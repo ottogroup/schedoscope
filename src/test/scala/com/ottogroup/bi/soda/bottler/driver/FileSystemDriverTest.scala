@@ -13,17 +13,17 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
 
   "Copy" should "copy data into target directory" in {
 
-    assert(driver.runAndWait(new Copy(in.getAbsolutePath() + "/*", out.getAbsolutePath(), false)) == true)
+    assert(driver.runAndWait(new Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), false)) == true)
 
     assert(new File(out, "test.txt").exists() == true)
-    assert(new File(out, "subdir/test2.txt").exists() == false)
+    assert(new File(out, "subdir" + File.separator +  "test2.txt").exists() == false)
 
     // source exists, destination not writable
     // source exists, destination writable      
   }
   "Copy(recursive=true)" should "copy data and subdirectories into target directory" in {
 
-    assert(driver.runAndWait(new Copy(in.getAbsolutePath() + "/*", out.getAbsolutePath(), true)) == true) // source exists, destination writable
+    assert(driver.runAndWait(new Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), true)) == true) // source exists, destination writable
     assert(new File(out, "test.txt").exists())
     assert(new File(out, "subdir/test2.txt").exists())
     // source exists, destination not writable
@@ -31,19 +31,19 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
   }
 
   "Move" should "move data into target directory" in {
-    assert(driver.runAndWait(new Move(in.getAbsolutePath() + "/test.txt", out.getAbsolutePath())) == true) // source exists, destination writable
+    assert(driver.runAndWait(new Move(in.getAbsolutePath() + File.separator + "test.txt", out.getAbsolutePath())) == true) // source exists, destination writable
     assert(new File(out, "test.txt").exists())
     assert(!new File(in, "test.txt").exists())
   }
   "Delete" should "delete data in target directory" in {
 
-    assert(driver.runAndWait(new Delete(out.getAbsolutePath() + "/test.txt")) == true) // source exists, destination writable
+    assert(driver.runAndWait(new Delete(out.getAbsolutePath() + File.separator + "test.txt")) == true) // source exists, destination writable
     assert(!new File(out, "test.txt").exists())
 
   }
   "Touch" should "create file" in {
 
-    assert(driver.runAndWait(new Touch(out.getAbsolutePath() + "/_SUCCESS")) == true) // source exists, destination writable
+    assert(driver.runAndWait(new Touch(out.getAbsolutePath() + File.separator + "_SUCCESS")) == true) // source exists, destination writable
     assert(new File(out, "_SUCCESS").exists())
   }
 

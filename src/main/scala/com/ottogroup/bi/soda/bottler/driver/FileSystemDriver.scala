@@ -20,6 +20,7 @@ import java.security.PrivilegedAction
 import org.apache.hadoop.fs.FileStatus
 import akka.actor.ActorRef
 import akka.event.Logging
+import java.io.File
 
 class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends Driver {
   def doAs(f: () => Boolean): Boolean = ugi.doAs(new PrivilegedAction[Boolean]() {
@@ -36,11 +37,11 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
   def runAndWait(t: Transformation): Boolean = {
     t match {
       case IfExists(path, op) => doAs(() => {
-        if (FileSystem.get(new URI(path), conf).exists(new Path(path)))
+        if (FileSystem.get(uri(path), conf).exists(new Path(path)))
           runAndWait(op) else true
       })
       case IfNotExists(path, op) => doAs(() => {
-        if (!FileSystem.get(new URI(path), conf).exists(new Path(path)))
+        if (!FileSystem.get(uri(path), conf).exists(new Path(path)))
           runAndWait(op) else true
       })
 
@@ -53,8 +54,8 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
 
   def copy(from: String, to: String, recursive: Boolean) = {
 
-    val fromFS = FileSystem.get(new URI(from), conf)
-    val toFS = FileSystem.get(new URI(to), conf)
+    val fromFS = FileSystem.get(uri(from), conf)
+    val toFS = FileSystem.get(uri(to), conf)
     val files = listFiles(fromFS, from)
     def inner(files: Seq[FileStatus], to: Path): Unit = {
 
@@ -82,7 +83,7 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
 
   def delete(from: String, recursive: Boolean) = {
 
-    val fromFS = FileSystem.get(new URI(from), conf)
+    val fromFS = FileSystem.get(uri(from), conf)
     val files = listFiles(fromFS, from)
     try {
       files.foreach(status => fromFS.delete(status.getPath(), recursive))
@@ -93,7 +94,7 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
   }
 
   def touch(path: String) = {
-    val filesys = FileSystem.get(new URI(path), conf)
+    val filesys = FileSystem.get(uri(path), conf)
     try {
       filesys.create(new Path(path))
     } catch {
@@ -103,8 +104,8 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
   }
 
   def move(from: String, to: String) = {
-    val fromFS = FileSystem.get(new URI(from), conf)
-    val toFS = FileSystem.get(new URI(to), conf)
+    val fromFS = FileSystem.get(uri(from), conf)
+    val toFS = FileSystem.get(uri(to), conf)
     val files = listFiles(fromFS, from)
     try {
       FileUtil.copy(fromFS, FileUtil.stat2Paths(files), toFS, new Path(to), true, true, conf)
@@ -114,8 +115,15 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
     true
   }
 
-  def listFiles(fs: FileSystem, path: String): Array[FileStatus] = {
+  private def listFiles(fs: FileSystem, path: String): Array[FileStatus] = {
     fs.globStatus(new Path(path))
   }
+
+  private def uri(pathOrUri: String) =
+    try {
+      new URI(pathOrUri)
+    } catch {
+      case _: Throwable => new File(pathOrUri).toURI()
+    }
 
 }
