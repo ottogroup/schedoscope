@@ -43,8 +43,6 @@ import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
 
-
-
 object SodaService {
   implicit val system = ActorSystem("sodaSystem")
   val settings = Settings(system)
@@ -135,14 +133,18 @@ object SodaService {
 
             case request @ Get on Root /: "listactions" /: test =>
               try {
-            	val status=(scheduleActor ?  GetStatus()).mapTo[ProcessList]
-            	status.map( pl =>request.ok(s"{"+
-            				s"""running:  ${pl.status.filter{ case s:HiveStatusResponse => s.status==RUNNING; case s:OozieStatusResponse => s.status==RUNNING}.toList.size},\n"""+
-            				s"""idle: ${pl.status.filter{ case s:HiveStatusResponse => s.status==IDLE; case s:OozieStatusResponse => s.status==IDLE}.toList.size},\n"""+
-            			    s"""processes :[ ${pl.status.foldLeft(""){case (a:String,s:HiveStatusResponse) => a+s"""{status:"${s.message}"\ntyp:"hive"\nstart:"${formatter.print(s.start)}\nquery:"${s.query}"}\n""""
-            			    case (a:String,s:OozieStatusResponse) => a+s"""{status:"${s.message}"\ntyp:"oozie"\nstart:"${formatter.print(s.start)}\njobId:"${s.jobId}"}\n""""}} ]"""+
-            			"\n}"))
-               
+                val status = (scheduleActor ? GetStatus()).mapTo[ProcessList]
+                status.map(pl => request.ok(s"{" +
+                  s"""running:  ${pl.status.filter { case s: HiveStatusResponse => s.status == RUNNING; case s: OozieStatusResponse => s.status == RUNNING }.toList.size},\n""" +
+                  s"""idle: ${pl.status.filter { case s: HiveStatusResponse => s.status == IDLE; case s: OozieStatusResponse => s.status == IDLE }.toList.size},\n""" +
+                  s"""processes :[ ${
+                    pl.status.foldLeft("") {
+                      case (a: String, s: HiveStatusResponse) => a + s"""{status:"${s.message}"\ntyp:"hive"\nstart:"${formatter.print(s.start)}\nquery:"${s.query}"}\n""""
+                      case (a: String, s: OozieStatusResponse) => a + s"""{status:"${s.message}"\ntyp:"oozie"\nstart:"${formatter.print(s.start)}\njobId:"${s.jobId}"}\n""""
+                    }
+                  } ]""" +
+                  "\n}"))
+
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }

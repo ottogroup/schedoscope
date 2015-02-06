@@ -18,7 +18,7 @@ class HiveActor(jdbcUrl: String) extends Actor {
 
   def running(sql: String): Receive = {
     case "tick" =>
-    case _: GetStatus => sender() ! new HiveStatusResponse("executing query", self,ProcessStatus.RUNNING,sql,startTime)
+    case _: GetStatus => sender() ! new HiveStatusResponse("executing query", self, ProcessStatus.RUNNING, sql, startTime)
     case CommandWithSender(_: KillAction, s) => s ! new InternalError("can't kill hive queries yet")
   }
 
@@ -51,10 +51,10 @@ class HiveActor(jdbcUrl: String) extends Actor {
       }
       become(running(h.sql.head))
     }
-    case _: GetStatus => sender ! HiveStatusResponse("idle", self, ProcessStatus.IDLE,"",startTime)
+    case _: GetStatus => sender ! HiveStatusResponse("idle", self, ProcessStatus.IDLE, "", startTime)
 
   }
-  
+
   private def finish(receive: => HiveActor.this.Receive, actionsRouter: akka.actor.ActorRef): Unit = {
     unbecome
     become(receive)

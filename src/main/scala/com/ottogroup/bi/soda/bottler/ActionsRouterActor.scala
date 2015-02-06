@@ -25,11 +25,11 @@ case class CommandWithSender(message: AnyRef, sender: ActorRef)
 case class WorkAvailable()
 case class TimedOut
 case class ProcessList(status: List[ActionStatusResponse])
-case class GetProcessList(sender:ActorRef)
+case class GetProcessList(sender: ActorRef)
 class StatusRetriever extends Actor with Aggregator {
 
   expectOnce {
-    case GetProcessList(s) ⇒ new MultipleResponseHandler(s, "")
+    case GetProcessList(s) => new MultipleResponseHandler(s, "")
   }
 
   class MultipleResponseHandler(originalSender: ActorRef, propName: String) {
@@ -43,9 +43,8 @@ class StatusRetriever extends Actor with Aggregator {
     context.system.scheduler.scheduleOnce(50 milliseconds, self, TimedOut)
 
     val handle = expect {
-      case ar: ActionStatusResponse ⇒
-        values += ar
-      case TimedOut ⇒ processFinal(values.toList)
+      case ar: ActionStatusResponse => values += ar
+      case TimedOut => processFinal(values.toList)
     }
 
     def processFinal(eval: List[ActionStatusResponse]) {
@@ -91,30 +90,30 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
         routers.get("hive").get ! WorkAvailable
       }
       case cmd: CopyFrom => routers.get("file").get ! CommandWithSender(Copy(cmd.fromPattern, view.partitionPathBuilder()), sender)
-      case cmd: FileOperation  => {
+      case cmd: FileOperation => {
         //    queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("file").get ! CommandWithSender(cmd, sender)
       }
     }
-     case cmd: OozieWF => {
-        queues.get("oozie").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("oozie").get ! WorkAvailable
-      }
-      case cmd: HiveQl => {
-        queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("hive").get ! WorkAvailable
-      }
-     
-      case cmd: FileOperation  => {
-        //    queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("file").get ! CommandWithSender(cmd, sender)
-      }
+    case cmd: OozieWF => {
+      queues.get("oozie").get.enqueue(CommandWithSender(cmd, sender))
+      routers.get("oozie").get ! WorkAvailable
+    }
+    case cmd: HiveQl => {
+      queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
+      routers.get("hive").get ! WorkAvailable
+    }
+
+    case cmd: FileOperation => {
+      //    queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
+      routers.get("file").get ! CommandWithSender(cmd, sender)
+    }
     case cmd: GetStatus => {
       implicit val timeout = Timeout(600);
       actorOf(Props(new StatusRetriever)) ! GetProcessList(sender())
-//      routers.map { case (name, router) => router ! CommandWithSender(cmd, sender) }.map { x => x }
+      //      routers.map { case (name, router) => router ! CommandWithSender(cmd, sender) }.map { x => x }
     }
-   
+
   })
 }
 

@@ -13,7 +13,7 @@ import java.sql.DriverManager
 
 class Database(conn: Connection, url: String) {
 
-  def selectForViewByQuery(v: View, q: String, o: FieldLike[_]): List[Map[String, Any]] = {        
+  def selectForViewByQuery(v: View, q: String, o: FieldLike[_]): List[Map[String, Any]] = {
     val res = ListBuffer[Map[String, Any]]()
     val rs = conn.createStatement().executeQuery(q)
     println("RUNNING " + q)

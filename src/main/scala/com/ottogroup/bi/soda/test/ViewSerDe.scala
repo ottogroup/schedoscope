@@ -16,15 +16,15 @@ import com.ottogroup.bi.soda.dsl.TextFile
 object ViewSerDe {
 
   def serialize(v: View with rows): String = {
-    v.storageFormat match {      
-      case tf : TextFile => {
+    v.storageFormat match {
+      case tf: TextFile => {
         val fterm = if (tf.fieldTerminator == null) "\t" else tf.fieldTerminator.replaceAll("\\\\t", "\t")
         val lterm = if (tf.lineTerminator == null) "\n" else tf.lineTerminator.replaceAll("\\\\n", "\n")
         v.rs.map(row =>
           v.fields.map(cell => {
             serializeCell(row(cell.n), false, tf)
           }).mkString(fterm))
-        .mkString(lterm)
+          .mkString(lterm)
       }
       case _ => throw new RuntimeException("Can only serialize views stored as textfile")
     }

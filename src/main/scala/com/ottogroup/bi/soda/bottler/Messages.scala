@@ -6,10 +6,9 @@ import akka.actor.ActorRef
 import org.joda.time.LocalDate
 import org.joda.time.LocalDateTime
 
-
 object ProcessStatus extends Enumeration {
-    type ProcessStatus = Value
-    val RUNNING,IDLE,ERROR,STOPPED = Value
+  type ProcessStatus = Value
+  val RUNNING, IDLE, ERROR, STOPPED = Value
 }
 
 class MessageType
@@ -39,8 +38,8 @@ case class GetStatus() extends Command
 case class ViewStatus(view: View, status: String, dependencies: Seq[ViewStatus]) extends Success
 sealed abstract class ActionStatusResponse
 import ProcessStatus._
-case class HiveStatusResponse(message: String, actor: ActorRef, status:ProcessStatus,query:String,start:LocalDateTime) extends ActionStatusResponse
-case class OozieStatusResponse(message: String, actor: ActorRef, status:ProcessStatus,jobId:String,start:LocalDateTime) extends ActionStatusResponse
+case class HiveStatusResponse(message: String, actor: ActorRef, status: ProcessStatus, query: String, start: LocalDateTime) extends ActionStatusResponse
+case class OozieStatusResponse(message: String, actor: ActorRef, status: ProcessStatus, jobId: String, start: LocalDateTime) extends ActionStatusResponse
 case class KillAction() extends Command
 case class Suspend() extends Command
 case class InternalError(message: String) extends Failure

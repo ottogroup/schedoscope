@@ -36,7 +36,7 @@ class OozieTestResources extends TestResources {
 
   override val localTestDirectory: String = "" // TODO
 
-  override val remoteTestDirectory: String = mo.getFsTestCaseDir.toString  
+  override val remoteTestDirectory: String = mo.getFsTestCaseDir.toString
 
   override val fileSystemDriver: FileSystemDriver = null // TODO
 

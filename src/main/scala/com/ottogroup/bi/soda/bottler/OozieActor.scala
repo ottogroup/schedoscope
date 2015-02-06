@@ -35,14 +35,14 @@ class OozieActor(oozieUrl: String) extends Actor {
             system.scheduler.scheduleOnce(10 seconds, self, "tick")
           }
           case WorkflowJob.Status.SUCCEEDED => {
-            
+
             s ! OozieSuccess()
             startTime = LocalDateTime.now
             become(receive)
           }
           case WorkflowJob.Status.FAILED | WorkflowJob.Status.KILLED => {
             s ! OozieError()
-                        startTime = LocalDateTime.now
+            startTime = LocalDateTime.now
             become(receive)
           }
         }
@@ -52,12 +52,12 @@ class OozieActor(oozieUrl: String) extends Actor {
       oozieClient.kill(jobId)
       become(receive)
     }
-    case _: GetStatus => sender() ! new OozieStatusResponse("executing job ", self,ProcessStatus.RUNNING,jobId,startTime)
+    case _: GetStatus => sender() ! new OozieStatusResponse("executing job ", self, ProcessStatus.RUNNING, jobId, startTime)
 
   }
 
   def receive = LoggingReceive {
-  	case _: GetStatus => sender ! OozieStatusResponse("idle", self, ProcessStatus.IDLE,"",startTime)
+    case _: GetStatus => sender ! OozieStatusResponse("idle", self, ProcessStatus.IDLE, "", startTime)
 
     case WorkAvailable => sender ! PollCommand("oozie")
     case CommandWithSender(OozieWF(bundle, wf, appPath, conf), s) => {
@@ -65,7 +65,7 @@ class OozieActor(oozieUrl: String) extends Actor {
       try {
 
         val jobId = runOozieJob(jobProperties, oozieClient);
-        startTime=LocalDateTime.now()
+        startTime = LocalDateTime.now()
         if (oozieClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING ||
           oozieClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.PREP) {
           become(running(jobId, s))

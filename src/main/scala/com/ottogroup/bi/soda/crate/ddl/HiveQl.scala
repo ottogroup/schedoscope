@@ -101,12 +101,14 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY \42${mapKeyTerminator
   def partitionWhereClause(view: View): String = {
     val whereClause = view
       .partitionParameters
-      .map { f => {
-        if (f.t == manifest[String]) 
-          s"${f.n}='${f.v.get}'"
-        else 
-          s"${f.n}=${f.v.get}"
-      }}
+      .map { f =>
+        {
+          if (f.t == manifest[String])
+            s"${f.n}='${f.v.get}'"
+          else
+            s"${f.n}=${f.v.get}"
+        }
+      }
 
     if (!whereClause.isEmpty)
       "WHERE " + whereClause.mkString(" AND ")

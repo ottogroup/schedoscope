@@ -28,7 +28,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     assert(new File(out, "subdir/test2.txt").exists())
     // source exists, destination not writable
     // source exists, destination writable      
-  } 
+  }
 
   "Move" should "move data into target directory" in {
     assert(driver.runAndWait(new Move(in.getAbsolutePath() + "/test.txt", out.getAbsolutePath())) == true) // source exists, destination writable
