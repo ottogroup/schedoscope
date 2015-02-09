@@ -21,7 +21,6 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.conf.Configuration
 import java.io.File
 import java.net.URL
-import org.mockito.internal.matchers.EndsWith
 
 object LocalTestResources extends TestResources {
 
