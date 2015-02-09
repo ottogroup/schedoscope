@@ -19,6 +19,8 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.LocalFileSystem
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.conf.Configuration
+import java.io.File
+import java.net.URL
 
 object LocalTestResources extends TestResources {
 
@@ -35,6 +37,22 @@ object LocalTestResources extends TestResources {
     new Path("file:///", d).toString()
   }
 
+  def cacheAndReturnClassPath() = {
+    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct
+    val nonJarClassPathMembers = classPathMembers.filter { !_.endsWith(".jar") }.toList
+    val jarClassPathMembers = classPathMembers.filter { _.endsWith(".jar") }.toList
+    
+    val (jarCopyOperations, _) = jarClassPathMembers.foldLeft((List[(File, File)](), 0)) {
+      case ((jarCopies, currentCounter), jarFile) =>
+        ((new File(new URL(jarFile).toURI()), new File(FileUtils.getTempDirectoryPath() + currentCounter + ".jar")) :: jarCopies , currentCounter + 1)
+    }
+
+    jarCopyOperations.foreach{ case (source, target) => FileUtils.copyFile(source, target) }
+    
+    val cachedJarClassPathMembers = jarCopyOperations.map { case (_, target) => new Path(target.toURI()).toUri().toString }.reverse
+    (nonJarClassPathMembers ++ cachedJarClassPathMembers).map(_.replaceAll("file:", "")).mkString(",")
+  }
+  
   override val hiveConf: HiveConf = {
     // we don't directly instantiate a new HiveConf(), because then hive-site.xml
     // would be loaded from classpath too early (we must make sure to write 
@@ -43,8 +61,8 @@ object LocalTestResources extends TestResources {
     conf.put(METASTOREWAREHOUSE.toString, hiveWarehouseDir)
     conf.put(LOCALMODEAUTO.toString, "true")
     conf.put(METASTORECONNECTURLKEY.toString, "jdbc:derby:memory:metastore_db;create=true")
-    val auxJars = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map(_.toString.replaceAll("file:", "")).distinct.mkString(",")
-    conf.put(HIVEAUXJARS.toString, auxJars)
+    
+    conf.put(HIVEAUXJARS.toString, cacheAndReturnClassPath())
     conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
     conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
     val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
