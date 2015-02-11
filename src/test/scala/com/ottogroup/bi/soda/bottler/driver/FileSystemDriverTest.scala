@@ -16,7 +16,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     assert(driver.runAndWait(new Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), false)) == true)
 
     assert(new File(out, "test.txt").exists() == true)
-    assert(new File(out, "subdir" + File.separator +  "test2.txt").exists() == false)
+    assert(new File(out, "subdir" + File.separator + "test2.txt").exists() == false)
 
     // source exists, destination not writable
     // source exists, destination writable      

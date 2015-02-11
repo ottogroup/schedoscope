@@ -26,7 +26,7 @@ import net.lingala.zip4j.model.ZipParameters
 import org.apache.hadoop.fs.FileUtil
 
 object LocalTestResources extends TestResources {
-  
+
   setupLocalHadoop()
 
   val hiveLocalJdbcUrl = "jdbc:hive://"
@@ -49,7 +49,7 @@ object LocalTestResources extends TestResources {
     val conf = new Properties()
     conf.put(METASTOREWAREHOUSE.toString, hiveWarehouseDir)
     conf.put(LOCALMODEAUTO.toString, "true")
-    conf.put(METASTORECONNECTURLKEY.toString, "jdbc:derby:memory:metastore_db;create=true")    
+    conf.put(METASTORECONNECTURLKEY.toString, "jdbc:derby:memory:metastore_db;create=true")
     conf.put(HIVEAUXJARS.toString, compiledClassesPath())
     conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
     conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
@@ -78,39 +78,39 @@ object LocalTestResources extends TestResources {
   override val database: Database = new Database(connection, hiveLocalJdbcUrl)
   override val bottler: DeploySchema = DeploySchema(metastoreClient, connection)
   override val hiveDriver: HiveDriver = new HiveDriver(connection)
-  
+
   def compiledClassesPath() = {
-    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct            
-    val nonJarClassPathMembers = classPathMembers.filter { !_.endsWith(".jar") }.toList    
-    nonJarClassPathMembers.map(_.replaceAll("file:", "")).mkString(",")    
+    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct
+    val nonJarClassPathMembers = classPathMembers.filter { !_.endsWith(".jar") }.toList
+    nonJarClassPathMembers.map(_.replaceAll("file:", "")).mkString(",")
   }
-  
+
   def setupLocalHadoop() {
     if (System.getenv("HADOOP_HOME") == null) {
       throw new RuntimeException("HADOOP_HOME must be set!")
     }
-    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct            
+    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct
     val jarClassPathMembers = classPathMembers.filter { _.endsWith(".jar") }.toList
-    val launcherJars =  jarClassPathMembers.filter { _.contains("hadoop-launcher") }    
-    val hadoopHome = new File(System.getenv("HADOOP_HOME"))     
-    
-    if (launcherJars.size == 1 && !hadoopHome.exists) {    
-        hadoopHome.mkdirs      
-        new ZipFile(launcherJars.head.replaceAll("file:", "")).extractAll(hadoopHome.toString)
-        FileUtil.chmod(hadoopHome.toString, "777", true)
+    val launcherJars = jarClassPathMembers.filter { _.contains("hadoop-launcher") }
+    val hadoopHome = new File(System.getenv("HADOOP_HOME"))
+
+    if (launcherJars.size == 1 && !hadoopHome.exists) {
+      hadoopHome.mkdirs
+      new ZipFile(launcherJars.head.replaceAll("file:", "")).extractAll(hadoopHome.toString)
+      FileUtil.chmod(hadoopHome.toString, "777", true)
     }
-    
+
     val hadoopLibDir = new File(hadoopHome.toString() + File.separator + "lib")
     if (hadoopLibDir.exists)
       FileUtils.deleteDirectory(hadoopLibDir)
-    hadoopLibDir.mkdir    
+    hadoopLibDir.mkdir
 
     val jarCopyOperations = jarClassPathMembers.foldLeft(List[(File, File)]()) {
       case (jarCopies, jarFile) =>
-        ((new File(new URL(jarFile).toURI()), 
+        ((new File(new URL(jarFile).toURI()),
           new File(new Path(System.getenv("HADOOP_HOME"), "lib" + File.separator + new Path(jarFile).getName).toString)) :: jarCopies)
     }
 
-    jarCopyOperations.foreach { case (source, target) => {FileUtils.copyFile(source, target) }}
-  }  
+    jarCopyOperations.foreach { case (source, target) => { FileUtils.copyFile(source, target) } }
+  }
 }
