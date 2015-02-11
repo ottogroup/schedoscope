@@ -23,6 +23,7 @@ import java.io.File
 import java.net.URL
 import net.lingala.zip4j.core.ZipFile
 import net.lingala.zip4j.model.ZipParameters
+import org.apache.hadoop.fs.FileUtil
 
 object LocalTestResources extends TestResources {
   
@@ -95,14 +96,14 @@ object LocalTestResources extends TestResources {
     
     if (launcherJars.size == 1 && !hadoopHome.exists) {    
         hadoopHome.mkdirs      
-        val zip = new ZipFile(launcherJars.head.replaceAll("file:", ""))
-        zip.extractAll(hadoopHome.toString)
+        new ZipFile(launcherJars.head.replaceAll("file:", "")).extractAll(hadoopHome.toString)
+        FileUtil.chmod(hadoopHome.toString, "777", true)
     }
     
     val hadoopLibDir = new File(hadoopHome.toString() + File.separator + "lib")
     if (hadoopLibDir.exists)
       FileUtils.deleteDirectory(hadoopLibDir)
-    hadoopLibDir.mkdir
+    hadoopLibDir.mkdir    
 
     val jarCopyOperations = jarClassPathMembers.foldLeft(List[(File, File)]()) {
       case (jarCopies, jarFile) =>

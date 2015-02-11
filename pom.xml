@@ -55,7 +55,7 @@
 		<dependency>
 			<groupId>com.ottogroup.bi</groupId>
 			<artifactId>hadoop-launcher</artifactId>
-			<version>0.0.4</version>
+			<version>0.0.6</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
