@@ -54,6 +54,13 @@
 		</dependency>
 		<dependency>
 			<groupId>com.ottogroup.bi</groupId>
+			<artifactId>hadoop-launcher</artifactId>
+			<version>0.0.2</version>
+			<type>zip</type>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.ottogroup.bi</groupId>
 			<artifactId>minioozie</artifactId>
 			<version>0.0.3</version>
 			<scope>provided</scope>
