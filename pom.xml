@@ -12,7 +12,7 @@
 
 	<profiles>
 		<profile>
-			<activation>
+		    <activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<id>cloudera</id>
@@ -115,7 +115,7 @@
 		<dependency>
 			<groupId>com.ottogroup.bi</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.0.4</version>
+			<version>0.0.5</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
