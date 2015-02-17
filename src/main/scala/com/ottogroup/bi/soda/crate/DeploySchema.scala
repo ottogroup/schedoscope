@@ -26,9 +26,11 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
 
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
+  val tablePropSchemaHash = "hash"
+  // FIXME: add transformation version handling (hash for transformation version + global "digest" for view version
   def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
 
-  def alterTable(dbName: String, tableName: String, key: String, value: String): Unit = {
+  def setTableProperty(dbName: String, tableName: String, key: String, value: String): Unit = {
     val table = metastoreClient.getTable(dbName, tableName)
     table.putToParameters(key, value)
     metastoreClient.alter_table(dbName, tableName, table)
@@ -43,11 +45,10 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
       metastoreClient.dropTable(dbName, tableName, false, true)
     }
     stmt.execute(sql)
-    alterTable(dbName, tableName, "hash", digest(sql))
+    setTableProperty(dbName, tableName, tablePropSchemaHash, digest(sql))
   }
 
   def schemaExists(dbname: String, tableName: String, sql: String): Boolean = {
-
     val d = digest(sql)
     if (existingSchemas.contains(d))
       return true;
@@ -56,9 +57,9 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     } else {
       val table = metastoreClient.getTable(dbname, tableName)
       val props = table.getParameters()
-      if (!props.containsKey("hash"))
+      if (!props.containsKey(tablePropSchemaHash))
         false
-      else if (d == props.get("hash").toString()) {
+      else if (d == props.get(tablePropSchemaHash).toString()) {
         existingSchemas += d
         true
       } else
@@ -83,7 +84,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     tables.diff(validTables).foreach { tableName =>
       {
         val table = metastoreClient.getTable(dbname, tableName)
-        if (table.getParameters().containsKey("hash"))
+        if (table.getParameters().containsKey(tablePropSchemaHash))
           metastoreClient.dropTable(dbname, tableName, false, true)
       }
     }

@@ -42,6 +42,7 @@ import com.ottogroup.bi.soda.bottler.OozieStatusResponse
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
+import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 
 object SodaService {
   implicit val system = ActorSystem("sodaSystem")
@@ -51,17 +52,13 @@ object SodaService {
   implicit val ec = ExecutionContext.global
   implicit val timeout = Timeout(3 days) // needed for `?` below
 
-  val hadoopConf = new Configuration(true)
-  hadoopConf.addResource(new Path("/etc/hadoop/conf/hdfs-site.xml"))
-  hadoopConf.addResource(new Path("/etc/hadoop/conf/core-site.xml"))
-
-  UserGroupInformation.setConfiguration(hadoopConf)
+  UserGroupInformation.setConfiguration(settings.hadoopConf)
   val ugi = UserGroupInformation.getCurrentUser()
   ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
   ugi.reloginFromKeytab();
 
-  val supervisor = system.actorOf(ViewSuperVisor.props(ugi, hadoopConf), "supervisor")
-  val scheduleActor = system.actorOf(ActionsRouterActor.props(hadoopConf), "actions")
+  val supervisor = system.actorOf(ViewSuperVisor.props(ugi, settings.hadoopConf), "supervisor")
+  val scheduleActor = system.actorOf(ActionsRouterActor.props(settings.hadoopConf), "actions")
   val schemaActor = system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schemaActor")
 
   val viewAugmentor = if (settings.parsedViewAugmentorClass != null)
@@ -70,6 +67,7 @@ object SodaService {
     null
   val formatter = DateTimeFormat.fullDateTime()
   def start() {
+    deploy()
     Service.serve[Http]("http-service", settings.port, settings.webserviceTimeOut) {
       (context =>
         context.handle { connection =>
@@ -169,11 +167,16 @@ object SodaService {
     }
   }
 
-  def main(args: Array[String]) {
-    start()
+  def main(args: Array[String]) {    
+    start() 
+  }
+  
+  private def deploy() {
+      // FIXME: one we have a driver registry, we can do here
+      // for (d in driverRegistry): d.deployAll()
   }
 
-  private def getViewActors(viewUrlPath: String) = {
+   private def getViewActors(viewUrlPath: String) = {
     val views = if (viewAugmentor != null)
       View.viewsFromUrl(viewUrlPath, viewAugmentor)
     else

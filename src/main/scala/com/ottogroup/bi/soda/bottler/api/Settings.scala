@@ -8,6 +8,8 @@ import akka.actor.ExtendedActorSystem
 import scala.concurrent.duration.Duration
 import com.typesafe.config.Config
 import java.util.concurrent.TimeUnit
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 
 class SettingsImpl(config: Config) extends Extension {
 
@@ -32,6 +34,18 @@ class SettingsImpl(config: Config) extends Extension {
   val oozieUri = config.getString("soda.oozie.url")
 
   val parsedViewAugmentorClass = config.getString("soda.app.parsedViewAugmentorClass")
+  
+  val libDirectory = config.getString("soda.app.libDirectory")
+  
+  val udfJar = config.getString("soda.transformations.hive.udfJar")
+  
+  val hadoopConf = {  
+    val hc = new Configuration(true)
+    hc.addResource(new Path("/etc/hadoop/conf/hdfs-site.xml"))
+    hc.addResource(new Path("/etc/hadoop/conf/core-site.xml"))
+    hc
+  }
+  
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
