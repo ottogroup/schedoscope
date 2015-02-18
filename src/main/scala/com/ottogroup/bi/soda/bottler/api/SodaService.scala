@@ -52,20 +52,19 @@ object SodaService {
   implicit val ec = ExecutionContext.global
   implicit val timeout = Timeout(3 days) // needed for `?` below
 
-  UserGroupInformation.setConfiguration(settings.hadoopConf)
-  val ugi = UserGroupInformation.getCurrentUser()
-  ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
-  ugi.reloginFromKeytab();
 
-  val supervisor = system.actorOf(ViewSuperVisor.props(ugi, settings.hadoopConf), "supervisor")
+
+  val supervisor = system.actorOf(ViewSuperVisor.props(settings.userGroupInformation, settings.hadoopConf), "supervisor")
   val scheduleActor = system.actorOf(ActionsRouterActor.props(settings.hadoopConf), "actions")
   val schemaActor = system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schemaActor")
-
+  
   val viewAugmentor = if (settings.parsedViewAugmentorClass != null)
     Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
   else
     null
   val formatter = DateTimeFormat.fullDateTime()
+  
+  
   def start() {
     deploy()
     Service.serve[Http]("http-service", settings.port, settings.webserviceTimeOut) {
@@ -137,8 +136,8 @@ object SodaService {
                   s"""idle: ${pl.status.filter { case s: HiveStatusResponse => s.status == IDLE; case s: OozieStatusResponse => s.status == IDLE }.toList.size},\n""" +
                   s"""processes :[ ${
                     pl.status.foldLeft("") {
-                      case (a: String, s: HiveStatusResponse) => a + s"""{status:"${s.message}"\ntyp:"hive"\nstart:"${formatter.print(s.start)}\nquery:"${s.query}"}\n""""
-                      case (a: String, s: OozieStatusResponse) => a + s"""{status:"${s.message}"\ntyp:"oozie"\nstart:"${formatter.print(s.start)}\njobId:"${s.jobId}"}\n""""
+                      case (json: String, s: HiveStatusResponse) => json + s"""{status:"${s.message}"\ntyp:"hive"\nstart:"${formatter.print(s.start)}\nquery:"${s.query}"}\n""""
+                      case (json: String, s: OozieStatusResponse) => json + s"""{status:"${s.message}"\ntyp:"oozie"\nstart:"${formatter.print(s.start)}\njobId:"${s.jobId}"}\n""""
                     }
                   } ]""" +
                   "\n}"))
@@ -172,8 +171,7 @@ object SodaService {
   }
   
   private def deploy() {
-      // FIXME: one we have a driver registry, we can do here
-      // for (d in driverRegistry): d.deployAll()
+	  scheduleActor ! Deploy
   }
 
    private def getViewActors(viewUrlPath: String) = {

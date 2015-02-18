@@ -13,9 +13,10 @@ import com.ottogroup.bi.soda.bottler.OozieCommand
 import org.apache.oozie.client.WorkflowJob
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
+import com.typesafe.config.Config
 
-class OozieDriver(cl: OozieClient) extends Driver {
-  val client = cl
+class OozieDriver(val client:OozieClient) extends Driver {
+ 
 
   override def run(t: Transformation): String = {
     t match {
@@ -48,10 +49,14 @@ class OozieDriver(cl: OozieClient) extends Driver {
   def runAndWait(jobProperties: Properties): Boolean = {
     OozieDriver.runAndWait(jobProperties, client)
   }
-
+  def getJobInfo(jobId:String) = client.getJobInfo(jobId)
+  def kill(jobId:String) = client.kill(jobId)
+  
+  
 }
 object OozieDriver {
-
+  def apply(config:Config) = new OozieDriver(new OozieClient(config.getString("url")))
+ 
   def createOozieJobConf(wf: OozieWF): Properties =
     {
       wf match {

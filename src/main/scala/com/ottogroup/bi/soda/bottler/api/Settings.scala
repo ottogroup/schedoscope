@@ -10,11 +10,14 @@ import com.typesafe.config.Config
 import java.util.concurrent.TimeUnit
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import com.typesafe.config.ConfigFactory
+import org.apache.hadoop.security.UserGroupInformation
 
 class SettingsImpl(config: Config) extends Extension {
-
+  
+  
   println(config)
-
+  def getConfig=config
   val env: String = config.getString("soda.app.environment")
 
   val webserviceTimeOut: Duration =
@@ -25,19 +28,21 @@ class SettingsImpl(config: Config) extends Extension {
 
   val packageName: String = config.getString("soda.app.package")
 
-  val jdbcUrl: String = config.getString("soda.hive.jdbcUrl")
+  val jdbcUrl: String = config.getString("soda.metastore.jdbcUrl")
 
   val kerberosPrincipal = config.getString("soda.kerberos.principal")
 
-  val metastoreUri = config.getString("soda.hive.metastoreUri")
+  val metastoreUri = config.getString("soda.metastore.metastoreUri")
 
-  val oozieUri = config.getString("soda.oozie.url")
+  //val oozieUri = config.getString("soda.oozie.url")
 
   val parsedViewAugmentorClass = config.getString("soda.app.parsedViewAugmentorClass")
   
   val libDirectory = config.getString("soda.app.libDirectory")
   
   val udfJar = config.getString("soda.transformations.hive.udfJar")
+  val availableTransformations = config.getObject("soda.transformations")
+  
   
   val hadoopConf = {  
     val hc = new Configuration(true)
@@ -46,9 +51,19 @@ class SettingsImpl(config: Config) extends Extension {
     hc
   }
   
+  val userGroupInformation = {
+      UserGroupInformation.setConfiguration(hadoopConf)
+      val ugi = UserGroupInformation.getCurrentUser()
+      ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
+      ugi.reloginFromKeytab();
+      ugi
+      
+  } 
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
+  
+   
 
   override def lookup = Settings
 

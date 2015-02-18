@@ -19,13 +19,16 @@ import com.ottogroup.bi.soda.dsl.transformations.filesystem.Copy
 import akka.contrib.pattern.Aggregator
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
+import com.ottogroup.bi.soda.bottler.api.Settings
+import collection.JavaConversions._
+import com.typesafe.config.Config
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.bottler.api.SettingsImpl
+import com.typesafe.config.ConfigObject
+import com.typesafe.config.ConfigFactory
+import com.typesafe.config.ConfigValueFactory
+import com.ottogroup.bi.soda.dsl.Transformation
 
-case class PollCommand(typ: String)
-case class CommandWithSender(message: AnyRef, sender: ActorRef)
-case class WorkAvailable()
-case class TimedOut
-case class ProcessList(status: List[ActionStatusResponse])
-case class GetProcessList(sender: ActorRef)
 class StatusRetriever extends Actor with Aggregator {
 
   expectOnce {
@@ -55,6 +58,23 @@ class StatusRetriever extends Actor with Aggregator {
   }
 }
 
+object ActionFactory {
+  def createActor(name: String, config: Config, settings: SettingsImpl) = {
+    println(config)
+    name match {
+      case "hive" => HiveActor.props(config)
+      case "oozie" => OozieActor.props(config)
+      case "file" => FileSystemActor.props(settings)
+    }
+  }
+  def getTransformationTypeName(t:Transformation) =
+    t match {
+    	case _:OozieWF => "oozie"
+    	case _:HiveQl=>"hive"
+    	case _:FileOperation => "file" 
+  }
+}
+
 /**
  * Supervisor for Hive, Oozie, Routers
  * Implements a pull-work-pattern that does not fill the mailboxes of actors.
@@ -64,18 +84,24 @@ class StatusRetriever extends Actor with Aggregator {
 class ActionsRouterActor(conf: Configuration) extends Actor {
   import context._
   val log = Logging(system, this)
-  val url = "http://anatolefrance:11000/oozie"
-  val jdbcUrl = "jdbc:hive2://anatolefrance:10000/default;principal=hive/anatolefrance@OTTOGROUP.COM"
-  val queues = Map("hive" -> new collection.mutable.Queue[CommandWithSender],
-    "oozie" -> new collection.mutable.Queue[CommandWithSender],
-    "file" -> new collection.mutable.Queue[CommandWithSender])
+  val settings = Settings.get(system)
 
-  val routers = Map("oozie" -> actorOf(OozieActor.props(url).withRouter(
-    BroadcastRouter(nrOfInstances = 50))),
-    "hive" -> actorOf(HiveActor.props(jdbcUrl).withRouter(
-      BroadcastRouter(nrOfInstances = 50))),
-    "file" -> actorOf(FileSystemActor.props(conf).withRouter(
-      BroadcastRouter(nrOfInstances = 1))))
+  val queues =
+    settings.availableTransformations.entrySet().foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
+    (map, entry) =>{
+      map + (entry.getKey() ->      
+       new collection.mutable.Queue[CommandWithSender]())
+      
+    }
+  }
+  val routers = settings.availableTransformations.entrySet().foldLeft(Map[String, ActorRef]()) {
+    (map, entry) =>{
+        val conf = entry.getValue().asInstanceOf[ConfigObject].toConfig().withFallback(ConfigFactory.empty.withValue("concurrency", ConfigValueFactory.fromAnyRef(1)))
+      map + (entry.getKey() ->      
+        actorOf(ActionFactory.createActor(entry.getKey(), conf, settings).withRouter(BroadcastRouter(nrOfInstances = conf.getInt("concurrency")))))
+      
+    }
+  }
 
   def receive = LoggingReceive({
     case PollCommand(typ) =>
@@ -91,8 +117,9 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
       }
       case cmd: CopyFrom => routers.get("file").get ! CommandWithSender(Copy(cmd.fromPattern, view.partitionPathBuilder()), sender)
       case cmd: FileOperation => {
-        //    queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("file").get ! CommandWithSender(cmd, sender)
+        queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
+        routers.get("file").get ! WorkAvailable
+      //  CommandWithSender(cmd, sender)
       }
     }
     case cmd: OozieWF => {
@@ -105,15 +132,15 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
     }
 
     case cmd: FileOperation => {
-      //    queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
       routers.get("file").get ! CommandWithSender(cmd, sender)
     }
     case cmd: GetStatus => {
       implicit val timeout = Timeout(600);
       actorOf(Props(new StatusRetriever)) ! GetProcessList(sender())
-      //      routers.map { case (name, router) => router ! CommandWithSender(cmd, sender) }.map { x => x }
     }
-
+    case cmd: Deploy => {
+      
+    }
   })
 }
 

@@ -14,6 +14,7 @@ import scala.collection.mutable.MutableList
 import scala.collection.mutable.Queue
 import scala.collection.mutable.Stack
 import com.ottogroup.bi.soda.dsl.Transformation
+import com.typesafe.config.Config
 
 class HiveDriver(conn: Connection) extends Driver {
 
@@ -64,7 +65,7 @@ class HiveDriver(conn: Connection) extends Driver {
 }
 
 object HiveDriver {
-  def apply(jdbcUrl: String) = {
+  def apply(config:Config) = {
     val hadoopConfiguration = new Configuration(false)
     hadoopConfiguration.addResource(new Path("/etc/hadoop/conf/hdfs-site.xml"))
     hadoopConfiguration.addResource(new Path("/etc/hadoop/conf/core-site.xml"))
@@ -75,7 +76,7 @@ object HiveDriver {
     val c =
       user.doAs(new PrivilegedAction[Connection]() {
         def run(): Connection = {
-          DriverManager.getConnection(jdbcUrl)
+          DriverManager.getConnection(config.getString("jdbcUrl"))
         }
       })
 

@@ -15,19 +15,21 @@ import akka.event.LoggingReceive
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import org.joda.time.LocalDateTime
+import com.ottogroup.bi.soda.bottler.driver.OozieDriver
+import com.typesafe.config.Config
 
-class OozieActor(oozieUrl: String) extends Actor {
+class OozieActor(config:Config) extends Actor {
 
   import context._
   val log = Logging(system, this)
-  val oozieClient = new OozieClient(oozieUrl)
+  val oozieDriver =  OozieDriver(config)
   var startTime = LocalDateTime.now()
 
   def running(jobId: String, s: ActorRef): Receive = LoggingReceive {
     case "tick" =>
 
       {
-        val jobInfo = oozieClient.getJobInfo(jobId)
+        val jobInfo = oozieDriver.getJobInfo(jobId)
         log.info(s"workflow ${jobInfo.getId()} in state: " + jobInfo.getStatus())
 
         jobInfo.getStatus() match {
@@ -49,7 +51,7 @@ class OozieActor(oozieUrl: String) extends Actor {
 
       }
     case KillAction => {
-      oozieClient.kill(jobId)
+      oozieDriver.kill(jobId)
       become(receive)
     }
     case _: GetStatus => sender() ! new OozieStatusResponse("executing job ", self, ProcessStatus.RUNNING, jobId, startTime)
@@ -58,16 +60,17 @@ class OozieActor(oozieUrl: String) extends Actor {
 
   def receive = LoggingReceive {
     case _: GetStatus => sender ! OozieStatusResponse("idle", self, ProcessStatus.IDLE, "", startTime)
+    case Deploy => oozieDriver.deployAll
 
     case WorkAvailable => sender ! PollCommand("oozie")
     case CommandWithSender(OozieWF(bundle, wf, appPath, conf), s) => {
       val jobProperties = createOozieJobConf(OozieWF(bundle, wf, appPath, conf))
       try {
 
-        val jobId = runOozieJob(jobProperties, oozieClient);
+        val jobId = oozieDriver.runOozieJob(jobProperties)
         startTime = LocalDateTime.now()
-        if (oozieClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING ||
-          oozieClient.getJobInfo(jobId).getStatus() == WorkflowJob.Status.PREP) {
+        if (oozieDriver.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING ||
+          oozieDriver.getJobInfo(jobId).getStatus() == WorkflowJob.Status.PREP) {
           become(running(jobId, s))
           system.scheduler.scheduleOnce(1000 millis, self, "tick")
         }
@@ -93,5 +96,5 @@ class OozieActor(oozieUrl: String) extends Actor {
 }
 
 object OozieActor {
-  def props(url: String) = Props(new OozieActor(url))
+  def props(config:Config) = Props(new OozieActor(config))
 }

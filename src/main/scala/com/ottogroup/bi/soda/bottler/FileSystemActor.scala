@@ -22,12 +22,13 @@ import akka.actor.ActorRef
 import akka.event.Logging
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.bottler.api.SettingsImpl
 
-class FileSystemActor(val conf: Configuration) extends Actor {
+class FileSystemActor(val settings:SettingsImpl) extends Actor {
   import context._
   val ec = ExecutionContext.global
   val ugi = UserGroupInformation.getLoginUser()
-  val driver = new FileSystemDriver(ugi, conf)
+  val driver =  FileSystemDriver(settings)
   val log = Logging(system, this)
 
   def receive = {
@@ -46,6 +47,6 @@ class FileSystemActor(val conf: Configuration) extends Actor {
 }
 
 object FileSystemActor {
-  def props(conf: Configuration) = Props(new FileSystemActor(conf))
+  def props(settings:SettingsImpl) = Props(new FileSystemActor(settings))
 
 }

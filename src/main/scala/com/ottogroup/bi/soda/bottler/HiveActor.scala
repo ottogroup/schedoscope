@@ -8,12 +8,13 @@ import scala.concurrent._
 import akka.event.Logging
 import java.sql.SQLException
 import org.joda.time.LocalDateTime
+import com.typesafe.config.Config
 
-class HiveActor(jdbcUrl: String) extends Actor {
-  val hiveDriver = HiveDriver.apply(jdbcUrl)
+class HiveActor(config:Config) extends Actor {
+  val hiveDriver = HiveDriver.apply(config)
   import context._
   val ec = ExecutionContext.global
-  val log = Logging(system, this)
+  val log = Logging(system, this) 
   var startTime = LocalDateTime.now()
 
   def running(sql: String): Receive = {
@@ -24,6 +25,7 @@ class HiveActor(jdbcUrl: String) extends Actor {
 
   override def receive: Receive = {
     case WorkAvailable => sender ! PollCommand("hive")
+    case Deploy => hiveDriver.deployAll
     case CommandWithSender(h: HiveQl, s) => {
       val actionsRouter = sender
       val requester = s
@@ -65,5 +67,5 @@ class HiveActor(jdbcUrl: String) extends Actor {
 }
 
 object HiveActor {
-  def props(url: String) = Props(new HiveActor(url))
+  def props(config:Config) = Props(new HiveActor(config))
 }

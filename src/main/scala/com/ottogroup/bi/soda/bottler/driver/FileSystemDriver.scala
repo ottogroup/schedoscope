@@ -21,8 +21,12 @@ import org.apache.hadoop.fs.FileStatus
 import akka.actor.ActorRef
 import akka.event.Logging
 import java.io.File
+import com.typesafe.config.Config
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.bottler.api.SettingsImpl
 
-class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends Driver {
+class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends Driver {
+
   def doAs(f: () => Boolean): Boolean = ugi.doAs(new PrivilegedAction[Boolean]() {
     def run(): Boolean = {
       f()
@@ -58,9 +62,7 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
     val toFS = FileSystem.get(uri(to), conf)
     val files = listFiles(fromFS, from)
     def inner(files: Seq[FileStatus], to: Path): Unit = {
-
       toFS.mkdirs(to)
-
       if (recursive) {
         files.filter(p => (p.isDirectory() && !p.getPath().getName().startsWith("."))).
           foreach(path => {
@@ -68,7 +70,6 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
           })
       }
       files.filter(p => !p.isDirectory()).map(status => status.getPath()).foreach { p =>
-
         FileUtil.copy(fromFS, p, toFS, to, false, true, conf)
       }
     }
@@ -125,5 +126,11 @@ class FileSystemDriver(ugi: UserGroupInformation, conf: Configuration) extends D
     } catch {
       case _: Throwable => new File(pathOrUri).toURI()
     }
+
+}
+
+object FileSystemDriver {
+  def apply(settings:SettingsImpl) = new FileSystemDriver(settings.userGroupInformation,settings.hadoopConf)
+ def apply(ugi:UserGroupInformation,conf:Configuration) =  new FileSystemDriver(ugi,conf)
 
 }

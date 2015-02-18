@@ -9,7 +9,7 @@ import com.ottogroup.bi.soda.dsl.transformations.filesystem._
 import java.io.File
 
 class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers with TestFolder {
-  val driver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
+  val driver =  FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
 
   "Copy" should "copy data into target directory" in {
 
@@ -42,7 +42,6 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
 
   }
   "Touch" should "create file" in {
-
     assert(driver.runAndWait(new Touch(out.getAbsolutePath() + File.separator + "_SUCCESS")) == true) // source exists, destination writable
     assert(new File(out, "_SUCCESS").exists())
   }
