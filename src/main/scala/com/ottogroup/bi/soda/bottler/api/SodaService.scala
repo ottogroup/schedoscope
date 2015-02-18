@@ -45,19 +45,17 @@ import org.joda.time.format.DateTimeFormat
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 
 object SodaService {
-  implicit val system = ActorSystem("sodaSystem")
-  val settings = Settings(system)
+  val settings = Settings()
 
   implicit val io = IOSystem()
   implicit val ec = ExecutionContext.global
   implicit val timeout = Timeout(3 days) // needed for `?` below
 
 
+  val supervisor = settings.system.actorOf(ViewSuperVisor.props(ugi, settings.hadoopConf), "supervisor")
+  val scheduleActor = settings.system.actorOf(ActionsRouterActor.props(settings.hadoopConf), "actions")
+  val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schemaActor")
 
-  val supervisor = system.actorOf(ViewSuperVisor.props(settings.userGroupInformation, settings.hadoopConf), "supervisor")
-  val scheduleActor = system.actorOf(ActionsRouterActor.props(settings.hadoopConf), "actions")
-  val schemaActor = system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schemaActor")
-  
   val viewAugmentor = if (settings.parsedViewAugmentorClass != null)
     Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
   else
@@ -148,7 +146,7 @@ object SodaService {
 
             case request @ Get on Root /: "kill" /: id =>
               try {
-                val result = (system.actorFor(id) ? KillAction)
+                val result = (settings.system.actorFor(id) ? KillAction)
 
                 result.map { case InternalError(s) => request.error(s) case _ => request.ok("ok") }
               } catch {

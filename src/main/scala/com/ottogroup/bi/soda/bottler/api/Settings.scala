@@ -51,24 +51,26 @@ class SettingsImpl(config: Config) extends Extension {
     hc
   }
   
-  val userGroupInformation = {
-      UserGroupInformation.setConfiguration(hadoopConf)
-      val ugi = UserGroupInformation.getCurrentUser()
-      ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
-      ugi.reloginFromKeytab();
-      ugi
-      
-  } 
+  val system = Settings.actorSystem
+  
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
   
    
 
+  val actorSystem = ActorSystem("sodaSystem")
+  
   override def lookup = Settings
 
   override def createExtension(system: ExtendedActorSystem) =
     new SettingsImpl(system.settings.config)
 
   override def get(system: ActorSystem): SettingsImpl = super.get(system)
+  
+  def apply() = {
+    super.apply(actorSystem)
+  }  
+  
+  
 }
