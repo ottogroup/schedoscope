@@ -9,9 +9,10 @@ import akka.event.Logging
 import java.sql.SQLException
 import org.joda.time.LocalDateTime
 import com.typesafe.config.Config
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
-class HiveActor(config:Config) extends Actor {
-  val hiveDriver = HiveDriver.apply(config)
+class HiveActor(ds:DriverSettings) extends Actor {
+  val hiveDriver = HiveDriver(ds)
   import context._
   val ec = ExecutionContext.global
   val log = Logging(system, this) 
@@ -67,5 +68,5 @@ class HiveActor(config:Config) extends Actor {
 }
 
 object HiveActor {
-  def props(config:Config) = Props(new HiveActor(config))
+  def props(ds:DriverSettings) = Props(new HiveActor(ds))
 }

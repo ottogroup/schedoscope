@@ -24,6 +24,7 @@ import java.io.File
 import com.typesafe.config.Config
 import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.bottler.api.SettingsImpl
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
 class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends Driver {
 
@@ -130,7 +131,11 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
 }
 
 object FileSystemDriver {
-  def apply(settings:SettingsImpl) = new FileSystemDriver(settings.userGroupInformation,settings.hadoopConf)
- def apply(ugi:UserGroupInformation,conf:Configuration) =  new FileSystemDriver(ugi,conf)
+  def apply(ds:DriverSettings) = {
+    val fsd = new FileSystemDriver(Settings().userGroupInformation,Settings().hadoopConf)
+    fsd.driverSettings = ds
+    fsd  
+  }
+  def apply(ugi:UserGroupInformation,conf:Configuration) =  new FileSystemDriver(ugi,conf)
 
 }

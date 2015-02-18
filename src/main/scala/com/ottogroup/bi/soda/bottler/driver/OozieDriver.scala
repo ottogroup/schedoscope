@@ -14,6 +14,7 @@ import org.apache.oozie.client.WorkflowJob
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import com.typesafe.config.Config
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
 class OozieDriver(val client:OozieClient) extends Driver {
  
@@ -55,7 +56,11 @@ class OozieDriver(val client:OozieClient) extends Driver {
   
 }
 object OozieDriver {
-  def apply(config:Config) = new OozieDriver(new OozieClient(config.getString("url")))
+  def apply(ds:DriverSettings) = {
+    val od = new OozieDriver(new OozieClient(ds.conf.getString("url")))
+    od.driverSettings = ds
+    od    
+  }
  
   def createOozieJobConf(wf: OozieWF): Properties =
     {

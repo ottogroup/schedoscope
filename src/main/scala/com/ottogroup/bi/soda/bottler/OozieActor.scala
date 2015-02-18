@@ -17,12 +17,13 @@ import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import org.joda.time.LocalDateTime
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 import com.typesafe.config.Config
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
-class OozieActor(config:Config) extends Actor {
+class OozieActor(ds:DriverSettings) extends Actor {
 
   import context._
   val log = Logging(system, this)
-  val oozieDriver =  OozieDriver(config)
+  val oozieDriver =  OozieDriver(ds)
   var startTime = LocalDateTime.now()
 
   def running(jobId: String, s: ActorRef): Receive = LoggingReceive {
@@ -96,5 +97,5 @@ class OozieActor(config:Config) extends Actor {
 }
 
 object OozieActor {
-  def props(config:Config) = Props(new OozieActor(config))
+  def props(ds:DriverSettings) = Props(new OozieActor(ds))
 }

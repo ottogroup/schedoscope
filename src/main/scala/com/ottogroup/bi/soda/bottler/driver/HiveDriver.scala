@@ -15,6 +15,8 @@ import scala.collection.mutable.Queue
 import scala.collection.mutable.Stack
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.typesafe.config.Config
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
 class HiveDriver(conn: Connection) extends Driver {
 
@@ -24,7 +26,7 @@ class HiveDriver(conn: Connection) extends Driver {
     t match {
       case th: HiveQl =>
         th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
-          .map(sql => if (!this.executeHiveQuery(sql)) return "")
+              .map(sql => if (!this.executeHiveQuery(sql)) return "")
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }
     ""
@@ -65,22 +67,16 @@ class HiveDriver(conn: Connection) extends Driver {
 }
 
 object HiveDriver {
-  def apply(config:Config) = {
-    val hadoopConfiguration = new Configuration(false)
-    hadoopConfiguration.addResource(new Path("/etc/hadoop/conf/hdfs-site.xml"))
-    hadoopConfiguration.addResource(new Path("/etc/hadoop/conf/core-site.xml"))
-    Class.forName("org.apache.hive.jdbc.HiveDriver")
-    UserGroupInformation.setConfiguration(hadoopConfiguration)
-    val user = UserGroupInformation.getLoginUser()
-    val hdfs = FileSystem.get(hadoopConfiguration)
+  def apply(ds:DriverSettings) = {
     val c =
-      user.doAs(new PrivilegedAction[Connection]() {
+      Settings().userGroupInformation.doAs(new PrivilegedAction[Connection]() {
         def run(): Connection = {
-          DriverManager.getConnection(config.getString("jdbcUrl"))
+          DriverManager.getConnection(Settings().jdbcUrl)
         }
       })
-
-    new HiveDriver(c)
+    val hd = new HiveDriver(c)
+    hd.driverSettings = ds
+    hd
   }
 }
 

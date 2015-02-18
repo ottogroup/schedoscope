@@ -28,6 +28,7 @@ import com.typesafe.config.ConfigObject
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigValueFactory
 import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
 class StatusRetriever extends Actor with Aggregator {
 
@@ -59,12 +60,11 @@ class StatusRetriever extends Actor with Aggregator {
 }
 
 object ActionFactory {
-  def createActor(name: String, config: Config, settings: SettingsImpl) = {
-    println(config)
+  def createActor(name: String, driverSettings: DriverSettings) = {
     name match {
-      case "hive" => HiveActor.props(config)
-      case "oozie" => OozieActor.props(config)
-      case "file" => FileSystemActor.props(settings)
+      case "hive" => HiveActor.props(driverSettings)
+      case "oozie" => OozieActor.props(driverSettings)
+      case "file" => FileSystemActor.props(driverSettings)
     }
   }
   def getTransformationTypeName(t:Transformation) =
@@ -98,7 +98,7 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
     (map, entry) =>{
         val conf = entry.getValue().asInstanceOf[ConfigObject].toConfig().withFallback(ConfigFactory.empty.withValue("concurrency", ConfigValueFactory.fromAnyRef(1)))
       map + (entry.getKey() ->      
-        actorOf(ActionFactory.createActor(entry.getKey(), conf, settings).withRouter(BroadcastRouter(nrOfInstances = conf.getInt("concurrency")))))
+        actorOf(ActionFactory.createActor(entry.getKey(), new DriverSettings(conf)).withRouter(BroadcastRouter(nrOfInstances = conf.getInt("concurrency")))))
       
     }
   }
