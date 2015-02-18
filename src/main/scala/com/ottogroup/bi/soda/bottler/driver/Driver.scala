@@ -15,7 +15,6 @@ trait Driver {
   // def deploy(t: Transformation, f: FileSystemDriver, c: Config) : Boolean
   // deploy resources for all transformations run by this driver
   def deployAll() : Boolean = {
-    driverSettings.
     true
   }  
 }
