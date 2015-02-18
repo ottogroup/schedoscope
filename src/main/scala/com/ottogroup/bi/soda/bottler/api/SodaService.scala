@@ -7,9 +7,7 @@ import HttpMethod._
 import UrlParsing.Strings._
 import akka.actor.ActorSystem
 import akka.actor.Props
-import akka.actor.Props
 import akka.dispatch._
-import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.Await
@@ -29,6 +27,7 @@ import com.ottogroup.bi.soda.bottler.ViewMaterializedIncomplete
 import com.ottogroup.bi.soda.bottler.SchemaActor
 import com.ottogroup.bi.soda.bottler.NoDataAvaiable
 import com.ottogroup.bi.soda.bottler.NewDataAvailable
+import com.ottogroup.bi.soda.bottler.Deploy
 import com.ottogroup.bi.soda.bottler.ViewSuperVisor
 import com.ottogroup.bi.soda.bottler.ActionsRouterActor
 import com.ottogroup.bi.soda.dsl.Parameter
@@ -43,6 +42,7 @@ import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
+import akka.actor.ActorRef
 
 object SodaService {
   val settings = Settings()
@@ -56,7 +56,7 @@ object SodaService {
   val scheduleActor = settings.system.actorOf(ActionsRouterActor.props(settings.hadoopConf), "actions")
   val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schemaActor")
 
-  val viewAugmentor = if (settings.parsedViewAugmentorClass != null)
+  val viewAugmentor = if (settings.parsedViewAugmentorClass != "")
     Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
   else
     null
@@ -169,7 +169,7 @@ object SodaService {
   }
   
   private def deploy() {
-	  scheduleActor ! Deploy
+	  scheduleActor ! Deploy()
   }
 
    private def getViewActors(viewUrlPath: String) = {

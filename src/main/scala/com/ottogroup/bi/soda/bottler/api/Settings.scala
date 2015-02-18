@@ -14,6 +14,7 @@ import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.security.UserGroupInformation
 import com.ottogroup.bi.soda.bottler.driver.HiveDriver
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
+import com.ottogroup.bi.soda.bottler.driver.Driver
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 
 class SettingsImpl(config: Config) extends Extension with defaults {
@@ -34,11 +35,11 @@ class SettingsImpl(config: Config) extends Extension with defaults {
 
   val packageName: String = get("soda.app.package", "app.eci")
 
-  val jdbcUrl: String = get("soda.hive.jdbcUrl", "")
+  val jdbcUrl: String = get("soda.metastore.jdbcUrl", "")
 
   val kerberosPrincipal = get("soda.kerberos.principal", "")
 
-  val metastoreUri = get("soda.hive.metastoreUri", "")
+  val metastoreUri = get("soda.metastore.metastoreUri", "")
 
   //val oozieUri = config.getString("soda.oozie.url")
 
@@ -46,7 +47,7 @@ class SettingsImpl(config: Config) extends Extension with defaults {
   
   val libDirectory = get("soda.app.libDirectory", sodaJar.replaceAll("/[^/]+$", "/"))
     
-  val availableTransformations = get("soda.transformations", ConfigFactory.empty())
+  val availableTransformations = config.getObject("soda.transformations")
     
   val hadoopConf = {  
     val hc = new Configuration(true)
@@ -66,9 +67,9 @@ class SettingsImpl(config: Config) extends Extension with defaults {
       
   } 
   
-  def getSettingsForDriver(d: Any) : DriverSettings = {
-    val confName = "soda.transformations." + d.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
-    new DriverSettings(get(confName, ConfigFactory.empty()))
+  def getSettingsForDriver(d: Any with Driver) : DriverSettings = {
+    val confName = "soda.transformations." + d.name
+    new DriverSettings(get(confName, ConfigFactory.empty()), d.name)
   } 
 }
 
@@ -89,8 +90,8 @@ object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
   
 }
 
-class DriverSettings(config: Config) extends defaults {
-  conf = config
+class DriverSettings(config: Config, val name: String) extends defaults {
+  conf = config  
   val location = get("location", "/tmp/soda")
   val libDirectory = get("libDirectory", "")
   val concurrency = get("concurrency", 1)
@@ -100,16 +101,19 @@ class DriverSettings(config: Config) extends defaults {
 
 trait defaults {
   var conf : Config = ConfigFactory.empty()
-  def get[T](p : String, d : T)  = {
+  def get[T](p : String, d : T) : T  = {
     if (conf.hasPath(p)) {
       d match {
-        case v : String => conf.getString(p)
-        case v : Int => conf.getInt(p)
-        case v : Config => conf.getObject(p).toConfig
-        case _ => conf.getObject(p)
+        case v : String => conf.getString(p).asInstanceOf[T]
+        case v : Int => conf.getInt(p).asInstanceOf[T]
+        case v : Config => conf.getObject(p).toConfig.asInstanceOf[T]
+        case v : Boolean => conf.getBoolean(p).asInstanceOf[T]
+        case _ => conf.getObject(p).asInstanceOf[T]
       }
     }
-    d
+    else {
+      d
+    }
   }
 
   

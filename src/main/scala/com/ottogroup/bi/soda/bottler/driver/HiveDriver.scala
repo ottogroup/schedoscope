@@ -68,6 +68,7 @@ class HiveDriver(conn: Connection) extends Driver {
 
 object HiveDriver {
   def apply(ds:DriverSettings) = {
+    Class.forName("org.apache.hive.jdbc.HiveDriver")
     val c =
       Settings().userGroupInformation.doAs(new PrivilegedAction[Connection]() {
         def run(): Connection = {

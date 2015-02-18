@@ -60,11 +60,11 @@ class StatusRetriever extends Actor with Aggregator {
 }
 
 object ActionFactory {
-  def createActor(name: String, driverSettings: DriverSettings) = {
+  def createActor(name: String, conf: Config) = {
     name match {
-      case "hive" => HiveActor.props(driverSettings)
-      case "oozie" => OozieActor.props(driverSettings)
-      case "file" => FileSystemActor.props(driverSettings)
+      case "hive" => HiveActor.props(new DriverSettings(conf, name))
+      case "oozie" => OozieActor.props(new DriverSettings(conf, name))
+      case "file" => FileSystemActor.props(new DriverSettings(conf, name))
     }
   }
   def getTransformationTypeName(t:Transformation) =
@@ -98,7 +98,7 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
     (map, entry) =>{
         val conf = entry.getValue().asInstanceOf[ConfigObject].toConfig().withFallback(ConfigFactory.empty.withValue("concurrency", ConfigValueFactory.fromAnyRef(1)))
       map + (entry.getKey() ->      
-        actorOf(ActionFactory.createActor(entry.getKey(), new DriverSettings(conf)).withRouter(BroadcastRouter(nrOfInstances = conf.getInt("concurrency")))))
+        actorOf(ActionFactory.createActor(entry.getKey(), conf).withRouter(BroadcastRouter(nrOfInstances = conf.getInt("concurrency")))))
       
     }
   }
@@ -139,7 +139,12 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
       actorOf(Props(new StatusRetriever)) ! GetProcessList(sender())
     }
     case cmd: Deploy => {
-      
+      routers.map(el => {
+        val name = el._1
+        val act = el._2
+        queues.get(name).get.enqueue(CommandWithSender(cmd, sender))
+        act ! WorkAvailable 
+      })
     }
   })
 }

@@ -104,6 +104,16 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
     }
     true
   }
+  
+  def mkdirs(path: String) = {
+    val filesys = FileSystem.get(uri(path), conf)
+    try {
+      filesys.mkdirs(new Path(path))
+    } catch {
+      case e: Throwable => false
+    }
+    true
+  }  
 
   def move(from: String, to: String) = {
     val fromFS = FileSystem.get(uri(from), conf)
@@ -127,6 +137,10 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
     } catch {
       case _: Throwable => new File(pathOrUri).toURI()
     }
+    
+  def localFilesystem : FileSystem = FileSystem.getLocal(conf)
+  
+  def filesystem = FileSystem.get(conf)
 
 }
 

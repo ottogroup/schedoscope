@@ -21,6 +21,7 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.Database
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import java.io.InvalidObjectException
+import com.ottogroup.bi.soda.bottler.api.Settings
 
 class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
 
@@ -104,15 +105,9 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
 
 object DeploySchema {
   def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
-    val hadoopConfiguration = new Configuration(false)
-    hadoopConfiguration.addResource(new Path("/etc/hadoop/conf/hdfs-site.xml"))
-    hadoopConfiguration.addResource(new Path("/etc/hadoop/conf/core-site.xml"))
     Class.forName("org.apache.hive.jdbc.HiveDriver")
-    UserGroupInformation.setConfiguration(hadoopConfiguration)
-    val user = UserGroupInformation.getLoginUser()
-    val hdfs = FileSystem.get(hadoopConfiguration)
     val connection =
-      user.doAs(new PrivilegedAction[Connection]() {
+      Settings().userGroupInformation.doAs(new PrivilegedAction[Connection]() {
         def run(): Connection = {
           DriverManager.getConnection(jdbcUrl)
         }

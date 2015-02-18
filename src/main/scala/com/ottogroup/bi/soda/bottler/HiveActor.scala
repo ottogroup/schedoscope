@@ -26,7 +26,7 @@ class HiveActor(ds:DriverSettings) extends Actor {
 
   override def receive: Receive = {
     case WorkAvailable => sender ! PollCommand("hive")
-    case Deploy => hiveDriver.deployAll
+    case CommandWithSender(d: Deploy, s) => hiveDriver.deployAll
     case CommandWithSender(h: HiveQl, s) => {
       val actionsRouter = sender
       val requester = s

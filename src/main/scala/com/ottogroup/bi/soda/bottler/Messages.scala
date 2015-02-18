@@ -47,7 +47,7 @@ case class InternalError(message: String) extends Failure
 case class PollCommand(typ: String)
 case class CommandWithSender(message: AnyRef, sender: ActorRef)
 case class WorkAvailable()
-case class TimedOut
+case class TimedOut()
 case class ProcessList(status: List[ActionStatusResponse])
 case class GetProcessList(sender: ActorRef)
-case class Deploy
+case class Deploy()
