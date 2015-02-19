@@ -30,6 +30,13 @@ import com.typesafe.config.ConfigValueFactory
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
+/**
+ * This actor aggregrates responses from multiple Actors 
+ * Used for retrieving running jobs,
+ * 
+ * @author dev_hzorn
+ *
+ */
 class StatusRetriever extends Actor with Aggregator {
 
   expectOnce {
@@ -119,7 +126,7 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
       case cmd: FileOperation => {
         queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("file").get ! WorkAvailable
-      //  CommandWithSender(cmd, sender)
+     
       }
     }
     case cmd: OozieWF => {
@@ -132,7 +139,8 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
     }
 
     case cmd: FileOperation => {
-      routers.get("file").get ! CommandWithSender(cmd, sender)
+        queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
+        routers.get("file").get ! WorkAvailable
     }
     case cmd: GetStatus => {
       implicit val timeout = Timeout(600);

@@ -16,7 +16,7 @@ class HiveActor(ds:DriverSettings) extends Actor {
   import context._
   val ec = ExecutionContext.global
   val log = Logging(system, this) 
-  var startTime = LocalDateTime.now()
+  var startTime = new LocalDateTime()
 
   def running(sql: String): Receive = {
     case "tick" =>
@@ -31,7 +31,7 @@ class HiveActor(ds:DriverSettings) extends Actor {
       val actionsRouter = sender
       val requester = s
       val f = future {
-        startTime = LocalDateTime.now()
+        startTime = new LocalDateTime()
         hiveDriver.runAndWait(h)
       }(ec)
       f.onSuccess {
@@ -61,7 +61,7 @@ class HiveActor(ds:DriverSettings) extends Actor {
   private def finish(receive: => HiveActor.this.Receive, actionsRouter: akka.actor.ActorRef): Unit = {
     unbecome
     become(receive)
-    startTime = LocalDateTime.now()
+    startTime = new LocalDateTime()
     actionsRouter ! PollCommand("hive")
   }
 

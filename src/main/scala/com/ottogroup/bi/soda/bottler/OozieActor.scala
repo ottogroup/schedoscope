@@ -17,14 +17,14 @@ import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import org.joda.time.LocalDateTime
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 import com.typesafe.config.Config
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import org.joda.time.Chronology
 
 class OozieActor(ds:DriverSettings) extends Actor {
 
   import context._
   val log = Logging(system, this)
-  val oozieDriver =  OozieDriver(ds)
-  var startTime = LocalDateTime.now()
+  val oozieDriver =  OozieDriver(config)
+  var startTime = new LocalDateTime()
 
   def running(jobId: String, s: ActorRef): Receive = LoggingReceive {
     case "tick" =>
@@ -40,12 +40,12 @@ class OozieActor(ds:DriverSettings) extends Actor {
           case WorkflowJob.Status.SUCCEEDED => {
 
             s ! OozieSuccess()
-            startTime = LocalDateTime.now
+            startTime = new LocalDateTime()
             become(receive)
           }
           case WorkflowJob.Status.FAILED | WorkflowJob.Status.KILLED => {
             s ! OozieError()
-            startTime = LocalDateTime.now
+            startTime = new LocalDateTime()
             become(receive)
           }
         }
@@ -68,7 +68,7 @@ class OozieActor(ds:DriverSettings) extends Actor {
       try {
 
         val jobId = oozieDriver.runOozieJob(jobProperties)
-        startTime = LocalDateTime.now()
+        startTime = new LocalDateTime()
         if (oozieDriver.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING ||
           oozieDriver.getJobInfo(jobId).getStatus() == WorkflowJob.Status.PREP) {
           become(running(jobId, s))
