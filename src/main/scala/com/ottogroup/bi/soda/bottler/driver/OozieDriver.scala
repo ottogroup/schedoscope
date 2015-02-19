@@ -57,7 +57,7 @@ class OozieDriver(val client:OozieClient) extends Driver {
 }
 object OozieDriver {
   def apply(ds:DriverSettings) = {
-    val od = new OozieDriver(new OozieClient(ds.conf.getString("url")))
+    val od = new OozieDriver(new OozieClient(ds.config.getString("url")))
     od.driverSettings = ds
     od    
   }

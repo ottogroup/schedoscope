@@ -16,36 +16,36 @@ import com.ottogroup.bi.soda.bottler.driver.HiveDriver
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 import com.ottogroup.bi.soda.bottler.driver.Driver
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.ListBuffer
 
-class SettingsImpl(config: Config) extends Extension with defaults {
+class SettingsImpl(val config: Config) extends Extension with defaults {
 
-  conf = config
   println(config)
-  def getConfig=config
+    
+  val system = Settings.actorSystem
   
   val sodaJar = this.getClass.getProtectionDomain.getCodeSource.getLocation.toURI.getPath
   
-  val env: String = get("soda.app.environment", "dev")
+  val env: String = get(config, "soda.app.environment", "dev")
 
   val webserviceTimeOut: Duration =
   Duration(config.getDuration("soda.webservice.timeout", TimeUnit.MILLISECONDS),
       TimeUnit.MILLISECONDS)
 
-  val port: Int = get("soda.webservice.port", 20698)
+  val port: Int = get(config, "soda.webservice.port", 20698)
 
-  val packageName: String = get("soda.app.package", "app.eci")
+  val packageName: String = get(config, "soda.app.package", "app.eci")
 
-  val jdbcUrl: String = get("soda.metastore.jdbcUrl", "")
+  val jdbcUrl: String = get(config, "soda.metastore.jdbcUrl", "")
 
-  val kerberosPrincipal = get("soda.kerberos.principal", "")
+  val kerberosPrincipal = get(config, "soda.kerberos.principal", "")
 
-  val metastoreUri = get("soda.metastore.metastoreUri", "")
+  val metastoreUri = get(config, "soda.metastore.metastoreUri", "")
 
-  //val oozieUri = config.getString("soda.oozie.url")
-
-  val parsedViewAugmentorClass = get("soda.app.parsedViewAugmentorClass", "")
+  val parsedViewAugmentorClass = get(config, "soda.app.parsedViewAugmentorClass", "")
   
-  val libDirectory = get("soda.app.libDirectory", sodaJar.replaceAll("/[^/]+$", "/"))
+  val libDirectory = get(config, "soda.app.libDirectory", sodaJar.replaceAll("/[^/]+$", "/"))
     
   val availableTransformations = config.getObject("soda.transformations")
     
@@ -55,9 +55,7 @@ class SettingsImpl(config: Config) extends Extension with defaults {
     hc.addResource(new Path("/etc/hadoop/conf/core-site.xml"))
     hc
   }
-  
-  val system = Settings.actorSystem
-  
+     
   val userGroupInformation = {
       UserGroupInformation.setConfiguration(hadoopConf)
       val ugi = UserGroupInformation.getCurrentUser()
@@ -65,12 +63,18 @@ class SettingsImpl(config: Config) extends Extension with defaults {
       ugi.reloginFromKeytab();
       ugi
       
-  } 
+  }
+  
+  private val driverSettings : HashMap[String,DriverSettings] = HashMap[String,DriverSettings]()
   
   def getSettingsForDriver(d: Any with Driver) : DriverSettings = {
-    val confName = "soda.transformations." + d.name
-    new DriverSettings(get(confName, ConfigFactory.empty()), d.name)
+    if (!driverSettings.contains(d.name)) {     
+      val confName = "soda.transformations." + d.name
+      driverSettings.put(d.name, new DriverSettings(get(config, confName, ConfigFactory.empty()), d.name))
+    }
+    driverSettings(d.name)
   } 
+  
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
@@ -90,18 +94,17 @@ object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
   
 }
 
-class DriverSettings(config: Config, val name: String) extends defaults {
-  conf = config  
-  val location = get("location", "/tmp/soda")
-  val libDirectory = get("libDirectory", "")
-  val concurrency = get("concurrency", 1)
-  val unpack = get("unpack", false)
+class DriverSettings(val config: Config, val name: String) extends defaults {
+  val location = get(config, "location", "/tmp/soda/"+name)
+  val libDirectory = get(config, "libDirectory", "")
+  val concurrency = get(config, "concurrency", 1)
+  val unpack = get(config, "unpack", false)
+  var libJars = List[String]()
 }
 
 
 trait defaults {
-  var conf : Config = ConfigFactory.empty()
-  def get[T](p : String, d : T) : T  = {
+  def get[T](conf: Config, p : String, d : T) : T  = {
     if (conf.hasPath(p)) {
       d match {
         case v : String => conf.getString(p).asInstanceOf[T]

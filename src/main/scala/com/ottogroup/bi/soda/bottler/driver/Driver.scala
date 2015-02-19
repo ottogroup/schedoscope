@@ -6,6 +6,10 @@ import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 import java.net.URLClassLoader
+import scala.collection.mutable.ListBuffer
+import java.nio.file.Files
+import scala.util.Random
+import net.lingala.zip4j.core.ZipFile
 
 trait Driver {
   var driverSettings = Settings().getSettingsForDriver(this)
@@ -28,27 +32,47 @@ trait Driver {
     fsd.delete(driverSettings.location, true)
     fsd.mkdirs(driverSettings.location)
     
-    // upload jars from lib directory FIXME: unpack
-    val succLibDir = driverSettings.libDirectory
+    val fromLibDir = driverSettings.libDirectory
       .split(",")
       .toList
-      .map (dir => {
-        // FIXME: wildcards
-        println("Copying file://" + dir + "*" + " to " + driverSettings.location)
-        fsd.copy("file://" + dir, driverSettings.location, true)
+      .filter ( !_.trim.equals("") )
+      .map( p => { if (!p.endsWith("/")) s"file://${p.trim}/*" else s"file://${p.trim}*" })      
+      .flatMap (dir => {
+        fsd.listFiles(dir)
+           .map( stat => stat.getPath.toString )
       })
-      .reduceOption((a,b) => a && b)
-      
-    // upload jars matching name pattern from classpath (e.g. eci-views-hive.jar)
-    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct
-    val succClasspath = classPathMembers.filter { _.endsWith(s"-${name}.jar") }
-                                        .toList
-                                        .map( el => {
-                                          println("Copying " + el + " to " + driverSettings.location)
-                                          fsd.copy(el, driverSettings.location, false)
-                                        })
-                                        .reduceOption((a,b) => a && b)
+    
+    val fromClasspath = this.getClass.getClassLoader
+      .asInstanceOf[URLClassLoader]
+      .getURLs
+      .map (el => el.toString )
+      .distinct
+      .filter( _.endsWith(s"-${name}.jar") )
+      .toList
+    
+    val succ = (fromLibDir ++ fromClasspath)
+      .toList
+      .map( f => {
+      if (driverSettings.unpack) {
+        val tmpDir = Files.createTempDirectory("soda-" + Random.nextLong.abs.toString).toFile
+        println(s"Unzipping ${name} resource ${f}")
+        new ZipFile(f.replaceAll("file:", "")).extractAll(tmpDir.getAbsolutePath)
+        println(s"Copying ${name} resource file://${tmpDir}/* to ${driverSettings.location}")
+        val succ = fsd.copy("file://" + tmpDir + "/*", driverSettings.location, true)
+        tmpDir.delete
+        succ        
+      }
+      else {
+        println(s"Copying ${name} resource ${f} to ${driverSettings.location}")
+        fsd.copy(f, driverSettings.location, true)        
+      }
+    })
+                          
+    // write list of found libjars back into config                                        
+    Settings().getSettingsForDriver(this).libJars = fsd.listFiles(driverSettings.location + "*")
+                                                       .map(stat => stat.getPath.toString)
+                                                       .toList
                                         
-    succLibDir.getOrElse(false) && succClasspath.getOrElse(false)
+    succ.reduceOption((a,b) => a && b).getOrElse(true)                                               
   }  
 }

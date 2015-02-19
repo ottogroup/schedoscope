@@ -61,7 +61,7 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
 
     val fromFS = FileSystem.get(uri(from), conf)
     val toFS = FileSystem.get(uri(to), conf)
-    val files = listFiles(fromFS, from)
+    val files = listFiles(from)
     def inner(files: Seq[FileStatus], to: Path): Unit = {
       toFS.mkdirs(to)
       if (recursive) {
@@ -86,7 +86,7 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
   def delete(from: String, recursive: Boolean) = {
 
     val fromFS = FileSystem.get(uri(from), conf)
-    val files = listFiles(fromFS, from)
+    val files = listFiles(from)
     try {
       files.foreach(status => fromFS.delete(status.getPath(), recursive))
     } catch {
@@ -118,7 +118,7 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
   def move(from: String, to: String) = {
     val fromFS = FileSystem.get(uri(from), conf)
     val toFS = FileSystem.get(uri(to), conf)
-    val files = listFiles(fromFS, from)
+    val files = listFiles(from)
     try {
       FileUtil.copy(fromFS, FileUtil.stat2Paths(files), toFS, new Path(to), true, true, conf)
     } catch {
@@ -127,8 +127,8 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
     true
   }
 
-  private def listFiles(fs: FileSystem, path: String): Array[FileStatus] = {
-    fs.globStatus(new Path(path))
+  def listFiles(path: String): Array[FileStatus] = {
+    FileSystem.get(uri(path),conf).globStatus(new Path(path))
   }
 
   private def uri(pathOrUri: String) =
