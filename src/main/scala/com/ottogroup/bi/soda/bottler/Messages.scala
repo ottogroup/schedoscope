@@ -25,13 +25,9 @@ case class HiveError() extends Failure
 case class OozieError() extends Failure
 case class OozieSuccess() extends Success
 case class HiveSuccess() extends Success
-case class ViewMaterialized(view: View) extends Success
-case class ViewMaterializedIncomplete(view: View) extends Success
-
+case class ViewMaterialized(view: View, incomplete:Boolean, changed:Boolean) extends Success
 case class NoDataAvaiable(view: View) extends Success
-
 case class NewDataAvailable(view: View) extends Command
-
 case class HiveCommand(sql: String) extends Command
 case class OozieCommand(properties: Properties) extends Command
 case class GetStatus() extends Command
@@ -51,3 +47,7 @@ case class TimedOut()
 case class ProcessList(status: List[ActionStatusResponse])
 case class GetProcessList(sender: ActorRef)
 case class Deploy()
+case class CheckVersion(view:View)
+case class SetVersion(view:View)
+case class VersionOk(view:View)
+case class VersionMismatch(view:View, dataVersion:String)

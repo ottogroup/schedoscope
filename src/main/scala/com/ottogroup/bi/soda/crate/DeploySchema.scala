@@ -28,6 +28,8 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
   val tablePropSchemaHash = "hash"
+    val partitionPropDigestName = "versionDigest"
+
   // FIXME: add transformation version handling (hash for transformation version + global "digest" for view version
   def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
 
@@ -36,7 +38,25 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     table.putToParameters(key, value)
     metastoreClient.alter_table(dbName, tableName, table)
   }
-
+  
+  def setPartitionProperty(dbName: String, tableName: String, part:String,key: String, value: String): Unit = {
+    val partition = metastoreClient.getPartition(dbName, tableName, part)
+    partition.putToParameters(key, value)
+    metastoreClient.alter_partition(dbName, tableName, partition)
+  }
+  
+  def setPartitionVersion(view:View) = {
+    setPartitionProperty(view.dbName, view.tableName, view.partitionPathBuilder.apply, partitionPropDigestName, view.transformation().versionDigest )
+  }
+  
+  def getPartitionVersion(view:View): String = {
+    val props =metastoreClient.getPartition(view.dbName, view.tableName, view.partitionPathBuilder.apply).getParameters()
+    if (props.containsKey(partitionPropDigestName))
+      props.get(partitionPropDigestName)
+    else
+      "does not exist"
+  }
+  
   def dropAndCreateTableSchema(dbName: String, tableName: String, sql: String): Unit = {
     val stmt = connection.createStatement()
     if (!metastoreClient.getAllDatabases.contains(dbName)) {
@@ -93,7 +113,8 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
 
   def deploySchemataForViews(views: Seq[View]): Unit = {
     val hashSet = HashSet[String]()
-    views.filter(view => { if (hashSet.contains(HiveQl.ddl(view))) { false } else { hashSet.add(HiveQl.ddl(view)); true } }).foreach { view =>
+    views.filter(view => { if (hashSet.contains(HiveQl.ddl(view))) { false } 
+    						else { hashSet.add(HiveQl.ddl(view)); true } }).foreach { view =>
       {
         if (!schemaExists(view.dbName, view.n, HiveQl.ddl(view)))
           dropAndCreateTableSchema(view.dbName, view.n, HiveQl.ddl(view))
@@ -115,7 +136,6 @@ object DeploySchema {
 
     val conf = new HiveConf()
     conf.set("hive.metastore.local", "false");
-    println(metaStoreUri.trim())
     conf.setVar(HiveConf.ConfVars.METASTOREURIS, metaStoreUri.trim());
     if (serverKerberosPrincipal != null) {
       conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
@@ -123,7 +143,6 @@ object DeploySchema {
       conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
         serverKerberosPrincipal);
     }
-    //conf.getAllProperties().store(System.out, "")
     val metastoreClient = new HiveMetaStoreClient(conf)
     new DeploySchema(metastoreClient, connection)
   }

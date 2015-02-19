@@ -29,6 +29,28 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       }
       sender ! new Success
     }
+    case CheckVersion(view) => {
+      //if (crate.schemaExists(view.env + "_" + view.module, view.n, ddl(view)))
+      try {
+         val digest= crate.getPartitionVersion(view)
+         if (digest.equals(view.transformation().versionDigest))
+        	sender ! VersionOk(view)
+         else
+            sender ! VersionMismatch(view,digest)
+      } catch {
+        case e: Throwable => { this.sender ! Error }
+      }
+    }
+     case SetVersion(view) => {
+      //if (crate.schemaExists(view.env + "_" + view.module, view.n, ddl(view)))
+      try {
+         crate.setPartitionVersion(view)
+      } catch {
+        case e: Throwable => { this.sender ! Error }
+      }
+      sender ! new Success
+      
+    }
   }
 }
 

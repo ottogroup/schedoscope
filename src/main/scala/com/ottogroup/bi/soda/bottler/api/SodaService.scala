@@ -23,7 +23,6 @@ import com.ottogroup.bi.soda.bottler.ViewStatus
 import com.ottogroup.bi.soda.bottler.KillAction
 import com.ottogroup.bi.soda.bottler.InternalError
 import com.ottogroup.bi.soda.bottler.ViewMaterialized
-import com.ottogroup.bi.soda.bottler.ViewMaterializedIncomplete
 import com.ottogroup.bi.soda.bottler.SchemaActor
 import com.ottogroup.bi.soda.bottler.NoDataAvaiable
 import com.ottogroup.bi.soda.bottler.NewDataAvailable
@@ -78,8 +77,8 @@ object SodaService {
                 val res = Await.result(Future sequence fut, 1 hour)
                 val result = res.foldLeft(0) { (count, r) =>
                   r match {
-                    case ViewMaterialized(v) => count + 1
-                    case ViewMaterializedIncomplete(v) => count + 1
+                    case ViewMaterialized(v,incomplete,changed) => count + 1
+                    
                     case _: NoDataAvaiable => count
                   }
                 }

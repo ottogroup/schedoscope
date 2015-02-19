@@ -9,7 +9,7 @@ import akka.event.Logging
 import java.sql.SQLException
 import org.joda.time.LocalDateTime
 import com.typesafe.config.Config
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.bottler.api.DriverSettings 
 
 class HiveActor(ds:DriverSettings) extends Actor {
   val hiveDriver = HiveDriver(ds)

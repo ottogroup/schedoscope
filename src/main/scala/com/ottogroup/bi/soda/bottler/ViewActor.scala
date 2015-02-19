@@ -35,10 +35,10 @@ import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 
 class ViewSuperVisor(ugi: UserGroupInformation, hadoopConf: Configuration) extends Actor {
   import context._
-  //if (view.dependencies.isEmpty) true
 
   def receive = {
     case v: View => {
+      //generate a unique id for every actor
       val actorName = v.module + v.n + v.parameters.foldLeft("") { (s, p) => s"${s}+${p.n}=${p.v.get}" }
 
       val actor = actorFor(actorName)
@@ -62,7 +62,8 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   val dependencies = collection.mutable.HashSet[View]()
   val actionsRouter = actorFor("/user/actions")
   var incomplete = false
-  var dataexpected = 0
+  var changed = false
+  var availableDependencies = 0
   //log.info("new actor: " + view + " in " + view.env)
 
   def transform(retries: Int) = {
@@ -76,11 +77,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
         Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), 10 seconds)
         become(materialized)
         log.info("got success")
-        if (incomplete)
-          listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterializedIncomplete(view) })
-        else
-          listeners.foreach(s => { log.debug(s"sending VM to ${s}"); s ! ViewMaterialized(view) })
-
+        listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view,incomplete,true) })
         listeners.clear
 
       }
@@ -107,7 +104,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
 
   // this table is materialized, just return
   def materialized: Receive = LoggingReceive({
-    case "materialize" => sender ! ViewMaterialized(view)
+    case "materialize" => sender ! ViewMaterialized(view,incomplete,false)
     case "invalidate" => become(receive)
     case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
 
@@ -136,37 +133,18 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   // waiting for depending tables to materialize
   def waiting: Receive = LoggingReceive {
     case "materialize" => listeners.enqueue(sender)
-    case ViewMaterializedIncomplete(dependency) => { incomplete = true; dependencyIsDone(dependency) }
-    case NoDataAvaiable(dependency) => { incomplete = true; dataexpected -= 1; dependencyIsDone(dependency) }
-    case ViewMaterialized(dependency) => dependencyIsDone(dependency)
+   
+    case NoDataAvaiable(dependency) => { incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency) }
+    case ViewMaterialized(dependency,true,false) => { incomplete = true; dependencyIsDone(dependency) }
+    case ViewMaterialized(dependency,false,false) => dependencyIsDone(dependency)
+    case ViewMaterialized(dependency,true,true) => { incomplete = true; changed=true; dependencyIsDone(dependency) }
+    case ViewMaterialized(dependency,false,true) => {changed=true;dependencyIsDone(dependency)}
   }
+  
 
   def receive = LoggingReceive({
-    case "materialize" => {
-      if (successFlagExists(view)) {
-        become(materialized)
-        log.info("bin da :" + view)
-        sender ! ViewMaterialized(view)
-      } else {
-        log.info(view + " has dependencies " + view.dependencies)
-        if (view.dependencies.isEmpty) {
-          sender ! NoDataAvaiable(view)
-          become(nodata)
-        } else {
-          become(waiting)
-          view.dependencies.foreach { dependendView =>
-            {
-              log.debug("querying dependency " + dependendView)
-              val actor = Await.result((supervisor ? dependendView).mapTo[ActorRef], timeout.duration)
-              dependencies.add(dependendView)
-              dataexpected += 1;
-              actor ! "materialize"
-
-            }
-          }
-        }
-        listeners.enqueue(sender)
-      }
+    case "materialize" => {     
+               materializeDependencies
     }
   })
 
@@ -192,14 +170,51 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     dependencies.remove(dependency)
     log.debug(s"this actor still waits for ${dependencies.size} dependencies")
     if (dependencies.isEmpty) {
-      if (dataexpected > 0)
-        transform(0)
+      // there where dependencies that did not return nodata
+      if (availableDependencies > 0 ) {
+        val versionInfo = Await.result(schemaActor ? CheckVersion(view), 10 seconds)
+        versionInfo match {
+          case VersionOk(v) =>
+          case VersionMismatch(v,version) => changed = true
+        }
+        if (changed)
+        	transform(0)
+        else
+            listeners.foreach(s => s ! ViewMaterialized(view,incomplete,false))
+    }
       else {
         listeners.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvaiable(view) })
         listeners.clear
         become(receive)
       }
     }
+  }
+  
+  private def materializeDependencies: Unit = {
+    log.info(view + " has dependencies " + view.dependencies)
+    if (view.dependencies.isEmpty) {
+      if (successFlagExists(view)) {
+        sender ! ViewMaterialized(view, false, false)
+        
+      }
+      else {
+    	  sender ! NoDataAvaiable(view)
+    	  become(nodata)
+      }
+    } else {
+      become(waiting)
+      view.dependencies.foreach { dependendView =>
+        {
+          log.debug("querying dependency " + dependendView)
+          val actor = Await.result((supervisor ? dependendView).mapTo[ActorRef], timeout.duration)
+          dependencies.add(dependendView)
+          availableDependencies += 1;
+          actor ! "materialize"
+
+        }
+      }
+    }
+    listeners.enqueue(sender)
   }
 
 }
