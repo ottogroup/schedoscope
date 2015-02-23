@@ -32,6 +32,7 @@ import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 
 class ViewSuperVisor(ugi: UserGroupInformation, hadoopConf: Configuration) extends Actor {
   import context._
@@ -70,11 +71,14 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     import scala.reflect.ClassTag
     val partitionResult = schemaActor ? AddPartition(view)
     Await.result(partitionResult, Duration.create("1 minute"))
+      
+     Await.result(actionsRouter ? Delete(view.fullPath,true), Duration.create("1 minute"))
     val result = actionsRouter ? view
 
     Await.result(result, Duration.create("480 minutes")) match {
       case _: OozieSuccess | _: HiveSuccess => {
         Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), 10 seconds)
+         Await.result(schemaActor ? SetVersion(view), 10 seconds)
         become(materialized)
         log.info("got success")
         listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view,incomplete,true) })
@@ -83,7 +87,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
       }
 
       case OozieException(exception) => retry(retries)
-      case _: OozieError | _: HiveError => retry(retries)
+      case _: OozieError | _: HiveError | _:Error => retry(retries)
       //  case a: OozieError => retry(retries)
 
       // case a: Any => log.error(s"unexcpected message ${a.toString}");become(failed) //debugging
@@ -174,6 +178,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
       if (availableDependencies > 0 ) {
         val versionInfo = Await.result(schemaActor ? CheckVersion(view), 10 seconds)
         versionInfo match {
+          case Error => 
           case VersionOk(v) =>
           case VersionMismatch(v,version) => changed = true
         }
