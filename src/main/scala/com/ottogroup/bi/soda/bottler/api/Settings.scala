@@ -18,7 +18,8 @@ import com.ottogroup.bi.soda.bottler.driver.Driver
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
-import com.ottogroup.bi.soda.dsl.Transformation
+import java.util.Properties
+import java.io.FileReader
 
 class SettingsImpl(val config: Config) extends Extension with defaults {
 
@@ -49,14 +50,29 @@ class SettingsImpl(val config: Config) extends Extension with defaults {
   val libDirectory = get(config, "soda.app.libDirectory", sodaJar.replaceAll("/[^/]+$", "/"))
     
   val availableTransformations = config.getObject("soda.transformations")
+  
     
   val hadoopConf = {  
     val hc = new Configuration(true)
     hc.addResource(new Path("/etc/hadoop/conf/hdfs-site.xml"))
     hc.addResource(new Path("/etc/hadoop/conf/core-site.xml"))
+    hc.addResource(new Path("/etc/hadoop/conf/yarn-site.xml"))
+    hc.addResource(new Path("/etc/hadoop/conf/mapred-site.xml"))
     hc
   }
-     
+  val jobTrackerOrResourceManager = {
+
+    if (hadoopConf.get("yarn.resourcemanager.address")!=null)
+      hadoopConf.get("yarn.resourcemanager.address")
+    else ""
+  }
+  val nameNode = {
+
+    if (hadoopConf.get("fs.defaultFS")!=null)
+      hadoopConf.get("fs.defaultFS")
+    else ""
+  }
+  
   val userGroupInformation = {
       UserGroupInformation.setConfiguration(hadoopConf)
       val ugi = UserGroupInformation.getCurrentUser()
@@ -64,6 +80,14 @@ class SettingsImpl(val config: Config) extends Extension with defaults {
       ugi.reloginFromKeytab();
       ugi
       
+  }
+  
+  val clusterProps = {
+    val properties = new Properties() 
+    try {
+    properties.load(new FileReader(s"/usr/local/otto/${env}/global/env/cluster.properties"))
+    }
+    properties
   }
   
   private val driverSettings : HashMap[String,DriverSettings] = HashMap[String,DriverSettings]()
