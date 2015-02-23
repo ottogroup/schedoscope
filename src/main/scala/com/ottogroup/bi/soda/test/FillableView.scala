@@ -17,7 +17,7 @@ import org.apache.hadoop.fs.Path
 import java.net.URI
 import java.io.OutputStreamWriter
 import java.io.File
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import com.ottogroup.bi.soda.dsl.TextFile
 
 trait FillableView extends View with rows {}
@@ -69,7 +69,7 @@ trait rows extends View {
     writeData()
   }
 
-  def deployWorkflow(wf: OozieWF) {
+  def deployWorkflow(wf: OozieTransformation) {
     val fs = resources().fileSystem
     val dest = new Path(wf.workflowAppPath)
     if (!fs.exists(dest))

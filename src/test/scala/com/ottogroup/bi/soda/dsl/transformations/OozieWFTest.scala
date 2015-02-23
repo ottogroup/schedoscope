@@ -7,8 +7,8 @@ import com.ottogroup.bi.soda.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter._
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.Parquet
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF._
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation._
 
 case class Productfeed(
   ecShopCode: Parameter[String],
@@ -24,7 +24,7 @@ case class Productfeed(
   val brand = fieldOf[String]
 
   transformVia(() =>
-    OozieWF(
+    OozieTransformation(
       "products_processed-bundle",
       "workflow-processed_productfeed",
       s"/hdp/${env}/applications/eci/scripts/oozie/products_processed-bundle/workflow-processed_productfeed/",
@@ -47,7 +47,7 @@ class OozieWFTest extends FlatSpec with BeforeAndAfter with Matchers {
   "OozieWF" should "load configuration correctly" in {
     val view = Productfeed(p("ec0101"), p("2014"), p("10"), p("11"))
 
-    val t = view.transformation().asInstanceOf[OozieWF]
+    val t = view.transformation().asInstanceOf[OozieTransformation]
 
     t.workflowAppPath shouldEqual "/hdp/dev/applications/eci/scripts/oozie/products_processed-bundle/workflow-processed_productfeed/"
 

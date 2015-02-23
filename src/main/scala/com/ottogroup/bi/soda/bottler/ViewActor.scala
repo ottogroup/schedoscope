@@ -10,8 +10,8 @@ import akka.util.Timeout
 import scala.concurrent.Await
 import com.ottogroup.bi.soda.crate.ddl.HiveQl._
 import com.ottogroup.bi.soda.dsl.NoOp
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
@@ -30,7 +30,7 @@ import java.io.File
 import java.io.FileOutputStream
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FileOperation
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 
 class ViewSuperVisor(ugi: UserGroupInformation, hadoopConf: Configuration) extends Actor {

@@ -8,7 +8,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import java.io.FileOutputStream
 import com.ottogroup.bi.soda.bottler.OozieCommand
 import java.io.File
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import com.ottogroup.bi.soda.bottler.OozieCommand
 import org.apache.oozie.client.WorkflowJob
 import com.ottogroup.bi.soda.dsl.Transformation
@@ -21,7 +21,7 @@ class OozieDriver(val client:OozieClient) extends Driver {
 
   override def run(t: Transformation): String = {
     t match {
-      case th: OozieWF => {
+      case th: OozieTransformation => {
         val prop = new Properties()
         th.configuration.map(el => prop.setProperty(el._1, el._2.toString))
         println("Starting Oozie job with config: \n" + th.configuration.mkString("\n"))
@@ -33,7 +33,7 @@ class OozieDriver(val client:OozieClient) extends Driver {
 
   override def runAndWait(t: Transformation): Boolean = {
     t match {
-      case th: OozieWF => {
+      case th: OozieTransformation => {
         val prop = new Properties()
         th.configuration.map(el => prop.setProperty(el._1, el._2.toString))
         println("Starting Oozie job with config: \n" + th.configuration.mkString("\n"))
@@ -62,10 +62,10 @@ object OozieDriver {
     od    
   }
  
-  def createOozieJobConf(wf: OozieWF): Properties =
+  def createOozieJobConf(wf: OozieTransformation): Properties =
     {
       wf match {
-        case o: OozieWF => {
+        case o: OozieTransformation => {
           val properties = new Properties()
           o.configuration.map(c => properties.put(c._1, c._2.toString()))
           properties.put(OozieClient.APP_PATH, wf.workflowAppPath)

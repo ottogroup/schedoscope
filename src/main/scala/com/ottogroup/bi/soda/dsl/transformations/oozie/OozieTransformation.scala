@@ -9,11 +9,11 @@ import collection.JavaConversions._
 import org.apache.oozie.client.OozieClient
 import java.io.FileInputStream
 
-case class OozieWF(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {
+case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {
   configureWith(c)
 }
 
-object OozieWF {
+object OozieTransformation {
   def configurationFrom(inputStream: InputStream): Map[String, String] = {
     val props = new Properties()
 

@@ -6,7 +6,6 @@ import org.scalatest.Matchers
 import com.ottogroup.bi.soda.crate.ddl.HiveQl._
 import com.ottogroup.bi.soda.dsl.Parameter._
 import java.util.Date
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
 import com.ottogroup.bi.soda.dsl.views.PointOccurrence
 import com.ottogroup.bi.soda.dsl.views.JobMetadata
 import com.ottogroup.bi.soda.dsl.View.t
@@ -19,6 +18,7 @@ import test.eci.datahub.Product
 import test.eci.datahub.ProductBrand
 import test.eci.datahub.ViewWithDefaultParams
 import com.ottogroup.bi.soda.dsl.views.DailyParameterization
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 
 class DslTest extends FlatSpec with BeforeAndAfter with Matchers {
 
@@ -145,7 +145,7 @@ class DslTest extends FlatSpec with BeforeAndAfter with Matchers {
   it should "be settable via transformVia" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrand.transformation().isInstanceOf[HiveQl] shouldBe true
+    productBrand.transformation().isInstanceOf[HiveTransformation] shouldBe true
   }
 
   "A view's parameters" should "partition a view" in {

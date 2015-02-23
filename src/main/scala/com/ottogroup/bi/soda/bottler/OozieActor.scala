@@ -12,7 +12,7 @@ import scala.concurrent.duration._
 import akka.actor.ActorRef
 import akka.event.Logging
 import akka.event.LoggingReceive
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import org.joda.time.LocalDateTime
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
@@ -63,8 +63,8 @@ class OozieActor(ds:DriverSettings) extends Actor {
     case _: GetStatus => sender ! OozieStatusResponse("idle", self, ProcessStatus.IDLE, "", startTime)
     case CommandWithSender(d: Deploy, s) => oozieDriver.deployAll()
     case WorkAvailable => sender ! PollCommand("oozie")
-    case CommandWithSender(OozieWF(bundle, wf, appPath, conf), s) => {
-      val jobProperties = createOozieJobConf(OozieWF(bundle, wf, appPath, conf))
+    case CommandWithSender(OozieTransformation(bundle, wf, appPath, conf), s) => {
+      val jobProperties = createOozieJobConf(OozieTransformation(bundle, wf, appPath, conf))
       try {
 
         val jobId = oozieDriver.runOozieJob(jobProperties)

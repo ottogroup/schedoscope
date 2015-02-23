@@ -1,6 +1,6 @@
 package com.ottogroup.bi.soda.bottler.driver
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl._
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation._
 import util.control.Breaks._
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
@@ -24,7 +24,7 @@ class HiveDriver(conn: Connection) extends Driver {
 
   override def run(t: Transformation): String = {
     t match {
-      case th: HiveQl =>
+      case th: HiveTransformation =>
         th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
               .map(sql => if (!this.executeHiveQuery(sql)) return "")
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
@@ -34,7 +34,7 @@ class HiveDriver(conn: Connection) extends Driver {
 
   override def runAndWait(t: Transformation): Boolean = {
     t match {
-      case th: HiveQl =>
+      case th: HiveTransformation =>
         th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
           .map(sql => if (!this.executeHiveQuery(sql)) return false)
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")

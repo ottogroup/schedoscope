@@ -1,7 +1,6 @@
 package com.ottogroup.bi.soda.bottler.driver
 
 import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
 
 class SodaDriver {
 

@@ -2,7 +2,7 @@ package com.ottogroup.bi.soda.bottler
 
 import akka.actor.Props
 import akka.actor.Actor
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import com.ottogroup.bi.soda.bottler.driver.HiveDriver
 import scala.concurrent._
 import akka.event.Logging
@@ -27,7 +27,7 @@ class HiveActor(ds:DriverSettings) extends Actor {
   override def receive: Receive = {
     case WorkAvailable => sender ! PollCommand("hive")
     case CommandWithSender(d: Deploy, s) => hiveDriver.deployAll
-    case CommandWithSender(h: HiveQl, s) => {
+    case CommandWithSender(h: HiveTransformation, s) => {
       val actionsRouter = sender
       val requester = s
       val f = future {

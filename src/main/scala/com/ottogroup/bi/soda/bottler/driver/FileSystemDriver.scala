@@ -10,7 +10,7 @@ import org.apache.hadoop.fs.Path
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfNotExists
 import akka.actor.Props
 import akka.actor.Actor
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import scala.concurrent._
 import org.apache.hadoop.fs.FileUtil
 import org.apache.hadoop.fs.PathFilter

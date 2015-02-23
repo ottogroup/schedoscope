@@ -4,15 +4,15 @@ import akka.actor.Actor
 import akka.actor.Props
 import akka.routing.BroadcastRouter
 import akka.actor.ActorRef
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FileOperation
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import org.apache.hadoop.conf.Configuration
 import akka.pattern.{ ask, pipe }
 import scala.concurrent.duration.Duration
 import akka.util.Timeout
 import akka.event.LoggingReceive
 import akka.event.Logging
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.CopyFrom
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Copy
@@ -76,9 +76,9 @@ object ActionFactory {
   }
   def getTransformationTypeName(t:Transformation) =
     t match {
-    	case _:OozieWF => "oozie"
-    	case _:HiveQl=>"hive"
-    	case _:FileOperation => "file" 
+    	case _:OozieTransformation => "oozie"
+    	case _:HiveTransformation=>"hive"
+    	case _:FilesystemTransformation => "file" 
   }
 }
 
@@ -114,31 +114,31 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
     case PollCommand(typ) =>
       queues.get(typ).map(q => if (!q.isEmpty) sender ! q.dequeue)
     case view: View => view.transformation() match {
-      case cmd: OozieWF => {
+      case cmd: OozieTransformation => {
         queues.get("oozie").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("oozie").get ! WorkAvailable
       }
-      case cmd: HiveQl => {
+      case cmd: HiveTransformation => {
         queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("hive").get ! WorkAvailable
       }
       case cmd: CopyFrom => routers.get("file").get ! CommandWithSender(Copy(cmd.fromPattern, view.partitionPathBuilder()), sender)
-      case cmd: FileOperation => {
+      case cmd: FilesystemTransformation => {
         queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("file").get ! WorkAvailable
      
       }
     }
-    case cmd: OozieWF => {
+    case cmd: OozieTransformation => {
       queues.get("oozie").get.enqueue(CommandWithSender(cmd, sender))
       routers.get("oozie").get ! WorkAvailable
     }
-    case cmd: HiveQl => {
+    case cmd: HiveTransformation => {
       queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
       routers.get("hive").get ! WorkAvailable
     }
 
-    case cmd: FileOperation => {
+    case cmd: FilesystemTransformation => {
         queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("file").get ! WorkAvailable
     }

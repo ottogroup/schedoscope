@@ -10,13 +10,13 @@ import java.io.InputStream
 import java.io.FileInputStream
 import java.security.MessageDigest
 
-case class HiveQl(sql: String*) extends Transformation {
+case class HiveTransformation(sql: String*) extends Transformation {
   val md5 = MessageDigest.getInstance("MD5")
   def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
   override def versionDigest=digest(sql.foldLeft(new StringBuilder())((a,b) => a.append(b)).toString)
 }
 
-object HiveQl {
+object HiveTransformation {
   def settingStatements(settings: Map[String, String] = Map()) = {
     val settingsStatements = new StringBuffer()
 

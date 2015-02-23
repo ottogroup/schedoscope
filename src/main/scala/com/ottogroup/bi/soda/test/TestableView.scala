@@ -15,9 +15,9 @@ import com.ottogroup.bi.soda.dsl.ValueCarrying
 import com.ottogroup.bi.soda.bottler.driver.Driver
 import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.test.resources.OozieTestResources
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieWF
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import org.apache.hadoop.fs.Path
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 
 trait TestableView extends FillableView {}
 
@@ -27,8 +27,8 @@ trait test extends TestableView {
 
   var driver: () => Driver = () => {
     this.transformation() match {
-      case t: HiveQl => resources().hiveDriver
-      case t: OozieWF => resources().oozieDriver
+      case t: HiveTransformation => resources().hiveDriver
+      case t: OozieTransformation => resources().oozieDriver
       // TODO: support other drivers
     }
   }
@@ -51,7 +51,7 @@ trait test extends TestableView {
     println("Deploying workflows, if needed")
     val trans = this.transformation()
     trans match {
-      case t: OozieWF => deployWorkflow(t)
+      case t: OozieTransformation => deployWorkflow(t)
       case _ => None
     }
 

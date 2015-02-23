@@ -18,6 +18,7 @@ import com.ottogroup.bi.soda.bottler.driver.Driver
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
+import com.ottogroup.bi.soda.dsl.Transformation
 
 class SettingsImpl(val config: Config) extends Extension with defaults {
 
@@ -74,6 +75,14 @@ class SettingsImpl(val config: Config) extends Extension with defaults {
     }
     driverSettings(d.name)
   } 
+      
+  def getSettingsForTransformation(t : Transformation) : DriverSettings = {
+    null
+  }
+  
+  def getSettingsByName(n : String) : DriverSettings = {
+    null
+  }
   
 }
 
@@ -95,7 +104,7 @@ object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
 }
 
 class DriverSettings(val config: Config, val name: String) extends defaults {
-  val location = get(config, "location", "/tmp/soda/"+name)
+  val location = get(config, "location", s"/tmp/soda/${name}/")
   val libDirectory = get(config, "libDirectory", "")
   val concurrency = get(config, "concurrency", 1)
   val unpack = get(config, "unpack", false)

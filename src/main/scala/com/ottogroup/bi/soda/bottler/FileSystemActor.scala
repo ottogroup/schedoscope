@@ -9,7 +9,7 @@ import org.apache.hadoop.fs.Path
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfNotExists
 import akka.actor.Props
 import akka.actor.Actor
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import com.ottogroup.bi.soda.bottler.driver.HiveDriver
 import scala.concurrent._
 import org.apache.hadoop.fs.FileUtil
@@ -34,7 +34,9 @@ class FileSystemActor(ds:DriverSettings) extends Actor {
 
   def receive = {
   	case WorkAvailable => sender ! PollCommand("file")
-    case CommandWithSender(cmd: FileOperation, sendingActor: ActorRef) => {
+    case CommandWithSender(d: Deploy, s) => driver.deployAll()
+
+    case CommandWithSender(cmd: FilesystemTransformation, sendingActor: ActorRef) => {
       val requester = sendingActor
       val operation = future {
         driver.runAndWait(cmd)

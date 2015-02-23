@@ -6,12 +6,12 @@ import com.ottogroup.bi.soda.dsl.views.Id
 import com.ottogroup.bi.soda.dsl.views.JobMetadata
 import com.ottogroup.bi.soda.dsl.views.PointOccurrence
 import com.ottogroup.bi.soda.dsl.Parquet
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQl._
 import com.ottogroup.bi.soda.dsl.Structure
 import java.util.Date
 import com.ottogroup.bi.soda.dsl.Avro
 import com.ottogroup.bi.soda.dsl.views.DailyParameterization
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation._
 
 case class Brand(
   ecNr: Parameter[String]) extends View
@@ -67,7 +67,7 @@ case class ProductBrand(
   storedAs(Parquet())
 
   transformVia(() =>
-    HiveQl(insertInto(
+    HiveTransformation(insertInto(
       this,
       s"""
          SELECT 	${this.ecNr.v.get} AS ${this.ecShopCode.n},
