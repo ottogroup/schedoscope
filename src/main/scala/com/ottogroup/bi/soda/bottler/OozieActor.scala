@@ -30,6 +30,7 @@ class OozieActor(ds:DriverSettings) extends Actor {
     case "tick" =>
 
       {
+        try {
         val jobInfo = oozieDriver.getJobInfo(jobId)
         log.info(s"workflow ${jobInfo.getId()} in state: " + jobInfo.getStatus())
 
@@ -38,17 +39,26 @@ class OozieActor(ds:DriverSettings) extends Actor {
             system.scheduler.scheduleOnce(10 seconds, self, "tick")
           }
           case WorkflowJob.Status.SUCCEEDED => {
-
+        	log.info(s"workflow ${jobId} succeeded")
             s ! OozieSuccess()
             startTime = new LocalDateTime()
             become(receive)
           }
           case WorkflowJob.Status.FAILED | WorkflowJob.Status.KILLED => {
+            log.warning(s"workflow ${jobId} failed!")
             s ! OozieError()
             startTime = new LocalDateTime()
             become(receive)
           }
         }
+        } catch {
+          case e:Throwable => {
+            log.error("unknown oozie error",e)
+            s! OozieError()
+            become(receive)
+          }
+        }
+        
 
       }
     case KillAction => {
@@ -69,8 +79,10 @@ class OozieActor(ds:DriverSettings) extends Actor {
 
         val jobId = oozieDriver.runOozieJob(jobProperties)
         startTime = new LocalDateTime()
-        if (oozieDriver.getJobInfo(jobId).getStatus() == WorkflowJob.Status.RUNNING ||
-          oozieDriver.getJobInfo(jobId).getStatus() == WorkflowJob.Status.PREP) {
+     
+        val jobstatus = oozieDriver.getJobInfo(jobId).getStatus() 
+        if (jobstatus== WorkflowJob.Status.RUNNING ||
+          jobstatus == WorkflowJob.Status.PREP) {
           become(running(jobId, s))
           system.scheduler.scheduleOnce(1000 millis, self, "tick")
         }
