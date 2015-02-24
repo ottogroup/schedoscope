@@ -92,20 +92,21 @@ class SettingsImpl(val config: Config) extends Extension with defaults {
   
   private val driverSettings : HashMap[String,DriverSettings] = HashMap[String,DriverSettings]()
   
-  def getSettingsForDriver(d: Any with Driver) : DriverSettings = {
-    if (!driverSettings.contains(d.name)) {     
-      val confName = "soda.transformations." + d.name
-      driverSettings.put(d.name, new DriverSettings(get(config, confName, ConfigFactory.empty()), d.name))
-    }
-    driverSettings(d.name)
+  def getDriverSettings(d: Any with Driver): DriverSettings = {
+    getDriverSettings(d.name)
   } 
       
-  def getSettingsForTransformation(t : Transformation) : DriverSettings = {
-    null
+  def getDriverSettings[T <: Transformation](t : T) : DriverSettings = {
+    val name = t.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("\\$", "")
+    getDriverSettings(name)
   }
   
-  def getSettingsByName(n : String) : DriverSettings = {
-    null
+  def getDriverSettings(n : String) : DriverSettings = {
+    if (!driverSettings.contains(n)) {     
+      val confName = "soda.transformations." + n
+      driverSettings.put(n, new DriverSettings(get(config, confName, ConfigFactory.empty()), n))
+    }
+    driverSettings(n)
   }
   
 }
