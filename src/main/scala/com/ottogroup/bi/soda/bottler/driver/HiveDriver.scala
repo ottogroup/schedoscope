@@ -28,9 +28,11 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
 
   override def run(t: Transformation): String = {
     t match {
-      case th: HiveTransformation =>
+      case th: HiveTransformation => {
+        th.functionDefs.foreach( func => this.registerFunction(func) )
         th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
               .map(sql => if (!this.executeHiveQuery(sql)) return "")
+      }
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }
     ""
