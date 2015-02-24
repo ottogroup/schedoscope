@@ -19,6 +19,10 @@ import java.io.OutputStreamWriter
 import java.io.File
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import com.ottogroup.bi.soda.dsl.TextFile
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import org.apache.hadoop.hive.metastore.api.ResourceUri
+import org.apache.hadoop.hive.metastore.api.ResourceType
+import collection.JavaConversions._
 
 trait FillableView extends View with rows {}
 
@@ -83,6 +87,15 @@ trait rows extends View {
         fs.copyFromLocalFile(src, new Path(dest, f.getName))
       })
   }
+  
+  def deployFunctions(ht: HiveTransformation) {
+    ht.functionDefs.map( f => {
+      val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
+      val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
+      f.setResourceUris(List(jarResource))
+    })
+  }
+  
 
   def deploySchema() {
     val d = resources().bottler

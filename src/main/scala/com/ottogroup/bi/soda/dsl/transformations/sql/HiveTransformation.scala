@@ -16,6 +16,7 @@ import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.Function
 import scala.collection.mutable.ListBuffer
 import collection.JavaConversions._
+import org.apache.commons.io.FilenameUtils
 
 case class HiveTransformation(sql: String*) extends Transformation {
   val functionDefs = ListBuffer[Function]()
@@ -45,7 +46,7 @@ object HiveTransformation extends Transformation {
     val functionBuff = ListBuffer[Function]()
     
     for ((name,cls) <- functions) {
-      val jarName = cls.getProtectionDomain.getCodeSource.getLocation.getFile
+      val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
       val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
       functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, List(jarResource)))
     }

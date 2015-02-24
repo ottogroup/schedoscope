@@ -51,7 +51,8 @@ trait test extends TestableView {
     println("Deploying workflows, if needed")
     val trans = this.transformation()
     trans match {
-      case t: OozieTransformation => deployWorkflow(t)
+      case ot: OozieTransformation => deployWorkflow(ot)
+      case ht: HiveTransformation => deployFunctions(ht)
       case _ => None
     }
 
