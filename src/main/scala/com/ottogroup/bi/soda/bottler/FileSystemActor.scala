@@ -25,15 +25,15 @@ import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.api.SettingsImpl
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
-class FileSystemActor(ds:DriverSettings) extends Actor {
+class FileSystemActor(ds: DriverSettings) extends Actor {
   import context._
   val ec = ExecutionContext.global
   val ugi = UserGroupInformation.getLoginUser()
-  val driver =  FileSystemDriver(ds)
+  val driver = FileSystemDriver(ds)
   val log = Logging(system, this)
 
   def receive = {
-  	case WorkAvailable => sender ! PollCommand("file")
+    case WorkAvailable => sender ! PollCommand("file")
     case CommandWithSender(d: Deploy, s) => driver.deployAll()
 
     case CommandWithSender(cmd: FilesystemTransformation, sendingActor: ActorRef) => {
@@ -51,6 +51,6 @@ class FileSystemActor(ds:DriverSettings) extends Actor {
 }
 
 object FileSystemActor {
-  def props(ds:DriverSettings) = Props(new FileSystemActor(ds))
+  def props(ds: DriverSettings) = Props(new FileSystemActor(ds))
 
 }

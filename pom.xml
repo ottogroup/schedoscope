@@ -12,7 +12,7 @@
 
 	<profiles>
 		<profile>
-		    <activation>
+			<activation>
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<id>cloudera</id>

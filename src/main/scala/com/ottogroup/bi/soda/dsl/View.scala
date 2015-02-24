@@ -22,11 +22,10 @@ import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedView
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import com.ottogroup.bi.soda.bottler.api.Settings
 
-
 abstract class View extends Structure with ViewDsl with DelayedInit {
-  
+
   val settings = Settings()
-  
+
   private def partitioningSuffix = {
     val partitionings = parameters
       .filter { p => isPartition(p) && isSuffixPartition(p) }

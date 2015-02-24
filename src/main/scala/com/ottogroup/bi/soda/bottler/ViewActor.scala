@@ -71,23 +71,23 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     import scala.reflect.ClassTag
     val partitionResult = schemaActor ? AddPartition(view)
     Await.result(partitionResult, Duration.create("1 minute"))
-      
-     Await.result(actionsRouter ? Delete(view.fullPath,true), Duration.create("1 minute"))
+
+    Await.result(actionsRouter ? Delete(view.fullPath, true), Duration.create("1 minute"))
     val result = actionsRouter ? view
 
     Await.result(result, Duration.create("480 minutes")) match {
       case _: OozieSuccess | _: HiveSuccess => {
         Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), 10 seconds)
-         Await.result(schemaActor ? SetVersion(view), 10 seconds)
+        Await.result(schemaActor ? SetVersion(view), 10 seconds)
         become(materialized)
         log.info("got success")
-        listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view,incomplete,true) })
+        listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view, incomplete, true) })
         listeners.clear
 
       }
 
       case OozieException(exception) => retry(retries)
-      case _: OozieError | _: HiveError | _:Error => retry(retries)
+      case _: OozieError | _: HiveError | _: Error => retry(retries)
       //  case a: OozieError => retry(retries)
 
       // case a: Any => log.error(s"unexcpected message ${a.toString}");become(failed) //debugging
@@ -108,7 +108,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
 
   // this table is materialized, just return
   def materialized: Receive = LoggingReceive({
-    case "materialize" => sender ! ViewMaterialized(view,incomplete,false)
+    case "materialize" => sender ! ViewMaterialized(view, incomplete, false)
     case "invalidate" => become(receive)
     case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
 
@@ -137,18 +137,17 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   // waiting for depending tables to materialize
   def waiting: Receive = LoggingReceive {
     case "materialize" => listeners.enqueue(sender)
-   
+
     case NoDataAvaiable(dependency) => { incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency) }
-    case ViewMaterialized(dependency,true,false) => { incomplete = true; dependencyIsDone(dependency) }
-    case ViewMaterialized(dependency,false,false) => dependencyIsDone(dependency)
-    case ViewMaterialized(dependency,true,true) => { incomplete = true; changed=true; dependencyIsDone(dependency) }
-    case ViewMaterialized(dependency,false,true) => {changed=true;dependencyIsDone(dependency)}
+    case ViewMaterialized(dependency, true, false) => { incomplete = true; dependencyIsDone(dependency) }
+    case ViewMaterialized(dependency, false, false) => dependencyIsDone(dependency)
+    case ViewMaterialized(dependency, true, true) => { incomplete = true; changed = true; dependencyIsDone(dependency) }
+    case ViewMaterialized(dependency, false, true) => { changed = true; dependencyIsDone(dependency) }
   }
-  
 
   def receive = LoggingReceive({
-    case "materialize" => {     
-               materializeDependencies
+    case "materialize" => {
+      materializeDependencies
     }
   })
 
@@ -175,36 +174,34 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     log.debug(s"this actor still waits for ${dependencies.size} dependencies")
     if (dependencies.isEmpty) {
       // there where dependencies that did not return nodata
-      if (availableDependencies > 0 ) {
+      if (availableDependencies > 0) {
         val versionInfo = Await.result(schemaActor ? CheckVersion(view), 10 seconds)
         versionInfo match {
-          case Error => 
+          case Error =>
           case VersionOk(v) =>
-          case VersionMismatch(v,version) => changed = true
+          case VersionMismatch(v, version) => changed = true
         }
         if (changed)
-        	transform(0)
+          transform(0)
         else
-            listeners.foreach(s => s ! ViewMaterialized(view,incomplete,false))
-    }
-      else {
+          listeners.foreach(s => s ! ViewMaterialized(view, incomplete, false))
+      } else {
         listeners.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvaiable(view) })
         listeners.clear
         become(receive)
       }
     }
   }
-  
+
   private def materializeDependencies: Unit = {
     log.info(view + " has dependencies " + view.dependencies)
     if (view.dependencies.isEmpty) {
       if (successFlagExists(view)) {
         sender ! ViewMaterialized(view, false, false)
-        
-      }
-      else {
-    	  sender ! NoDataAvaiable(view)
-    	  become(nodata)
+
+      } else {
+        sender ! NoDataAvaiable(view)
+        become(nodata)
       }
     } else {
       become(waiting)

@@ -26,7 +26,7 @@ import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.bottler.api.SettingsImpl
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
-class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends Driver {
+class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) extends Driver {
 
   def doAs(f: () => Boolean): Boolean = ugi.doAs(new PrivilegedAction[Boolean]() {
     def run(): Boolean = {
@@ -58,7 +58,6 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
   }
 
   def copy(from: String, to: String, recursive: Boolean) = {
-
     val fromFS = FileSystem.get(uri(from), conf)
     val toFS = FileSystem.get(uri(to), conf)
     val files = listFiles(from)
@@ -104,7 +103,7 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
     }
     true
   }
-  
+
   def mkdirs(path: String) = {
     val filesys = FileSystem.get(uri(path), conf)
     try {
@@ -113,7 +112,7 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
       case e: Throwable => false
     }
     true
-  }  
+  }
 
   def move(from: String, to: String) = {
     val fromFS = FileSystem.get(uri(from), conf)
@@ -128,7 +127,7 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
   }
 
   def listFiles(path: String): Array[FileStatus] = {
-    FileSystem.get(uri(path),conf).globStatus(new Path(path))
+    FileSystem.get(uri(path), conf).globStatus(new Path(path))
   }
 
   private def uri(pathOrUri: String) =
@@ -137,19 +136,19 @@ class FileSystemDriver(val ugi:UserGroupInformation,conf:Configuration) extends 
     } catch {
       case _: Throwable => new File(pathOrUri).toURI()
     }
-    
-  def localFilesystem : FileSystem = FileSystem.getLocal(conf)
-  
+
+  def localFilesystem: FileSystem = FileSystem.getLocal(conf)
+
   def filesystem = FileSystem.get(conf)
 
 }
 
 object FileSystemDriver {
-  def apply(ds:DriverSettings) = {
-    val fsd = new FileSystemDriver(Settings().userGroupInformation,Settings().hadoopConf)
+  def apply(ds: DriverSettings) = {
+    val fsd = new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
     fsd.driverSettings = ds
-    fsd  
+    fsd
   }
-  def apply(ugi:UserGroupInformation,conf:Configuration) =  new FileSystemDriver(ugi,conf)
+  def apply(ugi: UserGroupInformation, conf: Configuration) = new FileSystemDriver(ugi, conf)
 
 }

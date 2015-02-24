@@ -9,7 +9,7 @@ import org.joda.time.LocalDateTime
 object ProcessStatus extends Enumeration {
   type ProcessStatus = Value
   val RUNNING, IDLE, ERROR, STOPPED = Value
-} 
+}
 
 class MessageType
 class ErrorMessage extends MessageType
@@ -25,7 +25,7 @@ case class HiveError() extends Failure
 case class OozieError() extends Failure
 case class OozieSuccess() extends Success
 case class HiveSuccess() extends Success
-case class ViewMaterialized(view: View, incomplete:Boolean, changed:Boolean) extends Success
+case class ViewMaterialized(view: View, incomplete: Boolean, changed: Boolean) extends Success
 case class NoDataAvaiable(view: View) extends Success
 case class NewDataAvailable(view: View) extends Command
 case class HiveCommand(sql: String) extends Command
@@ -47,7 +47,7 @@ case class TimedOut()
 case class ProcessList(status: List[ActionStatusResponse])
 case class GetProcessList(sender: ActorRef)
 case class Deploy()
-case class CheckVersion(view:View)
-case class SetVersion(view:View)
-case class VersionOk(view:View)
-case class VersionMismatch(view:View, dataVersion:String)
+case class CheckVersion(view: View)
+case class SetVersion(view: View)
+case class VersionOk(view: View)
+case class VersionMismatch(view: View, dataVersion: String)

@@ -29,7 +29,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
   val tablePropSchemaHash = "hash"
-    val partitionPropDigestName = "versionDigest"
+  val partitionPropDigestName = "versionDigest"
 
   // FIXME: add transformation version handling (hash for transformation version + global "digest" for view version
   def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
@@ -39,31 +39,31 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     table.putToParameters(key, value)
     metastoreClient.alter_table(dbName, tableName, table)
   }
-  
-  def setPartitionProperty(dbName: String, tableName: String, part:String,key: String, value: String): Unit = {
+
+  def setPartitionProperty(dbName: String, tableName: String, part: String, key: String, value: String): Unit = {
     val partition = metastoreClient.getPartition(dbName, tableName, part)
     partition.putToParameters(key, value)
     metastoreClient.alter_partition(dbName, tableName, partition)
   }
-  
-  def setPartitionVersion(view:View) = {
-    setPartitionProperty(view.dbName, view.n, view.partitionPathBuilder.apply, partitionPropDigestName, view.transformation().versionDigest )
+
+  def setPartitionVersion(view: View) = {
+    setPartitionProperty(view.dbName, view.n, view.partitionPathBuilder.apply, partitionPropDigestName, view.transformation().versionDigest)
   }
-  
-  def getPartitionVersion(view:View): String = {
+
+  def getPartitionVersion(view: View): String = {
     try {
-    val props =metastoreClient.getPartition(view.dbName, view.n, view.partitionPathBuilder.apply).getParameters()
-    if (props.containsKey(partitionPropDigestName))
-      props.get(partitionPropDigestName)
-    else
-      "does not exist"
+      val props = metastoreClient.getPartition(view.dbName, view.n, view.partitionPathBuilder.apply).getParameters()
+      if (props.containsKey(partitionPropDigestName))
+        props.get(partitionPropDigestName)
+      else
+        "does not exist"
     } catch {
-    case e:Exception =>throw e
+      case e: Exception => throw e
     }
   }
-  
+
   def dropAndCreateTableSchema(dbName: String, tableName: String, sql: String): Unit = {
-    println("in dropAndCreateSchema "+dbName+"."+tableName+ " "+sql)
+    println("in dropAndCreateSchema " + dbName + "." + tableName + " " + sql)
     val stmt = connection.createStatement()
     if (!metastoreClient.getAllDatabases.contains(dbName)) {
       stmt.execute(s"CREATE DATABASE ${dbName}")
@@ -71,11 +71,11 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     if (metastoreClient.tableExists(dbName, tableName)) {
       metastoreClient.dropTable(dbName, tableName, false, true)
     }
-        
+
     stmt.execute(sql)
 
     setTableProperty(dbName, tableName, tablePropSchemaHash, digest(sql))
-    println("!!created table "+sql)
+    println("!!created table " + sql)
   }
 
   def schemaExists(dbname: String, tableName: String, sql: String): Boolean = {
@@ -98,11 +98,10 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
   }
 
   def createPartition(view: View): Partition = {
-    if (!schemaExists(view.dbName, view.n, HiveQl.ddl(view)))
-    {
+    if (!schemaExists(view.dbName, view.n, HiveQl.ddl(view))) {
       dropAndCreateTableSchema(view.dbName, view.n, HiveQl.ddl(view))
     }
-      try {
+    try {
       metastoreClient.appendPartition(view.dbName, view.n, view.partitionPathBuilder.apply)
     } catch {
       case e: AlreadyExistsException => metastoreClient.getPartition(view.dbName, view.n, view.partitionPathBuilder.apply)
@@ -124,8 +123,10 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
 
   def deploySchemataForViews(views: Seq[View]): Unit = {
     val hashSet = HashSet[String]()
-    views.filter(view => { if (hashSet.contains(HiveQl.ddl(view))) { false } 
-    						else { hashSet.add(HiveQl.ddl(view)); true } }).foreach { view =>
+    views.filter(view => {
+      if (hashSet.contains(HiveQl.ddl(view))) { false }
+      else { hashSet.add(HiveQl.ddl(view)); true }
+    }).foreach { view =>
       {
         if (!schemaExists(view.dbName, view.n, HiveQl.ddl(view)))
           dropAndCreateTableSchema(view.dbName, view.n, HiveQl.ddl(view))

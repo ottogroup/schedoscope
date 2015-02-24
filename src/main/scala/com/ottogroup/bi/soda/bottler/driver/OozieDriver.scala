@@ -18,8 +18,7 @@ import com.ottogroup.bi.soda.bottler.api.DriverSettings
 import com.ottogroup.bi.soda.bottler.api.Settings
 import java.io.FileReader
 
-class OozieDriver(val client:OozieClient) extends Driver {
- 
+class OozieDriver(val client: OozieClient) extends Driver {
 
   override def run(t: Transformation): String = {
     t match {
@@ -50,27 +49,27 @@ class OozieDriver(val client:OozieClient) extends Driver {
   def runAndWait(jobProperties: Properties): Boolean = {
     OozieDriver.runAndWait(jobProperties, client)
   }
-  def getJobInfo(jobId:String) = {
-  
-    	client.getJobInfo(jobId)
+  def getJobInfo(jobId: String) = {
+
+    client.getJobInfo(jobId)
   }
-  def kill(jobId:String) = client.kill(jobId)
-  
-  
+  def kill(jobId: String) = client.kill(jobId)
+
 }
 object OozieDriver {
-  def apply(ds:DriverSettings) = {
+  def apply(ds: DriverSettings) = {
     val od = new OozieDriver(new OozieClient(ds.config.getString("url")))
     od.driverSettings = ds
-    od    
+    od
   }
- 
+
   def createOozieJobConf(wf: OozieTransformation): Properties =
     {
       wf match {
-        case o: OozieWF => {
-          val properties = Settings().clusterProps
-        
+
+        case o: OozieTransformation => {
+          val properties = new Properties()
+
           o.configuration.map(c => properties.put(c._1, c._2.toString()))
           properties.put(OozieClient.APP_PATH, wf.workflowAppPath)
           properties.remove(OozieClient.BUNDLE_APP_PATH)
@@ -81,7 +80,7 @@ object OozieDriver {
           properties.put("user.name", UserGroupInformation.getLoginUser().getUserName());
           properties.put("jobTracker", Settings().jobTrackerOrResourceManager);
           properties.put("nameNode", Settings().nameNode);
-          properties.put("oozie.use.system.libpath","true")
+          properties.put("oozie.use.system.libpath", "true")
           properties
         }
       }

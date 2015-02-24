@@ -10,7 +10,7 @@ abstract class Transformation {
   }
 
   val configuration = HashMap[String, Any]()
-  
+
   def versionDigest() = "0"
 
 }

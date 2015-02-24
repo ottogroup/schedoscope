@@ -87,15 +87,14 @@ trait rows extends View {
         fs.copyFromLocalFile(src, new Path(dest, f.getName))
       })
   }
-  
+
   def deployFunctions(ht: HiveTransformation) {
-    ht.functionDefs.map( f => {
+    ht.functionDefs.map(f => {
       val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
       val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
       f.setResourceUris(List(jarResource))
     })
   }
-  
 
   def deploySchema() {
     val d = resources().bottler

@@ -31,9 +31,9 @@ import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 
 /**
- * This actor aggregrates responses from multiple Actors 
+ * This actor aggregrates responses from multiple Actors
  * Used for retrieving running jobs,
- * 
+ *
  * @author dev_hzorn
  *
  */
@@ -74,12 +74,12 @@ object ActionFactory {
       case "file" => FileSystemActor.props(new DriverSettings(conf, name))
     }
   }
-  def getTransformationTypeName(t:Transformation) =
+  def getTransformationTypeName(t: Transformation) =
     t match {
-    	case _:OozieTransformation => "oozie"
-    	case _:HiveTransformation=>"hive"
-    	case _:FilesystemTransformation => "file" 
-  }
+      case _: OozieTransformation => "oozie"
+      case _: HiveTransformation => "hive"
+      case _: FilesystemTransformation => "file"
+    }
 }
 
 /**
@@ -95,19 +95,21 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
 
   val queues =
     settings.availableTransformations.entrySet().foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
-    (map, entry) =>{
-      map + (entry.getKey() ->      
-       new collection.mutable.Queue[CommandWithSender]())
-      
+      (map, entry) =>
+        {
+          map + (entry.getKey() ->
+            new collection.mutable.Queue[CommandWithSender]())
+
+        }
     }
-  }
   val routers = settings.availableTransformations.entrySet().foldLeft(Map[String, ActorRef]()) {
-    (map, entry) =>{
+    (map, entry) =>
+      {
         val conf = entry.getValue().asInstanceOf[ConfigObject].toConfig().withFallback(ConfigFactory.empty.withValue("concurrency", ConfigValueFactory.fromAnyRef(1)))
-      map + (entry.getKey() ->      
-        actorOf(ActionFactory.createActor(entry.getKey(), conf).withRouter(BroadcastRouter(nrOfInstances = conf.getInt("concurrency")))))
-      
-    }
+        map + (entry.getKey() ->
+          actorOf(ActionFactory.createActor(entry.getKey(), conf).withRouter(BroadcastRouter(nrOfInstances = conf.getInt("concurrency")))))
+
+      }
   }
 
   def receive = LoggingReceive({
@@ -126,7 +128,7 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
       case cmd: FilesystemTransformation => {
         queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("file").get ! WorkAvailable
-     
+
       }
     }
     case cmd: OozieTransformation => {
@@ -139,8 +141,8 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
     }
 
     case cmd: FilesystemTransformation => {
-        queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("file").get ! WorkAvailable
+      queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
+      routers.get("file").get ! WorkAvailable
     }
     case cmd: GetStatus => {
       implicit val timeout = Timeout(600);
@@ -151,7 +153,7 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
         val name = el._1
         val act = el._2
         queues.get(name).get.enqueue(CommandWithSender(cmd, sender))
-        act ! WorkAvailable 
+        act ! WorkAvailable
       })
     }
   })

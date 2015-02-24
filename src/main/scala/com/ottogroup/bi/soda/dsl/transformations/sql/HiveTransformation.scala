@@ -22,17 +22,17 @@ case class HiveTransformation(sql: String*) extends Transformation {
   val functionDefs = ListBuffer[Function]()
   val md5 = MessageDigest.getInstance("MD5")
   def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
-  override def versionDigest=digest(sql.foldLeft(new StringBuilder())((a,b) => a.append(b)).toString)
+  override def versionDigest = digest(sql.foldLeft(new StringBuilder())((a, b) => a.append(b)).toString)
 }
 
 object HiveTransformation extends Transformation {
-  
+
   def apply(f: List[Function], sql: String) = {
     val ht = new HiveTransformation(sql)
     ht.functionDefs ++= f
     ht
-  }     
-  
+  }
+
   def settingStatements(settings: Map[String, String] = Map()) = {
     val settingsStatements = new StringBuffer()
 
@@ -41,16 +41,16 @@ object HiveTransformation extends Transformation {
 
     settingsStatements.toString()
   }
-  
-  def withFunctions(v: View, functions: Map[String,Class[_]] = Map()) = {
+
+  def withFunctions(v: View, functions: Map[String, Class[_]] = Map()) = {
     val functionBuff = ListBuffer[Function]()
-    
-    for ((name,cls) <- functions) {
+
+    for ((name, cls) <- functions) {
       val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
       val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
       functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, List(jarResource)))
     }
-    
+
     functionBuff.toList
   }
 
@@ -66,9 +66,9 @@ object HiveTransformation extends Transformation {
     insertStatement.toString()
   }
 
-  def insertInto(view: View, selectStatement: String, partition: Boolean = true, settings: Map[String, String] = Map(), functions: Map[String,Class[_]] = Map()) = {
+  def insertInto(view: View, selectStatement: String, partition: Boolean = true, settings: Map[String, String] = Map(), functions: Map[String, Class[_]] = Map()) = {
     val queryPrelude = new StringBuffer()
-    
+
     queryPrelude
       .append(settingStatements(settings))
       .append(insertStatement(view))
@@ -80,8 +80,8 @@ object HiveTransformation extends Transformation {
     }
 
     queryPrelude
-    .append("\n")
-    .append(selectStatement).toString()
+      .append("\n")
+      .append(selectStatement).toString()
   }
 
   def insertDynamicallyInto(view: View, selectStatement: String, settings: Map[String, String] = Map()) = {

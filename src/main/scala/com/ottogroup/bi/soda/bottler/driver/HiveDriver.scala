@@ -31,8 +31,7 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
       case th: HiveTransformation => {
         th.functionDefs.foreach( func => this.registerFunction(func) )
         th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
-              .map(sql => if (!this.executeHiveQuery(sql)) return "")
-      }
+          .map(sql => if (!this.executeHiveQuery(sql)) return "")
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }
     ""
@@ -41,7 +40,7 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
   override def runAndWait(t: Transformation): Boolean = {
     t match {
       case th: HiveTransformation => {
-        th.functionDefs.foreach( func => this.registerFunction(func) )
+        th.functionDefs.foreach(func => this.registerFunction(func))
         th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
           .map(sql => if (!this.executeHiveQuery(sql)) return false)
       }
@@ -72,28 +71,27 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
       })
     true
   }
-  
+
   def registerFunction(f: Function) {
     try {
       metastoreClient.getFunction(f.getDbName, f.getFunctionName)
-    }
-    catch {
+    } catch {
       case nso: MetaException => {
         val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
         // we don't use the metastore client here to create functions because we don't want
         // to bother with function ownerships
         println(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS ${f.getClassName} USING ${resourceJars}")
-        this.executeHiveQuery(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}")        
+        this.executeHiveQuery(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}")
       }
     }
   }
-  
+
 }
 
 object HiveDriver {
-  def apply(ds:DriverSettings) = {
+  def apply(ds: DriverSettings) = {
     Class.forName("org.apache.hive.jdbc.HiveDriver")
-    val ugi=Settings().userGroupInformation
+    val ugi = Settings().userGroupInformation
     ugi.reloginFromTicketCache()
     val c =
       ugi.doAs(new PrivilegedAction[Connection]() {
@@ -110,8 +108,8 @@ object HiveDriver {
       conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
         Settings().kerberosPrincipal);
     }
-    val metastoreClient = new HiveMetaStoreClient(conf)      
-      
+    val metastoreClient = new HiveMetaStoreClient(conf)
+
     val hd = new HiveDriver(c, metastoreClient)
     hd.driverSettings = ds
     hd

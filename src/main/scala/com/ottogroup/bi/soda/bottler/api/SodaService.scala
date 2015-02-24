@@ -50,8 +50,7 @@ object SodaService {
   implicit val ec = ExecutionContext.global
   implicit val timeout = Timeout(3 days) // needed for `?` below
 
-
-  val supervisor = settings.system.actorOf(ViewSuperVisor.props(ugi, settings.hadoopConf), "supervisor")
+  val supervisor = settings.system.actorOf(ViewSuperVisor.props(settings.userGroupInformation, settings.hadoopConf), "supervisor")
   val scheduleActor = settings.system.actorOf(ActionsRouterActor.props(settings.hadoopConf), "actions")
   val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schemaActor")
 
@@ -60,8 +59,7 @@ object SodaService {
   else
     null
   val formatter = DateTimeFormat.fullDateTime()
-  
-  
+
   def start() {
     deploy()
     Service.serve[Http]("http-service", settings.port, settings.webserviceTimeOut) {
@@ -77,8 +75,8 @@ object SodaService {
                 val res = Await.result(Future sequence fut, 1 hour)
                 val result = res.foldLeft(0) { (count, r) =>
                   r match {
-                    case ViewMaterialized(v,incomplete,changed) => count + 1
-                    
+                    case ViewMaterialized(v, incomplete, changed) => count + 1
+
                     case _: NoDataAvaiable => count
                   }
                 }
@@ -163,15 +161,15 @@ object SodaService {
     }
   }
 
-  def main(args: Array[String]) {    
-    start() 
-  }
-  
-  private def deploy() {
-	  scheduleActor ! Deploy()
+  def main(args: Array[String]) {
+    start()
   }
 
-   private def getViewActors(viewUrlPath: String) = {
+  private def deploy() {
+    scheduleActor ! Deploy()
+  }
+
+  private def getViewActors(viewUrlPath: String) = {
     val views = if (viewAugmentor != null)
       View.viewsFromUrl(viewUrlPath, viewAugmentor)
     else
