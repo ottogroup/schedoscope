@@ -22,6 +22,7 @@ import org.apache.hadoop.hive.metastore.api.Database
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import java.io.InvalidObjectException
 import com.ottogroup.bi.soda.bottler.api.Settings
+import org.apache.hadoop.hive.metastore.api.Function
 
 class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
 
