@@ -17,10 +17,14 @@ import com.ottogroup.bi.soda.dsl.Transformation
 import com.typesafe.config.Config
 import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
+import org.apache.hadoop.hive.conf.HiveConf
+import org.apache.hadoop.hive.metastore.api.Function
+import collection.JavaConversions._
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
+import org.apache.hadoop.hive.metastore.api.MetaException
 
-class HiveDriver(conn: Connection) extends Driver {
-
-  val connection = conn
+class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreClient) extends Driver {
 
   override def run(t: Transformation): String = {
     t match {
@@ -34,9 +38,11 @@ class HiveDriver(conn: Connection) extends Driver {
 
   override def runAndWait(t: Transformation): Boolean = {
     t match {
-      case th: HiveTransformation =>
+      case th: HiveTransformation => {
+        th.functionDefs.foreach( func => this.registerFunction(func) )
         th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
           .map(sql => if (!this.executeHiveQuery(sql)) return false)
+      }
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }
     true
@@ -64,6 +70,22 @@ class HiveDriver(conn: Connection) extends Driver {
       })
     true
   }
+  
+  def registerFunction(f: Function) {
+    try {
+      metastoreClient.getFunction(f.getDbName, f.getFunctionName)
+    }
+    catch {
+      case nso: MetaException => {
+        val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
+        // we don't use the metastore client here to create functions because we don't want
+        // to bother with function ownerships
+        println(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS ${f.getClassName} USING ${resourceJars}")
+        this.executeHiveQuery(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}")        
+      }
+    }
+  }
+  
 }
 
 object HiveDriver {
@@ -77,7 +99,18 @@ object HiveDriver {
           DriverManager.getConnection(Settings().jdbcUrl)
         }
       })
-    val hd = new HiveDriver(c)
+    val conf = new HiveConf()
+    conf.set("hive.metastore.local", "false");
+    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Settings().metastoreUri.trim());
+    if (Settings().kerberosPrincipal != null) {
+      conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
+        true);
+      conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
+        Settings().kerberosPrincipal);
+    }
+    val metastoreClient = new HiveMetaStoreClient(conf)      
+      
+    val hd = new HiveDriver(c, metastoreClient)
     hd.driverSettings = ds
     hd
   }

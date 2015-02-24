@@ -12,7 +12,7 @@ import scala.util.Random
 import net.lingala.zip4j.core.ZipFile
 
 trait Driver {
-  var driverSettings = Settings().getSettingsForDriver(this)
+  var driverSettings = Settings().getDriverSettings(this)
   
   // non-blocking
   def run(t: Transformation): String  
@@ -69,11 +69,11 @@ trait Driver {
     })
                           
     // write list of found libjars back into config                                        
-    Settings().getSettingsForDriver(this).libJars = fsd.listFiles(driverSettings.location + "*.jar")
+    Settings().getDriverSettings(this).libJars = fsd.listFiles(driverSettings.location + "*.jar")
                                                        .map(stat => stat.getPath.toString)
                                                        .toList
                                                        
-    println("registered libjars for " + name + ": " + Settings().getSettingsForDriver(this).libJars.mkString(","))                                                       
+    println("registered libjars for " + name + ": " + Settings().getDriverSettings(this).libJars.mkString(","))                                                       
                                         
     succ.reduceOption((a,b) => a && b).getOrElse(true)                                               
   }  

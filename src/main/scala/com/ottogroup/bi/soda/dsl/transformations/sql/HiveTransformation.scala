@@ -5,27 +5,52 @@ import org.jooq.DSLContext
 import org.jooq.Query
 import com.ottogroup.bi.soda.dsl.View
 import scala.collection.mutable.HashMap
+import com.ottogroup.bi.soda.bottler.api.Settings
 import scala.util.matching.Regex
 import java.io.InputStream
 import java.io.FileInputStream
 import java.security.MessageDigest
+import scala.collection.mutable.HashSet
+import org.apache.hadoop.hive.metastore.api.ResourceUri
+import org.apache.hadoop.hive.metastore.api.ResourceType
+import org.apache.hadoop.hive.metastore.api.Function
+import scala.collection.mutable.ListBuffer
+import collection.JavaConversions._
 
 case class HiveTransformation(sql: String*) extends Transformation {
+  val functionDefs = ListBuffer[Function]()
   val md5 = MessageDigest.getInstance("MD5")
   def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
   override def versionDigest=digest(sql.foldLeft(new StringBuilder())((a,b) => a.append(b)).toString)
 }
 
-object HiveTransformation {
+object HiveTransformation extends Transformation {
+  
+  def apply(f: List[Function], sql: String) = {
+    val ht = new HiveTransformation(sql)
+    ht.functionDefs ++= f
+    ht
+  }     
+  
   def settingStatements(settings: Map[String, String] = Map()) = {
     val settingsStatements = new StringBuffer()
 
     for ((key, value) <- settings)
-      settingsStatements
-        .append("SET ").append(key).append("=").append(value)
-        .append(";\n")
+      settingsStatements.append(s"SET ${key}=${value};\n")
 
     settingsStatements.toString()
+  }
+  
+  def withFunctions(v: View, functions: Map[String,Class[_]] = Map()) = {
+    val functionBuff = ListBuffer[Function]()
+    
+    for ((name,cls) <- functions) {
+      val jarName = cls.getProtectionDomain.getCodeSource.getLocation.getFile
+      val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
+      functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, List(jarResource)))
+    }
+    
+    functionBuff.toList
   }
 
   def insertStatement(view: View) = {
@@ -40,9 +65,9 @@ object HiveTransformation {
     insertStatement.toString()
   }
 
-  def insertInto(view: View, selectStatement: String, partition: Boolean = true, settings: Map[String, String] = Map()) = {
+  def insertInto(view: View, selectStatement: String, partition: Boolean = true, settings: Map[String, String] = Map(), functions: Map[String,Class[_]] = Map()) = {
     val queryPrelude = new StringBuffer()
-
+    
     queryPrelude
       .append(settingStatements(settings))
       .append(insertStatement(view))
@@ -54,8 +79,8 @@ object HiveTransformation {
     }
 
     queryPrelude
-      .append("\n")
-      .append(selectStatement).toString()
+    .append("\n")
+    .append(selectStatement).toString()
   }
 
   def insertDynamicallyInto(view: View, selectStatement: String, settings: Map[String, String] = Map()) = {
