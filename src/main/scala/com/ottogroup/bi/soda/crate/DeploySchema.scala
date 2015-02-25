@@ -96,18 +96,17 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
         false
     }
   }
-  
-  def partitionExists(dbname: String, tableName: String, sql: String, partition:String): Boolean = {
+
+  def partitionExists(dbname: String, tableName: String, sql: String, partition: String): Boolean = {
     if (!schemaExists(dbname, tableName, sql)) return false
     else
       try {
-    	  metastoreClient.getPartition(dbname, tableName, partition)    	  
+        metastoreClient.getPartition(dbname, tableName, partition)
       } catch {
-        case e:NoSuchObjectException => return false
-      } 
+        case e: NoSuchObjectException => return false
+      }
     true
   }
-    
 
   def createPartition(view: View): Partition = {
     if (!schemaExists(view.dbName, view.n, HiveQl.ddl(view))) {
@@ -161,7 +160,8 @@ object DeploySchema {
     val conf = new HiveConf()
     conf.set("hive.metastore.local", "false");
     conf.setVar(HiveConf.ConfVars.METASTOREURIS, metaStoreUri.trim());
-    if (serverKerberosPrincipal != null) {
+
+    if (serverKerberosPrincipal.trim() != "") {
       conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
         true);
       conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,

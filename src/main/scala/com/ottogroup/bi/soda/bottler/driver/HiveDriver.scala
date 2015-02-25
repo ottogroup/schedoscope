@@ -105,10 +105,13 @@ object HiveDriver {
     val conf = new HiveConf()
     conf.set("hive.metastore.local", "false");
     conf.setVar(HiveConf.ConfVars.METASTOREURIS, Settings().metastoreUri.trim());
-    conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
-      true);
-    conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
-      Settings().kerberosPrincipal);
+
+    if (Settings().kerberosPrincipal.trim() != "") {
+      conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
+        true);
+      conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
+        Settings().kerberosPrincipal);
+    }
 
     val metastoreClient = new HiveMetaStoreClient(conf)
 
