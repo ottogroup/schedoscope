@@ -96,6 +96,18 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
         false
     }
   }
+  
+  def partitionExists(dbname: String, tableName: String, sql: String, partition:String): Boolean = {
+    if (!schemaExists(dbname, tableName, sql)) false
+    else
+      try {
+    	  metastoreClient.getPartition(dbname, tableName, partition)    	  
+      } catch {
+        case e:NoSuchObjectException => false
+      }
+    true
+  }
+    
 
   def createPartition(view: View): Partition = {
     if (!schemaExists(view.dbName, view.n, HiveQl.ddl(view))) {

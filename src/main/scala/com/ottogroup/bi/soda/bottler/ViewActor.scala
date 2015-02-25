@@ -184,8 +184,9 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
       // there where dependencies that did not return nodata
       if (availableDependencies > 0) {
         val versionInfo = Await.result(schemaActor ? CheckVersion(view), 10 seconds)
+        log.debug(versionInfo.toString)
         versionInfo match {
-          case Error =>
+          case Error => changed = true
           case VersionOk(v) =>
           case VersionMismatch(v, version) => changed = true
         }
