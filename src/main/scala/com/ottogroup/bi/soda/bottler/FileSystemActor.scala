@@ -33,7 +33,7 @@ class FileSystemActor(ds: DriverSettings) extends Actor {
   val log = Logging(system, this)
 
   def receive = {
-    case WorkAvailable => sender ! PollCommand("file")
+    case WorkAvailable => sender ! PollCommand("filesystem")
     case CommandWithSender(d: Deploy, s) => driver.deployAll(ds)
 
     case CommandWithSender(cmd: FilesystemTransformation, sendingActor: ActorRef) => {

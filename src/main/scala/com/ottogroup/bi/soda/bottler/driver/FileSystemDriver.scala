@@ -84,7 +84,6 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
   }
 
   def delete(from: String, recursive: Boolean) = {
-
     val fromFS = fileSystem(from, conf)
     val files = listFiles(from)
     try {
@@ -135,6 +134,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
 
   def filesystem = FileSystem.get(conf)
 
+  override def deployAll(driverSettings: DriverSettings) = true
 }
 
 object FileSystemDriver {

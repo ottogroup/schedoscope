@@ -98,13 +98,13 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
   }
   
   def partitionExists(dbname: String, tableName: String, sql: String, partition:String): Boolean = {
-    if (!schemaExists(dbname, tableName, sql)) false
+    if (!schemaExists(dbname, tableName, sql)) return false
     else
       try {
     	  metastoreClient.getPartition(dbname, tableName, partition)    	  
       } catch {
-        case e:NoSuchObjectException => false
-      }
+        case e:NoSuchObjectException => return false
+      } 
     true
   }
     

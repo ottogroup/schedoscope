@@ -71,14 +71,14 @@ object ActionFactory {
     name match {
       case "hive" => HiveActor.props(new DriverSettings(conf, name))
       case "oozie" => OozieActor.props(new DriverSettings(conf, name))
-      case "file" => FileSystemActor.props(new DriverSettings(conf, name))
+      case "filesystem" => FileSystemActor.props(new DriverSettings(conf, name))
     }
   }
   def getTransformationTypeName(t: Transformation) =
     t match {
       case _: OozieTransformation => "oozie"
       case _: HiveTransformation => "hive"
-      case _: FilesystemTransformation => "file"
+      case _: FilesystemTransformation => "filesystem"
     }
 }
 
@@ -102,6 +102,7 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
 
         }
     }
+  queues.map(entry => println(entry._1))
   val routers = settings.availableTransformations.entrySet().foldLeft(Map[String, ActorRef]()) {
     (map, entry) =>
       {
@@ -124,10 +125,10 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
         queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("hive").get ! WorkAvailable
       }
-      case cmd: CopyFrom => routers.get("file").get ! CommandWithSender(Copy(cmd.fromPattern, view.partitionPathBuilder()), sender)
+      case cmd: CopyFrom => routers.get("filesystem").get ! CommandWithSender(Copy(cmd.fromPattern, view.partitionPathBuilder()), sender)
       case cmd: FilesystemTransformation => {
-        queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("file").get ! WorkAvailable
+        queues.get("filesystem").get.enqueue(CommandWithSender(cmd, sender))
+        routers.get("filesystem").get ! WorkAvailable
 
       }
     }
@@ -141,8 +142,8 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
     }
 
     case cmd: FilesystemTransformation => {
-      queues.get("file").get.enqueue(CommandWithSender(cmd, sender))
-      routers.get("file").get ! WorkAvailable
+      queues.get("filesystem").get.enqueue(CommandWithSender(cmd, sender))
+      routers.get("filesystem").get ! WorkAvailable
     }
     case cmd: GetStatus => {
       implicit val timeout = Timeout(600);

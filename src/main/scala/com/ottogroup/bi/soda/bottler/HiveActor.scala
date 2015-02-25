@@ -21,7 +21,8 @@ class HiveActor(ds: DriverSettings) extends Actor {
   def running(sql: String): Receive = {
     case "tick" =>
     case _: GetStatus => sender() ! new HiveStatusResponse("executing query", self, ProcessStatus.RUNNING, sql, startTime)
-    case CommandWithSender(_: KillAction, s) => s ! new InternalError("can't kill hive queries yet")
+  
+    case CommandWithSender(_: KillAction, s) => 
   }
 
   override def receive: Receive = {

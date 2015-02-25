@@ -39,7 +39,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
           else
             sender ! VersionMismatch(view, digest)
         } catch {
-          case e: Throwable => { this.sender ! Error }
+          case e: Throwable => { e.printStackTrace();this.sender ! Error }
         }
       } else
         sender ! VersionMismatch(view, "")
