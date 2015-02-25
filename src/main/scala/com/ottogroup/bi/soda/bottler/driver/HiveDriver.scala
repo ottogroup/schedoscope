@@ -26,7 +26,6 @@ import org.apache.hadoop.hive.metastore.api.MetaException
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 
 class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreClient) extends Driver {
-
   override def run(t: Transformation): String = {
     t match {
       case th: HiveTransformation => {
