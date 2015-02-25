@@ -148,10 +148,6 @@ object FileSystemDriver {
   def fileSystem(path: String, conf: Configuration) = FileSystem.get(uri(path), conf)
 
   def apply(ds: DriverSettings) = {
-    val fsd = new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
-    fsd.driverSettings = ds
-    fsd
+    new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
   }
-
-  def apply(ugi: UserGroupInformation, conf: Configuration) = new FileSystemDriver(ugi, conf)
 }

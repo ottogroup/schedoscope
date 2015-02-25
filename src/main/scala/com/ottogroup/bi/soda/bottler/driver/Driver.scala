@@ -12,23 +12,18 @@ import scala.util.Random
 import net.lingala.zip4j.core.ZipFile
 
 trait Driver {
-  var driverSettings = Settings().getDriverSettings(this)
-
   // non-blocking
   def run(t: Transformation): String
-  // blocking
 
+  // blocking
   def runAndWait(t: Transformation): Boolean
   // deploy resources for a single transformation FIXME: this is the next step
   // def deploy(t: Transformation, f: FileSystemDriver, c: Config) : Boolean
   // deploy resources for all transformations run by this driver
 
-  def name = {
-    val className = this.getClass.getSimpleName.toLowerCase
-    className.replaceAll("driver", "")
-  }
-  
-  def deployAll(): Boolean = {
+  def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
+
+  def deployAll(driverSettings: DriverSettings): Boolean = {
     val fsd = new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
 
     // clear destination

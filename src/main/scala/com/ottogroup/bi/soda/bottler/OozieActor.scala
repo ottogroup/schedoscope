@@ -71,7 +71,7 @@ class OozieActor(ds: DriverSettings) extends Actor {
 
   def receive = LoggingReceive {
     case _: GetStatus => sender ! OozieStatusResponse("idle", self, ProcessStatus.IDLE, "", startTime)
-    case CommandWithSender(d: Deploy, s) => oozieDriver.deployAll()
+    case CommandWithSender(d: Deploy, s) => oozieDriver.deployAll(ds)
     case WorkAvailable => sender ! PollCommand("oozie")
     case CommandWithSender(OozieTransformation(bundle, wf, appPath, conf), s) => {
       val jobProperties = createOozieJobConf(OozieTransformation(bundle, wf, appPath, conf))

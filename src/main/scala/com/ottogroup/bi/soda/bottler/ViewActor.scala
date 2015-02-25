@@ -139,18 +139,23 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     case "materialize" => listeners.enqueue(sender)
 
     case NoDataAvaiable(dependency) => {
-      log.debug("received nodata from "+dependency);incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency) }
-    case ViewMaterialized(dependency, true, false) => { 
-        log.debug("incomplete,not changed from "+dependency);incomplete = true; dependencyIsDone(dependency) }
-    case ViewMaterialized(dependency, false, false) =>{
-        log.debug("complete,not changed from "+dependency);
-      dependencyIsDone(dependency)}
-    case ViewMaterialized(dependency, true, true) => { 
-              log.debug("incomplete,changed from "+dependency);
-      incomplete = true; changed = true; dependencyIsDone(dependency) }
+      log.debug("received nodata from " + dependency); incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency)
+    }
+    case ViewMaterialized(dependency, true, false) => {
+      log.debug("incomplete,not changed from " + dependency); incomplete = true; dependencyIsDone(dependency)
+    }
+    case ViewMaterialized(dependency, false, false) => {
+      log.debug("complete,not changed from " + dependency);
+      dependencyIsDone(dependency)
+    }
+    case ViewMaterialized(dependency, true, true) => {
+      log.debug("incomplete,changed from " + dependency);
+      incomplete = true; changed = true; dependencyIsDone(dependency)
+    }
     case ViewMaterialized(dependency, false, true) => {
-              log.debug("complete, changed from "+dependency);
-      changed = true; dependencyIsDone(dependency) }
+      log.debug("complete, changed from " + dependency);
+      changed = true; dependencyIsDone(dependency)
+    }
   }
 
   def receive = LoggingReceive({
@@ -206,11 +211,11 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     log.info(view + " has dependencies " + view.dependencies)
     if (view.dependencies.isEmpty) {
       if (successFlagExists(view)) {
-        log.info("success exists for "+view)
+        log.info("success exists for " + view)
         sender ! ViewMaterialized(view, false, false)
 
       } else {
-        log.info("no data and no dependencies for "+view)
+        log.info("no data and no dependencies for " + view)
 
         sender ! NoDataAvaiable(view)
         become(nodata)

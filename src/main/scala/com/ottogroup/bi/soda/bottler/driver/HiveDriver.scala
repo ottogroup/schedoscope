@@ -33,7 +33,7 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
         th.udfs.foreach(this.registerFunction(_))
         executeHiveQuery(replaceParameters(th.sql, th.configuration.toMap))
       }
-      
+
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }
     ""
@@ -82,8 +82,7 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
         // to bother with function ownerships
         println(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS ${f.getClassName} USING ${resourceJars}")
         this.executeHiveQuery(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}")
-      }
-      catch {
+      } catch {
         case aee: AlreadyExistsException => {} // should never happen 
       }
     }
@@ -114,9 +113,7 @@ object HiveDriver {
 
     val metastoreClient = new HiveMetaStoreClient(conf)
 
-    val hd = new HiveDriver(c, metastoreClient)
-    hd.driverSettings = ds
-    hd
+    new HiveDriver(c, metastoreClient)
   }
 }
 

@@ -44,65 +44,52 @@ class OozieDriver(val client: OozieClient) extends Driver {
   }
 
   def runOozieJob(jobProperties: Properties): String = {
-    OozieDriver.runOozieJob(jobProperties, client)
+    client.run(jobProperties)
   }
 
   def runAndWait(jobProperties: Properties): Boolean = {
-    OozieDriver.runAndWait(jobProperties, client)
-  }
-  def getJobInfo(jobId: String) = {
-
-    client.getJobInfo(jobId)
-  }
-  def kill(jobId: String) = client.kill(jobId)
-
-}
-object OozieDriver {
-  def apply(ds: DriverSettings) = {
-    val od = new OozieDriver(new OozieClient(ds.url))
-    od.driverSettings = ds
-    od
-  }
-
-  def createOozieJobConf(wf: OozieTransformation): Properties = {
-      wf match {
-        case o: OozieTransformation => {
-          val properties = new Properties()
-          o.configuration.foreach(c => properties.put(c._1, c._2.toString()))
-          
-          properties.put(OozieClient.APP_PATH, wf.workflowAppPath)
-          properties.remove(OozieClient.BUNDLE_APP_PATH)
-          properties.remove(OozieClient.COORDINATOR_APP_PATH)
-          
-          // resolve embedded variables
-          
-          val config = ConfigFactory.parseProperties(properties).resolve()
-          config.entrySet().foreach(e => properties.put(e.getKey(), e.getValue().unwrapped().toString()))
-          properties.put("user.name", UserGroupInformation.getLoginUser().getUserName());
-          properties.put("jobTracker", Settings().jobTrackerOrResourceManager);
-          properties.put("nameNode", Settings().nameNode);
-          properties.put("oozie.use.system.libpath", "true")
-          properties
-        }
-      }
-    }
-
-  def runOozieJob(jobProperties: Properties, oozieClient: OozieClient): String = {
-    oozieClient.run(jobProperties)
-  }
-
-  def runAndWait(jobProperties: Properties, oozieClient: OozieClient): Boolean = {
     import WorkflowJob.Status._
-    val jobId = runOozieJob(jobProperties, oozieClient)
-    while (oozieClient.getJobInfo(jobId).getStatus() == RUNNING ||
-      oozieClient.getJobInfo(jobId).getStatus() == PREP) {
-      println("Job status is " + oozieClient.getJobInfo(jobId).getStatus())
+    val jobId = runOozieJob(jobProperties)
+    while (client.getJobInfo(jobId).getStatus() == RUNNING ||
+      client.getJobInfo(jobId).getStatus() == PREP) {
+      println("Job status is " + client.getJobInfo(jobId).getStatus())
       Thread.sleep(1000)
     }
-    println("Job status is " + oozieClient.getJobInfo(jobId).getStatus())
-    oozieClient.getJobInfo(jobId).getStatus() match {
+    println("Job status is " + client.getJobInfo(jobId).getStatus())
+    client.getJobInfo(jobId).getStatus() match {
       case SUCCEEDED => true
       case _ => false
+    }
+  }
+
+  def getJobInfo(jobId: String) = client.getJobInfo(jobId)
+
+  def kill(jobId: String) = client.kill(jobId)
+}
+
+object OozieDriver {
+  def apply(ds: DriverSettings) = new OozieDriver(new OozieClient(ds.url))
+
+  def createOozieJobConf(wf: OozieTransformation): Properties = {
+    wf match {
+      case o: OozieTransformation => {
+        val properties = new Properties()
+        o.configuration.foreach(c => properties.put(c._1, c._2.toString()))
+
+        properties.put(OozieClient.APP_PATH, wf.workflowAppPath)
+        properties.remove(OozieClient.BUNDLE_APP_PATH)
+        properties.remove(OozieClient.COORDINATOR_APP_PATH)
+
+        // resolve embedded variables
+
+        val config = ConfigFactory.parseProperties(properties).resolve()
+        config.entrySet().foreach(e => properties.put(e.getKey(), e.getValue().unwrapped().toString()))
+        properties.put("user.name", UserGroupInformation.getLoginUser().getUserName());
+        properties.put("jobTracker", Settings().jobTrackerOrResourceManager);
+        properties.put("nameNode", Settings().nameNode);
+        properties.put("oozie.use.system.libpath", "true")
+        properties
+      }
     }
   }
 }
