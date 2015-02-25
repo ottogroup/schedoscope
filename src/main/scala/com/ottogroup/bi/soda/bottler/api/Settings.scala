@@ -92,7 +92,7 @@ class SettingsImpl(val config: Config) extends Extension {
       val confName = "soda.transformations." + n
       driverSettings.put(n, new DriverSettings(config.getConfig(confName), n))
     }
-    
+
     driverSettings(n)
   }
 }
@@ -113,7 +113,7 @@ object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
 }
 
 class DriverSettings(val config: Config, val name: String) {
-  val location = config.getString("location")
+  val location = Settings().nameNode + config.getString("location")
   val libDirectory = config.getString("libDirectory")
   val concurrency = config.getInt("concurrency")
   val unpack = config.getBoolean("unpack")
