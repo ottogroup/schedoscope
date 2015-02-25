@@ -68,11 +68,11 @@ trait Driver {
       })
 
     // write list of found libjars back into config                                        
-    Settings().getDriverSettings(this).libJars = fsd.listFiles(driverSettings.location + "*.jar")
+    val libJars = fsd.listFiles(driverSettings.location + "*.jar")
       .map(stat => stat.getPath.toString)
       .toList
 
-    println("registered libjars for " + name + ": " + Settings().getDriverSettings(this).libJars.mkString(","))
+    println("registered libjars for " + name + ": " + libJars.mkString(","))
 
     succ.reduceOption((a, b) => a && b).getOrElse(true)
   }

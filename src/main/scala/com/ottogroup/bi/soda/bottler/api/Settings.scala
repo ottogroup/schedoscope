@@ -21,37 +21,30 @@ import scala.collection.mutable.ListBuffer
 import java.util.Properties
 import java.io.FileReader
 import com.ottogroup.bi.soda.dsl.Transformation
+import com.typesafe.config.ConfigException
 
-
-
-class SettingsImpl(val config: Config) extends Extension with defaults {
+class SettingsImpl(val config: Config) extends Extension {
 
   println(config)
     
   val system = Settings.actorSystem
-  
-  val sodaJar = this.getClass.getProtectionDomain.getCodeSource.getLocation.toURI.getPath
-  
-  val env: String = get(config, "soda.app.environment", "dev")
+
+  val env = config.getString("soda.app.environment")
 
   val webserviceTimeOut: Duration =
   Duration(config.getDuration("soda.webservice.timeout", TimeUnit.MILLISECONDS),
       TimeUnit.MILLISECONDS)
 
-  val port: Int = get(config, "soda.webservice.port", 20698)
+  val port = config.getInt("soda.webservice.port")
 
-  val packageName: String = get(config, "soda.app.package", "app.eci")
+  val jdbcUrl = config.getString("soda.metastore.jdbcUrl")
 
-  val jdbcUrl: String = get(config, "soda.metastore.jdbcUrl", "")
+  val kerberosPrincipal = config.getString("soda.kerberos.principal")
 
-  val kerberosPrincipal = get(config, "soda.kerberos.principal", "")
+  val metastoreUri = config.getString("soda.metastore.metastoreUri")
 
-  val metastoreUri = get(config, "soda.metastore.metastoreUri", "")
+  val parsedViewAugmentorClass = config.getString("soda.app.parsedViewAugmentorClass")
 
-  val parsedViewAugmentorClass = get(config, "soda.app.parsedViewAugmentorClass", "")
-  
-  val libDirectory = get(config, "soda.app.libDirectory", sodaJar.replaceAll("/[^/]+$", "/"))
-    
   val availableTransformations = config.getObject("soda.transformations")
       
   val hadoopConf = {  
@@ -62,27 +55,17 @@ class SettingsImpl(val config: Config) extends Extension with defaults {
     hc.addResource(new Path("/etc/hadoop/conf/mapred-site.xml"))
     hc
   }
-  
-  val jobTrackerOrResourceManager = {
-    if (hadoopConf.get("yarn.resourcemanager.address")!=null)
-      hadoopConf.get("yarn.resourcemanager.address")
-    else ""
-  }
-  
-  val nameNode = {
 
-    if (hadoopConf.get("fs.defaultFS")!=null)
-      hadoopConf.get("fs.defaultFS")
-    else ""
-  }
-  
+  val jobTrackerOrResourceManager = hadoopConf.get("yarn.resourcemanager.address")
+
+  val nameNode = hadoopConf.get("fs.defaultFS")
+
   val userGroupInformation = {
-      UserGroupInformation.setConfiguration(hadoopConf)
-      val ugi = UserGroupInformation.getCurrentUser()
-      ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
-      ugi.reloginFromKeytab();
-      ugi
-      
+    UserGroupInformation.setConfiguration(hadoopConf)
+    val ugi = UserGroupInformation.getCurrentUser()
+    ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
+    ugi.reloginFromKeytab();
+    ugi
   }
   
   val clusterProps = {
@@ -107,15 +90,14 @@ class SettingsImpl(val config: Config) extends Extension with defaults {
   def getDriverSettings(n : String) : DriverSettings = {
     if (!driverSettings.contains(n)) {     
       val confName = "soda.transformations." + n
-      driverSettings.put(n, new DriverSettings(get(config, confName, ConfigFactory.empty()), n))
+      driverSettings.put(n, new DriverSettings(config.getConfig(confName), n))
     }
+    
     driverSettings(n)
   }
-  
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
-
   val actorSystem = ActorSystem("sodaSystem")
   
   override def lookup = Settings
@@ -127,35 +109,13 @@ object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
   
   def apply() = {
     super.apply(actorSystem)
-  }  
-  
-}
-
-class DriverSettings(val config: Config, val name: String) extends defaults {
-  val location = Settings().nameNode + get(config, "location", s"/tmp/soda/${name}/")
-  val libDirectory = get(config, "libDirectory", "")
-  val concurrency = get(config, "concurrency", 1)
-  val unpack = get(config, "unpack", false)
-  var libJars = List[String]()
-}
-
-
-trait defaults {
-  def get[T](conf: Config, p : String, d : T) : T  = {
-    if (conf.hasPath(p)) {
-      d match {
-        case v : String => conf.getString(p).asInstanceOf[T]
-        case v : Int => conf.getInt(p).asInstanceOf[T]
-        case v : Config => conf.getObject(p).toConfig.asInstanceOf[T]
-        case v : Boolean => conf.getBoolean(p).asInstanceOf[T]
-        case _ => conf.getObject(p).asInstanceOf[T]
-      }
-    }
-    else {
-      d
-    }
   }
+}
 
-  
-  
+class DriverSettings(val config: Config, val name: String) {
+  val location = config.getString("location")
+  val libDirectory = config.getString("libDirectory")
+  val concurrency = config.getInt("concurrency")
+  val unpack = config.getBoolean("unpack")
+  val url = config.getString("url")
 }

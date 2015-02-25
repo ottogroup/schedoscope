@@ -33,8 +33,9 @@ class OozieDriver(val client: OozieClient) extends Driver {
 
   override def runAndWait(t: Transformation): Boolean = {
     t match {
-      case th: OozieWF => {
-      
+      case th: OozieTransformation => {
+        val prop = new Properties()
+        th.configuration.map(el => prop.setProperty(el._1, el._2.toString))
         println("Starting Oozie job with config: \n" + th.configuration.mkString("\n"))
         runAndWait(createOozieJobConf(th))
       }
@@ -58,23 +59,23 @@ class OozieDriver(val client: OozieClient) extends Driver {
 }
 object OozieDriver {
   def apply(ds: DriverSettings) = {
-    val od = new OozieDriver(new OozieClient(ds.config.getString("url")))
+    val od = new OozieDriver(new OozieClient(ds.url))
     od.driverSettings = ds
     od
   }
 
-  def createOozieJobConf(wf: OozieTransformation): Properties =
-    {
+  def createOozieJobConf(wf: OozieTransformation): Properties = {
       wf match {
-
         case o: OozieTransformation => {
           val properties = new Properties()
-
-          o.configuration.map(c => properties.put(c._1, c._2.toString()))
+          o.configuration.foreach(c => properties.put(c._1, c._2.toString()))
+          
           properties.put(OozieClient.APP_PATH, wf.workflowAppPath)
           properties.remove(OozieClient.BUNDLE_APP_PATH)
           properties.remove(OozieClient.COORDINATOR_APP_PATH)
+          
           // resolve embedded variables
+          
           val config = ConfigFactory.parseProperties(properties).resolve()
           config.entrySet().foreach(e => properties.put(e.getKey(), e.getValue().unwrapped().toString()))
           properties.put("user.name", UserGroupInformation.getLoginUser().getUserName());

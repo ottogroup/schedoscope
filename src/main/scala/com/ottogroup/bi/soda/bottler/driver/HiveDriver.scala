@@ -30,9 +30,11 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
   override def run(t: Transformation): String = {
     t match {
       case th: HiveTransformation => {
-        th.functionDefs.foreach( func => this.registerFunction(func) )
+        th.functionDefs.foreach(func => this.registerFunction(func))
         th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
           .map(sql => if (!this.executeHiveQuery(sql)) return "")
+      }
+
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }
     ""
@@ -94,23 +96,24 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
 object HiveDriver {
   def apply(ds: DriverSettings) = {
     Class.forName("org.apache.hive.jdbc.HiveDriver")
+
     val ugi = Settings().userGroupInformation
     ugi.reloginFromTicketCache()
     val c =
       ugi.doAs(new PrivilegedAction[Connection]() {
         def run(): Connection = {
-          DriverManager.getConnection(Settings().jdbcUrl)
+          DriverManager.getConnection(ds.url)
         }
       })
+
     val conf = new HiveConf()
     conf.set("hive.metastore.local", "false");
     conf.setVar(HiveConf.ConfVars.METASTOREURIS, Settings().metastoreUri.trim());
-    if (Settings().kerberosPrincipal != null) {
-      conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
-        true);
-      conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
-        Settings().kerberosPrincipal);
-    }
+    conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
+      true);
+    conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
+      Settings().kerberosPrincipal);
+
     val metastoreClient = new HiveMetaStoreClient(conf)
 
     val hd = new HiveDriver(c, metastoreClient)

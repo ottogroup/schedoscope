@@ -149,6 +149,6 @@ object FileSystemDriver {
     fsd.driverSettings = ds
     fsd
   }
+  
   def apply(ugi: UserGroupInformation, conf: Configuration) = new FileSystemDriver(ugi, conf)
-
 }

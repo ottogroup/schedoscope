@@ -9,6 +9,8 @@ import scala.util.matching.Regex._
 import com.ottogroup.bi.soda.dsl.View
 import scala.Array.canBuildFrom
 
+class NoAugmentation extends ViewUrlParser.ParsedViewAugmentor
+
 object ViewUrlParser {
   case class ParsedView(env: String, viewClass: Class[View], parameters: List[TypedAny])
 
