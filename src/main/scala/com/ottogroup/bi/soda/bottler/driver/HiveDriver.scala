@@ -68,7 +68,8 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
     queries.reverse.filter(q => !StringUtils.isBlank(q))
       .map(q => {
         val stmt = connection.createStatement()
-        stmt.execute(q)
+        println("*********** EEEEXECUTING: " + q.trim())
+        stmt.execute(q.trim())
       })
     true
   }
