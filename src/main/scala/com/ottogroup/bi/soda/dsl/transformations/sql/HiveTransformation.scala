@@ -46,9 +46,10 @@ object HiveTransformation extends Transformation {
     val functionBuff = ListBuffer[Function]()
 
     for ((name, cls) <- functions) {
-      val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
-      val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
-      functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, List(jarResource)))
+      //val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
+      val jarResources = Settings().getDriverSettings(this).libJars.map(lj => new ResourceUri(ResourceType.JAR,lj))
+      //val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
+      functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
     }
 
     functionBuff.toList

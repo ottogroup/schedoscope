@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.metastore.api.Function
 import collection.JavaConversions._
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.MetaException
+import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 
 class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreClient) extends Driver {
 
@@ -73,15 +74,17 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
   }
 
   def registerFunction(f: Function) {
-    try {
-      metastoreClient.getFunction(f.getDbName, f.getFunctionName)
-    } catch {
-      case nso: MetaException => {
+    val existing = metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
+    if (existing == null || existing.size() == 0) {
+      try {
         val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
         // we don't use the metastore client here to create functions because we don't want
         // to bother with function ownerships
         println(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS ${f.getClassName} USING ${resourceJars}")
         this.executeHiveQuery(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}")
+      }
+      catch {
+        case aee: AlreadyExistsException => {} // should never happen 
       }
     }
   }
