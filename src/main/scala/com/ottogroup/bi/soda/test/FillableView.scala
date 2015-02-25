@@ -89,7 +89,7 @@ trait rows extends View {
   }
 
   def deployFunctions(ht: HiveTransformation) {
-    ht.functionDefs.map(f => {
+    ht.udfs.map(f => {
       val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
       val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
       f.setResourceUris(List(jarResource))

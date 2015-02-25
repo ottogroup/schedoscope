@@ -18,19 +18,26 @@ import scala.collection.mutable.ListBuffer
 import collection.JavaConversions._
 import org.apache.commons.io.FilenameUtils
 
-case class HiveTransformation(sql: String*) extends Transformation {
-  val functionDefs = ListBuffer[Function]()
+case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
   val md5 = MessageDigest.getInstance("MD5")
+  
   def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
+  
   override def versionDigest = digest(sql.foldLeft(new StringBuilder())((a, b) => a.append(b)).toString)
 }
 
-object HiveTransformation extends Transformation {
+object HiveTransformation  {
+  def withFunctions(v: View, functions: Map[String, Class[_]] = Map()) = {
+    val functionBuff = ListBuffer[Function]()
 
-  def apply(f: List[Function], sql: String) = {
-    val ht = new HiveTransformation(sql)
-    ht.functionDefs ++= f
-    ht
+    for ((name, cls) <- functions) {
+      //val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
+      val jarResources = Settings().getDriverSettings("hive").libJars.map(lj => new ResourceUri(ResourceType.JAR,lj))
+      //val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
+      functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
+    }
+
+    functionBuff.toList
   }
 
   def settingStatements(settings: Map[String, String] = Map()) = {
@@ -40,19 +47,6 @@ object HiveTransformation extends Transformation {
       settingsStatements.append(s"SET ${key}=${value};\n")
 
     settingsStatements.toString()
-  }
-
-  def withFunctions(v: View, functions: Map[String, Class[_]] = Map()) = {
-    val functionBuff = ListBuffer[Function]()
-
-    for ((name, cls) <- functions) {
-      //val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
-      val jarResources = Settings().getDriverSettings(this).libJars.map(lj => new ResourceUri(ResourceType.JAR,lj))
-      //val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
-      functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
-    }
-
-    functionBuff.toList
   }
 
   def insertStatement(view: View) = {

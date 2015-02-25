@@ -21,7 +21,8 @@ import scala.collection.mutable.ListBuffer
 import java.util.Properties
 import java.io.FileReader
 import com.ottogroup.bi.soda.dsl.Transformation
-import com.typesafe.config.ConfigException
+import java.net.URLClassLoader
+import FileSystemDriver._
 
 class SettingsImpl(val config: Config) extends Extension {
 
@@ -118,4 +119,26 @@ class DriverSettings(val config: Config, val name: String) {
   val concurrency = config.getInt("concurrency")
   val unpack = config.getBoolean("unpack")
   val url = config.getString("url")
+  val libJars = {
+
+    val fromLibDir = libDirectory
+      .split(",")
+      .toList
+      .filter(!_.trim.equals(""))
+      .map(p => { if (!p.endsWith("/")) s"file://${p.trim}/*" else s"file://${p.trim}*" })
+      .flatMap(dir => {
+        fileSystem(dir, Settings().hadoopConf).globStatus(new Path(dir))
+          .map(stat => stat.getPath.toString)
+      })
+
+    val fromClasspath = this.getClass.getClassLoader
+      .asInstanceOf[URLClassLoader]
+      .getURLs
+      .map(el => el.toString)
+      .distinct
+      .filter(_.endsWith(s"-${name}.jar"))
+      .toList
+
+    (fromLibDir ++ fromClasspath).toList
+  }
 }

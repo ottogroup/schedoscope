@@ -30,11 +30,10 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
   override def run(t: Transformation): String = {
     t match {
       case th: HiveTransformation => {
-        th.functionDefs.foreach(func => this.registerFunction(func))
-        th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
-          .map(sql => if (!this.executeHiveQuery(sql)) return "")
+        th.udfs.foreach(this.registerFunction(_))
+        executeHiveQuery(replaceParameters(th.sql, th.configuration.toMap))
       }
-
+      
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }
     ""
@@ -43,9 +42,8 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
   override def runAndWait(t: Transformation): Boolean = {
     t match {
       case th: HiveTransformation => {
-        th.functionDefs.foreach(func => this.registerFunction(func))
-        th.sql.map(sql => replaceParameters(sql, th.configuration.toMap))
-          .map(sql => if (!this.executeHiveQuery(sql)) return false)
+        th.udfs.foreach(this.registerFunction(_))
+        if (!executeHiveQuery(replaceParameters(th.sql, th.configuration.toMap))) return false
       }
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }

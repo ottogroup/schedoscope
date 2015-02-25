@@ -52,7 +52,7 @@ class HiveActor(ds: DriverSettings) extends Actor {
           finish(receive, actionsRouter)
         }
       }
-      become(running(h.sql.head))
+      become(running(h.sql))
     }
     case _: GetStatus => sender ! HiveStatusResponse("idle", self, ProcessStatus.IDLE, "", startTime)
 

@@ -23,8 +23,11 @@ trait Driver {
   // def deploy(t: Transformation, f: FileSystemDriver, c: Config) : Boolean
   // deploy resources for all transformations run by this driver
 
-  def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
-
+  def name = {
+    val className = this.getClass.getSimpleName.toLowerCase
+    className.replaceAll("driver", "")
+  }
+  
   def deployAll(): Boolean = {
     val fsd = new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
 
@@ -32,26 +35,7 @@ trait Driver {
     fsd.delete(driverSettings.location, true)
     fsd.mkdirs(driverSettings.location)
 
-    val fromLibDir = driverSettings.libDirectory
-      .split(",")
-      .toList
-      .filter(!_.trim.equals(""))
-      .map(p => { if (!p.endsWith("/")) s"file://${p.trim}/*" else s"file://${p.trim}*" })
-      .flatMap(dir => {
-        fsd.listFiles(dir)
-          .map(stat => stat.getPath.toString)
-      })
-
-    val fromClasspath = this.getClass.getClassLoader
-      .asInstanceOf[URLClassLoader]
-      .getURLs
-      .map(el => el.toString)
-      .distinct
-      .filter(_.endsWith(s"-${name}.jar"))
-      .toList
-
-    val succ = (fromLibDir ++ fromClasspath)
-      .toList
+    val succ = driverSettings.libJars
       .map(f => {
         if (driverSettings.unpack) {
           val tmpDir = Files.createTempDirectory("soda-" + Random.nextLong.abs.toString).toFile
