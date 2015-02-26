@@ -115,7 +115,7 @@
 		<dependency>
 			<groupId>com.ottogroup.bi</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.0.5</version>
+			<version>0.0.6</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
