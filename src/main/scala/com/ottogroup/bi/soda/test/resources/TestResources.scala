@@ -24,6 +24,7 @@ abstract class TestResources {
   val oozieDriver: OozieDriver
   val localTestDirectory: String
   val remoteTestDirectory: String
+  val namenode: String
   final val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "&", mapKeyTerminator = "=")
   final val LOCAL: String = "local"
   final val OOZIE: String = "oozie"

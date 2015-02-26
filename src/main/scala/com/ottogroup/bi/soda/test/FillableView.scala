@@ -73,27 +73,35 @@ trait rows extends View {
     writeData()
   }
 
-  def deployWorkflow(wf: OozieTransformation) {
+  def deployWorkflow(wf: OozieTransformation) = {
     val fs = resources().fileSystem
-    val dest = new Path(wf.workflowAppPath)
+    val dest = new Path(resources().namenode + new URI(wf.workflowAppPath).getPath)
+    println(s"Uploading workflow ${wf.workflow} to ${dest}" + dest)
     if (!fs.exists(dest))
       fs.mkdirs(dest)
-    // FIXME: make source path configurable
+    // FIXME: make source path configurable, recursive upload
     new File(s"src/main/resources/oozie/${wf.bundle}/${wf.workflow}")
       .listFiles()
-      .filter(f => f.isFile)
       .map(f => {
-        val src = new Path(f.getAbsolutePath)
-        fs.copyFromLocalFile(src, new Path(dest, f.getName))
+        val src =  new Path("file:///" + f.getAbsolutePath)
+        fs.copyFromLocalFile(src, dest)
       })
+    val files = fs.listFiles(dest, true)
+    println(s"Uploaded files for workflow ${wf.workflow}:")
+    while (files.hasNext()) {
+      println("-> " + files.next().getPath.toString)
+    }
+    // create copy of workflow with adapted workflow app path
+    new OozieTransformation(wf.bundle, wf.workflow, dest.toString, wf.c).configureWith(wf.configuration.toMap)
   }
 
-  def deployFunctions(ht: HiveTransformation) {
+  def deployFunctions(ht: HiveTransformation) = {
     ht.udfs.map(f => {
       val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
       val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
       f.setResourceUris(List(jarResource))
     })
+    ht
   }
 
   def deploySchema() {

@@ -22,10 +22,10 @@ class OozieDriver(val client: OozieClient) extends Driver {
 
   override def run(t: Transformation): String = {
     t match {
-      case th: OozieWF => {
-       
-        println("Starting Oozie job with config: \n" + th.configuration.mkString("\n"))
-        runOozieJob(createOozieJobConf(th))
+      case ot: OozieTransformation => {
+        val jobConf = createOozieJobConf(ot)
+        println("Starting Oozie job with config: \n" + jobConf.mkString("\n"))
+        runOozieJob(jobConf)
       }
       case _ => throw new RuntimeException("OozieDriver can only run OozieWF transformations.")
     }
@@ -33,11 +33,10 @@ class OozieDriver(val client: OozieClient) extends Driver {
 
   override def runAndWait(t: Transformation): Boolean = {
     t match {
-      case th: OozieTransformation => {
-        val prop = new Properties()
-        th.configuration.map(el => prop.setProperty(el._1, el._2.toString))
-        println("Starting Oozie job with config: \n" + th.configuration.mkString("\n"))
-        runAndWait(createOozieJobConf(th))
+      case ot: OozieTransformation => {
+        val jobConf = createOozieJobConf(ot)
+        println("Starting Oozie job with config: \n" + jobConf.mkString("\n"))
+        runAndWait(jobConf)
       }
       case _ => throw new RuntimeException("OozieDriver can only run OozieWF transformations.")
     }
@@ -81,13 +80,10 @@ object OozieDriver {
         properties.remove(OozieClient.COORDINATOR_APP_PATH)
 
         // resolve embedded variables
-
         val config = ConfigFactory.parseProperties(properties).resolve()
         config.entrySet().foreach(e => properties.put(e.getKey(), e.getValue().unwrapped().toString()))
-        properties.put("user.name", UserGroupInformation.getLoginUser().getUserName());
-        properties.put("jobTracker", Settings().jobTrackerOrResourceManager);
-        properties.put("nameNode", Settings().nameNode);
-        properties.put("oozie.use.system.libpath", "true")
+        if (!properties.containsKey("user.name"))
+          properties.put("user.name", UserGroupInformation.getLoginUser().getUserName());
         properties
       }
     }

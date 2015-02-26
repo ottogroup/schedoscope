@@ -48,4 +48,6 @@ class OozieTestResources extends TestResources {
   override val database: Database = new Database(connection, mo.getHiveServer2JdbcURL)
   override val bottler: DeploySchema = DeploySchema(metastoreClient, connection)
   override val hiveDriver: HiveDriver = new HiveDriver(connection, metastoreClient)
+  
+  override val namenode = mo.getNameNodeUri
 }

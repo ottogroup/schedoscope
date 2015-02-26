@@ -20,6 +20,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
 import java.util.Properties
 import java.io.FileReader
+import java.io.IOException
 import com.ottogroup.bi.soda.dsl.Transformation
 import java.net.URLClassLoader
 import FileSystemDriver._
@@ -57,7 +58,7 @@ class SettingsImpl(val config: Config) extends Extension {
     hc
   }
 
-  val jobTrackerOrResourceManager = hadoopConf.get("yarn.resourcemanager.address")
+  val jobTrackerOrResourceManager = hadoopConf.get("yarn.resourcemanager.address", "0.0.0.0:8032")
 
   val nameNode = hadoopConf.get("fs.defaultFS")
 
@@ -68,17 +69,9 @@ class SettingsImpl(val config: Config) extends Extension {
     ugi.reloginFromKeytab();
     ugi
   }
-  
-  val clusterProps = {
-    val properties = new Properties() 
-    try {
-    properties.load(new FileReader(s"/usr/local/otto/${env}/global/env/cluster.properties"))
-    }
-    properties
-  }
-  
-  private val driverSettings : HashMap[String,DriverSettings] = HashMap[String,DriverSettings]()
-  
+
+  private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
+
   def getDriverSettings(d: Any with Driver): DriverSettings = {
     getDriverSettings(d.name)
   } 

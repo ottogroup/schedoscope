@@ -18,6 +18,7 @@ import com.ottogroup.bi.soda.test.resources.OozieTestResources
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import org.apache.hadoop.fs.Path
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.NoOp
 
 trait TestableView extends FillableView {}
 
@@ -49,11 +50,10 @@ trait test extends TestableView {
     })
 
     println("Deploying workflows, if needed")
-    val trans = this.transformation()
-    trans match {
+    val trans = this.transformation() match {
       case ot: OozieTransformation => deployWorkflow(ot)
       case ht: HiveTransformation => deployFunctions(ht)
-      case _ => None
+      case _ => this.transformation()
     }
 
     println("Starting transformation")

@@ -78,6 +78,8 @@ object LocalTestResources extends TestResources {
   override val database: Database = new Database(connection, hiveLocalJdbcUrl)
   override val bottler: DeploySchema = DeploySchema(metastoreClient, connection)
   override val hiveDriver: HiveDriver = new HiveDriver(connection, metastoreClient)
+  
+  override val namenode = "file:///"
 
   def compiledClassesPath() = {
     val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct
