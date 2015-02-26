@@ -176,7 +176,7 @@ object SodaService {
       View.viewsFromUrl(viewUrlPath)
 
     val viewActorRefFutures = views.map { v => (supervisor ? v).mapTo[ActorRef] }
-    Await.result(Future sequence viewActorRefFutures, 1000 milliseconds)
+    Await.result(Future sequence viewActorRefFutures, 60 seconds)
   }
 
   private def errorResponseWithStacktrace(request: colossus.protocols.http.Http#Input, t: Throwable) = {

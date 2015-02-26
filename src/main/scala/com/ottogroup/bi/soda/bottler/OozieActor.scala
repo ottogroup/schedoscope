@@ -33,11 +33,9 @@ class OozieActor(ds: DriverSettings) extends Actor {
       {
         try {
           val jobInfo = oozieDriver.getJobInfo(jobId)
-          log.info(s"workflow ${jobInfo.getId()} in state: " + jobInfo.getStatus())
-
           jobInfo.getStatus() match {
             case WorkflowJob.Status.RUNNING | WorkflowJob.Status.PREP | WorkflowJob.Status.SUSPENDED => {
-              system.scheduler.scheduleOnce(10 seconds, self, "tick")
+              system.scheduler.scheduleOnce(5 seconds, self, "tick")
             }
             case WorkflowJob.Status.SUCCEEDED => {
               log.info(s"workflow ${jobId} succeeded")

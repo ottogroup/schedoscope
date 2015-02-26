@@ -33,9 +33,23 @@ import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
+import java.util.concurrent.TimeoutException
 
 class ViewSuperVisor(ugi: UserGroupInformation, hadoopConf: Configuration) extends Actor {
   import context._
+  import akka.actor.OneForOneStrategy
+  import akka.actor.SupervisorStrategy._
+  import scala.concurrent.duration._
+
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: ArithmeticException => Resume
+      case _: NullPointerException => Restart
+      case _: IllegalArgumentException => Stop
+      case _: TimeoutException => Resume
+      case _: Exception => Escalate
+
+    }
 
   def receive = {
     case v: View => {
@@ -56,7 +70,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   val maxRetry = 5
   import context._
   val log = Logging(system, this)
-  implicit val timeout = Timeout(1 day) // needed for `?` below
+  implicit val timeout = Timeout(2 day) // needed for `?` below
   val supervisor = actorFor("/user/supervisor")
   val schemaActor = actorFor("/user/schemaActor")
   val listeners = collection.mutable.Queue[ActorRef]()
@@ -70,15 +84,15 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   def transform(retries: Int) = {
     import scala.reflect.ClassTag
     val partitionResult = schemaActor ? AddPartition(view)
-    Await.result(partitionResult, Duration.create("1 minute"))
+    Await.result(partitionResult, Duration.create("10 minutes"))
 
-    Await.result(actionsRouter ? Delete(view.fullPath, true), Duration.create("1 minute"))
+    Await.result(actionsRouter ? Delete(view.fullPath, true), Duration.create("10 minutes"))
     val result = actionsRouter ? view
 
-    Await.result(result, Duration.create("480 minutes")) match {
+    Await.result(result, 2 days) match {
       case _: OozieSuccess | _: HiveSuccess => {
-        Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), 10 seconds)
-        Await.result(schemaActor ? SetVersion(view), 10 seconds)
+        Await.result(actionsRouter ? Touch(view.fullPath+"/_SUCCESS"), 10 minute)
+        Await.result(schemaActor ? SetVersion(view), 10 minute)
         become(materialized)
         log.info("got success")
         listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view, incomplete, true) })
@@ -100,7 +114,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
    */
   def reload() = {
     become(waiting)
-    Await.result(actionsRouter ? Delete(view.fullPath + "/_SUCCESS", false), 10 seconds)
+    Await.result(actionsRouter ? Delete(view.fullPath+"/_SUCCESS", false), 10 minutes)
     transform(1)
     // tell everyone that new data is avaiable
     system.actorSelection("/user/supervisor/*") ! NewDataAvailable(view)
@@ -139,21 +153,21 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     case "materialize" => listeners.enqueue(sender)
 
     case NoDataAvaiable(dependency) => {
-      log.debug("received nodata from " + dependency); incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency)
+      log.debug("received nodata from "+dependency); incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency)
     }
     case ViewMaterialized(dependency, true, false) => {
-      log.debug("incomplete,not changed from " + dependency); incomplete = true; dependencyIsDone(dependency)
+      log.debug("incomplete,not changed from "+dependency); incomplete = true; dependencyIsDone(dependency)
     }
     case ViewMaterialized(dependency, false, false) => {
-      log.debug("complete,not changed from " + dependency);
+      log.debug("complete,not changed from "+dependency);
       dependencyIsDone(dependency)
     }
     case ViewMaterialized(dependency, true, true) => {
-      log.debug("incomplete,changed from " + dependency);
+      log.debug("incomplete,changed from "+dependency);
       incomplete = true; changed = true; dependencyIsDone(dependency)
     }
     case ViewMaterialized(dependency, false, true) => {
-      log.debug("complete, changed from " + dependency);
+      log.debug("complete, changed from "+dependency);
       changed = true; dependencyIsDone(dependency)
     }
   }
@@ -167,9 +181,9 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   def successFlagExists(view: View): Boolean = {
     ugi.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
-        val pathWithSuccessFlag = new Path(view.fullPath + "/_SUCCESS")
+        val pathWithSuccessFlag = new Path(view.fullPath+"/_SUCCESS")
         if (view.module == "app.eci.stage")
-          log.info("checking " + pathWithSuccessFlag + " " + FileSystem.get(hadoopConf).exists(pathWithSuccessFlag))
+          log.info("checking "+pathWithSuccessFlag+" "+FileSystem.get(hadoopConf).exists(pathWithSuccessFlag))
         FileSystem.get(hadoopConf).exists(pathWithSuccessFlag)
       }
     })
@@ -188,12 +202,14 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     if (dependencies.isEmpty) {
       // there where dependencies that did not return nodata
       if (availableDependencies > 0) {
-        val versionInfo = Await.result(schemaActor ? CheckVersion(view), 10 seconds)
-        log.debug(versionInfo.toString)
-        versionInfo match {
-          case Error => changed = true
-          case VersionOk(v) =>
-          case VersionMismatch(v, version) => changed = true
+        if (!changed) {
+          val versionInfo = Await.result(schemaActor ? CheckVersion(view), 5 minutes)
+          log.debug(versionInfo.toString)
+          versionInfo match {
+            case Error => changed = true
+            case VersionOk(v) =>
+            case VersionMismatch(v, version) => changed = true
+          }
         }
         if (changed)
           transform(0)
@@ -208,14 +224,14 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   }
 
   private def materializeDependencies: Unit = {
-    log.info(view + " has dependencies " + view.dependencies)
+    log.info(view+" has dependencies "+view.dependencies)
     if (view.dependencies.isEmpty) {
       if (successFlagExists(view)) {
-        log.info("success exists for " + view)
+        log.info("success exists for "+view)
         sender ! ViewMaterialized(view, false, false)
 
       } else {
-        log.info("no data and no dependencies for " + view)
+        log.info("no data and no dependencies for "+view)
 
         sender ! NoDataAvaiable(view)
         become(nodata)
@@ -224,7 +240,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
       become(waiting)
       view.dependencies.foreach { dependendView =>
         {
-          log.debug("querying dependency " + dependendView)
+          log.debug("querying dependency "+dependendView)
           val actor = Await.result((supervisor ? dependendView).mapTo[ActorRef], timeout.duration)
           dependencies.add(dependendView)
           availableDependencies += 1;

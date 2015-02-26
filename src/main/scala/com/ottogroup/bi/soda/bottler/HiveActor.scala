@@ -10,6 +10,7 @@ import java.sql.SQLException
 import org.joda.time.LocalDateTime
 import com.typesafe.config.Config
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import org.apache.thrift.transport.TTransportException
 
 class HiveActor(ds: DriverSettings) extends Actor {
   val hiveDriver = HiveDriver(ds)
@@ -21,7 +22,6 @@ class HiveActor(ds: DriverSettings) extends Actor {
   def running(sql: String): Receive = {
     case "tick" =>
     case _: GetStatus => sender() ! new HiveStatusResponse("executing query", self, ProcessStatus.RUNNING, sql, startTime)
-
     case CommandWithSender(_: KillAction, s) =>
   }
 
@@ -47,6 +47,8 @@ class HiveActor(ds: DriverSettings) extends Actor {
         }
       }
       f.onFailure {
+        // on severe errors, let it fail
+        case e:TTransportException => throw e
         case e => {
           log.error(e, "got exception from hivedriver")
           requester ! new HiveError

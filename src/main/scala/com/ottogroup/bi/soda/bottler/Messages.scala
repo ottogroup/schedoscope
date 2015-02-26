@@ -20,7 +20,7 @@ class Command
 case class Error(view: View, reason: String) extends Failure
 case class FatalError(view: View, reason: String) extends Failure
 case class OozieException(e: Throwable) extends Failure
-case class Exception(e: Throwable) extends Failure
+case class ActorException(e: Throwable) extends Failure
 case class HiveError() extends Failure
 case class OozieError() extends Failure
 case class OozieSuccess() extends Success
