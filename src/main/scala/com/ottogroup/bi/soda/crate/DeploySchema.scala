@@ -40,19 +40,19 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     metastoreClient.alter_table(dbName, tableName, table)
   }
 
-  def setPartitionProperty(dbName: String, tableName: String, part: String, key: String, value: String): Unit = {
+  def setPartitionProperty(dbName: String, tableName: String, part: List[String], key: String, value: String): Unit = {
     val partition = metastoreClient.getPartition(dbName, tableName, part)
     partition.putToParameters(key, value)
     metastoreClient.alter_partition(dbName, tableName, partition)
   }
 
   def setPartitionVersion(view: View) = {
-    setPartitionProperty(view.dbName, view.n, view.partitionPathBuilder.apply, partitionPropDigestName, view.transformation().versionDigest)
+    setPartitionProperty(view.dbName, view.n, view.partitionSpec, partitionPropDigestName, view.transformation().versionDigest)
   }
 
   def getPartitionVersion(view: View): String = {
     try {
-      val props = metastoreClient.getPartition(view.dbName, view.n, view.partitionPathBuilder.apply).getParameters()
+      val props = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec).getParameters()
       if (props.containsKey(partitionPropDigestName))
         props.get(partitionPropDigestName)
       else
@@ -97,7 +97,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     }
   }
 
-  def partitionExists(dbname: String, tableName: String, sql: String, partition: String): Boolean = {
+  def partitionExists(dbname: String, tableName: String, sql: String, partition: List[String]): Boolean = {
     if (!schemaExists(dbname, tableName, sql)) return false
     else
       try {
@@ -113,10 +113,10 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
       dropAndCreateTableSchema(view.dbName, view.n, HiveQl.ddl(view))
     }
     try {
-      metastoreClient.appendPartition(view.dbName, view.n, view.partitionPathBuilder.apply)
+      metastoreClient.appendPartition(view.dbName, view.n, view.partitionSpec)
     } catch {
-      case e: AlreadyExistsException => metastoreClient.getPartition(view.dbName, view.n, view.partitionPathBuilder.apply)
-      case e: InvalidObjectException => println(view.partitionPathBuilder.apply); throw (e)
+      case e: AlreadyExistsException => metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
+      case e: InvalidObjectException => println(view.partitionSpec.mkString(",")); throw (e)
     }
 
   }

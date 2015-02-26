@@ -30,7 +30,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       sender ! new Success
     }
     case CheckVersion(view) => {
-      if (crate.partitionExists(view.env + "_" + view.module, view.n, ddl(view), view.partitionPathBuilder.apply)) {
+      if (crate.partitionExists(view.env + "_" + view.module, view.n, ddl(view), view.partitionSpec)) {
         try {
 
           val digest = crate.getPartitionVersion(view)
