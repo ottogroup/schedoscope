@@ -23,6 +23,10 @@ import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import java.io.InvalidObjectException
 import com.ottogroup.bi.soda.bottler.api.Settings
 import org.apache.hadoop.hive.metastore.api.Function
+import org.joda.time.DateTime
+import collection.JavaConversions._
+import org.apache.hadoop.hive.metastore.api.MetaException
+import scala.collection.mutable.HashMap
 
 class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
 
@@ -40,7 +44,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     metastoreClient.alter_table(dbName, tableName, table)
   }
 
-  def setPartitionProperty(dbName: String, tableName: String, part: List[String], key: String, value: String): Unit = {
+  def setPartitionProperty(dbName: String, tableName: String, part: String, key: String, value: String): Unit = {
     val partition = metastoreClient.getPartition(dbName, tableName, part)
     partition.putToParameters(key, value)
     metastoreClient.alter_partition(dbName, tableName, partition)
@@ -97,7 +101,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     }
   }
 
-  def partitionExists(dbname: String, tableName: String, sql: String, partition: List[String]): Boolean = {
+  def partitionExists(dbname: String, tableName: String, sql: String, partition: String): Boolean = {
     if (!schemaExists(dbname, tableName, sql)) return false
     else
       try {
@@ -113,10 +117,17 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
       dropAndCreateTableSchema(view.dbName, view.n, HiveQl.ddl(view))
     }
     try {
-      metastoreClient.appendPartition(view.dbName, view.n, view.partitionSpec)
+      val now = new DateTime().getMillis.toInt
+      val sd = metastoreClient.getTable(view.dbName, view.n).getSd
+      sd.setLocation(view.fullPath)
+      val part = new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String,String]())
+      //val part = metastoreClient.appendPartition(view.dbName, view.n, view.partitionSpec)
+      metastoreClient.add_partitions(List(part), true, false)
+      metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
     } catch {
       case e: AlreadyExistsException => metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
-      case e: InvalidObjectException => println(view.partitionSpec.mkString(",")); throw (e)
+      case e: InvalidObjectException => println(view.partitionSpec); throw (e)
+      case e: MetaException => println(view.partitionSpec); throw (e)
     }
 
   }
