@@ -24,6 +24,7 @@ import java.io.IOException
 import com.ottogroup.bi.soda.dsl.Transformation
 import java.net.URLClassLoader
 import FileSystemDriver._
+import org.apache.hadoop.yarn.conf.YarnConfiguration
 
 class SettingsImpl(val config: Config) extends Extension {
 
@@ -51,10 +52,17 @@ class SettingsImpl(val config: Config) extends Extension {
 
 
   val hadoopConf = new Configuration(true)
-  val jobTrackerOrResourceManager = hadoopConf.get("yarn.resourcemanager.address", "0.0.0.0:8032")
+  val jobTrackerOrResourceManager = new YarnConfiguration(hadoopConf).get("yarn.resourcemanager.address", "krymradio.unbelievable-machine.net:8032")
 
   val nameNode = hadoopConf.get("fs.defaultFS")
 
+  val hiveActionTimeout = config.getDuration("soda.timeouts.hive",TimeUnit.SECONDS)
+  val oozieActionTimeout = config.getDuration("soda.timeouts.oozie",TimeUnit.SECONDS)
+  val fileActionTimeout = config.getDuration("soda.timeouts.file",TimeUnit.SECONDS)
+  val schemaActionTimeout = config.getDuration("soda.timeouts.schema",TimeUnit.SECONDS)
+  val dependencyTimout = config.getDuration("soda.timeouts.dependency",TimeUnit.SECONDS)
+  val materializeAllTimeout = config.getDuration("soda.timeouts.all",TimeUnit.SECONDS)
+  
   val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()

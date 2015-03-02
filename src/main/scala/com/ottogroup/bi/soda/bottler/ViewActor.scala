@@ -33,8 +33,9 @@ import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 import java.util.concurrent.TimeoutException
+import com.ottogroup.bi.soda.bottler.api.SettingsImpl
 
-class ViewSuperVisor(ugi: UserGroupInformation, hadoopConf: Configuration) extends Actor {
+class ViewSuperVisor( settings:SettingsImpl) extends Actor {
   import context._
   import akka.actor.OneForOneStrategy
   import akka.actor.SupervisorStrategy._
@@ -57,26 +58,32 @@ class ViewSuperVisor(ugi: UserGroupInformation, hadoopConf: Configuration) exten
 
       val actor = actorFor(actorName)
       sender ! (if (actor.isTerminated)
-        actorOf(ViewActor.props(v, ugi, hadoopConf), actorName)
+        actorOf(ViewActor.props(v, settings), actorName)
       else
         actor)
     }
   }
 }
 
-class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: Configuration) extends Actor {
-
+class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
+  
   val maxRetry = 5
   import context._
   val log = Logging(system, this)
-  implicit val timeout = Timeout(2 day) // needed for `?` below
+  implicit val timeout = new Timeout(settings.dependencyTimout)
+  val hadoopConf = settings.hadoopConf
   val supervisor = actorFor("/user/supervisor")
   val schemaActor = actorFor("/user/schemaActor")
   val listeners = collection.mutable.Queue[ActorRef]()
   val dependencies = collection.mutable.HashSet[View]()
   val actionsRouter = actorFor("/user/actions")
+  // state variables
+  // one of the dependencies was not available (no data)
   var incomplete = false
+  // one of the dependencies or the view itself was recreated
   var changed = false
+  // one of the dependencies' transformations failed
+  var withErrors=false
   var availableDependencies = 0
   //log.info("new actor: " + view + " in " + view.env)
 
@@ -98,6 +105,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
      case _: OozieSuccess | _: HiveSuccess => {
         Await.result(actionsRouter ? Touch(view.fullPath+"/_SUCCESS"), 10 minute)
         Await.result(schemaActor ? SetVersion(view), 10 minute)
+        unbecome()
         become(materialized)
         log.info("got success")
         listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view, incomplete, true) })
@@ -154,7 +162,9 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
         case _ => sender ! FatalError(view, "not recoverable")
   }
 
-  // waiting for depending tables to materialize
+  // State: waiting
+  // Description: Waiting for dependencies to materialize
+  // transitions: waiting, transforming, materialized
   def waiting: Receive = LoggingReceive {
     case "materialize" => listeners.enqueue(sender)
 
@@ -185,7 +195,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   })
 
   def successFlagExists(view: View): Boolean = {
-    ugi.doAs(new PrivilegedAction[Boolean]() {
+    settings.userGroupInformation.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
         val pathWithSuccessFlag = new Path(view.fullPath+"/_SUCCESS")
         FileSystem.get(hadoopConf).exists(pathWithSuccessFlag)
@@ -259,11 +269,11 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
 }
 
 object ViewActor {
-  def props(view: View, ugi: UserGroupInformation, hadoopConf: Configuration): Props = Props(new ViewActor(view, ugi, hadoopConf))
+  def props(view: View,  settings:SettingsImpl): Props = Props(new ViewActor(view, settings))
 
 }
 object ViewSuperVisor {
-  def props(ugi: UserGroupInformation, hadoopConf: Configuration): Props = Props(new ViewSuperVisor(ugi, hadoopConf))
+  def props(settings:SettingsImpl): Props = Props(new ViewSuperVisor(settings:SettingsImpl))
 
 }
 

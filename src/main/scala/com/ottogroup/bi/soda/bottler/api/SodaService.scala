@@ -50,7 +50,7 @@ object SodaService {
   implicit val ec = ExecutionContext.global
   implicit val timeout = Timeout(3 days) // needed for `?` below
 
-  val supervisor = settings.system.actorOf(ViewSuperVisor.props(settings.userGroupInformation, settings.hadoopConf), "supervisor")
+  val supervisor = settings.system.actorOf(ViewSuperVisor.props(settings), "supervisor")
   val scheduleActor = settings.system.actorOf(ActionsRouterActor.props(settings.hadoopConf), "actions")
   val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schemaActor")
 

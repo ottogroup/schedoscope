@@ -21,6 +21,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       sender ! new Success
     }
     case AddPartition(view) => {
+      
       //if (crate.schemaExists(view.env + "_" + view.module, view.n, ddl(view)))
       try {
         crate.createPartition(view)
@@ -30,6 +31,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       sender ! new Success
     }
     case CheckVersion(view) => {
+      
       if (crate.partitionExists(view.env + "_" + view.module, view.n, ddl(view), view.partitionSpec)) {
         try {
 
