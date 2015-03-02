@@ -32,7 +32,6 @@ import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 import java.util.concurrent.TimeoutException
 
 class ViewSuperVisor(ugi: UserGroupInformation, hadoopConf: Configuration) extends Actor {
@@ -87,11 +86,17 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     Await.result(partitionResult, Duration.create("10 minutes"))
 
     Await.result(actionsRouter ? Delete(view.fullPath, true), Duration.create("10 minutes"))
-    val result = actionsRouter ? view
-
-    Await.result(result, 2 days) match {
-      case _: OozieSuccess | _: HiveSuccess => {
-        Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), 10 minute)
+    actionsRouter ! view
+    unbecome()
+    become(transforming(retries))
+    
+  }
+  
+  // State: transforming
+  // transitions: materialized,failed,transforming
+  def transforming(retries:Int):Receive = {
+     case _: OozieSuccess | _: HiveSuccess => {
+        Await.result(actionsRouter ? Touch(view.fullPath+"/_SUCCESS"), 10 minute)
         Await.result(schemaActor ? SetVersion(view), 10 minute)
         become(materialized)
         log.info("got success")
@@ -99,20 +104,15 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
         listeners.clear
 
       }
-
       case OozieException(exception) => retry(retries)
       case _: OozieError | _: HiveError | _: Error => retry(retries)
-      //  case a: OozieError => retry(retries)
-
-      // case a: Any => log.error(s"unexcpected message ${a.toString}");become(failed) //debugging
-    }
   }
-
   /**
    * reload
    *
    */
   def reload() = {
+    unbecome()
     become(waiting)
     Await.result(actionsRouter ? Delete(view.fullPath + "/_SUCCESS", false), 10 minutes)
     transform(1)
@@ -120,32 +120,38 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     system.actorSelection("/user/supervisor/*") ! NewDataAvailable(view)
   }
 
-  // this table is materialized, just return
+  // State: materialized
+  // transitions: receive,materialized,transforming
   def materialized: Receive = LoggingReceive({
     case "materialize" => sender ! ViewMaterialized(view, incomplete, false)
-    case "invalidate" => become(receive)
+    case "invalidate" => unbecome();become(receive)
     case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
 
   })
 
-  // this table is materialized, just return
+  // State: nodata
+  // transitions; receive,transforming,nodata
   def nodata: Receive = LoggingReceive({
     case "materialize" => sender ! NoDataAvaiable(view)
-    case "invalidate" => become(receive)
+    case "invalidate" => unbecome();become(receive)
     case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
 
   })
-  def failedRetry(retries: Int): Receive = {
+  
+  
+  def retrying(retries: Int): Receive = {
     case "materialize" => listeners.add(sender)
     case "retry" => if (retries <= maxRetry)
       transform(retries + 1)
     else {
-      become(failed)
+      unbecome();become(failed)
     }
   }
 
   def failed: Receive = {
-    case _ => sender ! FatalError(view, "not recoverable")
+        case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
+        case "invalidate" => unbecome();become(receive)
+        case _ => sender ! FatalError(view, "not recoverable")
   }
 
   // waiting for depending tables to materialize
@@ -181,16 +187,14 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   def successFlagExists(view: View): Boolean = {
     ugi.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
-        val pathWithSuccessFlag = new Path(view.fullPath + "/_SUCCESS")
-        if (view.module == "app.eci.stage")
-          log.info("checking " + pathWithSuccessFlag + " " + FileSystem.get(hadoopConf).exists(pathWithSuccessFlag))
+        val pathWithSuccessFlag = new Path(view.fullPath+"/_SUCCESS")
         FileSystem.get(hadoopConf).exists(pathWithSuccessFlag)
       }
     })
   }
 
   private def retry(retries: Int): akka.actor.Cancellable = {
-    become(failedRetry(retries))
+    become(retrying(retries))
     log.warning("failed, will retry")
     // exponential backoff
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! "retry")
@@ -229,7 +233,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
       if (successFlagExists(view)) {
         log.info("success exists for " + view)
         sender ! ViewMaterialized(view, false, false)
-
+        become(materialized)
       } else {
         log.info("no data and no dependencies for " + view)
 

@@ -72,7 +72,7 @@ object SodaService {
               try {
                 val viewActors = getViewActors(viewUrlPath)
                 val fut = viewActors.map(viewActor => viewActor ? "materialize")
-                val res = Await.result(Future sequence fut, 1 hour)
+                val res = Await.result(Future sequence fut,  timeout.duration)
                 val result = res.foldLeft(0) { (count, r) =>
                   r match {
                     case ViewMaterialized(v, incomplete, changed) => count + 1

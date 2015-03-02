@@ -49,8 +49,8 @@ class SettingsImpl(val config: Config) extends Extension {
 
   val availableTransformations = config.getObject("soda.transformations")
 
-  val hadoopConf = new Configuration(true)
 
+  val hadoopConf = new Configuration(true)
   val jobTrackerOrResourceManager = hadoopConf.get("yarn.resourcemanager.address", "0.0.0.0:8032")
 
   val nameNode = hadoopConf.get("fs.defaultFS")
