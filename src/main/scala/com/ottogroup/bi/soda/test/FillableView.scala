@@ -83,7 +83,7 @@ trait rows extends View {
     new File(s"src/main/resources/oozie/${wf.bundle}/${wf.workflow}")
       .listFiles()
       .map(f => {
-        val src =  new Path("file:///" + f.getAbsolutePath)
+        val src = new Path("file:///" + f.getAbsolutePath)
         fs.copyFromLocalFile(src, dest)
       })
     val files = fs.listFiles(dest, true)

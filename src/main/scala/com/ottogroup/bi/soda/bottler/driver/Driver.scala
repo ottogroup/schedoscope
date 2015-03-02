@@ -17,12 +17,10 @@ trait Driver {
 
   // blocking
   def runAndWait(t: Transformation): Boolean
-  // deploy resources for a single transformation FIXME: this is the next step
-  // def deploy(t: Transformation, f: FileSystemDriver, c: Config) : Boolean
-  // deploy resources for all transformations run by this driver
 
   def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
 
+  // deploy resources for all transformations run by this driver
   def deployAll(driverSettings: DriverSettings): Boolean = {
     val fsd = new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
 

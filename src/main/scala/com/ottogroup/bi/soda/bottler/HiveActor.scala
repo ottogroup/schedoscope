@@ -48,7 +48,7 @@ class HiveActor(ds: DriverSettings) extends Actor {
       }
       f.onFailure {
         // on severe errors, let it fail
-        case e:TTransportException => throw e
+        case e: TTransportException => throw e
         case e => {
           log.error(e, "got exception from hivedriver")
           requester ! new HiveError

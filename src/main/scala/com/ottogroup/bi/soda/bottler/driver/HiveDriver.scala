@@ -46,6 +46,7 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
       }
       case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
     }
+
     true
   }
 

@@ -55,9 +55,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   var avroSchemaPathPrefixBuilder: String => String = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
 
   def partitionSpec = "/" + partitionParameters.map(p => s"${p.n}=${p.v.getOrElse("")}").mkString("/")
-  
+
   def partitionValues = partitionParameters.map(p => p.v.getOrElse("").toString).toList
-  
+
   def dbName = dbNameBuilder(env)
   def tableName = dbName + "." + n
   def locationPath = locationPathBuilder(env)

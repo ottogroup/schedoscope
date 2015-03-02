@@ -40,12 +40,13 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
     ""
   }
 
-  def runAndWait(t: Transformation): Boolean = {
+  def runAndWait(t: Transformation): Boolean =
     t match {
       case IfExists(path, op) => doAs(() => {
         if (fileSystem(path, conf).exists(new Path(path)))
           runAndWait(op) else true
       })
+
       case IfNotExists(path, op) => doAs(() => {
         if (!fileSystem(path, conf).exists(new Path(path)))
           runAndWait(op) else true
@@ -56,7 +57,6 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
       case Delete(path, recursive) => doAs(() => delete(path, recursive))
       case Touch(path) => doAs(() => touch(path))
     }
-  }
 
   def copy(from: String, to: String, recursive: Boolean) = {
     val fromFS = fileSystem(from, conf)

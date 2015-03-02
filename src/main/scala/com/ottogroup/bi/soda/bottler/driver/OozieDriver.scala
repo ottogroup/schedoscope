@@ -20,41 +20,43 @@ import java.io.FileReader
 
 class OozieDriver(val client: OozieClient) extends Driver {
 
-  override def run(t: Transformation): String = {
+  override def run(t: Transformation): String =
     t match {
       case ot: OozieTransformation => {
         val jobConf = createOozieJobConf(ot)
         println("Starting Oozie job with config: \n" + jobConf.mkString("\n"))
         runOozieJob(jobConf)
       }
+
       case _ => throw new RuntimeException("OozieDriver can only run OozieWF transformations.")
     }
-  }
 
-  override def runAndWait(t: Transformation): Boolean = {
+  override def runAndWait(t: Transformation): Boolean =
     t match {
       case ot: OozieTransformation => {
         val jobConf = createOozieJobConf(ot)
         println("Starting Oozie job with config: \n" + jobConf.mkString("\n"))
         runAndWait(jobConf)
       }
+
       case _ => throw new RuntimeException("OozieDriver can only run OozieWF transformations.")
     }
-  }
 
-  def runOozieJob(jobProperties: Properties): String = {
-    client.run(jobProperties)
-  }
+  def runOozieJob(jobProperties: Properties): String = client.run(jobProperties)
 
   def runAndWait(jobProperties: Properties): Boolean = {
     import WorkflowJob.Status._
+
     val jobId = runOozieJob(jobProperties)
+
     while (client.getJobInfo(jobId).getStatus() == RUNNING ||
       client.getJobInfo(jobId).getStatus() == PREP) {
       println("Job status is " + client.getJobInfo(jobId).getStatus())
       Thread.sleep(1000)
     }
+
     println("Job status is " + client.getJobInfo(jobId).getStatus())
+
     client.getJobInfo(jobId).getStatus() match {
       case SUCCEEDED => true
       case _ => false
@@ -64,12 +66,8 @@ class OozieDriver(val client: OozieClient) extends Driver {
   def getJobInfo(jobId: String) = client.getJobInfo(jobId)
 
   def kill(jobId: String) = client.kill(jobId)
-}
 
-object OozieDriver {
-  def apply(ds: DriverSettings) = new OozieDriver(new OozieClient(ds.url))
-
-  def createOozieJobConf(wf: OozieTransformation): Properties = {
+  def createOozieJobConf(wf: OozieTransformation): Properties =
     wf match {
       case o: OozieTransformation => {
         val properties = new Properties()
@@ -87,5 +85,9 @@ object OozieDriver {
         properties
       }
     }
-  }
+
+}
+
+object OozieDriver {
+  def apply(ds: DriverSettings) = new OozieDriver(new OozieClient(ds.url))
 }

@@ -119,13 +119,14 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
       val now = new DateTime().getMillis.toInt
       val sd = metastoreClient.getTable(view.dbName, view.n).getSd
       sd.setLocation(view.fullPath)
-      val part = new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String,String]())
+      val part = new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String, String]())
       //val part = metastoreClient.appendPartition(view.dbName, view.n, view.partitionSpec)
       metastoreClient.add_partitions(List(part), true, false)
       metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
     } catch {
       case e: AlreadyExistsException => metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
-      case e: InvalidObjectException => println(view.partitionSpec); throw (e)
+      case e: InvalidObjectException =>
+        println(view.partitionSpec); throw (e)
       case e: MetaException => println(view.partitionSpec); throw (e)
     }
 

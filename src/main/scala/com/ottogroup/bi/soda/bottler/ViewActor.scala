@@ -91,7 +91,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
 
     Await.result(result, 2 days) match {
       case _: OozieSuccess | _: HiveSuccess => {
-        Await.result(actionsRouter ? Touch(view.fullPath+"/_SUCCESS"), 10 minute)
+        Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), 10 minute)
         Await.result(schemaActor ? SetVersion(view), 10 minute)
         become(materialized)
         log.info("got success")
@@ -114,7 +114,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
    */
   def reload() = {
     become(waiting)
-    Await.result(actionsRouter ? Delete(view.fullPath+"/_SUCCESS", false), 10 minutes)
+    Await.result(actionsRouter ? Delete(view.fullPath + "/_SUCCESS", false), 10 minutes)
     transform(1)
     // tell everyone that new data is avaiable
     system.actorSelection("/user/supervisor/*") ! NewDataAvailable(view)
@@ -153,21 +153,21 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
     case "materialize" => listeners.enqueue(sender)
 
     case NoDataAvaiable(dependency) => {
-      log.debug("received nodata from "+dependency); incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency)
+      log.debug("received nodata from " + dependency); incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency)
     }
     case ViewMaterialized(dependency, true, false) => {
-      log.debug("incomplete,not changed from "+dependency); incomplete = true; dependencyIsDone(dependency)
+      log.debug("incomplete,not changed from " + dependency); incomplete = true; dependencyIsDone(dependency)
     }
     case ViewMaterialized(dependency, false, false) => {
-      log.debug("complete,not changed from "+dependency);
+      log.debug("complete,not changed from " + dependency);
       dependencyIsDone(dependency)
     }
     case ViewMaterialized(dependency, true, true) => {
-      log.debug("incomplete,changed from "+dependency);
+      log.debug("incomplete,changed from " + dependency);
       incomplete = true; changed = true; dependencyIsDone(dependency)
     }
     case ViewMaterialized(dependency, false, true) => {
-      log.debug("complete, changed from "+dependency);
+      log.debug("complete, changed from " + dependency);
       changed = true; dependencyIsDone(dependency)
     }
   }
@@ -181,9 +181,9 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   def successFlagExists(view: View): Boolean = {
     ugi.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
-        val pathWithSuccessFlag = new Path(view.fullPath+"/_SUCCESS")
+        val pathWithSuccessFlag = new Path(view.fullPath + "/_SUCCESS")
         if (view.module == "app.eci.stage")
-          log.info("checking "+pathWithSuccessFlag+" "+FileSystem.get(hadoopConf).exists(pathWithSuccessFlag))
+          log.info("checking " + pathWithSuccessFlag + " " + FileSystem.get(hadoopConf).exists(pathWithSuccessFlag))
         FileSystem.get(hadoopConf).exists(pathWithSuccessFlag)
       }
     })
@@ -224,14 +224,14 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
   }
 
   private def materializeDependencies: Unit = {
-    log.info(view+" has dependencies "+view.dependencies)
+    log.info(view + " has dependencies " + view.dependencies)
     if (view.dependencies.isEmpty) {
       if (successFlagExists(view)) {
-        log.info("success exists for "+view)
+        log.info("success exists for " + view)
         sender ! ViewMaterialized(view, false, false)
 
       } else {
-        log.info("no data and no dependencies for "+view)
+        log.info("no data and no dependencies for " + view)
 
         sender ! NoDataAvaiable(view)
         become(nodata)
@@ -240,7 +240,7 @@ class ViewActor(val view: View, val ugi: UserGroupInformation, val hadoopConf: C
       become(waiting)
       view.dependencies.foreach { dependendView =>
         {
-          log.debug("querying dependency "+dependendView)
+          log.debug("querying dependency " + dependendView)
           val actor = Await.result((supervisor ? dependendView).mapTo[ActorRef], timeout.duration)
           dependencies.add(dependendView)
           availableDependencies += 1;

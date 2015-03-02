@@ -72,10 +72,8 @@ class OozieActor(ds: DriverSettings) extends Actor {
     case CommandWithSender(d: Deploy, s) => oozieDriver.deployAll(ds)
     case WorkAvailable => sender ! PollCommand("oozie")
     case CommandWithSender(OozieTransformation(bundle, wf, appPath, conf), s) => {
-      val jobProperties = createOozieJobConf(OozieTransformation(bundle, wf, appPath, conf))
       try {
-
-        val jobId = oozieDriver.runOozieJob(jobProperties)
+        val jobId = oozieDriver.run(OozieTransformation(bundle, wf, appPath, conf))
         startTime = new LocalDateTime()
 
         val jobstatus = oozieDriver.getJobInfo(jobId).getStatus()
@@ -84,7 +82,6 @@ class OozieActor(ds: DriverSettings) extends Actor {
           become(running(jobId, s))
           system.scheduler.scheduleOnce(1000 millis, self, "tick")
         }
-        //sender ! OozieSuccess()
       } catch {
         case e: OozieClientException =>
           {
