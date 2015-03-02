@@ -48,15 +48,8 @@ class SettingsImpl(val config: Config) extends Extension {
   val parsedViewAugmentorClass = config.getString("soda.app.parsedViewAugmentorClass")
 
   val availableTransformations = config.getObject("soda.transformations")
-      
-  val hadoopConf = {  
-    val hc = new Configuration(true)
-    hc.addResource(new Path("/etc/hadoop/conf/hdfs-site.xml"))
-    hc.addResource(new Path("/etc/hadoop/conf/core-site.xml"))
-    hc.addResource(new Path("/etc/hadoop/conf/yarn-site.xml"))
-    hc.addResource(new Path("/etc/hadoop/conf/mapred-site.xml"))
-    hc
-  }
+
+  val hadoopConf = new Configuration(true)
 
   val jobTrackerOrResourceManager = hadoopConf.get("yarn.resourcemanager.address", "0.0.0.0:8032")
 

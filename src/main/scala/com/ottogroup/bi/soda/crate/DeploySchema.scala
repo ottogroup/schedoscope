@@ -29,7 +29,6 @@ import org.apache.hadoop.hive.metastore.api.MetaException
 import scala.collection.mutable.HashMap
 
 class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
-
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
   val tablePropSchemaHash = "hash"
