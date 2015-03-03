@@ -118,6 +118,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     try {
       val now = new DateTime().getMillis.toInt
       val sd = metastoreClient.getTable(view.dbName, view.n).getSd
+ 
       sd.setLocation(view.fullPath)
       val part = new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String, String]())
       //val part = metastoreClient.appendPartition(view.dbName, view.n, view.partitionSpec)
