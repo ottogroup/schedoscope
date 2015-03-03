@@ -75,8 +75,7 @@ object SodaService {
                 val res = Await.result(Future sequence fut,  timeout.duration)
                 val result = res.foldLeft(0) { (count, r) =>
                   r match {
-                    case ViewMaterialized(v, incomplete, changed) => count + 1
-
+                    case ViewMaterialized(v, incomplete, changed,errors) => count + 1
                     case _: NoDataAvaiable => count
                   }
                 }

@@ -72,6 +72,13 @@ class SettingsImpl(val config: Config) extends Extension {
   val dependencyTimout = config.getDuration("soda.timeouts.dependency", TimeUnit.SECONDS)
   val materializeAllTimeout = config.getDuration("soda.timeouts.all", TimeUnit.SECONDS)
 
+  val hiveActionTimeout = Duration.create(config.getDuration("soda.timeouts.hive",TimeUnit.SECONDS),TimeUnit.SECONDS)
+  val oozieActionTimeout =  Duration.create(config.getDuration("soda.timeouts.oozie",TimeUnit.SECONDS),TimeUnit.SECONDS)
+  val fileActionTimeout =  Duration.create(config.getDuration("soda.timeouts.file",TimeUnit.SECONDS),TimeUnit.SECONDS)
+  val schemaActionTimeout =  Duration.create(config.getDuration("soda.timeouts.schema",TimeUnit.SECONDS),TimeUnit.SECONDS)
+  val dependencyTimout =  Duration.create(config.getDuration("soda.timeouts.dependency",TimeUnit.SECONDS),TimeUnit.SECONDS)
+  val materializeAllTimeout =  Duration.create(config.getDuration("soda.timeouts.all",TimeUnit.SECONDS),TimeUnit.SECONDS)
+  
   val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()
