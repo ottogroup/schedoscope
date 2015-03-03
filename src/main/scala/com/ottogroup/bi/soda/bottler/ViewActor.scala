@@ -34,6 +34,36 @@ import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransforma
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 import java.util.concurrent.TimeoutException
 import com.ottogroup.bi.soda.bottler.api.SettingsImpl
+import akka.contrib.pattern.Aggregator
+
+class ViewStatusRetriever extends Actor with Aggregator {
+
+  expectOnce {
+    case GetProcessList(s) => new MultipleResponseHandler(s, "")
+  }
+
+  class MultipleResponseHandler(originalSender: ActorRef, propName: String) {
+
+    import context.dispatcher
+    import collection.mutable.ArrayBuffer
+
+    val values = ArrayBuffer.empty[ActionStatusResponse]
+
+    context.actorSelection("/user/supervisor/*") ! GetStatus()
+    context.system.scheduler.scheduleOnce(50 milliseconds, self, TimedOut)
+
+    val handle = expect {
+      case ar: ActionStatusResponse => values += ar
+      case TimedOut => processFinal(values.toList)
+    }
+
+    def processFinal(eval: List[ActionStatusResponse]) {
+      unexpect(handle)
+      originalSender ! ProcessList(eval)
+      context.stop(self)
+    }
+  }
+}
 
 class ViewSuperVisor( settings:SettingsImpl) extends Actor {
   import context._
@@ -87,29 +117,39 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
   var availableDependencies = 0
   //log.info("new actor: " + view + " in " + view.env)
 
-  def transform(retries: Int) = {
-    import scala.reflect.ClassTag
-    val partitionResult = schemaActor ? AddPartition(view)
-    Await.result(partitionResult, Duration.create("10 minutes"))
+  def receive = LoggingReceive({
+    case "materialize" => {
+      materializeDependencies
+    }
+  })
 
-    Await.result(actionsRouter ? Delete(view.fullPath, true), Duration.create("10 minutes"))
+  def transform(retries: Int) = {
+
+    log.debug("in transform, preparing..")
+    val partitionResult = schemaActor ? AddPartition(view)
+
+    Await.result(partitionResult, settings.schemaActionTimeout)
+    Await.result(actionsRouter ? Delete(view.fullPath, true), settings.fileActionTimeout)
+    log.debug("starting transformation")
     actionsRouter ! view
     unbecome()
     become(transforming(retries))
-    
+    log.debug("NEW STATE:transforming")
   }
   
   // State: transforming
   // transitions: materialized,failed,transforming
-  def transforming(retries:Int):Receive = {
-     case _: OozieSuccess | _: HiveSuccess => {
-        Await.result(actionsRouter ? Touch(view.fullPath+"/_SUCCESS"), 10 minute)
-        Await.result(schemaActor ? SetVersion(view), 10 minute)
-        unbecome()
-        become(materialized)
-        log.info("got success")
-        listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view, incomplete, true) })
-        listeners.clear
+  def transforming(retries: Int): Receive = {
+
+    case _: OozieSuccess | _: HiveSuccess => {
+      log.info("SUCCESS")
+      Await.result(actionsRouter ? Touch(view.fullPath+"/_SUCCESS"), settings.fileActionTimeout)
+      Await.result(schemaActor ? SetVersion(view), settings.schemaActionTimeout)
+      unbecome()
+      become(materialized)
+      log.debug("NEW STATE:materialized")
+      listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view, incomplete, true, withErrors) })
+      listeners.clear
 
       }
       case OozieException(exception) => retry(retries)
@@ -122,7 +162,8 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
   def reload() = {
     unbecome()
     become(waiting)
-    Await.result(actionsRouter ? Delete(view.fullPath + "/_SUCCESS", false), 10 minutes)
+    log.debug("NEW STATE:waiting")
+    Await.result(actionsRouter ? Delete(view.fullPath+"/_SUCCESS", false), settings.fileActionTimeout)
     transform(1)
     // tell everyone that new data is avaiable
     system.actorSelection("/user/supervisor/*") ! NewDataAvailable(view)
@@ -131,8 +172,10 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
   // State: materialized
   // transitions: receive,materialized,transforming
   def materialized: Receive = LoggingReceive({
-    case "materialize" => sender ! ViewMaterialized(view, incomplete, false)
-    case "invalidate" => unbecome();become(receive)
+    case "materialize" => sender ! ViewMaterialized(view, incomplete, false, withErrors)
+    case "invalidate" =>
+      unbecome(); become(receive);          log.debug("NEW STATE:receive")
+
     case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
 
   })
@@ -141,7 +184,9 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
   // transitions; receive,transforming,nodata
   def nodata: Receive = LoggingReceive({
     case "materialize" => sender ! NoDataAvaiable(view)
-    case "invalidate" => unbecome();become(receive)
+    case "invalidate" =>
+      unbecome(); become(receive);          log.debug("NEW STATE:receive")
+
     case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
 
   })
@@ -152,14 +197,17 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
     case "retry" => if (retries <= maxRetry)
       transform(retries + 1)
     else {
-      unbecome();become(failed)
+      unbecome(); become(failed);          log.warning("NEW STATE:failed")
+
     }
   }
 
   def failed: Receive = {
-        case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
-        case "invalidate" => unbecome();become(receive)
-        case _ => sender ! FatalError(view, "not recoverable")
+    case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
+    case "invalidate" =>
+      unbecome(); become(receive);log.debug("NEW STATE:receive")
+
+    case _ => sender ! FatalError(view, "not recoverable")
   }
 
   // State: waiting
@@ -169,30 +217,42 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
     case "materialize" => listeners.enqueue(sender)
 
     case NoDataAvaiable(dependency) => {
-      log.debug("received nodata from " + dependency); incomplete = true; availableDependencies -= 1; dependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, true, false) => {
-      log.debug("incomplete,not changed from " + dependency); incomplete = true; dependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, false, false) => {
-      log.debug("complete,not changed from " + dependency);
+      log.debug("received nodata from "+dependency); 
+      incomplete = true; availableDependencies -= 1;
       dependencyIsDone(dependency)
     }
-    case ViewMaterialized(dependency, true, true) => {
-      log.debug("incomplete,changed from " + dependency);
+    case ViewMaterialized(dependency, true, false, false) => {
+      log.debug("incomplete,not changed from "+dependency); 
+      incomplete = true; dependencyIsDone(dependency)
+    }
+    case ViewMaterialized(dependency, false, false, false) => {
+      log.debug("complete,not changed from "+dependency);
+      dependencyIsDone(dependency)
+    }
+    case ViewMaterialized(dependency, true, true, false) => {
+      log.debug("incomplete,changed from "+dependency);
+      incomplete = true; changed = true; 
+      dependencyIsDone(dependency)
+    }
+    case ViewMaterialized(dependency, false, true, false) => {
+      log.debug("complete, changed from "+dependency);
+      changed = true; dependencyIsDone(dependency)
+    } case ViewMaterialized(dependency, true, false, true) => {
+      log.debug("incomplete,not changed from "+dependency); incomplete = true; dependencyIsDone(dependency)
+    }
+    case ViewMaterialized(dependency, false, false, true) => {
+      log.debug("complete,not changed from "+dependency);
+      dependencyIsDone(dependency)
+    }
+    case ViewMaterialized(dependency, true, true, true) => {
+      log.debug("incomplete,changed from "+dependency);
       incomplete = true; changed = true; dependencyIsDone(dependency)
     }
-    case ViewMaterialized(dependency, false, true) => {
-      log.debug("complete, changed from " + dependency);
+    case ViewMaterialized(dependency, false, true, true) => {
+      log.debug("complete, changed from "+dependency);
       changed = true; dependencyIsDone(dependency)
     }
   }
-
-  def receive = LoggingReceive({
-    case "materialize" => {
-      materializeDependencies
-    }
-  })
 
   def successFlagExists(view: View): Boolean = {
     settings.userGroupInformation.doAs(new PrivilegedAction[Boolean]() {
@@ -204,20 +264,21 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
   }
 
   private def retry(retries: Int): akka.actor.Cancellable = {
+    unbecome()
     become(retrying(retries))
-    log.warning("failed, will retry")
+    log.warning("NEW STATE: retrying")
     // exponential backoff
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! "retry")
   }
 
   private def dependencyIsDone(dependency: com.ottogroup.bi.soda.dsl.View) = {
     dependencies.remove(dependency)
-    log.debug(s"this actor still waits for ${dependencies.size} dependencies")
+    log.debug(s"this actor still waits for ${dependencies.size} dependencies, changed=${changed}, incomplete=${incomplete}, availableDependencies=${availableDependencies}")
     if (dependencies.isEmpty) {
       // there where dependencies that did not return nodata
       if (availableDependencies > 0) {
         if (!changed) {
-          val versionInfo = Await.result(schemaActor ? CheckVersion(view), 5 minutes)
+          val versionInfo = Await.result(schemaActor ? CheckVersion(view), settings.schemaActionTimeout)
           log.debug(versionInfo.toString)
           versionInfo match {
             case Error => changed = true
@@ -227,12 +288,21 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
         }
         if (changed)
           transform(0)
-        else
-          listeners.foreach(s => s ! ViewMaterialized(view, incomplete, false))
+        else{
+          listeners.foreach(s => s ! ViewMaterialized(view, incomplete, false, withErrors))
+          listeners.clear
+          unbecome
+          become(materialized)
+          log.debug("NEW STATE:materialized")
+        }
       } else {
         listeners.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvaiable(view) })
         listeners.clear
+        unbecome
         become(receive)
+        log.debug("NEW STATE:receive")
+
+        
       }
     }
   }
@@ -241,17 +311,20 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
     log.info(view + " has dependencies " + view.dependencies)
     if (view.dependencies.isEmpty) {
       if (successFlagExists(view)) {
-        log.info("success exists for " + view)
-        sender ! ViewMaterialized(view, false, false)
+        log.info("success exists for "+view)
+        sender ! ViewMaterialized(view, false, false, withErrors)
         become(materialized)
+        log.debug("NEW STATE:materialized")
       } else {
         log.info("no data and no dependencies for " + view)
 
         sender ! NoDataAvaiable(view)
         become(nodata)
+        log.debug("NEW STATE:nodata")
+
       }
     } else {
-      become(waiting)
+
       view.dependencies.foreach { dependendView =>
         {
           log.debug("querying dependency " + dependendView)
@@ -263,6 +336,10 @@ class ViewActor(val view: View,  val settings:SettingsImpl) extends Actor {
         }
       }
     }
+   
+    become(waiting)
+    log.debug("NEW STATE:waiting")
+
     listeners.enqueue(sender)
   }
 
