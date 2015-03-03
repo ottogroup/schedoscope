@@ -26,6 +26,8 @@ import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.bottler.api.SettingsImpl
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 import FileSystemDriver._
+import org.apache.commons.io.FileUtils
+import java.nio.file.Files
 
 class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) extends Driver {
 
@@ -60,9 +62,25 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
     }
 
   def copy(from: String, to: String, recursive: Boolean) = {
-    val fromFS = fileSystem(from, conf)
+    def classpathResourceToFile(classpathResourceUrl: String) = {
+      val remainingPath = classpathResourceUrl.replace("classpath://", "")
+      val tempDir = Files.createTempDirectory("classpath").toFile.toString()
+      val tempFile = new File(tempDir + File.separator + remainingPath)
+      FileUtils.touch(tempFile)
+      FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/" + remainingPath), tempFile)
+
+      tempFile.toString()
+    }
+
+    val fromIncludingResources = if (from.startsWith("classpath://"))
+      classpathResourceToFile(from)
+    else
+      from
+
+    val fromFS = fileSystem(fromIncludingResources, conf)
     val toFS = fileSystem(to, conf)
-    val files = listFiles(from)
+    val files = listFiles(fromIncludingResources)
+
     def inner(files: Seq[FileStatus], to: Path): Unit = {
       toFS.mkdirs(to)
       if (recursive) {
@@ -75,6 +93,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
         FileUtil.copy(fromFS, p, toFS, to, false, true, conf)
       }
     }
+
     try {
       inner(files, new Path(to))
     } catch {
