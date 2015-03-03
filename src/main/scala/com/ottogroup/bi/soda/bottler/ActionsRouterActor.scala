@@ -125,11 +125,9 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
         queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("hive").get ! WorkAvailable
       }
-      case cmd: CopyFrom => routers.get("filesystem").get ! CommandWithSender(Copy(cmd.fromPattern, view.partitionPathBuilder()), sender)
       case cmd: FilesystemTransformation => {
         queues.get("filesystem").get.enqueue(CommandWithSender(cmd, sender))
         routers.get("filesystem").get ! WorkAvailable
-
       }
     }
     case cmd: OozieTransformation => {

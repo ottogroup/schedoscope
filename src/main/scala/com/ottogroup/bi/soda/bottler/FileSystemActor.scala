@@ -51,5 +51,4 @@ class FileSystemActor(ds: DriverSettings) extends Actor {
 
 object FileSystemActor {
   def props(ds: DriverSettings) = Props(new FileSystemActor(ds))
-
 }

@@ -52,6 +52,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
           runAndWait(op) else true
       })
 
+      case CopyFrom(from, view, recursive) => doAs(() => copy(from, view.fullPath, recursive))
       case Copy(from, to, recursive) => doAs(() => copy(from, to, recursive))
       case Move(from, to) => doAs(() => move(from, to))
       case Delete(path, recursive) => doAs(() => delete(path, recursive))
