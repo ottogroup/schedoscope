@@ -145,6 +145,26 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
     }
     true
   }
+  
+  def fileChecksums(paths: List[String], recursive: Boolean) : List[String] = {
+    paths.flatMap( p => {
+      val fs = fileSystem(p, conf)
+      val path = new Path(p)
+      if (fs.isFile(path) ) {
+        val cs = fs.getFileChecksum(path)
+        if (cs != null)
+          List(cs.toString)
+        else
+          List()        
+      }
+      else if (recursive) {
+        fileChecksums(listFiles(p).map( f => f.getPath.toString()).toList, recursive)
+      }
+      else
+        List()
+    }).toList 
+  }
+  
 
   def listFiles(path: String): Array[FileStatus] = {
     fileSystem(path, conf).globStatus(new Path(path))
