@@ -50,19 +50,28 @@ class SettingsImpl(val config: Config) extends Extension {
 
   val availableTransformations = config.getObject("soda.transformations")
 
-
   val hadoopConf = new Configuration(true)
-  val jobTrackerOrResourceManager = new YarnConfiguration(hadoopConf).get("yarn.resourcemanager.address", "krymradio.unbelievable-machine.net:8032")
 
-  val nameNode = hadoopConf.get("fs.defaultFS")
+  val jobTrackerOrResourceManager = {
+    val yarnConf = new YarnConfiguration(hadoopConf)
+    if (yarnConf.get("yarn.resourcemanager.address") == null)
+      config.getString("soda.hadoop.resourceManager")
+    else
+      yarnConf.get("yarn.resourcemanager.address")
+  }
 
-  val hiveActionTimeout = config.getDuration("soda.timeouts.hive",TimeUnit.SECONDS)
-  val oozieActionTimeout = config.getDuration("soda.timeouts.oozie",TimeUnit.SECONDS)
-  val fileActionTimeout = config.getDuration("soda.timeouts.file",TimeUnit.SECONDS)
-  val schemaActionTimeout = config.getDuration("soda.timeouts.schema",TimeUnit.SECONDS)
-  val dependencyTimout = config.getDuration("soda.timeouts.dependency",TimeUnit.SECONDS)
-  val materializeAllTimeout = config.getDuration("soda.timeouts.all",TimeUnit.SECONDS)
-  
+  val nameNode = if (hadoopConf.get("fs.defaultFS") == null)
+    config.getString("soda.hadoop.nameNode")
+  else
+    hadoopConf.get("fs.defaultFS")
+    
+  val hiveActionTimeout = config.getDuration("soda.timeouts.hive", TimeUnit.SECONDS)
+  val oozieActionTimeout = config.getDuration("soda.timeouts.oozie", TimeUnit.SECONDS)
+  val fileActionTimeout = config.getDuration("soda.timeouts.file", TimeUnit.SECONDS)
+  val schemaActionTimeout = config.getDuration("soda.timeouts.schema", TimeUnit.SECONDS)
+  val dependencyTimout = config.getDuration("soda.timeouts.dependency", TimeUnit.SECONDS)
+  val materializeAllTimeout = config.getDuration("soda.timeouts.all", TimeUnit.SECONDS)
+
   val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()
