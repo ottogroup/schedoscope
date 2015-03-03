@@ -26,12 +26,14 @@ case class OozieError() extends Failure
 case class OozieSuccess() extends Success
 case class HiveSuccess() extends Success
 case class ViewMaterialized(view: View, incomplete: Boolean, changed: Boolean, errors:Boolean) extends Success
+case class Failed(view:View) extends Failure
 case class NoDataAvaiable(view: View) extends Success
 case class NewDataAvailable(view: View) extends Command
 case class HiveCommand(sql: String) extends Command
 case class OozieCommand(properties: Properties) extends Command
 case class GetStatus() extends Command
 case class ViewStatus(view: View, status: String, dependencies: Seq[ViewStatus]) extends Success
+case class ViewStatusResponse(state:String,view:View)
 sealed abstract class ActionStatusResponse
 import ProcessStatus._
 case class HiveStatusResponse(message: String, actor: ActorRef, status: ProcessStatus, query: String, start: LocalDateTime) extends ActionStatusResponse
