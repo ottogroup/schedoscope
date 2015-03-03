@@ -78,7 +78,7 @@ class SettingsImpl(val config: Config) extends Extension {
   val schemaActionTimeout =  Duration.create(config.getDuration("soda.timeouts.schema",TimeUnit.SECONDS),TimeUnit.SECONDS)
   val dependencyTimout =  Duration.create(config.getDuration("soda.timeouts.dependency",TimeUnit.SECONDS),TimeUnit.SECONDS)
   val materializeAllTimeout =  Duration.create(config.getDuration("soda.timeouts.all",TimeUnit.SECONDS),TimeUnit.SECONDS)
-  
+  val retries = config.getInt("soda.action.retry")
   val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()
