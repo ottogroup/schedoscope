@@ -65,12 +65,13 @@ object SodaService {
   val formatter = DateTimeFormat.fullDateTime()
 
   def start() {
-    deploy() 
+    deploy()
+    val headers = List(("Content-Type", "application/json"))
     Service.serve[Http]("http-service", settings.port, settings.webserviceTimeOut) {
       (context =>
         context.handle { connection =>
           connection.become {
-            case request @ Get on Root => request.ok("Health check OK")
+            case request @ Get on Root => request.ok("Health check OK", headers)
 
             case request @ Get on Root /: "materialize" /: viewUrlPath =>
               try {
@@ -85,11 +86,11 @@ object SodaService {
                   }
                 }
                 if (result == res.size)
-                  request.ok(s"""{ \n"status":"success"\n"view":"${viewName(viewUrlPath)}\n}"""")
+                  request.ok(s"""{ \n"status":"success"\n"view":"${viewName(viewUrlPath)}\n}"""", headers)
                 else if (result == 0)
-                  request.ok(s"""{ \n"status":"nodata"\n"view":"${viewName(viewUrlPath)}\n}"""")
+                  request.ok(s"""{ \n"status":"nodata"\n"view":"${viewName(viewUrlPath)}\n}"""", headers)
                 else
-                  request.ok(s"""{ \n"status":"incomplete"\n"view":"${viewName(viewUrlPath)}\n}"""")
+                  request.ok(s"""{ \n"status":"incomplete"\n"view":"${viewName(viewUrlPath)}\n}"""", headers)
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -100,7 +101,7 @@ object SodaService {
                 val fut = viewActors.map(viewActor => (viewActor ? "status").mapTo[ViewStatus])
                 val res = Await.result(Future sequence fut, 1 hour)
                 val resultMessage = res.foldLeft("") { (message, current) => message + current.view.toString() + "\n" }
-                request.ok(resultMessage)
+                request.ok(resultMessage, headers)
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -111,7 +112,7 @@ object SodaService {
                 val fut = viewActors.map(viewActor => (viewActor ? "invalidate").mapTo[View])
                 val res = Await.result(Future sequence fut, 1 hour)
                 val resultMessage = res.foldLeft("") { (message, current) => message + current.toString() + "\n" }
-                request.ok(resultMessage)
+                request.ok(resultMessage, headers)
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -122,7 +123,7 @@ object SodaService {
                 val fut = viewActors.map(viewActor => (viewActor ? "status").mapTo[ViewStatus])
                 val viewActorsStatus = Await.result(Future sequence fut, 1 hour)
                 viewActors.zip(viewActorsStatus).foreach { case (a, s) => a ! NewDataAvailable(s.view) }
-                request.ok("ok")
+                request.ok("ok", headers)
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -139,7 +140,7 @@ object SodaService {
                       case (json: String, s: OozieStatusResponse) => json + s"""{status:"${s.message}"\ntyp:"oozie"\nstart:"${formatter.print(s.start)}\njobId:"${s.jobId}"}\n""""
                     }
                   } ]""" +
-                  "\n}"))
+                  "\n}", headers))
 
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
@@ -166,14 +167,14 @@ object SodaService {
               try {
                 val result = (settings.system.actorFor(id) ? KillAction)
 
-                result.map { case InternalError(s) => request.error(s) case _ => request.ok("ok") }
+                result.map { case InternalError(s) => request.error(s, headers) case _ => request.ok("ok", headers) }
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
 
             case request @ Get on Root /: "resume" /: id =>
               try {
-                request.ok("ok")
+                request.ok("ok", headers)
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
