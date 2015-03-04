@@ -24,8 +24,7 @@ import com.ottogroup.bi.soda.bottler.KillAction
 import com.ottogroup.bi.soda.bottler.InternalError
 import com.ottogroup.bi.soda.bottler.ViewMaterialized
 import com.ottogroup.bi.soda.bottler.SchemaActor
-import com.ottogroup.bi.soda.bottler.NoDataAvaiable
-import com.ottogroup.bi.soda.bottler.NewDataAvailable
+import com.ottogroup.bi.soda.bottler.NoDataAvailable
 import com.ottogroup.bi.soda.bottler.Deploy
 import com.ottogroup.bi.soda.bottler.ViewSuperVisor
 import com.ottogroup.bi.soda.bottler.ActionsRouterActor
@@ -37,11 +36,16 @@ import com.ottogroup.bi.soda.bottler.ProcessList
 import com.ottogroup.bi.soda.bottler.ProcessStatus._
 import com.ottogroup.bi.soda.bottler.HiveStatusResponse
 import com.ottogroup.bi.soda.bottler.OozieStatusResponse
+import com.ottogroup.bi.soda.bottler.ViewStatusResponse
+import com.ottogroup.bi.soda.bottler.Failed
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.DateTimeFormat
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import akka.actor.ActorRef
+import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
+import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
+import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 
 object SodaService {
   val settings = Settings()
@@ -61,7 +65,7 @@ object SodaService {
   val formatter = DateTimeFormat.fullDateTime()
 
   def start() {
-    deploy()
+    deploy() 
     Service.serve[Http]("http-service", settings.port, settings.webserviceTimeOut) {
       (context =>
         context.handle { connection =>
@@ -72,11 +76,12 @@ object SodaService {
               try {
                 val viewActors = getViewActors(viewUrlPath)
                 val fut = viewActors.map(viewActor => viewActor ? "materialize")
-                val res = Await.result(Future sequence fut,  timeout.duration)
+                val res = Await.result(Future sequence fut,  10 days)
                 val result = res.foldLeft(0) { (count, r) =>
                   r match {
                     case ViewMaterialized(v, incomplete, changed,errors) => count + 1
-                    case _: NoDataAvaiable => count
+                    case _: NoDataAvailable => count
+                    case Failed(view) => count
                   }
                 }
                 if (result == res.size)
@@ -139,7 +144,24 @@ object SodaService {
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
+            case request @ Get on Root /: "listviews" /: test =>
+              try {
+                val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
+                val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
+                status.map(vsl => request.ok(s"{" +
+                  vsl.groupBy(_.state).mapValues(_.size).foldLeft("")((st,a) =>
+                  st + s"""${a._1}:  ${a._2},\n"""
+                  )+
+                 s"""details :[ ${
+                    vsl.foldLeft("") {
+                      case (json: String, s: ViewStatusResponse ) => json + s"""{status:"${s.state}"\nview:"${s.view.n}\nparameters:"${s.view.partitionSpec}"}\n""""
+                               }
+                  } ]""" +
+                  "\n}"))
 
+              } catch {
+                case t: Throwable => errorResponseWithStacktrace(request, t)
+              }
             case request @ Get on Root /: "kill" /: id =>
               try {
                 val result = (settings.system.actorFor(id) ? KillAction)
