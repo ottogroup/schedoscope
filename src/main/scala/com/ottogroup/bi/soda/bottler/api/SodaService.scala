@@ -46,9 +46,17 @@ import akka.actor.ActorRef
 import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
 import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
 import com.ottogroup.bi.soda.bottler.ViewStatusResponse
+import org.codehaus.jackson.map.ObjectMapper
+import com.cloudera.com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.core.io.JsonStringEncoder
 
 object SodaService {
   val settings = Settings()
+  
+  val om = new ObjectMapper()
+  val enc = JsonStringEncoder.getInstance
+  
+  val headers = List(("Content-Type", "application/json"))
 
   implicit val io = IOSystem()
   implicit val ec = ExecutionContext.global
@@ -64,14 +72,12 @@ object SodaService {
     null
   val formatter = DateTimeFormat.fullDateTime()
 
-  def start() {
-    deploy()
-    val headers = List(("Content-Type", "application/json"))
+  def start() {    
     Service.serve[Http]("http-service", settings.port, settings.webserviceTimeOut) {
       (context =>
         context.handle { connection =>
           connection.become {
-            case request @ Get on Root => request.ok("Health check OK", headers)
+            case request @ Get on Root => sendOk(request, """{"status" : "ok"}""")
 
             case request @ Get on Root /: "materialize" /: viewUrlPath =>
               try {
@@ -86,11 +92,11 @@ object SodaService {
                   }
                 }
                 if (result == res.size)
-                  request.ok(s"""{ \n"status":"success"\n"view":"${viewName(viewUrlPath)}\n}"""", headers)
+                  sendOk(request, s"""{ "status":"success", "view":"${viewName(viewUrlPath)}}"""")
                 else if (result == 0)
-                  request.ok(s"""{ \n"status":"nodata"\n"view":"${viewName(viewUrlPath)}\n}"""", headers)
+                  sendOk(request, s"""{ "status":"nodata", "view":"${viewName(viewUrlPath)}}"""")
                 else
-                  request.ok(s"""{ \n"status":"incomplete"\n"view":"${viewName(viewUrlPath)}\n}"""", headers)
+                  sendOk(request, s"""{ "status":"incomplete", "view":"${viewName(viewUrlPath)}}"""")
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -131,35 +137,36 @@ object SodaService {
             case request @ Get on Root /: "listactions" /: test =>
               try {
                 val status = (scheduleActor ? GetStatus()).mapTo[ProcessList]
-                status.map(pl => request.ok(s"{" +
-                  s"""running:  ${pl.status.filter { case s: HiveStatusResponse => s.status == RUNNING; case s: OozieStatusResponse => s.status == RUNNING }.toList.size},\n""" +
-                  s"""idle: ${pl.status.filter { case s: HiveStatusResponse => s.status == IDLE; case s: OozieStatusResponse => s.status == IDLE }.toList.size},\n""" +
-                  s"""processes :[ ${
-                    pl.status.foldLeft("") {
-                      case (json: String, s: HiveStatusResponse) => json + s"""{status:"${s.message}"\ntyp:"hive"\nstart:"${formatter.print(s.start)}\nquery:"${s.query}"}\n""""
-                      case (json: String, s: OozieStatusResponse) => json + s"""{status:"${s.message}"\ntyp:"oozie"\nstart:"${formatter.print(s.start)}\njobId:"${s.jobId}"}\n""""
-                    }
-                  } ]""" +
-                  "\n}", headers))
-
+                status.map(pl => {
+                   val resp = s"{" +
+                    s""" "running" :  ${pl.status.filter { case s: HiveStatusResponse => s.status == RUNNING; case s: OozieStatusResponse => s.status == RUNNING }.toList.size},""" +
+                    s""" "idle" : ${pl.status.filter { case s: HiveStatusResponse => s.status == IDLE; case s: OozieStatusResponse => s.status == IDLE }.toList.size},""" +
+                    s""" "processes" : [ ${
+                      pl.status.map(a => {
+                        a match {
+                          case s: HiveStatusResponse =>  s"""{"status":"${s.message}", "typ":"hive", "start":"${formatter.print(s.start)}", "query":"${new String(enc.quoteAsString(s.query))}"} """
+                          case s: OozieStatusResponse => s"""{"status":"${s.message}", "typ":"oozie", "start":"${formatter.print(s.start)}", "jobId":"${s.jobId}"} """
+                        }                        
+                      }).mkString(",")}]}
+                     """
+                  sendOk(request, resp)
+                  })                  
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
-            case request @ Get on Root /: "listviews" /: test =>
+            case request @ Get on Root /: "listviews" /: state =>
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
                 val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
-                status.map(vsl => request.ok(s"{" +
-                  vsl.groupBy(_.state).mapValues(_.size).foldLeft("")((st,a) =>
-                  st + s"""${a._1}:  ${a._2},\n"""
-                  )+
-                 s"""details :[ ${
-                    vsl.foldLeft("") {
-                      case (json: String, s: ViewStatusResponse ) => json + s"""{status:"${s.state}"\nview:"${s.view.n}\nparameters:"${s.view.partitionSpec}"}\n""""
-                               }
-                  } ]""" +
-                  "\n}", headers))
-
+                status.map( views => {
+                    val stats = views.groupBy(_.state)
+                                     .mapValues(_.size)
+                                     .map(a => s""""${a._1}" : ${a._2},""")
+                                     .mkString("")
+                    val filtered = views.filter("any".equals(state) || _.state.equals(state))
+                    val details = filtered.map(v => s"""{"status":"${v.state}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
+                    sendOk(request, s"""{ ${stats}  "details" : [ ${details} ] }""")
+                })                                 
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -206,4 +213,26 @@ object SodaService {
     request.error(t.getStackTrace().foldLeft("")((s, e) => s + e.toString() + "\n"),
       List(("content-type", "text/plain")))
   }
+    
+  private def formatJson(json: String) = {    
+    om.defaultPrettyPrintingWriter().writeValueAsString(om.readValue(json, classOf[Object]))    
+  }
+  
+  private def sendOk(r: HttpRequest, s: String) = {
+    try {
+      r.ok(formatJson(s), headers)
+    } catch {
+      case j: Exception => r.error("Cannot parse JSON: " + s, List(("Content-type", "text/plain")) )
+    }
+    
+  }
+  
+  private def sendError(r: HttpRequest, s: String) = {
+    try {
+      r.error(formatJson(s), headers)
+    } catch {
+      case j: Exception => r.error("Cannot parse JSON: " + s, List(("Content-type", "text/plain")) )
+    }    
+  }  
+    
 }
