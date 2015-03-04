@@ -7,6 +7,8 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import com.ottogroup.bi.soda.crate.DeploySchema
 import com.ottogroup.bi.soda.crate.ddl.HiveQl._
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.dsl.Version
 
 case class CreateSchema(view: View)
 case class AddPartition(view: View)
@@ -16,13 +18,12 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 
   def receive = {
     case CreateSchema(view) => {
-      if (!(crate.schemaExists(view.env + "_" + view.module, view.n, ddl(view))))
-        crate.dropAndCreateTableSchema(view.env + "_" + view.module, view.n, ddl(view))
+      if (!(crate.schemaExists(view)))
+        crate.dropAndCreateTableSchema(view)
       sender ! new Success
     }
     case AddPartition(view) => {
       
-      //if (crate.schemaExists(view.env + "_" + view.module, view.n, ddl(view)))
       try {
         crate.createPartition(view)
       } catch {
@@ -32,14 +33,15 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
     }
     case CheckVersion(view) => {
       
-      if (crate.partitionExists(view.env + "_" + view.module, view.n, ddl(view), view.partitionSpec)) {
+      if (crate.partitionExists(view)) {
         try {
-
-          val digest = crate.getPartitionVersion(view)
-          if (digest.equals(view.transformation().versionDigest))
+          if (!Settings().transformationVersioning)
+            sender ! VersionOk(view)
+          val pv = crate.getPartitionVersion(view)
+          if (pv.equals(view.transformation().versionDigest()))
             sender ! VersionOk(view)
           else
-            sender ! VersionMismatch(view, digest)
+            sender ! VersionMismatch(view, pv)
         } catch {
           case e: Throwable => { e.printStackTrace(); this.sender ! Error }
         }
@@ -47,7 +49,6 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
         sender ! VersionMismatch(view, "")
     }
     case SetVersion(view) => {
-      //if (crate.schemaExists(view.env + "_" + view.module, view.n, ddl(view)))
       try {
         crate.setPartitionVersion(view)
       } catch {

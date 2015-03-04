@@ -11,6 +11,10 @@ import java.io.FileInputStream
 
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {
   configureWith(c)
+  
+  override def resources() = {
+    List(workflowAppPath)
+  } 
 }
 
 object OozieTransformation {

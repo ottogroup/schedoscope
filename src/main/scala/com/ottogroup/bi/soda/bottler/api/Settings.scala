@@ -51,6 +51,8 @@ class SettingsImpl(val config: Config) extends Extension {
   val availableTransformations = config.getObject("soda.transformations")
 
   val hadoopConf = new Configuration(true)
+  
+  val transformationVersioning = config.getBoolean("soda.versioning.transformations")
 
   val jobTrackerOrResourceManager = {
     val yarnConf = new YarnConfiguration(hadoopConf)

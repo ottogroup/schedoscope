@@ -28,6 +28,7 @@ import com.ottogroup.bi.soda.bottler.api.DriverSettings
 import FileSystemDriver._
 import org.apache.commons.io.FileUtils
 import java.nio.file.Files
+import scala.collection.mutable.HashMap
 
 class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) extends Driver {
 
@@ -148,17 +149,18 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
   
   def fileChecksums(paths: List[String], recursive: Boolean) : List[String] = {
     paths.flatMap( p => {
+      println("Computing checksum for " + p)
       val fs = fileSystem(p, conf)
       val path = new Path(p)
       if (fs.isFile(path) ) {
-        val cs = fs.getFileChecksum(path)
-        if (cs != null)
-          List(cs.toString)
+        val cs = ChecksumCache.lookup(p).getOrElse(fs.getFileChecksum(path))        
+        if (cs != null) 
+          List(ChecksumCache.cache(p, cs.toString))
         else
-          List()        
+          List()
       }
       else if (recursive) {
-        fileChecksums(listFiles(p).map( f => f.getPath.toString()).toList, recursive)
+        fileChecksums(listFiles(p + "/*").map( f => f.getPath.toString()).toList, recursive)
       }
       else
         List()
@@ -190,4 +192,22 @@ object FileSystemDriver {
   def apply(ds: DriverSettings) = {
     new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
   }
+}
+
+object ChecksumCache {
+  val checksums = HashMap[String,String]()
+  
+  def lookup(file: String) : Option[String]  = {
+    checksums.get(file)
+  }
+  
+  def cache(file: String, checksum: String) : String = {
+    checksums.put(file, checksum)
+    checksum
+  }
+  
+  def clear() {
+    checksums.clear()
+  }
+ 
 }

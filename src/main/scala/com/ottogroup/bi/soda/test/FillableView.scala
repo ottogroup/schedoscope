@@ -107,14 +107,14 @@ trait rows extends View {
   def deploySchema() {
     val d = resources().bottler
     println(HiveQl.ddl(this))
-    if (!d.schemaExists(dbName, n, HiveQl.ddl(this))) {
-      d.dropAndCreateTableSchema(dbName, n, HiveQl.ddl(this))
+    if (!d.schemaExists(this)) {
+      d.dropAndCreateTableSchema(this)
     }
   }
 
   def writeData() {
     val d = resources().bottler
-    val partitionFilePath = if (!this.partitionParameters.isEmpty)
+    val partitionFilePath = if (this.isPartitioned())
       new Path(new URI(d.createPartition(this).getSd.getLocation).getPath)
     else
       new Path(this.fullPath)

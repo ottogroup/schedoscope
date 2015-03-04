@@ -56,12 +56,14 @@ trait test extends TestableView {
       case _ => this.transformation()
     }
 
-    println("Starting transformation")
+    println("Starting transformation; version is: " + trans.versionDigest())    
     driver().runAndWait(trans)
     println("Populating results transformation, adding partition")
     // FIXME: some transformations may create the partition by themselves?
-    val part = resources().bottler.createPartition(this)
-    println("Added partition: " + part.getSd.getLocation)
+    if (this.isPartitioned()) {
+      val part = resources().bottler.createPartition(this)
+      println("Added partition: " + part.getSd.getLocation)
+    }
     populate(sortedBy)
 
   }

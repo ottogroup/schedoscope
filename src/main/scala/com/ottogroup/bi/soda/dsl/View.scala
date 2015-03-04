@@ -69,6 +69,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def isPartition(p: Parameter[_]) = parameters.contains(p)
 
   def isSuffixPartition(p: Parameter[_]) = suffixPartitions.contains(p)
+  
+  def isPartitioned() = !partitionParameters.isEmpty()
 
   def asTableSuffix[P <: Parameter[_]](p: P): P = {
     suffixPartitions.add(p)

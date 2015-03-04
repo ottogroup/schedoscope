@@ -17,16 +17,19 @@ import org.apache.hadoop.hive.metastore.api.Function
 import scala.collection.mutable.ListBuffer
 import collection.JavaConversions._
 import org.apache.commons.io.FilenameUtils
+import com.ottogroup.bi.soda.dsl.Version
 
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
-  val md5 = MessageDigest.getInstance("MD5")
-
-  def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
-
-  override def versionDigest = digest(sql.foldLeft(new StringBuilder())((a, b) => a.append(b)).toString)
+    
+  override def versionDigest = Version.digest(resourceHashes :+ sql )
+  
+  override def resources() = {
+    udfs.flatMap(udf => udf.getResourceUris.map( uri => uri.getUri) )
+  }  
 }
 
-object HiveTransformation {
+object HiveTransformation extends  {  
+  
   def withFunctions(v: View, functions: Map[String, Class[_]] = Map()) = {
     val functionBuff = ListBuffer[Function]()
 

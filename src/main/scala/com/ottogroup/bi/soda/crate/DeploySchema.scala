@@ -27,15 +27,13 @@ import org.joda.time.DateTime
 import collection.JavaConversions._
 import org.apache.hadoop.hive.metastore.api.MetaException
 import scala.collection.mutable.HashMap
+import com.ottogroup.bi.soda.dsl.TransformationVersion
+import com.ottogroup.bi.soda.dsl.SchemaVersion
+import com.ottogroup.bi.soda.dsl.Version
 
 class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
-  val tablePropSchemaHash = "hash"
-  val partitionPropDigestName = "versionDigest"
-
-  // FIXME: add transformation version handling (hash for transformation version + global "digest" for view version
-  def digest(string: String): String = md5.digest(string.toCharArray().map(_.toByte)).map("%02X" format _).mkString
 
   def setTableProperty(dbName: String, tableName: String, key: String, value: String): Unit = {
     val table = metastoreClient.getTable(dbName, tableName)
@@ -50,49 +48,47 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
   }
 
   def setPartitionVersion(view: View) = {
-    setPartitionProperty(view.dbName, view.n, view.partitionSpec, partitionPropDigestName, view.transformation().versionDigest)
+    setPartitionProperty(view.dbName, view.n, view.partitionSpec, TransformationVersion.checksumProperty, view.transformation().versionDigest)
   }
 
   def getPartitionVersion(view: View): String = {
     try {
       val props = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec).getParameters()
-      if (props.containsKey(partitionPropDigestName))
-        props.get(partitionPropDigestName)
-      else
-        "does not exist"
+      Version.check(props.get(TransformationVersion.checksumProperty))
     } catch {
       case e: Exception => throw e
     }
   }
-
-  def dropAndCreateTableSchema(dbName: String, tableName: String, sql: String): Unit = {
-    println("in dropAndCreateSchema " + dbName + "." + tableName + " " + sql)
+  
+  def dropAndCreateTableSchema(view: View): Unit = {
+    val ddl = HiveQl.ddl(view)
+    println("in dropAndCreateSchema " + view.dbName + "." + view.n + " " + ddl)
     val stmt = connection.createStatement()
-    if (!metastoreClient.getAllDatabases.contains(dbName)) {
-      stmt.execute(s"CREATE DATABASE ${dbName}")
+    if (!metastoreClient.getAllDatabases.contains(view.dbName)) {
+      stmt.execute(s"CREATE DATABASE ${view.dbName}")
     }
-    if (metastoreClient.tableExists(dbName, tableName)) {
-      metastoreClient.dropTable(dbName, tableName, false, true)
+    if (metastoreClient.tableExists(view.dbName, view.n)) {
+      metastoreClient.dropTable(view.dbName, view.n, false, true)
     }
 
-    stmt.execute(sql)
+    stmt.execute(ddl)
 
-    setTableProperty(dbName, tableName, tablePropSchemaHash, digest(sql))
-    println("!!created table " + sql)
+    setTableProperty(view.dbName, view.n, SchemaVersion.checksumProperty, Version.digest(ddl))
+    println("!!created table " + ddl)
   }
 
-  def schemaExists(dbname: String, tableName: String, sql: String): Boolean = {
-    val d = digest(sql)
+  def schemaExists(view: View): Boolean = {
+    val d = Version.digest(HiveQl.ddl(view))
     if (existingSchemas.contains(d))
       return true;
-    if (!metastoreClient.tableExists(dbname, tableName)) {
+    if (!metastoreClient.tableExists(view.dbName, view.n)) {
       false
     } else {
-      val table = metastoreClient.getTable(dbname, tableName)
+      val table = metastoreClient.getTable(view.dbName, view.n)
       val props = table.getParameters()
-      if (!props.containsKey(tablePropSchemaHash))
+      if (!props.containsKey(SchemaVersion.checksumProperty))
         false
-      else if (d == props.get(tablePropSchemaHash).toString()) {
+      else if (d == props.get(SchemaVersion.checksumProperty).toString()) {
         existingSchemas += d
         true
       } else
@@ -100,28 +96,31 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     }
   }
 
-  def partitionExists(dbname: String, tableName: String, sql: String, partition: String): Boolean = {
-    if (!schemaExists(dbname, tableName, sql)) return false
+  def partitionExists(view: View): Boolean = {
+    if (!schemaExists(view)) return false
     else
       try {
-        metastoreClient.getPartition(dbname, tableName, partition)
+        metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
       } catch {
         case e: NoSuchObjectException => return false
       }
     true
   }
+  
+
 
   def createPartition(view: View): Partition = {
-    if (!schemaExists(view.dbName, view.n, HiveQl.ddl(view))) {
-      dropAndCreateTableSchema(view.dbName, view.n, HiveQl.ddl(view))
+    if (!schemaExists(view)) {
+      dropAndCreateTableSchema(view)
     }
+    if (!view.isPartitioned())
+      throw new RuntimeException(s"Cannot create partition on non-partitioned view ${view.tableName}")
     try {
       val now = new DateTime().getMillis.toInt
       val sd = metastoreClient.getTable(view.dbName, view.n).getSd
  
       sd.setLocation(view.fullPath)
       val part = new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String, String]())
-      //val part = metastoreClient.appendPartition(view.dbName, view.n, view.partitionSpec)
       metastoreClient.add_partitions(List(part), true, false)
       metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
     } catch {
@@ -138,7 +137,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     tables.diff(validTables).foreach { tableName =>
       {
         val table = metastoreClient.getTable(dbname, tableName)
-        if (table.getParameters().containsKey(tablePropSchemaHash))
+        if (table.getParameters().containsKey(SchemaVersion.checksumProperty))
           metastoreClient.dropTable(dbname, tableName, false, true)
       }
     }
@@ -151,8 +150,8 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
       else { hashSet.add(HiveQl.ddl(view)); true }
     }).foreach { view =>
       {
-        if (!schemaExists(view.dbName, view.n, HiveQl.ddl(view)))
-          dropAndCreateTableSchema(view.dbName, view.n, HiveQl.ddl(view))
+        if (!schemaExists(view))
+          dropAndCreateTableSchema(view)
       }
     }
   }
@@ -160,7 +159,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
 }
 
 object DeploySchema {
-  def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
+	def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
     Class.forName("org.apache.hive.jdbc.HiveDriver")
     val connection =
       Settings().userGroupInformation.doAs(new PrivilegedAction[Connection]() {
