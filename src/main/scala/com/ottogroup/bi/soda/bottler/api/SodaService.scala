@@ -158,7 +158,7 @@ object SodaService {
                       case (json: String, s: ViewStatusResponse ) => json + s"""{status:"${s.state}"\nview:"${s.view.n}\nparameters:"${s.view.partitionSpec}"}\n""""
                                }
                   } ]""" +
-                  "\n}"))
+                  "\n}", headers))
 
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
