@@ -27,7 +27,7 @@ case class OozieSuccess() extends Success
 case class HiveSuccess() extends Success
 case class ViewMaterialized(view: View, incomplete: Boolean, changed: Boolean, errors:Boolean) extends Success
 case class Failed(view:View) extends Failure
-case class NoDataAvaiable(view: View) extends Success
+case class NoDataAvailable(view: View) extends Success
 case class NewDataAvailable(view: View) extends Command
 case class HiveCommand(sql: String) extends Command
 case class OozieCommand(properties: Properties) extends Command
