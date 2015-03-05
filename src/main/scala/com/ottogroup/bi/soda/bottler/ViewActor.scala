@@ -141,7 +141,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   // transitions: materialized,failed,transforming
   def transforming(retries: Int): Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("transforming", view)
-    case _: OozieSuccess | _: HiveSuccess | _: Success => {
+    case _: OozieSuccess | _: HiveSuccess | _: FileSystemSuccess => {
       log.info("SUCCESS")
 
       Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), settings.fileActionTimeout)
@@ -156,7 +156,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
       listeners.clear
     }
     case OozieException(exception) => retry(retries)
-    case _: OozieError | _: HiveError | _: Error | _: Failure => retry(retries)
+    case _: OozieError | _: HiveError | _: Error | _: FileSystemError => retry(retries)
   })
 
   def reload() = {

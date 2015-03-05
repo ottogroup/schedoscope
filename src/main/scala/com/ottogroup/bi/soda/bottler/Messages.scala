@@ -23,7 +23,9 @@ case class OozieException(e: Throwable) extends Failure
 case class ActorException(e: Throwable) extends Failure
 case class HiveError() extends Failure
 case class OozieError() extends Failure
+case class FileSystemError() extends Failure
 case class OozieSuccess() extends Success
+case class FileSystemSuccess() extends Success
 case class HiveSuccess() extends Success
 case class ViewMaterialized(view: View, incomplete: Boolean, changed: Boolean, errors:Boolean) extends Success
 case class Failed(view:View) extends Failure

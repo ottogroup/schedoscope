@@ -41,8 +41,8 @@ class FileSystemActor(ds: DriverSettings) extends Actor {
         driver.runAndWait(cmd)
       }(ec)
       operation.onSuccess {
-        case true => { requester ! new Success }
-        case false => { requester ! new Failure }
+        case true => { requester ! new FileSystemSuccess }
+        case false => { requester ! new FileSystemError }
       }(ec)
       operation.onFailure { case t => { requester ! ActorException(t) } }(ec)
     }

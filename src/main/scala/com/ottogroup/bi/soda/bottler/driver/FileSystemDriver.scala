@@ -65,7 +65,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
       FileUtils.touch(tempFile)
       FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/" + remainingPath), tempFile)
 
-      tempFile.toString()
+      "file:" + tempFile.toString()
     }
 
     val fromIncludingResources = if (from.startsWith("classpath://"))
