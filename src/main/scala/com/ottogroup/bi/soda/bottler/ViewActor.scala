@@ -107,18 +107,18 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   val listeners = collection.mutable.Queue[ActorRef]()
   val dependencies = collection.mutable.HashSet[View]()
   val actionsRouter = actorFor("/user/actions")
-  
+
   // state variables
   // one of the dependencies was not available (no data)
   var incomplete = false
-  
+
   // one of the dependencies or the view itself was recreated
   var changed = false
-  
+
   // one of the dependencies' transformations failed
   var withErrors=false
   var availableDependencies = 0
-  
+
   def receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("receive", view)
     case "materialize" => materializeDependencies
@@ -130,10 +130,10 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     Await.result(actionsRouter ? Delete(view.fullPath, true), settings.fileActionTimeout)
 
     actionsRouter ! view
-    
+
     unbecome()
     become(transforming(retries))
-    
+
     log.debug("STATE CHANGE:transforming")
   }
   
@@ -143,31 +143,31 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     case _: GetStatus => sender ! ViewStatusResponse("transforming", view)
     case _: OozieSuccess | _: HiveSuccess => {
       log.info("SUCCESS")
-      
+
       Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), settings.fileActionTimeout)
       Await.result(schemaActor ? SetVersion(view), settings.schemaActionTimeout)
-      
+
       unbecome()
       become(materialized)
-      
+
       log.debug("STATE CHANGE:transforming->materialized")
-      
+
       listeners.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view, incomplete, true, withErrors) })
       listeners.clear
     }
     case OozieException(exception) => retry(retries)
     case _: OozieError | _: HiveError | _: Error => retry(retries)
   })
-  
+
   def reload() = {
     unbecome()
     become(waiting)
-    
+
     log.debug("STATE CHANGE:waiting")
-    
+
     Await.result(actionsRouter ? Delete(view.fullPath + "/_SUCCESS", false), settings.fileActionTimeout)
     transform(1)
-    
+
     // tell everyone that new data is avaiable
     system.actorSelection("/user/supervisor/*") ! NewDataAvailable(view)
   }
@@ -191,11 +191,14 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     case _: GetStatus => sender ! ViewStatusResponse("nodata", view)
 
     case "materialize" => sender ! NoDataAvailable(view)
-    case "invalidate" =>
-      unbecome(); become(receive); log.debug("STATE CHANGE:nodata->receive")
+    case "invalidate" => {
+      unbecome()
+      become(receive)
+
+      log.debug("STATE CHANGE:nodata->receive")
+    }
 
     case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
-
   })
 
   def retrying(retries: Int): Receive = LoggingReceive({
@@ -206,10 +209,12 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
       transform(retries + 1)
     else {
       unbecome()
-      become(failed);
-      log.warning("STATE CHANGE:retrying-> failed")
+      become(failed)
+
       listeners.foreach(_ ! Failed(view))
       listeners.clear()
+
+      log.warning("STATE CHANGE:retrying-> failed")
     }
   })
 
@@ -291,9 +296,9 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   private def retry(retries: Int): akka.actor.Cancellable = {
     unbecome()
     become(retrying(retries))
-    
+
     log.warning("STATE CHANGE: transforming->retrying")
-    
+
     // exponential backoff
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! "retry")
   }
@@ -304,7 +309,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     if (dependencies.isEmpty) {
       // there where dependencies that did not return nodata
       if (availableDependencies > 0) {
-        
+
         if (!changed) {
           val versionInfo = Await.result(schemaActor ? CheckVersion(view), settings.schemaActionTimeout)
           log.debug(versionInfo.toString)
@@ -315,25 +320,25 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
             case VersionMismatch(v, version) => changed = true; log.debug("version mismatch,assuming changed workflow")
           }
         }
-        
+
         if (changed)
           transform(0)
         else {
           listeners.foreach(s => s ! ViewMaterialized(view, incomplete, false, withErrors))
           listeners.clear
-          
+
           unbecome
           become(materialized)
-          
+
           log.debug("STATE CHANGE:waiting->materialized")
         }
       } else {
         listeners.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
         listeners.clear
-        
+
         unbecome
         become(receive)
-        
+
         log.debug("STATE CHANGE:waiting->receive")
 
       }
@@ -345,15 +350,15 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     if (view.dependencies.isEmpty) {
       if (successFlagExists(view) && view.transformation() == NoOp()) {
         log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
-        
+
         sender ! ViewMaterialized(view, false, false, withErrors)
-        
+
         become(materialized)
-        
+
         log.debug("STATE CHANGE:receive->materialized")
       } else if (view.transformation() != NoOp()) {
         log.debug("no dependencies for " + view + " and transformation specified")
-        
+
         transform(0)
       } else {
         log.debug("no data and no dependencies for " + view)
@@ -371,13 +376,13 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
           val actor = Await.result((supervisor ? dependendView).mapTo[ActorRef], timeout.duration)
           dependencies.add(dependendView)
           availableDependencies += 1
-          
+
           actor ! "materialize"
         }
       }
-      
+
       become(waiting)
-      
+
       log.debug("STATE CHANGE:receive -> waiting")
     }
 
