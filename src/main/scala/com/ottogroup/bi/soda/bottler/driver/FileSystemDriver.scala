@@ -36,12 +36,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
     def run(): Boolean = {
       f()
     }
-  })
-
-  def run(t: Transformation): String = {
-    // TODO non-blocking implementation possible / wanted?
-    ""
-  }
+  })  
 
   def runAndWait(t: Transformation): Boolean =
     t match {

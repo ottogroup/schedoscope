@@ -26,6 +26,8 @@ import org.apache.hadoop.hive.metastore.api.MetaException
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 
 class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreClient) extends Driver {
+  override def supportsNonBlockingRun = true
+
   override def run(t: Transformation): String = {
     t match {
       case th: HiveTransformation => {
@@ -33,18 +35,18 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
         executeHiveQuery(replaceParameters(th.sql, th.configuration.toMap))
       }
 
-      case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
+      case _ => throw DriverException("HiveDriver can only run HiveQl transformations.")
     }
     ""
   }
 
-  override def runAndWait(t: Transformation): Boolean = {
+  def runAndWait(t: Transformation): Boolean = {
     t match {
       case th: HiveTransformation => {
         th.udfs.foreach(this.registerFunction(_))
         if (!executeHiveQuery(replaceParameters(th.sql, th.configuration.toMap))) return false
       }
-      case _ => throw new RuntimeException("HiveDriver can only run HiveQl transformations.")
+      case _ => throw DriverException("HiveDriver can only run HiveQl transformations.")
     }
 
     true

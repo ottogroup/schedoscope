@@ -11,14 +11,19 @@ import java.nio.file.Files
 import scala.util.Random
 import net.lingala.zip4j.core.ZipFile
 
+case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+
 trait Driver {
+  def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
+  
+  def supportsNonBlockingRun = false
+  
   // non-blocking
-  def run(t: Transformation): String
+  def run(t: Transformation): String =  throw DriverException(s"Driver ${name} does not support asynchronous run()")
 
   // blocking
   def runAndWait(t: Transformation): Boolean
 
-  def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
 
   // deploy resources for all transformations run by this driver
   def deployAll(driverSettings: DriverSettings): Boolean = {

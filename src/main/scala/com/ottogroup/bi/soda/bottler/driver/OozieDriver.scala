@@ -19,6 +19,7 @@ import com.ottogroup.bi.soda.bottler.api.Settings
 import java.io.FileReader
 
 class OozieDriver(val client: OozieClient) extends Driver {
+  override def supportsNonBlockingRun = true
 
   override def run(t: Transformation): String =
     t match {
@@ -28,10 +29,10 @@ class OozieDriver(val client: OozieClient) extends Driver {
         runOozieJob(jobConf)
       }
 
-      case _ => throw new RuntimeException("OozieDriver can only run OozieWF transformations.")
+      case _ => throw DriverException("OozieDriver can only run OozieWF transformations.")
     }
 
-  override def runAndWait(t: Transformation): Boolean =
+  def runAndWait(t: Transformation): Boolean =
     t match {
       case ot: OozieTransformation => {
         val jobConf = createOozieJobConf(ot)
@@ -39,7 +40,7 @@ class OozieDriver(val client: OozieClient) extends Driver {
         runAndWait(jobConf)
       }
 
-      case _ => throw new RuntimeException("OozieDriver can only run OozieWF transformations.")
+      case _ => throw DriverException("OozieDriver can only run OozieWF transformations.")
     }
 
   def runOozieJob(jobProperties: Properties): String = client.run(jobProperties)
