@@ -21,6 +21,7 @@ import scala.collection.mutable.ListBuffer
 import java.util.Properties
 import java.io.FileReader
 import java.io.IOException
+import java.nio.file.Paths
 import com.ottogroup.bi.soda.dsl.Transformation
 import java.net.URLClassLoader
 import FileSystemDriver._
@@ -152,5 +153,13 @@ class DriverSettings(val config: Config, val name: String) {
       .toList
 
     (fromLibDir ++ fromClasspath).toList
+  }
+  
+  val libJarsHdfs = {
+    if (unpack)
+      List[String]()
+    else {
+      libJars.map(lj => location + "/" + Paths.get(lj).getFileName.toString)
+    }
   }
 }

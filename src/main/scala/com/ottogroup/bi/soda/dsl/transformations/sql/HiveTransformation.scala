@@ -35,7 +35,7 @@ object HiveTransformation extends  {
 
     for ((name, cls) <- functions) {
       //val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
-      val jarResources = Settings().getDriverSettings("hive").libJars.map(lj => new ResourceUri(ResourceType.JAR, lj))
+      val jarResources = Settings().getDriverSettings("hive").libJarsHdfs.map(lj => new ResourceUri(ResourceType.JAR, lj))
       //val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
       functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
     }
