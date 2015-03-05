@@ -178,35 +178,33 @@ object SodaService {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
                 val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
                 val nodes = HashSet[(String,String)]()
-                val edges = HashMap[String,String]()
-                val groups = Map(("materialized", 0), ("transforming",1), ("nodata", 2), ("table", 3), ("failed", 4), ("retrying", 5), ("receive", 6), ("waiting", 7), ("db", 8))
-                var idx = 0
+                val edges = HashSet[(String,String)]()
+                val colors = Map(("materialized", "lime"), ("transforming","yellow"), ("nodata", "beige"), ("table", "black"), ("failed", "red"), ("retrying", "orange"), ("receive", "powderblue"), ("waiting", "blue"), ("dummy", "white"))
                 status.map( views => {
-                    views.foreach(v => {                     
-                        nodes.add((v.view.viewId,v.state))
-                        idx += 1
-                        v.view.dependencies.foreach(d => {
-                          edges.put(d.viewId, v.view.viewId)
-                        })                        
+                    views.foreach(v => {
+                        if (v.state != "receive" && v.state != "nodata") {
+                          nodes.add((v.view.viewId,v.state))
+                          v.view.dependencies.foreach(d => {
+                            edges.add((d.viewId, v.view.viewId))
+                          })                        
+                        }
                     })
-                    val outer = nodes.map(n => n._1).toSeq.diff(edges.keys.toSeq.distinct)
+                    val outer = nodes.map(n => n._1).toSeq.diff(edges.map(e=>e._1).toSeq.distinct)
                     outer.foreach(o => {
                       val tab = o.split("/")(0)
                       val db = tab.split("\\.")(0)
                       nodes.add((tab, "table"))
-                      //nodes.add((db, "db"))
-                      edges.put(o, tab)
-                      //if (!edges.get(tab).getOrElse("").equals(db))
-                        //edges.put(tab, db)
+                      edges.add((o, tab))
                     })
                     val nodeList = nodes.toList.zipWithIndex.map(el => (el._1._1, (el._2,el._1._2)))
-                    val nodeLookup = nodeList.toMap
-                    println(nodeLookup.mkString("\n"))
+                    val nodeLookup = nodeList.map(nl => (nl._1, nl._2._1)).toMap
                     
-                    val nodeListJson = nodeList.map( n => s"""{"name":"${n._1} : ${n._2._2}", "group":${groups.get(n._2._2).get}}""" ).mkString(",")
-                    val edgeList = edges.map(e => s"""{"source":${nodeLookup.get(e._1).get._1}, "target":${nodeLookup.get(e._2).get._1}, "value":1}""").mkString(",")
+                    val nodeListJson = nodeList.map( n => s"""{"name":"${n._1} : ${n._2._2}", "color":"${colors.get(n._2._2).get}"}""" ).mkString(",")
+                    val edgeListJson = edges.filter(e => {nodeLookup.contains(e._1) && nodeLookup.contains(e._2)})
+                                        .map(e => s"""{"source":${nodeLookup.get(e._1).get}, "target":${nodeLookup.get(e._2).get}, "value":1}""")
+                                        .mkString(",")
                     
-                    sendOk(request, s"""{ "nodes" : [${nodeListJson}], "links" : [${edgeList}] }""")  
+                    sendOk(request, s"""{ "nodes" : [${nodeListJson}], "links" : [${edgeListJson}] }""")  
                 })                                 
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)

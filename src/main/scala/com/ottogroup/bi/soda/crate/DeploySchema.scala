@@ -30,6 +30,7 @@ import scala.collection.mutable.HashMap
 import com.ottogroup.bi.soda.dsl.TransformationVersion
 import com.ottogroup.bi.soda.dsl.SchemaVersion
 import com.ottogroup.bi.soda.dsl.Version
+import collection.JavaConversions._ 
 
 class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
@@ -53,8 +54,11 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
 
   def getPartitionVersion(view: View): String = {
     try {
-      val props = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec).getParameters()
-      Version.check(props.get(TransformationVersion.checksumProperty))
+      val part = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
+      if (part == null || part.getParameters == null)
+        Version.default
+      else 
+        part.getParameters.getOrElse(TransformationVersion.checksumProperty, Version.default)
     } catch {
       case e: Exception => throw e
     }
