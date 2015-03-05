@@ -63,6 +63,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def locationPath = locationPathBuilder(env)
   def fullPath = locationPath + partitionPathBuilder()
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
+  
+  def viewId = tableName + "/" + partitionValues.mkString("/")
 
   private val suffixPartitions = new HashSet[Parameter[_]]()
 

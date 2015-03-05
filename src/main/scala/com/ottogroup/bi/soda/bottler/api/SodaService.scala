@@ -49,6 +49,8 @@ import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 import org.codehaus.jackson.map.ObjectMapper
 import com.cloudera.com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.io.JsonStringEncoder
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.HashSet
 
 object SodaService {
   val settings = Settings()
@@ -56,7 +58,7 @@ object SodaService {
   val om = new ObjectMapper()
   val enc = JsonStringEncoder.getInstance
   
-  val headers = List(("Content-Type", "application/json"))
+  val headers = List(("Content-Type", "application/json"), ("Access-Control-Allow-Origin", "*"))
 
   implicit val io = IOSystem()
   implicit val ec = ExecutionContext.global
@@ -72,7 +74,8 @@ object SodaService {
     null
   val formatter = DateTimeFormat.fullDateTime()
 
-  def start() {    
+  def start() {
+    deploy()
     Service.serve[Http]("http-service", settings.port, settings.webserviceTimeOut) {
       (context =>
         context.handle { connection =>
@@ -92,11 +95,11 @@ object SodaService {
                   }
                 }
                 if (result == res.size)
-                  sendOk(request, s"""{ "status":"success", "view":"${viewName(viewUrlPath)}}"""")
+                  sendOk(request, s"""{ "status":"success", "view":"${viewName(viewUrlPath)}"}""")
                 else if (result == 0)
-                  sendOk(request, s"""{ "status":"nodata", "view":"${viewName(viewUrlPath)}}"""")
+                  sendOk(request, s"""{ "status":"nodata", "view":"${viewName(viewUrlPath)}"}""")
                 else
-                  sendOk(request, s"""{ "status":"incomplete", "view":"${viewName(viewUrlPath)}}"""")
+                  sendOk(request, s"""{ "status":"incomplete", "view":"${viewName(viewUrlPath)}"}""")
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -170,6 +173,44 @@ object SodaService {
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
+            case request @ Get on Root /: "dependencygraph" /: dummy =>
+              try {
+                val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
+                val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
+                val nodes = HashSet[(String,String)]()
+                val edges = HashMap[String,String]()
+                val groups = Map(("materialized", 0), ("transforming",1), ("nodata", 2), ("table", 3), ("failed", 4), ("retrying", 5), ("receive", 6), ("waiting", 7), ("db", 8))
+                var idx = 0
+                status.map( views => {
+                    views.foreach(v => {                     
+                        nodes.add((v.view.viewId,v.state))
+                        idx += 1
+                        v.view.dependencies.foreach(d => {
+                          edges.put(d.viewId, v.view.viewId)
+                        })                        
+                    })
+                    val outer = nodes.map(n => n._1).toSeq.diff(edges.keys.toSeq.distinct)
+                    outer.foreach(o => {
+                      val tab = o.split("/")(0)
+                      val db = tab.split("\\.")(0)
+                      nodes.add((tab, "table"))
+                      //nodes.add((db, "db"))
+                      edges.put(o, tab)
+                      //if (!edges.get(tab).getOrElse("").equals(db))
+                        //edges.put(tab, db)
+                    })
+                    val nodeList = nodes.toList.zipWithIndex.map(el => (el._1._1, (el._2,el._1._2)))
+                    val nodeLookup = nodeList.toMap
+                    println(nodeLookup.mkString("\n"))
+                    
+                    val nodeListJson = nodeList.map( n => s"""{"name":"${n._1} : ${n._2._2}", "group":${groups.get(n._2._2).get}}""" ).mkString(",")
+                    val edgeList = edges.map(e => s"""{"source":${nodeLookup.get(e._1).get._1}, "target":${nodeLookup.get(e._2).get._1}, "value":1}""").mkString(",")
+                    
+                    sendOk(request, s"""{ "nodes" : [${nodeListJson}], "links" : [${edgeList}] }""")  
+                })                                 
+              } catch {
+                case t: Throwable => errorResponseWithStacktrace(request, t)
+              }              
             case request @ Get on Root /: "kill" /: id =>
               try {
                 val result = (settings.system.actorFor(id) ? KillAction)
