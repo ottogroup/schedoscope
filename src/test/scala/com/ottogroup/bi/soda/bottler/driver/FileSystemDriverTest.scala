@@ -14,51 +14,45 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
   val driver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
 
   "Copy" should "copy files into target directory" in {
-    assert(driver.runAndWait(Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), false)) == true)
+    driver.runAndWait(Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), false)) shouldBe a [DriverRunSucceeded[_]]
 
-    assert(new File(out, "test.txt").exists())
-    assert(!new File(out, "subdir" + File.separator + "test2.txt").exists())
+    new File(out, "test.txt") shouldBe 'exists
+    new File(out, "subdir" + File.separator + "test2.txt") should not be 'exists
   }
-  
+
   it should "copy classpath resources into target directory" in {
-    assert(driver.runAndWait(Copy("classpath://input/classpathtest.txt", out.getAbsolutePath(), false)))
-    assert(new File(out, "classpathtest.txt").exists())
+    driver.runAndWait(Copy("classpath://input/classpathtest.txt", out.getAbsolutePath(), false)) shouldBe a [DriverRunSucceeded[_]]
+    new File(out, "classpathtest.txt") shouldBe 'exists
   }
-  
+
   "Copy(recursive=true)" should "copy files and subdirectories into target directory" in {
-    assert(driver.runAndWait(Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), true)) == true) // source exists, destination writable
-    assert(new File(out, "test.txt").exists())
-    assert(new File(out, "subdir/test2.txt").exists())
+    driver.runAndWait(Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), true)) shouldBe a [DriverRunSucceeded[_]]
+    new File(out, "test.txt") shouldBe 'exists
+    new File(out, "subdir/test2.txt") shouldBe 'exists
   }
 
   "Move" should "move files into target directory" in {
-    assert(driver.runAndWait(Move(in.getAbsolutePath() + File.separator + "test.txt", out.getAbsolutePath()))) // source exists, destination writable
-    assert(new File(out, "test.txt").exists())
-    assert(!new File(in, "test.txt").exists())
+    driver.runAndWait(Move(in.getAbsolutePath() + File.separator + "test.txt", out.getAbsolutePath())) shouldBe a [DriverRunSucceeded[_]]
+    new File(out, "test.txt") shouldBe 'exists
+    new File(in, "test.txt") should not be 'exists
   }
-  
+
   "Delete" should "delete files in target directory" in {
-    assert(driver.runAndWait(Delete(out.getAbsolutePath() + File.separator + "test.txt"))) // source exists, destination writable
-    assert(!new File(out, "test.txt").exists())
+    driver.runAndWait(Delete(out.getAbsolutePath() + File.separator + "test.txt")) shouldBe a [DriverRunSucceeded[_]]
+    new File(out, "test.txt") should not be 'exists
   }
-  
+
   "Touch" should "create file" in {
-    assert(driver.runAndWait(Touch(out.getAbsolutePath() + File.separator + "_SUCCESS"))) // source exists, destination writable
-    assert(new File(out, "_SUCCESS").exists())
-  }
-
-  "IfExists" should "copy data into target directory" in {
-  }
-
-  "IfNotExists" should "copy data into target directory" in {
+    driver.runAndWait(Touch(out.getAbsolutePath() + File.separator + "_SUCCESS")) shouldBe a [DriverRunSucceeded[_]]
+    new File(out, "_SUCCESS") should not be 'exists
   }
 
   "CopyFrom" should "copy data into view instance directory" in {
     val product = new Product(p("EC0106"), p("2014"), p("01"), p("01")) {
       override def fullPath = out.toString()
     }
-    
-    assert(driver.runAndWait(CopyFrom(in.getAbsolutePath() + File.separator + "*", product, false)))
-    assert(new File(out, "test.txt").exists())  
+
+    driver.runAndWait(CopyFrom(in.getAbsolutePath() + File.separator + "*", product, false)) shouldBe a [DriverRunSucceeded[_]]
+    new File(out, "test.txt") shouldBe 'exists
   }
 }

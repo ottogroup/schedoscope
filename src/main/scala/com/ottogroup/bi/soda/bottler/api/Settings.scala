@@ -52,7 +52,7 @@ class SettingsImpl(val config: Config) extends Extension {
   val availableTransformations = config.getObject("soda.transformations")
 
   val hadoopConf = new Configuration(true)
-  
+
   val transformationVersioning = config.getBoolean("soda.versioning.transformations")
 
   val jobTrackerOrResourceManager = {
@@ -67,20 +67,13 @@ class SettingsImpl(val config: Config) extends Extension {
     config.getString("soda.hadoop.nameNode")
   else
     hadoopConf.get("fs.defaultFS")
-    
-  val hiveActionTimeout = config.getDuration("soda.timeouts.hive", TimeUnit.SECONDS)
-  val oozieActionTimeout = config.getDuration("soda.timeouts.oozie", TimeUnit.SECONDS)
-  val fileActionTimeout = config.getDuration("soda.timeouts.file", TimeUnit.SECONDS)
-  val schemaActionTimeout = config.getDuration("soda.timeouts.schema", TimeUnit.SECONDS)
-  val dependencyTimout = config.getDuration("soda.timeouts.dependency", TimeUnit.SECONDS)
-  val materializeAllTimeout = config.getDuration("soda.timeouts.all", TimeUnit.SECONDS)
 
-  val hiveActionTimeout = Duration.create(config.getDuration("soda.timeouts.hive",TimeUnit.SECONDS),TimeUnit.SECONDS)
-  val oozieActionTimeout =  Duration.create(config.getDuration("soda.timeouts.oozie",TimeUnit.SECONDS),TimeUnit.SECONDS)
-  val fileActionTimeout =  Duration.create(config.getDuration("soda.timeouts.file",TimeUnit.SECONDS),TimeUnit.SECONDS)
-  val schemaActionTimeout =  Duration.create(config.getDuration("soda.timeouts.schema",TimeUnit.SECONDS),TimeUnit.SECONDS)
-  val dependencyTimout =  Duration.create(config.getDuration("soda.timeouts.dependency",TimeUnit.SECONDS),TimeUnit.SECONDS)
-  val materializeAllTimeout =  Duration.create(config.getDuration("soda.timeouts.all",TimeUnit.SECONDS),TimeUnit.SECONDS)
+  val hiveActionTimeout = Duration.create(config.getDuration("soda.timeouts.hive", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val oozieActionTimeout = Duration.create(config.getDuration("soda.timeouts.oozie", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val fileActionTimeout = Duration.create(config.getDuration("soda.timeouts.file", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val schemaActionTimeout = Duration.create(config.getDuration("soda.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val dependencyTimout = Duration.create(config.getDuration("soda.timeouts.dependency", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val materializeAllTimeout = Duration.create(config.getDuration("soda.timeouts.all", TimeUnit.SECONDS), TimeUnit.SECONDS)
   val retries = config.getInt("soda.action.retry")
   val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
@@ -92,7 +85,7 @@ class SettingsImpl(val config: Config) extends Extension {
 
   private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
 
-  def getDriverSettings(d: Any with Driver): DriverSettings = {
+  def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
     getDriverSettings(d.name)
   } 
       
@@ -154,7 +147,7 @@ class DriverSettings(val config: Config, val name: String) {
 
     (fromLibDir ++ fromClasspath).toList
   }
-  
+
   val libJarsHdfs = {
     if (unpack)
       List[String]()

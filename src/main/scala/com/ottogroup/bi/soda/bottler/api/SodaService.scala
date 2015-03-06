@@ -54,10 +54,10 @@ import scala.collection.mutable.HashSet
 
 object SodaService {
   val settings = Settings()
-  
+
   val om = new ObjectMapper()
   val enc = JsonStringEncoder.getInstance
-  
+
   val headers = List(("Content-Type", "application/json"), ("Access-Control-Allow-Origin", "*"))
 
   implicit val io = IOSystem()
@@ -86,10 +86,10 @@ object SodaService {
               try {
                 val viewActors = getViewActors(viewUrlPath)
                 val fut = viewActors.map(viewActor => viewActor ? "materialize")
-                val res = Await.result(Future sequence fut,  10 days)
+                val res = Await.result(Future sequence fut, 10 days)
                 val result = res.foldLeft(0) { (count, r) =>
                   r match {
-                    case ViewMaterialized(v, incomplete, changed,errors) => count + 1
+                    case ViewMaterialized(v, incomplete, changed, errors) => count + 1
                     case _: NoDataAvailable => count
                     case Failed(view) => count
                   }
@@ -141,19 +141,20 @@ object SodaService {
               try {
                 val status = (scheduleActor ? GetStatus()).mapTo[ProcessList]
                 status.map(pl => {
-                   val resp = s"{" +
+                  val resp = s"{" +
                     s""" "running" :  ${pl.status.filter { case s: HiveStatusResponse => s.status == RUNNING; case s: OozieStatusResponse => s.status == RUNNING }.toList.size},""" +
                     s""" "idle" : ${pl.status.filter { case s: HiveStatusResponse => s.status == IDLE; case s: OozieStatusResponse => s.status == IDLE }.toList.size},""" +
                     s""" "processes" : [ ${
                       pl.status.map(a => {
                         a match {
-                          case s: HiveStatusResponse =>  s"""{"status":"${s.message}", "typ":"hive", "start":"${formatter.print(s.start)}", "query":"${new String(enc.quoteAsString(s.query))}"} """
+                          case s: HiveStatusResponse => s"""{"status":"${s.message}", "typ":"hive", "start":"${formatter.print(s.start)}", "query":"${new String(enc.quoteAsString(s.query))}"} """
                           case s: OozieStatusResponse => s"""{"status":"${s.message}", "typ":"oozie", "start":"${formatter.print(s.start)}", "jobId":"${s.jobId}"} """
-                        }                        
-                      }).mkString(",")}]}
+                        }
+                      }).mkString(",")
+                    }]}
                      """
                   sendOk(request, resp)
-                  })                  
+                })
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -161,15 +162,15 @@ object SodaService {
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
                 val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
-                status.map( views => {
-                    val stats = views.groupBy(_.state)
-                                     .mapValues(_.size)
-                                     .map(a => s""""${a._1}" : ${a._2},""")
-                                     .mkString("")
-                    val filtered = views.filter("any".equals(state) || _.state.equals(state))
-                    val details = filtered.map(v => s"""{"status":"${v.state}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
-                    sendOk(request, s"""{ ${stats}  "details" : [ ${details} ] }""")
-                })                                 
+                status.map(views => {
+                  val stats = views.groupBy(_.state)
+                    .mapValues(_.size)
+                    .map(a => s""""${a._1}" : ${a._2},""")
+                    .mkString("")
+                  val filtered = views.filter("any".equals(state) || _.state.equals(state))
+                  val details = filtered.map(v => s"""{"status":"${v.state}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
+                  sendOk(request, s"""{ ${stats}  "details" : [ ${details} ] }""")
+                })
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -177,38 +178,38 @@ object SodaService {
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
                 val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
-                val nodes = HashSet[(String,String)]()
-                val edges = HashSet[(String,String)]()
-                val colors = Map(("materialized", "lime"), ("transforming","yellow"), ("nodata", "beige"), ("table", "black"), ("failed", "red"), ("retrying", "orange"), ("receive", "powderblue"), ("waiting", "blue"), ("dummy", "white"))
-                status.map( views => {
-                    views.foreach(v => {
-                        if (v.state != "receive" && v.state != "nodata") {
-                          nodes.add((v.view.viewId,v.state))
-                          v.view.dependencies.foreach(d => {
-                            edges.add((d.viewId, v.view.viewId))
-                          })                        
-                        }
-                    })
-                    val outer = nodes.map(n => n._1).toSeq.diff(edges.map(e=>e._1).toSeq.distinct)
-                    outer.foreach(o => {
-                      val tab = o.split("/")(0)
-                      val db = tab.split("\\.")(0)
-                      nodes.add((tab, "table"))
-                      edges.add((o, tab))
-                    })
-                    val nodeList = nodes.toList.zipWithIndex.map(el => (el._1._1, (el._2,el._1._2)))
-                    val nodeLookup = nodeList.map(nl => (nl._1, nl._2._1)).toMap
-                    
-                    val nodeListJson = nodeList.map( n => s"""{"name":"${n._1} : ${n._2._2}", "color":"${colors.get(n._2._2).get}"}""" ).mkString(",")
-                    val edgeListJson = edges.filter(e => {nodeLookup.contains(e._1) && nodeLookup.contains(e._2)})
-                                        .map(e => s"""{"source":${nodeLookup.get(e._1).get}, "target":${nodeLookup.get(e._2).get}, "value":1}""")
-                                        .mkString(",")
-                    
-                    sendOk(request, s"""{ "nodes" : [${nodeListJson}], "links" : [${edgeListJson}] }""")  
-                })                                 
+                val nodes = HashSet[(String, String)]()
+                val edges = HashSet[(String, String)]()
+                val colors = Map(("materialized", "lime"), ("transforming", "yellow"), ("nodata", "beige"), ("table", "black"), ("failed", "red"), ("retrying", "orange"), ("receive", "powderblue"), ("waiting", "blue"), ("dummy", "white"))
+                status.map(views => {
+                  views.foreach(v => {
+                    if (v.state != "receive" && v.state != "nodata") {
+                      nodes.add((v.view.viewId, v.state))
+                      v.view.dependencies.foreach(d => {
+                        edges.add((d.viewId, v.view.viewId))
+                      })
+                    }
+                  })
+                  val outer = nodes.map(n => n._1).toSeq.diff(edges.map(e => e._1).toSeq.distinct)
+                  outer.foreach(o => {
+                    val tab = o.split("/")(0)
+                    val db = tab.split("\\.")(0)
+                    nodes.add((tab, "table"))
+                    edges.add((o, tab))
+                  })
+                  val nodeList = nodes.toList.zipWithIndex.map(el => (el._1._1, (el._2, el._1._2)))
+                  val nodeLookup = nodeList.map(nl => (nl._1, nl._2._1)).toMap
+
+                  val nodeListJson = nodeList.map(n => s"""{"name":"${n._1} : ${n._2._2}", "color":"${colors.get(n._2._2).get}"}""").mkString(",")
+                  val edgeListJson = edges.filter(e => { nodeLookup.contains(e._1) && nodeLookup.contains(e._2) })
+                    .map(e => s"""{"source":${nodeLookup.get(e._1).get}, "target":${nodeLookup.get(e._2).get}, "value":1}""")
+                    .mkString(",")
+
+                  sendOk(request, s"""{ "nodes" : [${nodeListJson}], "links" : [${edgeListJson}] }""")
+                })
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
-              }              
+              }
             case request @ Get on Root /: "kill" /: id =>
               try {
                 val result = (settings.system.actorFor(id) ? KillAction)
@@ -252,26 +253,26 @@ object SodaService {
     request.error(t.getStackTrace().foldLeft("")((s, e) => s + e.toString() + "\n"),
       List(("content-type", "text/plain")))
   }
-    
-  private def formatJson(json: String) = {    
-    om.defaultPrettyPrintingWriter().writeValueAsString(om.readValue(json, classOf[Object]))    
+
+  private def formatJson(json: String) = {
+    om.defaultPrettyPrintingWriter().writeValueAsString(om.readValue(json, classOf[Object]))
   }
-  
+
   private def sendOk(r: HttpRequest, s: String) = {
     try {
       r.ok(formatJson(s), headers)
     } catch {
-      case j: Exception => r.error("Cannot parse JSON: " + s, List(("Content-type", "text/plain")) )
+      case j: Exception => r.error("Cannot parse JSON: " + s, List(("Content-type", "text/plain")))
     }
-    
+
   }
-  
+
   private def sendError(r: HttpRequest, s: String) = {
     try {
       r.error(formatJson(s), headers)
     } catch {
-      case j: Exception => r.error("Cannot parse JSON: " + s, List(("Content-type", "text/plain")) )
-    }    
-  }  
-    
+      case j: Exception => r.error("Cannot parse JSON: " + s, List(("Content-type", "text/plain")))
+    }
+  }
+
 }

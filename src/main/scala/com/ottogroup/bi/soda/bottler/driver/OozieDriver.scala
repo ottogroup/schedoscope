@@ -17,33 +17,28 @@ import com.typesafe.config.Config
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 import com.ottogroup.bi.soda.bottler.api.Settings
 import java.io.FileReader
+import scala.concurrent.duration.Duration
+import org.joda.time.LocalDateTime
 
-class OozieDriver(val client: OozieClient) extends Driver {
-  override def supportsNonBlockingRun = true
+class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
+  override def runTimeOut: Duration = Settings().oozieActionTimeout
 
-  override def run(t: Transformation): String =
-    t match {
-      case ot: OozieTransformation => {
-        val jobConf = createOozieJobConf(ot)
-        println("Starting Oozie job with config: \n" + jobConf.mkString("\n"))
-        runOozieJob(jobConf)
-      }
+  def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = {
+    val jobConf = createOozieJobConf(t)
+    val oozieJobId = runOozieJob(jobConf)
+    new DriverRunHandle[OozieTransformation](this, new LocalDateTime(), t, oozieJobId, null)
+  }
 
-      case _ => throw DriverException("OozieDriver can only run OozieWF transformations.")
-    }
+  override def runAndWait(t: OozieTransformation): DriverRunState[OozieTransformation] = {
+    val jobConf = createOozieJobConf(t)
+    println("Starting Oozie job with config: \n" + jobConf.mkString("\n"))
+    runAndWait(jobConf)
+  }
 
-  def runAndWait(t: Transformation): Boolean =
-    t match {
-      case ot: OozieTransformation => {
-        val jobConf = createOozieJobConf(ot)
-        println("Starting Oozie job with config: \n" + jobConf.mkString("\n"))
-        runAndWait(jobConf)
-      }
-
-      case _ => throw DriverException("OozieDriver can only run OozieWF transformations.")
-    }
-
-  def runOozieJob(jobProperties: Properties): String = client.run(jobProperties)
+  def runOozieJob(jobProperties: Properties): String = {
+    println("Starting Oozie job with config: \n" + jobProperties.mkString("\n"))
+    client.run(jobProperties)
+  }
 
   def runAndWait(jobProperties: Properties): Boolean = {
     import WorkflowJob.Status._

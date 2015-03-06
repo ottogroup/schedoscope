@@ -24,6 +24,7 @@ import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.api.SettingsImpl
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.bottler.driver.DriverRunState
 
 class FileSystemActor(ds: DriverSettings) extends Actor {
   import context._
@@ -35,16 +36,16 @@ class FileSystemActor(ds: DriverSettings) extends Actor {
   def receive = {
     case WorkAvailable => sender ! PollCommand("filesystem")
     case CommandWithSender(d: Deploy, s) => driver.deployAll(ds)
-    case CommandWithSender(cmd: FilesystemTransformation, sendingActor: ActorRef) => {
-      val requester = sendingActor
-      val operation = future {
+    case CommandWithSender(cmd: FilesystemTransformation, requester: ActorRef) => {
+      val run = future {
         driver.runAndWait(cmd)
+      }(ec)      
+      
+      run.onSuccess {
+        case runState => requester ! runState
       }(ec)
-      operation.onSuccess {
-        case true => { requester ! new FileSystemSuccess }
-        case false => { requester ! new FileSystemError }
-      }(ec)
-      operation.onFailure { case t => { requester ! ActorException(t) } }(ec)
+      
+      run.onFailure { case t => { requester ! ActorException(t) } }(ec)
     }
   }
 }

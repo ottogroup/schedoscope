@@ -56,7 +56,7 @@ trait test extends TestableView {
       case _ => this.transformation()
     }
 
-    println("Starting transformation; version is: " + trans.versionDigest())    
+    println("Starting transformation; version is: " + trans.versionDigest())
     driver().runAndWait(trans)
     println("Populating results transformation, adding partition")
     // FIXME: some transformations may create the partition by themselves?

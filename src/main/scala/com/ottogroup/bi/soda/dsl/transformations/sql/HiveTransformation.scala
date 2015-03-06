@@ -20,16 +20,16 @@ import org.apache.commons.io.FilenameUtils
 import com.ottogroup.bi.soda.dsl.Version
 
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
-    
-  override def versionDigest = Version.digest(resourceHashes :+ sql )
-  
+
+  override def versionDigest = Version.digest(resourceHashes :+ sql)
+
   override def resources() = {
-    udfs.flatMap(udf => udf.getResourceUris.map( uri => uri.getUri) )
-  }  
+    udfs.flatMap(udf => udf.getResourceUris.map(uri => uri.getUri))
+  }
 }
 
-object HiveTransformation extends  {  
-  
+object HiveTransformation extends {
+
   def withFunctions(v: View, functions: Map[String, Class[_]] = Map()) = {
     val functionBuff = ListBuffer[Function]()
 

@@ -29,25 +29,34 @@ import FileSystemDriver._
 import org.apache.commons.io.FileUtils
 import java.nio.file.Files
 import scala.collection.mutable.HashMap
+import org.joda.time.LocalDateTime
+import scala.concurrent.duration.FiniteDuration
+import scala.concurrent._
+import scala.concurrent.duration.Duration
 
-class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) extends Driver {
+class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) extends Driver[FilesystemTransformation] {
 
-  def doAs(f: () => Boolean): Boolean = ugi.doAs(new PrivilegedAction[Boolean]() {
-    def run(): Boolean = {
-      f()
-    }
-  })  
+  override def runTimeOut: Duration = Settings().fileActionTimeout
 
-  def runAndWait(t: Transformation): Boolean =
+  def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
+    new DriverRunHandle(this, new LocalDateTime(), t, null, future {
+      doRun(t)
+    }(ExecutionContext.global))
+
+  def doRun(t: FilesystemTransformation): DriverRunState[FilesystemTransformation] =
     t match {
       case IfExists(path, op) => doAs(() => {
         if (fileSystem(path, conf).exists(new Path(path)))
-          runAndWait(op) else true
+          doRun(op)
+        else
+          DriverRunSucceeded(this, s"Path ${path} does not yet exist.")
       })
 
       case IfNotExists(path, op) => doAs(() => {
         if (!fileSystem(path, conf).exists(new Path(path)))
-          runAndWait(op) else true
+          doRun(op)
+        else
+          DriverRunSucceeded(this, s"Path ${path} already exists.")
       })
 
       case CopyFrom(from, view, recursive) => doAs(() => copy(from, view.fullPath, recursive))
@@ -55,9 +64,17 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
       case Move(from, to) => doAs(() => move(from, to))
       case Delete(path, recursive) => doAs(() => delete(path, recursive))
       case Touch(path) => doAs(() => touch(path))
+
+      case _ => throw DriverException("FileSystemDriver can only run file transformations.")
     }
 
-  def copy(from: String, to: String, recursive: Boolean) = {
+  def doAs(f: () => DriverRunState[FilesystemTransformation]): DriverRunState[FilesystemTransformation] = ugi.doAs(new PrivilegedAction[DriverRunState[FilesystemTransformation]]() {
+    def run(): DriverRunState[FilesystemTransformation] = {
+      f()
+    }
+  })
+
+  def copy(from: String, to: String, recursive: Boolean): DriverRunState[FilesystemTransformation] = {
     def classpathResourceToFile(classpathResourceUrl: String) = {
       val remainingPath = classpathResourceUrl.replace("classpath://", "")
       val tempDir = Files.createTempDirectory("classpath").toFile.toString()
@@ -93,75 +110,79 @@ class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) exten
     try {
       inner(files, new Path(to))
     } catch {
-      case e: Throwable => false
+      case e: Throwable => DriverRunFailed(this, s"Caught exception while copying ${from} to ${to}", e)
     }
-    true
 
+    DriverRunSucceeded(this, s"Copy from ${from} to ${to} succeeded")
   }
 
-  def delete(from: String, recursive: Boolean) = {
+  def delete(from: String, recursive: Boolean): DriverRunState[FilesystemTransformation] = {
     val fromFS = fileSystem(from, conf)
     val files = listFiles(from)
+
     try {
       files.foreach(status => fromFS.delete(status.getPath(), recursive))
     } catch {
-      case e: Throwable => false
+      case e: Throwable => DriverRunFailed(this, s"Caught exception while deleting ${from}", e)
     }
-    true
+
+    DriverRunSucceeded(this, s"Deletion of ${from} succeeded")
   }
 
-  def touch(path: String) = {
+  def touch(path: String): DriverRunState[FilesystemTransformation] = {
     val filesys = fileSystem(path, conf)
+
     try {
       filesys.create(new Path(path))
     } catch {
-      case e: Throwable => false
+      case e: Throwable => DriverRunFailed(this, s"Caught exception while touching ${path}", e)
     }
-    true
+
+    DriverRunSucceeded(this, s"Touching of ${path} succeeded")
   }
 
-  def mkdirs(path: String) = {
+  def mkdirs(path: String): DriverRunState[FilesystemTransformation] = {
     val filesys = fileSystem(path, conf)
     try {
       filesys.mkdirs(new Path(path))
     } catch {
-      case e: Throwable => false
+      case e: Throwable => DriverRunFailed(this, s"Caught exception while making dirs ${path}", e)
     }
-    true
+
+    DriverRunSucceeded(this, s"Touching of ${path} succeeded")
   }
 
-  def move(from: String, to: String) = {
+  def move(from: String, to: String): DriverRunState[FilesystemTransformation] = {
     val fromFS = fileSystem(from, conf)
     val toFS = fileSystem(to, conf)
     val files = listFiles(from)
+
     try {
       FileUtil.copy(fromFS, FileUtil.stat2Paths(files), toFS, new Path(to), true, true, conf)
     } catch {
-      case e: Throwable => false
+      case e: Throwable => DriverRunFailed(this, s"Caught exception while moving from ${from} to ${to}", e)
     }
-    true
+
+    DriverRunSucceeded(this, s"Moving from ${from} to ${to} succeeded")
   }
-  
-  def fileChecksums(paths: List[String], recursive: Boolean) : List[String] = {
-    paths.flatMap( p => {
+
+  def fileChecksums(paths: List[String], recursive: Boolean): List[String] = {
+    paths.flatMap(p => {
       println("Computing checksum for " + p)
       val fs = fileSystem(p, conf)
       val path = new Path(p)
-      if (fs.isFile(path) ) {
-        val cs = ChecksumCache.lookup(p).getOrElse(fs.getFileChecksum(path))        
-        if (cs != null) 
+      if (fs.isFile(path)) {
+        val cs = ChecksumCache.lookup(p).getOrElse(fs.getFileChecksum(path))
+        if (cs != null)
           List(ChecksumCache.cache(p, cs.toString))
         else
           List()
-      }
-      else if (recursive) {
-        fileChecksums(listFiles(p + "/*").map( f => f.getPath.toString()).toList, recursive)
-      }
-      else
+      } else if (recursive) {
+        fileChecksums(listFiles(p + "/*").map(f => f.getPath.toString()).toList, recursive)
+      } else
         List()
-    }).toList 
+    }).toList
   }
-  
 
   def listFiles(path: String): Array[FileStatus] = {
     fileSystem(path, conf).globStatus(new Path(path))
@@ -190,19 +211,18 @@ object FileSystemDriver {
 }
 
 object ChecksumCache {
-  val checksums = HashMap[String,String]()
-  
-  def lookup(file: String) : Option[String]  = {
+  val checksums = HashMap[String, String]()
+
+  def lookup(file: String): Option[String] = {
     checksums.get(file)
   }
-  
-  def cache(file: String, checksum: String) : String = {
+
+  def cache(file: String, checksum: String): String = {
     checksums.put(file, checksum)
     checksum
   }
-  
+
   def clear() {
     checksums.clear()
   }
- 
 }

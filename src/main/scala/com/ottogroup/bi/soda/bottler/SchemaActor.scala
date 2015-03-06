@@ -23,7 +23,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       sender ! new Success
     }
     case AddPartition(view) => {
-      
+
       try {
         crate.createPartition(view)
       } catch {
@@ -32,7 +32,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       sender ! new Success
     }
     case CheckVersion(view) => {
-      
+
       if (crate.partitionExists(view)) {
         try {
           if (!Settings().transformationVersioning)

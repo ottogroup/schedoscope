@@ -24,72 +24,57 @@ import collection.JavaConversions._
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.MetaException
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
+import org.apache.thrift.transport.TTransportException
+import scala.concurrent.duration.Duration
+import scala.concurrent._
+import org.joda.time.LocalDateTime
 
-class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreClient) extends Driver {
-  override def supportsNonBlockingRun = true
+class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
+  override def runTimeOut: Duration = Settings().hiveActionTimeout
+  
+  def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
+    new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, null, future {
+      t.udfs.foreach(this.registerFunction(_))
+      executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
+    }(ExecutionContext.global))
 
-  override def run(t: Transformation): String = {
-    t match {
-      case th: HiveTransformation => {
-        th.udfs.foreach(this.registerFunction(_))
-        executeHiveQuery(replaceParameters(th.sql, th.configuration.toMap))
-      }
-
-      case _ => throw DriverException("HiveDriver can only run HiveQl transformations.")
-    }
-    ""
-  }
-
-  def runAndWait(t: Transformation): Boolean = {
-    t match {
-      case th: HiveTransformation => {
-        th.udfs.foreach(this.registerFunction(_))
-        if (!executeHiveQuery(replaceParameters(th.sql, th.configuration.toMap))) return false
-      }
-      case _ => throw DriverException("HiveDriver can only run HiveQl transformations.")
-    }
-
-    true
-  }
-
-  def executeHiveQuery(sql: String): Boolean = {
-    if (sql == null)
-      return false
-
-    // we mimic here the simple sql query splitting from
-    // org.apache.hadoop.hive.cli.CliDriver#processLine    
+  def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
     println(sql)
-    val queries = Stack[String]("")
+
+    val queryStack = Stack[String]("")
+
     sql.split(";").map(el => {
-      if (StringUtils.endsWith(queries.head, "\\")) {
-        queries.push(StringUtils.chop(queries.pop()) + ";" + el)
+      if (StringUtils.endsWith(queryStack.head, "\\")) {
+        queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + el)
       } else {
-        queries.push(el)
+        queryStack.push(el)
       }
     })
-    queries.reverse.filter(q => !StringUtils.isBlank(q))
-      .map(q => {
-        val stmt = connection.createStatement()
-        stmt.execute(q.trim())
-      })
-    true
+
+    val queriesToExecute = queryStack.reverse.filter(q => !StringUtils.isBlank(q))
+
+    queriesToExecute.foreach(q => try {
+      val stmt = connection.createStatement()
+      stmt.execute(q.trim())
+    } catch {
+      case t: TTransportException => throw DriverException("Critical failure while executing Hive query ${q}", t)
+      case e: Throwable => DriverRunFailed[HiveTransformation](this, s"Failure while executing Hive query ${q}", e)
+    })
+
+    DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
 
   def registerFunction(f: Function) {
     val existing = metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
     if (existing == null || existing.size() == 0) {
-      try {
-        val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
-        // we don't use the metastore client here to create functions because we don't want
-        // to bother with function ownerships
-        println(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS ${f.getClassName} USING ${resourceJars}")
-        this.executeHiveQuery(s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}")
-      } catch {
-        case aee: AlreadyExistsException => {} // should never happen 
-      }
+      val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
+      val createFunction = s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}"
+
+      println(createFunction)
+
+      this.executeHiveQuery(createFunction)
     }
   }
-
 }
 
 object HiveDriver {

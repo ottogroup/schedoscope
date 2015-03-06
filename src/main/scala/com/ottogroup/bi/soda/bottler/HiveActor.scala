@@ -36,24 +36,13 @@ class HiveActor(ds: DriverSettings) extends Actor {
         hiveDriver.runAndWait(h)
       }(ec)
       f.onSuccess {
-        case true => {
-          requester ! new HiveSuccess
-          finish(receive, actionsRouter)
-        }
-        case false => {
-          log.error("hive driver returned false")
-          requester ! new HiveError
+        case r => {
+          requester ! r
           finish(receive, actionsRouter)
         }
       }
       f.onFailure {
-        // on severe errors, let it fail
-        case e: TTransportException => throw e
-        case e => {
-          log.error(e, "got exception from hivedriver")
-          requester ! new HiveError
-          finish(receive, actionsRouter)
-        }
+        case e => throw e
       }
       become(running(h.sql))
     }

@@ -30,7 +30,7 @@ import scala.collection.mutable.HashMap
 import com.ottogroup.bi.soda.dsl.TransformationVersion
 import com.ottogroup.bi.soda.dsl.SchemaVersion
 import com.ottogroup.bi.soda.dsl.Version
-import collection.JavaConversions._ 
+import collection.JavaConversions._
 
 class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
@@ -57,13 +57,13 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
       val part = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
       if (part == null || part.getParameters == null)
         Version.default
-      else 
+      else
         part.getParameters.getOrElse(TransformationVersion.checksumProperty, Version.default)
     } catch {
       case e: Exception => throw e
     }
   }
-  
+
   def dropAndCreateTableSchema(view: View): Unit = {
     val ddl = HiveQl.ddl(view)
     println("in dropAndCreateSchema " + view.dbName + "." + view.n + " " + ddl)
@@ -110,8 +110,6 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
       }
     true
   }
-  
-
 
   def createPartition(view: View): Partition = {
     if (!schemaExists(view)) {
@@ -122,7 +120,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     try {
       val now = new DateTime().getMillis.toInt
       val sd = metastoreClient.getTable(view.dbName, view.n).getSd
- 
+
       sd.setLocation(view.fullPath)
       val part = new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String, String]())
       metastoreClient.add_partitions(List(part), true, false)
@@ -163,7 +161,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
 }
 
 object DeploySchema {
-	def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
+  def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
     Class.forName("org.apache.hive.jdbc.HiveDriver")
     val connection =
       Settings().userGroupInformation.doAs(new PrivilegedAction[Connection]() {

@@ -10,22 +10,39 @@ import scala.collection.mutable.ListBuffer
 import java.nio.file.Files
 import scala.util.Random
 import net.lingala.zip4j.core.ZipFile
+import scala.concurrent.impl.Future
+import scala.concurrent.Future
+import org.joda.time.LocalDateTime
+import scala.concurrent.duration.Duration
+import scala.concurrent.Await
+import scala.concurrent.duration.FiniteDuration
 
 case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
-trait Driver {
+class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, val stateHandle: Any, val result: Future[DriverRunState[T]])
+
+sealed abstract class DriverRunState[T <: Transformation](val driver: Driver[T])
+case class DriverRunOngoing[T <: Transformation](val driver: Driver[T], val runHandle: DriverRunHandle[T]) extends DriverRunState[T](driver)
+case class DriverRunSucceeded[T <: Transformation](val driver: Driver[T], comment: String) extends DriverRunState[T](driver)
+case class DriverRunFailed[T <: Transformation](val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
+
+trait Driver[T <: Transformation] {
   def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
+
+  def killRun(run: DriverRunHandle[T]): Unit = {}
   
-  def supportsNonBlockingRun = false
+  def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T] = 
+    if (run.result.isCompleted)
+      run.result.value.get.get
+    else
+      DriverRunOngoing[T](this, run)
   
-  // non-blocking
-  def run(t: Transformation): String =  throw DriverException(s"Driver ${name} does not support asynchronous run()")
+  def run(t: T): DriverRunHandle[T]
+ 
+  def runTimeOut: Duration = Duration.Inf
+  
+  def runAndWait(t: T): DriverRunState[T] = Await.result(run(t).result, runTimeOut)
 
-  // blocking
-  def runAndWait(t: Transformation): Boolean
-
-
-  // deploy resources for all transformations run by this driver
   def deployAll(driverSettings: DriverSettings): Boolean = {
     val fsd = new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
 
@@ -56,6 +73,6 @@ trait Driver {
 
     println("registered libjars for " + name + ": " + libJars.mkString(","))
 
-    succ.reduceOption((a, b) => a && b).getOrElse(true)
+    succ.filter(_.isInstanceOf[DriverRunFailed[_]]).isEmpty
   }
 }
