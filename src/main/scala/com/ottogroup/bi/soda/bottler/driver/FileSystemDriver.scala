@@ -110,7 +110,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     try {
       inner(files, new Path(to))
     } catch {
-      case e: Throwable => DriverRunFailed(this, s"Caught exception while copying ${from} to ${to}", e)
+      case e: Throwable => return DriverRunFailed(this, s"Caught exception while copying ${from} to ${to}", e)
     }
 
     DriverRunSucceeded(this, s"Copy from ${from} to ${to} succeeded")
@@ -123,7 +123,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     try {
       files.foreach(status => fromFS.delete(status.getPath(), recursive))
     } catch {
-      case e: Throwable => DriverRunFailed(this, s"Caught exception while deleting ${from}", e)
+      case e: Throwable => return DriverRunFailed(this, s"Caught exception while deleting ${from}", e)
     }
 
     DriverRunSucceeded(this, s"Deletion of ${from} succeeded")
@@ -135,7 +135,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     try {
       filesys.create(new Path(path))
     } catch {
-      case e: Throwable => DriverRunFailed(this, s"Caught exception while touching ${path}", e)
+      case e: Throwable => return DriverRunFailed(this, s"Caught exception while touching ${path}", e)
     }
 
     DriverRunSucceeded(this, s"Touching of ${path} succeeded")
@@ -146,7 +146,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     try {
       filesys.mkdirs(new Path(path))
     } catch {
-      case e: Throwable => DriverRunFailed(this, s"Caught exception while making dirs ${path}", e)
+      case e: Throwable => return DriverRunFailed(this, s"Caught exception while making dirs ${path}", e)
     }
 
     DriverRunSucceeded(this, s"Touching of ${path} succeeded")
@@ -160,7 +160,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     try {
       FileUtil.copy(fromFS, FileUtil.stat2Paths(files), toFS, new Path(to), true, true, conf)
     } catch {
-      case e: Throwable => DriverRunFailed(this, s"Caught exception while moving from ${from} to ${to}", e)
+      case e: Throwable => return DriverRunFailed(this, s"Caught exception while moving from ${from} to ${to}", e)
     }
 
     DriverRunSucceeded(this, s"Moving from ${from} to ${to} succeeded")

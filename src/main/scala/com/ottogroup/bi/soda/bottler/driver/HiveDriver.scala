@@ -40,7 +40,7 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
 
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
     println(sql)
-
+    
     val queryStack = Stack[String]("")
 
     sql.split(";").map(el => {
@@ -58,7 +58,10 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
       stmt.execute(q.trim())
     } catch {
       case t: TTransportException => throw DriverException("Critical failure while executing Hive query ${q}", t)
-      case e: Throwable => DriverRunFailed[HiveTransformation](this, s"Failure while executing Hive query ${q}", e)
+      case e: Throwable => {
+        e.printStackTrace()
+        return DriverRunFailed[HiveTransformation](this, s"Failure while executing Hive query ${q}", e)
+      }
     })
 
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")

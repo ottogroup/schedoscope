@@ -55,7 +55,9 @@ trait test extends TestableView {
     }
 
     println("Starting transformation; version is: " + trans.versionDigest())
-    driver().runAndWait(trans)
+    val d = driver()
+    val rto = d.runTimeOut
+    d.runAndWait(trans)
     println("Populating results transformation, adding partition")
     // FIXME: some transformations may create the partition by themselves?
     if (this.isPartitioned()) {

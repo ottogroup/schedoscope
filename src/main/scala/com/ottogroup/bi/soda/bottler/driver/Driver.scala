@@ -41,7 +41,12 @@ trait Driver[T <: Transformation] {
 
   def run(t: T): DriverRunHandle[T]
 
-  def runAndWait(t: T): DriverRunState[T] = Await.result(run(t).result, runTimeOut)
+  def runAndWait(t: T): DriverRunState[T] = {
+    val resultFuture = run(t).result
+
+    val result = Await.result(resultFuture, runTimeOut)
+    result
+  }
 
   def deployAll(ds: DriverSettings): Boolean = {
     val fsd = FileSystemDriver(ds)
