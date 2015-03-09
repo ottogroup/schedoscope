@@ -23,14 +23,12 @@ import com.ottogroup.bi.soda.dsl.NoOp
 trait TestableView extends FillableView {}
 
 trait test extends TestableView {
-
   var rowIdx = 0
 
-  var driver: () => Driver = () => {
+  var driver: () => Driver[Transformation] = () => {
     this.transformation() match {
-      case t: HiveTransformation => resources().hiveDriver
-      case t: OozieTransformation => resources().oozieDriver
-      // TODO: support other drivers
+      case t: HiveTransformation => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
+      case t: OozieTransformation => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
     }
   }
 

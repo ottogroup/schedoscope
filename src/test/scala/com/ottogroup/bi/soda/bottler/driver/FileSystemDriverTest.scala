@@ -44,7 +44,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
 
   "Touch" should "create file" in {
     driver.runAndWait(Touch(out.getAbsolutePath() + File.separator + "_SUCCESS")) shouldBe a [DriverRunSucceeded[_]]
-    new File(out, "_SUCCESS") should not be 'exists
+    new File(out, "_SUCCESS") shouldBe 'exists
   }
 
   "CopyFrom" should "copy data into view instance directory" in {

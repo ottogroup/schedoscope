@@ -22,9 +22,9 @@ case class DriverException(message: String = null, cause: Throwable = null) exte
 class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, val stateHandle: Any, val result: Future[DriverRunState[T]])
 
 sealed abstract class DriverRunState[T <: Transformation](val driver: Driver[T])
-case class DriverRunOngoing[T <: Transformation](val driver: Driver[T], val runHandle: DriverRunHandle[T]) extends DriverRunState[T](driver)
-case class DriverRunSucceeded[T <: Transformation](val driver: Driver[T], comment: String) extends DriverRunState[T](driver)
-case class DriverRunFailed[T <: Transformation](val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
+case class DriverRunOngoing[T <: Transformation](override val driver: Driver[T], val runHandle: DriverRunHandle[T]) extends DriverRunState[T](driver)
+case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T], comment: String) extends DriverRunState[T](driver)
+case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
 
 trait Driver[T <: Transformation] {
   def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")

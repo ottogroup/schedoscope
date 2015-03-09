@@ -3,6 +3,7 @@ package com.ottogroup.bi.soda.bottler.driver
 import java.util.Properties
 import com.typesafe.config.ConfigFactory
 import org.apache.oozie.client.OozieClient
+import org.apache.oozie.client.WorkflowJob.Status._
 import scala.collection.JavaConversions._
 import org.apache.hadoop.security.UserGroupInformation
 import java.io.FileOutputStream
@@ -23,16 +24,46 @@ import org.joda.time.LocalDateTime
 class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
   override def runTimeOut: Duration = Settings().oozieActionTimeout
 
-  def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = {
+  def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = try {
     val jobConf = createOozieJobConf(t)
     val oozieJobId = runOozieJob(jobConf)
     new DriverRunHandle[OozieTransformation](this, new LocalDateTime(), t, oozieJobId, null)
+  } catch {
+    case e: Throwable => throw DriverException("Unexpected error occurred while running Oozie job", e)
+  }
+
+  override def getDriverRunState(run: DriverRunHandle[OozieTransformation]) = {
+    val jobId = run.stateHandle.toString
+    try {
+      val state = getJobInfo(jobId).getStatus()
+
+      state match {
+        case SUCCEEDED => DriverRunSucceeded[OozieTransformation](this, s"Oozie job ${jobId} succeeded")
+        case SUSPENDED | RUNNING | PREP => DriverRunOngoing[OozieTransformation](this, run)
+        case _ => DriverRunFailed[OozieTransformation](this, s"Oozie job ${jobId} failed", DriverException(s"Failed Oozie job status ${state}"))
+      }
+    } catch {
+      case e: Throwable => throw DriverException(s"Unexpected error occurred while checking run state of Oozie job ${jobId}", e)
+    }
   }
 
   override def runAndWait(t: OozieTransformation): DriverRunState[OozieTransformation] = {
-    val jobConf = createOozieJobConf(t)
-    println("Starting Oozie job with config: \n" + jobConf.mkString("\n"))
-    runAndWait(jobConf)
+    val runHandle = run(t)
+
+    while (getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[OozieTransformation]])
+      Thread.sleep(1000)
+
+    getDriverRunState(runHandle)
+  }
+
+  override def killRun(run: DriverRunHandle[OozieTransformation]) = {
+    val jobId = run.stateHandle.toString
+    println("Killing Oozie job ${jobId}")
+    try {
+      client.kill(jobId)
+    } catch {
+      case e: Throwable => throw DriverException(s"Unexpected error occurred while killing Oozie job ${run.stateHandle}", e)
+    }
   }
 
   def runOozieJob(jobProperties: Properties): String = {
@@ -40,28 +71,11 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
     client.run(jobProperties)
   }
 
-  def runAndWait(jobProperties: Properties): Boolean = {
-    import WorkflowJob.Status._
-
-    val jobId = runOozieJob(jobProperties)
-
-    while (client.getJobInfo(jobId).getStatus() == RUNNING ||
-      client.getJobInfo(jobId).getStatus() == PREP) {
-      println("Job status is " + client.getJobInfo(jobId).getStatus())
-      Thread.sleep(1000)
-    }
-
-    println("Job status is " + client.getJobInfo(jobId).getStatus())
-
-    client.getJobInfo(jobId).getStatus() match {
-      case SUCCEEDED => true
-      case _ => false
-    }
+  def getJobInfo(jobId: String) = {
+    val jobInfo = client.getJobInfo(jobId)
+    println(s"Oozie job ${jobId} info is ${jobInfo}")
+    jobInfo
   }
-
-  def getJobInfo(jobId: String) = client.getJobInfo(jobId)
-
-  def kill(jobId: String) = client.kill(jobId)
 
   def createOozieJobConf(wf: OozieTransformation): Properties =
     wf match {

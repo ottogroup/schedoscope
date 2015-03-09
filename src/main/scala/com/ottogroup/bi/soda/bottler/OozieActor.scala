@@ -17,54 +17,53 @@ import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
 import org.joda.time.LocalDateTime
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 import com.typesafe.config.Config
-import org.joda.time.Chronology
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.bottler.driver.DriverRunHandle
+import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
+import com.ottogroup.bi.soda.bottler.driver.DriverRunSucceeded
+import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
+import com.ottogroup.bi.soda.bottler.driver.DriverException
 
 class OozieActor(ds: DriverSettings) extends Actor {
-
   import context._
   val log = Logging(system, this)
-  val oozieDriver =  OozieDriver(config)
-  var startTime = new LocalDateTime()
   val oozieDriver = OozieDriver(ds)
+  var startTime = new LocalDateTime
 
-  def running(jobId: String, s: ActorRef): Receive = LoggingReceive {
-    case "tick" =>
+  def running(runHandle: DriverRunHandle[OozieTransformation], s: ActorRef): Receive = LoggingReceive {
+    case "tick" => {
+      try {
+        val runState = oozieDriver.getDriverRunState(runHandle)
 
-      {
-        try {
-          val jobInfo = oozieDriver.getJobInfo(jobId)
-          jobInfo.getStatus() match {
-            case WorkflowJob.Status.RUNNING | WorkflowJob.Status.PREP | WorkflowJob.Status.SUSPENDED => {
-              system.scheduler.scheduleOnce(5 seconds, self, "tick")
-            }
-            case WorkflowJob.Status.SUCCEEDED => {
-              log.info(s"workflow ${jobId} succeeded")
-              s ! OozieSuccess()
-              startTime = new LocalDateTime()
-              become(receive)
-            }
-            case WorkflowJob.Status.FAILED | WorkflowJob.Status.KILLED => {
-              log.warning(s"workflow ${jobId} failed!")
-              s ! OozieError()
-              startTime = new LocalDateTime()
-              become(receive)
-            }
+        runState match {
+          case _: DriverRunOngoing[OozieTransformation] => system.scheduler.scheduleOnce(5 seconds, self, "tick")
+          case _: DriverRunSucceeded[OozieTransformation] => {
+            log.info(s"Oozie workflow ${runHandle.stateHandle} succeeded.")
+            s ! OozieSuccess()
+            startTime = new LocalDateTime()
+            become(receive)
           }
-        } catch {
-          case e: Throwable => {
-            log.error("unknown oozie error", e)
+          case f: DriverRunFailed[OozieTransformation] => {
+            log.info(s"Oozie workflow ${runHandle.stateHandle} failed. ${f.reason}, cause ${f.cause}")
             s ! OozieError()
+            startTime = new LocalDateTime()
             become(receive)
           }
         }
-
+      } catch {
+        case e: DriverException => {
+          log.error(s"Ooozie Driver exception caught. ${e.message}, cause ${e.cause}")
+          s ! OozieError()
+          become(receive)
+        }
       }
+
+    }
     case KillAction => {
-      oozieDriver.kill(jobId)
+      oozieDriver.killRun(runHandle)
       become(receive)
     }
-    case _: GetStatus => sender() ! new OozieStatusResponse("executing job ", self, ProcessStatus.RUNNING, jobId, startTime)
-
+    case _: GetStatus => sender() ! new OozieStatusResponse("executing job ", self, ProcessStatus.RUNNING, runHandle.stateHandle.toString, startTime)
   }
 
   def receive = LoggingReceive {
@@ -72,32 +71,9 @@ class OozieActor(ds: DriverSettings) extends Actor {
     case CommandWithSender(d: Deploy, s) => oozieDriver.deployAll(ds)
     case WorkAvailable => sender ! PollCommand("oozie")
     case CommandWithSender(OozieTransformation(bundle, wf, appPath, conf), s) => {
-      try {
-        val jobId = oozieDriver.run(OozieTransformation(bundle, wf, appPath, conf))
-        startTime = new LocalDateTime()
-
-        val jobstatus = oozieDriver.getJobInfo(jobId).getStatus()
-        if (jobstatus == WorkflowJob.Status.RUNNING ||
-          jobstatus == WorkflowJob.Status.PREP) {
-          become(running(jobId, s))
-          system.scheduler.scheduleOnce(1000 millis, self, "tick")
-        }
-      } catch {
-        case e: OozieClientException =>
-          {
-            log.warning("got exception..." + e.getMessage())
-            s ! OozieException(e)
-          }
-        case e: NullPointerException => {
-          log.warning("got exception..." + e.getMessage())
-          s ! OozieException(e)
-        }
-        case e: Throwable => {
-          log.warning("got exception..." + e.getMessage())
-          s ! OozieException(e)
-
-        }
-      }
+      val runHandle = oozieDriver.run(OozieTransformation(bundle, wf, appPath, conf))
+      become(running(runHandle, s))
+      system.scheduler.scheduleOnce(1000 millis, self, "tick")
     }
   }
 }
