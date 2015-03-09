@@ -31,7 +31,7 @@ import org.joda.time.LocalDateTime
 
 class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
   override def runTimeOut: Duration = Settings().hiveActionTimeout
-  
+
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, null, future {
       t.udfs.foreach(this.registerFunction(_))

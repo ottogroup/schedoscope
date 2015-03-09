@@ -5,9 +5,8 @@ import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import com.ottogroup.bi.soda.bottler.api.Settings
 
 abstract class Transformation {
-
   // FIXME: not so nice that each transformation has the file system driver .. 
-  val fsd = new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
+  val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))
 
   def configureWith(c: Map[String, Any]) = {
     configuration ++= c
@@ -23,7 +22,6 @@ abstract class Transformation {
   def resourceHashes = fsd.fileChecksums(resources(), true)
 
   def typ = this.getClass.getSimpleName.toLowerCase.replaceAll("Transformation", "")
-
 }
 
 case class NoOp() extends Transformation

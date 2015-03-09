@@ -14,36 +14,36 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
   val driver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
 
   "Copy" should "copy files into target directory" in {
-    driver.runAndWait(Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), false)) shouldBe a [DriverRunSucceeded[_]]
+    driver.runAndWait(Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), false)) shouldBe a[DriverRunSucceeded[_]]
 
     new File(out, "test.txt") shouldBe 'exists
     new File(out, "subdir" + File.separator + "test2.txt") should not be 'exists
   }
 
   it should "copy classpath resources into target directory" in {
-    driver.runAndWait(Copy("classpath://input/classpathtest.txt", out.getAbsolutePath(), false)) shouldBe a [DriverRunSucceeded[_]]
+    driver.runAndWait(Copy("classpath://input/classpathtest.txt", out.getAbsolutePath(), false)) shouldBe a[DriverRunSucceeded[_]]
     new File(out, "classpathtest.txt") shouldBe 'exists
   }
 
   "Copy(recursive=true)" should "copy files and subdirectories into target directory" in {
-    driver.runAndWait(Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), true)) shouldBe a [DriverRunSucceeded[_]]
+    driver.runAndWait(Copy(in.getAbsolutePath() + File.separator + "*", out.getAbsolutePath(), true)) shouldBe a[DriverRunSucceeded[_]]
     new File(out, "test.txt") shouldBe 'exists
     new File(out, "subdir/test2.txt") shouldBe 'exists
   }
 
   "Move" should "move files into target directory" in {
-    driver.runAndWait(Move(in.getAbsolutePath() + File.separator + "test.txt", out.getAbsolutePath())) shouldBe a [DriverRunSucceeded[_]]
+    driver.runAndWait(Move(in.getAbsolutePath() + File.separator + "test.txt", out.getAbsolutePath())) shouldBe a[DriverRunSucceeded[_]]
     new File(out, "test.txt") shouldBe 'exists
     new File(in, "test.txt") should not be 'exists
   }
 
   "Delete" should "delete files in target directory" in {
-    driver.runAndWait(Delete(out.getAbsolutePath() + File.separator + "test.txt")) shouldBe a [DriverRunSucceeded[_]]
+    driver.runAndWait(Delete(out.getAbsolutePath() + File.separator + "test.txt")) shouldBe a[DriverRunSucceeded[_]]
     new File(out, "test.txt") should not be 'exists
   }
 
   "Touch" should "create file" in {
-    driver.runAndWait(Touch(out.getAbsolutePath() + File.separator + "_SUCCESS")) shouldBe a [DriverRunSucceeded[_]]
+    driver.runAndWait(Touch(out.getAbsolutePath() + File.separator + "_SUCCESS")) shouldBe a[DriverRunSucceeded[_]]
     new File(out, "_SUCCESS") shouldBe 'exists
   }
 
@@ -52,7 +52,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
       override def fullPath = out.toString()
     }
 
-    driver.runAndWait(CopyFrom(in.getAbsolutePath() + File.separator + "*", product, false)) shouldBe a [DriverRunSucceeded[_]]
+    driver.runAndWait(CopyFrom(in.getAbsolutePath() + File.separator + "*", product, false)) shouldBe a[DriverRunSucceeded[_]]
     new File(out, "test.txt") shouldBe 'exists
   }
 }

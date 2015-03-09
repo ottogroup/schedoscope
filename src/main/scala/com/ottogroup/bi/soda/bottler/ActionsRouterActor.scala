@@ -66,51 +66,25 @@ class StatusRetriever extends Actor with Aggregator {
   }
 }
 
-object ActionFactory {
-  def createActor(name: String, conf: Config) = {
-    name match {
-      case "hive" => HiveActor.props(new DriverSettings(conf, name))
-      case "oozie" => OozieActor.props(new DriverSettings(conf, name))
-      case "filesystem" => FileSystemActor.props(new DriverSettings(conf, name))
-    }
-  }
-  def getTransformationTypeName(t: Transformation) =
-    t match {
-      case _: OozieTransformation => "oozie"
-      case _: HiveTransformation => "hive"
-      case _: FilesystemTransformation => "filesystem"
-    }
-}
-
 /**
  * Supervisor for Hive, Oozie, Routers
  * Implements a pull-work-pattern that does not fill the mailboxes of actors.
  * This way, a long running job will not block short-running
  * In future we should learn runtimes of jobs and distribute to dedicated queues.
  */
-class ActionsRouterActor(conf: Configuration) extends Actor {
+class ActionsRouterActor() extends Actor {
   import context._
   val log = Logging(system, this)
   val settings = Settings.get(system)
 
-  val queues =
-    settings.availableTransformations.entrySet().foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
-      (map, entry) =>
-        {
-          map + (entry.getKey() ->
-            new collection.mutable.Queue[CommandWithSender]())
+  val availableTransformations = settings.availableTransformations.keySet()
 
-        }
-    }
-  queues.map(entry => println(entry._1))
-  val routers = settings.availableTransformations.entrySet().foldLeft(Map[String, ActorRef]()) {
-    (map, entry) =>
-      {
-        val conf = entry.getValue().asInstanceOf[ConfigObject].toConfig().withFallback(ConfigFactory.empty.withValue("concurrency", ConfigValueFactory.fromAnyRef(1)))
-        map + (entry.getKey() ->
-          actorOf(ActionFactory.createActor(entry.getKey(), conf).withRouter(BroadcastRouter(nrOfInstances = conf.getInt("concurrency")))))
+  val queues = availableTransformations.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
+    (registeredDriverQueues, driverName) => registeredDriverQueues + (driverName -> new collection.mutable.Queue[CommandWithSender]())
+  }
 
-      }
+  val routers = availableTransformations.foldLeft(Map[String, ActorRef]()) {
+    (registeredDrivers, driverName) => registeredDrivers + (driverName -> actorOf(DriverActor.props(driverName)))
   }
 
   def receive = LoggingReceive({
@@ -159,5 +133,5 @@ class ActionsRouterActor(conf: Configuration) extends Actor {
 }
 
 object ActionsRouterActor {
-  def props(conf: Configuration) = Props(new ActionsRouterActor(conf))
+  def props(conf: Configuration) = Props(new ActionsRouterActor())
 }

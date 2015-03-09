@@ -51,7 +51,7 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
     val runHandle = run(t)
 
     while (getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[OozieTransformation]])
-      Thread.sleep(1000)
+      Thread.sleep(5000)
 
     getDriverRunState(runHandle)
   }

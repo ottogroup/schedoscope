@@ -34,8 +34,7 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 
-class FileSystemDriver(val ugi: UserGroupInformation, conf: Configuration) extends Driver[FilesystemTransformation] {
-
+class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
   override def runTimeOut: Duration = Settings().fileActionTimeout
 
   def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =

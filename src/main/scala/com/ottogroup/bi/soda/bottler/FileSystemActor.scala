@@ -39,12 +39,12 @@ class FileSystemActor(ds: DriverSettings) extends Actor {
     case CommandWithSender(cmd: FilesystemTransformation, requester: ActorRef) => {
       val run = future {
         driver.runAndWait(cmd)
-      }(ec)      
-      
+      }(ec)
+
       run.onSuccess {
         case runState => requester ! runState
       }(ec)
-      
+
       run.onFailure { case t => { requester ! ActorException(t) } }(ec)
     }
   }

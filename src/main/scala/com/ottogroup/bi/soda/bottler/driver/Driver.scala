@@ -30,44 +30,44 @@ trait Driver[T <: Transformation] {
   def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
 
   def killRun(run: DriverRunHandle[T]): Unit = {}
-  
-  def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T] = 
+
+  def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T] =
     if (run.result.isCompleted)
       run.result.value.get.get
     else
       DriverRunOngoing[T](this, run)
-  
+
   def run(t: T): DriverRunHandle[T]
- 
+
   def runTimeOut: Duration = Duration.Inf
-  
+
   def runAndWait(t: T): DriverRunState[T] = Await.result(run(t).result, runTimeOut)
 
-  def deployAll(driverSettings: DriverSettings): Boolean = {
-    val fsd = new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
+  def deployAll(ds: DriverSettings): Boolean = {
+    val fsd = FileSystemDriver(ds)
 
     // clear destination
-    fsd.delete(driverSettings.location, true)
-    fsd.mkdirs(driverSettings.location)
+    fsd.delete(ds.location, true)
+    fsd.mkdirs(ds.location)
 
-    val succ = driverSettings.libJars
+    val succ = ds.libJars
       .map(f => {
-        if (driverSettings.unpack) {
+        if (ds.unpack) {
           val tmpDir = Files.createTempDirectory("soda-" + Random.nextLong.abs.toString).toFile
           println(s"Unzipping ${name} resource ${f}")
           new ZipFile(f.replaceAll("file:", "")).extractAll(tmpDir.getAbsolutePath)
-          println(s"Copying ${name} resource file://${tmpDir}/* to ${driverSettings.location}")
-          val succ = fsd.copy("file://" + tmpDir + "/*", driverSettings.location, true)
+          println(s"Copying ${name} resource file://${tmpDir}/* to ${ds.location}")
+          val succ = fsd.copy("file://" + tmpDir + "/*", ds.location, true)
           tmpDir.delete
           succ
         } else {
-          println(s"Copying ${name} resource ${f} to ${driverSettings.location}")
-          fsd.copy(f, driverSettings.location, true)
+          println(s"Copying ${name} resource ${f} to ${ds.location}")
+          fsd.copy(f, ds.location, true)
         }
       })
 
     // write list of found libjars back into config                                        
-    val libJars = fsd.listFiles(driverSettings.location + "*.jar")
+    val libJars = fsd.listFiles(ds.location + "*.jar")
       .map(stat => stat.getPath.toString)
       .toList
 
