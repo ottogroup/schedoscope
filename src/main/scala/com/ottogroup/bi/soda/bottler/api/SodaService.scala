@@ -147,11 +147,10 @@ object SodaService {
                     s""" "processes" : [ ${
                       pl.status.map(a => {
                         a match {
-                          case s: HiveStatusResponse => s"""{"status":"${s.message}", "typ":"hive", "start":"${formatter.print(s.start)}", "query":"${new String(enc.quoteAsString(s.query))}"} """
-                          case s: OozieStatusResponse => s"""{"status":"${s.message}", "typ":"oozie", "start":"${formatter.print(s.start)}", "jobId":"${s.jobId}"} """
-                        }
-                      }).mkString(",")
-                    }]}
+                          case s: HiveStatusResponse =>  s"""{"status":"${s.message}", "typ":"hive", "start":"${formatter.print(s.start)}", "job":"${new String(enc.quoteAsString(s.query))}"} """
+                          case s: OozieStatusResponse => s"""{"status":"${s.message}", "typ":"oozie", "start":"${formatter.print(s.start)}", "job":"${s.jobId}"} """
+                        }                        
+                      }).mkString(",")}]}
                      """
                   sendOk(request, resp)
                 })
@@ -162,15 +161,15 @@ object SodaService {
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
                 val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
-                status.map(views => {
-                  val stats = views.groupBy(_.state)
-                    .mapValues(_.size)
-                    .map(a => s""""${a._1}" : ${a._2},""")
-                    .mkString("")
-                  val filtered = views.filter("any".equals(state) || _.state.equals(state))
-                  val details = filtered.map(v => s"""{"status":"${v.state}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
-                  sendOk(request, s"""{ ${stats}  "details" : [ ${details} ] }""")
-                })
+                status.map( views => {
+                    val stats = views.groupBy(_.state)
+                                     .mapValues(_.size)
+                                     .map(a => s""""${a._1}" : ${a._2}""")
+                                     .mkString(",")
+                    val filtered = views.filter("any".equals(state) || _.state.equals(state))
+                    val details = filtered.map(v => s"""{"status":"${v.state}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
+                    sendOk(request, s"""{ "overview" : { ${stats} }  "details" : [ ${details} ] }""")
+                })                                 
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
