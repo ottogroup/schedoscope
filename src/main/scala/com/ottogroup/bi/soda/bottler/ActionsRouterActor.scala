@@ -48,17 +48,17 @@ class StatusRetriever extends Actor with Aggregator {
     import context.dispatcher
     import collection.mutable.ArrayBuffer
 
-    val values = ArrayBuffer.empty[ActionStatusResponse]
+    val values = ArrayBuffer.empty[ActionStatusResponse[_]]
 
     context.actorSelection("/user/actions/*") ! GetStatus()
     context.system.scheduler.scheduleOnce(50 milliseconds, self, TimedOut)
 
     val handle = expect {
-      case ar: ActionStatusResponse => values += ar
+      case ar: ActionStatusResponse[_] => values += ar
       case TimedOut => processFinal(values.toList)
     }
 
-    def processFinal(eval: List[ActionStatusResponse]) {
+    def processFinal(eval: List[ActionStatusResponse[_]]) {
       unexpect(handle)
       originalSender ! ProcessList(eval)
       context.stop(self)
@@ -90,6 +90,7 @@ class ActionsRouterActor() extends Actor {
   def receive = LoggingReceive({
     case PollCommand(typ) =>
       queues.get(typ).map(q => if (!q.isEmpty) sender ! q.dequeue)
+
     case view: View => view.transformation() match {
       case cmd: OozieTransformation => {
         queues.get("oozie").get.enqueue(CommandWithSender(cmd, sender))
@@ -104,10 +105,12 @@ class ActionsRouterActor() extends Actor {
         routers.get("filesystem").get ! WorkAvailable
       }
     }
+
     case cmd: OozieTransformation => {
       queues.get("oozie").get.enqueue(CommandWithSender(cmd, sender))
       routers.get("oozie").get ! WorkAvailable
     }
+
     case cmd: HiveTransformation => {
       queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
       routers.get("hive").get ! WorkAvailable
@@ -117,10 +120,12 @@ class ActionsRouterActor() extends Actor {
       queues.get("filesystem").get.enqueue(CommandWithSender(cmd, sender))
       routers.get("filesystem").get ! WorkAvailable
     }
+
     case cmd: GetStatus => {
       implicit val timeout = Timeout(600);
       actorOf(Props(new StatusRetriever)) ! GetProcessList(sender())
     }
+
     case cmd: Deploy => {
       routers.map(el => {
         val name = el._1

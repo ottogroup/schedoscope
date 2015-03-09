@@ -44,6 +44,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
   def doRun(t: FilesystemTransformation): DriverRunState[FilesystemTransformation] =
     t match {
+
       case IfExists(path, op) => doAs(() => {
         if (fileSystem(path, conf).exists(new Path(path)))
           doRun(op)

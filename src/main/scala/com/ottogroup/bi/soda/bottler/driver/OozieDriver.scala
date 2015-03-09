@@ -7,10 +7,8 @@ import org.apache.oozie.client.WorkflowJob.Status._
 import scala.collection.JavaConversions._
 import org.apache.hadoop.security.UserGroupInformation
 import java.io.FileOutputStream
-import com.ottogroup.bi.soda.bottler.OozieCommand
 import java.io.File
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import com.ottogroup.bi.soda.bottler.OozieCommand
 import org.apache.oozie.client.WorkflowJob
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver._

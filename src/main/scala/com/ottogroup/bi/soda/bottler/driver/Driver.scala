@@ -27,6 +27,8 @@ case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T
 case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
 
 trait Driver[T <: Transformation] {
+  def runTimeOut: Duration = Duration.Inf
+
   def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
 
   def killRun(run: DriverRunHandle[T]): Unit = {}
@@ -38,8 +40,6 @@ trait Driver[T <: Transformation] {
       DriverRunOngoing[T](this, run)
 
   def run(t: T): DriverRunHandle[T]
-
-  def runTimeOut: Duration = Duration.Inf
 
   def runAndWait(t: T): DriverRunState[T] = Await.result(run(t).result, runTimeOut)
 

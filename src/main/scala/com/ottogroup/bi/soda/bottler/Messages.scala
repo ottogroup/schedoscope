@@ -5,11 +5,13 @@ import java.util.Properties
 import akka.actor.ActorRef
 import org.joda.time.LocalDate
 import org.joda.time.LocalDateTime
-
-object ProcessStatus extends Enumeration {
-  type ProcessStatus = Value
-  val RUNNING, IDLE, ERROR, STOPPED = Value
-}
+import com.ottogroup.bi.soda.bottler.driver.DriverRunState
+import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.bottler.driver.DriverRunHandle
+import com.ottogroup.bi.soda.bottler.driver.Driver
+import com.ottogroup.bi.soda.bottler.driver.DriverRunSucceeded
+import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
+import com.ottogroup.bi.soda.bottler.driver.DriverException
 
 class MessageType
 class ErrorMessage extends MessageType
@@ -18,6 +20,7 @@ sealed class Success
 case class ViewMaterialized(view: View, incomplete: Boolean, changed: Boolean, errors: Boolean) extends Success
 case class NoDataAvailable(view: View) extends Success
 case class ViewStatus(view: View, status: String, dependencies: Seq[ViewStatus]) extends Success
+case class ActionSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends Success
 
 sealed class Failure
 case class Error(view: View, reason: String) extends Failure
@@ -25,11 +28,11 @@ case class FatalError(view: View, reason: String) extends Failure
 case class ActorException(e: Throwable) extends Failure
 case class Failed(view: View) extends Failure
 case class InternalError(message: String) extends Failure
+case class ActionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunFailed[T]) extends Failure
+case class ActionExceptionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverException: DriverException) extends Failure
 
 sealed class Command
 case class NewDataAvailable(view: View) extends Command
-case class HiveCommand(sql: String) extends Command
-case class OozieCommand(properties: Properties) extends Command
 case class GetStatus() extends Command
 case class KillAction() extends Command
 case class Suspend() extends Command
@@ -38,7 +41,7 @@ case class PollCommand(typ: String)
 case class CommandWithSender(message: AnyRef, sender: ActorRef)
 case class WorkAvailable()
 case class TimedOut()
-case class ProcessList(status: List[ActionStatusResponse])
+case class ProcessList(processStates: List[ActionStatusResponse[_]])
 case class GetProcessList(sender: ActorRef)
 case class Deploy()
 case class CheckVersion(view: View)
@@ -47,11 +50,5 @@ case class VersionOk(view: View)
 case class VersionMismatch(view: View, dataVersion: String)
 
 case class ViewStatusResponse(state: String, view: View)
-sealed abstract class ActionStatusResponse
-import ProcessStatus._
-case class HiveStatusResponse(message: String, actor: ActorRef, status: ProcessStatus, query: String, start: LocalDateTime) extends ActionStatusResponse
-case class OozieStatusResponse(message: String, actor: ActorRef, status: ProcessStatus, jobId: String, start: LocalDateTime) extends ActionStatusResponse
+case class ActionStatusResponse[T <: Transformation](message: String, actor: ActorRef, driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T])
 
-case class OozieError() extends Failure
-case class OozieSuccess() extends Success
-case class OozieException(e: Throwable) extends Failure

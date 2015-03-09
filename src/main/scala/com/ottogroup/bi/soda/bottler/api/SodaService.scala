@@ -33,9 +33,6 @@ import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser._
 import com.ottogroup.bi.soda.bottler.GetStatus
 import com.ottogroup.bi.soda.bottler.ProcessList
-import com.ottogroup.bi.soda.bottler.ProcessStatus._
-import com.ottogroup.bi.soda.bottler.HiveStatusResponse
-import com.ottogroup.bi.soda.bottler.OozieStatusResponse
 import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 import com.ottogroup.bi.soda.bottler.Failed
 import org.joda.time.format.DateTimeFormatterBuilder
@@ -51,6 +48,7 @@ import com.cloudera.com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.core.io.JsonStringEncoder
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
+import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
 
 object SodaService {
   val settings = Settings()
@@ -141,22 +139,18 @@ object SodaService {
               try {
                 val status = (scheduleActor ? GetStatus()).mapTo[ProcessList]
                 status.map(pl => {
-                  val resp = s"{" +
-                    s""" "running" :  ${pl.status.filter { case s: HiveStatusResponse => s.status == RUNNING; case s: OozieStatusResponse => s.status == RUNNING }.toList.size},""" +
-                    s""" "idle" : ${pl.status.filter { case s: HiveStatusResponse => s.status == IDLE; case s: OozieStatusResponse => s.status == IDLE }.toList.size},""" +
-                    s""" "processes" : [ ${
-                      pl.status.map(a => {
-                        a match {
-                          case s: HiveStatusResponse =>  s"""{"status":"${s.message}", "typ":"hive", "start":"${formatter.print(s.start)}", "job":"${new String(enc.quoteAsString(s.query))}"} """
-                          case s: OozieStatusResponse => s"""{"status":"${s.message}", "typ":"oozie", "start":"${formatter.print(s.start)}", "job":"${s.jobId}"} """
-                        }                        
-                      }).mkString(",")}]}
-                     """
+                  val resp = s"""{
+                     "running" : ${pl.processStates.filter { _.driverRunStatus.isInstanceOf[DriverRunOngoing[_]] }.size},
+                     "idle" : ${pl.processStates.filter { _.driverRunHandle == null }.size},
+                     "processes" : [ 
+                     	${pl.processStates.map { s => s"""{"status":"${s.message}", "type":"${s.driver.name}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) s.driverRunHandle.transformation else ""}"}""" }.mkString(",")}
+                     ]}"""
                   sendOk(request, resp)
                 })
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
+
             case request @ Get on Root /: "listviews" /: state =>
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
@@ -173,6 +167,7 @@ object SodaService {
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
+
             case request @ Get on Root /: "dependencygraph" /: dummy =>
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
@@ -209,6 +204,7 @@ object SodaService {
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
+
             case request @ Get on Root /: "kill" /: id =>
               try {
                 val result = (settings.system.actorFor(id) ? KillAction)

@@ -39,15 +39,17 @@ class DriverActor[T <: Transformation](val driver: Driver[T], val ds: DriverSett
     case "tick" => try {
       driver.getDriverRunState(runHandle) match {
         case _: DriverRunOngoing[T] => system.scheduler.scheduleOnce(pingDuration, self, "tick")
-        case _: DriverRunSucceeded[T] => {
+
+        case success: DriverRunSucceeded[T] => {
           log.info(s"Driver run ${runHandle} succeeded.")
-          s ! OozieSuccess()
+          s ! ActionSuccess(runHandle, success)
           startTime = new LocalDateTime()
           become(receive)
         }
-        case f: DriverRunFailed[T] => {
-          log.info(s"Oozie workflow ${runHandle} failed. ${f.reason}, cause ${f.cause}")
-          s ! OozieError()
+
+        case failure: DriverRunFailed[T] => {
+          log.info(s"Oozie workflow ${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
+          s ! ActionFailure(runHandle, failure)
           startTime = new LocalDateTime()
           become(receive)
         }
@@ -55,7 +57,7 @@ class DriverActor[T <: Transformation](val driver: Driver[T], val ds: DriverSett
     } catch {
       case e: DriverException => {
         log.error(s"Driver exception caught: ${e.message}, cause ${e.cause}")
-        s ! OozieError()
+        s ! ActionExceptionFailure(runHandle, e)
         become(receive)
       }
     }
@@ -65,11 +67,11 @@ class DriverActor[T <: Transformation](val driver: Driver[T], val ds: DriverSett
       become(receive)
     }
 
-    case _: GetStatus => sender() ! new OozieStatusResponse("executing job ", self, ProcessStatus.RUNNING, runHandle.stateHandle.toString, startTime)
+    case _: GetStatus => sender() ! ActionStatusResponse(s"Driver actor ${driver.name} executing action", self, driver, runHandle, driver.getDriverRunState(runHandle))
   }
 
   def receive = LoggingReceive {
-    case _: GetStatus => sender ! OozieStatusResponse("idle", self, ProcessStatus.IDLE, "", startTime)
+    case _: GetStatus => sender ! ActionStatusResponse(s"Driver actor ${driver.name} idle", self, driver, null, null)
 
     case CommandWithSender(d: Deploy, s) => driver.deployAll(ds)
 
@@ -94,7 +96,7 @@ object DriverActor {
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
-    
+
     driverActor.withRouter(BroadcastRouter(nrOfInstances = ds.concurrency))
   }
 }
