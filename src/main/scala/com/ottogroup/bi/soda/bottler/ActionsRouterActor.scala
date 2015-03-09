@@ -106,16 +106,6 @@ class ActionsRouterActor() extends Actor {
       }
     }
 
-    case cmd: OozieTransformation => {
-      queues.get("oozie").get.enqueue(CommandWithSender(cmd, sender))
-      routers.get("oozie").get ! WorkAvailable
-    }
-
-    case cmd: HiveTransformation => {
-      queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
-      routers.get("hive").get ! WorkAvailable
-    }
-
     case cmd: FilesystemTransformation => {
       queues.get("filesystem").get.enqueue(CommandWithSender(cmd, sender))
       routers.get("filesystem").get ! WorkAvailable

@@ -55,9 +55,9 @@ class DriverActor[T <: Transformation](val driver: Driver[T], val ds: DriverSett
         }
       }
     } catch {
-      case e: DriverException => {
-        log.error(s"Driver exception caught: ${e.message}, cause ${e.cause}")
-        s ! ActionExceptionFailure(runHandle, e)
+      case exception: DriverException => {
+        log.error(s"Driver exception caught: ${exception.message}, cause ${exception.cause}")
+        s ! ActionExceptionFailure(runHandle, exception)
         become(receive)
       }
     }

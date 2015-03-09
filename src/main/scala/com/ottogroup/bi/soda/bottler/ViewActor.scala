@@ -82,7 +82,6 @@ class ViewSuperVisor( settings:SettingsImpl) extends Actor {
       case _: IllegalArgumentException => Stop
       case _: TimeoutException => Resume
       case _: Exception => Escalate
-
     }
 
   def receive = {
