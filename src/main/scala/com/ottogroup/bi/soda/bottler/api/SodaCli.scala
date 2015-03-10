@@ -20,8 +20,9 @@ object CliFormat {
         sb.append(s"|${pad("status", 10)}|${pad("typ", 8)}|${pad("started", 35)}|${pad("job", 50)}|\n")
         sb.append(pl.processes.map( p => s"|${pad(p.status,10)}|${pad(p.typ, 8)}|${pad(p.start, 35)}|${pad(p.job,50)}|").mkString("\n"))
       }
+      case _ => sb.append(o)
     }
-    o.toString
+    sb.toString
   }
   
   def pad(s : String, l: Int) : String = {
