@@ -10,11 +10,13 @@ import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 import com.ottogroup.bi.soda.dsl.TextFile
 import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.security.UserGroupInformation
 
 abstract class TestResources {
   val hiveConf: HiveConf
   val hiveWarehouseDir: String
   val connection: Connection
+  val ugi: UserGroupInformation
   val metastoreClient: HiveMetaStoreClient
   val database: Database
   val bottler: DeploySchema

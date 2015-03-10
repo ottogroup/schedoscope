@@ -28,8 +28,10 @@ import org.apache.thrift.transport.TTransportException
 import scala.concurrent.duration.Duration
 import scala.concurrent._
 import org.joda.time.LocalDateTime
+import org.apache.thrift.TException
+import java.sql.SQLException
 
-class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
+class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
   override def runTimeOut: Duration = Settings().hiveActionTimeout
 
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
@@ -40,7 +42,7 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
 
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
     println(sql)
-    
+
     val queryStack = Stack[String]("")
 
     sql.split(";").map(el => {
@@ -53,16 +55,15 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
 
     val queriesToExecute = queryStack.reverse.filter(q => !StringUtils.isBlank(q))
 
-    queriesToExecute.foreach(q => try {
-      val stmt = connection.createStatement()
-      stmt.execute(q.trim())
-    } catch {
-      case t: TTransportException => throw DriverException("Critical failure while executing Hive query ${q}", t)
-      case e: Throwable => {
-        e.printStackTrace()
-        return DriverRunFailed[HiveTransformation](this, s"Failure while executing Hive query ${q}", e)
-      }
-    })
+    queriesToExecute.foreach(
+      q => try {
+        val stmt = connection.createStatement()
+        stmt.execute(q.trim())
+      } catch {
+        case e: SQLException =>
+          return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
+        case t: Throwable => throw DriverException("Runtime exception while executing Hive query ${q}", t)
+      })
 
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
@@ -78,20 +79,21 @@ class HiveDriver(val connection: Connection, val metastoreClient: HiveMetaStoreC
       this.executeHiveQuery(createFunction)
     }
   }
+
+  def connection = {
+    Class.forName("org.apache.hive.jdbc.HiveDriver")
+    ugi.reloginFromTicketCache()
+    ugi.doAs(new PrivilegedAction[Connection]() {
+      def run(): Connection = {
+        DriverManager.getConnection(connectionUrl)
+      }
+    })
+  }
 }
 
 object HiveDriver {
   def apply(ds: DriverSettings) = {
-    Class.forName("org.apache.hive.jdbc.HiveDriver")
-
     val ugi = Settings().userGroupInformation
-    ugi.reloginFromTicketCache()
-    val c =
-      ugi.doAs(new PrivilegedAction[Connection]() {
-        def run(): Connection = {
-          DriverManager.getConnection(ds.url)
-        }
-      })
 
     val conf = new HiveConf()
     conf.set("hive.metastore.local", "false");
@@ -106,7 +108,7 @@ object HiveDriver {
 
     val metastoreClient = new HiveMetaStoreClient(conf)
 
-    new HiveDriver(c, metastoreClient)
+    new HiveDriver(ugi, ds.url, metastoreClient)
   }
 }
 

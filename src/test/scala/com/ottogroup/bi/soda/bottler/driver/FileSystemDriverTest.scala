@@ -40,7 +40,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
   "Delete" should "delete files in target directory" in {
     driver.runAndWait(Copy("classpath://input/classpathtest.txt", out.getAbsolutePath(), false))
     new File(out, "classpathtest.txt") shouldBe 'exists
-    
+
     driver.runAndWait(Delete(out.getAbsolutePath() + File.separator + "classpathtest.txt")) shouldBe a[DriverRunSucceeded[_]]
     new File(out, "classpathtest.txt") should not be 'exists
   }

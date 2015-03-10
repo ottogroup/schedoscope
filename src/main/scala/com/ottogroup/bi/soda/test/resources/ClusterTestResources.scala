@@ -17,6 +17,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.Properties
 import collection.JavaConversions._
+import org.apache.hadoop.security.UserGroupInformation
 
 class OozieTestResources extends TestResources {
 
@@ -34,6 +35,14 @@ class OozieTestResources extends TestResources {
     conn
   }
 
+  override val ugi: UserGroupInformation = {
+    UserGroupInformation.setConfiguration(hiveConf)
+    val ugi = UserGroupInformation.getCurrentUser()
+    ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
+    ugi.reloginFromKeytab();
+    ugi
+  }
+
   override val localTestDirectory: String = "" // TODO
 
   override val remoteTestDirectory: String = mo.getFsTestCaseDir.toString
@@ -47,7 +56,7 @@ class OozieTestResources extends TestResources {
   override val metastoreClient: HiveMetaStoreClient = new HiveMetaStoreClient(hiveConf)
   override val database: Database = new Database(connection, mo.getHiveServer2JdbcURL)
   override val bottler: DeploySchema = DeploySchema(metastoreClient, connection)
-  override val hiveDriver: HiveDriver = new HiveDriver(connection, metastoreClient)
+  override val hiveDriver: HiveDriver = new HiveDriver(ugi, mo.getHiveServer2JdbcURL, metastoreClient)
 
   override val namenode = mo.getNameNodeUri
 }

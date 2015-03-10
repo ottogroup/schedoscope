@@ -24,6 +24,7 @@ import java.net.URL
 import net.lingala.zip4j.core.ZipFile
 import net.lingala.zip4j.model.ZipParameters
 import org.apache.hadoop.fs.FileUtil
+import org.apache.hadoop.security.UserGroupInformation
 
 object LocalTestResources extends TestResources {
 
@@ -64,6 +65,14 @@ object LocalTestResources extends TestResources {
     DriverManager.getConnection(hiveLocalJdbcUrl, "", "")
   }
 
+  override val ugi: UserGroupInformation = {
+    UserGroupInformation.setConfiguration(hiveConf)
+    val ugi = UserGroupInformation.getCurrentUser()
+    ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
+    ugi.reloginFromKeytab();
+    ugi
+  }
+
   override val localTestDirectory: String = "" // TODO
 
   override val remoteTestDirectory: String = new Path("file:///", Paths.get("target").toAbsolutePath().toString).toString // TODO
@@ -77,7 +86,7 @@ object LocalTestResources extends TestResources {
   override val metastoreClient: HiveMetaStoreClient = new HiveMetaStoreClient(hiveConf)
   override val database: Database = new Database(connection, hiveLocalJdbcUrl)
   override val bottler: DeploySchema = DeploySchema(metastoreClient, connection)
-  override val hiveDriver: HiveDriver = new HiveDriver(connection, metastoreClient)
+  override val hiveDriver: HiveDriver = new HiveDriver(ugi, hiveLocalJdbcUrl, metastoreClient)
 
   override val namenode = "file:///"
 

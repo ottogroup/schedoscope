@@ -33,6 +33,7 @@ import org.joda.time.LocalDateTime
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent._
 import scala.concurrent.duration.Duration
+import java.io.IOException
 
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
   override def runTimeOut: Duration = Settings().fileActionTimeout
@@ -109,11 +110,12 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
     try {
       inner(files, new Path(to))
-    } catch {
-      case e: Throwable => return DriverRunFailed(this, s"Caught exception while copying ${from} to ${to}", e)
-    }
 
-    DriverRunSucceeded(this, s"Copy from ${from} to ${to} succeeded")
+      DriverRunSucceeded(this, s"Copy from ${from} to ${to} succeeded")
+    } catch {
+      case i: IOException => DriverRunFailed(this, s"Caught IO exception while copying ${from} to ${to}", i)
+      case t: Throwable => throw DriverException(s"Runtime exception caught while copying ${from} to ${to}", t)
+    }
   }
 
   def delete(from: String, recursive: Boolean): DriverRunState[FilesystemTransformation] = {
@@ -122,11 +124,12 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
     try {
       files.foreach(status => fromFS.delete(status.getPath(), recursive))
-    } catch {
-      case e: Throwable => return DriverRunFailed(this, s"Caught exception while deleting ${from}", e)
-    }
 
-    DriverRunSucceeded(this, s"Deletion of ${from} succeeded")
+      DriverRunSucceeded(this, s"Deletion of ${from} succeeded")
+    } catch {
+      case i: IOException => DriverRunFailed(this, s"Caught IO exception while copying ${from}", i)
+      case t: Throwable => throw DriverException(s"Runtime exception while copying ${from}", t)
+    }
   }
 
   def touch(path: String): DriverRunState[FilesystemTransformation] = {
@@ -134,22 +137,24 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
     try {
       filesys.create(new Path(path))
-    } catch {
-      case e: Throwable => return DriverRunFailed(this, s"Caught exception while touching ${path}", e)
-    }
 
-    DriverRunSucceeded(this, s"Touching of ${path} succeeded")
+      DriverRunSucceeded(this, s"Touching of ${path} succeeded")
+    } catch {
+      case i: IOException => DriverRunFailed(this, s"Caught IO exception while touching ${path}", i)
+      case t: Throwable => throw DriverException(s"Runtime exception while touching ${path}", t)
+    }
   }
 
   def mkdirs(path: String): DriverRunState[FilesystemTransformation] = {
     val filesys = fileSystem(path, conf)
     try {
       filesys.mkdirs(new Path(path))
-    } catch {
-      case e: Throwable => return DriverRunFailed(this, s"Caught exception while making dirs ${path}", e)
-    }
 
-    DriverRunSucceeded(this, s"Touching of ${path} succeeded")
+      DriverRunSucceeded(this, s"Touching of ${path} succeeded")
+    } catch {
+      case i: IOException => DriverRunFailed(this, s"Caught IO exception while making dirs ${path}", i)
+      case t: Throwable => throw DriverException(s"Runtime exception while making dirs ${path}", t)
+    }
   }
 
   def move(from: String, to: String): DriverRunState[FilesystemTransformation] = {
@@ -159,11 +164,12 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
     try {
       FileUtil.copy(fromFS, FileUtil.stat2Paths(files), toFS, new Path(to), true, true, conf)
-    } catch {
-      case e: Throwable => return DriverRunFailed(this, s"Caught exception while moving from ${from} to ${to}", e)
-    }
 
-    DriverRunSucceeded(this, s"Moving from ${from} to ${to} succeeded")
+      DriverRunSucceeded(this, s"Moving from ${from} to ${to} succeeded")
+    } catch {
+      case i: IOException => DriverRunFailed(this, s"Caught IO exception while  moving from ${from} to ${to}", i)
+      case t: Throwable => throw DriverException(s"Runtime exception while moving from ${from} to ${to}", t)
+    }
   }
 
   def fileChecksums(paths: List[String], recursive: Boolean): List[String] = {
