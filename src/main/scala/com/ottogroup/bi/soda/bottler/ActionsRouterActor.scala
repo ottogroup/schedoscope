@@ -91,19 +91,10 @@ class ActionsRouterActor() extends Actor {
     case PollCommand(typ) =>
       queues.get(typ).map(q => if (!q.isEmpty) sender ! q.dequeue)
 
-    case view: View => view.transformation() match {
-      case cmd: OozieTransformation => {
-        queues.get("oozie").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("oozie").get ! WorkAvailable
-      }
-      case cmd: HiveTransformation => {
-        queues.get("hive").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("hive").get ! WorkAvailable
-      }
-      case cmd: FilesystemTransformation => {
-        queues.get("filesystem").get.enqueue(CommandWithSender(cmd, sender))
-        routers.get("filesystem").get ! WorkAvailable
-      }
+    case view: View => {
+      val cmd =view.transformation()
+      queues.get(cmd.typ).get.enqueue(CommandWithSender(cmd, sender))
+      routers.get(cmd.typ).get ! WorkAvailable            
     }
 
     case cmd: FilesystemTransformation => {

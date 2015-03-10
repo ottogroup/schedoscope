@@ -12,7 +12,7 @@ abstract class Transformation {
     configuration ++= c
     this
   }
-
+  
   val configuration = HashMap[String, Any]()
 
   def versionDigest() = Version.digest(resourceHashes)
@@ -21,7 +21,7 @@ abstract class Transformation {
 
   def resourceHashes = fsd.fileChecksums(resources(), true)
 
-  def typ = this.getClass.getSimpleName.toLowerCase.replaceAll("Transformation", "")
+  def typ = this.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "")
 }
 
 case class NoOp() extends Transformation
