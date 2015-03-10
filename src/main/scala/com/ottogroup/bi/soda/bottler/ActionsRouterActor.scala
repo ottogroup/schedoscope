@@ -92,9 +92,9 @@ class ActionsRouterActor() extends Actor {
       queues.get(typ).map(q => if (!q.isEmpty) sender ! q.dequeue)
 
     case view: View => {
-      val cmd =view.transformation()
+      val cmd = view.transformation()
       queues.get(cmd.typ).get.enqueue(CommandWithSender(cmd, sender))
-      routers.get(cmd.typ).get ! WorkAvailable            
+      routers.get(cmd.typ).get ! WorkAvailable
     }
 
     case cmd: FilesystemTransformation => {

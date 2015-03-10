@@ -12,7 +12,7 @@ abstract class Transformation {
     configuration ++= c
     this
   }
-  
+
   val configuration = HashMap[String, Any]()
 
   def versionDigest() = Version.digest(resourceHashes)

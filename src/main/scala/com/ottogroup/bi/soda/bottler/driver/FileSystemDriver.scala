@@ -86,21 +86,12 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       "file:" + tempFile.toString()
     }
 
-    val fromIncludingResources = if (from.startsWith("classpath://"))
-      classpathResourceToFile(from)
-    else
-      from
-
-    val fromFS = fileSystem(fromIncludingResources, conf)
-    val toFS = fileSystem(to, conf)
-    val files = listFiles(fromIncludingResources)
-
-    def inner(files: Seq[FileStatus], to: Path): Unit = {
+    def inner(fromFS: FileSystem, toFS: FileSystem, files: Seq[FileStatus], to: Path): Unit = {
       toFS.mkdirs(to)
       if (recursive) {
         files.filter(p => (p.isDirectory() && !p.getPath().getName().startsWith("."))).
           foreach(path => {
-            inner(fromFS.globStatus(new Path(path.getPath(), "*")), new Path(to, path.getPath().getName()))
+            inner(fromFS, toFS, fromFS.globStatus(new Path(path.getPath(), "*")), new Path(to, path.getPath().getName()))
           })
       }
       files.filter(p => !p.isDirectory()).map(status => status.getPath()).foreach { p =>
@@ -109,7 +100,14 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     }
 
     try {
-      inner(files, new Path(to))
+      val fromIncludingResources = if (from.startsWith("classpath://"))
+        classpathResourceToFile(from)
+      else
+        from
+
+      val fromFS = fileSystem(fromIncludingResources, conf)
+      val toFS = fileSystem(to, conf)
+      inner(fromFS, toFS, listFiles(fromIncludingResources), new Path(to))
 
       DriverRunSucceeded(this, s"Copy from ${from} to ${to} succeeded")
     } catch {
@@ -118,11 +116,10 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     }
   }
 
-  def delete(from: String, recursive: Boolean): DriverRunState[FilesystemTransformation] = {
-    val fromFS = fileSystem(from, conf)
-    val files = listFiles(from)
-
+  def delete(from: String, recursive: Boolean): DriverRunState[FilesystemTransformation] =
     try {
+      val fromFS = fileSystem(from, conf)
+      val files = listFiles(from)
       files.foreach(status => fromFS.delete(status.getPath(), recursive))
 
       DriverRunSucceeded(this, s"Deletion of ${from} succeeded")
@@ -130,12 +127,11 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while copying ${from}", i)
       case t: Throwable => throw DriverException(s"Runtime exception while copying ${from}", t)
     }
-  }
 
-  def touch(path: String): DriverRunState[FilesystemTransformation] = {
-    val filesys = fileSystem(path, conf)
-
+  def touch(path: String): DriverRunState[FilesystemTransformation] =
     try {
+      val filesys = fileSystem(path, conf)
+
       filesys.create(new Path(path))
 
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
@@ -143,11 +139,11 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while touching ${path}", i)
       case t: Throwable => throw DriverException(s"Runtime exception while touching ${path}", t)
     }
-  }
 
-  def mkdirs(path: String): DriverRunState[FilesystemTransformation] = {
-    val filesys = fileSystem(path, conf)
+  def mkdirs(path: String): DriverRunState[FilesystemTransformation] =
     try {
+      val filesys = fileSystem(path, conf)
+
       filesys.mkdirs(new Path(path))
 
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
@@ -155,14 +151,13 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while making dirs ${path}", i)
       case t: Throwable => throw DriverException(s"Runtime exception while making dirs ${path}", t)
     }
-  }
 
-  def move(from: String, to: String): DriverRunState[FilesystemTransformation] = {
-    val fromFS = fileSystem(from, conf)
-    val toFS = fileSystem(to, conf)
-    val files = listFiles(from)
-
+  def move(from: String, to: String): DriverRunState[FilesystemTransformation] =
     try {
+      val fromFS = fileSystem(from, conf)
+      val toFS = fileSystem(to, conf)
+      val files = listFiles(from)
+
       FileUtil.copy(fromFS, FileUtil.stat2Paths(files), toFS, new Path(to), true, true, conf)
 
       DriverRunSucceeded(this, s"Moving from ${from} to ${to} succeeded")
@@ -170,7 +165,6 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while  moving from ${from} to ${to}", i)
       case t: Throwable => throw DriverException(s"Runtime exception while moving from ${from} to ${to}", t)
     }
-  }
 
   def fileChecksums(paths: List[String], recursive: Boolean): List[String] = {
     paths.flatMap(p => {
@@ -191,7 +185,10 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
   }
 
   def listFiles(path: String): Array[FileStatus] = {
-    fileSystem(path, conf).globStatus(new Path(path))
+    val files = fileSystem(path, conf).globStatus(new Path(path))
+    if (files != null)
+      files
+    else Array()
   }
 
   def localFilesystem: FileSystem = FileSystem.getLocal(conf)
