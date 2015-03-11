@@ -20,7 +20,10 @@ import scala.concurrent.duration.Duration
 import org.joda.time.LocalDateTime
 
 class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
+
   override def runTimeOut: Duration = Settings().oozieActionTimeout
+
+  override def name = "oozie"
 
   def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = try {
     val jobConf = createOozieJobConf(t)

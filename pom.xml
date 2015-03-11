@@ -201,6 +201,10 @@
 					<reportsDirectory>${project.build.directory}/surefire-reports</reportsDirectory>
 					<junitxml>.</junitxml>
 					<filereports>WDF TestSuite.txt</filereports>
+					<argLine>-Xmx1024m -XX:MaxPermSize=512M</argLine>
+					<environmentVariables>
+						<HADOOP_HOME>${project.build.directory}/hadoop</HADOOP_HOME>
+					</environmentVariables>
 				</configuration>
 				<executions>
 					<execution>

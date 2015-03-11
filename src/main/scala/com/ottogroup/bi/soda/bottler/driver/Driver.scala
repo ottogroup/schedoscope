@@ -29,7 +29,7 @@ case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], 
 trait Driver[T <: Transformation] {
   def runTimeOut: Duration = Duration.Inf
 
-  def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "")
+  def name: String
 
   def killRun(run: DriverRunHandle[T]): Unit = {}
 

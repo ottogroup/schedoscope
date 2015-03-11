@@ -32,7 +32,10 @@ import org.apache.thrift.TException
 import java.sql.SQLException
 
 class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
+
   override def runTimeOut: Duration = Settings().hiveActionTimeout
+
+  override def name = "hive"
 
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, null, future {
@@ -81,7 +84,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
   }
 
   def connection = {
-    Class.forName("org.apache.hive.jdbc.HiveDriver")
+    Class.forName(JDBC_CLASS)
     ugi.reloginFromTicketCache()
     ugi.doAs(new PrivilegedAction[Connection]() {
       def run(): Connection = {
@@ -89,6 +92,8 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
       }
     })
   }
+
+  def JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
 }
 
 object HiveDriver {

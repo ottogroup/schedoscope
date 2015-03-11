@@ -13,7 +13,11 @@ import com.ottogroup.bi.soda.dsl.Parameter.p
 class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers with TestFolder {
   val fileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
 
-  "FileSystemDriver" should "execute Copy file transformation with a single file" taggedAs (DriverTests) in {
+  "FileSystemDriver" should "be named filesystem" taggedAs (DriverTests) in {
+    fileSystemDriver.name shouldBe "filesystem"
+  }
+
+  it should "execute Copy file transformation with a single file" taggedAs (DriverTests) in {
     createInputFile("aTest.file")
 
     outputFile("aTest.file") should not be 'exists

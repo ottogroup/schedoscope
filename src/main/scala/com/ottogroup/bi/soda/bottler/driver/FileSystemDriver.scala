@@ -36,7 +36,10 @@ import scala.concurrent.duration.Duration
 import java.io.IOException
 
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
+
   override def runTimeOut: Duration = Settings().fileActionTimeout
+
+  override def name = "filesystem"
 
   def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
     new DriverRunHandle(this, new LocalDateTime(), t, null, future {

@@ -65,7 +65,6 @@ trait test extends TestableView {
       println("Added partition: " + part.getSd.getLocation)
     }
     populate(sortedBy)
-
   }
 
   def basedOn(d: View with rows*) {
