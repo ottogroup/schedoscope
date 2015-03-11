@@ -73,6 +73,36 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile(s"subfolder${/}aTest.file") shouldBe 'exists
   }
 
+  it should "execute IfExists file transformation when a given file exists" in {
+    createInputFile("check.file")
+    
+    inputFile("check.file") shouldBe 'exists
+    outputFile("aTest.file") should not be 'exists
+    outputFile("anotherTest.file") should not be 'exists
+    
+    fileSystemDriver.runAndWait(IfExists(inputPath("check.file"), Touch(outputPath("aTest.file")))) shouldBe a[DriverRunSucceeded[_]]
+    fileSystemDriver.runAndWait(IfExists(inputPath("anotherCheck.file"), Touch(outputPath("anotherTest.file")))) shouldBe a[DriverRunSucceeded[_]]
+
+    inputFile("check.file") shouldBe 'exists
+    outputFile("aTest.file") shouldBe 'exists
+    outputFile("anotherTest.file") should not be 'exists
+  }
+  
+  it should "execute IfNotExists file transformation when a given file does not exist" in {
+    createInputFile("check.file")
+    
+    inputFile("check.file") shouldBe 'exists
+    outputFile("aTest.file") should not be 'exists
+    outputFile("anotherTest.file") should not be 'exists
+    
+    fileSystemDriver.runAndWait(IfNotExists(inputPath("check.file"), Touch(outputPath("aTest.file")))) shouldBe a[DriverRunSucceeded[_]]
+    fileSystemDriver.runAndWait(IfNotExists(inputPath("anotherCheck.file"), Touch(outputPath("anotherTest.file")))) shouldBe a[DriverRunSucceeded[_]]
+
+    inputFile("check.file") shouldBe 'exists
+    outputFile("aTest.file") should not be 'exists
+    outputFile("anotherTest.file") shouldBe 'exists
+  }
+  
   it should "execute Touch file transformation" in {
     outputFile("aTest.file") should not be 'exists
 
