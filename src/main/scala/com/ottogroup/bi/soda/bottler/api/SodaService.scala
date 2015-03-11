@@ -143,7 +143,7 @@ object SodaService {
                      "running" : ${pl.processStates.filter { _.driverRunStatus.isInstanceOf[DriverRunOngoing[_]] }.size},
                      "idle" : ${pl.processStates.filter { _.driverRunHandle == null }.size},
                      "processes" : [ 
-                     	${pl.processStates.map { s => s"""{"status":"${s.message}", "type":"${s.driver.name}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) s.driverRunHandle.transformation else ""}"}""" }.mkString(",")}
+                     	${pl.processStates.map { s => s"""{"status":"${s.message}", "typ":"${s.driver.name}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) enc.quoteAsString(s.driverRunHandle.transformation.toString) else ""}"}""" }.mkString(",")}
                      ]}"""
                   sendOk(request, resp)
                 })
@@ -155,15 +155,15 @@ object SodaService {
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
                 val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
-                status.map( views => {
-                    val stats = views.groupBy(_.state)
-                                     .mapValues(_.size)
-                                     .map(a => s""""${a._1}" : ${a._2}""")
-                                     .mkString(",")
-                    val filtered = views.filter("any".equals(state) || _.state.equals(state))
-                    val details = filtered.map(v => s"""{"status":"${v.state}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
-                    sendOk(request, s"""{ "overview" : { ${stats} }  "details" : [ ${details} ] }""")
-                })                                 
+                status.map(views => {
+                  val stats = views.groupBy(_.state)
+                    .mapValues(_.size)
+                    .map(a => s""""${a._1}" : ${a._2}""")
+                    .mkString(",")
+                  val filtered = views.filter("any".equals(state) || _.state.equals(state))
+                  val details = filtered.map(v => s"""{"status":"${v.state}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
+                  sendOk(request, s"""{ "overview" : { ${stats} }, "details" : [ ${details} ] }""")
+                })
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }
@@ -172,12 +172,13 @@ object SodaService {
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
                 val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
-                val nodes = HashSet[(String, String)]()
+                val nodes = HashSet[(String, String)]()                
                 val edges = HashSet[(String, String)]()
                 val colors = Map(("materialized", "lime"), ("transforming", "yellow"), ("nodata", "beige"), ("table", "black"), ("failed", "red"), ("retrying", "orange"), ("receive", "powderblue"), ("waiting", "blue"), ("dummy", "white"))
                 status.map(views => {
                   views.foreach(v => {
-                    if (v.state != "receive" && v.state != "nodata") {
+                    //if (v.state != "receive" && v.state != "nodata") {
+                    if (true) {
                       nodes.add((v.view.viewId, v.state))
                       v.view.dependencies.foreach(d => {
                         edges.add((d.viewId, v.view.viewId))
@@ -190,7 +191,9 @@ object SodaService {
                     val db = tab.split("\\.")(0)
                     nodes.add((tab, "table"))
                     edges.add((o, tab))
+                    edges.add((tab, "ROOT"))
                   })
+                  nodes.add(("ROOT", "dummy"))
                   val nodeList = nodes.toList.zipWithIndex.map(el => (el._1._1, (el._2, el._1._2)))
                   val nodeLookup = nodeList.map(nl => (nl._1, nl._2._1)).toMap
 
@@ -199,7 +202,7 @@ object SodaService {
                     .map(e => s"""{"source":${nodeLookup.get(e._1).get}, "target":${nodeLookup.get(e._2).get}, "value":1}""")
                     .mkString(",")
 
-                  sendOk(request, s"""{ "nodes" : [${nodeListJson}], "links" : [${edgeListJson}] }""")
+                  sendOk(request, s"""{"rootId": ${nodeLookup.get("ROOT").get}, "nodes" : [${nodeListJson}], "links" : [${edgeListJson}] }""")
                 })
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)

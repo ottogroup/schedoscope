@@ -167,14 +167,15 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     }
 
   def fileChecksums(paths: List[String], recursive: Boolean): List[String] = {
-    paths.flatMap(p => {
-      println("Computing checksum for " + p)
+    paths.flatMap(p => {      
       val fs = fileSystem(p, conf)
       val path = new Path(p)
       if (fs.isFile(path)) {
         val cs = ChecksumCache.lookup(p).getOrElse(fs.getFileChecksum(path))
-        if (cs != null)
+        if (cs != null) {
+          println("Computing checksum for " + p)
           List(ChecksumCache.cache(p, cs.toString))
+        }
         else
           List()
       } else if (recursive) {

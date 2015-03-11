@@ -124,8 +124,8 @@ object ViewUrlParser {
 
   } catch {
 
-    case e: Throwable => throw new IllegalArgumentException("""        
-Error while parsing view URL path!
+    case e: Throwable => throw new IllegalArgumentException(s"""        
+Error while parsing view URL path: ${viewUrlPath}!
 
 Path format: /{environment}/{package}/{view}(/{view parameter value})*
 
