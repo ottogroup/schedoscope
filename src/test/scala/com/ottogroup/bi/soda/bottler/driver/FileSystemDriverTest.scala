@@ -13,7 +13,7 @@ import com.ottogroup.bi.soda.dsl.Parameter.p
 class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers with TestFolder {
   val fileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
 
-  "FileSystemDriver" should "execute Copy file transformation with a single file" in {
+  "FileSystemDriver" should "execute Copy file transformation with a single file" taggedAs (DriverTests) in {
     createInputFile("aTest.file")
 
     outputFile("aTest.file") should not be 'exists
@@ -23,7 +23,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile("aTest.file") shouldBe 'exists
   }
 
-  it should "execute Copy file transformation of multiple files with pattern" in {
+  it should "execute Copy file transformation of multiple files with pattern" taggedAs (DriverTests) in {
     createInputFile("aTest.file")
     createInputFile("anotherTest.file")
 
@@ -36,7 +36,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile("anotherTest.file") shouldBe 'exists
   }
 
-  it should "execute Copy file transformation recursively" in {
+  it should "execute Copy file transformation recursively" taggedAs (DriverTests) in {
     createInputFile(s"subfolder${/}aTest.file")
     createInputFile(s"subfolder${/}anotherSubfolder${/}anotherTest.file")
 
@@ -49,7 +49,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile(s"subfolder${/}anotherSubfolder${/}anotherTest.file") shouldBe 'exists
   }
 
-  it should "execute Move file transformation with a single file" in {
+  it should "execute Move file transformation with a single file" taggedAs (DriverTests) in {
     createInputFile("aTest.file")
 
     inputFile("aTest.file") shouldBe 'exists
@@ -61,7 +61,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile("aTest.file") shouldBe 'exists
   }
 
-  it should "execute Move file transformation with a folder recursively" in {
+  it should "execute Move file transformation with a folder recursively" taggedAs (DriverTests) in {
     createInputFile(s"subfolder${/}aTest.file")
 
     inputFile(s"subfolder${/}aTest.file") shouldBe 'exists
@@ -73,13 +73,13 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile(s"subfolder${/}aTest.file") shouldBe 'exists
   }
 
-  it should "execute IfExists file transformation when a given file exists" in {
+  it should "execute IfExists file transformation when a given file exists" taggedAs (DriverTests) in {
     createInputFile("check.file")
-    
+
     inputFile("check.file") shouldBe 'exists
     outputFile("aTest.file") should not be 'exists
     outputFile("anotherTest.file") should not be 'exists
-    
+
     fileSystemDriver.runAndWait(IfExists(inputPath("check.file"), Touch(outputPath("aTest.file")))) shouldBe a[DriverRunSucceeded[_]]
     fileSystemDriver.runAndWait(IfExists(inputPath("anotherCheck.file"), Touch(outputPath("anotherTest.file")))) shouldBe a[DriverRunSucceeded[_]]
 
@@ -87,14 +87,14 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile("aTest.file") shouldBe 'exists
     outputFile("anotherTest.file") should not be 'exists
   }
-  
-  it should "execute IfNotExists file transformation when a given file does not exist" in {
+
+  it should "execute IfNotExists file transformation when a given file does not exist" taggedAs (DriverTests) in {
     createInputFile("check.file")
-    
+
     inputFile("check.file") shouldBe 'exists
     outputFile("aTest.file") should not be 'exists
     outputFile("anotherTest.file") should not be 'exists
-    
+
     fileSystemDriver.runAndWait(IfNotExists(inputPath("check.file"), Touch(outputPath("aTest.file")))) shouldBe a[DriverRunSucceeded[_]]
     fileSystemDriver.runAndWait(IfNotExists(inputPath("anotherCheck.file"), Touch(outputPath("anotherTest.file")))) shouldBe a[DriverRunSucceeded[_]]
 
@@ -102,8 +102,8 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile("aTest.file") should not be 'exists
     outputFile("anotherTest.file") shouldBe 'exists
   }
-  
-  it should "execute Touch file transformation" in {
+
+  it should "execute Touch file transformation" taggedAs (DriverTests) in {
     outputFile("aTest.file") should not be 'exists
 
     fileSystemDriver.runAndWait(Touch(outputPath("aTest.file"))) shouldBe a[DriverRunSucceeded[_]]
@@ -111,7 +111,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile("aTest.file") shouldBe 'exists
   }
 
-  it should "execute Delete file transformations on single files" in {
+  it should "execute Delete file transformations on single files" taggedAs (DriverTests) in {
     createInputFile("aTest.file")
     inputFile("aTest.file") shouldBe 'exists
 
@@ -120,7 +120,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     inputFile("aTest.file") should not be 'exists
   }
 
-  it should "execute Delete file transformations on folders recursively" in {
+  it should "execute Delete file transformations on folders recursively" taggedAs (DriverTests) in {
     createInputFile(s"subfolder${/}aTest.file")
 
     inputFile(s"subfolder${/}aTest.file") shouldBe 'exists
@@ -130,7 +130,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     inputFile("subfolder") should not be 'exists
   }
 
-  it should "execute CopyFrom file transformations by copying a single file to partition path of view" in {
+  it should "execute CopyFrom file transformations by copying a single file to partition path of view" taggedAs (DriverTests) in {
     val product = new Product(p("EC0106"), p("2014"), p("01"), p("01")) {
       override def fullPath = out
     }
@@ -143,7 +143,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     new File(s"${product.fullPath}${/}aTest.file") shouldBe 'exists
   }
 
-  it should "execute CopyFrom file transformations by copying a folder recursively to partition path of view" in {
+  it should "execute CopyFrom file transformations by copying a folder recursively to partition path of view" taggedAs (DriverTests) in {
     val product = new Product(p("EC0106"), p("2014"), p("01"), p("01")) {
       override def fullPath = out
     }
@@ -156,7 +156,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     new File(s"${product.fullPath}${/}subfolder${/}aTest.file") shouldBe 'exists
   }
 
-  it should "run asynchronously" in {
+  it should "run asynchronously" taggedAs (DriverTests) in {
     outputFile("aTest.file") should not be 'exists
 
     val runHandle = fileSystemDriver.run(Touch(outputPath("aTest.file")))
@@ -172,7 +172,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     outputFile("aTest.file") shouldBe 'exists
   }
 
-  it should "return DriverRunFailed in case of problems when running asynchronously" in {
+  it should "return DriverRunFailed in case of problems when running asynchronously" taggedAs (DriverTests) in {
     createInputFile(s"subfolder${/}aTest.file")
     inputFile("subfolder") shouldBe 'exists
 
@@ -189,7 +189,7 @@ class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers wi
     inputFile("subfolder") shouldBe 'exists
   }
 
-  it should "return DriverRunFailed in case of problems when running synchronously" in {
+  it should "return DriverRunFailed in case of problems when running synchronously" taggedAs (DriverTests) in {
     createInputFile(s"subfolder${/}aTest.file")
     inputFile("subfolder") shouldBe 'exists
 
