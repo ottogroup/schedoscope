@@ -172,13 +172,13 @@ object SodaService {
               try {
                 val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
                 val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
-                val nodes = HashSet[(String, String)]()                
+                val nodes = HashSet[(String, String)]()
                 val edges = HashSet[(String, String)]()
                 val colors = Map(("materialized", "lime"), ("transforming", "yellow"), ("nodata", "beige"), ("table", "black"), ("failed", "red"), ("retrying", "orange"), ("receive", "powderblue"), ("waiting", "blue"), ("dummy", "white"))
                 status.map(views => {
                   views.foreach(v => {
                     if (v.state != "receive" && v.state != "nodata") {
-                    //if (true) {
+                      //if (true) {
                       nodes.add((v.view.viewId, v.state))
                       v.view.dependencies.foreach(d => {
                         edges.add((d.viewId, v.view.viewId))

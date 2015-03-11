@@ -9,7 +9,7 @@ case class Proc(status: String, typ: String, start: String, transformation: Stri
 case class ProcList(running: Int, idle: Int, processes: List[Proc])
 case class ViewStat(status: String, view: String)
 case class ViewSpec(status: String, view: String, parameters: String)
-case class ViewList(overview: Map[String,Int], details: List[ViewSpec])
+case class ViewList(overview: Map[String, Int], details: List[ViewSpec])
 
 object SodaJsonProtocol extends DefaultJsonProtocol {
   implicit val processFormat = jsonFormat4(Proc)
