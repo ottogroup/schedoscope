@@ -40,10 +40,10 @@ import com.ottogroup.bi.soda.bottler.api.DriverSettings
 class StatusRetriever extends Actor with Aggregator {
 
   expectOnce {
-    case GetProcessList(s) => new MultipleResponseHandler(s, "")
+    case GetProcessList(s, q) => new MultipleResponseHandler(s, q, "")
   }
 
-  class MultipleResponseHandler(originalSender: ActorRef, propName: String) {
+  class MultipleResponseHandler(originalSender: ActorRef, queues: Map[String, List[String]], propName: String) {
 
     import context.dispatcher
     import collection.mutable.ArrayBuffer
@@ -55,12 +55,12 @@ class StatusRetriever extends Actor with Aggregator {
 
     val handle = expect {
       case ar: ActionStatusResponse[_] => values += ar
-      case TimedOut => processFinal(values.toList)
+      case TimedOut                    => processFinal(values.toList)
     }
 
     def processFinal(eval: List[ActionStatusResponse[_]]) {
       unexpect(handle)
-      originalSender ! ProcessList(eval)
+      originalSender ! ProcessList(eval, queues)
       context.stop(self)
     }
   }
@@ -84,27 +84,29 @@ class ActionsRouterActor() extends Actor {
   }
 
   val routers = availableTransformations.foldLeft(Map[String, ActorRef]()) {
-    (registeredDrivers, driverName) => registeredDrivers + (driverName -> actorOf(DriverActor.props(driverName)))
+    (registeredDrivers, driverName) => registeredDrivers + (driverName -> actorOf(DriverActor.props(driverName, self)))
   }
+  
 
   def receive = LoggingReceive({
-    case PollCommand(typ) =>
+
+    case PollCommand(typ) => {
+      log.debug("Received poll for " + typ)
       queues.get(typ).map(q => if (!q.isEmpty) sender ! q.dequeue)
+    }
 
     case view: View => {
-      val cmd = view.transformation()
+      val cmd = view.transformation().forView(view) // backreference transformation -> view
       queues.get(cmd.typ).get.enqueue(CommandWithSender(cmd, sender))
-      routers.get(cmd.typ).get ! WorkAvailable
     }
 
     case cmd: FilesystemTransformation => {
       queues.get("filesystem").get.enqueue(CommandWithSender(cmd, sender))
-      routers.get("filesystem").get ! WorkAvailable
     }
 
     case cmd: GetStatus => {
       implicit val timeout = Timeout(600);
-      actorOf(Props(new StatusRetriever)) ! GetProcessList(sender())
+      actorOf(Props(new StatusRetriever)) ! GetProcessList(sender(), formatQueues())
     }
 
     case cmd: Deploy => {
@@ -112,10 +114,17 @@ class ActionsRouterActor() extends Actor {
         val name = el._1
         val act = el._2
         queues.get(name).get.enqueue(CommandWithSender(cmd, sender))
-        act ! WorkAvailable
+        //act ! WorkAvailable
       })
     }
   })
+
+  private def formatQueues() = {
+    queues.map(q => (q._1, q._2.map(c => {
+       val viewId = if (c.message.asInstanceOf[Transformation].view.isDefined) c.message.asInstanceOf[Transformation].view.get.viewId else "no-view" 
+       c.message.asInstanceOf[Transformation].description
+    }).toList))
+  }
 }
 
 object ActionsRouterActor {

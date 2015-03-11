@@ -18,6 +18,7 @@ import scala.collection.mutable.ListBuffer
 import collection.JavaConversions._
 import org.apache.commons.io.FilenameUtils
 import com.ottogroup.bi.soda.dsl.Version
+import org.apache.commons.lang.StringUtils
 
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 
@@ -26,9 +27,12 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
   override def resources() = {
     udfs.flatMap(udf => udf.getResourceUris.map(uri => uri.getUri))
   }
+  
+  description = StringUtils.abbreviate(sql, 100).replaceAll("\n", "").replaceAll("\t", "")
+
 }
 
-object HiveTransformation extends {
+object HiveTransformation {
 
   def withFunctions(v: View, functions: Map[String, Class[_]] = Map()) = {
     val functionBuff = ListBuffer[Function]()

@@ -49,6 +49,7 @@ import com.fasterxml.jackson.core.io.JsonStringEncoder
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
 import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
+import com.ottogroup.bi.soda.dsl.Transformation
 
 object SodaService {
   val settings = Settings()
@@ -70,7 +71,7 @@ object SodaService {
     Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
   else
     null
-  val formatter = DateTimeFormat.fullDateTime()
+  val formatter = DateTimeFormat.shortDateTime()
 
   def start() {
     deploy()
@@ -142,8 +143,10 @@ object SodaService {
                   val resp = s"""{
                      "running" : ${pl.processStates.filter { _.driverRunStatus.isInstanceOf[DriverRunOngoing[_]] }.size},
                      "idle" : ${pl.processStates.filter { _.driverRunHandle == null }.size},
+                     "queued" : ${pl.queues.foldLeft(0)((s,el) => s + el._2.size)},  
+                     "queues" : { ${pl.queues.map(ql => s""" "${ql._1}" : [ ${ql._2.map(el => "\""+new String(enc.quoteAsString(el))+"\"").mkString(",")} ] """).mkString(",") } },  
                      "processes" : [ 
-                     	${pl.processStates.map { s => s"""{"status":"${s.message}", "typ":"${s.driver.name}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) enc.quoteAsString(s.driverRunHandle.transformation.toString) else ""}"}""" }.mkString(",")}
+                     	${pl.processStates.map { s => s"""{"status":"${s.message}", "typ":"${s.driver.name}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) new String(enc.quoteAsString(s.driverRunHandle.transformation.asInstanceOf[Transformation].description)) else ""}"}""" }.mkString(",")}
                      ]}"""
                   sendOk(request, resp)
                 })
@@ -241,6 +244,8 @@ object SodaService {
       View.viewsFromUrl(viewUrlPath, viewAugmentor)
     else
       View.viewsFromUrl(viewUrlPath)
+      
+    println("COMPUTED VIEWS: " + views.map(v => v.viewId).mkString("\n"))
 
     val viewActorRefFutures = views.map { v => (supervisor ? v).mapTo[ActorRef] }
     Await.result(Future sequence viewActorRefFutures, 60 seconds)

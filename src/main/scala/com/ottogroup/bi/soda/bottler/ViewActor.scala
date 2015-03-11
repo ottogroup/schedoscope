@@ -42,10 +42,10 @@ import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
 class ViewStatusRetriever extends Actor with Aggregator {
 
   expectOnce {
-    case GetStatus() => new MultipleResponseHandler(sender, "")
+    case GetStatus() => new MultipleResponseHandler(sender)
   }
 
-  class MultipleResponseHandler(originalSender: ActorRef, propName: String) {
+  class MultipleResponseHandler(originalSender: ActorRef) {
 
     import context.dispatcher
     import collection.mutable.ArrayBuffer
@@ -349,7 +349,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   }
 
   private def materializeDependencies: Unit = {
-    log.debug(view + " has dependencies " + view.dependencies)
+    log.debug(view + " has dependencies " + view.dependencies.mkString(", "))
     if (view.dependencies.isEmpty) {
       if (successFlagExists(view) && view.transformation() == NoOp()) {
         log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")

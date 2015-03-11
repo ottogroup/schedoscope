@@ -8,6 +8,7 @@ import com.typesafe.config.ConfigFactory
 import collection.JavaConversions._
 import org.apache.oozie.client.OozieClient
 import java.io.FileInputStream
+import org.apache.commons.lang.StringUtils
 
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {
   configureWith(c)
@@ -15,6 +16,8 @@ case class OozieTransformation(bundle: String, workflow: String, workflowAppPath
   override def resources() = {
     List(workflowAppPath)
   }
+  
+  description = StringUtils.abbreviate(s"${bundle}/${workflow}", 100)
 }
 
 object OozieTransformation {

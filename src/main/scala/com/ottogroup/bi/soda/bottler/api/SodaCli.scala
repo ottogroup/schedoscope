@@ -1,6 +1,7 @@
 package com.ottogroup.bi.soda.bottler.api
 
 import scala.concurrent.Future
+import com.bethecoder.ascii_table.ASCIITable
 
 /**
  * @author dev_dbenz
@@ -15,18 +16,22 @@ object CliFormat {
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
-      case pl: ProcList => {
+      case pl: ProcList => {        
         sb.append(s"Running: ${pl.running}\n")
         sb.append(s"Idle: ${pl.idle}\n")
-        sb.append(s"Details:\n")
-        sb.append(s"|${pad("status", 10)}|${pad("typ", 8)}|${pad("started", 35)}|${pad("transformation", 50)}|\n")
-        sb.append(pl.processes.map(p => s"|${pad(p.status, 10)}|${pad(p.typ, 8)}|${pad(p.start, 35)}|${pad(p.transformation, 50)}|").mkString("\n"))
+        sb.append(s"Queued: ${pl.queued}\n")
+        sb.append(s"Details\n")
+        val header = Array("STATUS","TYP","STARTED", "TRANSFORMATION")
+        val running = pl.processes.map(p => Array(p.status, p.typ, p.start, p.transformation)).toArray
+        val queued =  pl.queues.flatMap(q => q._2.map( e => Array("queued", q._1, "no", e))).toArray
+        sb.append(ASCIITable.getInstance.getTable(header, running ++ queued))        
       }
       case vl: ViewList => {
         sb.append(vl.overview.map(el => s"${el._1}: ${el._2}\n").mkString("\n"))
         sb.append(s"Details:\n")
-        sb.append(s"|${pad("view", 35)}|${pad("status", 15)}|${pad("parameters", 50)}|\n")
-        sb.append(vl.details.map(d => s"|${pad(d.view, 35)}|${pad(d.status, 15)}|${pad(d.parameters, 50)}|").mkString("\n"))
+        val header = Array("VIEW", "STATUS", "PARAMETERS")
+        val data = vl.details.map(d => Array(d.view, d.status, d.parameters)).toArray
+        sb.append(ASCIITable.getInstance.getTable(header, data))
       }
       case vs: ViewStat => {
         sb.append(s"view: ${vs.view}\n")
@@ -43,7 +48,7 @@ object CliFormat {
     sb.toString
   }
 
-  def pad(s: String, l: Int): String = {
-    " " + s.replaceAll("\\n", "").replaceAll("\\t", "").padTo(l, " ").mkString + " "
-  }
+  def formatRow(l : String*): String = {
+    "| " + l.mkString("\t| ") + " |\n"
+  }  
 }

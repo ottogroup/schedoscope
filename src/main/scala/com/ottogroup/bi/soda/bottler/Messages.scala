@@ -39,10 +39,9 @@ case class Suspend() extends Command
 
 case class PollCommand(typ: String)
 case class CommandWithSender(message: AnyRef, sender: ActorRef)
-case class WorkAvailable()
 case class TimedOut()
-case class ProcessList(processStates: List[ActionStatusResponse[_]])
-case class GetProcessList(sender: ActorRef)
+case class ProcessList(processStates: List[ActionStatusResponse[_]], queues: Map[String,List[String]])
+case class GetProcessList(sender: ActorRef, queues: Map[String, List[String]])
 case class Deploy()
 case class CheckVersion(view: View)
 case class SetVersion(view: View)
