@@ -15,7 +15,7 @@ import com.ottogroup.bi.soda.DriverTests
 
 class OozieDriverTest extends FlatSpec with Matchers {
 
-  lazy val resources: OozieTestResources = new OozieTestResources()
+  lazy val resources: OozieTestResources = OozieTestResources()
 
   def cluster = resources.mo
   def driver = resources.oozieDriver
@@ -23,7 +23,7 @@ class OozieDriverTest extends FlatSpec with Matchers {
   def deployWorkflow(wf: OozieTransformation) = {
     val hdfs = resources.fileSystem
     val dest = new Path(s"${resources.namenode}/${wf.workflowAppPath}")
-    val src = new Path(s"src/test/resources/${wf.bundle}/${wf.workflow}/workflow.xml")
+    val src = new Path(s"src/test/resources/oozie/${wf.bundle}/${wf.workflow}/workflow.xml")
 
     println(s"Uploading workflow ${wf.workflow} from ${src} to ${dest}")
 

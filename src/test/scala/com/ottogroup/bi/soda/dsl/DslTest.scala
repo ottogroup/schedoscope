@@ -20,6 +20,7 @@ import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import test.eci.datahub.Click
 import test.eci.datahub.ClickOfEC0101
+import test.eci.datahub.ClickOfEC0101ViaOozie
 
 class DslTest extends FlatSpec with Matchers {
 
@@ -309,7 +310,7 @@ class DslTest extends FlatSpec with Matchers {
   it should "be queryable" in {
     val views = View.viewsInPackage("test.eci.datahub")
 
-    views should contain theSameElementsAs List(classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101])
+    views should contain theSameElementsAs List(classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101], classOf[ClickOfEC0101ViaOozie])
 
     val traits = View.getTraits(classOf[ProductBrand])
 

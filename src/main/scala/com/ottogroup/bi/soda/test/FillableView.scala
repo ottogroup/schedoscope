@@ -44,7 +44,7 @@ trait rows extends View {
   locationPathBuilder = (env: String) => resources().hiveWarehouseDir + ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
   // unify storage format
   storedAs(localTestResources.textStorage)
-  
+
   // overrides (to enable correct table/database names, otherwise $$anonFunc...) 
   override def namingBase = this.getClass.getSuperclass.getSimpleName()
   override def getCanonicalClassname = this.getClass.getSuperclass.getCanonicalName
@@ -76,16 +76,27 @@ trait rows extends View {
   def deployWorkflow(wf: OozieTransformation) = {
     val fs = resources().fileSystem
     val dest = new Path(resources().namenode + new URI(wf.workflowAppPath).getPath)
-    println(s"Uploading workflow ${wf.workflow} to ${dest}" + dest)
+    println(s"Uploading workflow ${wf.workflow} to ${dest}")
+
     if (!fs.exists(dest))
       fs.mkdirs(dest)
+
     // FIXME: make source path configurable, recursive upload
-    new File(s"src/main/resources/oozie/${wf.bundle}/${wf.workflow}")
-      .listFiles()
-      .map(f => {
-        val src = new Path("file:///" + f.getAbsolutePath)
-        fs.copyFromLocalFile(src, dest)
-      })
+    val srcFilesFromMain = if (new File(s"src/main/resources/oozie/${wf.bundle}/${wf.workflow}").listFiles() == null)
+      Array[File]()
+    else
+      new File(s"src/main/resources/oozie/${wf.bundle}/${wf.workflow}").listFiles()
+
+    val srcFilesFromTest = if (new File(s"src/test/resources/oozie/${wf.bundle}/${wf.workflow}").listFiles() == null)
+      Array[File]()
+    else
+      new File(s"src/test/resources/oozie/${wf.bundle}/${wf.workflow}").listFiles()
+
+    (srcFilesFromMain ++ srcFilesFromTest).map(f => {
+      val src = new Path("file:///" + f.getAbsolutePath)
+      fs.copyFromLocalFile(src, dest)
+    })
+
     val files = fs.listFiles(dest, true)
     println(s"Uploaded files for workflow ${wf.workflow}:")
     while (files.hasNext()) {

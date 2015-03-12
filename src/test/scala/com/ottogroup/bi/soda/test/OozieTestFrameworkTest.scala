@@ -7,11 +7,11 @@ import com.ottogroup.bi.soda.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter._
 import com.ottogroup.bi.soda.dsl.Field._
 import test.eci.datahub.Click
-import test.eci.datahub.ClickOfEC0101
 import com.ottogroup.bi.soda.DriverTests
-import test.eci.datahub.ClickOfEC0101
+import test.eci.datahub.ClickOfEC0101ViaOozie
+import com.ottogroup.bi.soda.OozieTests
 
-class HiveTestFrameworkTest extends FlatSpec with Matchers {
+class OozieTestFrameworkTest extends FlatSpec with Matchers {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
       v(id, "event01"),
@@ -36,9 +36,14 @@ class HiveTestFrameworkTest extends FlatSpec with Matchers {
       v(url, "http://ec0106.com/url3"))
   }
 
-  "Hive test framework" should "execute hive transformations locally" taggedAs (DriverTests) in {
-    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
+  "Oozie test framework" should "execute oozie workflows in MiniOozie cluster" taggedAs (DriverTests, OozieTests) in {
+    new ClickOfEC0101ViaOozie(p("2014"), p("01"), p("01")) with clustertest {
       basedOn(ec0101Clicks, ec0106Clicks)
+      withConfiguration(
+        ("jobTracker" -> cluster().getJobTrackerUri),
+        ("nameNode" -> cluster().getNameNodeUri),
+        ("input" -> s"${ec0101Clicks.fullPath}/*"),
+        ("output" -> s"${this.fullPath}/"))
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "event01",

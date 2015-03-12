@@ -14,6 +14,9 @@ import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation._
 import com.ottogroup.bi.soda.dsl.views.DailyParameterization
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation._
+import com.ottogroup.bi.soda.bottler.api.Settings
 
 case class Brand(
   ecNr: Parameter[String]) extends View
@@ -148,7 +151,28 @@ case class ClickOfEC0101(
 
   val click = dependsOn(() => Click(p("EC0101"), year, month, day))
 
-  transformVia {
-    () => HiveTransformation(insertInto(this, s"SELECT ${click().id.n}, ${click().url.n} FROM ${click().tableName} WHERE ${click().ecShopCode.n} = '${click().ecShopCode.v.get}'"))
-  }
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this, s""" 
+            SELECT ${click().id.n}, ${click().url.n} 
+            FROM ${click().tableName} 
+            WHERE ${click().ecShopCode.n} = '${click().ecShopCode.v.get}'""")))
+}
+
+case class ClickOfEC0101ViaOozie(
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => OozieTransformation(
+      "bundle", "click",
+      oozieWFPath(env, "bundle", "click"),
+      Map()))
 }

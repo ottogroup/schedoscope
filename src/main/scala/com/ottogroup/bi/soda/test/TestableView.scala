@@ -136,7 +136,7 @@ trait test extends TestableView {
 }
 
 trait clustertest extends test {
-  val otr = new OozieTestResources()
+  val otr = OozieTestResources()
   resources = () => otr
   def cluster = () => otr.mo
 }

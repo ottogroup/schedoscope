@@ -10,6 +10,7 @@ import org.apache.oozie.client.OozieClient
 import java.io.FileInputStream
 import org.apache.commons.lang.StringUtils
 import com.ottogroup.bi.soda.dsl.NamedTransformation
+import com.ottogroup.bi.soda.bottler.api.Settings
 
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {
   configureWith(c)
@@ -22,6 +23,8 @@ case class OozieTransformation(bundle: String, workflow: String, workflowAppPath
 }
 
 object OozieTransformation extends NamedTransformation {
+  def oozieWFPath(env: String, bundle: String, workflow: String) = s"${Settings().getDriverSettings("oozie").location}/workflows/${bundle}/${workflow}/"
+
   def configurationFrom(inputStream: InputStream): Map[String, String] = {
     val props = new Properties()
 

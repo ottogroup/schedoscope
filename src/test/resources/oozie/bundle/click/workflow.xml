@@ -1,0 +1,24 @@
+<workflow-app name="click" xmlns="uri:oozie:workflow:0.4">
+	<global>
+		<job-tracker>${jobTracker}</job-tracker>
+		<name-node>${nameNode}</name-node>
+	</global>
+
+	<start to="elt" />
+
+	<action name="elt">
+		<fs>			
+			<mkdir path="${output}"/>
+			<move source="${input}" target="${output}"/>
+		</fs>
+	
+		<ok to="end" />
+		<error to="kill" />
+	</action>
+
+	<kill name="kill">
+		<message>Workflow ${wf:name()} failed.</message>
+	</kill>
+
+	<end name="end" />
+</workflow-app>

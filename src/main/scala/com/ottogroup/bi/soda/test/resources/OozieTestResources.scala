@@ -25,3 +25,9 @@ class OozieTestResources extends TestResources {
 
   override lazy val namenode = mo.getNameNodeUri
 }
+
+object OozieTestResources {
+  lazy val oozieTestResources = new OozieTestResources()
+  
+  def apply() = oozieTestResources
+}
