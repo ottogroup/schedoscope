@@ -86,19 +86,19 @@ object SodaService {
                 val viewActors = getViewActors(viewUrlPath)
                 val fut = viewActors.map(viewActor => viewActor ? "materialize")
                 val res = Await.result(Future sequence fut, 10 days)
-                val result = res.foldLeft(0) { (count, r) =>
+                val successCount = res.foldLeft(0) { (count, r) =>
                   r match {
-                    case ViewMaterialized(v, incomplete, changed, errors) => count + 1
-                    case _: NoDataAvailable => count
+                    case ViewMaterialized(view, incomplete, changed, errors) => count + 1
+                    case NoDataAvailable(view) => count
                     case Failed(view) => count
                   }
                 }
-                if (result == res.size)
-                  sendOk(request, s"""{ "status":"success", "view":"${viewName(viewUrlPath)}"}""")
-                else if (result == 0)
-                  sendOk(request, s"""{ "status":"nodata", "view":"${viewName(viewUrlPath)}"}""")
+                if (successCount == res.size)
+                  sendOk(request, s"""{ "status":"success", "views":"${viewNames(viewUrlPath).mkString(",")}"}""")
+                else if (successCount == 0)
+                  sendOk(request, s"""{ "status":"nodata", "views":"${viewNames(viewUrlPath).mkString(",")}"}""")
                 else
-                  sendOk(request, s"""{ "status":"incomplete", "view":"${viewName(viewUrlPath)}"}""")
+                  sendOk(request, s"""{ "status":"incomplete", "views":"${viewNames(viewUrlPath).mkString(",")}"}""")
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }

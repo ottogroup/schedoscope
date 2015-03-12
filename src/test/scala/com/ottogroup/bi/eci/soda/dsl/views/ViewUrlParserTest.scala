@@ -52,6 +52,17 @@ class ViewUrlParserTest extends FlatSpec with Matchers {
     clazz shouldBe classOf[Product]
     arguments should be(List(t(p("EC0106")), t(p("2014")), t(p("01")), t(p("12"))))
   }
+  
+  it should "parse multiple views" in {
+    val parsedViews = parse("/dev/test.eci.datahub/e(Product,Brand)/EC0106/2014/01/12/")
+    parsedViews.size shouldBe 2
+    parsedViews(0).env shouldBe "dev"
+    parsedViews(0).viewClass shouldBe classOf[Product]
+    parsedViews(0).parameters should be(List(t(p("EC0106")), t(p("2014")), t(p("01")), t(p("12"))))
+    parsedViews(1).env shouldBe "dev"
+    parsedViews(1).viewClass shouldBe classOf[Brand]
+    parsedViews(1).parameters should be(List(t(p("EC0106")), t(p("2014")), t(p("01")), t(p("12"))))    
+  }  
 
   it should "fail when called with not enough arguments" in {
     an[IllegalArgumentException] should be thrownBy parse("/dev/test.eci.datahub/")
