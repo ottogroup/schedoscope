@@ -35,8 +35,6 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
   override def runTimeOut: Duration = Settings().hiveActionTimeout
 
-  override def name = "hive"
-
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, null, future {
       t.udfs.foreach(this.registerFunction(_))
@@ -57,16 +55,17 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
     })
 
     val queriesToExecute = queryStack.reverse.filter(q => !StringUtils.isBlank(q))
-
+    val stmt = connection.createStatement()
+    
     queriesToExecute.foreach(
-      q => try {
-        val stmt = connection.createStatement()
+      q => try {        
         stmt.execute(q.trim())
       } catch {
         case e: SQLException =>
           return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
         case t: Throwable => throw DriverException(s"Runtime exception while executing Hive query ${q}", t)
       })
+    stmt.close()
 
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
@@ -96,7 +95,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
   def JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
 }
 
-object HiveDriver {
+object HiveDriver extends NamedDriver {
   def apply(ds: DriverSettings) = {
     val ugi = Settings().userGroupInformation
 

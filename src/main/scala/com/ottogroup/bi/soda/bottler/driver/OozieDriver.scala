@@ -23,8 +23,6 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
 
   override def runTimeOut: Duration = Settings().oozieActionTimeout
 
-  override def name = "oozie"
-
   def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = try {
     val jobConf = createOozieJobConf(t)
     val oozieJobId = runOozieJob(jobConf)
@@ -98,6 +96,6 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
     }
 }
 
-object OozieDriver {
+object OozieDriver extends NamedDriver {
   def apply(ds: DriverSettings) = new OozieDriver(new OozieClient(ds.url))
 }

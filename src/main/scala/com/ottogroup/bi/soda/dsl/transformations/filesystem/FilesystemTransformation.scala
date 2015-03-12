@@ -2,8 +2,9 @@ package com.ottogroup.bi.soda.dsl.transformations.filesystem
 
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.NamedTransformation
 
-sealed class FilesystemTransformation extends Transformation
+sealed class FilesystemTransformation extends Transformation with NamedTransformation
 case class CopyFrom(val fromPattern: String, val toView: View, val recursive: Boolean = true) extends FilesystemTransformation
 case class Copy(val fromPattern: String, val toPath: String, val recursive: Boolean = true) extends FilesystemTransformation
 case class Move(val fromPattern: String, val toPath: String) extends FilesystemTransformation

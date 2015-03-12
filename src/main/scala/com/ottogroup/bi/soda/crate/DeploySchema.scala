@@ -76,6 +76,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
     }
 
     stmt.execute(ddl)
+    stmt.close()
 
     setTableProperty(view.dbName, view.n, SchemaVersion.checksumProperty, Version.digest(ddl))
     println("!!created table " + ddl)

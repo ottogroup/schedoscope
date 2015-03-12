@@ -9,6 +9,7 @@ import collection.JavaConversions._
 import org.apache.oozie.client.OozieClient
 import java.io.FileInputStream
 import org.apache.commons.lang.StringUtils
+import com.ottogroup.bi.soda.dsl.NamedTransformation
 
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {
   configureWith(c)
@@ -20,7 +21,7 @@ case class OozieTransformation(bundle: String, workflow: String, workflowAppPath
   description = StringUtils.abbreviate(s"${bundle}/${workflow}", 100)
 }
 
-object OozieTransformation {
+object OozieTransformation extends NamedTransformation {
   def configurationFrom(inputStream: InputStream): Map[String, String] = {
     val props = new Properties()
 

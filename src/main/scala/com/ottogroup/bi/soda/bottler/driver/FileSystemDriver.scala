@@ -25,7 +25,6 @@ import com.typesafe.config.Config
 import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.bottler.api.SettingsImpl
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import FileSystemDriver._
 import org.apache.commons.io.FileUtils
 import java.nio.file.Files
 import scala.collection.mutable.HashMap
@@ -34,12 +33,11 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent._
 import scala.concurrent.duration.Duration
 import java.io.IOException
+import FileSystemDriver._
 
-class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
+class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {    
 
   override def runTimeOut: Duration = Settings().fileActionTimeout
-
-  override def name = "filesystem"
 
   def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
     new DriverRunHandle(this, new LocalDateTime(), t, null, future {
@@ -201,7 +199,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
   override def deployAll(driverSettings: DriverSettings) = true
 }
 
-object FileSystemDriver {
+object FileSystemDriver extends NamedDriver {
   private def uri(pathOrUri: String) =
     try {
       new URI(pathOrUri)

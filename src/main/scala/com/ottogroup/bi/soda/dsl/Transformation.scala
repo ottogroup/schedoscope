@@ -4,10 +4,10 @@ import scala.collection.mutable.HashMap
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import com.ottogroup.bi.soda.bottler.api.Settings
 
-abstract class Transformation {
+abstract class Transformation extends NamedTransformation {
   var view: Option[View] = None
   // FIXME: not so nice that each transformation has the file system driver .. 
-  val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))
+  val fsd = FileSystemDriver(Settings().getDriverSettings(FileSystemDriver.name))
 
   def configureWith(c: Map[String, Any]) = {
     configuration ++= c
@@ -25,11 +25,15 @@ abstract class Transformation {
   def forView(v: View) = {
     view = Some(v)
     this
-  }
-
-  def typ = this.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "")
+  }  
 
   var description = this.toString
+  
+  def getView() = if (view.isDefined) view.get.viewId else "no-view"
 }
 
 case class NoOp() extends Transformation
+
+trait NamedTransformation {
+  def name = this.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("[^a-z]", "")
+}

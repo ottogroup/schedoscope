@@ -29,6 +29,7 @@ import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigValueFactory
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 
 /**
  * This actor aggregrates responses from multiple Actors
@@ -89,17 +90,24 @@ class ActionsRouterActor() extends Actor {
 
   def receive = LoggingReceive({
 
-    case PollCommand(typ) => {
-      queues.get(typ).map(q => if (!q.isEmpty) sender ! q.dequeue)
+    case PollCommand(typ) => {      
+      queues.get(typ).map(q => if (!q.isEmpty) {
+        val cmd = q.dequeue()
+        val targetView = cmd.message.asInstanceOf[Transformation].getView        
+        log.debug(s"Sending ${typ} transformation for view ${targetView} to ${sender}; remaining ${typ} jobs: ${queues.get(typ).size}")
+        sender ! cmd
+      })
     }
 
-    case view: View => {
+    case view: View => {      
       val cmd = view.transformation().forView(view) // backreference transformation -> view
-      queues.get(cmd.typ).get.enqueue(CommandWithSender(cmd, sender))
+      queues.get(cmd.name).get.enqueue(CommandWithSender(cmd, sender))
+      log.debug(s"Enqueued transformation for view ${view.viewId}; queue size is now: ${queues.get(cmd.name).size}")
     }
 
     case cmd: FilesystemTransformation => {
-      queues.get("filesystem").get.enqueue(CommandWithSender(cmd, sender))
+      queues.get(FileSystemDriver.name).get.enqueue(CommandWithSender(cmd, sender))
+      log.debug(s"Enqueued transformation for ${FileSystemDriver.name}; queue size is now: ${queues.get(FileSystemDriver.name).size}")
     }
 
     case cmd: GetStatus => {
@@ -112,14 +120,12 @@ class ActionsRouterActor() extends Actor {
         val name = el._1
         val act = el._2
         queues.get(name).get.enqueue(CommandWithSender(cmd, sender))
-        //act ! WorkAvailable
       })
     }
   })
 
   private def formatQueues() = {
     queues.map(q => (q._1, q._2.map(c => {
-      val viewId = if (c.message.asInstanceOf[Transformation].view.isDefined) c.message.asInstanceOf[Transformation].view.get.viewId else "no-view"
       c.message.asInstanceOf[Transformation].description
     }).toList))
   }

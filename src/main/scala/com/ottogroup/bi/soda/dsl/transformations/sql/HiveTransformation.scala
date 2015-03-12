@@ -19,6 +19,8 @@ import collection.JavaConversions._
 import org.apache.commons.io.FilenameUtils
 import com.ottogroup.bi.soda.dsl.Version
 import org.apache.commons.lang.StringUtils
+import com.ottogroup.bi.soda.dsl.NamedTransformation
+import com.ottogroup.bi.soda.bottler.driver.HiveDriver
 
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 
@@ -32,16 +34,16 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
 
 }
 
-object HiveTransformation {
+object HiveTransformation extends NamedTransformation {
 
   def withFunctions(v: View, functions: Map[String, Class[_]] = Map()) = {
     val functionBuff = ListBuffer[Function]()
 
-    for ((name, cls) <- functions) {
+    for ((funcName, cls) <- functions) {
       //val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
-      val jarResources = Settings().getDriverSettings("hive").libJarsHdfs.map(lj => new ResourceUri(ResourceType.JAR, lj))
+      val jarResources = Settings().getDriverSettings(name).libJarsHdfs.map(lj => new ResourceUri(ResourceType.JAR, lj))
       //val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
-      functionBuff.append(new Function(name, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
+      functionBuff.append(new Function(funcName, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
     }
 
     functionBuff.toList

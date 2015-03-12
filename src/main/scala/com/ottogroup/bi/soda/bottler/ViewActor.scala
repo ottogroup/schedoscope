@@ -141,7 +141,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   // State: transforming
   // transitions: materialized,failed,transforming
   def transforming(retries: Int): Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("transforming", view)
+    case _: GetStatus => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
 
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
