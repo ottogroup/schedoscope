@@ -65,7 +65,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
       } catch {
         case e: SQLException =>
           return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
-        case t: Throwable => throw DriverException("Runtime exception while executing Hive query ${q}", t)
+        case t: Throwable => throw DriverException(s"Runtime exception while executing Hive query ${q}", t)
       })
 
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
