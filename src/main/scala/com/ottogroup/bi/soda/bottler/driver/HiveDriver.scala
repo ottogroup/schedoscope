@@ -56,9 +56,9 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
     val queriesToExecute = queryStack.reverse.filter(q => !StringUtils.isBlank(q))
     val stmt = connection.createStatement()
-    
+
     queriesToExecute.foreach(
-      q => try {        
+      q => try {
         stmt.execute(q.trim())
       } catch {
         case e: SQLException =>

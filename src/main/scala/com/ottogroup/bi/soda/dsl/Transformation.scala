@@ -25,10 +25,10 @@ abstract class Transformation extends NamedTransformation {
   def forView(v: View) = {
     view = Some(v)
     this
-  }  
+  }
 
   var description = this.toString
-  
+
   def getView() = if (view.isDefined) view.get.viewId else "no-view"
 }
 

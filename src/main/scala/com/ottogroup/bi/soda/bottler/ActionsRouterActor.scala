@@ -90,16 +90,16 @@ class ActionsRouterActor() extends Actor {
 
   def receive = LoggingReceive({
 
-    case PollCommand(typ) => {      
+    case PollCommand(typ) => {
       queues.get(typ).map(q => if (!q.isEmpty) {
         val cmd = q.dequeue()
-        val targetView = cmd.message.asInstanceOf[Transformation].getView        
+        val targetView = cmd.message.asInstanceOf[Transformation].getView
         log.debug(s"Sending ${typ} transformation for view ${targetView} to ${sender}; remaining ${typ} jobs: ${queues.get(typ).size}")
         sender ! cmd
       })
     }
 
-    case view: View => {      
+    case view: View => {
       val cmd = view.transformation().forView(view) // backreference transformation -> view
       queues.get(cmd.name).get.enqueue(CommandWithSender(cmd, sender))
       log.debug(s"Enqueued transformation for view ${view.viewId}; queue size is now: ${queues.get(cmd.name).size}")

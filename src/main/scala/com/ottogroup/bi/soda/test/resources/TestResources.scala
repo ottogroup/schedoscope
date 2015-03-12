@@ -45,6 +45,7 @@ abstract class TestResources {
 
   lazy val hiveDriver: HiveDriver = new HiveDriver(ugi, jdbcUrl, metastoreClient) {
     override def JDBC_CLASS = jdbcClass
+    override def name = "hive"
   }
 
   val fileSystem: FileSystem
