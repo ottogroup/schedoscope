@@ -43,10 +43,8 @@ trait rows extends View {
   // prefix location 
   locationPathBuilder = (env: String) => resources().hiveWarehouseDir + ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
   // unify storage format
-  storageFormat match {
-    case f: TextFile => None
-    case _ => storedAs(localTestResources.textStorage)
-  }
+  storedAs(localTestResources.textStorage)
+  
   // overrides (to enable correct table/database names, otherwise $$anonFunc...) 
   override def namingBase = this.getClass.getSuperclass.getSimpleName()
   override def getCanonicalClassname = this.getClass.getSuperclass.getCanonicalName

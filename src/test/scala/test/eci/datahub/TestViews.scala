@@ -148,6 +148,7 @@ case class ClickOfEC0101(
 
   val click = dependsOn(() => Click(p("EC0101"), year, month, day))
 
-  transformVia(() =>
-    HiveTransformation(s"SELECT * FROM ${click().dbName}.${click().tableName} WHERE ec_shop_code = '${click().ecShopCode.v.get}'"))
+  transformVia {
+    () => HiveTransformation(insertInto(this, s"SELECT ${click().id.n}, ${click().url.n} FROM ${click().tableName} WHERE ${click().ecShopCode.n} = '${click().ecShopCode.v.get}'"))
+  }
 }
