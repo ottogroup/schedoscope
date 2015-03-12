@@ -1,0 +1,26 @@
+<workflow-app name="workflow" xmlns="uri:oozie:workflow:0.4">
+	<global>
+		<job-tracker>${jobTracker}</job-tracker>
+		<name-node>${nameNode}</name-node>
+	</global>
+
+	<start to="waste-time" />
+
+	<action name="waste-time">
+		<fs>
+			<mkdir path="/tmp/soda/oozie/dummy1"/>
+			<mkdir path="/tmp/soda/oozie/dummy1/dummy2"/>
+			<mkdir path="/tmp/soda/oozie/dummy1/dummy2/dummy3"/>
+			<delete path="/tmp/soda/oozie/dummy1" />
+		</fs>
+
+		<ok to="end" />
+		<error to="kill" />
+	</action>
+
+	<kill name="kill">
+		<message>Workflow ${wf:name()} failed.</message>
+	</kill>
+
+	<end name="end" />
+</workflow-app>

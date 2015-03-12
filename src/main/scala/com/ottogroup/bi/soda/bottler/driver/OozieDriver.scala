@@ -96,7 +96,6 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
         properties
       }
     }
-
 }
 
 object OozieDriver {

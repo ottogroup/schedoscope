@@ -10,10 +10,15 @@ import org.apache.hadoop.conf.Configuration
 import com.ottogroup.bi.soda.dsl.Parameter.p
 
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
-  val fileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
+  var cachedDriver: FileSystemDriver = null
+  def driver: FileSystemDriver = {
+    if (cachedDriver == null)
+      cachedDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
+    cachedDriver
+  }
 
   "FileSystemDriver" should "be named filesystem" taggedAs (DriverTests) in {
-    fileSystemDriver.name shouldBe "filesystem"
+    driver.name shouldBe "filesystem"
   }
 
   it should "execute Copy file transformation with a single file" taggedAs (DriverTests) in {
@@ -21,7 +26,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
 
     outputFile("aTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(Copy(inputPath("aTest.file"), out, false)) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(Copy(inputPath("aTest.file"), out, false)) shouldBe a[DriverRunSucceeded[_]]
 
     outputFile("aTest.file") shouldBe 'exists
   }
@@ -33,7 +38,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     outputFile("aTest.file") should not be 'exists
     outputFile("anotherTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(Copy(inputPath("*.file"), out, false)) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(Copy(inputPath("*.file"), out, false)) shouldBe a[DriverRunSucceeded[_]]
 
     outputFile("aTest.file") shouldBe 'exists
     outputFile("anotherTest.file") shouldBe 'exists
@@ -46,7 +51,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     outputFile(s"subfolder${/}aTest.file") should not be 'exists
     outputFile(s"subfolder${/}anotherSubfolder${/}anotherTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(Copy(inputPath("/*"), out, true)) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(Copy(inputPath("/*"), out, true)) shouldBe a[DriverRunSucceeded[_]]
 
     outputFile(s"subfolder${/}aTest.file") shouldBe 'exists
     outputFile(s"subfolder${/}anotherSubfolder${/}anotherTest.file") shouldBe 'exists
@@ -58,7 +63,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     inputFile("aTest.file") shouldBe 'exists
     outputFile("aTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(Move(inputPath("aTest.file"), out)) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(Move(inputPath("aTest.file"), out)) shouldBe a[DriverRunSucceeded[_]]
 
     inputFile("aTest.file") should not be 'exists
     outputFile("aTest.file") shouldBe 'exists
@@ -70,7 +75,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     inputFile(s"subfolder${/}aTest.file") shouldBe 'exists
     outputFile(s"subfolder${/}aTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(Move(inputPath("subfolder"), out)) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(Move(inputPath("subfolder"), out)) shouldBe a[DriverRunSucceeded[_]]
 
     inputFile(s"subfolder") should not be 'exists
     outputFile(s"subfolder${/}aTest.file") shouldBe 'exists
@@ -83,8 +88,8 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     outputFile("aTest.file") should not be 'exists
     outputFile("anotherTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(IfExists(inputPath("check.file"), Touch(outputPath("aTest.file")))) shouldBe a[DriverRunSucceeded[_]]
-    fileSystemDriver.runAndWait(IfExists(inputPath("anotherCheck.file"), Touch(outputPath("anotherTest.file")))) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(IfExists(inputPath("check.file"), Touch(outputPath("aTest.file")))) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(IfExists(inputPath("anotherCheck.file"), Touch(outputPath("anotherTest.file")))) shouldBe a[DriverRunSucceeded[_]]
 
     inputFile("check.file") shouldBe 'exists
     outputFile("aTest.file") shouldBe 'exists
@@ -98,8 +103,8 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     outputFile("aTest.file") should not be 'exists
     outputFile("anotherTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(IfNotExists(inputPath("check.file"), Touch(outputPath("aTest.file")))) shouldBe a[DriverRunSucceeded[_]]
-    fileSystemDriver.runAndWait(IfNotExists(inputPath("anotherCheck.file"), Touch(outputPath("anotherTest.file")))) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(IfNotExists(inputPath("check.file"), Touch(outputPath("aTest.file")))) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(IfNotExists(inputPath("anotherCheck.file"), Touch(outputPath("anotherTest.file")))) shouldBe a[DriverRunSucceeded[_]]
 
     inputFile("check.file") shouldBe 'exists
     outputFile("aTest.file") should not be 'exists
@@ -109,7 +114,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
   it should "execute Touch file transformation" taggedAs (DriverTests) in {
     outputFile("aTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(Touch(outputPath("aTest.file"))) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(Touch(outputPath("aTest.file"))) shouldBe a[DriverRunSucceeded[_]]
 
     outputFile("aTest.file") shouldBe 'exists
   }
@@ -118,7 +123,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     createInputFile("aTest.file")
     inputFile("aTest.file") shouldBe 'exists
 
-    fileSystemDriver.runAndWait(Delete(inputPath("aTest.file"))) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(Delete(inputPath("aTest.file"))) shouldBe a[DriverRunSucceeded[_]]
 
     inputFile("aTest.file") should not be 'exists
   }
@@ -128,7 +133,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
 
     inputFile(s"subfolder${/}aTest.file") shouldBe 'exists
 
-    fileSystemDriver.runAndWait(Delete(inputPath("subfolder"), true)) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(Delete(inputPath("subfolder"), true)) shouldBe a[DriverRunSucceeded[_]]
 
     inputFile("subfolder") should not be 'exists
   }
@@ -141,7 +146,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     createInputFile("aTest.file")
     new File(s"${product.fullPath}${/}aTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(CopyFrom(inputPath("*.file"), product, false)) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(CopyFrom(inputPath("*.file"), product, false)) shouldBe a[DriverRunSucceeded[_]]
 
     new File(s"${product.fullPath}${/}aTest.file") shouldBe 'exists
   }
@@ -154,7 +159,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     createInputFile(s"subfolder${/}aTest.file")
     new File(s"${product.fullPath}${/}aTest.file") should not be 'exists
 
-    fileSystemDriver.runAndWait(CopyFrom(inputPath("subfolder"), product, true)) shouldBe a[DriverRunSucceeded[_]]
+    driver.runAndWait(CopyFrom(inputPath("subfolder"), product, true)) shouldBe a[DriverRunSucceeded[_]]
 
     new File(s"${product.fullPath}${/}subfolder${/}aTest.file") shouldBe 'exists
   }
@@ -162,15 +167,15 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
   it should "run asynchronously" taggedAs (DriverTests) in {
     outputFile("aTest.file") should not be 'exists
 
-    val runHandle = fileSystemDriver.run(Touch(outputPath("aTest.file")))
+    val runHandle = driver.run(Touch(outputPath("aTest.file")))
 
     var runWasAsynchronous = false
 
-    while (fileSystemDriver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[FilesystemTransformation]])
+    while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[FilesystemTransformation]])
       runWasAsynchronous = true
 
     runWasAsynchronous shouldBe true
-    fileSystemDriver.getDriverRunState(runHandle) shouldBe a[DriverRunSucceeded[FilesystemTransformation]]
+    driver.getDriverRunState(runHandle) shouldBe a[DriverRunSucceeded[FilesystemTransformation]]
 
     outputFile("aTest.file") shouldBe 'exists
   }
@@ -179,15 +184,15 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     createInputFile(s"subfolder${/}aTest.file")
     inputFile("subfolder") shouldBe 'exists
 
-    val runHandle = fileSystemDriver.run(Delete(inputPath("subfolder"), false))
+    val runHandle = driver.run(Delete(inputPath("subfolder"), false))
 
     var runWasAsynchronous = false
 
-    while (fileSystemDriver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[FilesystemTransformation]])
+    while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[FilesystemTransformation]])
       runWasAsynchronous = true
 
     runWasAsynchronous shouldBe true
-    fileSystemDriver.getDriverRunState(runHandle) shouldBe a[DriverRunFailed[FilesystemTransformation]]
+    driver.getDriverRunState(runHandle) shouldBe a[DriverRunFailed[FilesystemTransformation]]
 
     inputFile("subfolder") shouldBe 'exists
   }
@@ -196,7 +201,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     createInputFile(s"subfolder${/}aTest.file")
     inputFile("subfolder") shouldBe 'exists
 
-    val runState = fileSystemDriver.runAndWait(Delete(inputPath("subfolder"), false))
+    val runState = driver.runAndWait(Delete(inputPath("subfolder"), false))
 
     runState shouldBe a[DriverRunFailed[FilesystemTransformation]]
 

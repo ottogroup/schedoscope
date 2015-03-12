@@ -1,7 +1,7 @@
 ----------------------------------------------------------------
-Wed Mar 11 17:10:09 CET 2015:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.10.1.1 - (1458268): instance a816c00e-014c-0999-add0-00002e4350d8 
-on database directory memory:/home/uwestermann_dev/Code/soda/metastore_db with class loader sun.misc.Launcher$AppClassLoader@6876fb1b 
+Thu Mar 12 15:20:17 CET 2015:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.10.1.1 - (1458268): instance a816c00e-014c-0e5b-7643-000037f54378 
+on database directory memory:/home/uwestermann_dev/Code/soda/metastore_db with class loader sun.misc.Launcher$AppClassLoader@781fb069 
 Loaded from file:/home/uwestermann_dev/.m2/repository/org/apache/derby/derby/10.10.1.1/derby-10.10.1.1.jar
 java.vendor=Oracle Corporation
 java.runtime.version=1.7.0_55-b13

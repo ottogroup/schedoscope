@@ -28,7 +28,7 @@ case class Productfeed(
       "products_processed-bundle",
       "workflow-processed_productfeed",
       s"/hdp/${env}/applications/eci/scripts/oozie/products_processed-bundle/workflow-processed_productfeed/",
-      configurationFromResource("test.properties") ++
+      configurationFromResource("ooziewftest.properties") ++
         Map(
           "env" -> env,
           "envDir" -> env,

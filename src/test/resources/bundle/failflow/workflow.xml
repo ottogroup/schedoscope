@@ -1,0 +1,14 @@
+<workflow-app name="failflow" xmlns="uri:oozie:workflow:0.4">
+	<global>
+		<job-tracker>${jobTracker}</job-tracker>
+		<name-node>${nameNode}</name-node>
+	</global>
+
+	<start to="kill" />
+
+	<kill name="kill">
+		<message>Workflow ${wf:name()} failed.</message>
+	</kill>
+
+	<end name="end" />
+</workflow-app>

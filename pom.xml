@@ -133,10 +133,22 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<artifactId>jersey-server</artifactId>
+			<groupId>com.sun.jersey</groupId>
+			<version>1.9</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>com.ottogroup.bi</groupId>
 			<artifactId>minioozie</artifactId>
 			<version>0.0.6</version>
 			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>jersey-server</artifactId>
+					<groupId>com.sun.jersey</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
