@@ -99,17 +99,16 @@ object ViewUrlParser {
         for (existingArguments <- argumentLists; newArguments <- typeParameter(parameter))
           yield existingArguments ++ newArguments)
     }
-  
-  def parseViewClassnames(pakkage: String, viewClassNames: String) = viewClassNames match {
-      case Enumeration(enumerationType, enumerationValues) => {
-        if ("e".equals(enumerationType))
-          enumerationValues.split(",").toSeq.map(vc => Class.forName(s"${pakkage}.${vc}").asInstanceOf[Class[View]]).toList
-        else
-          throw new IllegalArgumentException("Illegal view enumeration: Please use syntax 'e(view1,view2,...)")
-      }
-      case _ => List(Class.forName(s"${pakkage}.${viewClassNames}").asInstanceOf[Class[View]])
-  }
 
+  def parseViewClassnames(pakkage: String, viewClassNames: String) = viewClassNames match {
+    case Enumeration(enumerationType, enumerationValues) => {
+      if ("e".equals(enumerationType))
+        enumerationValues.split(",").toSeq.map(vc => Class.forName(s"${pakkage}.${vc}").asInstanceOf[Class[View]]).toList
+      else
+        throw new IllegalArgumentException("Illegal view enumeration: Please use syntax 'e(view1,view2,...)")
+    }
+    case _ => List(Class.forName(s"${pakkage}.${viewClassNames}").asInstanceOf[Class[View]])
+  }
 
   def parse(viewUrlPath: String): List[ParsedView] = try {
     val normalizedPathFront = if (viewUrlPath.startsWith("/"))
@@ -129,7 +128,7 @@ object ViewUrlParser {
     val environment :: packageName :: viewClassNames :: parameters = urlPathChunks
 
     for {
-      viewClass <- parseViewClassnames(packageName, viewClassNames) 
+      viewClass <- parseViewClassnames(packageName, viewClassNames)
       pl <- parseParameters(parameters)
     } yield ParsedView(environment, viewClass, pl)
 
