@@ -94,7 +94,7 @@ object SodaControl {
     cmd("listactions") action { (_, c) => c.copy(action = Some(LISTACTIONS)) } text ("list status of action actors") children ()
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
       opt[String]('e', "environment") action { (x, c) => c.copy(environment = x) } required () valueName ("<env>") text ("environment (e.g. 'dev')"),
-      opt[String]('d', "dababase") action { (x, c) => c.copy(database = x) } required () valueName ("<db>") text ("database (e.g. 'my.company')"),
+      opt[String]('d', "package") action { (x, c) => c.copy(database = x) } required () valueName ("<db>") text ("database (e.g. 'my.company')"),
       opt[String]('v', "view") action { (x, c) => c.copy(view = Some(x)) } valueName ("<view>") optional () text ("view (e.g. 'customers'). If no view is given, all views from the database are loaded."),
       opt[String]('p', "parameters") action { (x, c) => c.copy(parameters = x) } required () valueName ("<parameters>") text ("view parameter specification (e.g. 'e(shop1,shop2)/rymd(20140101-20140107)"))
     checkConfig { c =>
