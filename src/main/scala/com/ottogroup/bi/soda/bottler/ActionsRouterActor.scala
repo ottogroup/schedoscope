@@ -55,7 +55,7 @@ class StatusRetriever extends Actor with Aggregator {
 
     val handle = expect {
       case ar: ActionStatusResponse[_] => values += ar
-      case TimedOut                    => processFinal(values.toList)
+      case TimedOut => processFinal(values.toList)
     }
 
     def processFinal(eval: List[ActionStatusResponse[_]]) {
@@ -86,7 +86,6 @@ class ActionsRouterActor() extends Actor {
   val routers = availableTransformations.foldLeft(Map[String, ActorRef]()) {
     (registeredDrivers, driverName) => registeredDrivers + (driverName -> actorOf(DriverActor.props(driverName, self)))
   }
-  
 
   def receive = LoggingReceive({
 
@@ -121,8 +120,8 @@ class ActionsRouterActor() extends Actor {
 
   private def formatQueues() = {
     queues.map(q => (q._1, q._2.map(c => {
-       val viewId = if (c.message.asInstanceOf[Transformation].view.isDefined) c.message.asInstanceOf[Transformation].view.get.viewId else "no-view" 
-       c.message.asInstanceOf[Transformation].description
+      val viewId = if (c.message.asInstanceOf[Transformation].view.isDefined) c.message.asInstanceOf[Transformation].view.get.viewId else "no-view"
+      c.message.asInstanceOf[Transformation].description
     }).toList))
   }
 }

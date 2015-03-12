@@ -1,6 +1,5 @@
 package com.ottogroup.bi.soda.dsl
 
-import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import com.ottogroup.bi.soda.crate.ddl.HiveQl._
@@ -20,7 +19,7 @@ import test.eci.datahub.ViewWithDefaultParams
 import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 
-class DslTest extends FlatSpec with BeforeAndAfter with Matchers {
+class DslTest extends FlatSpec with Matchers {
 
   "A view" should "be instantiable without new" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))

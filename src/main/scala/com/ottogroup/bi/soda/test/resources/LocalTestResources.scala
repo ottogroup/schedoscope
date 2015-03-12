@@ -24,7 +24,7 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREWAREHOUSE
 
 import net.lingala.zip4j.core.ZipFile
 
-object LocalTestResources extends TestResources {
+class LocalTestResources extends TestResources {
   setupLocalHadoop()
 
   def hiveSiteXmlPath = "target/test-classes/hive-site.xml"
@@ -42,6 +42,11 @@ object LocalTestResources extends TestResources {
       cachedWarehouseDir = new Path("file:///", d).toString()
     }
     cachedWarehouseDir
+  }
+
+  override def connection = {
+    val c = hiveConf
+    super.connection
   }
 
   var cachedHiveConf: HiveConf = null
@@ -62,6 +67,7 @@ object LocalTestResources extends TestResources {
 
       cachedHiveConf = new HiveConf()
     }
+
     cachedHiveConf
   }
 
@@ -69,7 +75,7 @@ object LocalTestResources extends TestResources {
 
   override def jdbcUrl = "jdbc:hive://"
 
-  override val remoteTestDirectory: String = new Path("file:///", Paths.get("target").toAbsolutePath().toString).toString // TODO
+  override def remoteTestDirectory: String = new Path("file:///", Paths.get("target").toAbsolutePath().toString).toString // TODO
 
   var cachedFileSystem: FileSystem = null
   override def fileSystem: FileSystem = {

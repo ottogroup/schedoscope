@@ -80,7 +80,7 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val driver: 
   }
 
   def receive = LoggingReceive {
-    case _: GetStatus                    => sender ! ActionStatusResponse("idle", self, driver, null, null)
+    case _: GetStatus => sender ! ActionStatusResponse("idle", self, driver, null, null)
 
     case CommandWithSender(d: Deploy, s) => driver.deployAll(ds)
 
@@ -103,11 +103,11 @@ object DriverActor {
     val ds = Settings().getDriverSettings(driverName)
 
     val driverActor = driverName match {
-      case "hive"       => Props(new DriverActor(actionsRouter, HiveDriver(ds), ds, 1 seconds))
+      case "hive" => Props(new DriverActor(actionsRouter, HiveDriver(ds), ds, 1 seconds))
       case "filesystem" => Props(new DriverActor(actionsRouter, FileSystemDriver(ds), ds, 100 milliseconds))
-      case "oozie"      => Props(new DriverActor(actionsRouter, OozieDriver(ds), ds, 5 seconds))
+      case "oozie" => Props(new DriverActor(actionsRouter, OozieDriver(ds), ds, 5 seconds))
 
-      case _            => throw DriverException(s"Driver for ${driverName} not found")
+      case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
 
     driverActor.withRouter(BroadcastRouter(nrOfInstances = ds.concurrency))

@@ -22,7 +22,6 @@ abstract class TestResources {
   private var cachedConnection: Connection = null
   def connection: Connection = {
     if (cachedConnection == null) {
-      val c = hiveConf //make sure config is written before JDBC connection is established
       Class.forName(jdbcClass)
       cachedConnection = DriverManager.getConnection(jdbcUrl, "", "")
     }

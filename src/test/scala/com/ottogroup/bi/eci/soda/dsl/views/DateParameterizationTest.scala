@@ -1,12 +1,11 @@
 package com.ottogroup.bi.eci.soda.dsl.views
 
 import org.scalatest.FlatSpec
-import org.scalatest.BeforeAndAfter
 import org.scalatest.Matchers
 import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
 import com.ottogroup.bi.soda.dsl.Parameter._
 
-class DailyParameterizationTest extends FlatSpec with BeforeAndAfter with Matchers {
+class DailyParameterizationTest extends FlatSpec with Matchers {
   "prevDay" should "compute the previous date" in {
     val prevDate = DateParameterizationUtils.prevDay(p("2014"), p("01"), p("01")) match {
       case Some((prevYear, prevMonth, prevDay)) => (prevYear.v.get, prevMonth.v.get, prevDay.v.get)

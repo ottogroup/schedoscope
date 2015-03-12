@@ -143,8 +143,8 @@ object SodaService {
                   val resp = s"""{
                      "running" : ${pl.processStates.filter { _.driverRunStatus.isInstanceOf[DriverRunOngoing[_]] }.size},
                      "idle" : ${pl.processStates.filter { _.driverRunHandle == null }.size},
-                     "queued" : ${pl.queues.foldLeft(0)((s,el) => s + el._2.size)},  
-                     "queues" : { ${pl.queues.map(ql => s""" "${ql._1}" : [ ${ql._2.map(el => "\""+new String(enc.quoteAsString(el))+"\"").mkString(",")} ] """).mkString(",") } },  
+                     "queued" : ${pl.queues.foldLeft(0)((s, el) => s + el._2.size)},  
+                     "queues" : { ${pl.queues.map(ql => s""" "${ql._1}" : [ ${ql._2.map(el => "\"" + new String(enc.quoteAsString(el)) + "\"").mkString(",")} ] """).mkString(",")} },  
                      "processes" : [ 
                      	${pl.processStates.map { s => s"""{"status":"${s.message}", "typ":"${s.driver.name}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) new String(enc.quoteAsString(s.driverRunHandle.transformation.asInstanceOf[Transformation].description)) else ""}"}""" }.mkString(",")}
                      ]}"""
@@ -244,7 +244,7 @@ object SodaService {
       View.viewsFromUrl(viewUrlPath, viewAugmentor)
     else
       View.viewsFromUrl(viewUrlPath)
-      
+
     println("COMPUTED VIEWS: " + views.map(v => v.viewId).mkString("\n"))
 
     val viewActorRefFutures = views.map { v => (supervisor ? v).mapTo[ActorRef] }

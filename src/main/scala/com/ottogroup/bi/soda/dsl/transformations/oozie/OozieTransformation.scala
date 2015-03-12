@@ -16,7 +16,7 @@ case class OozieTransformation(bundle: String, workflow: String, workflowAppPath
   override def resources() = {
     List(workflowAppPath)
   }
-  
+
   description = StringUtils.abbreviate(s"${bundle}/${workflow}", 100)
 }
 

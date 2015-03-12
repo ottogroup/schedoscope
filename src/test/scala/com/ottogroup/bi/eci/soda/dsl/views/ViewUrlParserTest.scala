@@ -1,7 +1,6 @@
 package com.ottogroup.bi.eci.soda.dsl.views
 
 import org.scalatest.FlatSpec
-import org.scalatest.BeforeAndAfter
 import org.scalatest.Matchers
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser._
 import com.ottogroup.bi.soda.dsl.Parameter._
@@ -10,7 +9,7 @@ import test.eci.datahub.Brand
 import test.eci.datahub.Product
 import com.ottogroup.bi.soda.dsl.Parameter
 
-class ViewUrlParserTest extends FlatSpec with BeforeAndAfter with Matchers {
+class ViewUrlParserTest extends FlatSpec with Matchers {
 
   "ViewUrlParse.parse(viewUrlPath)" should "start with /env/package/view" in {
     val List(ParsedView(env, clazz, arguments)) = parse("/dev/test.eci.datahub/Brand")

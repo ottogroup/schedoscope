@@ -21,14 +21,14 @@ abstract class Transformation {
   def resources() = List[String]()
 
   def resourceHashes = fsd.fileChecksums(resources(), true)
-  
+
   def forView(v: View) = {
     view = Some(v)
     this
   }
 
   def typ = this.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "")
-  
+
   var description = this.toString
 }
 

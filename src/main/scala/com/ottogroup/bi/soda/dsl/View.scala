@@ -152,7 +152,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     val t = transformation()
     transformVia(() => t.configureWith(c))
   }
-  
+
   override def toString() = viewId
 }
 
@@ -221,7 +221,7 @@ object View {
     }
 
     register(env, viewConstructor.invoke(viewCompanionObject, parametersToPass.asInstanceOf[Seq[Object]]: _*).asInstanceOf[V])
-  }    
+  }
 
   def viewsFromUrl(viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] = ViewUrlParser
     .parse(viewUrlPath)

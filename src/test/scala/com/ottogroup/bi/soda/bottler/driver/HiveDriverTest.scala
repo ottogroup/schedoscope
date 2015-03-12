@@ -2,13 +2,12 @@ package com.ottogroup.bi.soda.bottler.driver
 
 import org.scalatest.Matchers
 import org.scalatest.FlatSpec
-import org.scalatest.BeforeAndAfter
 import com.ottogroup.bi.soda.test.resources.LocalTestResources
 import com.ottogroup.bi.soda.test.resources.LocalTestResources
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 
-class HiveDriverTest extends FlatSpec with BeforeAndAfter with Matchers {
-  val hiveDriver = LocalTestResources.hiveDriver
+class HiveDriverTest extends FlatSpec with Matchers {
+  val hiveDriver = new LocalTestResources().hiveDriver
 
   "HiveDriver" should "be named hive" taggedAs (DriverTests) in {
     hiveDriver.name shouldBe "hive"

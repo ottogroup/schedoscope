@@ -16,15 +16,15 @@ object CliFormat {
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
-      case pl: ProcList => {        
+      case pl: ProcList => {
         sb.append(s"Running: ${pl.running}\n")
         sb.append(s"Idle: ${pl.idle}\n")
         sb.append(s"Queued: ${pl.queued}\n")
         sb.append(s"Details\n")
-        val header = Array("STATUS","TYP","STARTED", "TRANSFORMATION")
+        val header = Array("STATUS", "TYP", "STARTED", "TRANSFORMATION")
         val running = pl.processes.map(p => Array(p.status, p.typ, p.start, p.transformation)).toArray
-        val queued =  pl.queues.flatMap(q => q._2.map( e => Array("queued", q._1, "no", e))).toArray
-        sb.append(ASCIITable.getInstance.getTable(header, running ++ queued))        
+        val queued = pl.queues.flatMap(q => q._2.map(e => Array("queued", q._1, "no", e))).toArray
+        sb.append(ASCIITable.getInstance.getTable(header, running ++ queued))
       }
       case vl: ViewList => {
         sb.append(vl.overview.map(el => s"${el._1}: ${el._2}\n").mkString("\n"))
@@ -48,7 +48,7 @@ object CliFormat {
     sb.toString
   }
 
-  def formatRow(l : String*): String = {
+  def formatRow(l: String*): String = {
     "| " + l.mkString("\t| ") + " |\n"
-  }  
+  }
 }

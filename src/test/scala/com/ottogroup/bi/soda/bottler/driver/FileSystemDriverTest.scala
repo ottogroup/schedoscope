@@ -1,7 +1,6 @@
 package com.ottogroup.bi.soda.bottler.driver
 
 import org.scalatest.Matchers
-import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import com.ottogroup.bi.soda.dsl.transformations.filesystem._
 import java.io.File
@@ -10,7 +9,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
 import com.ottogroup.bi.soda.dsl.Parameter.p
 
-class FileSystemDriverTest extends FlatSpec with BeforeAndAfter with Matchers with TestFolder {
+class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
   val fileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
 
   "FileSystemDriver" should "be named filesystem" taggedAs (DriverTests) in {

@@ -6,7 +6,7 @@ import com.ottogroup.bi.soda.bottler.ViewStatus
 // FIXME: we should unify this, staying as close as possible to existing objects...
 
 case class Proc(status: String, typ: String, start: String, transformation: String)
-case class ProcList(running: Int, idle: Int, queued: Int, queues: Map[String,List[String]], processes: List[Proc])
+case class ProcList(running: Int, idle: Int, queued: Int, queues: Map[String, List[String]], processes: List[Proc])
 case class ViewStat(status: String, view: String)
 case class ViewSpec(status: String, view: String, parameters: String)
 case class ViewList(overview: Map[String, Int], details: List[ViewSpec])

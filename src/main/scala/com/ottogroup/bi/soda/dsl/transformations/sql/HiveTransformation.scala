@@ -27,7 +27,7 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
   override def resources() = {
     udfs.flatMap(udf => udf.getResourceUris.map(uri => uri.getUri))
   }
-  
+
   description = StringUtils.abbreviate(sql, 100).replaceAll("\n", "").replaceAll("\t", "")
 
 }

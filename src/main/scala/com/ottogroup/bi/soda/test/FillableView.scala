@@ -23,14 +23,16 @@ import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import org.apache.hadoop.hive.metastore.api.ResourceUri
 import org.apache.hadoop.hive.metastore.api.ResourceType
 import collection.JavaConversions._
+import com.ottogroup.bi.soda.test.resources.LocalTestResources
 
 trait FillableView extends View with rows {}
 
 trait rows extends View {
-
   env = "test"
 
-  var resources: () => TestResources = () => LocalTestResources
+  val localTestResources = new LocalTestResources()
+
+  var resources: () => TestResources = () => localTestResources
 
   val rs = new ListBuffer[Map[String, Any]]()
 
@@ -43,7 +45,7 @@ trait rows extends View {
   // unify storage format
   storageFormat match {
     case f: TextFile => None
-    case _ => storedAs(LocalTestResources.textStorage)
+    case _ => storedAs(localTestResources.textStorage)
   }
   // overrides (to enable correct table/database names, otherwise $$anonFunc...) 
   override def namingBase = this.getClass.getSuperclass.getSimpleName()
