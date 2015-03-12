@@ -9,25 +9,19 @@ import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 class OozieTestResources extends TestResources {
   val mo = new MiniOozie()
 
-  override def jdbcClass = "org.apache.hive.jdbc.HiveDriver"
+  override val jdbcClass = "org.apache.hive.jdbc.HiveDriver"
 
-  override def hiveConf: HiveConf = mo.getHiveServer2Conf
+  override lazy val hiveConf: HiveConf = mo.getHiveServer2Conf
 
-  override def hiveWarehouseDir: String = mo.getFsTestCaseDir.toString
+  override lazy val hiveWarehouseDir: String = mo.getFsTestCaseDir.toString
 
-  override def jdbcUrl = mo.getHiveServer2JdbcURL
+  override lazy val jdbcUrl = mo.getHiveServer2JdbcURL
 
-  override def remoteTestDirectory: String = mo.getFsTestCaseDir.toString
+  override lazy val remoteTestDirectory: String = mo.getFsTestCaseDir.toString
 
-  var cachedOozieDriver: OozieDriver = null
-  override def oozieDriver: OozieDriver = {
-    if (cachedOozieDriver == null)
-      cachedOozieDriver = new OozieDriver(mo.getClient)
+  override lazy val oozieDriver: OozieDriver = new OozieDriver(mo.getClient)
 
-    cachedOozieDriver
-  }
+  override lazy val fileSystem: FileSystem = mo.getFileSystem
 
-  override def fileSystem: FileSystem = mo.getFileSystem
-
-  override def namenode = mo.getNameNodeUri
+  override lazy val namenode = mo.getNameNodeUri
 }

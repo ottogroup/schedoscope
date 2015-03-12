@@ -15,83 +15,45 @@ import com.ottogroup.bi.soda.dsl.TextFile
 import com.ottogroup.bi.soda.test.Database
 
 abstract class TestResources {
-  def hiveConf: HiveConf
+  val hiveConf: HiveConf
 
-  def hiveWarehouseDir: String
+  val hiveWarehouseDir: String
 
-  private var cachedConnection: Connection = null
-  def connection: Connection = {
-    if (cachedConnection == null) {
-      Class.forName(jdbcClass)
-      cachedConnection = DriverManager.getConnection(jdbcUrl, "", "")
-    }
-
-    cachedConnection
+  lazy val connection: Connection = {
+    val c = hiveConf
+    Class.forName(jdbcClass)
+    DriverManager.getConnection(jdbcUrl, "", "")
   }
 
-  private var cachedUgi: UserGroupInformation = null
-  def ugi: UserGroupInformation = {
-    if (cachedUgi == null) {
-      UserGroupInformation.setConfiguration(hiveConf)
-      cachedUgi = UserGroupInformation.getCurrentUser()
-      cachedUgi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
-      cachedUgi.reloginFromKeytab();
-    }
-
-    cachedUgi
+  lazy val ugi: UserGroupInformation = {
+    UserGroupInformation.setConfiguration(hiveConf)
+    val ugi = UserGroupInformation.getCurrentUser()
+    ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
+    ugi.reloginFromKeytab()
+    ugi
   }
 
-  private var cachedMetastoreClient: HiveMetaStoreClient = null
-  def metastoreClient: HiveMetaStoreClient = {
-    if (cachedMetastoreClient == null) {
-      cachedMetastoreClient = new HiveMetaStoreClient(hiveConf)
-    }
-    cachedMetastoreClient
+  lazy val metastoreClient: HiveMetaStoreClient = new HiveMetaStoreClient(hiveConf)
+
+  val jdbcClass: String
+
+  val jdbcUrl: String
+
+  lazy val database = new Database(connection, jdbcUrl)
+
+  lazy val bottler: DeploySchema = DeploySchema(metastoreClient, connection)
+
+  lazy val hiveDriver: HiveDriver = new HiveDriver(ugi, jdbcUrl, metastoreClient) {
+    override def JDBC_CLASS = jdbcClass
   }
 
-  def jdbcClass: String
+  val fileSystem: FileSystem
 
-  def jdbcUrl: String
+  lazy val oozieDriver: OozieDriver = null
 
-  private var cachedDatabase: Database = null
-  def database: Database = {
-    if (cachedDatabase == null)
-      cachedDatabase = new Database(connection, jdbcUrl)
+  val remoteTestDirectory: String
 
-    cachedDatabase
-  }
+  val namenode: String
 
-  private var cachedBottler: DeploySchema = null
-  def bottler: DeploySchema = {
-    if (cachedBottler == null)
-      cachedBottler = DeploySchema(metastoreClient, connection)
-
-    cachedBottler
-  }
-
-  private var cachedHiveDriver: HiveDriver = null
-  def hiveDriver: HiveDriver = {
-    if (cachedHiveDriver == null)
-      cachedHiveDriver = new HiveDriver(ugi, jdbcUrl, metastoreClient) {
-        override def JDBC_CLASS = jdbcClass
-      }
-
-    cachedHiveDriver
-  }
-
-  def fileSystem: FileSystem
-
-  def oozieDriver: OozieDriver = null
-
-  def remoteTestDirectory: String
-
-  def namenode: String
-
-  private var cachedTextStore: TextFile = null
-  def textStorage = {
-    if (cachedTextStore == null)
-      cachedTextStore = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "&", mapKeyTerminator = "=")
-
-    cachedTextStore
-  }
+  lazy val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "&", mapKeyTerminator = "=")
 }

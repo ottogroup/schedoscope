@@ -12,7 +12,7 @@ import com.ottogroup.bi.soda.DriverTests
 
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: FileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
-  
+
   "FileSystemDriver" should "be named filesystem" taggedAs (DriverTests) in {
     driver.name shouldBe "filesystem"
   }

@@ -27,65 +27,45 @@ import net.lingala.zip4j.core.ZipFile
 class LocalTestResources extends TestResources {
   setupLocalHadoop()
 
-  def hiveSiteXmlPath = "target/test-classes/hive-site.xml"
-  def dependenciesDir = "deploy/dependencies"
+  val hiveSiteXmlPath = "target/test-classes/hive-site.xml"
+  val dependenciesDir = "deploy/dependencies"
 
-  var cachedWarehouseDir: String = null
-  override def hiveWarehouseDir: String = {
-    if (cachedWarehouseDir == null) {
-      val dir = Paths.get("target/hive-warehouse").toAbsolutePath()
-      if (Files.exists(dir)) {
-        FileUtils.deleteDirectory(dir.toFile())
-      }
-      val d = Files.createDirectory(dir).toString.replaceAll("\\\\", "/")
-
-      cachedWarehouseDir = new Path("file:///", d).toString()
+  override lazy val hiveWarehouseDir: String = {
+    val dir = Paths.get("target/hive-warehouse").toAbsolutePath()
+    if (Files.exists(dir)) {
+      FileUtils.deleteDirectory(dir.toFile())
     }
-    cachedWarehouseDir
+    val d = Files.createDirectory(dir).toString.replaceAll("\\\\", "/")
+
+    new Path("file:///", d).toString()
   }
 
-  override def connection = {
-    val c = hiveConf
-    super.connection
+  override lazy val hiveConf: HiveConf = {
+    // we don't directly instantiate a new HiveConf(), because then hive-site.xml
+    // would be loaded from classpath too early (we must make sure to write 
+    // hive-site.xml BEFORE it is loaded the first time)
+    val conf = new Properties()
+    conf.put(METASTOREWAREHOUSE.toString, hiveWarehouseDir)
+    conf.put(LOCALMODEAUTO.toString, "true")
+    conf.put(METASTORECONNECTURLKEY.toString, "jdbc:derby:memory:metastore_db;create=true")
+    conf.put(HIVEAUXJARS.toString, compiledClassesPath())
+    conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
+    conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
+    val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
+    Files.write(Paths.get(hiveSiteXmlPath), ("<configuration>\n" + props + "\n</configuration>").getBytes());
+
+    new HiveConf()
   }
 
-  var cachedHiveConf: HiveConf = null
-  override def hiveConf: HiveConf = {
-    if (cachedHiveConf == null) {
-      // we don't directly instantiate a new HiveConf(), because then hive-site.xml
-      // would be loaded from classpath too early (we must make sure to write 
-      // hive-site.xml BEFORE it is loaded the first time)
-      val conf = new Properties()
-      conf.put(METASTOREWAREHOUSE.toString, hiveWarehouseDir)
-      conf.put(LOCALMODEAUTO.toString, "true")
-      conf.put(METASTORECONNECTURLKEY.toString, "jdbc:derby:memory:metastore_db;create=true")
-      conf.put(HIVEAUXJARS.toString, compiledClassesPath())
-      conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
-      conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
-      val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
-      Files.write(Paths.get(hiveSiteXmlPath), ("<configuration>\n" + props + "\n</configuration>").getBytes());
+  override val jdbcClass = "org.apache.hadoop.hive.jdbc.HiveDriver"
 
-      cachedHiveConf = new HiveConf()
-    }
+  override val jdbcUrl = "jdbc:hive://"
 
-    cachedHiveConf
-  }
+  override lazy val remoteTestDirectory: String = new Path("file:///", Paths.get("target").toAbsolutePath().toString).toString
 
-  override def jdbcClass = "org.apache.hadoop.hive.jdbc.HiveDriver"
+  override lazy val fileSystem: FileSystem = FileSystem.getLocal(new Configuration())
 
-  override def jdbcUrl = "jdbc:hive://"
-
-  override def remoteTestDirectory: String = new Path("file:///", Paths.get("target").toAbsolutePath().toString).toString // TODO
-
-  var cachedFileSystem: FileSystem = null
-  override def fileSystem: FileSystem = {
-    if (cachedFileSystem == null)
-      cachedFileSystem = FileSystem.getLocal(new Configuration())
-
-    cachedFileSystem
-  }
-
-  override def namenode = "file:///"
+  override val namenode = "file:///"
 
   def compiledClassesPath() = {
     val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct
