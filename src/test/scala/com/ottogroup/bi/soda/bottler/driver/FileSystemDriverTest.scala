@@ -8,15 +8,11 @@ import test.eci.datahub.Product
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
 import com.ottogroup.bi.soda.dsl.Parameter.p
+import com.ottogroup.bi.soda.DriverTests
 
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
-  var cachedDriver: FileSystemDriver = null
-  def driver: FileSystemDriver = {
-    if (cachedDriver == null)
-      cachedDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
-    cachedDriver
-  }
-
+  lazy val driver: FileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
+  
   "FileSystemDriver" should "be named filesystem" taggedAs (DriverTests) in {
     driver.name shouldBe "filesystem"
   }

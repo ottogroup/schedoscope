@@ -1,6 +1,7 @@
 package test.eci.datahub
 
 import com.ottogroup.bi.soda.dsl.Parameter
+import com.ottogroup.bi.soda.dsl.Parameter._
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.views.Id
 import com.ottogroup.bi.soda.dsl.views.JobMetadata
@@ -12,6 +13,7 @@ import com.ottogroup.bi.soda.dsl.Avro
 import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation._
+import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 
 case class Brand(
   ecNr: Parameter[String]) extends View
@@ -122,4 +124,30 @@ case class ViewWithDefaultParams(
   month: Parameter[String],
   day: Parameter[String],
   defaultParameter: Int = 2) extends View {
+}
+
+case class Click(
+  ecShopCode: Parameter[String],
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+}
+
+case class ClickOfEC0101(
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+  
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+  
+  transformVia(() =>
+    HiveTransformation(s"SELECT * FROM ${click().dbName}.${click().tableName} WHERE ec_shop_code = '${click().ecShopCode.v.get}'"))
 }

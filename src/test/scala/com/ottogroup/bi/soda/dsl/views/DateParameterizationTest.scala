@@ -1,8 +1,7 @@
-package com.ottogroup.bi.eci.soda.dsl.views
+package com.ottogroup.bi.soda.dsl.views
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
 import com.ottogroup.bi.soda.dsl.Parameter._
 
 class DailyParameterizationTest extends FlatSpec with Matchers {

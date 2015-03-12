@@ -1,4 +1,4 @@
-package com.ottogroup.bi.eci.soda.dsl.views
+package com.ottogroup.bi.soda.dsl.views
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers

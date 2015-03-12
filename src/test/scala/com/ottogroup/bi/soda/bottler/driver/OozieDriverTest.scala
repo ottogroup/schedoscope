@@ -10,15 +10,12 @@ import com.ottogroup.bi.soda.test.resources.TestResources
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import org.apache.hadoop.fs.Path
 import java.net.URI
+import com.ottogroup.bi.soda.OozieTests
+import com.ottogroup.bi.soda.DriverTests
 
 class OozieDriverTest extends FlatSpec with Matchers {
 
-  var cachedResources: OozieTestResources = null
-  def resources: OozieTestResources = {
-    if (cachedResources == null)
-      cachedResources = new OozieTestResources()
-    cachedResources
-  }
+  lazy val resources: OozieTestResources = new OozieTestResources()
 
   def cluster = resources.mo
   def driver = resources.oozieDriver
@@ -34,39 +31,24 @@ class OozieDriverTest extends FlatSpec with Matchers {
       hdfs.mkdirs(dest)
 
     hdfs.copyFromLocalFile(src, dest)
+    wf
   }
 
-  var cachedWorkingOozieTransformation: OozieTransformation = null
-  def workingOozieTransformation = {
-    if (cachedWorkingOozieTransformation == null) {
-      cachedWorkingOozieTransformation = OozieTransformation(
-        "bundle", "workflow",
-        "/tmp/soda/oozie/workflows/bundle/workflow/", Map(
-          "jobTracker" -> cluster.getJobTrackerUri(),
-          "nameNode" -> cluster.getNameNodeUri(),
-          "oozie.use.system.libpath" -> "false"))
+  lazy val workingOozieTransformation = deployWorkflow(
+    OozieTransformation(
+      "bundle", "workflow",
+      "/tmp/soda/oozie/workflows/bundle/workflow/", Map(
+        "jobTracker" -> cluster.getJobTrackerUri(),
+        "nameNode" -> cluster.getNameNodeUri(),
+        "oozie.use.system.libpath" -> "false")))
 
-      deployWorkflow(cachedWorkingOozieTransformation)
-    }
-
-    cachedWorkingOozieTransformation
-  }
-
-  var cachedFailingOozieTransformation: OozieTransformation = null
-  def failingOozieTransformation = {
-    if (cachedFailingOozieTransformation == null) {
-      cachedFailingOozieTransformation = OozieTransformation(
-        "bundle", "failflow",
-        "/tmp/soda/oozie/workflows/bundle/failflow/", Map(
-          "jobTracker" -> cluster.getJobTrackerUri(),
-          "nameNode" -> cluster.getNameNodeUri(),
-          "oozie.use.system.libpath" -> "false"))
-
-      deployWorkflow(cachedFailingOozieTransformation)
-    }
-
-    cachedFailingOozieTransformation
-  }
+  lazy val failingOozieTransformation = deployWorkflow(
+    OozieTransformation(
+      "bundle", "failflow",
+      "/tmp/soda/oozie/workflows/bundle/failflow/", Map(
+        "jobTracker" -> cluster.getJobTrackerUri(),
+        "nameNode" -> cluster.getNameNodeUri(),
+        "oozie.use.system.libpath" -> "false")))
 
   "Oozie" should "be named oozie" taggedAs (DriverTests, OozieTests) in {
     driver.name shouldBe "oozie"

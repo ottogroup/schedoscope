@@ -1,4 +1,4 @@
-package com.ottogroup.bi.soda.bottler.driver
+package com.ottogroup.bi.soda
 
 import org.scalatest.Tag
 

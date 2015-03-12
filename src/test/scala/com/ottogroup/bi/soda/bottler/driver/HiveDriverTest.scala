@@ -5,14 +5,10 @@ import org.scalatest.FlatSpec
 import com.ottogroup.bi.soda.test.resources.LocalTestResources
 import com.ottogroup.bi.soda.test.resources.LocalTestResources
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.DriverTests
 
 class HiveDriverTest extends FlatSpec with Matchers {
-  var cachedDriver: HiveDriver = null
-  def driver: HiveDriver = {
-    if (cachedDriver == null)
-      cachedDriver = new LocalTestResources().hiveDriver
-    cachedDriver
-  }
+  lazy val driver: HiveDriver = new LocalTestResources().hiveDriver
 
   "HiveDriver" should "be named hive" taggedAs (DriverTests) in {
     driver.name shouldBe "hive"
