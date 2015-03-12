@@ -89,8 +89,7 @@ class ActionsRouterActor() extends Actor {
 
   def receive = LoggingReceive({
 
-    case PollCommand(typ) => {
-      log.debug("Received poll for " + typ)
+    case PollCommand(typ) => {      
       queues.get(typ).map(q => if (!q.isEmpty) sender ! q.dequeue)
     }
 
