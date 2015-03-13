@@ -2,13 +2,12 @@ package com.ottogroup.bi.soda.test
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter._
-import com.ottogroup.bi.soda.dsl.Field._
-import test.eci.datahub.Click
-import test.eci.datahub.ClickOfEC0101
+
 import com.ottogroup.bi.soda.DriverTests
+import com.ottogroup.bi.soda.dsl.Field.v
+import com.ottogroup.bi.soda.dsl.Parameter.p
+
+import test.eci.datahub.Click
 import test.eci.datahub.ClickOfEC0101
 
 class HiveTestFrameworkTest extends FlatSpec with Matchers {

@@ -1,16 +1,16 @@
 package com.ottogroup.bi.soda.dsl.transformations.oozie
 
-import com.ottogroup.bi.soda.dsl.Transformation
-import java.util.Properties
-import java.io.FileReader
-import java.io.InputStream
-import com.typesafe.config.ConfigFactory
-import collection.JavaConversions._
-import org.apache.oozie.client.OozieClient
 import java.io.FileInputStream
+import java.io.InputStream
+import java.util.Properties
+
+import scala.collection.JavaConversions.propertiesAsScalaMap
+
 import org.apache.commons.lang.StringUtils
-import com.ottogroup.bi.soda.dsl.NamedTransformation
+
 import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.dsl.NamedTransformation
+import com.ottogroup.bi.soda.dsl.Transformation
 
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {
   configureWith(c)

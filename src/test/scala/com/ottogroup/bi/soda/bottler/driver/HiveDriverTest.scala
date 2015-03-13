@@ -1,11 +1,11 @@
 package com.ottogroup.bi.soda.bottler.driver
 
-import org.scalatest.Matchers
 import org.scalatest.FlatSpec
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import org.scalatest.Matchers
+
 import com.ottogroup.bi.soda.DriverTests
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.test.resources.LocalTestResources
 
 class HiveDriverTest extends FlatSpec with Matchers {
   lazy val driver: HiveDriver = new LocalTestResources().hiveDriver

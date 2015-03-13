@@ -1,29 +1,24 @@
 package com.ottogroup.bi.soda.test
 
+import java.io.File
+import java.io.OutputStreamWriter
+import java.net.URI
+
+import scala.Array.canBuildFrom
+import scala.collection.JavaConversions.seqAsJavaList
 import scala.collection.mutable.ListBuffer
+
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.hive.metastore.api.ResourceType
+import org.apache.hadoop.hive.metastore.api.ResourceUri
+
+import com.ottogroup.bi.soda.crate.ddl.HiveQl
 import com.ottogroup.bi.soda.dsl.FieldLike
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.TextFile
-import com.ottogroup.bi.soda.crate.DeploySchema
-import com.ottogroup.bi.soda.crate.ddl.HiveQl
-import java.util.Date
-import com.ottogroup.bi.soda.bottler.driver.HiveDriver
-import com.ottogroup.bi.soda.dsl.Named
-import com.ottogroup.bi.soda.dsl.Structure
-import scala.collection.mutable.HashMap
-import com.ottogroup.bi.soda.test.resources.TestResources
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import org.apache.hadoop.fs.Path
-import java.net.URI
-import java.io.OutputStreamWriter
-import java.io.File
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import com.ottogroup.bi.soda.dsl.TextFile
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import org.apache.hadoop.hive.metastore.api.ResourceUri
-import org.apache.hadoop.hive.metastore.api.ResourceType
-import collection.JavaConversions._
 import com.ottogroup.bi.soda.test.resources.LocalTestResources
+import com.ottogroup.bi.soda.test.resources.TestResources
 
 trait FillableView extends View with rows {}
 

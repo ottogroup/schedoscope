@@ -2,6 +2,8 @@ package com.ottogroup.bi.soda.dsl
 
 import java.security.MessageDigest
 
+import scala.Array.canBuildFrom
+
 /**
  * @author dev_dbenz
  */

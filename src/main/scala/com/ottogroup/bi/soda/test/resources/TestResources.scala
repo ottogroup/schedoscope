@@ -1,18 +1,16 @@
 package com.ottogroup.bi.soda.test.resources
 
-import java.sql.Connection
 import java.sql.DriverManager
-
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
-
 import com.ottogroup.bi.soda.bottler.driver.HiveDriver
-import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 import com.ottogroup.bi.soda.crate.DeploySchema
 import com.ottogroup.bi.soda.dsl.TextFile
 import com.ottogroup.bi.soda.test.Database
+import java.sql.Connection
+import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 
 abstract class TestResources {
   val hiveConf: HiveConf

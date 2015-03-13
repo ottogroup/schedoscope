@@ -1,26 +1,27 @@
 package com.ottogroup.bi.soda.dsl
 
+import java.util.Date
+
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.crate.ddl.HiveQl._
-import com.ottogroup.bi.soda.dsl.Parameter._
-import java.util.Date
-import com.ottogroup.bi.soda.dsl.views.PointOccurrence
-import com.ottogroup.bi.soda.dsl.views.JobMetadata
+
+import com.ottogroup.bi.soda.crate.ddl.HiveQl.ddl
+import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.View.t
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.views.JobMetadata
 import com.ottogroup.bi.soda.dsl.views.PointOccurrence
+
 import test.eci.datahub.AvroView
 import test.eci.datahub.Brand
+import test.eci.datahub.Click
+import test.eci.datahub.ClickOfEC0101
+import test.eci.datahub.ClickOfEC0101ViaOozie
 import test.eci.datahub.EdgeCasesView
 import test.eci.datahub.Product
 import test.eci.datahub.ProductBrand
 import test.eci.datahub.ViewWithDefaultParams
-import com.ottogroup.bi.soda.dsl.views.DailyParameterization
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import test.eci.datahub.Click
-import test.eci.datahub.ClickOfEC0101
-import test.eci.datahub.ClickOfEC0101ViaOozie
 
 class DslTest extends FlatSpec with Matchers {
 

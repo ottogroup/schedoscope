@@ -1,17 +1,13 @@
 package com.ottogroup.bi.soda.bottler.driver
 
-import org.scalatest.Matchers
-import org.scalatest.FlatSpec
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.test.resources.OozieTestResources
-import com.ottogroup.bi.soda.test.resources.TestResources
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import org.apache.hadoop.fs.Path
-import java.net.URI
-import com.ottogroup.bi.soda.OozieTests
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers
+
 import com.ottogroup.bi.soda.DriverTests
+import com.ottogroup.bi.soda.OozieTests
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+import com.ottogroup.bi.soda.test.resources.OozieTestResources
 
 class OozieDriverTest extends FlatSpec with Matchers {
 

@@ -1,8 +1,5 @@
 package com.ottogroup.bi.soda.dsl
 
-import java.lang.reflect.ParameterizedType
-import java.util.regex.Pattern
-
 abstract class FieldLike[T: Manifest] extends Named {
   val t = manifest[T]
 

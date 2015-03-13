@@ -1,23 +1,20 @@
 package org.jooq.impl
 
-import com.ottogroup.bi.soda.dsl.View
+import java.util.Date
+
+import scala.collection.JavaConverters.asScalaBufferConverter
+import scala.collection.mutable.HashSet
+import scala.collection.mutable.ListBuffer
+
 import org.jooq.DataType
 import org.jooq.Record
-import com.ottogroup.bi.soda.dsl.Field
-import org.jooq.Context
-import org.jooq.impl.DSL._
-import org.jooq.SQLDialect
-import scala.collection.mutable.ListBuffer
-import com.ottogroup.bi.soda.dsl.FieldLike
-import scala.collection.mutable.HashSet
-import com.ottogroup.bi.soda.crate.ddl.HiveQl._
-import com.ottogroup.bi.soda.dsl.FieldLike
-import org.jooq.impl.DefaultDataType._
-import java.util.Date
+import org.jooq.impl.DSL.field
+import org.jooq.impl.DSL.nullSafe
+
 import com.openpojo.reflection.impl.PojoClassFactory
-import scala.collection.JavaConverters._
+import com.ottogroup.bi.soda.dsl.FieldLike
 import com.ottogroup.bi.soda.dsl.Structure
-import org.jooq.UDTRecord
+import com.ottogroup.bi.soda.dsl.View
 
 object ViewTable {
   def viewOrStructureTable(s: Structure) = {

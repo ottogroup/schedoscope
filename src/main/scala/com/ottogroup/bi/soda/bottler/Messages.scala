@@ -29,7 +29,6 @@ case class ActorException(e: Throwable) extends Failure
 case class Failed(view: View) extends Failure
 case class InternalError(message: String) extends Failure
 case class ActionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunFailed[T]) extends Failure
-case class ActionExceptionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverException: DriverException) extends Failure
 
 sealed class Command
 case class NewDataAvailable(view: View) extends Command

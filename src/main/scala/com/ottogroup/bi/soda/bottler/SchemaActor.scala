@@ -20,10 +20,11 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
     case CreateSchema(view) => {
       if (!(crate.schemaExists(view)))
         crate.dropAndCreateTableSchema(view)
+        
       sender ! new Success
     }
-    case AddPartition(view) => {
 
+    case AddPartition(view) => {
       try {
         crate.createPartition(view)
       } catch {
@@ -31,8 +32,8 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       }
       sender ! new Success
     }
-    case CheckVersion(view) => {
 
+    case CheckVersion(view) =>
       if (crate.partitionExists(view)) {
         try {
           if (!Settings().transformationVersioning)
@@ -47,7 +48,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
         }
       } else
         sender ! VersionMismatch(view, "")
-    }
+
     case SetVersion(view) => {
       try {
         crate.setPartitionVersion(view)
@@ -55,12 +56,10 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
         case e: Throwable => { this.sender ! Error }
       }
       sender ! new Success
-
     }
   }
 }
 
 object SchemaActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(new SchemaActor(jdbcUrl, metaStoreUri, serverKerberosPrincipal))
-
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal)
 }

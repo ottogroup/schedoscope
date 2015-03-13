@@ -1,26 +1,22 @@
 package com.ottogroup.bi.soda.dsl.transformations.sql
 
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.Structure
-import org.jooq.DSLContext
-import org.jooq.Query
-import org.jooq.impl.DSL._
-import org.jooq.SQLDialect
-import org.jooq.util.mysql.MySQLDSL
-import org.jooq.conf.Settings
-import org.jooq.impl.DefaultDSLContext
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.FieldLike
-import org.jooq.conf.RenderNameStyle
 import java.util.Date
-import org.jooq.impl.DSL
-import org.jooq.DataType
-import org.jooq.impl.ViewTable
+
+import scala.collection.JavaConverters.asScalaBufferConverter
+
 import org.jooq.Param
+import org.jooq.Query
+import org.jooq.SQLDialect
+import org.jooq.conf.RenderNameStyle
+import org.jooq.impl.DSL
+import org.jooq.impl.DSL.function
+import org.jooq.impl.DSL.inline
+import org.jooq.impl.DefaultDSLContext
+import org.jooq.impl.ViewTable
+
 import com.openpojo.reflection.impl.PojoClassFactory
-import scala.collection.JavaConverters._
-import org.jooq.impl.StructureTable
-import scala.collection.mutable.HashMap
+import com.ottogroup.bi.soda.dsl.FieldLike
+import com.ottogroup.bi.soda.dsl.Structure
 
 object HiveQlDsl {
   def dsl(specification: HiveDSLContext => Query) = {

@@ -1,8 +1,9 @@
 package com.ottogroup.bi.soda.dsl.views
 
 import java.util.Calendar
+
 import com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter._
+import com.ottogroup.bi.soda.dsl.Parameter.p
 
 object DateParameterizationUtils {
   def defaultEarliestDay = {

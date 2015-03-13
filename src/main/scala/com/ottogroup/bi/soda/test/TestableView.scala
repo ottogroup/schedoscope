@@ -1,24 +1,17 @@
 package com.ottogroup.bi.soda.test
 
 import scala.collection.mutable.ListBuffer
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.Parameter._
-import com.ottogroup.bi.soda.dsl.Field
-import com.ottogroup.bi.soda.crate.DeploySchema
-import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
-import com.ottogroup.bi.soda.bottler.driver.OozieDriver
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.bottler.driver.HiveDriver
-import com.ottogroup.bi.soda.dsl.FieldLike
-import com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.ValueCarrying
-import com.ottogroup.bi.soda.bottler.driver.Driver
-import com.ottogroup.bi.soda.dsl.Structure
-import com.ottogroup.bi.soda.test.resources.OozieTestResources
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+
 import org.apache.hadoop.fs.Path
+
+import com.ottogroup.bi.soda.bottler.driver.Driver
+import com.ottogroup.bi.soda.dsl.FieldLike
+import com.ottogroup.bi.soda.dsl.Structure
+import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.NoOp
+import com.ottogroup.bi.soda.test.resources.OozieTestResources
 
 trait TestableView extends FillableView {}
 

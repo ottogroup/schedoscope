@@ -1,10 +1,9 @@
 package com.ottogroup.bi.soda.test.resources
 
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.hive.conf.HiveConf
-
 import com.ottogroup.bi.eci.minioozie.MiniOozie
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
+import org.apache.hadoop.hive.conf.HiveConf
+import org.apache.hadoop.fs.FileSystem
 
 class OozieTestResources extends TestResources {
   val mo = new MiniOozie()

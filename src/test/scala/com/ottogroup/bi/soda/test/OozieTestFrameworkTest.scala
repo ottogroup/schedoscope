@@ -2,14 +2,14 @@ package com.ottogroup.bi.soda.test
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter._
-import com.ottogroup.bi.soda.dsl.Field._
-import test.eci.datahub.Click
+
 import com.ottogroup.bi.soda.DriverTests
-import test.eci.datahub.ClickOfEC0101ViaOozie
 import com.ottogroup.bi.soda.OozieTests
+import com.ottogroup.bi.soda.dsl.Field.v
+import com.ottogroup.bi.soda.dsl.Parameter.p
+
+import test.eci.datahub.Click
+import test.eci.datahub.ClickOfEC0101ViaOozie
 
 class OozieTestFrameworkTest extends FlatSpec with Matchers {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {

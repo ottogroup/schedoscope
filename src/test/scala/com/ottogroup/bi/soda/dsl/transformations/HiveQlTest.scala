@@ -1,18 +1,22 @@
 package com.ottogroup.bi.soda.dsl.transformations
 
-import org.scalatest.BeforeAndAfter
-import org.scalatest.Matchers
-import org.scalatest.FlatSpec
 import java.util.Date
-import org.jooq.SQLDialect
-import org.jooq.impl.DSL._
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.Structure
+
+import org.scalatest.BeforeAndAfter
+import org.scalatest.FlatSpec
+import org.scalatest.Matchers
+
 import com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter._
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl._
+import com.ottogroup.bi.soda.dsl.Parameter.p
+import com.ottogroup.bi.soda.dsl.Structure
+import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl.dsl
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl.f
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl.get
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl.t
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation._
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.queryFromResource
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.replaceParameters
 
 case class Article() extends Structure {
   val name = fieldOf[String]

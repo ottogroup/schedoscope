@@ -1,42 +1,35 @@
 package com.ottogroup.bi.soda.bottler.driver
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation._
-import util.control.Breaks._
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.Path
+
 import java.security.PrivilegedAction
 import java.sql.Connection
 import java.sql.DriverManager
-import org.apache.commons.lang.StringUtils
-import scala.collection.mutable.MutableList
-import scala.collection.mutable.Queue
-import scala.collection.mutable.Stack
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.typesafe.config.Config
-import com.ottogroup.bi.soda.bottler.api.Settings
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
-import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.metastore.api.Function
-import collection.JavaConversions._
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
-import org.apache.hadoop.hive.metastore.api.MetaException
-import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
-import org.apache.thrift.transport.TTransportException
-import scala.concurrent.duration.Duration
-import scala.concurrent._
-import org.joda.time.LocalDateTime
-import org.apache.thrift.TException
 import java.sql.SQLException
+
+import scala.Array.canBuildFrom
+import scala.collection.JavaConversions.asScalaBuffer
+import scala.collection.mutable.Stack
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
+import scala.concurrent.future
+
+import org.apache.commons.lang.StringUtils
+import org.apache.hadoop.hive.conf.HiveConf
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
+import org.apache.hadoop.hive.metastore.api.Function
+import org.apache.hadoop.security.UserGroupInformation
+import org.joda.time.LocalDateTime
+
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.replaceParameters
 
 class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
   override def runTimeOut: Duration = Settings().hiveActionTimeout
 
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
-    new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, null, future {
+    new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {
       t.udfs.foreach(this.registerFunction(_))
       executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
     }(ExecutionContext.global))

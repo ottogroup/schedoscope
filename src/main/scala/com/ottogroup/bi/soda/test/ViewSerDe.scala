@@ -1,17 +1,12 @@
 package com.ottogroup.bi.soda.test
 
-import com.ottogroup.bi.soda.dsl.FieldLike
-import scala.collection.mutable.ListBuffer
-import com.ottogroup.bi.soda.dsl.Structure
-import com.ottogroup.bi.soda.dsl.Field
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.FieldLike
-import com.ottogroup.bi.soda.dsl.StructureDsl
 import java.util.Date
-import com.ottogroup.bi.soda.dsl.StructureDsl
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
+
+import scala.Array.canBuildFrom
+
+import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.dsl.TextFile
-import com.ottogroup.bi.soda.dsl.TextFile
+import com.ottogroup.bi.soda.dsl.View
 
 object ViewSerDe {
 

@@ -1,16 +1,9 @@
 package com.ottogroup.bi.soda.bottler.api
 
+import scala.Array.canBuildFrom
 import scala.concurrent.Future
-import com.bethecoder.ascii_table.ASCIITable
 
-/**
- * @author dev_dbenz
- */
-object show {
-  def processlist() {
-    CliFormat.serialize(SodaClient.listActions)
-  }
-}
+import com.bethecoder.ascii_table.ASCIITable
 
 object CliFormat {
   def serialize(o: Any): String = {

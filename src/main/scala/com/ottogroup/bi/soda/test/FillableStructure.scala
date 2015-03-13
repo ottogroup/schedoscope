@@ -1,9 +1,9 @@
 package com.ottogroup.bi.soda.test
 
-import com.ottogroup.bi.soda.dsl.Structure
-import com.ottogroup.bi.soda.dsl.FieldLike
-import scala.collection.mutable.ListBuffer
 import scala.collection.mutable.HashMap
+
+import com.ottogroup.bi.soda.dsl.FieldLike
+import com.ottogroup.bi.soda.dsl.Structure
 
 trait FillableStructure extends Structure with values {}
 

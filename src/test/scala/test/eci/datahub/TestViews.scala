@@ -1,22 +1,21 @@
 package test.eci.datahub
 
+import java.util.Date
+
+import com.ottogroup.bi.soda.dsl.Avro
 import com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter._
+import com.ottogroup.bi.soda.dsl.Parameter.p
+import com.ottogroup.bi.soda.dsl.Parquet
+import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation.oozieWFPath
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.insertInto
+import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.views.Id
 import com.ottogroup.bi.soda.dsl.views.JobMetadata
 import com.ottogroup.bi.soda.dsl.views.PointOccurrence
-import com.ottogroup.bi.soda.dsl.Parquet
-import com.ottogroup.bi.soda.dsl.Structure
-import java.util.Date
-import com.ottogroup.bi.soda.dsl.Avro
-import com.ottogroup.bi.soda.dsl.views.DailyParameterization
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation._
-import com.ottogroup.bi.soda.dsl.views.DailyParameterization
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation._
-import com.ottogroup.bi.soda.bottler.api.Settings
 
 case class Brand(
   ecNr: Parameter[String]) extends View

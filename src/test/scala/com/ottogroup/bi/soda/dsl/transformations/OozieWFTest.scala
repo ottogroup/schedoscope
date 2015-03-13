@@ -1,14 +1,14 @@
 package com.ottogroup.bi.soda.dsl.transformations
 
 import org.scalatest.BeforeAndAfter
-import org.scalatest.Matchers
 import org.scalatest.FlatSpec
+import org.scalatest.Matchers
+
 import com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter._
+import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.Parquet
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation._
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation.configurationFromResource
 
 case class Productfeed(
   ecShopCode: Parameter[String],

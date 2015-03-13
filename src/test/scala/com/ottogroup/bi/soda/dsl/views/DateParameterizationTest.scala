@@ -2,7 +2,8 @@ package com.ottogroup.bi.soda.dsl.views
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.dsl.Parameter._
+
+import com.ottogroup.bi.soda.dsl.Parameter.p
 
 class DailyParameterizationTest extends FlatSpec with Matchers {
   "prevDay" should "compute the previous date" in {

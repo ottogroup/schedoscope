@@ -1,27 +1,21 @@
 package com.ottogroup.bi.soda.bottler.api
 
-import scala.util.{ Success, Failure }
-import scala.concurrent.duration._
-import akka.actor.ActorSystem
-import akka.pattern.ask
-import akka.event.Logging
-import akka.io.IO
-import spray.can.Http
-import spray.httpx.SprayJsonSupport
-import spray.client.pipelining._
-import spray.util._
-import spray.http.HttpResponse
-import scala.concurrent.impl.Future
-import scala.concurrent.Future
-import spray.http.HttpResponse
-import scala.util.Try
-import akka.util.Timeout
 import scala.concurrent.Await
-import spray.http.HttpRequest
-import spray.json.DefaultJsonProtocol
-import spray.httpx.SprayJsonSupport._
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import scala.util.Try
+
 import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.views.ViewUrlParser
+
+import akka.actor.ActorSystem
+import akka.event.Logging
+import akka.util.Timeout
+import spray.client.pipelining.Get
+import spray.client.pipelining.WithTransformerConcatenation
+import spray.client.pipelining.sendReceive
+import spray.client.pipelining.unmarshal
+import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
 
 object SodaRestClient {
 

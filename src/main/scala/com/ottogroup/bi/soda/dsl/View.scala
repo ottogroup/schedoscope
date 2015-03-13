@@ -1,26 +1,19 @@
 package com.ottogroup.bi.soda.dsl
 
-import scala.collection.mutable.LinkedHashMap
-import scala.collection.mutable.ListBuffer
-import scala.util.matching.Regex
-import scala.collection.mutable.HashSet
+import scala.Array.canBuildFrom
+import scala.collection.JavaConversions.asScalaBuffer
+import scala.collection.JavaConversions.seqAsJavaList
 import scala.collection.mutable.HashMap
-import java.lang.reflect.Method
-import collection.JavaConversions._
+import scala.collection.mutable.HashSet
+import scala.collection.mutable.ListBuffer
+
 import com.openpojo.reflection.impl.PojoClassFactory
-import scala.tools.nsc.Settings
-import scala.tools.nsc.interpreter.IMain
-import java.io.PrintWriter
-import scala.tools.nsc.interpreter.NamedParam
-import scala.tools.nsc.interpreter.NamedParamClass
-import scala.tools.nsc.interpreter.NamedParam.Untyped
-import scala.tools.nsc.interpreter.AbstractFileClassLoader
-import java.net.URLClassLoader
-import com.ottogroup.bi.soda.test.rows
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.dsl.View._
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedView
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.test.rows
 
 abstract class View extends Structure with ViewDsl with DelayedInit {
 

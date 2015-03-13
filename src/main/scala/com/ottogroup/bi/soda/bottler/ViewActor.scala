@@ -1,43 +1,32 @@
 package com.ottogroup.bi.soda.bottler
 
-import akka.actor.Actor
-import akka.actor.Props
-import akka.event.Logging
-import akka.pattern.{ ask, pipe }
-import com.ottogroup.bi.soda.dsl.View
-import akka.actor._
-import akka.util.Timeout
-import scala.concurrent.Await
-import com.ottogroup.bi.soda.crate.ddl.HiveQl._
-import com.ottogroup.bi.soda.dsl.NoOp
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.hadoop.fs.FileSystem
 import java.security.PrivilegedAction
-import scala.concurrent.Future
-import akka.event.LoggingReceive
-import scala.concurrent.duration._
-import com.ottogroup.bi.soda.dsl.Parameter
-import java.util.Properties
-import org.apache.oozie.client.OozieClient
-import com.typesafe.config.ConfigFactory
-import collection.JavaConversions._
-import java.io.FileWriter
-import java.io.File
-import java.io.FileOutputStream
-import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
-import java.util.concurrent.TimeoutException
+
+import scala.collection.JavaConversions.mutableSeqAsJavaList
+import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
+import scala.concurrent.duration.DurationInt
+
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
+
 import com.ottogroup.bi.soda.bottler.api.SettingsImpl
-import akka.contrib.pattern.Aggregator
 import com.ottogroup.bi.soda.dsl.NoOp
-import com.ottogroup.bi.soda.bottler.driver.DriverRunSucceeded
-import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
+import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
+
+import akka.actor.Actor
+import akka.actor.ActorRef
+import akka.actor.ActorSelection.toScala
+import akka.actor.Props
+import akka.actor.actorRef2Scala
+import akka.contrib.pattern.Aggregator
+import akka.event.Logging
+import akka.event.LoggingReceive
+import akka.pattern.ask
+import akka.util.Timeout
 
 class ViewStatusRetriever extends Actor with Aggregator {
 
@@ -52,7 +41,7 @@ class ViewStatusRetriever extends Actor with Aggregator {
 
     val values = ArrayBuffer.empty[ViewStatusResponse]
 
-    context.actorSelection("/user/supervisor/*") ! GetStatus()
+    context.actorSelection("/user/soda/views/*") ! GetStatus()
     context.system.scheduler.scheduleOnce(50 milliseconds, self, TimedOut)
 
     val handle = expect {
@@ -62,38 +51,8 @@ class ViewStatusRetriever extends Actor with Aggregator {
 
     def processFinal(eval: List[ViewStatusResponse]) {
       unexpect(handle)
-      //val result = eval.foldLeft(collection.mutable.Map[String, Long]()) { (map, vsr) => map += (vsr.state -> (map.getOrElse(vsr.state, 0l) + 1)) }
       originalSender ! eval
       context.stop(self)
-    }
-  }
-}
-
-class ViewSuperVisor( settings:SettingsImpl) extends Actor {
-  import context._
-  import akka.actor.OneForOneStrategy
-  import akka.actor.SupervisorStrategy._
-  import scala.concurrent.duration._
-
-  override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
-      case _: ArithmeticException => Resume
-      case _: NullPointerException => Restart
-      case _: IllegalArgumentException => Stop
-      case _: TimeoutException => Resume
-      case _: Exception => Escalate
-    }
-
-  def receive = {
-    case v: View => {
-      //generate a unique id for every actor
-      val actorName = v.module + v.n + v.parameters.foldLeft("") { (s, p) => s"${s}+${p.n}=${p.v.get}" }
-
-      val actor = actorFor(actorName)
-      sender ! (if (actor.isTerminated)
-        actorOf(ViewActor.props(v, settings), actorName)
-      else
-        actor)
     }
   }
 }
@@ -102,12 +61,14 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   import context._
   val log = Logging(system, this)
   implicit val timeout = new Timeout(settings.dependencyTimout)
-  val hadoopConf = settings.hadoopConf
-  val supervisor = actorFor("/user/supervisor")
-  val schemaActor = actorFor("/user/schemaActor")
+  
+  val viewManagerActor = actorFor("/user/soda/views")
+  val schemaActor = actorFor("/user/soda/schema")
+  val actionsManagerActor = actorFor("/user/soda/actions")
+  
   val listeners = collection.mutable.Queue[ActorRef]()
   val dependencies = collection.mutable.HashSet[View]()
-  val actionsRouter = actorFor("/user/actions")
+ 
 
   // state variables
   // one of the dependencies was not available (no data)
@@ -117,7 +78,8 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   var changed = false
 
   // one of the dependencies' transformations failed
-  var withErrors=false
+  var withErrors = false
+  
   var availableDependencies = 0
 
   def receive = LoggingReceive({
@@ -128,9 +90,9 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   def transform(retries: Int) = {
     val partitionResult = schemaActor ? AddPartition(view)
     Await.result(partitionResult, settings.schemaActionTimeout)
-    Await.result(actionsRouter ? Delete(view.fullPath, true), settings.fileActionTimeout)
+    Await.result(actionsManagerActor ? Delete(view.fullPath, true), settings.fileActionTimeout)
 
-    actionsRouter ! view
+    actionsManagerActor ! view
 
     unbecome()
     become(transforming(retries))
@@ -146,7 +108,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
 
-      Await.result(actionsRouter ? Touch(view.fullPath + "/_SUCCESS"), settings.fileActionTimeout)
+      Await.result(actionsManagerActor ? Touch(view.fullPath + "/_SUCCESS"), settings.fileActionTimeout)
       Await.result(schemaActor ? SetVersion(view), settings.schemaActionTimeout)
 
       unbecome()
@@ -158,7 +120,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
       listeners.clear
     }
 
-    case _: ActionFailure[_] | _: ActionExceptionFailure[_] => retry(retries)
+    case _: ActionFailure[_] => retry(retries)
   })
 
   def reload() = {
@@ -167,7 +129,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
 
     log.debug("STATE CHANGE:waiting")
 
-    Await.result(actionsRouter ? Delete(view.fullPath + "/_SUCCESS", false), settings.fileActionTimeout)
+    Await.result(actionsManagerActor ? Delete(view.fullPath + "/_SUCCESS", false), settings.fileActionTimeout)
     transform(1)
 
     // tell everyone that new data is avaiable
@@ -291,7 +253,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
       def run() = {
         val pathWithSuccessFlag = new Path(view.fullPath + "/_SUCCESS")
 
-        FileSystem.get(hadoopConf).exists(pathWithSuccessFlag)
+        FileSystem.get(settings.hadoopConf).exists(pathWithSuccessFlag)
       }
     })
   }
@@ -376,7 +338,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
         {
           log.debug("querying dependency " + dependendView)
 
-          val actor = Await.result((supervisor ? dependendView).mapTo[ActorRef], timeout.duration)
+          val actor = Await.result((viewManagerActor ? dependendView).mapTo[ActorRef], timeout.duration)
           dependencies.add(dependendView)
           availableDependencies += 1
 
@@ -394,11 +356,5 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
 }
 
 object ViewActor {
-  def props(view: View,  settings:SettingsImpl): Props = Props(new ViewActor(view, settings))
-
+  def props(view: View, settings: SettingsImpl): Props = Props(classOf[ViewActor], view, settings)
 }
-object ViewSuperVisor {
-  def props(settings:SettingsImpl): Props = Props(new ViewSuperVisor(settings:SettingsImpl))
-
-}
-

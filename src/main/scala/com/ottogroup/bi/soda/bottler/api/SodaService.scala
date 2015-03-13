@@ -1,55 +1,52 @@
 package com.ottogroup.bi.soda.bottler.api
 
-import colossus._
-import service._
-import protocols.http._
-import HttpMethod._
-import UrlParsing.Strings._
-import akka.actor.ActorSystem
-import akka.actor.Props
-import akka.dispatch._
-import akka.pattern.ask
-import akka.util.Timeout
-import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Promise, Future }
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import Predef.{ any2stringadd => _, _ }
-import colossus.core.ServerSettings
-import com.ottogroup.bi.soda.bottler.NewDataAvailable
-import com.ottogroup.bi.soda.bottler.ViewStatus
-import com.ottogroup.bi.soda.bottler.KillAction
-import com.ottogroup.bi.soda.bottler.InternalError
-import com.ottogroup.bi.soda.bottler.ViewMaterialized
-import com.ottogroup.bi.soda.bottler.SchemaActor
-import com.ottogroup.bi.soda.bottler.NoDataAvailable
-import com.ottogroup.bi.soda.bottler.Deploy
-import com.ottogroup.bi.soda.bottler.ViewSuperVisor
-import com.ottogroup.bi.soda.bottler.ActionsRouterActor
-import com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser._
-import com.ottogroup.bi.soda.bottler.GetStatus
-import com.ottogroup.bi.soda.bottler.ProcessList
-import com.ottogroup.bi.soda.bottler.ViewStatusResponse
-import com.ottogroup.bi.soda.bottler.Failed
-import org.joda.time.format.DateTimeFormatterBuilder
-import org.joda.time.format.DateTimeFormatter
-import org.joda.time.format.DateTimeFormat
-import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
-import akka.actor.ActorRef
-import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
-import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
-import com.ottogroup.bi.soda.bottler.ViewStatusResponse
-import org.codehaus.jackson.map.ObjectMapper
-import com.cloudera.com.fasterxml.jackson.core.JsonParseException
-import com.fasterxml.jackson.core.io.JsonStringEncoder
-import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+
+import org.codehaus.jackson.map.ObjectMapper
+import org.joda.time.format.DateTimeFormat
+
+import com.fasterxml.jackson.core.io.JsonStringEncoder
+import com.ottogroup.bi.soda.bottler.ActionsManagerActor
+import com.ottogroup.bi.soda.bottler.Deploy
+import com.ottogroup.bi.soda.bottler.Failed
+import com.ottogroup.bi.soda.bottler.GetStatus
+import com.ottogroup.bi.soda.bottler.InternalError
+import com.ottogroup.bi.soda.bottler.KillAction
+import com.ottogroup.bi.soda.bottler.NewDataAvailable
+import com.ottogroup.bi.soda.bottler.NoDataAvailable
+import com.ottogroup.bi.soda.bottler.ProcessList
+import com.ottogroup.bi.soda.bottler.SchemaActor
+import com.ottogroup.bi.soda.bottler.ViewManagerActor
+import com.ottogroup.bi.soda.bottler.ViewMaterialized
+import com.ottogroup.bi.soda.bottler.ViewStatus
+import com.ottogroup.bi.soda.bottler.ViewStatusResponse
+import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
 import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
 import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
+import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.viewNames
+
+import akka.actor.ActorRef
+import akka.actor.Props
+import akka.actor.actorRef2Scala
+import akka.pattern.ask
+import akka.util.Timeout
+
+import colossus.IOSystem
+import colossus.protocols.http.Http
+import colossus.protocols.http.HttpMethod.Get
+import colossus.protocols.http.HttpProvider
+import colossus.protocols.http.HttpRequest
+import colossus.protocols.http.UrlParsing.Strings
+import colossus.protocols.http.UrlParsing.Strings._
+import colossus.service.Response.liftCompletedFuture
+import colossus.service.Response.liftCompletedSync
+import colossus.service.Service
 
 object SodaService {
   val settings = Settings()
@@ -63,9 +60,9 @@ object SodaService {
   implicit val ec = ExecutionContext.global
   implicit val timeout = Timeout(3 days) // needed for `?` below
 
-  val supervisor = settings.system.actorOf(ViewSuperVisor.props(settings), "supervisor")
-  val scheduleActor = settings.system.actorOf(ActionsRouterActor.props(settings.hadoopConf), "actions")
-  val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schemaActor")
+  val viewManagerActor = settings.system.actorOf(ViewManagerActor.props(settings), "soda/views")
+  val actionsManagerActor = settings.system.actorOf(ActionsManagerActor.props(settings.hadoopConf), "soda/actions")
+  val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "soda/schema")
 
   val viewAugmentor = if (settings.parsedViewAugmentorClass != "")
     Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
@@ -138,7 +135,7 @@ object SodaService {
 
             case request @ Get on Root /: "listactions" /: test =>
               try {
-                val status = (scheduleActor ? GetStatus()).mapTo[ProcessList]
+                val status = (actionsManagerActor ? GetStatus()).mapTo[ProcessList]
                 status.map(pl => {
                   val resp = s"""{
                      "running" : ${pl.processStates.filter { _.driverRunStatus.isInstanceOf[DriverRunOngoing[_]] }.size},
@@ -236,7 +233,7 @@ object SodaService {
   }
 
   private def deploy() {
-    scheduleActor ! Deploy()
+    actionsManagerActor ! Deploy()
   }
 
   private def getViewActors(viewUrlPath: String) = {
@@ -247,7 +244,7 @@ object SodaService {
 
     println("COMPUTED VIEWS: " + views.map(v => v.viewId).mkString("\n"))
 
-    val viewActorRefFutures = views.map { v => (supervisor ? v).mapTo[ActorRef] }
+    val viewActorRefFutures = views.map { v => (viewManagerActor ? v).mapTo[ActorRef] }
     Await.result(Future sequence viewActorRefFutures, 60 seconds)
   }
 

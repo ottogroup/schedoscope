@@ -1,7 +1,7 @@
 package com.ottogroup.bi.soda.dsl
 
+import scala.Array.canBuildFrom
 import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.LinkedHashMap
 
 abstract class Structure extends StructureDsl with Named {
   var parentField: FieldLike[Structure] = null

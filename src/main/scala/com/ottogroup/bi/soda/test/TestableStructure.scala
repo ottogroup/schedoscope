@@ -1,8 +1,9 @@
 package com.ottogroup.bi.soda.test
 
-import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.dsl.FieldLike
-import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.Structure
+
+import com.ottogroup.bi.soda.dsl._
 
 trait testStruct extends Structure with values {
   def filledBy(vals: Any) {

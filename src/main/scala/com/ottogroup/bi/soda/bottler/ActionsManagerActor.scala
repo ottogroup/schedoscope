@@ -1,35 +1,30 @@
 package com.ottogroup.bi.soda.bottler
 
-import akka.actor.Actor
-import akka.actor.Props
-import akka.routing.BroadcastRouter
-import akka.actor.ActorRef
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
-import org.apache.hadoop.conf.Configuration
-import akka.pattern.{ ask, pipe }
-import scala.concurrent.duration.Duration
-import akka.util.Timeout
-import akka.event.LoggingReceive
-import akka.event.Logging
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.CopyFrom
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Copy
-import akka.contrib.pattern.Aggregator
+import scala.Option.option2Iterable
+import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration._
+import scala.concurrent.duration.DurationInt
+
+import org.apache.hadoop.conf.Configuration
+
 import com.ottogroup.bi.soda.bottler.api.Settings
-import collection.JavaConversions._
-import com.typesafe.config.Config
-import com.ottogroup.bi.soda.bottler.api.Settings
-import com.ottogroup.bi.soda.bottler.api.SettingsImpl
-import com.typesafe.config.ConfigObject
-import com.typesafe.config.ConfigFactory
-import com.typesafe.config.ConfigValueFactory
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.bottler.driver.DriverException
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
+import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
+
+import akka.actor.Actor
+import akka.actor.ActorRef
+import akka.actor.ActorSelection.toScala
+import akka.actor.OneForOneStrategy
+import akka.actor.Props
+import akka.actor.SupervisorStrategy.Escalate
+import akka.actor.SupervisorStrategy.Restart
+import akka.actor.actorRef2Scala
+import akka.contrib.pattern.Aggregator
+import akka.event.Logging
+import akka.event.LoggingReceive
 
 /**
  * This actor aggregrates responses from multiple Actors
@@ -38,20 +33,19 @@ import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
  * @author dev_hzorn
  *
  */
-class StatusRetriever extends Actor with Aggregator {
+class ActionStatusRetriever extends Actor with Aggregator {
 
   expectOnce {
     case GetProcessList(s, q) => new MultipleResponseHandler(s, q, "")
   }
 
   class MultipleResponseHandler(originalSender: ActorRef, queues: Map[String, List[String]], propName: String) {
-
     import context.dispatcher
     import collection.mutable.ArrayBuffer
 
     val values = ArrayBuffer.empty[ActionStatusResponse[_]]
 
-    context.actorSelection("/user/actions/*") ! GetStatus()
+    context.actorSelection("/user/soda/actions/*") ! GetStatus()
     context.system.scheduler.scheduleOnce(50 milliseconds, self, TimedOut)
 
     val handle = expect {
@@ -67,15 +61,9 @@ class StatusRetriever extends Actor with Aggregator {
   }
 }
 
-/**
- * Supervisor for Hive, Oozie, Routers
- * Implements a pull-work-pattern that does not fill the mailboxes of actors.
- * This way, a long running job will not block short-running
- * In future we should learn runtimes of jobs and distribute to dedicated queues.
- */
-class ActionsRouterActor() extends Actor {
+class ActionsManagerActor() extends Actor {
   import context._
-  val log = Logging(system, this)
+  val log = Logging(system, ActionsManagerActor.this)
   val settings = Settings.get(system)
 
   val availableTransformations = settings.availableTransformations.keySet()
@@ -84,12 +72,19 @@ class ActionsRouterActor() extends Actor {
     (registeredDriverQueues, driverName) => registeredDriverQueues + (driverName -> new collection.mutable.Queue[CommandWithSender]())
   }
 
-  val routers = availableTransformations.foldLeft(Map[String, ActorRef]()) {
-    (registeredDrivers, driverName) => registeredDrivers + (driverName -> actorOf(DriverActor.props(driverName, self)))
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: DriverException => Restart
+      case _: Throwable => Escalate
+    }
+
+  override def preStart {
+    for (transformation <- availableTransformations; _ <- 0 until settings.getDriverSettings(transformation).concurrency) {
+      actorOf(DriverActor.props(transformation, self))
+    }
   }
 
   def receive = LoggingReceive({
-
     case PollCommand(typ) => {
       queues.get(typ).map(q => if (!q.isEmpty) {
         val cmd = q.dequeue()
@@ -100,7 +95,7 @@ class ActionsRouterActor() extends Actor {
     }
 
     case view: View => {
-      val cmd = view.transformation().forView(view) // backreference transformation -> view
+      val cmd = view.transformation().forView(view)
       queues.get(cmd.name).get.enqueue(CommandWithSender(cmd, sender))
       log.debug(s"Enqueued transformation for view ${view.viewId}; queue size is now: ${queues.get(cmd.name).size}")
     }
@@ -110,18 +105,9 @@ class ActionsRouterActor() extends Actor {
       log.debug(s"Enqueued transformation for ${FileSystemDriver.name}; queue size is now: ${queues.get(FileSystemDriver.name).size}")
     }
 
-    case cmd: GetStatus => {
-      implicit val timeout = Timeout(600);
-      actorOf(Props(new StatusRetriever)) ! GetProcessList(sender(), formatQueues())
-    }
+    case cmd: GetStatus => actorOf(Props[ActionStatusRetriever]) ! GetProcessList(sender(), formatQueues())
 
-    case cmd: Deploy => {
-      routers.map(el => {
-        val name = el._1
-        val act = el._2
-        queues.get(name).get.enqueue(CommandWithSender(cmd, sender))
-      })
-    }
+    case cmd: Deploy => queues.values.foreach { _.enqueue(CommandWithSender(cmd, sender)) }
   })
 
   private def formatQueues() = {
@@ -131,6 +117,6 @@ class ActionsRouterActor() extends Actor {
   }
 }
 
-object ActionsRouterActor {
-  def props(conf: Configuration) = Props(new ActionsRouterActor())
+object ActionsManagerActor {
+  def props(conf: Configuration) = Props[ActionsManagerActor]
 }

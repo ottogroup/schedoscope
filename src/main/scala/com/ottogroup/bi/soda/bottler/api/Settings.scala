@@ -1,31 +1,24 @@
 package com.ottogroup.bi.soda.bottler.api
 
+import java.net.URLClassLoader
+import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
+import scala.Array.canBuildFrom
+import scala.collection.mutable.HashMap
+import scala.concurrent.duration.Duration
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.security.UserGroupInformation
+import org.apache.hadoop.yarn.conf.YarnConfiguration
+import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver.fileSystem
+import com.ottogroup.bi.soda.dsl.Transformation
+import com.typesafe.config.Config
 import akka.actor.ActorSystem
+import akka.actor.ExtendedActorSystem
 import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
-import akka.actor.ExtendedActorSystem
-import scala.concurrent.duration.Duration
-import com.typesafe.config.Config
-import java.util.concurrent.TimeUnit
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import com.typesafe.config.ConfigFactory
-import org.apache.hadoop.security.UserGroupInformation
-import com.ottogroup.bi.soda.bottler.driver.HiveDriver
-import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 import com.ottogroup.bi.soda.bottler.driver.Driver
-import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.ListBuffer
-import java.util.Properties
-import java.io.FileReader
-import java.io.IOException
-import java.nio.file.Paths
-import com.ottogroup.bi.soda.dsl.Transformation
-import java.net.URLClassLoader
-import FileSystemDriver._
-import org.apache.hadoop.yarn.conf.YarnConfiguration
 
 class SettingsImpl(val config: Config) extends Extension {
 

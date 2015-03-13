@@ -1,23 +1,23 @@
 package com.ottogroup.bi.soda.bottler.driver
 
 import java.util.Properties
-import com.typesafe.config.ConfigFactory
-import org.apache.oozie.client.OozieClient
-import org.apache.oozie.client.WorkflowJob.Status._
-import scala.collection.JavaConversions._
+
+import scala.collection.JavaConversions.asScalaSet
+import scala.collection.JavaConversions.propertiesAsScalaMap
+import scala.concurrent.duration.Duration
+
 import org.apache.hadoop.security.UserGroupInformation
-import java.io.FileOutputStream
-import java.io.File
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import org.apache.oozie.client.WorkflowJob
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.bottler.driver.OozieDriver._
-import com.typesafe.config.Config
+import org.apache.oozie.client.OozieClient
+import org.apache.oozie.client.WorkflowJob.Status.PREP
+import org.apache.oozie.client.WorkflowJob.Status.RUNNING
+import org.apache.oozie.client.WorkflowJob.Status.SUCCEEDED
+import org.apache.oozie.client.WorkflowJob.Status.SUSPENDED
+import org.joda.time.LocalDateTime
+
 import com.ottogroup.bi.soda.bottler.api.DriverSettings
 import com.ottogroup.bi.soda.bottler.api.Settings
-import java.io.FileReader
-import scala.concurrent.duration.Duration
-import org.joda.time.LocalDateTime
+import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+import com.typesafe.config.ConfigFactory
 
 class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
 
@@ -26,7 +26,7 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
   def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = try {
     val jobConf = createOozieJobConf(t)
     val oozieJobId = runOozieJob(jobConf)
-    new DriverRunHandle[OozieTransformation](this, new LocalDateTime(), t, oozieJobId, null)
+    new DriverRunHandle[OozieTransformation](this, new LocalDateTime(), t, oozieJobId)
   } catch {
     case e: Throwable => throw DriverException("Unexpected error occurred while running Oozie job", e)
   }

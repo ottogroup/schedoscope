@@ -1,9 +1,10 @@
 package com.ottogroup.bi.soda.test
 
-import com.ottogroup.bi.soda.dsl.FieldLike
-import java.util.Date
-import com.ottogroup.bi.soda.dsl.Structure
 import java.text.SimpleDateFormat
+import java.util.Date
+
+import com.ottogroup.bi.soda.dsl.FieldLike
+import com.ottogroup.bi.soda.dsl.Structure
 
 object FieldSequentialValue {
   def get(f: FieldLike[_], i: Int, p: String): Any = {

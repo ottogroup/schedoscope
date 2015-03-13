@@ -1,7 +1,6 @@
 package com.ottogroup.bi.soda.bottler.api
 
-import spray.json._
-import com.ottogroup.bi.soda.bottler.ViewStatus
+import spray.json.DefaultJsonProtocol
 
 // FIXME: we should unify this, staying as close as possible to existing objects...
 

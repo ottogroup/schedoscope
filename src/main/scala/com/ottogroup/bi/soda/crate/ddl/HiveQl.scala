@@ -1,15 +1,11 @@
 
 package com.ottogroup.bi.soda.crate.ddl
 
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.Structure
-import com.ottogroup.bi.soda.dsl.Structure
-import com.ottogroup.bi.soda.dsl.Parquet
 import com.ottogroup.bi.soda.dsl.Avro
+import com.ottogroup.bi.soda.dsl.Parquet
+import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.dsl.TextFile
-import com.ottogroup.bi.soda.dsl.Structure
-import com.ottogroup.bi.soda.dsl.Structure
-import com.ottogroup.bi.soda.dsl.Structure
+import com.ottogroup.bi.soda.dsl.View
 
 object HiveQl {
   def typeDdl[T](scalaType: Manifest[T]): String = {

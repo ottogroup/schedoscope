@@ -1,26 +1,23 @@
 package com.ottogroup.bi.soda.dsl.transformations.sql
 
-import com.ottogroup.bi.soda.dsl.Transformation
-import org.jooq.DSLContext
-import org.jooq.Query
-import com.ottogroup.bi.soda.dsl.View
-import scala.collection.mutable.HashMap
-import com.ottogroup.bi.soda.bottler.api.Settings
-import scala.util.matching.Regex
-import java.io.InputStream
 import java.io.FileInputStream
-import java.security.MessageDigest
-import scala.collection.mutable.HashSet
-import org.apache.hadoop.hive.metastore.api.ResourceUri
-import org.apache.hadoop.hive.metastore.api.ResourceType
-import org.apache.hadoop.hive.metastore.api.Function
+import java.io.InputStream
+
+import scala.collection.JavaConversions.asScalaBuffer
+import scala.collection.JavaConversions.seqAsJavaList
+import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
-import collection.JavaConversions._
-import org.apache.commons.io.FilenameUtils
-import com.ottogroup.bi.soda.dsl.Version
+
 import org.apache.commons.lang.StringUtils
+import org.apache.hadoop.hive.metastore.api.Function
+import org.apache.hadoop.hive.metastore.api.ResourceType
+import org.apache.hadoop.hive.metastore.api.ResourceUri
+
+import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.dsl.NamedTransformation
-import com.ottogroup.bi.soda.bottler.driver.HiveDriver
+import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.dsl.Version
+import com.ottogroup.bi.soda.dsl.View
 
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 
@@ -40,9 +37,7 @@ object HiveTransformation extends NamedTransformation {
     val functionBuff = ListBuffer[Function]()
 
     for ((funcName, cls) <- functions) {
-      //val jarName = FilenameUtils.getName(cls.getProtectionDomain.getCodeSource.getLocation.getFile)
       val jarResources = Settings().getDriverSettings(name).libJarsHdfs.map(lj => new ResourceUri(ResourceType.JAR, lj))
-      //val jarResource = new ResourceUri(ResourceType.JAR, Settings().getDriverSettings(this).location + jarName)
       functionBuff.append(new Function(funcName, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
     }
 

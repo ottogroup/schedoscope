@@ -1,13 +1,16 @@
 package com.ottogroup.bi.soda.dsl.views
 
+import java.net.URLDecoder
+
+import scala.Array.canBuildFrom
+
+import com.ottogroup.bi.soda.dsl.Parameter.p
+import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.View.TypedAny
 import com.ottogroup.bi.soda.dsl.View.t
-import com.ottogroup.bi.soda.dsl.Parameter._
-import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils._
-import java.net.URLDecoder
-import scala.util.matching.Regex._
-import com.ottogroup.bi.soda.dsl.View
-import scala.Array.canBuildFrom
+import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils.defaultEarliestDay
+import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils.thisAndPrevDays
+import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils.thisAndPrevMonths
 
 class NoAugmentation extends ViewUrlParser.ParsedViewAugmentor
 

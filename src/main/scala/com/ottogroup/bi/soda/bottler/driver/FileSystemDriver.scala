@@ -1,46 +1,44 @@
 package com.ottogroup.bi.soda.bottler.driver
 
-import com.ottogroup.bi.soda.dsl.Transformation
-import akka.actor.Actor
-import com.ottogroup.bi.soda.dsl.transformations.filesystem._
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.conf.Configuration
-import java.net.URI
-import org.apache.hadoop.fs.Path
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfNotExists
-import akka.actor.Props
-import akka.actor.Actor
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import scala.concurrent._
-import org.apache.hadoop.fs.FileUtil
-import org.apache.hadoop.fs.PathFilter
-import scala.util.matching.Regex
-import org.apache.hadoop.security.UserGroupInformation
-import java.security.PrivilegedAction
-import org.apache.hadoop.fs.FileStatus
-import akka.actor.ActorRef
-import akka.event.Logging
 import java.io.File
-import com.typesafe.config.Config
-import com.ottogroup.bi.soda.bottler.api.Settings
-import com.ottogroup.bi.soda.bottler.api.SettingsImpl
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import org.apache.commons.io.FileUtils
-import java.nio.file.Files
-import scala.collection.mutable.HashMap
-import org.joda.time.LocalDateTime
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent._
-import scala.concurrent.duration.Duration
 import java.io.IOException
-import FileSystemDriver._
+import java.net.URI
+import java.nio.file.Files
+import java.security.PrivilegedAction
+
+import scala.Array.canBuildFrom
+import scala.collection.mutable.HashMap
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration.Duration
+import scala.concurrent.future
+
+import org.apache.commons.io.FileUtils
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.FileStatus
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.FileUtil
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.security.UserGroupInformation
+import org.joda.time.LocalDateTime
+
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.Copy
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.CopyFrom
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfExists
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfNotExists
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.Move
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
+import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver._
 
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
 
   override def runTimeOut: Duration = Settings().fileActionTimeout
 
   def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
-    new DriverRunHandle(this, new LocalDateTime(), t, null, future {
+    new DriverRunHandle(this, new LocalDateTime(), t, future {
       doRun(t)
     }(ExecutionContext.global))
 

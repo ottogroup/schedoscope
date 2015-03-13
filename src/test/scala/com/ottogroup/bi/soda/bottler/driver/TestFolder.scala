@@ -1,10 +1,10 @@
 package com.ottogroup.bi.soda.bottler.driver
 
 import java.io.File
-import org.scalatest._
+
 import org.apache.commons.io.FileUtils
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
-import java.net.URL
+import org.scalatest.AbstractSuite
+import org.scalatest.Suite
 
 trait TestFolder extends AbstractSuite { self: Suite =>
   var testFolder: File = _

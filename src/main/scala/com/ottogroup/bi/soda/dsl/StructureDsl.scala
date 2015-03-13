@@ -1,8 +1,5 @@
 package com.ottogroup.bi.soda.dsl
 
-import scala.collection.mutable.ListBuffer
-import scala.collection.mutable.LinkedHashMap
-
 trait StructureDsl {
   protected def registerField(f: Field[_]): Unit
 

@@ -1,36 +1,33 @@
 package com.ottogroup.bi.soda.crate
-import com.ottogroup.bi.soda.crate.ddl.HiveQl
-import com.ottogroup.bi.soda.dsl.View
-import java.sql.DriverManager
-import java.sql.Connection
+
+import java.io.InvalidObjectException
 import java.security.MessageDigest
+import java.security.PrivilegedAction
+import java.sql.Connection
+import java.sql.DriverManager
+
+import scala.collection.JavaConversions.asScalaBuffer
+import scala.collection.JavaConversions.mapAsScalaMap
+import scala.collection.JavaConversions.mutableMapAsJavaMap
+import scala.collection.JavaConversions.seqAsJavaList
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.HashSet
+
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import scala.collection.mutable.HashSet
-import scala.collection.JavaConversions._
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.hadoop.fs.FileSystem
-import java.security.PrivilegedAction
-import scala.Array.canBuildFrom
-import com.ottogroup.bi.soda.crate.ddl.HiveQl
-import org.apache.hadoop.hive.metastore.api.Partition
 import org.apache.hadoop.hive.metastore.IMetaStoreClient
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
-import org.apache.hadoop.hive.metastore.api.Database
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
-import java.io.InvalidObjectException
-import com.ottogroup.bi.soda.bottler.api.Settings
-import org.apache.hadoop.hive.metastore.api.Function
-import org.joda.time.DateTime
-import collection.JavaConversions._
 import org.apache.hadoop.hive.metastore.api.MetaException
-import scala.collection.mutable.HashMap
-import com.ottogroup.bi.soda.dsl.TransformationVersion
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
+import org.apache.hadoop.hive.metastore.api.Partition
+import org.joda.time.DateTime
+
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.crate.ddl.HiveQl
 import com.ottogroup.bi.soda.dsl.SchemaVersion
+import com.ottogroup.bi.soda.dsl.TransformationVersion
 import com.ottogroup.bi.soda.dsl.Version
-import collection.JavaConversions._
+import com.ottogroup.bi.soda.dsl.View
 
 class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")

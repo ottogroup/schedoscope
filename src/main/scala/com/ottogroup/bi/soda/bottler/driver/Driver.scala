@@ -1,25 +1,23 @@
 package com.ottogroup.bi.soda.bottler.driver
 
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.typesafe.config.Config
-import com.ottogroup.bi.soda.bottler.api.Settings
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import java.net.URLClassLoader
-import scala.collection.mutable.ListBuffer
 import java.nio.file.Files
-import scala.util.Random
-import net.lingala.zip4j.core.ZipFile
-import scala.concurrent.impl.Future
-import scala.concurrent.Future
-import org.joda.time.LocalDateTime
-import scala.concurrent.duration.Duration
+
+import scala.Array.canBuildFrom
 import scala.concurrent.Await
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.util.Random
+
+import org.joda.time.LocalDateTime
+
+import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.dsl.Transformation
+
+import net.lingala.zip4j.core.ZipFile
 
 case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
-class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, val stateHandle: Any, val result: Future[DriverRunState[T]])
+class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, val stateHandle: Any)
 
 sealed abstract class DriverRunState[T <: Transformation](val driver: Driver[T])
 case class DriverRunOngoing[T <: Transformation](override val driver: Driver[T], val runHandle: DriverRunHandle[T]) extends DriverRunState[T](driver)
@@ -31,15 +29,17 @@ trait Driver[T <: Transformation] extends NamedDriver {
 
   def killRun(run: DriverRunHandle[T]): Unit = {}
 
-  def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T] =
-    if (run.result.isCompleted)
-      run.result.value.get.get
+  def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T] = {
+    val runState = run.stateHandle.asInstanceOf[Future[DriverRunState[T]]]
+    if (runState.isCompleted)
+      runState.value.get.get
     else
       DriverRunOngoing[T](this, run)
+  }
 
   def run(t: T): DriverRunHandle[T]
 
-  def runAndWait(t: T): DriverRunState[T] = Await.result(run(t).result, runTimeOut)
+  def runAndWait(t: T): DriverRunState[T] = Await.result(run(t).stateHandle.asInstanceOf[Future[DriverRunState[T]]], runTimeOut)
 
   def deployAll(ds: DriverSettings): Boolean = {
     val fsd = FileSystemDriver(ds)
