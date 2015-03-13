@@ -29,6 +29,8 @@ import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.bottler.driver.HiveDriver
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import akka.routing.BroadcastRouter
+import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 
 class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val driver: Driver[T], val ds: DriverSettings, val pingDuration: FiniteDuration) extends Actor {
   import context._
@@ -36,13 +38,13 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val driver: 
   var startTime = new LocalDateTime
 
   override def preStart() {
-    system.scheduler.scheduleOnce(pingDuration, self, "tick")
+    tick()
   }
 
   def running(runHandle: DriverRunHandle[T], s: ActorRef): Receive = LoggingReceive {
     case "tick" => try {
       driver.getDriverRunState(runHandle) match {
-        case _: DriverRunOngoing[T] => system.scheduler.scheduleOnce(pingDuration, self, "tick")
+        case _: DriverRunOngoing[T] => tick()
 
         case success: DriverRunSucceeded[T] => {
           log.info(s"Driver run ${runHandle} succeeded.")
@@ -76,6 +78,17 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val driver: 
     startTime = new LocalDateTime()
     unbecome()
     become(receive)
+    tick()
+  }
+
+  def becomeRunning(sender: ActorRef, command: T) {
+    val runHandle = driver.run(command)
+    unbecome()
+    become(running(runHandle, sender))
+    tick()
+  }
+
+  def tick() {
     system.scheduler.scheduleOnce(pingDuration, self, "tick")
   }
 
@@ -86,15 +99,10 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val driver: 
 
     case "tick" => {
       actionsRouter ! PollCommand(driver.name)
-      system.scheduler.scheduleOnce(pingDuration, self, "tick")
+      tick()
     }
 
-    case CommandWithSender(t, s) => {
-      val runHandle = driver.run(t.asInstanceOf[T])
-      unbecome()
-      become(running(runHandle, s))
-      system.scheduler.scheduleOnce(pingDuration, self, "tick")
-    }
+    case CommandWithSender(command, sender) => becomeRunning(sender, command.asInstanceOf[T])
   }
 }
 
@@ -103,9 +111,9 @@ object DriverActor {
     val ds = Settings().getDriverSettings(driverName)
 
     val driverActor = driverName match {
-      case "hive" => Props(new DriverActor(actionsRouter, HiveDriver(ds), ds, 1 seconds))
-      case "filesystem" => Props(new DriverActor(actionsRouter, FileSystemDriver(ds), ds, 100 milliseconds))
-      case "oozie" => Props(new DriverActor(actionsRouter, OozieDriver(ds), ds, 5 seconds))
+      case "hive" => Props(classOf[DriverActor[HiveTransformation]], actionsRouter, HiveDriver(ds), ds, 1 seconds)
+      case "filesystem" => Props(classOf[DriverActor[FilesystemTransformation]], actionsRouter, FileSystemDriver(ds), ds, 100 milliseconds)
+      case "oozie" => Props(classOf[DriverActor[OozieTransformation]], actionsRouter, OozieDriver(ds), ds, 5 seconds)
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
