@@ -72,6 +72,12 @@ class ActionsManagerActor() extends Actor {
     (registeredDriverQueues, driverName) => registeredDriverQueues + (driverName -> new collection.mutable.Queue[CommandWithSender]())
   }
 
+  private def formatQueues() = {
+    queues.map(q => (q._1, q._2.map(c => {
+      c.command.asInstanceOf[Transformation].description
+    }).toList))
+  }
+
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: DriverException => Restart
@@ -85,36 +91,36 @@ class ActionsManagerActor() extends Actor {
   }
 
   def receive = LoggingReceive({
-    case PollCommand(typ) => {
-      queues.get(typ).map(q => if (!q.isEmpty) {
-        val cmd = q.dequeue()
-        val targetView = cmd.message.asInstanceOf[Transformation].getView
-        log.debug(s"Sending ${typ} transformation for view ${targetView} to ${sender}; remaining ${typ} jobs: ${queues.get(typ).size}")
+    case GetStatus => actorOf(Props[ActionStatusRetriever]) ! GetProcessList(sender(), formatQueues())
+
+    case PollCommand(transformationType) => {
+      val queueForType = queues.get(transformationType).get
+
+      if (!queueForType.isEmpty) {
+        val cmd = queueForType.dequeue()
+        
         sender ! cmd
-      })
+        
+        val transformation = cmd.command.asInstanceOf[Transformation]
+        log.debug(s"Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(transformationType).size}")
+      }
     }
 
-    case view: View => {
-      val cmd = view.transformation().forView(view)
-      queues.get(cmd.name).get.enqueue(CommandWithSender(cmd, sender))
-      log.debug(s"Enqueued transformation for view ${view.viewId}; queue size is now: ${queues.get(cmd.name).size}")
+    case actionCommand: CommandWithSender => {
+      val transformation = actionCommand.command.asInstanceOf[Transformation]
+      val queueName = transformation.name
+
+      queues.get(queueName).get.enqueue(actionCommand)
+
+      log.debug(s"Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).size}")
     }
 
-    case cmd: FilesystemTransformation => {
-      queues.get(FileSystemDriver.name).get.enqueue(CommandWithSender(cmd, sender))
-      log.debug(s"Enqueued transformation for ${FileSystemDriver.name}; queue size is now: ${queues.get(FileSystemDriver.name).size}")
-    }
+    case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
 
-    case cmd: GetStatus => actorOf(Props[ActionStatusRetriever]) ! GetProcessList(sender(), formatQueues())
+    case filesystemTransformationAction: FilesystemTransformation => self ! CommandWithSender(filesystemTransformationAction, sender)
 
-    case cmd: Deploy => queues.values.foreach { _.enqueue(CommandWithSender(cmd, sender)) }
+    case deployAction: Deploy => queues.values.foreach { _.enqueue(CommandWithSender(deployAction, sender)) }
   })
-
-  private def formatQueues() = {
-    queues.map(q => (q._1, q._2.map(c => {
-      c.message.asInstanceOf[Transformation].description
-    }).toList))
-  }
 }
 
 object ActionsManagerActor {

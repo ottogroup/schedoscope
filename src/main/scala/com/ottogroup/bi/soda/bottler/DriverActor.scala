@@ -29,24 +29,30 @@ import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: DriverSettings, val driverConstructor: (DriverSettings) => Driver[T], val pingDuration: FiniteDuration) extends Actor {
   import context._
   val log = Logging(system, this)
-  var startTime = new LocalDateTime
 
   lazy val driver = driverConstructor(ds)
 
+  var runningCommand: Option[CommandWithSender] = None
+
   def receive = LoggingReceive {
-    case _: GetStatus => sender ! ActionStatusResponse("idle", self, driver, null, null)
+    case CommandWithSender(command, sender) => becomeRunning(CommandWithSender(command, sender))
 
-    case CommandWithSender(d: Deploy, s) => driver.deployAll(ds)
+    case GetStatus => sender ! ActionStatusResponse("idle", self, driver, null, null)
 
-    case "tick" => {
+    case "tick" => { 
       actionsRouter ! PollCommand(driver.name)
       tick()
     }
-
-    case CommandWithSender(command, sender) => becomeRunning(sender, command.asInstanceOf[T])
   }
 
   def running(runHandle: DriverRunHandle[T], s: ActorRef): Receive = LoggingReceive {
+    case KillAction => {
+      driver.killRun(runHandle)
+      becomeReceive()
+    }
+
+    case GetStatus => sender() ! ActionStatusResponse("running", self, driver, runHandle, driver.getDriverRunState(runHandle))
+
     case "tick" => try {
       driver.getDriverRunState(runHandle) match {
         case _: DriverRunOngoing[T] => tick()
@@ -55,12 +61,14 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: Driv
           log.info(s"Driver run ${runHandle} succeeded.")
           s ! ActionSuccess(runHandle, success)
           becomeReceive()
+          tick()
         }
 
         case failure: DriverRunFailed[T] => {
           log.info(s"Oozie workflow ${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
           s ! ActionFailure(runHandle, failure)
           becomeReceive()
+          tick()
         }
       }
     } catch {
@@ -73,32 +81,42 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: Driv
         throw t
       }
     }
-
-    case KillAction => {
-      driver.killRun(runHandle)
-      becomeReceive()
-    }
-
-    case _: GetStatus => sender() ! ActionStatusResponse("running", self, driver, runHandle, driver.getDriverRunState(runHandle))
   }
 
   override def preStart() {
     tick()
   }
 
-  def becomeReceive() {
-    startTime = new LocalDateTime()
-    unbecome()
-    become(receive)
-    tick()
+  override def preRestart(reason: Throwable, message: Option[Any]) {
+    if (runningCommand.isDefined)
+      actionsRouter ! runningCommand.get
+  }
+  
+  def tick() {
+    system.scheduler.scheduleOnce(pingDuration, self, "tick")
   }
 
-  def becomeRunning(sender: ActorRef, command: T) {
-    try {
-      val runHandle = driver.run(command)
-      unbecome()
-      become(running(runHandle, sender))
-      tick()
+  def becomeReceive() {
+    runningCommand = None
+
+    unbecome()
+    become(receive)
+  }
+
+  def becomeRunning(commandToRun: CommandWithSender) {
+    runningCommand = Some(commandToRun)
+    
+    try {  
+      if (commandToRun.command == Deploy) {
+        driver.deployAll(ds)
+
+        runningCommand = None
+      } else {
+        val runHandle = driver.run(commandToRun.command.asInstanceOf[T])
+
+        unbecome()
+        become(running(runHandle, sender))
+      }
     } catch {
       case exception: DriverException => {
         log.error(s"Driver exception caught by driver actor in receive state, rethrowing: ${exception.message}, cause ${exception.cause}")
@@ -109,10 +127,6 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: Driv
         throw t
       }
     }
-  }
-
-  def tick() {
-    system.scheduler.scheduleOnce(pingDuration, self, "tick")
   }
 }
 

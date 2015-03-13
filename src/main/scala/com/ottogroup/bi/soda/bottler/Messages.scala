@@ -29,24 +29,22 @@ case class ActorException(e: Throwable) extends Failure
 case class Failed(view: View) extends Failure
 case class InternalError(message: String) extends Failure
 case class ActionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunFailed[T]) extends Failure
+case class TimedOut() extends Failure
 
 sealed class Command
 case class NewDataAvailable(view: View) extends Command
 case class GetStatus() extends Command
 case class KillAction() extends Command
 case class Suspend() extends Command
+case class Deploy() extends Command
+case class PollCommand(typ: String) extends Command
+case class GetProcessList(sender: ActorRef, queues: Map[String, List[String]]) extends Command
+case class CommandWithSender(command: AnyRef, sender: ActorRef) extends Command
+case class CheckVersion(view: View) extends Command
+case class SetVersion(view: View) extends Command
 
-case class PollCommand(typ: String)
-case class CommandWithSender(message: AnyRef, sender: ActorRef)
-case class TimedOut()
-case class ProcessList(processStates: List[ActionStatusResponse[_]], queues: Map[String, List[String]])
-case class GetProcessList(sender: ActorRef, queues: Map[String, List[String]])
-case class Deploy()
-case class CheckVersion(view: View)
-case class SetVersion(view: View)
 case class VersionOk(view: View)
 case class VersionMismatch(view: View, dataVersion: String)
-
 case class ViewStatusResponse(state: String, view: View)
 case class ActionStatusResponse[T <: Transformation](message: String, actor: ActorRef, driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T])
-
+case class ProcessList(processStates: List[ActionStatusResponse[_]], queues: Map[String, List[String]])

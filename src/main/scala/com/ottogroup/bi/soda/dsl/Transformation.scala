@@ -7,6 +7,7 @@ import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 
 abstract class Transformation extends NamedTransformation {
   var view: Option[View] = None
+  
   // FIXME: not so nice that each transformation has the file system driver .. 
   val fsd = FileSystemDriver(Settings().getDriverSettings(FileSystemDriver.name))
 
