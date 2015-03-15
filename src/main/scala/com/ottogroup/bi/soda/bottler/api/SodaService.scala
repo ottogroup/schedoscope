@@ -2,15 +2,19 @@ package com.ottogroup.bi.soda.bottler.api
 
 import scala.collection.mutable.HashSet
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
-
-import org.codehaus.jackson.map.ObjectMapper
-import org.joda.time.format.DateTimeFormat
-
-import com.fasterxml.jackson.core.io.JsonStringEncoder
-import com.ottogroup.bi.soda.bottler.ActionsManagerActor
+import scala.concurrent.duration._
+import scala.concurrent.{ ExecutionContext, Promise, Future }
+import org.apache.hadoop.security.UserGroupInformation
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
+import Predef.{ any2stringadd => _, _ }
+import colossus.core.ServerSettings
+import com.ottogroup.bi.soda.bottler.NewDataAvailable
+import com.ottogroup.bi.soda.bottler.KillAction
+import com.ottogroup.bi.soda.bottler.InternalError
+import com.ottogroup.bi.soda.bottler.ViewMaterialized
+import com.ottogroup.bi.soda.bottler.SchemaActor
+import com.ottogroup.bi.soda.bottler.NoDataAvailable
 import com.ottogroup.bi.soda.bottler.Deploy
 import com.ottogroup.bi.soda.bottler.Failed
 import com.ottogroup.bi.soda.bottler.GetStatus
@@ -27,26 +31,7 @@ import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
 import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
 import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.viewNames
-
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.actorRef2Scala
-import akka.pattern.ask
-import akka.util.Timeout
-
-import colossus.IOSystem
-import colossus.protocols.http.Http
-import colossus.protocols.http.HttpMethod.Get
-import colossus.protocols.http.HttpProvider
-import colossus.protocols.http.HttpRequest
-import colossus.protocols.http.UrlParsing.Strings
-import colossus.protocols.http.UrlParsing.Strings._
-import colossus.service.Response.liftCompletedFuture
-import colossus.service.Response.liftCompletedSync
-import colossus.service.Service
+import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 
 object SodaService {
   val settings = Settings()
@@ -103,7 +88,7 @@ object SodaService {
             case request @ Get on Root /: "status" /: viewUrlPath =>
               try {
                 val viewActors = getViewActors(viewUrlPath)
-                val fut = viewActors.map(viewActor => (viewActor ? "status").mapTo[ViewStatus])
+                val fut = viewActors.map(viewActor => (viewActor ? GetStatus()).mapTo[ViewStatusResponse])
                 val res = Await.result(Future sequence fut, 1 hour)
                 val resultMessage = res.foldLeft("") { (message, current) => message + current.view.toString() + "\n" }
                 request.ok(resultMessage, headers)
@@ -125,7 +110,7 @@ object SodaService {
             case request @ Get on Root /: "newdata" /: viewUrlPath =>
               try {
                 val viewActors = getViewActors(viewUrlPath)
-                val fut = viewActors.map(viewActor => (viewActor ? "status").mapTo[ViewStatus])
+                val fut = viewActors.map(viewActor => (viewActor ? GetStatus()).mapTo[ViewStatusResponse])
                 val viewActorsStatus = Await.result(Future sequence fut, 1 hour)
                 viewActors.zip(viewActorsStatus).foreach { case (a, s) => a ! NewDataAvailable(s.view) }
                 request.ok("ok", headers)
@@ -211,7 +196,6 @@ object SodaService {
             case request @ Get on Root /: "kill" /: id =>
               try {
                 val result = (settings.system.actorFor(id) ? KillAction)
-
                 result.map { case InternalError(s) => request.error(s, headers) case _ => request.ok("ok", headers) }
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)

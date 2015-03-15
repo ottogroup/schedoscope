@@ -19,7 +19,6 @@ class ErrorMessage extends MessageType
 sealed class Success
 case class ViewMaterialized(view: View, incomplete: Boolean, changed: Boolean, errors: Boolean) extends Success
 case class NoDataAvailable(view: View) extends Success
-case class ViewStatus(view: View, status: String, dependencies: Seq[ViewStatus]) extends Success
 case class ActionSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends Success
 
 sealed class Failure

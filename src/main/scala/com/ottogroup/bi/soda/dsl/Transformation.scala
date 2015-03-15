@@ -37,5 +37,5 @@ abstract class Transformation extends NamedTransformation {
 case class NoOp() extends Transformation
 
 trait NamedTransformation {
-  def name = this.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("[^a-z]", "")
+  def name = Named.formatName(this.getClass.getSimpleName.toLowerCase.replaceAll("transformation", ""))
 }

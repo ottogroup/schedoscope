@@ -6,21 +6,12 @@ import scala.concurrent.duration.DurationInt
 import scala.util.Try
 
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser
-
-import akka.actor.ActorSystem
-import akka.event.Logging
-import akka.util.Timeout
-import spray.client.pipelining.Get
-import spray.client.pipelining.WithTransformerConcatenation
-import spray.client.pipelining.sendReceive
-import spray.client.pipelining.unmarshal
-import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
+import spray.routing.SimpleRoutingApp
 
 object SodaRestClient {
 
   var host = "localhost"
-  var port = 20699
+  var port = Settings().port
 
   import SodaJsonProtocol._
 
@@ -77,7 +68,7 @@ object SodaControl {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, environment: String = "", database: String = "", view: Option[String] = None, parameters: String = "", status: Option[String] = None)
+  case class Config(action: Option[Action.Value] = None, environment: String = "", database: String = "", view: String = "", parameters: String = "", status: Option[String] = None)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -88,8 +79,8 @@ object SodaControl {
     cmd("listactions") action { (_, c) => c.copy(action = Some(LISTACTIONS)) } text ("list status of action actors") children ()
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
       opt[String]('e', "environment") action { (x, c) => c.copy(environment = x) } required () valueName ("<env>") text ("environment (e.g. 'dev')"),
-      opt[String]('d', "package") action { (x, c) => c.copy(database = x) } required () valueName ("<db>") text ("database (e.g. 'my.company')"),
-      opt[String]('v', "view") action { (x, c) => c.copy(view = Some(x)) } valueName ("<view>") optional () text ("view (e.g. 'customers'). If no view is given, all views from the database are loaded."),
+      opt[String]('d', "package") action { (x, c) => c.copy(database = x) } required()  valueName ("<db>") text ("database (e.g. 'my.company')"),
+      opt[String]('v', "view") action { (x, c) => c.copy(view = x) } required() valueName ("<view>") optional () text ("view (e.g. 'customers'). If no view is given, all views from the database are loaded."),
       opt[String]('p', "parameters") action { (x, c) => c.copy(parameters = x) } required () valueName ("<parameters>") text ("view parameter specification (e.g. 'e(shop1,shop2)/rymd(20140101-20140107)"))
     checkConfig { c =>
       {
@@ -112,13 +103,7 @@ object SodaControl {
             SodaClient.listViews
           }
           case MATERIALIZE => {
-            if (config.view.isDefined)
-              SodaClient.materialize(config.environment, config.database, config.view.get, config.parameters)
-            else {
-              val viewsInDb = View.viewsInPackage(config.database).map(vc => vc.getSimpleName)
-              log.info("Materializing views: " + viewsInDb.mkString(", "))
-              viewsInDb.map(v => SodaClient.materialize(config.environment, config.database, v, config.parameters))
-            }
+             SodaClient.materialize(config.environment, config.database, config.view, config.parameters)
           }
           case _ => {
             println("Unsupported Action: " + config.action.get.toString)
@@ -133,3 +118,6 @@ object SodaControl {
   }
 
 }
+
+
+
