@@ -128,7 +128,7 @@ object SodaService {
                      "queued" : ${pl.queues.foldLeft(0)((s, el) => s + el._2.size)},  
                      "queues" : { ${pl.queues.map(ql => s""" "${ql._1}" : [ ${ql._2.map(el => "\"" + new String(enc.quoteAsString(el)) + "\"").mkString(",")} ] """).mkString(",")} },  
                      "processes" : [ 
-                     	${pl.processStates.map { s => s"""{"status":"${s.message}", "typ":"${s.driver.name}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) new String(enc.quoteAsString(s.driverRunHandle.transformation.asInstanceOf[Transformation].description)) else ""}"}""" }.mkString(",")}
+                     	${pl.processStates.map { s => s"""{"status":"${s.message}", "typ":"${s.driver.transformationName}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) new String(enc.quoteAsString(s.driverRunHandle.transformation.asInstanceOf[Transformation].description)) else ""}"}""" }.mkString(",")}
                      ]}"""
                   sendOk(request, resp)
                 })

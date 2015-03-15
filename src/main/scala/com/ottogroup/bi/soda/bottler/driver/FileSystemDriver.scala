@@ -35,6 +35,8 @@ import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver._
 
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
 
+  override def transformationName = "filesystem"
+  
   override def runTimeOut: Duration = Settings().fileActionTimeout
 
   def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
@@ -197,7 +199,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
   override def deployAll(driverSettings: DriverSettings) = true
 }
 
-object FileSystemDriver extends NamedDriver {
+object FileSystemDriver {
   private def uri(pathOrUri: String) =
     try {
       new URI(pathOrUri)

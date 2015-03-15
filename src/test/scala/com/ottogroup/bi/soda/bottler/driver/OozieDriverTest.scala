@@ -46,8 +46,8 @@ class OozieDriverTest extends FlatSpec with Matchers {
         "nameNode" -> cluster.getNameNodeUri(),
         "oozie.use.system.libpath" -> "false")))
 
-  "Oozie" should "be named oozie" taggedAs (DriverTests, OozieTests) in {
-    driver.name shouldBe "oozie"
+  "Oozie" should "have transformation name oozie" taggedAs (DriverTests, OozieTests) in {
+    driver.transformationName shouldBe "oozie"
   }
 
   it should "execute oozie tranformations synchronously" taggedAs (DriverTests, OozieTests) in {

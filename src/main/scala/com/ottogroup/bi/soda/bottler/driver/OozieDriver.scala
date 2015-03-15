@@ -21,6 +21,8 @@ import com.typesafe.config.ConfigFactory
 
 class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
 
+  override def transformationName = "oozie"
+  
   override def runTimeOut: Duration = Settings().oozieActionTimeout
 
   def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = try {
@@ -96,6 +98,6 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
     }
 }
 
-object OozieDriver extends NamedDriver {
+object OozieDriver {
   def apply(ds: DriverSettings) = new OozieDriver(new OozieClient(ds.url))
 }

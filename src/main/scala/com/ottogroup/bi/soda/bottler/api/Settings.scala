@@ -79,10 +79,10 @@ class SettingsImpl(val config: Config) extends Extension {
   private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
 
   def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
-    getDriverSettings(d.name)
-  } 
-      
-  def getDriverSettings[T <: Transformation](t : T) : DriverSettings = {
+    getDriverSettings(d.transformationName)
+  }
+
+  def getDriverSettings[T <: Transformation](t: T): DriverSettings = {
     val name = t.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("\\$", "")
     getDriverSettings(name)
   }

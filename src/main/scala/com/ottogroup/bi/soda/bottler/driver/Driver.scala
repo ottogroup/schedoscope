@@ -24,7 +24,9 @@ case class DriverRunOngoing[T <: Transformation](override val driver: Driver[T],
 case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T], comment: String) extends DriverRunState[T](driver)
 case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
 
-trait Driver[T <: Transformation] extends NamedDriver {
+trait Driver[T <: Transformation]  {
+  def transformationName: String
+  
   def runTimeOut: Duration = Duration.Inf
 
   def killRun(run: DriverRunHandle[T]): Unit = {}
@@ -52,14 +54,14 @@ trait Driver[T <: Transformation] extends NamedDriver {
       .map(f => {
         if (ds.unpack) {
           val tmpDir = Files.createTempDirectory("soda-" + Random.nextLong.abs.toString).toFile
-          println(s"Unzipping ${name} resource ${f}")
+          println(s"Unzipping ${transformationName} resource ${f}")
           new ZipFile(f.replaceAll("file:", "")).extractAll(tmpDir.getAbsolutePath)
-          println(s"Copying ${name} resource file://${tmpDir}/* to ${ds.location}")
+          println(s"Copying ${transformationName} resource file://${tmpDir}/* to ${ds.location}")
           val succ = fsd.copy("file://" + tmpDir + "/*", ds.location, true)
           tmpDir.delete
           succ
         } else {
-          println(s"Copying ${name} resource ${f} to ${ds.location}")
+          println(s"Copying ${transformationName} resource ${f} to ${ds.location}")
           fsd.copy(f, ds.location, true)
         }
       })
@@ -69,12 +71,8 @@ trait Driver[T <: Transformation] extends NamedDriver {
       .map(stat => stat.getPath.toString)
       .toList
 
-    println("registered libjars for " + name + ": " + libJars.mkString(","))
+    println("registered libjars for " + transformationName + ": " + libJars.mkString(","))
 
     succ.filter(_.isInstanceOf[DriverRunFailed[_]]).isEmpty
   }
-}
-
-trait NamedDriver {
-  def name = this.getClass.getSimpleName.toLowerCase.replaceAll("driver", "").replaceAll("[^a-z]", "")
 }

@@ -13,8 +13,8 @@ import com.ottogroup.bi.soda.DriverTests
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: FileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
 
-  "FileSystemDriver" should "be named filesystem" taggedAs (DriverTests) in {
-    driver.name shouldBe "filesystem"
+  "FileSystemDriver" should "be have transformation name filesystem" taggedAs (DriverTests) in {
+    driver.transformationName shouldBe "filesystem"
   }
 
   it should "execute Copy file transformation with a single file" taggedAs (DriverTests) in {

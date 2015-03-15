@@ -10,8 +10,8 @@ import com.ottogroup.bi.soda.test.resources.LocalTestResources
 class HiveDriverTest extends FlatSpec with Matchers {
   lazy val driver: HiveDriver = new LocalTestResources().hiveDriver
 
-  "HiveDriver" should "be named hive" taggedAs (DriverTests) in {
-    driver.name shouldBe "hive"
+  "HiveDriver" should "have transformation name hive" taggedAs (DriverTests) in {
+    driver.transformationName shouldBe "hive"
   }
 
   it should "execute hive tranformations synchronously" taggedAs (DriverTests) in {

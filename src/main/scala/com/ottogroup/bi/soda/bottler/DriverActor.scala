@@ -40,7 +40,7 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: Driv
     case GetStatus => sender ! ActionStatusResponse("idle", self, driver, null, null)
 
     case "tick" => { 
-      actionsRouter ! PollCommand(driver.name)
+      actionsRouter ! PollCommand(driver.transformationName)
       tick()
     }
   }
