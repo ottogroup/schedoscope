@@ -41,8 +41,8 @@ class ViewStatusRetriever extends Actor with Aggregator {
 
     val values = ArrayBuffer.empty[ViewStatusResponse]
 
-    context.actorSelection("/user/soda/views/*") ! GetStatus()
-    context.system.scheduler.scheduleOnce(50 milliseconds, self, TimedOut)
+    context.actorSelection("/user/views/*") ! GetStatus()
+    context.system.scheduler.scheduleOnce(1 second, self, TimedOut)
 
     val handle = expect {
       case ar: ViewStatusResponse => values += ar
@@ -61,12 +61,12 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   import context._
   val log = Logging(system, this)
   implicit val timeout = new Timeout(settings.dependencyTimout)
-  
-  val viewManagerActor = actorFor("/user/soda/views")
-  val schemaActor = actorFor("/user/soda/schema")
-  val actionsManagerActor = actorFor("/user/soda/actions")
-  
-  val listeners = collection.mutable.Queue[ActorRef]()
+
+  val viewManagerActor = actorFor("/user/views")
+  val schemaActor = actorFor("/user/schema")
+  val actionsManagerActor = actorFor("/user/actions")
+
+  val listeners = collection.mutable.HashSet[ActorRef]()
   val dependencies = collection.mutable.HashSet[View]()
  
 
@@ -104,7 +104,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   // transitions: materialized,failed,transforming
   def transforming(retries: Int): Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
-
+    
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
 
@@ -121,6 +121,8 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     }
 
     case _: ActionFailure[_] => retry(retries)
+    
+    case "materialize" => listeners.add(sender)
   })
 
   def reload() = {
@@ -133,7 +135,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     transform(1)
 
     // tell everyone that new data is avaiable
-    system.actorSelection("/user/supervisor/*") ! NewDataAvailable(view)
+    system.actorSelection("/user/views/*") ! NewDataAvailable(view)
   }
 
   // State: materialized
@@ -198,7 +200,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   def waiting: Receive = LoggingReceive {
     case _: GetStatus => sender ! ViewStatusResponse("waiting", view)
 
-    case "materialize" => listeners.enqueue(sender)
+    case "materialize" => listeners.add(sender)
 
     case NoDataAvailable(dependency) => {
       log.debug("received nodata from " + dependency);
@@ -351,7 +353,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
       log.debug("STATE CHANGE:receive -> waiting")
     }
 
-    listeners.enqueue(sender)
+    listeners.add(sender)
   }
 }
 

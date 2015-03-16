@@ -45,8 +45,8 @@ class ActionStatusRetriever extends Actor with Aggregator {
 
     val values = ArrayBuffer.empty[ActionStatusResponse[_]]
 
-    context.actorSelection("/user/soda/actions/*") ! GetStatus()
-    context.system.scheduler.scheduleOnce(50 milliseconds, self, TimedOut)
+    context.actorSelection("/user/actions/*") ! GetStatus()
+    context.system.scheduler.scheduleOnce(1 second, self, TimedOut)
 
     val handle = expect {
       case ar: ActionStatusResponse[_] => values += ar
@@ -74,7 +74,10 @@ class ActionsManagerActor() extends Actor {
 
   private def formatQueues() = {
     queues.map(q => (q._1, q._2.map(c => {
-      c.command.asInstanceOf[Transformation].description
+      if (c.command.isInstanceOf[Transformation])
+        c.command.asInstanceOf[Transformation].description
+      else
+        "deploy"
     }).toList))
   }
 
@@ -91,7 +94,7 @@ class ActionsManagerActor() extends Actor {
   }
 
   def receive = LoggingReceive({
-    case GetStatus => actorOf(Props[ActionStatusRetriever]) ! GetProcessList(sender(), formatQueues())
+    case GetStatus() => actorOf(Props[ActionStatusRetriever]) ! GetProcessList(sender(), formatQueues())
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(transformationType).get
@@ -100,26 +103,35 @@ class ActionsManagerActor() extends Actor {
         val cmd = queueForType.dequeue()
         
         sender ! cmd
-        
-        val transformation = cmd.command.asInstanceOf[Transformation]
-        log.debug(s"Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(transformationType).size}")
+
+        if (cmd.command.isInstanceOf[Transformation]) {
+          val transformation = cmd.command.asInstanceOf[Transformation]
+          log.debug(s"Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(transformationType).size}")
+        }
+        else
+          log.debug("Dequeued deploy action")
       }
     }
 
     case actionCommand: CommandWithSender => {
-      val transformation = actionCommand.command.asInstanceOf[Transformation]
-      val queueName = transformation.name
-
-      queues.get(queueName).get.enqueue(actionCommand)
-
-      log.debug(s"Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).size}")
+      if (actionCommand.command.isInstanceOf[Transformation]) {
+        val transformation = actionCommand.command.asInstanceOf[Transformation]
+        val queueName = transformation.name
+  
+        queues.get(queueName).get.enqueue(actionCommand)
+  
+        log.debug(s"Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).size}")
+      } else {
+        queues.values.foreach { _.enqueue(actionCommand) }
+      }
+        
     }
 
     case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
 
     case filesystemTransformationAction: FilesystemTransformation => self ! CommandWithSender(filesystemTransformationAction, sender)
 
-    case deployAction: Deploy => queues.values.foreach { _.enqueue(CommandWithSender(deployAction, sender)) }
+    case deployAction: Deploy => self ! CommandWithSender(deployAction, sender)
   })
 }
 

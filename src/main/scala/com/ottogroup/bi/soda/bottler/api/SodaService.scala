@@ -222,9 +222,9 @@ object SodaService {
 
   private def getViewActors(viewUrlPath: String) = {
     val views = if (viewAugmentor != null)
-      View.viewsFromUrl(env, viewUrlPath, viewAugmentor)
+      View.viewsFromUrl(Settings().env, viewUrlPath, viewAugmentor)
     else
-      View.viewsFromUrl(env, viewUrlPath)
+      View.viewsFromUrl(Settings().env, viewUrlPath)
 
     println("COMPUTED VIEWS: " + views.map(v => v.viewId).mkString("\n"))
 

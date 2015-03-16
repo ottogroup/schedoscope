@@ -98,8 +98,8 @@ class SettingsImpl(val config: Config) extends Extension {
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
-  val actorSystem = ActorSystem("sodaSystem")
-  
+  val actorSystem = ActorSystem("soda")
+
   override def lookup = Settings
 
   override def createExtension(system: ExtendedActorSystem) =

@@ -5,6 +5,10 @@ import org.joda.time.LocalDateTime
 import com.ottogroup.bi.soda.bottler.ActionStatusResponse
 import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 import com.ottogroup.bi.soda.dsl.View
+import spray.json.RootJsonFormat
+import spray.json.JsValue
+import spray.json.JsString
+import spray.json.JsObject
 
 // FIXME: we should unify this, staying as close as possible to existing objects...
 
@@ -28,4 +32,18 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
   implicit val viewSpecFormat = jsonFormat3(ViewSpec)
   implicit val viewListFormat = jsonFormat2(ViewList)
   implicit val edgeFormat = jsonFormat2(Edge)
+  
+  implicit object viewFormat extends RootJsonFormat[View] {
+    def read(value : JsValue) = {
+      null
+    }
+    def write (v: View) = {
+      JsObject(Map("urlPath" -> JsString(v.viewId)))
+    }
+  } 
+  
+//  implicit object actionFormat extends RootJsonFormat[_] {
+//    
+//  }
+  
 }

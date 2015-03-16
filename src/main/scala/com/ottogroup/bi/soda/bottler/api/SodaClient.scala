@@ -50,7 +50,7 @@ object SodaClient {
   def listViews = Await.result(SodaRestClient.get[ViewList]("/listviews/any"), 20.seconds)
 
   def materialize(env: String, db: String, view: String, params: String) = {
-    val viewUrlPath = s"${env}/${db}/${view}/${params}"
+    val viewUrlPath = s"/${db}/${view}/${params}"
     Await.result(SodaRestClient.get[ViewStat](s"/materialize/${viewUrlPath}"), 10.days)
   }
 

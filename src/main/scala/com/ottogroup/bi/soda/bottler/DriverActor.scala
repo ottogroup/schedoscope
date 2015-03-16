@@ -28,7 +28,7 @@ import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 
 class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: DriverSettings, val driverConstructor: (DriverSettings) => Driver[T], val pingDuration: FiniteDuration) extends Actor {
   import context._
-  val log = Logging(system, this)
+  val log = Logging(system, this) 
 
   lazy val driver = driverConstructor(ds)
 
@@ -37,7 +37,7 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: Driv
   def receive = LoggingReceive {
     case CommandWithSender(command, sender) => becomeRunning(CommandWithSender(command, sender))
 
-    case GetStatus => sender ! ActionStatusResponse("idle", self, driver, null, null)
+    case GetStatus() => sender ! ActionStatusResponse("idle", self, driver, null, null)
 
     case "tick" => { 
       actionsRouter ! PollCommand(driver.transformationName)
@@ -46,12 +46,12 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: Driv
   }
 
   def running(runHandle: DriverRunHandle[T], s: ActorRef): Receive = LoggingReceive {
-    case KillAction => {
+    case KillAction() => {
       driver.killRun(runHandle)
       becomeReceive()
     }
 
-    case GetStatus => sender() ! ActionStatusResponse("running", self, driver, runHandle, driver.getDriverRunState(runHandle))
+    case GetStatus() => sender ! ActionStatusResponse("running", self, driver, runHandle, driver.getDriverRunState(runHandle))
 
     case "tick" => try {
       driver.getDriverRunState(runHandle) match {
@@ -105,9 +105,9 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: Driv
 
   def becomeRunning(commandToRun: CommandWithSender) {
     runningCommand = Some(commandToRun)
-    
-    try {  
-      if (commandToRun.command == Deploy) {
+
+    try {
+      if (commandToRun.command.isInstanceOf[Deploy]) {
         driver.deployAll(ds)
 
         runningCommand = None
@@ -115,7 +115,7 @@ class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: Driv
         val runHandle = driver.run(commandToRun.command.asInstanceOf[T])
 
         unbecome()
-        become(running(runHandle, sender))
+        become(running(runHandle, commandToRun.sender))
       }
     } catch {
       case exception: DriverException => {
@@ -137,15 +137,15 @@ object DriverActor {
     driverName match {
       case "hive" => Props(
         classOf[DriverActor[HiveTransformation]],
-        actionsRouter, ds, (_: DriverSettings) => HiveDriver(_), 5 seconds)
+        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds)
 
       case "filesystem" => Props(
         classOf[DriverActor[FilesystemTransformation]],
-        actionsRouter, ds, (_: DriverSettings) => FileSystemDriver(_), 100 milliseconds)
+        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds)
 
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
-        actionsRouter, ds, (_: DriverSettings) => OozieDriver(_), 5 seconds)
+        actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds)
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
