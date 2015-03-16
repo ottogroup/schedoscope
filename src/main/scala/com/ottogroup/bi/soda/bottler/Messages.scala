@@ -28,22 +28,25 @@ case class ActorException(e: Throwable) extends Failure
 case class Failed(view: View) extends Failure
 case class InternalError(message: String) extends Failure
 case class ActionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunFailed[T]) extends Failure
-case class TimedOut() extends Failure
 
 sealed class Command
 case class NewDataAvailable(view: View) extends Command
-case class GetStatus() extends Command
 case class KillAction() extends Command
 case class Suspend() extends Command
 case class Deploy() extends Command
 case class PollCommand(typ: String) extends Command
-case class GetProcessList(sender: ActorRef, queues: Map[String, List[String]]) extends Command
 case class CommandWithSender(command: AnyRef, sender: ActorRef) extends Command
 case class CheckVersion(view: View) extends Command
 case class SetVersion(view: View) extends Command
+case class GetStatus() extends Command
+case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends Command
+case class GetViewStatusList(statusRequester: ActorRef, viewActors: Seq[ActorRef]) extends Command
 
 case class VersionOk(view: View)
 case class VersionMismatch(view: View, dataVersion: String)
-case class ViewStatusResponse(state: String, view: View)
-case class ActionStatusResponse[T <: Transformation](message: String, actor: ActorRef, driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T])
-case class ProcessList(processStates: List[ActionStatusResponse[_]], queues: Map[String, List[String]])
+
+sealed class Status
+case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]], val actionQueueStatus: Map[String, List[String]]) extends Status
+case class ActionStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends Status
+case class ViewStatusResponse(val status: String, view: View) extends Status
+case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends Status

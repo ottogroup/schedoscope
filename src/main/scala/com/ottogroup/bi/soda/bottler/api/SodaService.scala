@@ -2,19 +2,13 @@ package com.ottogroup.bi.soda.bottler.api
 
 import scala.collection.mutable.HashSet
 import scala.concurrent.Await
-import scala.concurrent.duration._
-import scala.concurrent.{ ExecutionContext, Promise, Future }
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import Predef.{ any2stringadd => _, _ }
-import colossus.core.ServerSettings
-import com.ottogroup.bi.soda.bottler.NewDataAvailable
-import com.ottogroup.bi.soda.bottler.KillAction
-import com.ottogroup.bi.soda.bottler.InternalError
-import com.ottogroup.bi.soda.bottler.ViewMaterialized
-import com.ottogroup.bi.soda.bottler.SchemaActor
-import com.ottogroup.bi.soda.bottler.NoDataAvailable
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+import org.codehaus.jackson.map.ObjectMapper
+import org.joda.time.format.DateTimeFormat
+import com.fasterxml.jackson.core.io.JsonStringEncoder
+import com.ottogroup.bi.soda.bottler.ActionsManagerActor
 import com.ottogroup.bi.soda.bottler.Deploy
 import com.ottogroup.bi.soda.bottler.Failed
 import com.ottogroup.bi.soda.bottler.GetStatus
@@ -22,7 +16,6 @@ import com.ottogroup.bi.soda.bottler.InternalError
 import com.ottogroup.bi.soda.bottler.KillAction
 import com.ottogroup.bi.soda.bottler.NewDataAvailable
 import com.ottogroup.bi.soda.bottler.NoDataAvailable
-import com.ottogroup.bi.soda.bottler.ProcessList
 import com.ottogroup.bi.soda.bottler.SchemaActor
 import com.ottogroup.bi.soda.bottler.ViewManagerActor
 import com.ottogroup.bi.soda.bottler.ViewMaterialized
@@ -31,7 +24,26 @@ import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
 import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
 import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.bottler.ViewStatusResponse
+import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
+import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.viewNames
+import akka.actor.ActorRef
+import akka.actor.Props
+import akka.actor.actorRef2Scala
+import akka.pattern.ask
+import akka.util.Timeout
+import colossus.IOSystem
+import colossus.protocols.http.Http
+import colossus.protocols.http.HttpMethod.Get
+import colossus.protocols.http.HttpProvider
+import colossus.protocols.http.HttpRequest
+import colossus.protocols.http.UrlParsing.Strings
+import colossus.protocols.http.UrlParsing.Strings._
+import colossus.service.Response.liftCompletedFuture
+import colossus.service.Response.liftCompletedSync
+import colossus.service.Service
+import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
+import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 
 object SodaService {
   val settings = Settings()
@@ -120,15 +132,15 @@ object SodaService {
 
             case request @ Get on Root /: "listactions" /: test =>
               try {
-                val status = (actionsManagerActor ? GetStatus()).mapTo[ProcessList]
-                status.map(pl => {
+                val status = (actionsManagerActor ? GetStatus()).mapTo[ActionStatusListResponse]
+                status.map(actionStatusResponses => {
                   val resp = s"""{
-                     "running" : ${pl.processStates.filter { _.driverRunStatus.isInstanceOf[DriverRunOngoing[_]] }.size},
-                     "idle" : ${pl.processStates.filter { _.driverRunHandle == null }.size},
-                     "queued" : ${pl.queues.foldLeft(0)((s, el) => s + el._2.size)},  
-                     "queues" : { ${pl.queues.map(ql => s""" "${ql._1}" : [ ${ql._2.map(el => "\"" + new String(enc.quoteAsString(el)) + "\"").mkString(",")} ] """).mkString(",")} },  
+                     "running" : ${actionStatusResponses.actionStatusList.filter { _.driverRunStatus.isInstanceOf[DriverRunOngoing[_]] }.size},
+                     "idle" : ${actionStatusResponses.actionStatusList.filter { _.driverRunHandle == null }.size},
+                     "queued" : ${actionStatusResponses.actionQueueStatus.foldLeft(0)((s, el) => s + el._2.size)},  
+                     "queues" : { ${actionStatusResponses.actionQueueStatus.map(ql => s""" "${ql._1}" : [ ${ql._2.map(el => "\"" + new String(enc.quoteAsString(el)) + "\"").mkString(",")} ] """).mkString(",")} },  
                      "processes" : [ 
-                     	${pl.processStates.map { s => s"""{"status":"${s.message}", "typ":"${s.driver.transformationName}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) new String(enc.quoteAsString(s.driverRunHandle.transformation.asInstanceOf[Transformation].description)) else ""}"}""" }.mkString(",")}
+                     	${actionStatusResponses.actionStatusList.map { s => s"""{"status":"${s.message}", "typ":"${s.driver.transformationName}", "start":"${if (s.driverRunHandle != null) formatter.print(s.driverRunHandle.started) else ""}", "transformation":"${if (s.driverRunHandle != null) new String(enc.quoteAsString(s.driverRunHandle.transformation.asInstanceOf[Transformation].description)) else ""}"}""" }.mkString(",")}
                      ]}"""
                   sendOk(request, resp)
                 })
@@ -138,15 +150,15 @@ object SodaService {
 
             case request @ Get on Root /: "listviews" /: state =>
               try {
-                val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
-                val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
-                status.map(views => {
-                  val stats = views.groupBy(_.state)
+                val status = (viewManagerActor ? GetStatus()).mapTo[ViewStatusListResponse]
+                status.map(viewStatusResponses => {
+                  val views = viewStatusResponses.viewStatusList
+                  val stats = views.groupBy(_.status)
                     .mapValues(_.size)
                     .map(a => s""""${a._1}" : ${a._2}""")
                     .mkString(",")
-                  val filtered = views.filter("any".equals(state) || _.state.equals(state))
-                  val details = filtered.map(v => s"""{"status":"${v.state}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
+                  val filtered = views.filter("any".equals(state) || _.status.equals(state))
+                  val details = filtered.map(v => s"""{"status":"${v.status}", "view":"${v.view.n}", "parameters":"${v.view.partitionSpec}"}""").mkString(",")
                   sendOk(request, s"""{ "overview" : { ${stats} }, "details" : [ ${details} ] }""")
                 })
               } catch {
@@ -155,16 +167,16 @@ object SodaService {
 
             case request @ Get on Root /: "dependencygraph" /: dummy =>
               try {
-                val gatherActor = settings.system.actorOf(Props(new ViewStatusRetriever()))
-                val status = (gatherActor ? GetStatus()).mapTo[List[ViewStatusResponse]]
+                val status = (viewManagerActor ? GetStatus()).mapTo[ViewStatusListResponse]
                 val nodes = HashSet[(String, String)]()
                 val edges = HashSet[(String, String)]()
                 val colors = Map(("materialized", "lime"), ("transforming", "yellow"), ("nodata", "beige"), ("table", "black"), ("failed", "red"), ("retrying", "orange"), ("receive", "powderblue"), ("waiting", "blue"), ("dummy", "white"))
-                status.map(views => {
+                status.map(viewStatusResponses => {
+                  val views = viewStatusResponses.viewStatusList
                   views.foreach(v => {
-                    if (v.state != "receive" && v.state != "nodata") {
+                    if (v.status != "receive" && v.status != "nodata") {
                       //if (true) {
-                      nodes.add((v.view.viewId, v.state))
+                      nodes.add((v.view.viewId, v.status))
                       v.view.dependencies.foreach(d => {
                         edges.add((d.viewId, v.view.viewId))
                       })

@@ -2,11 +2,8 @@ package com.ottogroup.bi.soda.bottler
 
 import java.security.PrivilegedAction
 
-import scala.collection.JavaConversions.mutableSeqAsJavaList
-import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.concurrent.duration.DurationInt
 
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
@@ -22,40 +19,10 @@ import akka.actor.ActorRef
 import akka.actor.ActorSelection.toScala
 import akka.actor.Props
 import akka.actor.actorRef2Scala
-import akka.contrib.pattern.Aggregator
 import akka.event.Logging
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
-
-class ViewStatusRetriever extends Actor with Aggregator {
-
-  expectOnce {
-    case GetStatus() => new MultipleResponseHandler(sender)
-  }
-
-  class MultipleResponseHandler(originalSender: ActorRef) {
-
-    import context.dispatcher
-    import collection.mutable.ArrayBuffer
-
-    val values = ArrayBuffer.empty[ViewStatusResponse]
-
-    context.actorSelection("/user/views/*") ! GetStatus()
-    context.system.scheduler.scheduleOnce(1 second, self, TimedOut)
-
-    val handle = expect {
-      case ar: ViewStatusResponse => values += ar
-      case TimedOut => processFinal(values.toList)
-    }
-
-    def processFinal(eval: List[ViewStatusResponse]) {
-      unexpect(handle)
-      originalSender ! eval
-      context.stop(self)
-    }
-  }
-}
 
 class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   import context._
@@ -104,7 +71,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   // transitions: materialized,failed,transforming
   def transforming(retries: Int): Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
-    
+
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
 
@@ -121,7 +88,7 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
     }
 
     case _: ActionFailure[_] => retry(retries)
-    
+
     case "materialize" => listeners.add(sender)
   })
 

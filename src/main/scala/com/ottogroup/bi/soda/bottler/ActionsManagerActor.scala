@@ -9,14 +9,12 @@ import org.apache.hadoop.conf.Configuration
 
 import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.bottler.driver.DriverException
-import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.actor.ActorSelection.toScala
 import akka.actor.OneForOneStrategy
 import akka.actor.Props
 import akka.actor.SupervisorStrategy.Escalate
@@ -26,36 +24,28 @@ import akka.contrib.pattern.Aggregator
 import akka.event.Logging
 import akka.event.LoggingReceive
 
-/**
- * This actor aggregrates responses from multiple Actors
- * Used for retrieving running jobs,
- *
- * @author dev_hzorn
- *
- */
-class ActionStatusRetriever extends Actor with Aggregator {
-
+class ActionStatusRetriever() extends Actor with Aggregator {
   expectOnce {
-    case GetProcessList(s, q) => new MultipleResponseHandler(s, q, "")
+    case GetActionStatusList(statusRequester, actionQueueStatus, driverActors: Seq[ActorRef]) => new MultipleResponseHandler(statusRequester, actionQueueStatus, driverActors)
   }
 
-  class MultipleResponseHandler(originalSender: ActorRef, queues: Map[String, List[String]], propName: String) {
+  class MultipleResponseHandler(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Iterable[ActorRef]) {
     import context.dispatcher
     import collection.mutable.ArrayBuffer
 
     val values = ArrayBuffer.empty[ActionStatusResponse[_]]
 
-    context.actorSelection("/user/actions/*") ! GetStatus()
-    context.system.scheduler.scheduleOnce(1 second, self, TimedOut)
+    driverActors.foreach(_ ! GetStatus())
+    context.system.scheduler.scheduleOnce(1 second, self, "timeout")
 
     val handle = expect {
-      case ar: ActionStatusResponse[_] => values += ar
-      case TimedOut => processFinal(values.toList)
+      case actionStatus: ActionStatusResponse[_] => values += actionStatus
+      case "timeout" => processFinal(values.toList)
     }
 
-    def processFinal(eval: List[ActionStatusResponse[_]]) {
+    def processFinal(actionStatus: List[ActionStatusResponse[_]]) {
       unexpect(handle)
-      originalSender ! ProcessList(eval, queues)
+      statusRequester ! ActionStatusListResponse(actionStatus, actionQueueStatus)
       context.stop(self)
     }
   }
@@ -72,7 +62,7 @@ class ActionsManagerActor() extends Actor {
     (registeredDriverQueues, driverName) => registeredDriverQueues + (driverName -> new collection.mutable.Queue[CommandWithSender]())
   }
 
-  private def formatQueues() = {
+  private def actionQueueStatus() = {
     queues.map(q => (q._1, q._2.map(c => {
       if (c.command.isInstanceOf[Transformation])
         c.command.asInstanceOf[Transformation].description
@@ -94,7 +84,7 @@ class ActionsManagerActor() extends Actor {
   }
 
   def receive = LoggingReceive({
-    case GetStatus() => actorOf(Props[ActionStatusRetriever]) ! GetProcessList(sender(), formatQueues())
+    case GetStatus() => actorOf(Props[ActionStatusRetriever]) ! GetActionStatusList(sender(), actionQueueStatus(), children.toList)
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(transformationType).get
@@ -107,8 +97,7 @@ class ActionsManagerActor() extends Actor {
         if (cmd.command.isInstanceOf[Transformation]) {
           val transformation = cmd.command.asInstanceOf[Transformation]
           log.debug(s"Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(transformationType).size}")
-        }
-        else
+        } else
           log.debug("Dequeued deploy action")
       }
     }
@@ -117,14 +106,14 @@ class ActionsManagerActor() extends Actor {
       if (actionCommand.command.isInstanceOf[Transformation]) {
         val transformation = actionCommand.command.asInstanceOf[Transformation]
         val queueName = transformation.name
-  
+
         queues.get(queueName).get.enqueue(actionCommand)
-  
+
         log.debug(s"Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).size}")
       } else {
         queues.values.foreach { _.enqueue(actionCommand) }
       }
-        
+
     }
 
     case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
