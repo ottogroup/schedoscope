@@ -216,8 +216,8 @@ object View {
     register(env, viewConstructor.invoke(viewCompanionObject, parametersToPass.asInstanceOf[Seq[Object]]: _*).asInstanceOf[V])
   }
 
-  def viewsFromUrl(viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] = ViewUrlParser
-    .parse(viewUrlPath)
+  def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] = ViewUrlParser
+    .parse(env, viewUrlPath)
     .map { parsedViewAugmentor.augment(_) }
     .filter { _ != null }
     .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }

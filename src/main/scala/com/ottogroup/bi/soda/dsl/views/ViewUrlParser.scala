@@ -113,7 +113,7 @@ object ViewUrlParser {
     case _ => List(Class.forName(s"${pakkage}.${viewClassNames}").asInstanceOf[Class[View]])
   }
 
-  def parse(viewUrlPath: String): List[ParsedView] = try {
+  def parse(env: String, viewUrlPath: String): List[ParsedView] = try {
     val normalizedPathFront = if (viewUrlPath.startsWith("/"))
       viewUrlPath.tail
     else
@@ -125,22 +125,22 @@ object ViewUrlParser {
       normalizedPathFront
 
     val urlPathChunks = normalizedPath.split("/").map { URLDecoder.decode(_, "UTF-8") }.toList
-    if (urlPathChunks.size < 3)
-      throw new IllegalArgumentException("View URL paths needs at least an env, a package, and a view class name.")
+    if (urlPathChunks.size < 2)
+      throw new IllegalArgumentException("View URL paths needs at least a package and a view class name.")
 
-    val environment :: packageName :: viewClassNames :: parameters = urlPathChunks
+    val packageName :: viewClassNames :: parameters = urlPathChunks
 
     for {
       viewClass <- parseViewClassnames(packageName, viewClassNames)
       pl <- parseParameters(parameters)
-    } yield ParsedView(environment, viewClass, pl)
+    } yield ParsedView(env, viewClass, pl)
 
   } catch {
 
     case e: Throwable => throw new IllegalArgumentException(s"""        
 Error while parsing view URL path: ${viewUrlPath}!
 
-Path format: /{environment}/{package}/{view}(/{view parameter value})*
+Path format: /{package}/{view}(/{view parameter value})*
 
 View parameter value format:
   i(aNumber)                    => an integer
@@ -172,5 +172,5 @@ Reason for exception:
 """, e)
   }
 
-  def viewNames(viewUrlPath: String) = parse(viewUrlPath).map(pv => pv.viewClass.getName)
+  def viewNames(viewUrlPath: String) = parse("dev", viewUrlPath).map(pv => pv.viewClass.getName)
 }

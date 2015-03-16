@@ -293,7 +293,7 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "be dynamically instantiatable via URL path" in {
-    val views = View.viewsFromUrl("/dev/test.eci.datahub/Product/e(EC0106,EC0101)/rymd(20140224-20131202)/")
+    val views = View.viewsFromUrl("dev", "/test.eci.datahub/Product/e(EC0106,EC0101)/rymd(20140224-20131202)/")
 
     views.length shouldBe 2 * 85
 

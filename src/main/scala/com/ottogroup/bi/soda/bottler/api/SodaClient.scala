@@ -68,7 +68,7 @@ object SodaControl {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, environment: String = "", database: String = "", view: String = "", parameters: String = "", status: Option[String] = None)
+  case class Config(action: Option[Action.Value] = None, environment: String = "dev", database: String = "", view: String = "", parameters: String = "", status: Option[String] = None)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -85,7 +85,7 @@ object SodaControl {
     checkConfig { c =>
       {
         if (!c.action.isDefined) failure("A command is required")
-        else if (c.action.get.equals("materialize") && Try(ViewUrlParser.parse(c.parameters)).isFailure) failure("Cannot parse view parameters")
+        else if (c.action.get.equals("materialize") && Try(ViewUrlParser.parse(c.environment, c.parameters)).isFailure) failure("Cannot parse view parameters")
         else success
       }
     }

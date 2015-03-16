@@ -45,6 +45,8 @@ object SodaService {
   implicit val ec = ExecutionContext.global
   implicit val timeout = Timeout(3 days) // needed for `?` below
 
+  val env = settings.env
+  
   val viewManagerActor = settings.system.actorOf(ViewManagerActor.props(settings), "soda/views")
   val actionsManagerActor = settings.system.actorOf(ActionsManagerActor.props(settings.hadoopConf), "soda/actions")
   val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "soda/schema")
@@ -222,9 +224,9 @@ object SodaService {
 
   private def getViewActors(viewUrlPath: String) = {
     val views = if (viewAugmentor != null)
-      View.viewsFromUrl(viewUrlPath, viewAugmentor)
+      View.viewsFromUrl(env, viewUrlPath, viewAugmentor)
     else
-      View.viewsFromUrl(viewUrlPath)
+      View.viewsFromUrl(env, viewUrlPath)
 
     println("COMPUTED VIEWS: " + views.map(v => v.viewId).mkString("\n"))
 
