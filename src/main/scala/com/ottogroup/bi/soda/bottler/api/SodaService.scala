@@ -45,11 +45,9 @@ object SodaService {
   implicit val ec = ExecutionContext.global
   implicit val timeout = Timeout(3 days) // needed for `?` below
 
-  val env = settings.env
-  
-  val viewManagerActor = settings.system.actorOf(ViewManagerActor.props(settings), "soda/views")
-  val actionsManagerActor = settings.system.actorOf(ActionsManagerActor.props(settings.hadoopConf), "soda/actions")
-  val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "soda/schema")
+  val viewManagerActor = settings.system.actorOf(ViewManagerActor.props(settings), "views")
+  val actionsManagerActor = settings.system.actorOf(ActionsManagerActor.props(settings.hadoopConf), "actions")
+  val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schema")
 
   val viewAugmentor = if (settings.parsedViewAugmentorClass != "")
     Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
