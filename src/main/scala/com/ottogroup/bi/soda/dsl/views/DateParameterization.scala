@@ -86,7 +86,7 @@ object DateParameterizationUtils {
     thisAndPrevDays(lastOfMonthParameters._1, lastOfMonthParameters._2, lastOfMonthParameters._3, earliestDay)
   }
 
-  def thisAndPrevMonths(year: Parameter[String], month: Parameter[String], earliestDay: Calendar = defaultEarliestDay): Seq[(Parameter[String], Parameter[String])] = {
+  def thisAndPrevMonths(year: Parameter[String], month: Parameter[String], earliestDay: Calendar): Seq[(Parameter[String], Parameter[String])] = {
     val lastOfMonth = parametersToDate(year, month, p("01"))
     lastOfMonth.add(Calendar.MONTH, 1)
     lastOfMonth.add(Calendar.DAY_OF_MONTH, -1)
