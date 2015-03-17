@@ -2,6 +2,7 @@ package com.ottogroup.bi.soda.bottler.api
 
 import java.net.URLClassLoader
 import java.nio.file.Paths
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
@@ -11,7 +12,9 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver.fileSystem
+import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
 import com.typesafe.config.Config
 import akka.actor.ActorSystem
 import akka.actor.ExtendedActorSystem
@@ -27,6 +30,27 @@ class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem
 
   val env = config.getString("soda.app.environment")
+
+  val earliestDay = {
+    val conf = config.getString("soda.app.earliestDay")
+    val Array(year, month, day) = conf.split("-")
+    DateParameterizationUtils.parametersToDay(p(year), p(month), p(day))
+  }
+
+  val latestDay = {
+    val conf = config.getString("soda.app.latestDay")
+    if (conf == "now") {
+      val now = Calendar.getInstance()
+      now.set(Calendar.HOUR_OF_DAY, 0)
+      now.set(Calendar.MINUTE, 0)
+      now.set(Calendar.SECOND, 0)
+      now.set(Calendar.MILLISECOND, 0)
+      now
+    } else {
+      val Array(year, month, day) = conf.split("-")
+      DateParameterizationUtils.parametersToDay(p(year), p(month), p(day))
+    }
+  }
 
   val webserviceTimeOut: Duration =
   Duration(config.getDuration("soda.webservice.timeout", TimeUnit.MILLISECONDS),

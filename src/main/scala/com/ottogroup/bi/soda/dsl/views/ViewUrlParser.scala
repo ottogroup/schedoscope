@@ -8,7 +8,7 @@ import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.View.TypedAny
 import com.ottogroup.bi.soda.dsl.View.t
-import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils.defaultEarliestDay
+import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils.earliestDay
 import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils.thisAndPrevDays
 import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils.thisAndPrevMonths
 
@@ -58,7 +58,7 @@ object ViewUrlParser {
     if (s"${earlierYear}${earlierMonth}" > s"${laterYear}${laterMonth}")
       typeMonthlyRangeParameter(laterYear, laterMonth, earlierYear, earlierMonth)
     else
-      thisAndPrevMonths(p(laterYear), p(laterMonth), defaultEarliestDay)
+      thisAndPrevMonths(p(laterYear), p(laterMonth))
         .takeWhile { case (year, month) => s"${earlierYear}${earlierMonth}" <= s"${year.v.get}${month.v.get}" }
         .map { case (year, month) => List(t(year), t(month)) }
         .toList
@@ -67,7 +67,7 @@ object ViewUrlParser {
     if (s"${earlierYear}${earlierMonth}${earlierDay}" > s"${laterYear}${laterMonth}${laterDay}")
       typeDailyRangeParameter(laterYear, laterMonth, laterDay, earlierYear, earlierMonth, earlierDay)
     else
-      thisAndPrevDays(p(laterYear), p(laterMonth), p(laterDay), defaultEarliestDay)
+      thisAndPrevDays(p(laterYear), p(laterMonth), p(laterDay))
         .takeWhile { case (year, month, day) => s"${earlierYear}${earlierMonth}${earlierDay}" <= s"${year.v.get}${month.v.get}${day.v.get}" }
         .map { case (year, month, day) => List(t(year), t(month), t(day)) }
         .toList

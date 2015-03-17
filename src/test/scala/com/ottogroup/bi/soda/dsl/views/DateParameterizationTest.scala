@@ -22,7 +22,7 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
   }
 
   "thisAndPrevDays" should "deliver all days from the start date down to the earliest date" in {
-    val days = DateParameterizationUtils.thisAndPrevDays(p("2014"), p("01"), p("11"), DateParameterizationUtils.defaultEarliestDay)
+    val days = DateParameterizationUtils.thisAndPrevDays(p("2014"), p("01"), p("11"))
 
     var firstDay: String = null
     var lastDay: String = null
@@ -38,7 +38,6 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
   }
 
   "thisMonthAndPrevDay" should "count down from the last day of the given month" in {
-    DateParameterizationUtils.thisAndPrevDays(p("2014"), p("02"), DateParameterizationUtils.defaultEarliestDay) shouldEqual DateParameterizationUtils.thisAndPrevDays(p("2014"), p("02"), p("28"), DateParameterizationUtils.defaultEarliestDay)
+    DateParameterizationUtils.thisAndPrevDays(p("2014"), p("02")) shouldEqual DateParameterizationUtils.thisAndPrevDays(p("2014"), p("02"), p("28"))
   }
-
 }

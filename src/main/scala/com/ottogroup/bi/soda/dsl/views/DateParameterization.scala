@@ -1,25 +1,19 @@
 package com.ottogroup.bi.soda.dsl.views
 
 import java.util.Calendar
-
 import com.ottogroup.bi.soda.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
+import com.ottogroup.bi.soda.bottler.api.Settings
 
 object DateParameterizationUtils {
-  def defaultEarliestDay = {
-    val cal = Calendar.getInstance()
-    cal.clear()
-    cal.set(2013, Calendar.DECEMBER, 1)
-    cal
-  }
+  def earliestDay = Settings().earliestDay
 
-  def defaultLatestDay = {
-    val cal = Calendar.getInstance()
-    cal.set(Calendar.HOUR_OF_DAY, 0)
-    cal.set(Calendar.MINUTE, 0)
-    cal.set(Calendar.SECOND, 0)
-    cal.set(Calendar.MILLISECOND, 0)
-    cal
+  def parametersToDay(year: Parameter[String], month: Parameter[String], day: Parameter[String]) = {
+    val date = Calendar.getInstance()
+    date.clear()
+    date.set(year.v.get.toInt, month.v.get.toInt - 1, day.v.get.toInt)
+
+    date
   }
 
   def dayToParameters(thisDay: Calendar) = {
@@ -30,17 +24,9 @@ object DateParameterizationUtils {
     (year, month, day)
   }
 
-  def parametersToDate(year: Parameter[String], month: Parameter[String], day: Parameter[String]) = {
-    val date = Calendar.getInstance()
-    date.clear()
-    date.set(year.v.get.toInt, month.v.get.toInt - 1, day.v.get.toInt)
+  def today = dayToParameters(Settings().latestDay)
 
-    date
-  }
-
-  def today = dayToParameters(defaultLatestDay)
-
-  def prevDay(thisDay: Calendar, earliestDay: Calendar): Option[Calendar] = {
+  def prevDay(thisDay: Calendar): Option[Calendar] = {
     if (thisDay.after(earliestDay)) {
       val prevDay = thisDay.clone().asInstanceOf[Calendar]
       prevDay.add(Calendar.DAY_OF_MONTH, -1)
@@ -50,14 +36,14 @@ object DateParameterizationUtils {
     }
   }
 
-  def prevDay(year: Parameter[String], month: Parameter[String], day: Parameter[String], earliestDay: Calendar = defaultEarliestDay): Option[(Parameter[String], Parameter[String], Parameter[String])] = {
-    prevDay(parametersToDate(year, month, day), earliestDay) match {
+  def prevDay(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Option[(Parameter[String], Parameter[String], Parameter[String])] = {
+    prevDay(parametersToDay(year, month, day)) match {
       case Some(previousDay) => Some(dayToParameters(previousDay))
       case None => None
     }
   }
 
-  def prevDaysFrom(thisDay: Calendar, earliestDay: Calendar): Seq[Calendar] = {
+  def prevDaysFrom(thisDay: Calendar): Seq[Calendar] = {
     new Iterator[Calendar] {
       var current: Option[Calendar] = Some(thisDay)
 
@@ -65,7 +51,7 @@ object DateParameterizationUtils {
 
       override def next = current match {
         case Some(day) => {
-          current = prevDay(day, earliestDay)
+          current = prevDay(day)
           day
         }
         case None => null
@@ -73,37 +59,37 @@ object DateParameterizationUtils {
     }.toSeq
   }
 
-  def thisAndPrevDays(year: Parameter[String], month: Parameter[String], day: Parameter[String], earliestDay: Calendar): Seq[(Parameter[String], Parameter[String], Parameter[String])] =
-    prevDaysFrom(parametersToDate(year, month, day), earliestDay).map { dayToParameters(_) }
+  def thisAndPrevDays(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Seq[(Parameter[String], Parameter[String], Parameter[String])] =
+    prevDaysFrom(parametersToDay(year, month, day)).map { dayToParameters(_) }
 
-  def thisAndPrevDays(year: Parameter[String], month: Parameter[String], earliestDay: Calendar): Seq[(Parameter[String], Parameter[String], Parameter[String])] = {
-    val lastOfMonth = parametersToDate(year, month, p("01"))
+  def thisAndPrevDays(year: Parameter[String], month: Parameter[String]): Seq[(Parameter[String], Parameter[String], Parameter[String])] = {
+    val lastOfMonth = parametersToDay(year, month, p("01"))
     lastOfMonth.add(Calendar.MONTH, 1)
     lastOfMonth.add(Calendar.DAY_OF_MONTH, -1)
 
     val lastOfMonthParameters = dayToParameters(lastOfMonth)
 
-    thisAndPrevDays(lastOfMonthParameters._1, lastOfMonthParameters._2, lastOfMonthParameters._3, earliestDay)
+    thisAndPrevDays(lastOfMonthParameters._1, lastOfMonthParameters._2, lastOfMonthParameters._3)
   }
 
-  def thisAndPrevMonths(year: Parameter[String], month: Parameter[String], earliestDay: Calendar): Seq[(Parameter[String], Parameter[String])] = {
-    val lastOfMonth = parametersToDate(year, month, p("01"))
+  def thisAndPrevMonths(year: Parameter[String], month: Parameter[String]): Seq[(Parameter[String], Parameter[String])] = {
+    val lastOfMonth = parametersToDay(year, month, p("01"))
     lastOfMonth.add(Calendar.MONTH, 1)
     lastOfMonth.add(Calendar.DAY_OF_MONTH, -1)
 
     val lastOfMonthParameters = dayToParameters(lastOfMonth)
 
-    thisAndPrevDays(lastOfMonthParameters._1, lastOfMonthParameters._2, lastOfMonthParameters._3, earliestDay).map { case (year, month, day) => (year, month) }.distinct
+    thisAndPrevDays(lastOfMonthParameters._1, lastOfMonthParameters._2, lastOfMonthParameters._3).map { case (year, month, day) => (year, month) }.distinct
   }
 
-  def allDays(earliestDay: Calendar = defaultEarliestDay) = {
+  def allDays() = {
     val (todaysYear, todaysMonth, todaysDay) = today
-    thisAndPrevDays(todaysYear, todaysMonth, todaysDay, earliestDay)
+    thisAndPrevDays(todaysYear, todaysMonth, todaysDay)
   }
 
-  def allMonths(earliestDay: Calendar = defaultEarliestDay) = {
+  def allMonths() = {
     val (todaysYear, todaysMonth, _) = today
-    thisAndPrevMonths(todaysYear, todaysMonth, earliestDay)
+    thisAndPrevMonths(todaysYear, todaysMonth)
   }
 }
 
@@ -111,14 +97,13 @@ trait MonthlyParameterization {
   val year: Parameter[String]
   val month: Parameter[String]
 
-  def thisAndPrevMonths(earliestDay: Calendar = DateParameterizationUtils.defaultEarliestDay) = DateParameterizationUtils.thisAndPrevMonths(year, month, earliestDay)
+  def thisAndPrevMonths() = DateParameterizationUtils.thisAndPrevMonths(year, month)
 
-  def thisAndPrevDays(earliestDay: Calendar = DateParameterizationUtils.defaultEarliestDay) = DateParameterizationUtils.thisAndPrevDays(year, month, earliestDay)
+  def thisAndPrevDays() = DateParameterizationUtils.thisAndPrevDays(year, month)
 
-  def allDays(earliestDay: Calendar = DateParameterizationUtils.defaultEarliestDay) = DateParameterizationUtils.allDays(earliestDay)
+  def allDays() = DateParameterizationUtils.allDays()
 
-  def allMonths(earliestDay: Calendar = DateParameterizationUtils.defaultEarliestDay) = DateParameterizationUtils.allMonths(earliestDay)
-
+  def allMonths() = DateParameterizationUtils.allMonths()
 }
 
 trait DailyParameterization {
@@ -128,9 +113,9 @@ trait DailyParameterization {
 
   val dateId: Parameter[String] = p(s"${year.v.get}${month.v.get}${day.v.get}")
 
-  def prevDay(earliestDay: Calendar = DateParameterizationUtils.defaultEarliestDay) = DateParameterizationUtils.prevDay(year, month, day, earliestDay)
+  def prevDay() = DateParameterizationUtils.prevDay(year, month, day)
 
-  def thisAndPrevDays(earliestDay: Calendar = DateParameterizationUtils.defaultEarliestDay) = DateParameterizationUtils.thisAndPrevDays(year, month, day, earliestDay)
+  def thisAndPrevDays() = DateParameterizationUtils.thisAndPrevDays(year, month, day)
 
-  def allDays(earliestDay: Calendar = DateParameterizationUtils.defaultEarliestDay) = DateParameterizationUtils.allDays(earliestDay)
+  def allDays() = DateParameterizationUtils.allDays()
 }
