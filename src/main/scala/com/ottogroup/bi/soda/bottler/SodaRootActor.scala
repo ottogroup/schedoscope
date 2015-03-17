@@ -1,12 +1,14 @@
 package com.ottogroup.bi.soda.bottler
 
+import scala.concurrent.duration.DurationInt
+
+import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.bottler.api.SettingsImpl
+
 import akka.actor.Actor
 import akka.actor.ActorRef
-import com.ottogroup.bi.soda.bottler.api.SettingsImpl
-import akka.actor.Props
-import com.ottogroup.bi.soda.bottler.api.Settings
 import akka.actor.AllForOneStrategy
-import scala.concurrent.duration.DurationInt
+import akka.actor.Props
 import akka.actor.SupervisorStrategy.Restart
 
 class SodaRootActor(settings: SettingsImpl) extends Actor {

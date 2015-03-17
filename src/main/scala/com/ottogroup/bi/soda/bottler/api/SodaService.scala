@@ -5,8 +5,10 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+
 import org.codehaus.jackson.map.ObjectMapper
 import org.joda.time.format.DateTimeFormat
+
 import com.fasterxml.jackson.core.io.JsonStringEncoder
 import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
 import com.ottogroup.bi.soda.bottler.Deploy
@@ -17,6 +19,9 @@ import com.ottogroup.bi.soda.bottler.KillAction
 import com.ottogroup.bi.soda.bottler.MaterializeView
 import com.ottogroup.bi.soda.bottler.NewDataAvailable
 import com.ottogroup.bi.soda.bottler.NoDataAvailable
+import com.ottogroup.bi.soda.bottler.SodaRootActor.actionsManagerActor
+import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
+import com.ottogroup.bi.soda.bottler.SodaRootActor.viewManagerActor
 import com.ottogroup.bi.soda.bottler.ViewMaterialized
 import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 import com.ottogroup.bi.soda.bottler.ViewStatusResponse
@@ -25,7 +30,9 @@ import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.viewNames
+
 import akka.actor.ActorRef
+import akka.actor.ActorSelection.toScala
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
 import akka.util.Timeout
@@ -38,7 +45,6 @@ import colossus.protocols.http.UrlParsing.Strings._
 import colossus.service.Response.liftCompletedFuture
 import colossus.service.Response.liftCompletedSync
 import colossus.service.Service
-import com.ottogroup.bi.soda.bottler.SodaRootActor._
 
 object SodaService {
   implicit val io = IOSystem()
