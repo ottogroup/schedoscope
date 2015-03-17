@@ -41,13 +41,13 @@ class ViewStatusRetriever() extends Actor with Aggregator {
   }
 }
 
-class ViewManagerActor(settings: SettingsImpl) extends Actor {
+class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
 
-  override val supervisorStrategy = OneForOneStrategy() {
-      case _: Throwable => Escalate
-    }
-
+  override def preRestart(reason: Throwable, message: Option[Any]) {
+    // prevent termination of children durin restart and cause their own restart
+  }
+    
   def receive = {
     case GetStatus() => actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender(), children.toList)
 
@@ -57,7 +57,7 @@ class ViewManagerActor(settings: SettingsImpl) extends Actor {
 
       val actor = actorFor(actorName)
       sender ! (if (actor.isTerminated)
-        actorOf(ViewActor.props(v, settings), actorName)
+        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), actorName)
       else
         actor)
     }
@@ -65,5 +65,5 @@ class ViewManagerActor(settings: SettingsImpl) extends Actor {
 }
 
 object ViewManagerActor {
-  def props(settings: SettingsImpl): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl)
+  def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor)
 }

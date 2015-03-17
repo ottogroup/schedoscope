@@ -26,7 +26,7 @@ import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 
-class DriverActor[T <: Transformation](val actionsRouter: ActorRef, val ds: DriverSettings, val driverConstructor: (DriverSettings) => Driver[T], val pingDuration: FiniteDuration) extends Actor {
+class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
   val log = Logging(system, this) 
 

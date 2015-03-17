@@ -6,12 +6,13 @@ import akka.actor.ActorSystem
 import spray.httpx.SprayJsonSupport._
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.bottler.driver.DriverRunHandle
+import com.ottogroup.bi.soda.bottler.SodaRootActor._
 
 
 object SodaSprayService extends App with SimpleRoutingApp {
 
-  implicit val system = Settings().system
-    
+  implicit val system = settings.system
+
   import SodaJsonProtocol._
   
   startServer( interface = "localhost", port = 8888 ) {

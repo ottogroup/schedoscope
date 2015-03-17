@@ -24,14 +24,10 @@ import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
 
-class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
+class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
   val log = Logging(system, this)
   implicit val timeout = new Timeout(settings.dependencyTimout)
-
-  val viewManagerActor = actorFor("/user/views")
-  val schemaActor = actorFor("/user/schema")
-  val actionsManagerActor = actorFor("/user/actions")
 
   val listeners = collection.mutable.HashSet[ActorRef]()
   val dependencies = collection.mutable.HashSet[View]()
@@ -48,6 +44,10 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
   var withErrors = false
   
   var availableDependencies = 0
+
+  override def postRestart(reason: Throwable) {
+    self ! "materialize"
+  }
 
   def receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("receive", view)
@@ -325,5 +325,5 @@ class ViewActor(val view: View, val settings: SettingsImpl) extends Actor {
 }
 
 object ViewActor {
-  def props(view: View, settings: SettingsImpl): Props = Props(classOf[ViewActor], view, settings)
+  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, schemaActor)
 }

@@ -5,10 +5,12 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+
 import org.codehaus.jackson.map.ObjectMapper
 import org.joda.time.format.DateTimeFormat
+
 import com.fasterxml.jackson.core.io.JsonStringEncoder
-import com.ottogroup.bi.soda.bottler.ActionsManagerActor
+import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
 import com.ottogroup.bi.soda.bottler.Deploy
 import com.ottogroup.bi.soda.bottler.Failed
 import com.ottogroup.bi.soda.bottler.GetStatus
@@ -16,19 +18,19 @@ import com.ottogroup.bi.soda.bottler.InternalError
 import com.ottogroup.bi.soda.bottler.KillAction
 import com.ottogroup.bi.soda.bottler.NewDataAvailable
 import com.ottogroup.bi.soda.bottler.NoDataAvailable
-import com.ottogroup.bi.soda.bottler.SchemaActor
-import com.ottogroup.bi.soda.bottler.ViewManagerActor
+import com.ottogroup.bi.soda.bottler.SodaRootActor.actionsManagerActor
+import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
+import com.ottogroup.bi.soda.bottler.SodaRootActor.viewManagerActor
 import com.ottogroup.bi.soda.bottler.ViewMaterialized
-import com.ottogroup.bi.soda.bottler.ViewStatus
+import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 import com.ottogroup.bi.soda.bottler.ViewStatusResponse
-import com.ottogroup.bi.soda.bottler.ViewStatusRetriever
 import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.viewNames
+
 import akka.actor.ActorRef
-import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.pattern.ask
 import akka.util.Timeout
@@ -37,34 +39,23 @@ import colossus.protocols.http.Http
 import colossus.protocols.http.HttpMethod.Get
 import colossus.protocols.http.HttpProvider
 import colossus.protocols.http.HttpRequest
-import colossus.protocols.http.UrlParsing.Strings
 import colossus.protocols.http.UrlParsing.Strings._
 import colossus.service.Response.liftCompletedFuture
 import colossus.service.Response.liftCompletedSync
 import colossus.service.Service
-import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
-import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 
 object SodaService {
-  val settings = Settings()
+  implicit val io = IOSystem()
+  implicit val ec = ExecutionContext.global
+  implicit val timeout = Timeout(3 days) // needed for `?` below
 
   val om = new ObjectMapper()
   val enc = JsonStringEncoder.getInstance
 
   val headers = List(("Content-Type", "application/json"), ("Access-Control-Allow-Origin", "*"))
 
-  implicit val io = IOSystem()
-  implicit val ec = ExecutionContext.global
-  implicit val timeout = Timeout(3 days) // needed for `?` below
+  val viewAugmentor = Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
 
-  val viewManagerActor = settings.system.actorOf(ViewManagerActor.props(settings), "views")
-  val actionsManagerActor = settings.system.actorOf(ActionsManagerActor.props(settings.hadoopConf), "actions")
-  val schemaActor = settings.system.actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schema")
-
-  val viewAugmentor = if (settings.parsedViewAugmentorClass != "")
-    Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
-  else
-    null
   val formatter = DateTimeFormat.shortDateTime()
 
   def start() {
