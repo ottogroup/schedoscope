@@ -46,12 +46,12 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   var availableDependencies = 0
 
   override def postRestart(reason: Throwable) {
-    self ! "materialize"
+    self ! MaterializeView()
   }
 
   def receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("receive", view)
-    case "materialize" => materializeDependencies
+    case MaterializeView() => materializeDependencies
   })
 
   def transform(retries: Int) = {
@@ -89,7 +89,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     case _: ActionFailure[_] => retry(retries)
 
-    case "materialize" => listeners.add(sender)
+    case MaterializeView() => listeners.add(sender)
   })
 
   def reload() = {
@@ -110,7 +110,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def materialized: Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("materialized", view)
 
-    case "materialize" => sender ! ViewMaterialized(view, incomplete, false, withErrors)
+    case MaterializeView() => sender ! ViewMaterialized(view, incomplete, false, withErrors)
     case "invalidate" =>
       unbecome(); become(receive); log.debug("STATE CHANGE:receive")
 
@@ -123,7 +123,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def nodata: Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("nodata", view)
 
-    case "materialize" => sender ! NoDataAvailable(view)
+    case MaterializeView() => sender ! NoDataAvailable(view)
     case "invalidate" => {
       unbecome()
       become(receive)
@@ -137,7 +137,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def retrying(retries: Int): Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("retrying", view)
 
-    case "materialize" => listeners.add(sender)
+    case MaterializeView() => listeners.add(sender)
 
     case "retry" => if (retries <= settings.retries)
       transform(retries + 1)
@@ -157,7 +157,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case NewDataAvailable(view) => if (dependencies.contains(view)) reload()
     case "invalidate" =>
       unbecome(); become(receive); log.debug("STATE CHANGE:failed->receive")
-    case "materialize" => sender ! Failed(view)
+    case MaterializeView() => sender ! Failed(view)
     case _ => sender ! FatalError(view, "not recoverable")
   })
 
@@ -167,7 +167,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def waiting: Receive = LoggingReceive {
     case _: GetStatus => sender ! ViewStatusResponse("waiting", view)
 
-    case "materialize" => listeners.add(sender)
+    case MaterializeView() => listeners.add(sender)
 
     case NoDataAvailable(dependency) => {
       log.debug("received nodata from " + dependency);
@@ -311,7 +311,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
           dependencies.add(dependendView)
           availableDependencies += 1
 
-          actor ! "materialize"
+          actor ! MaterializeView()
         }
       }
 

@@ -47,7 +47,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   override def preRestart(reason: Throwable, message: Option[Any]) {
     // prevent termination of children durin restart and cause their own restart
   }
-    
+
   def receive = {
     case GetStatus() => actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender(), children.toList)
 

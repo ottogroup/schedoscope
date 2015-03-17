@@ -16,6 +16,7 @@ import com.ottogroup.bi.soda.bottler.Failed
 import com.ottogroup.bi.soda.bottler.GetStatus
 import com.ottogroup.bi.soda.bottler.InternalError
 import com.ottogroup.bi.soda.bottler.KillAction
+import com.ottogroup.bi.soda.bottler.MaterializeView
 import com.ottogroup.bi.soda.bottler.NewDataAvailable
 import com.ottogroup.bi.soda.bottler.NoDataAvailable
 import com.ottogroup.bi.soda.bottler.SodaRootActor.actionsManagerActor
@@ -69,7 +70,7 @@ object SodaService {
             case request @ Get on Root /: "materialize" /: viewUrlPath =>
               try {
                 val viewActors = getViewActors(viewUrlPath)
-                val fut = viewActors.map(viewActor => viewActor ? "materialize")
+                val fut = viewActors.map(viewActor => viewActor ? MaterializeView())
                 val res = Await.result(Future sequence fut, 10 days)
                 val successCount = res.foldLeft(0) { (count, r) =>
                   r match {

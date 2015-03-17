@@ -41,12 +41,13 @@ case class SetVersion(view: View) extends Command
 case class GetStatus() extends Command
 case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends Command
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Seq[ActorRef]) extends Command
-
-case class VersionOk(view: View)
-case class VersionMismatch(view: View, dataVersion: String)
+case class MaterializeView() extends Command
 
 sealed class Status
 case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]], val actionQueueStatus: Map[String, List[String]]) extends Status
 case class ActionStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends Status
 case class ViewStatusResponse(val status: String, view: View) extends Status
 case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends Status
+case class VersionOk(view: View) extends Status
+case class VersionMismatch(view: View, dataVersion: String) extends Status
+
