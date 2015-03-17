@@ -20,8 +20,8 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Throwable => Restart
     }
-  
-  override def preStart() {
+
+  override def preStart {
     actionsManagerActor = actorOf(ActionsManagerActor.props(settings.hadoopConf), "actions")
     schemaActor = actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schema")
     viewManagerActor = actorOf(ViewManagerActor.props(settings, actionsManagerActor, schemaActor), "views")
@@ -35,10 +35,17 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
 
 object SodaRootActor {
   def props(settings: SettingsImpl) = Props(classOf[SodaRootActor], settings)
-  
+
   lazy val settings = Settings()
+
   lazy val sodaRootActor = settings.system.actorOf(props(settings), "soda")
-  lazy val viewManagerActor = settings.system.actorFor(sodaRootActor.path.child("views"))
-  lazy val schemaActor = settings.system.actorFor(sodaRootActor.path.child("schema"))
-  lazy val actionsManagerActor = settings.system.actorFor(sodaRootActor.path.child("actions"))
+
+  lazy val viewManagerActor =
+    settings.system.actorSelection(sodaRootActor.path.child("views"))
+
+  lazy val schemaActor =
+    settings.system.actorSelection(sodaRootActor.path.child("schema"))
+
+  lazy val actionsManagerActor =
+    settings.system.actorSelection(sodaRootActor.path.child("actions"))
 }

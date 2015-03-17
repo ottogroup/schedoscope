@@ -50,7 +50,13 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
     })
 
     val queriesToExecute = queryStack.reverse.filter(q => !StringUtils.isBlank(q))
-    val stmt = connection.createStatement()
+
+    val stmt = try { connection.createStatement() }
+    catch {
+      case e: SQLException =>
+        return DriverRunFailed[HiveTransformation](this, s"SQL exception while preparing Hive query ${queriesToExecute}", e)
+      case t: Throwable => throw DriverException(s"Runtime exception while preparing Hive query ${queriesToExecute}", t)
+    }
 
     queriesToExecute.foreach(
       q => try {
