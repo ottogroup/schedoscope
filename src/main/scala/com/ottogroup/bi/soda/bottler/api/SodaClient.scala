@@ -17,22 +17,31 @@ import spray.client.pipelining.unmarshal
 import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
 import com.ottogroup.bi.soda.Settings
 
-object CliFormat {
+object CliFormat { // FIXME: a more generic parsing would be cool...
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
       case as: ActionStatusList => {
-        sb.append(as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n"))
-        val header = Array("STATUS", "TYP")
-        val running = as.actions.map(p => Array(p.status, p.typ)).toArray
-        val queued = as.queues.flatMap(q => q._2.map(e => Array("queued", q._1))).toArray
+        sb.append(as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
+        val header = Array("ACTOR", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
+        val running = as.actions.map(p => {
+          val (s, d, t) : (String,String,String) =
+            if (p.runStatus.isDefined) {
+              (p.runStatus.get.started.toString, p.runStatus.get.description, p.runStatus.get.targetView)
+            }
+            else {
+              ("", "", "")
+            }
+          Array(p.actor, p.status, s, d, t, p.properties.mkString(","))
+          }).toArray
+        val queued = as.queues.flatMap(q => q._2.map(e => Array(s"${q._1}-queue", "queued", "no", q._2.toString, "", ""))).toArray
         sb.append(ASCIITable.getInstance.getTable(header, running ++ queued))
       }
       case vl: ViewStatusList => {
-        sb.append(vl.overview.map(el => s"${el._1}: ${el._2}\n").mkString("\n"))
+        sb.append(vl.overview.map(el => s"${el._1}: ${el._2}").mkString("\n") + "\n")
         sb.append(s"Details:\n")
-        val header = Array("VIEW", "STATUS")
-        val data = vl.views.map(d => Array(d.view, d.status)).toArray
+        val header = Array("VIEW", "STATUS", "PROPS")
+        val data = vl.views.map(d => Array(d.view, d.status, d.properties.mkString(","))).toArray
         sb.append(ASCIITable.getInstance.getTable(header, data))
       }
       case sc: SodaCommandStatus => {

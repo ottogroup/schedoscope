@@ -41,7 +41,10 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
     val formatter = DateTimeFormat.shortDateTime()
     def read(value: JsValue) = {
       value match {
-        case s: JsString => formatter.parseDateTime(s.value).toLocalDateTime()
+        case s: JsString => {
+           try {formatter.parseDateTime(s.value).toLocalDateTime()}
+           catch {case ie : IllegalArgumentException => null}
+        }
         case _ => null
       }
     }
