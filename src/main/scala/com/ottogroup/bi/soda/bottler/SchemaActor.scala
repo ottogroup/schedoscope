@@ -9,45 +9,57 @@ import com.ottogroup.bi.soda.crate.SchemaManager
 import com.ottogroup.bi.soda.crate.ddl.HiveQl._
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.Version
+import java.util.Date
 
 class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
 
   def receive = {
-    case AddPartition(view) => {
-      try {
-        crate.createPartition(view)
-      } catch {
-        case e: Throwable => { this.sender ! SchemaActionFailure() }
-      }
+    case AddPartition(view) => try {
+      crate.createPartition(view)
       sender ! SchemaActionSuccess()
+    } catch {
+      case e: Throwable => { this.sender ! SchemaActionFailure() }
     }
 
-    case CheckVersion(view) =>
-      if (crate.partitionExists(view)) {
-        try {
+    case CheckViewVersion(view) =>
+      try {
+        if (crate.partitionExists(view)) {
           if (!Settings().transformationVersioning) {
-            sender ! VersionOk(view)
+            sender ! ViewVersionOk(view)
           } else {
             val pv = crate.getPartitionVersion(view)
             if (pv.equals(view.transformation().versionDigest()))
-              sender ! VersionOk(view)
+              sender ! ViewVersionOk(view)
             else
-              sender ! VersionMismatch(view, pv)
+              sender ! ViewVersionMismatch(view, pv)
           }
-        } catch {
-          case e: Throwable => { e.printStackTrace(); this.sender ! SchemaActionFailure() }
+        } else {
+          sender ! ViewVersionMismatch(view, "")
         }
-      } else
-        sender ! VersionMismatch(view, "")
-
-    case SetVersion(view) => {
-      try {
-        crate.setPartitionVersion(view)
       } catch {
-        case e: Throwable => { this.sender ! SchemaActionFailure() }
+        case e: Throwable => { e.printStackTrace(); this.sender ! SchemaActionFailure() }
       }
+
+    case SetViewVersion(view) => try {
+      crate.setPartitionVersion(view)
       sender ! SchemaActionSuccess()
+    } catch {
+      case e: Throwable => { this.sender ! SchemaActionFailure() }
+    }
+
+    case LogTransformationTimestamp(view) => try {
+      crate.setTransformationTimestamp(view, new Date().getTime())
+      sender ! SchemaActionSuccess()
+    } catch {
+      case e: Throwable => { this.sender ! SchemaActionFailure() }
+    }
+
+    case GetTransformationTimestamp(view) => try {
+      val timeStamp = crate.getTransformationTimestamp(view)
+      sender ! TransformationTimestamp(view, timeStamp)
+    } catch {
+      case e: Throwable => { this.sender ! SchemaActionFailure() }
     }
   }
 }

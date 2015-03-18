@@ -4,11 +4,7 @@ import java.security.MessageDigest
 
 import scala.Array.canBuildFrom
 
-/**
- * @author dev_dbenz
- */
 object Version {
-
   val md5 = MessageDigest.getInstance("MD5")
 
   val default = "0"
@@ -27,12 +23,13 @@ object Version {
     v
   }
 
+  object SchemaVersion {
+    def checksumProperty() = "schema.checksum"
+  }
+
+  object TransformationVersion {
+    def checksumProperty() = "transformation.checksum"
+    def timestampProperty() = "transformation.timestamp"
+  }
 }
 
-object SchemaVersion {
-  def checksumProperty() = "schema.checksum"
-}
-
-object TransformationVersion {
-  def checksumProperty() = "transformation.checksum"
-}

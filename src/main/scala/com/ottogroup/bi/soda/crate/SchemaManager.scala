@@ -24,8 +24,6 @@ import org.joda.time.DateTime
 
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.crate.ddl.HiveQl
-import com.ottogroup.bi.soda.dsl.SchemaVersion
-import com.ottogroup.bi.soda.dsl.TransformationVersion
 import com.ottogroup.bi.soda.dsl.Version
 import com.ottogroup.bi.soda.dsl.View
 
@@ -46,7 +44,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def setPartitionVersion(view: View) = {
-    setPartitionProperty(view.dbName, view.n, view.partitionSpec, TransformationVersion.checksumProperty, view.transformation().versionDigest)
+    setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
   }
 
   def getPartitionVersion(view: View): String = {
@@ -54,7 +52,19 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     if (part == null || part.getParameters == null)
       Version.default
     else
-      part.getParameters.getOrElse(TransformationVersion.checksumProperty, Version.default)
+      part.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default)
+  }
+
+  def setTransformationTimestamp(view: View, timestamp: Long) = {
+    setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
+  }
+
+  def getTransformationTimestamp(view: View) = {
+    val part = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
+    if (part == null || part.getParameters == null)
+      0l
+    else
+      part.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong
   }
 
   def dropAndCreateTableSchema(view: View): Unit = {
@@ -71,7 +81,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     stmt.execute(ddl)
     stmt.close()
 
-    setTableProperty(view.dbName, view.n, SchemaVersion.checksumProperty, Version.digest(ddl))
+    setTableProperty(view.dbName, view.n, Version.SchemaVersion.checksumProperty, Version.digest(ddl))
     println("!!created table " + ddl)
   }
 
@@ -84,9 +94,9 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     } else {
       val table = metastoreClient.getTable(view.dbName, view.n)
       val props = table.getParameters()
-      if (!props.containsKey(SchemaVersion.checksumProperty))
+      if (!props.containsKey(Version.SchemaVersion.checksumProperty))
         false
-      else if (d == props.get(SchemaVersion.checksumProperty).toString()) {
+      else if (d == props.get(Version.SchemaVersion.checksumProperty).toString()) {
         existingSchemas += d
         true
       } else
@@ -133,7 +143,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     tables.diff(validTables).foreach { tableName =>
       {
         val table = metastoreClient.getTable(dbname, tableName)
-        if (table.getParameters().containsKey(SchemaVersion.checksumProperty))
+        if (table.getParameters().containsKey(Version.SchemaVersion.checksumProperty))
           metastoreClient.dropTable(dbname, tableName, false, true)
       }
     }

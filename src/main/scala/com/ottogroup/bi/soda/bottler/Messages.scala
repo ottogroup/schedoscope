@@ -30,8 +30,10 @@ case class Retry() extends CommandRequest
 case class Invalidate() extends CommandRequest
 case class PollCommand(typ: String) extends CommandRequest
 case class CommandWithSender(command: AnyRef, sender: ActorRef) extends CommandRequest
-case class CheckVersion(view: View) extends CommandRequest
-case class SetVersion(view: View) extends CommandRequest
+case class CheckViewVersion(view: View) extends CommandRequest
+case class SetViewVersion(view: View) extends CommandRequest
+case class LogTransformationTimestamp(view: View) extends CommandRequest
+case class GetTransformationTimestamp(view: View) extends CommandRequest
 case class GetStatus() extends CommandRequest
 case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Seq[ActorRef]) extends CommandRequest
@@ -45,8 +47,9 @@ case class ActionStatusListResponse(val actionStatusList: List[ActionStatusRespo
 case class ActionStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
 case class ViewStatusResponse(val status: String, view: View) extends CommandResponse
 case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends CommandResponse
-case class VersionOk(view: View) extends CommandResponse
-case class VersionMismatch(view: View, dataVersion: String) extends CommandResponse
+case class ViewVersionOk(view: View) extends CommandResponse
+case class ViewVersionMismatch(view: View, dataVersion: String) extends CommandResponse
+case class TransformationTimestamp(view: View, timestamp: Long) extends CommandResponse
 case class NoDataAvailable(view: View) extends CommandResponse
-case class ViewMaterialized(view: View, incomplete: Boolean, changed: Boolean, errors: Boolean) extends CommandResponse
+case class ViewMaterialized(view: View, incomplete: Boolean, transformationTimestamp: Long, errors: Boolean) extends CommandResponse
 

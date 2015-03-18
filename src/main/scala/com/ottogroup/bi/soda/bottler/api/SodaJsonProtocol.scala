@@ -28,7 +28,7 @@ case class RunStatus(description: String, targetView: String, started: LocalDate
 
 
 object SodaJsonProtocol extends DefaultJsonProtocol {
-  
+
   implicit val runStatusFormat = jsonFormat5(RunStatus)
   implicit val actionStatusFormat = jsonFormat5(ActionStatus)
   implicit val actionStatusListFormat = jsonFormat3(ActionStatusList)

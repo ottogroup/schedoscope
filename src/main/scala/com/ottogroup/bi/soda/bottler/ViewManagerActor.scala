@@ -54,6 +54,8 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
       actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender, children.toList)
     }
 
+    case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
+
     case v: View => {
       //generate a unique id for every actor
       val actorName = v.module + v.n + v.parameters.foldLeft("") { (s, p) => s"${s}+${p.n}=${p.v.get}" }
