@@ -38,6 +38,7 @@ case class GetViewStatusList(statusRequester: ActorRef, viewActors: Seq[ActorRef
 case class MaterializeView() extends CommandRequest
 
 sealed class CommandResponse
+case class DeployActionSuccess() extends CommandResponse
 case class SchemaActionSuccess() extends CommandResponse
 case class ActionSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends CommandResponse
 case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]], val actionQueueStatus: Map[String, List[String]]) extends CommandResponse

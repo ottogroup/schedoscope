@@ -20,10 +20,10 @@ import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import akka.actor.ActorRef
 import akka.actor.ActorSelection.toScala
-import akka.actor.Deploy
 import akka.pattern.ask
 import akka.util.Timeout
 import com.ottogroup.bi.soda.bottler.Invalidate
+import com.ottogroup.bi.soda.bottler.Deploy
 
 class SodaSystem extends SodaInterface {
   /*
@@ -38,7 +38,7 @@ class SodaSystem extends SodaInterface {
   val schemaActor = SodaRootActor.schemaActor
 
   /*
-   * deploy transformation resources
+   * deploy transformation resources FIXME: we don't check for success here...
    */
   actionsManagerActor ! Deploy()
 
@@ -51,21 +51,27 @@ class SodaSystem extends SodaInterface {
   /*
    * helper methods
    */
+    
   private def getViewActors(viewUrlPath: String) = {
     val views = View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
     val viewActorRefFutures = views.map { v => (viewManagerActor ? v).mapTo[ActorRef] }
     Await.result(Future sequence viewActorRefFutures, 60 seconds)
   }
 
-  private def commandId(command: Any, args: Seq[String], start: LocalDateTime) = {
+  private def commandId(command: Any, args: Seq[String], start: Option[LocalDateTime] = None) = {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
     val c = command match {
       case s: String => s
       case c: Any => Named.formatName(c.getClass.getSimpleName)
     }
     val a = if (args.size == 0) "_" else args.mkString(":")
-    val s = format.print(start)
-    s"${c}::${a}::${s}"
+    if (start.isDefined) {
+      val s = format.print(start.get)
+      s"${c}::${a}::${s}"
+    }
+    else {
+      s"${c}::${a}"
+    }
   }
 
   private def submitCommandInternal(actors: List[ActorRef], command: Any, args: String*) = {
@@ -75,7 +81,7 @@ class SodaSystem extends SodaInterface {
     } else {
       val jobFutures = actors.map(actor => actor ? command)
       val start = new LocalDateTime()
-      val id = commandId(command, args, start)
+      val id = commandId(command, args, Some(start))
       runningCommands.put(id, SodaCommand(id, start, jobFutures))
       SodaCommandStatus(id, start, null, Map("submitted" -> jobFutures.size))
     }
@@ -89,7 +95,7 @@ class SodaSystem extends SodaInterface {
   }
 
   private def runningCommandId(command: String, args: String*): Option[String] = {
-    val cidPrefix = s"${command}-${args.mkString}"
+    val cidPrefix = commandId(command, args)
     runningCommands.keys
       .foreach(k =>
         if (k.startsWith(cidPrefix))

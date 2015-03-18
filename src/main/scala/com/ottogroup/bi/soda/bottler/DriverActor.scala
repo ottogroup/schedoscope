@@ -109,7 +109,7 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
     try {
       if (commandToRun.command.isInstanceOf[Deploy]) {
         driver.deployAll(ds)
-
+        commandToRun.sender ! DeployActionSuccess()
         runningCommand = None
       } else {
         val runHandle = driver.run(commandToRun.command.asInstanceOf[T])

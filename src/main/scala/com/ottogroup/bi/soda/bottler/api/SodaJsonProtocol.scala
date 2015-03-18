@@ -72,7 +72,9 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
       val runStatus = RunStatus(desc, view, drh.started, comment, None)
       ActionStatus(actor, typ, status, Some(runStatus), None)
     }
-    ActionStatus(actor, typ, status, None, None)
+    else {
+      ActionStatus(actor, typ, status, None, None)
+    }
   }
 
 }

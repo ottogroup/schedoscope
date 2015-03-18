@@ -40,7 +40,7 @@ object SodaRootActor {
 
   lazy val settings = Settings()
 
-  lazy val sodaRootActor = settings.system.actorOf(props(settings), "soda")
+  lazy val sodaRootActor = settings.system.actorOf(props(settings), "root")
 
   lazy val viewManagerActor =
     settings.system.actorSelection(sodaRootActor.path.child("views"))
