@@ -15,7 +15,6 @@ import com.ottogroup.bi.soda.bottler.driver.DriverException
 
 sealed class Failure
 case class Error(view: View, reason: String) extends Failure
-case class FatalError(view: View, reason: String) extends Failure
 case class Failed(view: View) extends Failure
 case class ActionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunFailed[T]) extends Failure
 case class SchemaActionFailure() extends Failure
