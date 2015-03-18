@@ -49,7 +49,10 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   }
 
   def receive = {
-    case GetStatus() => actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender(), children.toList)
+    case GetStatus() => {
+      println("Fetching status from " + children.toList.mkString(","))
+      actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender, children.toList)      
+    }
 
     case v: View => {
       //generate a unique id for every actor

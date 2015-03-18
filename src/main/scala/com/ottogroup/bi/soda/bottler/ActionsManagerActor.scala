@@ -78,8 +78,8 @@ class ActionsManagerActor() extends Actor {
     }
 
   override def preStart {
-    for (transformation <- availableTransformations; _ <- 0 until settings.getDriverSettings(transformation).concurrency) {
-      actorOf(DriverActor.props(transformation, self))
+    for (transformation <- availableTransformations; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
+      actorOf(DriverActor.props(transformation, self), s"${transformation}-${c+1}")
     }
   }
 

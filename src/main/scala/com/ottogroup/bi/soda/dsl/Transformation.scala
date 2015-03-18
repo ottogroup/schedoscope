@@ -31,7 +31,7 @@ abstract class Transformation {
 
   var description = this.toString
 
-  def getView() = if (view.isDefined) view.get.viewId else "no-view"
+  def getView() = if (view.isDefined) view.get.urlPath else "no-view"
 
   def name: String
 }

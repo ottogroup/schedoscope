@@ -32,13 +32,13 @@ case class OrderItem(year: Parameter[Int], month: Parameter[Int], day: Parameter
 }
 
 case class Order(year: Parameter[Int], month: Parameter[Int], day: Parameter[Int]) extends View {
-  val id = fieldOf[Int]
+  val viewId = fieldOf[Int]
   val date = fieldOf[Date]
   val customerNumber = fieldOf[String]
 }
 
 case class OrderAll(year: Parameter[Int], month: Parameter[Int], day: Parameter[Int]) extends View {
-  val id = fieldOf[Int]
+  val viewId = fieldOf[Int]
   val date = fieldOf[Date]
   val customerNumber = fieldOf[String]
   val pos = fieldOf[Int]
@@ -53,11 +53,11 @@ case class OrderAll(year: Parameter[Int], month: Parameter[Int], day: Parameter[
     HiveTransformation(HiveTransformation.insertInto(
       this,
       dsl {
-        _.select(order().id, get(orderItem().eans, 0), orderItem().article)
+        _.select(order().viewId, get(orderItem().eans, 0), orderItem().article)
           .from(order())
           .join(orderItem())
-          .on(order().id.equal(orderItem().orderId))
-          .where(order().id.equal(4711))
+          .on(order().viewId.equal(orderItem().orderId))
+          .where(order().viewId.equal(4711))
       })))
 }
 
