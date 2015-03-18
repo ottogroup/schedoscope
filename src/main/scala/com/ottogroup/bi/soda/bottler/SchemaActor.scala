@@ -5,13 +5,13 @@ import akka.actor.Actor
 import akka.actor.ActorDSL._
 import akka.actor.ActorSystem
 import akka.actor.Props
-import com.ottogroup.bi.soda.crate.DeploySchema
+import com.ottogroup.bi.soda.crate.SchemaManager
 import com.ottogroup.bi.soda.crate.ddl.HiveQl._
 import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.dsl.Version
 
 class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
-  val crate = DeploySchema(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
 
   def receive = {
     case AddPartition(view) => {

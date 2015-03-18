@@ -6,7 +6,7 @@ import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
 import com.ottogroup.bi.soda.bottler.driver.HiveDriver
-import com.ottogroup.bi.soda.crate.DeploySchema
+import com.ottogroup.bi.soda.crate.SchemaManager
 import com.ottogroup.bi.soda.dsl.TextFile
 import com.ottogroup.bi.soda.test.Database
 import java.sql.Connection
@@ -39,7 +39,7 @@ abstract class TestResources {
 
   lazy val database = new Database(connection, jdbcUrl)
 
-  lazy val bottler: DeploySchema = DeploySchema(metastoreClient, connection)
+  lazy val crate: SchemaManager = SchemaManager(metastoreClient, connection)
 
   lazy val hiveDriver: HiveDriver = new HiveDriver(ugi, jdbcUrl, metastoreClient) {
     override def JDBC_CLASS = jdbcClass

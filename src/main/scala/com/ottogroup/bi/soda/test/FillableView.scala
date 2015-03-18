@@ -111,7 +111,7 @@ trait rows extends View {
   }
 
   def deploySchema() {
-    val d = resources().bottler
+    val d = resources().crate
     println(HiveQl.ddl(this))
     if (!d.schemaExists(this)) {
       d.dropAndCreateTableSchema(this)
@@ -119,7 +119,7 @@ trait rows extends View {
   }
 
   def writeData() {
-    val d = resources().bottler
+    val d = resources().crate
     val partitionFilePath = if (this.isPartitioned())
       new Path(new URI(d.createPartition(this).getSd.getLocation).getPath)
     else

@@ -54,7 +54,7 @@ trait test extends TestableView {
     println("Populating results transformation, adding partition")
     // FIXME: some transformations may create the partition by themselves?
     if (this.isPartitioned()) {
-      val part = resources().bottler.createPartition(this)
+      val part = resources().crate.createPartition(this)
       println("Added partition: " + part.getSd.getLocation)
     }
     populate(sortedBy)

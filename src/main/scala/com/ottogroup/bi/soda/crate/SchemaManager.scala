@@ -29,7 +29,7 @@ import com.ottogroup.bi.soda.dsl.TransformationVersion
 import com.ottogroup.bi.soda.dsl.Version
 import com.ottogroup.bi.soda.dsl.View
 
-class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connection) {
+class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
 
@@ -158,7 +158,7 @@ class DeploySchema(val metastoreClient: IMetaStoreClient, val connection: Connec
 
 }
 
-object DeploySchema {
+object SchemaManager {
   def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
     Class.forName("org.apache.hive.jdbc.HiveDriver")
     val connection =
@@ -179,11 +179,11 @@ object DeploySchema {
         serverKerberosPrincipal);
     }
     val metastoreClient = new HiveMetaStoreClient(conf)
-    new DeploySchema(metastoreClient, connection)
+    new SchemaManager(metastoreClient, connection)
   }
 
   def apply(metastoreClient: IMetaStoreClient, connection: Connection) = {
-    new DeploySchema(metastoreClient, connection)
+    new SchemaManager(metastoreClient, connection)
   }
 
   def main(args: Array[String]) = {
