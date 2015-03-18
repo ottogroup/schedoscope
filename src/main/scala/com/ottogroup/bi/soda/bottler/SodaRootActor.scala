@@ -2,8 +2,8 @@ package com.ottogroup.bi.soda.bottler
 
 import scala.concurrent.duration.DurationInt
 
-import com.ottogroup.bi.soda.bottler.api.Settings
-import com.ottogroup.bi.soda.bottler.api.SettingsImpl
+import com.ottogroup.bi.soda.Settings
+import com.ottogroup.bi.soda.SettingsImpl
 
 import akka.actor.Actor
 import akka.actor.ActorRef

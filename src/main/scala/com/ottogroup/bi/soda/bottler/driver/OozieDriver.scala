@@ -14,8 +14,8 @@ import org.apache.oozie.client.WorkflowJob.Status.SUCCEEDED
 import org.apache.oozie.client.WorkflowJob.Status.SUSPENDED
 import org.joda.time.LocalDateTime
 
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.DriverSettings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 import com.typesafe.config.ConfigFactory
 

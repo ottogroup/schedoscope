@@ -8,7 +8,7 @@ import scala.collection.JavaConversions.propertiesAsScalaMap
 
 import org.apache.commons.lang.StringUtils
 
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.Transformation
 
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {

@@ -7,7 +7,7 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import com.ottogroup.bi.soda.crate.SchemaManager
 import com.ottogroup.bi.soda.crate.ddl.HiveQl._
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.Version
 
 class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {

@@ -1,11 +1,12 @@
 package com.ottogroup.bi.soda.bottler.api
 
+import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
+
 import akka.actor.ActorSystem
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
 import spray.routing.Directive.pimpApply
 import spray.routing.SimpleRoutingApp
-import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
 
 object SodaService extends App with SimpleRoutingApp {
 
@@ -21,46 +22,51 @@ object SodaService extends App with SimpleRoutingApp {
           soda.actions(None)
         }
       } ~
-      path("actions" / Rest) {status => {
-          complete {
-            soda.actions(Some(status))
+        path("actions" / Rest) { status =>
+          {
+            complete {
+              soda.actions(Some(status))
+            }
           }
-        }
-      } ~      
-      path("views") {
-        complete {
-          soda.views(None, None, false)
-        }
-      } ~
-      path("views" / Rest) {status => {
+        } ~
+        path("views") {
           complete {
-            soda.views(None, Some(status), false)
+            soda.views(None, None, false)
           }
-        }
-      } ~      
-      path("materialize" / Rest) { viewUrlPath => {
-          complete {
-            soda.materialize(viewUrlPath)
+        } ~
+        path("views" / Rest) { status =>
+          {
+            complete {
+              soda.views(None, Some(status), false)
+            }
           }
-        }
-      } ~
-      path("command" / Rest) { commandId => {
-          complete {
-            soda.commandStatus(commandId)
+        } ~
+        path("materialize" / Rest) { viewUrlPath =>
+          {
+            complete {
+              soda.materialize(viewUrlPath)
+            }
           }
-        }
-      } ~
-      path("commands") {
+        } ~
+        path("command" / Rest) { commandId =>
+          {
+            complete {
+              soda.commandStatus(commandId)
+            }
+          }
+        } ~
+        path("commands") {
           complete {
             soda.commands(None)
           }
-      } ~      
-      path("commands" / Rest) { status => {
-          complete {
-            soda.commands(Some(status))
+        } ~
+        path("commands" / Rest) { status =>
+          {
+            complete {
+              soda.commands(Some(status))
+            }
           }
         }
-      }
     }
   }
 

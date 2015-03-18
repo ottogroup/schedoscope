@@ -1,10 +1,11 @@
 package com.ottogroup.bi.soda.bottler.api
 
+import scala.Array.canBuildFrom
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
-import com.ottogroup.bi.soda.dsl.View
+import com.bethecoder.ascii_table.ASCIITable
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser
 import akka.actor.ActorSystem
 import akka.event.Logging
@@ -14,14 +15,14 @@ import spray.client.pipelining.WithTransformerConcatenation
 import spray.client.pipelining.sendReceive
 import spray.client.pipelining.unmarshal
 import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
-import com.bethecoder.ascii_table.ASCIITable
+import com.ottogroup.bi.soda.Settings
 
 object CliFormat {
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
       case as: ActionStatusList => {
-        sb.append(as.overview.map( el => s"${el._1} : ${el._2}").mkString("\n"))
+        sb.append(as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n"))
         val header = Array("STATUS", "TYP")
         val running = as.actions.map(p => Array(p.status, p.typ)).toArray
         val queued = as.queues.flatMap(q => q._2.map(e => Array("queued", q._1))).toArray
@@ -50,7 +51,6 @@ object CliFormat {
     sb.toString
   }
 }
-
 
 class SodaRestClient extends SodaInterface {
 
@@ -83,43 +83,41 @@ class SodaRestClient extends SodaInterface {
   def close() {
     system.shutdown()
   }
-  
+
   def materialize(viewUrlPath: String): SodaCommandStatus = {
-   Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath}"), 10.days) 
+    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath}"), 10.days)
   }
 
-  def invalidate(viewUrlPath: String): SodaCommandStatus = { null}
+  def invalidate(viewUrlPath: String): SodaCommandStatus = { null }
 
-  def newdata(viewUrlPath: String): SodaCommandStatus = { null}
+  def newdata(viewUrlPath: String): SodaCommandStatus = { null }
 
-  def commandStatus(commandId: String): SodaCommandStatus = { null}
+  def commandStatus(commandId: String): SodaCommandStatus = { null }
 
-  def commands(status: Option[String]): List[SodaCommandStatus] = { 
-    val stat = if (status.isDefined) "/"+status else ""
+  def commands(status: Option[String]): List[SodaCommandStatus] = {
+    val stat = if (status.isDefined) "/" + status else ""
     Await.result(get[List[SodaCommandStatus]](s"/commands${stat}"), 20.seconds)
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false): ViewStatusList = { 
-    val stat = if (status.isDefined) "/"+status else ""
+  def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false): ViewStatusList = {
+    val stat = if (status.isDefined) "/" + status else ""
     Await.result(get[ViewStatusList](s"/views${stat}"), 20.seconds)
   }
 
   def actions(status: Option[String]): ActionStatusList = {
-    val stat = if (status.isDefined) "/"+status else ""
+    val stat = if (status.isDefined) "/" + status else ""
     Await.result(get[ActionStatusList](s"/actions${stat}"), 20.seconds)
-  }  
+  }
 }
 
-
-
-object SodaControl {  
+object SodaControl {
   object Action extends Enumeration {
     val VIEWS, ACTIONS, MATERIALIZE, COMMANDS = Value
   }
   import Action._
 
   case class Config(action: Option[Action.Value] = None, viewUrlPath: String = "", status: Option[String] = None)
-  
+
   val soda = new SodaRestClient()
   val log = Logging(soda.system, getClass)
 
@@ -132,7 +130,7 @@ object SodaControl {
     cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children ()
     cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children ()
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = x) } required () valueName ("<viewUrlPath>") required() text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = x) } required () valueName ("<viewUrlPath>") required () text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
     checkConfig { c =>
       {
         if (!c.action.isDefined) failure("A command is required")
@@ -158,7 +156,7 @@ object SodaControl {
           }
           case COMMANDS => {
             soda.commands(None)
-          }          
+          }
           case _ => {
             println("Unsupported Action: " + config.action.get.toString)
           }

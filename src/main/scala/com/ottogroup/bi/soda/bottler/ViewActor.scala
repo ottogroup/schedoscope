@@ -8,7 +8,7 @@ import scala.concurrent.duration.Duration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 
-import com.ottogroup.bi.soda.bottler.api.SettingsImpl
+import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.dsl.NoOp
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
@@ -47,26 +47,98 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     self ! MaterializeView()
   }
 
+  // State: default
+  // transitions: materialized,waiting,nodata
   def receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("receive", view)
+
     case MaterializeView() => materializeDependencies
   })
 
-  def transform(retries: Int) = {
-    val partitionResult = schemaActor ? AddPartition(view)
-    Await.result(partitionResult, settings.schemaActionTimeout)
-    Await.result(actionsManagerActor ? Delete(view.fullPath, true), settings.fileActionTimeout)
+  // State: waiting
+  // Description: Waiting for dependencies to materialize
+  // transitions: waiting, transforming, materialized
+  def waiting: Receive = LoggingReceive {
+    case _: GetStatus => sender ! ViewStatusResponse("waiting", view)
 
-    actionsManagerActor ! view
+    case MaterializeView() => listeningDependant.add(sender)
 
-    unbecome()
-    become(transforming(retries))
+    case NoDataAvailable(dependency) => {
+      log.debug("received nodata from " + dependency)
+      incomplete = true
+      dependencyAnswered(dependency)
+    }
 
-    log.debug("STATE CHANGE:transforming")
+    case Failed(dependency) => {
+      log.debug("received failed from " + dependency)
+      incomplete = true
+      withErrors = true
+      dependencyAnswered(dependency)
+    }
+
+    case ViewMaterialized(dependency, true, false, false) => {
+      log.debug("incomplete,not changed from " + dependency)
+      aDependencyReturnedData = true
+      incomplete = true
+      dependencyAnswered(dependency)
+    }
+
+    case ViewMaterialized(dependency, false, false, false) => {
+      log.debug("complete,not changed from " + dependency)
+      aDependencyReturnedData = true
+      dependencyAnswered(dependency)
+    }
+
+    case ViewMaterialized(dependency, true, true, false) => {
+      log.debug("incomplete,changed from " + dependency)
+      aDependencyReturnedData = true
+      incomplete = true
+      changed = true
+      dependencyAnswered(dependency)
+    }
+
+    case ViewMaterialized(dependency, false, true, false) => {
+      log.debug("complete, changed from " + dependency)
+      aDependencyReturnedData = true
+      changed = true
+      dependencyAnswered(dependency)
+    }
+
+    case ViewMaterialized(dependency, true, false, true) => {
+      log.debug("incomplete,not changed from " + dependency)
+      aDependencyReturnedData = true
+      incomplete = true
+      withErrors = true
+      dependencyAnswered(dependency)
+    }
+
+    case ViewMaterialized(dependency, false, false, true) => {
+      log.debug("complete,not changed from " + dependency)
+      aDependencyReturnedData = true
+      withErrors = true
+      dependencyAnswered(dependency)
+    }
+
+    case ViewMaterialized(dependency, true, true, true) => {
+      log.debug("incomplete,changed from " + dependency);
+      aDependencyReturnedData = true
+      incomplete = true
+      changed = true
+      withErrors = true
+      dependencyAnswered(dependency)
+    }
+
+    case ViewMaterialized(dependency, false, true, true) => {
+      log.debug("complete, changed from " + dependency)
+      aDependencyReturnedData = true
+      changed = true
+      withErrors = true
+      dependencyAnswered(dependency)
+    }
   }
   
   // State: transforming
-  // transitions: materialized,failed,transforming
+  // transitions: materialized,failed,retrying
   def transforming(retries: Int): Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
 
@@ -81,7 +153,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
       log.debug("STATE CHANGE:transforming->materialized")
 
-      listeningDependant.foreach(s => { log.debug(s"sending VMI to ${s}"); s ! ViewMaterialized(view, incomplete, true, withErrors) })
+      listeningDependant.foreach(s => { log.debug(s"sending View materialized message to ${s}"); s ! ViewMaterialized(view, incomplete, true, withErrors) })
       listeningDependant.clear
     }
 
@@ -90,26 +162,13 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case MaterializeView() => listeningDependant.add(sender)
   })
 
-  def reload() = {
-    unbecome()
-    become(waiting)
-
-    log.debug("STATE CHANGE:waiting")
-
-    Await.result(actionsManagerActor ? Delete(view.fullPath + "/_SUCCESS", false), settings.fileActionTimeout)
-    transform(1)
-
-    // tell everyone that new data is avaiable
-    system.actorSelection("/user/views/*") ! NewDataAvailable(view)
-  }
-
   // State: materialized
   // transitions: receive,materialized,transforming
   def materialized: Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("materialized", view)
 
     case MaterializeView() => sender ! ViewMaterialized(view, incomplete, false, withErrors)
-    
+
     case Invalidate() =>
       unbecome(); become(receive); log.debug("STATE CHANGE:receive")
 
@@ -118,11 +177,12 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   })
 
   // State: nodata
-  // transitions; receive,transforming,nodata
+  // transitions: receive,transforming,nodata
   def nodata: Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("nodata", view)
 
     case MaterializeView() => sender ! NoDataAvailable(view)
+
     case Invalidate() => {
       unbecome()
       become(receive)
@@ -133,6 +193,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case NewDataAvailable(view) => if (waitingForDependency.contains(view)) reload()
   })
 
+  // State: retrying
+  // transitions: failed, transforming
   def retrying(retries: Int): Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("retrying", view)
 
@@ -151,85 +213,48 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
   })
 
+  // State: failed
+  // transitions:  waiting
   def failed: Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("failed", view)
+
     case NewDataAvailable(view) => if (waitingForDependency.contains(view)) reload()
-    case Invalidate() =>
-      unbecome(); become(receive); log.debug("STATE CHANGE:failed->receive")
+
+    case Invalidate() => {
+      unbecome()
+      become(receive)
+      log.debug("STATE CHANGE:failed->receive")
+    }
+
     case MaterializeView() => sender ! Failed(view)
+
     case _ => sender ! FatalError(view, "not recoverable")
   })
 
-  // State: waiting
-  // Description: Waiting for dependencies to materialize
-  // transitions: waiting, transforming, materialized
-  def waiting: Receive = LoggingReceive {
-    case _: GetStatus => sender ! ViewStatusResponse("waiting", view)
+  def reload() = {
+    unbecome()
+    become(waiting)
 
-    case MaterializeView() => listeningDependant.add(sender)
+    log.debug("STATE CHANGE:waiting")
 
-    case NoDataAvailable(dependency) => {
-      log.debug("received nodata from " + dependency)
-      incomplete = true
-      waitingDependencyIsDone(dependency)
-    }
-    case Failed(dependency) => {
-      log.debug("received failed from " + dependency)
-      incomplete = true
-      withErrors = true
-      waitingDependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, true, false, false) => {
-      log.debug("incomplete,not changed from " + dependency)
-      aDependencyReturnedData = true
-      incomplete = true
-      waitingDependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, false, false, false) => {
-      log.debug("complete,not changed from " + dependency)
-      aDependencyReturnedData = true
-      waitingDependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, true, true, false) => {
-      log.debug("incomplete,changed from " + dependency)
-      aDependencyReturnedData = true
-      incomplete = true
-      changed = true
-      waitingDependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, false, true, false) => {
-      log.debug("complete, changed from " + dependency)
-      aDependencyReturnedData = true
-      changed = true; waitingDependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, true, false, true) => {
-      log.debug("incomplete,not changed from " + dependency)
-      aDependencyReturnedData = true
-      incomplete = true
-      withErrors = true
-      waitingDependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, false, false, true) => {
-      log.debug("complete,not changed from " + dependency)
-      aDependencyReturnedData = true
-      withErrors = true
-      waitingDependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, true, true, true) => {
-      log.debug("incomplete,changed from " + dependency);
-      aDependencyReturnedData = true
-      incomplete = true
-      changed = true
-      withErrors = true
-      waitingDependencyIsDone(dependency)
-    }
-    case ViewMaterialized(dependency, false, true, true) => {
-      log.debug("complete, changed from " + dependency)
-      aDependencyReturnedData = true
-      changed = true
-      withErrors = true
-      waitingDependencyIsDone(dependency)
-    }
+    Await.result(actionsManagerActor ? Delete(view.fullPath + "/_SUCCESS", false), settings.fileActionTimeout)
+    transform(1)
+
+    // tell everyone that new data is avaiable
+    system.actorSelection("/user/views/*") ! NewDataAvailable(view)
+  }
+
+  def transform(retries: Int) = {
+    val partitionResult = schemaActor ? AddPartition(view)
+    Await.result(partitionResult, settings.schemaActionTimeout)
+    Await.result(actionsManagerActor ? Delete(view.fullPath, true), settings.fileActionTimeout)
+
+    actionsManagerActor ! view
+
+    unbecome()
+    become(transforming(retries))
+
+    log.debug("STATE CHANGE:transforming")
   }
 
   def successFlagExists(view: View): Boolean = {
@@ -242,7 +267,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     })
   }
 
-  private def retry(retries: Int): akka.actor.Cancellable = {
+  def retry(retries: Int): akka.actor.Cancellable = {
     unbecome()
     become(retrying(retries))
 
@@ -252,11 +277,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
   }
 
-  private def waitingDependencyIsDone(dependency: com.ottogroup.bi.soda.dsl.View) = {
+  def dependencyAnswered(dependency: com.ottogroup.bi.soda.dsl.View) = {
     waitingForDependency.remove(dependency)
-    
+
     log.debug(s"this actor still waits for ${waitingForDependency.size} dependencies, changed=${changed}, incomplete=${incomplete}, dependencies with data=${aDependencyReturnedData}")
-    
+
     if (waitingForDependency.isEmpty) {
       if (aDependencyReturnedData) {
         if (!changed) {
@@ -267,7 +292,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
               changed = true
               log.warning("got error from versioncheck, assuming changed data")
             }
+
             case VersionOk(v) =>
+
             case VersionMismatch(v, version) => changed = true; log.debug("version mismatch,assuming changed workflow")
           }
         }
@@ -297,8 +324,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
   }
 
-  private def materializeDependencies: Unit = {
+  def materializeDependencies: Unit = {
     log.debug(view + " has dependencies " + view.dependencies.mkString(", "))
+
     if (view.dependencies.isEmpty) {
       if (successFlagExists(view) && view.transformation() == NoOp()) {
         log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")

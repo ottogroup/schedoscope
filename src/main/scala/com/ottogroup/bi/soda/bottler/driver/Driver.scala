@@ -10,7 +10,7 @@ import scala.util.Random
 
 import org.joda.time.LocalDateTime
 
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
+import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.dsl.Transformation
 
 import net.lingala.zip4j.core.ZipFile

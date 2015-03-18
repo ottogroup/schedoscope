@@ -21,8 +21,8 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
 
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.DriverSettings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Copy
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.CopyFrom
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete

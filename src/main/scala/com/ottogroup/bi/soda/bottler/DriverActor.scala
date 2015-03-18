@@ -3,8 +3,8 @@ package com.ottogroup.bi.soda.bottler
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 import org.joda.time.LocalDateTime
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.DriverSettings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.bottler.driver.Driver
 import com.ottogroup.bi.soda.bottler.driver.DriverException
 import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
@@ -28,7 +28,7 @@ import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
 
 class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
-  val log = Logging(system, this) 
+  val log = Logging(system, this)
 
   lazy val driver = driverConstructor(ds)
 

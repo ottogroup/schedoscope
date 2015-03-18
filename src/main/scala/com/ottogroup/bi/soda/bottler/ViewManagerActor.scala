@@ -3,7 +3,7 @@ package com.ottogroup.bi.soda.bottler
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.DurationInt
 
-import com.ottogroup.bi.soda.bottler.api.SettingsImpl
+import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.dsl.View
 
 import akka.actor.Actor
@@ -51,7 +51,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   def receive = {
     case GetStatus() => {
       println("Fetching status from " + children.toList.mkString(","))
-      actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender, children.toList)      
+      actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender, children.toList)
     }
 
     case v: View => {

@@ -1,35 +1,29 @@
 package com.ottogroup.bi.soda.bottler.api
 
-
+import scala.Option.option2Iterable
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import org.joda.time.LocalDateTime
+import org.joda.time.format.DateTimeFormat
 import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
 import com.ottogroup.bi.soda.bottler.Failed
-import com.ottogroup.bi.soda.bottler.SodaRootActor
-import com.ottogroup.bi.soda.bottler.ActionStatusResponse
 import com.ottogroup.bi.soda.bottler.GetStatus
-import com.ottogroup.bi.soda.bottler.NoDataAvailable
-import com.ottogroup.bi.soda.bottler.ViewMaterialized
 import com.ottogroup.bi.soda.bottler.MaterializeView
+import com.ottogroup.bi.soda.bottler.NoDataAvailable
+import com.ottogroup.bi.soda.bottler.SodaRootActor
+import com.ottogroup.bi.soda.bottler.ViewMaterialized
 import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
-import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
-import com.ottogroup.bi.soda.bottler.driver.DriverRunState
-import com.ottogroup.bi.soda.bottler.driver.DriverRunSucceeded
-import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
+import com.ottogroup.bi.soda.dsl.Named
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import akka.actor.ActorRef
+import akka.actor.ActorSelection.toScala
+import akka.actor.Deploy
 import akka.pattern.ask
 import akka.util.Timeout
-import com.ottogroup.bi.soda.bottler.driver.DriverRunHandle
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
-import com.ottogroup.bi.soda.dsl.Named
-import org.joda.time.format.DateTimeFormat
-import akka.actor.Deploy
+import com.ottogroup.bi.soda.bottler.Invalidate
 
 class SodaSystem extends SodaInterface {
   /*
@@ -42,7 +36,7 @@ class SodaSystem extends SodaInterface {
   val actionsManagerActor = SodaRootActor.actionsManagerActor
   val viewManagerActor = SodaRootActor.viewManagerActor
   val schemaActor = SodaRootActor.schemaActor
-  
+
   /*
    * deploy transformation resources
    */
@@ -62,11 +56,11 @@ class SodaSystem extends SodaInterface {
     val viewActorRefFutures = views.map { v => (viewManagerActor ? v).mapTo[ActorRef] }
     Await.result(Future sequence viewActorRefFutures, 60 seconds)
   }
-  
+
   private def commandId(command: Any, args: Seq[String], start: LocalDateTime) = {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
     val c = command match {
-      case s : String => s
+      case s: String => s
       case c: Any => Named.formatName(c.getClass.getSimpleName)
     }
     val a = if (args.size == 0) "_" else args.mkString(":")
@@ -103,7 +97,6 @@ class SodaSystem extends SodaInterface {
     None
   }
 
-
   /*
    * soda API
    */
@@ -114,7 +107,7 @@ class SodaSystem extends SodaInterface {
 
   def invalidate(viewUrlPath: String) = { // FIXME: incomplete
     val viewActors = getViewActors(viewUrlPath)
-    submitCommandInternal(viewActors, "invalidate", viewUrlPath)
+    submitCommandInternal(viewActors, Invalidate(), viewUrlPath)
   }
 
   def newdata(viewUrlPath: String) = { // FIXME: incomplete

@@ -22,7 +22,7 @@ import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.joda.time.DateTime
 
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.crate.ddl.HiveQl
 import com.ottogroup.bi.soda.dsl.SchemaVersion
 import com.ottogroup.bi.soda.dsl.TransformationVersion
@@ -50,15 +50,11 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def getPartitionVersion(view: View): String = {
-    try {
-      val part = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
-      if (part == null || part.getParameters == null)
-        Version.default
-      else
-        part.getParameters.getOrElse(TransformationVersion.checksumProperty, Version.default)
-    } catch {
-      case e: Exception => throw e
-    }
+    val part = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
+    if (part == null || part.getParameters == null)
+      Version.default
+    else
+      part.getParameters.getOrElse(TransformationVersion.checksumProperty, Version.default)
   }
 
   def dropAndCreateTableSchema(view: View): Unit = {

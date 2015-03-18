@@ -4,15 +4,12 @@ import scala.Option.option2Iterable
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.DurationInt
-
 import org.apache.hadoop.conf.Configuration
-
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.bottler.driver.DriverException
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -23,6 +20,7 @@ import akka.actor.actorRef2Scala
 import akka.contrib.pattern.Aggregator
 import akka.event.Logging
 import akka.event.LoggingReceive
+import com.ottogroup.bi.soda.Settings
 
 class ActionStatusRetriever() extends Actor with Aggregator {
   expectOnce {
@@ -79,7 +77,7 @@ class ActionsManagerActor() extends Actor {
 
   override def preStart {
     for (transformation <- availableTransformations; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
-      actorOf(DriverActor.props(transformation, self), s"${transformation}-${c+1}")
+      actorOf(DriverActor.props(transformation, self), s"${transformation}-${c + 1}")
     }
   }
 
@@ -97,8 +95,7 @@ class ActionsManagerActor() extends Actor {
         if (cmd.command.isInstanceOf[Transformation]) {
           val transformation = cmd.command.asInstanceOf[Transformation]
           log.debug(s"Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(transformationType).get.size}")
-        }
-        else
+        } else
           log.debug("Dequeued deploy action")
       }
     }

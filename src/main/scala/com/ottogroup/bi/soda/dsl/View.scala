@@ -8,7 +8,7 @@ import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 
 import com.openpojo.reflection.impl.PojoClassFactory
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.View._
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedView

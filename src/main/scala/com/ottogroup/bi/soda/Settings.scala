@@ -1,4 +1,4 @@
-package com.ottogroup.bi.soda.bottler.api
+package com.ottogroup.bi.soda
 
 import java.net.URLClassLoader
 import java.nio.file.Paths
@@ -13,15 +13,15 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver.fileSystem
 import com.ottogroup.bi.soda.dsl.Parameter.p
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
 import com.typesafe.config.Config
 import akka.actor.ActorSystem
 import akka.actor.ExtendedActorSystem
 import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
+import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
 import com.ottogroup.bi.soda.bottler.driver.Driver
+import com.ottogroup.bi.soda.dsl.Transformation
 
 class SettingsImpl(val config: Config) extends Extension {
 
@@ -92,6 +92,7 @@ class SettingsImpl(val config: Config) extends Extension {
   val dependencyTimout = Duration.create(config.getDuration("soda.timeouts.dependency", TimeUnit.SECONDS), TimeUnit.SECONDS)
   val materializeAllTimeout = Duration.create(config.getDuration("soda.timeouts.all", TimeUnit.SECONDS), TimeUnit.SECONDS)
   val retries = config.getInt("soda.action.retry")
+
   val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()

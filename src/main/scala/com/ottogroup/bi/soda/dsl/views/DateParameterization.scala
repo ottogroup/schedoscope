@@ -3,7 +3,7 @@ package com.ottogroup.bi.soda.dsl.views
 import java.util.Calendar
 import com.ottogroup.bi.soda.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.Settings
 
 object DateParameterizationUtils {
   def earliestDay = Settings().earliestDay

@@ -19,8 +19,8 @@ import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
 
-import com.ottogroup.bi.soda.bottler.api.DriverSettings
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.DriverSettings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.replaceParameters
 

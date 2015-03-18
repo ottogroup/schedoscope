@@ -2,7 +2,7 @@ package com.ottogroup.bi.soda.dsl
 
 import scala.collection.mutable.HashMap
 
-import com.ottogroup.bi.soda.bottler.api.Settings
+import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
 
 abstract class Transformation {
