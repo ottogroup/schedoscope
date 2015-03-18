@@ -42,8 +42,8 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
     def read(value: JsValue) = {
       value match {
         case s: JsString => {
-           try {formatter.parseDateTime(s.value).toLocalDateTime()}
-           catch {case ie : IllegalArgumentException => null}
+          try { formatter.parseDateTime(s.value).toLocalDateTime() }
+          catch { case ie: IllegalArgumentException => null }
         }
         case _ => null
       }
@@ -74,8 +74,7 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
       val view = drh.transformation.asInstanceOf[Transformation].getView()
       val runStatus = RunStatus(desc, view, drh.started, comment, None)
       ActionStatus(actor, typ, status, Some(runStatus), None)
-    }
-    else {
+    } else {
       ActionStatus(actor, typ, status, None, None)
     }
   }

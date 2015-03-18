@@ -25,15 +25,14 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
         sb.append(as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
         val header = Array("ACTOR", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
         val running = as.actions.map(p => {
-          val (s, d, t) : (String,String,String) =
+          val (s, d, t): (String, String, String) =
             if (p.runStatus.isDefined) {
               (p.runStatus.get.started.toString, p.runStatus.get.description, p.runStatus.get.targetView)
-            }
-            else {
+            } else {
               ("", "", "")
             }
           Array(p.actor, p.status, s, d, t, p.properties.mkString(","))
-          }).toArray
+        }).toArray
         val queued = as.queues.flatMap(q => q._2.map(e => Array(s"${q._1}-queue", "queued", "no", q._2.toString, "", ""))).toArray
         sb.append(ASCIITable.getInstance.getTable(header, running ++ queued))
       }

@@ -51,7 +51,7 @@ class SodaSystem extends SodaInterface {
   /*
    * helper methods
    */
-    
+
   private def getViewActors(viewUrlPath: String) = {
     val views = View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
     val viewActorRefFutures = views.map { v => (viewManagerActor ? v).mapTo[ActorRef] }
@@ -68,8 +68,7 @@ class SodaSystem extends SodaInterface {
     if (start.isDefined) {
       val s = format.print(start.get)
       s"${c}::${a}::${s}"
-    }
-    else {
+    } else {
       s"${c}::${a}"
     }
   }
