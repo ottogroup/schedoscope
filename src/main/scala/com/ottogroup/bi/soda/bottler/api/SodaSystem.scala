@@ -168,9 +168,9 @@ class SodaSystem extends SodaInterface {
         .mapValues(_.size)
 
       if (statusCounts.get("running").getOrElse(0) == 0) {
-        finalizeInternal(commandId, cmd.get.start, Map("submitted" -> cmd.size) ++ statusCounts)
+        finalizeInternal(commandId, cmd.get.start, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
       } else {
-        SodaCommandStatus(commandId, cmd.get.start, null, Map("submitted" -> cmd.size) ++ statusCounts)
+        SodaCommandStatus(commandId, cmd.get.start, null, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
       }
     }
   }
