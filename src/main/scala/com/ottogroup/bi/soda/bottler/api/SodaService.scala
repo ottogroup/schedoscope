@@ -14,7 +14,6 @@ import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
 import com.ottogroup.bi.soda.bottler.Deploy
 import com.ottogroup.bi.soda.bottler.Failed
 import com.ottogroup.bi.soda.bottler.GetStatus
-import com.ottogroup.bi.soda.bottler.InternalError
 import com.ottogroup.bi.soda.bottler.KillAction
 import com.ottogroup.bi.soda.bottler.MaterializeView
 import com.ottogroup.bi.soda.bottler.NewDataAvailable
@@ -200,8 +199,8 @@ object SodaService {
 
             case request @ Get on Root /: "kill" /: id =>
               try {
-                val result = (settings.system.actorSelection(id) ? KillAction)
-                result.map { case InternalError(s) => request.error(s, headers) case _ => request.ok("ok", headers) }
+                settings.system.actorSelection(id) ! KillAction
+                request.ok("ok", headers)
               } catch {
                 case t: Throwable => errorResponseWithStacktrace(request, t)
               }

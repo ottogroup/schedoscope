@@ -10,41 +10,33 @@ import com.ottogroup.bi.soda.crate.ddl.HiveQl._
 import com.ottogroup.bi.soda.bottler.api.Settings
 import com.ottogroup.bi.soda.dsl.Version
 
-case class CreateSchema(view: View)
-case class AddPartition(view: View)
-
 class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   val crate = DeploySchema(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
 
   def receive = {
-    case CreateSchema(view) => {
-      if (!(crate.schemaExists(view)))
-        crate.dropAndCreateTableSchema(view)
-        
-      sender ! new Success
-    }
-
     case AddPartition(view) => {
       try {
         crate.createPartition(view)
       } catch {
-        case e: Throwable => { this.sender ! Error }
+        case e: Throwable => { this.sender ! SchemaActionFailure() }
       }
-      sender ! new Success
+      sender ! SchemaActionSuccess()
     }
 
     case CheckVersion(view) =>
       if (crate.partitionExists(view)) {
         try {
-          if (!Settings().transformationVersioning)
+          if (!Settings().transformationVersioning) {
             sender ! VersionOk(view)
-          val pv = crate.getPartitionVersion(view)
-          if (pv.equals(view.transformation().versionDigest()))
-            sender ! VersionOk(view)
-          else
-            sender ! VersionMismatch(view, pv)
+          } else {
+            val pv = crate.getPartitionVersion(view)
+            if (pv.equals(view.transformation().versionDigest()))
+              sender ! VersionOk(view)
+            else
+              sender ! VersionMismatch(view, pv)
+          }
         } catch {
-          case e: Throwable => { e.printStackTrace(); this.sender ! Error }
+          case e: Throwable => { e.printStackTrace(); this.sender ! SchemaActionFailure() }
         }
       } else
         sender ! VersionMismatch(view, "")
@@ -53,9 +45,9 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       try {
         crate.setPartitionVersion(view)
       } catch {
-        case e: Throwable => { this.sender ! Error }
+        case e: Throwable => { this.sender ! SchemaActionFailure() }
       }
-      sender ! new Success
+      sender ! SchemaActionSuccess()
     }
   }
 }

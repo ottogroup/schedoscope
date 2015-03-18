@@ -12,7 +12,6 @@ import com.ottogroup.bi.soda.bottler.ActionsManagerActor
 import com.ottogroup.bi.soda.bottler.Deploy
 import com.ottogroup.bi.soda.bottler.Failed
 import com.ottogroup.bi.soda.bottler.GetStatus
-import com.ottogroup.bi.soda.bottler.InternalError
 import com.ottogroup.bi.soda.bottler.KillAction
 import com.ottogroup.bi.soda.bottler.NewDataAvailable
 import com.ottogroup.bi.soda.bottler.NoDataAvailable
