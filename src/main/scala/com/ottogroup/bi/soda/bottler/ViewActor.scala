@@ -69,26 +69,26 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     case MaterializeView() => {
       listenersWaitingForMaterialize.add(sender)
-      transformOrMaterialize(0)
+      toTransformOrMaterialize(0)
     }
 
-    case NewDataAvailable(viewWithNewData) => if (view == viewWithNewData) reload(false)
+    case NewDataAvailable(viewWithNewData) => if (view == viewWithNewData) toDefaultAndReload(false)
   })
 
   // State: default for views with dependencies
   // transitions: waiting
   def defaultForViewWithDependencies: Receive = LoggingReceive({
-    case _: GetStatus                      => sender ! ViewStatusResponse("receive", view)
+    case _: GetStatus => sender ! ViewStatusResponse("receive", view)
 
-    case MaterializeView()                 => weyt()
+    case MaterializeView() => toWaiting()
 
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) reload()
+    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
   })
 
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
   def waiting: Receive = LoggingReceive {
-    case _: GetStatus      => sender ! ViewStatusResponse("waiting", view)
+    case _: GetStatus => sender ! ViewStatusResponse("waiting", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -117,28 +117,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! NewDataAvailable(viewWithNewData)
   }
 
-  def dependencyAnswered(dependency: com.ottogroup.bi.soda.dsl.View) {
-    dependenciesMaterializing.remove(dependency)
-
-    if (!dependenciesMaterializing.isEmpty) {
-      log.debug(s"This actor is still waiting for ${dependenciesMaterializing.size} dependencies, dependencyFreshness=${dependenciesFreshness}, incomplete=${incomplete}, dependencies with data=${oneDependencyReturnedData}")
-      return
-    }
-
-    if (oneDependencyReturnedData) {
-      if ((getTransformationTimestamp(view) <= dependenciesFreshness) || hasVersionMismatch(view))
-        transformOrMaterialize(0)
-      else {
-        materialize()
-      }
-    } else {
-      listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
-      listenersWaitingForMaterialize.clear
-
-      reset()
-    }
-  }
-
   // State: transforming, view actor in process of applying transformation
   // transitions: materialized,retrying
   def transforming(retries: Int): Receive = LoggingReceive({
@@ -150,12 +128,12 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       touchSuccessFlag(view)
       logTransformationTimestamp(view)
 
-      materialize()
+      toMaterialize()
     }
 
-    case _: ActionFailure[_]               => retry(retries)
+    case _: ActionFailure[_] => toRetrying(retries)
 
-    case MaterializeView()                 => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
@@ -163,12 +141,12 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: retrying
   // transitions: failed, transforming
   def retrying(retries: Int): Receive = LoggingReceive({
-    case _: GetStatus      => sender ! ViewStatusResponse("retrying", view)
+    case _: GetStatus => sender ! ViewStatusResponse("retrying", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
     case Retry() => if (retries <= settings.retries)
-      transformOrMaterialize(retries + 1)
+      toTransformOrMaterialize(retries + 1)
     else {
 
       log.warning(stateInfo("failed"))
@@ -186,14 +164,14 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: materialized, view has been computed and materialized
   // transitions: default,transforming
   def materialized: Receive = LoggingReceive({
-    case _: GetStatus      => sender ! ViewStatusResponse("materialized", view)
+    case _: GetStatus => sender ! ViewStatusResponse("materialized", view)
 
     case MaterializeView() => sender ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors)
 
-    case Invalidate()      => reset
+    case Invalidate() => toDefault()
 
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) reload()
-    else if (view.dependencies.isEmpty && view == viewWithNewData) reload(false)
+    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
+    else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
   })
 
   // State: failed, view actor failed to materialize
@@ -202,15 +180,37 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case _: GetStatus => sender ! ViewStatusResponse("failed", view)
 
     case NewDataAvailable(viewWithNewData) =>
-      if (view.dependencies.contains(viewWithNewData)) reload()
-      else if (view.dependencies.isEmpty && view == viewWithNewData) reload(false)
+      if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
+      else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
 
-    case Invalidate()      => reset()
+    case Invalidate() => toDefault()
 
     case MaterializeView() => sender ! Failed(view)
   })
 
-  def reset() = {
+  def dependencyAnswered(dependency: com.ottogroup.bi.soda.dsl.View) {
+    dependenciesMaterializing.remove(dependency)
+
+    if (!dependenciesMaterializing.isEmpty) {
+      log.debug(s"This actor is still waiting for ${dependenciesMaterializing.size} dependencies, dependencyFreshness=${dependenciesFreshness}, incomplete=${incomplete}, dependencies with data=${oneDependencyReturnedData}")
+      return
+    }
+
+    if (oneDependencyReturnedData) {
+      if ((getTransformationTimestamp(view) <= dependenciesFreshness) || hasVersionMismatch(view))
+        toTransformOrMaterialize(0)
+      else {
+        toMaterialize()
+      }
+    } else {
+      listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
+      listenersWaitingForMaterialize.clear
+
+      toDefault()
+    }
+  }
+
+  def toDefault() {
     lastTransformationTimestamp = 0l
     dependenciesFreshness = 0l
     withErrors = false
@@ -222,26 +222,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     become(receive)
   }
 
-  def reload(withPropagation: Boolean = true) {
-    reset()
-
-    self ! MaterializeView()
-    if (withPropagation)
-      viewManagerActor ! NewDataAvailable(view)
-  }
-
-  def retry(retries: Int): akka.actor.Cancellable = {
-
-    log.info(stateInfo("retrying"))
-
-    unbecome()
-    become(retrying(retries))
-
-    // exponential backoff
-    system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
-  }
-
-  def weyt() {
+  def toWaiting() {
     withErrors = false
     incomplete = false
     dependenciesFreshness = 0l
@@ -266,7 +247,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     become(waiting)
   }
 
-  def materialize() {
+  def toMaterialize() {
     log.info(stateInfo("materialized"))
 
     listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors))
@@ -279,7 +260,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     dependenciesFreshness = 0l
   }
 
-  def transformOrMaterialize(retries: Int) {
+  def toTransformOrMaterialize(retries: Int) {
     view.transformation() match {
       case NoOp() => if (successFlagExists(view)) {
         log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
@@ -287,14 +268,14 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         addPartition(view)
         setVersion(view)
 
-        materialize()
+        toMaterialize()
       } else {
         log.debug("no data and no dependencies for " + view)
 
         listenersWaitingForMaterialize.foreach(s => s ! NoDataAvailable(view))
         listenersWaitingForMaterialize.clear
 
-        reset()
+        toDefault()
       }
 
       case _: FilesystemTransformation => {
@@ -325,6 +306,24 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   }
 
+  def toRetrying(retries: Int): akka.actor.Cancellable = {
+    log.info(stateInfo("retrying"))
+
+    unbecome()
+    become(retrying(retries))
+
+    // exponential backoff
+    system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
+  }
+
+  def toDefaultAndReload(withPropagation: Boolean = true) {
+    toDefault()
+
+    self ! MaterializeView()
+    if (withPropagation)
+      viewManagerActor ! NewDataAvailable(view)
+  }
+  
   def successFlagExists(view: View): Boolean = {
     settings.userGroupInformation.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
@@ -363,7 +362,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     if (lastTransformationTimestamp == 0l) {
       lastTransformationTimestamp = Await.result(schemaActor ? GetTransformationTimestamp(view), settings.schemaActionTimeout) match {
         case TransformationTimestamp(_, ts) => ts
-        case _                              => 0l
+        case _ => 0l
       }
     }
     lastTransformationTimestamp
