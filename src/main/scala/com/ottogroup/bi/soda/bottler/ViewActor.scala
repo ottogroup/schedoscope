@@ -1,26 +1,29 @@
 package com.ottogroup.bi.soda.bottler
 
-import java.security.PrivilegedAction
 import java.lang.Math.max
+import java.security.PrivilegedAction
+
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
+
 import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.dsl.NoOp
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
+
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.actor.ActorSelection.toScala
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
 import akka.pattern.ask
 import akka.util.Timeout
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
@@ -50,11 +53,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   // State: default
-  // transitions: defaultForNoOpView, defaultForViewWithoutDependencies, defaultForViewWithDependencies
-  def receive = if (view.transformation() == NoOp()) {
-    log.info(stateInfo("defaultForNoOpView"))
-    defaultForNoOpView
-  } else if (view.dependencies.isEmpty) {
+  // transitions: defaultForViewWithoutDependencies, defaultForViewWithDependencies
+  def receive = if (view.dependencies.isEmpty) {
     log.info(stateInfo("defaultForViewWithoutDependencies"))
     defaultForViewWithoutDependencies
   } else {
@@ -62,42 +62,14 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     defaultForViewWithDependencies
   }
 
-  // State: default for NoOp views
-  // transitions: materialized
-  def defaultForNoOpView: Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("receive", view)
-
-    case MaterializeView() => {
-      if (successFlagExists(view)) {
-        log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
-
-        addPartition(view)
-        setVersion(view)
-
-        sender ! ViewMaterialized(view, false, getOrLogTransformationTimestamp(view), false)
-
-        materialize()
-      } else {
-        log.debug("no data and no dependencies for " + view)
-
-        sender ! NoDataAvailable(view)
-      }
-    }
-
-    case NewDataAvailable(viewWithNewData) => {}
-  })
-
   // State: default for non-NoOp views without dependencies
   // transitions: transforming
   def defaultForViewWithoutDependencies: Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("receive", view)
 
     case MaterializeView() => {
-      log.debug("no dependencies for " + view + " and transformation specified")
-
       listenersWaitingForMaterialize.add(sender)
-
-      transform(0)
+      transformOrMaterialize(0)
     }
 
     case NewDataAvailable(viewWithNewData) => {}
@@ -155,11 +127,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     if (oneDependencyReturnedData) {
       if ((getTransformationTimestamp(view) <= dependenciesFreshness) || hasVersionMismatch(view))
-        transform(0)
+        transformOrMaterialize(0)
       else {
-        listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors))
-        listenersWaitingForMaterialize.clear
-
         materialize()
       }
     } else {
@@ -174,7 +143,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       become(receive)
     }
   }
-  
+
   // State: transforming, view actor in process of applying transformation
   // transitions: materialized,retrying
   def transforming(retries: Int): Receive = LoggingReceive({
@@ -184,14 +153,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       log.info("SUCCESS")
 
       touchSuccessFlag(view)
-      val transformationTimestamp = logTransformationTimestamp(view)
-
-      log.info(stateInfo("materialized"))
+      logTransformationTimestamp(view)
 
       materialize()
-
-      listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending View materialized message to ${s}"); s ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors) })
-      listenersWaitingForMaterialize.clear
     }
 
     case _: ActionFailure[_] => retry(retries)
@@ -209,7 +173,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
     case Retry() => if (retries <= settings.retries)
-      transform(retries + 1)
+      transformOrMaterialize(retries + 1)
     else {
 
       log.warning(stateInfo("failed"))
@@ -282,7 +246,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     withErrors = false
     incomplete = false
     dependenciesFreshness = 0l
-    
+
     listenersWaitingForMaterialize.add(sender)
 
     view.dependencies.foreach { d =>
@@ -306,6 +270,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def materialize() {
     log.info(stateInfo("materialized"))
 
+    listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors))
+    listenersWaitingForMaterialize.clear
+
     unbecome()
     become(materialized)
 
@@ -313,18 +280,53 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     dependenciesFreshness = 0l
   }
 
-  def transform(retries: Int) {
-    addPartition(view)
-    setVersion(view)
-    if (!view.transformation().isInstanceOf[FilesystemTransformation])
-      deletePartitionData(view)
+  def transformOrMaterialize(retries: Int) {
+    view.transformation() match {
+      case NoOp() => if (successFlagExists(view)) {
+        log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
 
-    actionsManagerActor ! view
+        addPartition(view)
+        setVersion(view)
 
-    log.info(stateInfo("transforming"))
+        materialize()
+      } else {
+        log.debug("no data and no dependencies for " + view)
 
-    unbecome()
-    become(transforming(retries))
+        listenersWaitingForMaterialize.foreach(s => s ! NoDataAvailable(view))
+        listenersWaitingForMaterialize.clear
+
+        log.info(stateInfo("default"))
+
+        unbecome()
+        become(receive)
+      }
+
+      case _: FilesystemTransformation => {
+        addPartition(view)
+        setVersion(view)
+
+        actionsManagerActor ! view
+
+        log.info(stateInfo("transforming"))
+
+        unbecome()
+        become(transforming(retries))
+      }
+
+      case _ => {
+        addPartition(view)
+        setVersion(view)
+        deletePartitionData(view)
+
+        actionsManagerActor ! view
+
+        log.info(stateInfo("transforming"))
+
+        unbecome()
+        become(transforming(retries))
+      }
+    }
+
   }
 
   def successFlagExists(view: View): Boolean = {
