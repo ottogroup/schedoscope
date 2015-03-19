@@ -196,6 +196,10 @@ object View {
     val parametersToPass = ListBuffer[Any]()
     val parameterValuesPassed = ListBuffer[TypedAny]()
     parameterValuesPassed ++= parameterValues
+    
+    if (viewConstructor.getParameterTypes.size.equals(parameterValues.size)) {
+      throw new RuntimeException(s"Wrong number of arguments for constructing view ${viewClass.getSimpleName}; required ${viewConstructor.getParameterTypes.size}, found ${parameterValues.size}")
+    }
 
     for (constructorParameterType <- viewConstructor.getParameterTypes()) {
       var passedValueForParameter: TypedAny = null

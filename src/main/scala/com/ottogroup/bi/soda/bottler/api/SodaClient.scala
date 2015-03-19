@@ -172,6 +172,7 @@ object SodaControl {
         println("\nRESULTS\n=======")
         println(CliFormat.serialize(res))
         soda.close()
+        System.exit(0)
       }
       case None => // usage information has already been displayed
     }

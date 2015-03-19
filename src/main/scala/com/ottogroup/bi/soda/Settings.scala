@@ -26,6 +26,8 @@ import com.ottogroup.bi.soda.dsl.Transformation
 class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem
 
+  private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
+  
   val env = config.getString("soda.app.environment")
 
   val earliestDay = {
@@ -82,7 +84,7 @@ class SettingsImpl(val config: Config) extends Extension {
   else
     hadoopConf.get("fs.defaultFS")
 
-  val filesystemTimeout = getDriverSettings("filesystem").timeout
+  def filesystemTimeout = getDriverSettings("filesystem").timeout
   val schemaTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
   val statusListAggregationTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
   val viewManagerResponseTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
@@ -97,8 +99,7 @@ class SettingsImpl(val config: Config) extends Extension {
     ugi.reloginFromKeytab();
     ugi
   }
-
-  private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
+  
 
   def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
     getDriverSettings(d.transformationName)
@@ -123,6 +124,21 @@ class SettingsImpl(val config: Config) extends Extension {
     config.getString(confName)
   }
   
+}
+
+object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
+  val actorSystem = ActorSystem("soda")
+
+  override def lookup = Settings
+
+  override def createExtension(system: ExtendedActorSystem) =
+    new SettingsImpl(system.settings.config)
+
+  override def get(system: ActorSystem): SettingsImpl = super.get(system)
+
+  def apply() = {
+    super.apply(actorSystem)
+  }
 }
 
 class DriverSettings(val config: Config, val name: String) {
@@ -164,18 +180,3 @@ class DriverSettings(val config: Config, val name: String) {
   }
 }
 
-
-object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
-  val actorSystem = ActorSystem("soda")
-
-  override def lookup = Settings
-
-  override def createExtension(system: ExtendedActorSystem) =
-    new SettingsImpl(system.settings.config)
-
-  override def get(system: ActorSystem): SettingsImpl = super.get(system)
-
-  def apply() = {
-    super.apply(actorSystem)
-  }
-}
