@@ -29,7 +29,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   import context._
 
   val log = Logging(system, this)
-  implicit val timeout = new Timeout(settings.dependencyTimout)
+  //implicit val timeout = new Timeout(settings.dependencyTimout)
 
   val listenersWaitingForMaterialize = collection.mutable.HashSet[ActorRef]()
   val dependenciesMaterializing = collection.mutable.HashSet[View]()
@@ -235,7 +235,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
         log.debug("materializing dependency " + d)
 
-        val dependencyActor = Await.result((viewManagerActor ? d).mapTo[ActorRef], timeout.duration)
+        val dependencyActor = Await.result(ask(viewManagerActor, d)(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout).asInstanceOf[ActorRef]
 
         dependencyActor ! MaterializeView()
       }
@@ -342,11 +342,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def touchSuccessFlag(view: View) {
-    Await.result(actionsManagerActor ? Touch(view.fullPath + "/_SUCCESS"), settings.fileActionTimeout)
+    Await.result(ask(actionsManagerActor, Touch(view.fullPath + "/_SUCCESS"))(settings.filesystemTimeout), settings.filesystemTimeout)
   }
 
   def hasVersionMismatch(view: View) = {
-    val versionInfo = Await.result(schemaActor ? CheckViewVersion(view), settings.schemaActionTimeout)
+    val versionInfo = Await.result(ask(schemaActor, CheckViewVersion(view))(settings.schemaTimeout), settings.schemaTimeout)
 
     log.debug(versionInfo.toString)
 
@@ -367,7 +367,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def getTransformationTimestamp(view: View) = {
     if (lastTransformationTimestamp == 0l) {
-      lastTransformationTimestamp = Await.result(schemaActor ? GetTransformationTimestamp(view), settings.schemaActionTimeout) match {
+      lastTransformationTimestamp = Await.result(ask(schemaActor, GetTransformationTimestamp(view))(settings.schemaTimeout), settings.schemaTimeout) match {
         case TransformationTimestamp(_, ts) => ts
         case _ => 0l
       }
@@ -376,7 +376,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def logTransformationTimestamp(view: View) = {
-    Await.result(schemaActor ? LogTransformationTimestamp(view), settings.schemaActionTimeout)
+    Await.result(ask(schemaActor, LogTransformationTimestamp(view))(settings.schemaTimeout), settings.schemaTimeout)
     getTransformationTimestamp(view)
   }
 
@@ -388,15 +388,15 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def addPartition(view: View) {
-    Await.result(schemaActor ? AddPartition(view), settings.schemaActionTimeout)
+    Await.result(ask(schemaActor, AddPartition(view))(settings.schemaTimeout), settings.schemaTimeout)
   }
 
   def deletePartitionData(view: View) {
-    Await.result(actionsManagerActor ? Delete(view.fullPath, true), settings.fileActionTimeout)
+    Await.result(ask(actionsManagerActor, Delete(view.fullPath, true))(settings.filesystemTimeout), settings.filesystemTimeout)
   }
 
   def setVersion(view: View) {
-    Await.result(schemaActor ? SetViewVersion(view), settings.schemaActionTimeout)
+    Await.result(ask(schemaActor, SetViewVersion(view))(settings.schemaTimeout), settings.schemaTimeout)
   }
 
   def stateInfo(stateName: String) =

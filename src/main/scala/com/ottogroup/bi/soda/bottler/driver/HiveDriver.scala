@@ -27,8 +27,6 @@ import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.replaceP
 class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
   override def transformationName = "hive"
-  
-  override def runTimeOut: Duration = Settings().hiveActionTimeout
 
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {

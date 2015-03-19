@@ -36,8 +36,6 @@ import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver._
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
 
   override def transformationName = "filesystem"
-  
-  override def runTimeOut: Duration = Settings().fileActionTimeout
 
   def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
     new DriverRunHandle(this, new LocalDateTime(), t, future {

@@ -2,10 +2,9 @@ package com.ottogroup.bi.soda.bottler
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.DurationInt
-
 import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.dsl.View
-
+import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -13,6 +12,7 @@ import akka.actor.Props
 import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.actorRef2Scala
 import akka.contrib.pattern.Aggregator
+import com.ottogroup.bi.soda.Settings
 
 class ViewStatusRetriever() extends Actor with Aggregator {
   expectOnce {
@@ -26,7 +26,7 @@ class ViewStatusRetriever() extends Actor with Aggregator {
     val values = ArrayBuffer.empty[ViewStatusResponse]
 
     viewActors.foreach(_ ! GetStatus())
-    context.system.scheduler.scheduleOnce(1 second, self, "timeout")
+    context.system.scheduler.scheduleOnce(settings.statusListAggregationTimeout, self, "timeout")
 
     val handle = expect {
       case viewStatus: ViewStatusResponse => values += viewStatus

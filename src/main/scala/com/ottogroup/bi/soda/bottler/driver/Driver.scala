@@ -1,19 +1,16 @@
 package com.ottogroup.bi.soda.bottler.driver
 
 import java.nio.file.Files
-
 import scala.Array.canBuildFrom
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Random
-
 import org.joda.time.LocalDateTime
-
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.dsl.Transformation
-
 import net.lingala.zip4j.core.ZipFile
+import com.ottogroup.bi.soda.Settings
 
 case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
@@ -26,8 +23,8 @@ case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], 
 
 trait Driver[T <: Transformation]  {
   def transformationName: String
-  
-  def runTimeOut: Duration = Duration.Inf
+
+  def runTimeOut: Duration = Settings().getDriverSettings(transformationName).timeout
 
   def killRun(run: DriverRunHandle[T]): Unit = {}
 

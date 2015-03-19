@@ -24,21 +24,18 @@ import com.ottogroup.bi.soda.bottler.driver.Driver
 import com.ottogroup.bi.soda.dsl.Transformation
 
 class SettingsImpl(val config: Config) extends Extension {
-
-  println(config)
-    
   val system = Settings.actorSystem
 
   val env = config.getString("soda.app.environment")
 
   val earliestDay = {
-    val conf = config.getString("soda.app.earliestDay")
+    val conf = config.getString("soda.scheduler.earliestDay")
     val Array(year, month, day) = conf.split("-")
     DateParameterizationUtils.parametersToDay(p(year), p(month), p(day))
   }
 
   val latestDay = {
-    val conf = config.getString("soda.app.latestDay")
+    val conf = config.getString("soda.scheduler.latestDay")
     if (conf == "now") {
       val now = Calendar.getInstance()
       now.set(Calendar.HOUR_OF_DAY, 0)
@@ -85,12 +82,12 @@ class SettingsImpl(val config: Config) extends Extension {
   else
     hadoopConf.get("fs.defaultFS")
 
-  val hiveActionTimeout = Duration.create(config.getDuration("soda.timeouts.hive", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  val oozieActionTimeout = Duration.create(config.getDuration("soda.timeouts.oozie", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  val fileActionTimeout = Duration.create(config.getDuration("soda.timeouts.file", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  val schemaActionTimeout = Duration.create(config.getDuration("soda.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  val dependencyTimout = Duration.create(config.getDuration("soda.timeouts.dependency", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  val materializeAllTimeout = Duration.create(config.getDuration("soda.timeouts.all", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val filesystemTimeout = getDriverSettings("filesystem").timeout
+  val schemaTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val statusListAggregationTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val viewManagerResponseTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  val completitionTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.completion", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  
   val retries = config.getInt("soda.action.retry")
 
   val userGroupInformation = {
@@ -128,29 +125,15 @@ class SettingsImpl(val config: Config) extends Extension {
   
 }
 
-object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
-  val actorSystem = ActorSystem("soda")
-
-  override def lookup = Settings
-
-  override def createExtension(system: ExtendedActorSystem) =
-    new SettingsImpl(system.settings.config)
-
-  override def get(system: ActorSystem): SettingsImpl = super.get(system)
-  
-  def apply() = {
-    super.apply(actorSystem)
-  }
-}
-
 class DriverSettings(val config: Config, val name: String) {
   val location = Settings().nameNode + config.getString("location")
   val libDirectory = config.getString("libDirectory")
   val concurrency = config.getInt("concurrency")
   val unpack = config.getBoolean("unpack")
   val url = config.getString("url")
+  val timeout = Duration.create(config.getDuration("timeout", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  
   val libJars = {
-
     val fromLibDir = libDirectory
       .split(",")
       .toList
@@ -178,5 +161,21 @@ class DriverSettings(val config: Config, val name: String) {
     else {
       libJars.map(lj => location + "/" + Paths.get(lj).getFileName.toString)
     }
+  }
+}
+
+
+object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
+  val actorSystem = ActorSystem("soda")
+
+  override def lookup = Settings
+
+  override def createExtension(system: ExtendedActorSystem) =
+    new SettingsImpl(system.settings.config)
+
+  override def get(system: ActorSystem): SettingsImpl = super.get(system)
+
+  def apply() = {
+    super.apply(actorSystem)
   }
 }

@@ -34,7 +34,7 @@ class ActionStatusRetriever() extends Actor with Aggregator {
     val values = ArrayBuffer.empty[ActionStatusResponse[_]]
 
     driverActors.foreach(_ ! GetStatus())
-    context.system.scheduler.scheduleOnce(1 second, self, "timeout")
+    context.system.scheduler.scheduleOnce(Settings().statusListAggregationTimeout, self, "timeout")
 
     val handle = expect {
       case actionStatus: ActionStatusResponse[_] => values += actionStatus
