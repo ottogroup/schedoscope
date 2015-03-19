@@ -72,23 +72,23 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       transformOrMaterialize(0)
     }
 
-    case NewDataAvailable(viewWithNewData) => {}
+    case NewDataAvailable(viewWithNewData) => if (view == viewWithNewData) reload(false)
   })
 
   // State: default for views with dependencies
   // transitions: waiting
   def defaultForViewWithDependencies: Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("receive", view)
+    case _: GetStatus                      => sender ! ViewStatusResponse("receive", view)
 
-    case MaterializeView() => weyt()
+    case MaterializeView()                 => weyt()
 
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! MaterializeView()
+    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) reload()
   })
 
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
   def waiting: Receive = LoggingReceive {
-    case _: GetStatus => sender ! ViewStatusResponse("waiting", view)
+    case _: GetStatus      => sender ! ViewStatusResponse("waiting", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -114,7 +114,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       dependencyAnswered(dependency)
     }
 
-    case NewDataAvailable(viewWithNewData) => {}
+    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! NewDataAvailable(viewWithNewData)
   }
 
   def dependencyAnswered(dependency: com.ottogroup.bi.soda.dsl.View) {
@@ -136,11 +136,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       listenersWaitingForMaterialize.clear
 
       reset()
-
-      log.info(stateInfo("default"))
-
-      unbecome
-      become(receive)
     }
   }
 
@@ -158,17 +153,17 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       materialize()
     }
 
-    case _: ActionFailure[_] => retry(retries)
+    case _: ActionFailure[_]               => retry(retries)
 
-    case MaterializeView() => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView()                 => listenersWaitingForMaterialize.add(sender)
 
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! NewDataAvailable(viewWithNewData)
+    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
 
   // State: retrying
   // transitions: failed, transforming
   def retrying(retries: Int): Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("retrying", view)
+    case _: GetStatus      => sender ! ViewStatusResponse("retrying", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -185,19 +180,20 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       listenersWaitingForMaterialize.clear()
     }
 
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! NewDataAvailable(viewWithNewData)
+    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
 
   // State: materialized, view has been computed and materialized
   // transitions: default,transforming
   def materialized: Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("materialized", view)
+    case _: GetStatus      => sender ! ViewStatusResponse("materialized", view)
 
     case MaterializeView() => sender ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors)
 
-    case Invalidate() => reset
+    case Invalidate()      => reset
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) reload()
+    else if (view.dependencies.isEmpty && view == viewWithNewData) reload(false)
   })
 
   // State: failed, view actor failed to materialize
@@ -205,9 +201,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def failed: Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("failed", view)
 
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) reload()
+    case NewDataAvailable(viewWithNewData) =>
+      if (view.dependencies.contains(viewWithNewData)) reload()
+      else if (view.dependencies.isEmpty && view == viewWithNewData) reload(false)
 
-    case Invalidate() => reset()
+    case Invalidate()      => reset()
 
     case MaterializeView() => sender ! Failed(view)
   })
@@ -224,11 +222,12 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     become(receive)
   }
 
-  def reload() {
+  def reload(withPropagation: Boolean = true) {
     reset()
 
     self ! MaterializeView()
-    viewManagerActor ! NewDataAvailable(view)
+    if (withPropagation)
+      viewManagerActor ! NewDataAvailable(view)
   }
 
   def retry(retries: Int): akka.actor.Cancellable = {
@@ -295,10 +294,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         listenersWaitingForMaterialize.foreach(s => s ! NoDataAvailable(view))
         listenersWaitingForMaterialize.clear
 
-        log.info(stateInfo("default"))
-
-        unbecome()
-        become(receive)
+        reset()
       }
 
       case _: FilesystemTransformation => {
@@ -367,7 +363,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     if (lastTransformationTimestamp == 0l) {
       lastTransformationTimestamp = Await.result(schemaActor ? GetTransformationTimestamp(view), settings.schemaActionTimeout) match {
         case TransformationTimestamp(_, ts) => ts
-        case _ => 0l
+        case _                              => 0l
       }
     }
     lastTransformationTimestamp
