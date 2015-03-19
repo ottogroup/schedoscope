@@ -120,6 +120,12 @@ class SettingsImpl(val config: Config) extends Extension {
 
     driverSettings(n)
   }
+  
+  def getTransformationSetting(typ: String, setting: String) = {
+    val confName = s"soda.transformations.${typ}.transformation.${setting}"
+    config.getString(confName)
+  }
+  
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
