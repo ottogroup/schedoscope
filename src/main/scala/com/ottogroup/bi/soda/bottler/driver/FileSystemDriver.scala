@@ -174,7 +174,6 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       if (fs.isFile(path)) {
         val cs = ChecksumCache.lookup(p).getOrElse(fs.getFileChecksum(path))
         if (cs != null) {
-          println("Computing checksum for " + p)
           List(ChecksumCache.cache(p, cs.toString))
         } else
           List()

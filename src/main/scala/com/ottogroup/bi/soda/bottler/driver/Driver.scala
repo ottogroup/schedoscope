@@ -54,14 +54,11 @@ trait Driver[T <: Transformation]  {
       .map(f => {
         if (ds.unpack) {
           val tmpDir = Files.createTempDirectory("soda-" + Random.nextLong.abs.toString).toFile
-          println(s"Unzipping ${transformationName} resource ${f}")
           new ZipFile(f.replaceAll("file:", "")).extractAll(tmpDir.getAbsolutePath)
-          println(s"Copying ${transformationName} resource file://${tmpDir}/* to ${ds.location}")
           val succ = fsd.copy("file://" + tmpDir + "/*", ds.location, true)
           tmpDir.delete
           succ
         } else {
-          println(s"Copying ${transformationName} resource ${f} to ${ds.location}")
           fsd.copy(f, ds.location, true)
         }
       })

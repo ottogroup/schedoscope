@@ -58,14 +58,14 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
         case _: DriverRunOngoing[T] => tick()
 
         case success: DriverRunSucceeded[T] => {
-          log.info(s"Driver run ${runHandle} succeeded.")
+          log.info(s"DRIVER ACTOR: Driver run for handle=${runHandle} succeeded.")
           s ! ActionSuccess(runHandle, success)
           becomeReceive()
           tick()
         }
 
         case failure: DriverRunFailed[T] => {
-          log.info(s"Oozie workflow ${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
+          log.error(s"DRIVER ACTOR: Oozie workflow ${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
           s ! ActionFailure(runHandle, failure)
           becomeReceive()
           tick()
@@ -73,11 +73,12 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
       }
     } catch {
       case exception: DriverException => {
-        log.error(s"Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}")
+        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}")
         throw exception
       }
+      
       case t: Throwable => {
-        log.error(s"Unexpected exception caught by driver actor in running state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}")
+        log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in running state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}")
         throw t
       }
     }
@@ -105,25 +106,31 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
 
   def becomeRunning(commandToRun: CommandWithSender) {
     runningCommand = Some(commandToRun)
-
+    
     try {
       if (commandToRun.command.isInstanceOf[Deploy]) {
+        log.info(s"DRIVER ACTOR: Running Deploy command")
+        
         driver.deployAll(ds)
         commandToRun.sender ! DeployActionSuccess()
+        
         runningCommand = None
       } else {
         val runHandle = driver.run(commandToRun.command.asInstanceOf[T])
 
+        log.info(s"DRIVER ACTOR: Running command ${commandToRun}, runHandle=${runHandle}")
+          
         unbecome()
         become(running(runHandle, commandToRun.sender))
       }
     } catch {
       case exception: DriverException => {
-        log.error(s"Driver exception caught by driver actor in receive state, rethrowing: ${exception.message}, cause ${exception.cause}")
+        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in receive state, rethrowing: ${exception.message}, cause ${exception.cause}")
         throw exception
       }
+      
       case t: Throwable => {
-        log.error(s"Unexpected exception caught by driver actor in receive state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}")
+        log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in receive state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}")
         throw t
       }
     }

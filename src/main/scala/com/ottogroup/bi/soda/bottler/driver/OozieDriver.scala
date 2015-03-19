@@ -59,7 +59,6 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
 
   override def killRun(run: DriverRunHandle[OozieTransformation]) = {
     val jobId = run.stateHandle.toString
-    println("Killing Oozie job ${jobId}")
     try {
       client.kill(jobId)
     } catch {
@@ -67,16 +66,10 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
     }
   }
 
-  def runOozieJob(jobProperties: Properties): String = {
-    println("Starting Oozie job with config: \n" + jobProperties.mkString("\n"))
-    client.run(jobProperties)
-  }
+  def runOozieJob(jobProperties: Properties): String = client.run(jobProperties)
+ 
 
-  def getJobInfo(jobId: String) = {
-    val jobInfo = client.getJobInfo(jobId)
-    println(s"Oozie job ${jobId} info is ${jobInfo}")
-    jobInfo
-  }
+  def getJobInfo(jobId: String) = client.getJobInfo(jobId)
 
   def createOozieJobConf(wf: OozieTransformation): Properties =
     wf match {

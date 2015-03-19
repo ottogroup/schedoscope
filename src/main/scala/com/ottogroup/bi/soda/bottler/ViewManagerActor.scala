@@ -49,11 +49,8 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   }
 
   def receive = {
-    case GetStatus() => {
-      println("Fetching status from " + children.toList.mkString(","))
-      actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender, children.toList)
-    }
-
+    case GetStatus() => actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender, children.toList)
+    
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
 
     case v: View => {

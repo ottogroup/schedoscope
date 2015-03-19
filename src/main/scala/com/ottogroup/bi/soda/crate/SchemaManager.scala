@@ -69,7 +69,6 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def dropAndCreateTableSchema(view: View): Unit = {
     val ddl = HiveQl.ddl(view)
-    println("in dropAndCreateSchema " + view.dbName + "." + view.n + " " + ddl)
     val stmt = connection.createStatement()
     if (!metastoreClient.getAllDatabases.contains(view.dbName)) {
       stmt.execute(s"CREATE DATABASE ${view.dbName}")
@@ -82,17 +81,19 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     stmt.close()
 
     setTableProperty(view.dbName, view.n, Version.SchemaVersion.checksumProperty, Version.digest(ddl))
-    println("!!created table " + ddl)
   }
 
   def schemaExists(view: View): Boolean = {
     val d = Version.digest(HiveQl.ddl(view))
+    
     if (existingSchemas.contains(d))
-      return true;
-    if (!metastoreClient.tableExists(view.dbName, view.n)) {
+      return true
+      
+    if (!metastoreClient.tableExists(view.dbName, view.n))
       false
-    } else {
+    else {
       val table = metastoreClient.getTable(view.dbName, view.n)
+
       val props = table.getParameters()
       if (!props.containsKey(Version.SchemaVersion.checksumProperty))
         false
@@ -105,22 +106,25 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def partitionExists(view: View): Boolean = {
-    if (!schemaExists(view)) return false
+    if (!schemaExists(view))
+      false
     else
       try {
         metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
+        true
       } catch {
-        case e: NoSuchObjectException => return false
+        case e: NoSuchObjectException => false
       }
-    true
   }
 
   def createPartition(view: View): Partition = {
     if (!schemaExists(view)) {
       dropAndCreateTableSchema(view)
     }
+    
     if (!view.isPartitioned())
       throw new RuntimeException(s"Cannot create partition on non-partitioned view ${view.tableName}")
+    
     try {
       val now = new DateTime().getMillis.toInt
       val sd = metastoreClient.getTable(view.dbName, view.n).getSd
@@ -131,11 +135,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
     } catch {
       case e: AlreadyExistsException => metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
-      case e: InvalidObjectException =>
-        println(view.partitionSpec); throw (e)
-      case e: MetaException => println(view.partitionSpec); throw (e)
     }
-
   }
 
   def removeObsoleteTables(dbname: String, validTables: List[String]) = {
@@ -151,17 +151,19 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def deploySchemataForViews(views: Seq[View]): Unit = {
     val hashSet = HashSet[String]()
-    views.filter(view => {
-      if (hashSet.contains(HiveQl.ddl(view))) { false }
-      else { hashSet.add(HiveQl.ddl(view)); true }
-    }).foreach { view =>
+    views.filter(view =>
+      if (hashSet.contains(HiveQl.ddl(view)))
+        false
+      else {
+        hashSet.add(HiveQl.ddl(view))
+        true
+      }).foreach { view =>
       {
         if (!schemaExists(view))
           dropAndCreateTableSchema(view)
       }
     }
   }
-
 }
 
 object SchemaManager {
@@ -190,9 +192,5 @@ object SchemaManager {
 
   def apply(metastoreClient: IMetaStoreClient, connection: Connection) = {
     new SchemaManager(metastoreClient, connection)
-  }
-
-  def main(args: Array[String]) = {
-
   }
 }

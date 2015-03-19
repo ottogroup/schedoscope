@@ -37,8 +37,6 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
     }(ExecutionContext.global))
 
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
-    println(sql)
-
     val queryStack = Stack[String]("")
 
     sql.split(";").map(el => {
@@ -76,8 +74,6 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
     if (existing == null || existing.size() == 0) {
       val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
       val createFunction = s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}"
-
-      println(createFunction)
 
       this.executeHiveQuery(createFunction)
     }

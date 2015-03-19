@@ -94,9 +94,9 @@ class ActionsManagerActor() extends Actor {
 
         if (cmd.command.isInstanceOf[Transformation]) {
           val transformation = cmd.command.asInstanceOf[Transformation]
-          log.debug(s"Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(transformationType).get.size}")
+          log.info(s"ACTIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(transformationType).get.size}")
         } else
-          log.debug("Dequeued deploy action")
+          log.info("ACTIONMANAGER DEQUEUE: Dequeued deploy action")
       }
     }
 
@@ -106,10 +106,10 @@ class ActionsManagerActor() extends Actor {
         val queueName = transformation.name
 
         queues.get(queueName).get.enqueue(actionCommand)
-  
-        log.debug(s"Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
+        log.info(s"ACTIONMANAGER ENQUEUE: Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
       } else {
         queues.values.foreach { _.enqueue(actionCommand) }
+        log.info("ACTIONMANAGER ENQUEUE: Enqueued deploy action")
       }
 
     }
