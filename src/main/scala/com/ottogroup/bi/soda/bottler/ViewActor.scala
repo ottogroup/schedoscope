@@ -61,7 +61,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     log.info(stateInfo("defaultForViewWithDependencies"))
     defaultForViewWithDependencies
   }
-  
+
   // State: default for NoOp views
   // transitions: materialized
   def defaultForNoOpView: Receive = LoggingReceive({
@@ -108,59 +108,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def defaultForViewWithDependencies: Receive = LoggingReceive({
     case _: GetStatus => sender ! ViewStatusResponse("receive", view)
 
-    case MaterializeView() => {
-      listenersWaitingForMaterialize.add(sender)
-
-      view.dependencies.foreach { d =>
-        {
-          dependenciesMaterializing.add(d)
-
-          log.debug("materializing dependency " + d)
-
-          val dependencyActor = Await.result((viewManagerActor ? d).mapTo[ActorRef], timeout.duration)
-
-          dependencyActor ! MaterializeView()
-        }
-      }
-
-      log.info(stateInfo("waiting"))
-
-      unbecome()
-      become(waiting)
-    }
+    case MaterializeView() => weyt()
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! MaterializeView()
   })
-
-  def dependencyAnswered(dependency: com.ottogroup.bi.soda.dsl.View) {
-    dependenciesMaterializing.remove(dependency)
-
-    if (!dependenciesMaterializing.isEmpty) {
-      log.debug(s"This actor is still waiting for ${dependenciesMaterializing.size} dependencies, dependencyFreshness=${dependenciesFreshness}, incomplete=${incomplete}, dependencies with data=${oneDependencyReturnedData}")
-      return
-    }
-
-    if (oneDependencyReturnedData) {
-      if ((getTransformationTimestamp(view) <= dependenciesFreshness) || hasVersionMismatch(view))
-        transform(0)
-      else {
-        listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors))
-        listenersWaitingForMaterialize.clear
-
-        materialize()
-      }
-    } else {
-      listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
-      listenersWaitingForMaterialize.clear
-
-      reset()
-
-      log.info(stateInfo("default"))
-
-      unbecome
-      become(receive)
-    }
-  }
 
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
@@ -194,6 +145,36 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case NewDataAvailable(viewWithNewData) => {}
   }
 
+  def dependencyAnswered(dependency: com.ottogroup.bi.soda.dsl.View) {
+    dependenciesMaterializing.remove(dependency)
+
+    if (!dependenciesMaterializing.isEmpty) {
+      log.debug(s"This actor is still waiting for ${dependenciesMaterializing.size} dependencies, dependencyFreshness=${dependenciesFreshness}, incomplete=${incomplete}, dependencies with data=${oneDependencyReturnedData}")
+      return
+    }
+
+    if (oneDependencyReturnedData) {
+      if ((getTransformationTimestamp(view) <= dependenciesFreshness) || hasVersionMismatch(view))
+        transform(0)
+      else {
+        listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors))
+        listenersWaitingForMaterialize.clear
+
+        materialize()
+      }
+    } else {
+      listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
+      listenersWaitingForMaterialize.clear
+
+      reset()
+
+      log.info(stateInfo("default"))
+
+      unbecome
+      become(receive)
+    }
+  }
+  
   // State: transforming, view actor in process of applying transformation
   // transitions: materialized,retrying
   def transforming(retries: Int): Receive = LoggingReceive({
@@ -295,6 +276,31 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     // exponential backoff
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
+  }
+
+  def weyt() {
+    withErrors = false
+    incomplete = false
+    dependenciesFreshness = 0l
+    
+    listenersWaitingForMaterialize.add(sender)
+
+    view.dependencies.foreach { d =>
+      {
+        dependenciesMaterializing.add(d)
+
+        log.debug("materializing dependency " + d)
+
+        val dependencyActor = Await.result((viewManagerActor ? d).mapTo[ActorRef], timeout.duration)
+
+        dependencyActor ! MaterializeView()
+      }
+    }
+
+    log.info(stateInfo("waiting"))
+
+    unbecome()
+    become(waiting)
   }
 
   def materialize() {
