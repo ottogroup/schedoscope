@@ -20,24 +20,26 @@ import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import akka.actor.ActorRef
 import akka.actor.ActorSelection.toScala
-import akka.pattern.ask
 import akka.util.Timeout
 import com.ottogroup.bi.soda.bottler.Invalidate
 import com.ottogroup.bi.soda.bottler.Deploy
+import com.ottogroup.bi.soda.queryActorWithMessages
+import com.ottogroup.bi.soda.queryActor
+import akka.pattern.Patterns
+import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
+import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
 
 class SodaSystem extends SodaInterface {
   /*
    *  setup soda actor system
    */
-  //implicit val timeout = Timeout(settings.dependencyTimout) // needed for `?` below  
   val settings = SodaRootActor.settings
   implicit val ec = ExecutionContext.global
-  
+
   val viewAugmentor = Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
   val viewManagerActor = SodaRootActor.viewManagerActor
   val actionsManagerActor = SodaRootActor.actionsManagerActor
   val schemaActor = SodaRootActor.schemaActor
-  
 
   /*
    * deploy transformation resources FIXME: we don't check for success here...
@@ -56,8 +58,7 @@ class SodaSystem extends SodaInterface {
 
   private def getViewActors(viewUrlPath: String) = {
     val views = View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
-    val viewActorRefFutures = views.map { v => ask(viewManagerActor, v)(Timeout(settings.viewManagerResponseTimeout)).mapTo[ActorRef] }
-    Await.result(Future sequence viewActorRefFutures, settings.viewManagerResponseTimeout)
+    queryActorWithMessages(viewManagerActor, views, settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
   }
 
   private def commandId(command: Any, args: Seq[String], start: Option[LocalDateTime] = None) = {
@@ -80,7 +81,7 @@ class SodaSystem extends SodaInterface {
     if (currentCommandId.isDefined) {
       commandStatus(currentCommandId.get)
     } else {
-      val jobFutures = actors.map(actor => ask(actor, command)(Timeout(settings.completitionTimeout)))
+      val jobFutures = actors.map { actor => Patterns.ask(actor, command, Timeout(settings.completitionTimeout)) }
       val start = new LocalDateTime()
       val id = commandId(command, args, Some(start))
       runningCommands.put(id, SodaCommand(id, start, jobFutures))
@@ -124,7 +125,7 @@ class SodaSystem extends SodaInterface {
 
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false) = {
     println("Fetching views ...")
-    val result = Await.result(ask(viewManagerActor, GetStatus())(Timeout(settings.statusListAggregationTimeout)), settings.statusListAggregationTimeout).asInstanceOf[ViewStatusListResponse]
+    val result: ViewStatusListResponse = queryActor(viewManagerActor, GetStatus(), settings.statusListAggregationTimeout)
     val views = result.viewStatusList
       .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!withDependencies) None else Some(v.view.dependencies.map(d => d.urlPath).toList)))
       .filter(v => status.getOrElse(v.status).equals(v.status))
@@ -134,7 +135,7 @@ class SodaSystem extends SodaInterface {
 
   def actions(status: Option[String]) = {
     println("Fetching actions ...")
-    val result = Await.result(ask(actionsManagerActor, GetStatus())(Timeout(settings.statusListAggregationTimeout)), settings.statusListAggregationTimeout).asInstanceOf[ActionStatusListResponse]
+    val result: ActionStatusListResponse = queryActor(actionsManagerActor, GetStatus(), settings.statusListAggregationTimeout)
     val actions = result.actionStatusList
       .map(a => SodaJsonProtocol.parseActionStatus(a))
       .filter(a => status.getOrElse(a.status).equals(a.status))

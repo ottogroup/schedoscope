@@ -1,18 +1,16 @@
 package com.ottogroup.bi.soda.bottler
 
-import scala.collection.mutable.ArrayBuffer
-import scala.concurrent.duration.DurationInt
+import scala.collection.mutable.ListBuffer
+
 import com.ottogroup.bi.soda.SettingsImpl
-import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
+import com.ottogroup.bi.soda.dsl.View
+
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.actor.OneForOneStrategy
 import akka.actor.Props
-import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.actorRef2Scala
 import akka.contrib.pattern.Aggregator
-import com.ottogroup.bi.soda.Settings
 
 class ViewStatusRetriever() extends Actor with Aggregator {
   expectOnce {
@@ -23,13 +21,20 @@ class ViewStatusRetriever() extends Actor with Aggregator {
     import context.dispatcher
     import collection.mutable.ArrayBuffer
 
-    val values = ArrayBuffer.empty[ViewStatusResponse]
+    val values = ListBuffer[ViewStatusResponse]()
 
     viewActors.foreach(_ ! GetStatus())
     context.system.scheduler.scheduleOnce(settings.statusListAggregationTimeout, self, "timeout")
 
     val handle = expect {
-      case viewStatus: ViewStatusResponse => values += viewStatus
+      
+    case viewStatus: ViewStatusResponse => {
+        values += viewStatus
+
+        if (values.size == viewActors.size)
+          processFinal(values.toList)
+      }
+      
       case "timeout" => processFinal(values.toList)
     }
 
@@ -50,7 +55,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
   def receive = {
     case GetStatus() => actorOf(Props[ViewStatusRetriever]) ! GetViewStatusList(sender, children.toList)
-    
+
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
 
     case v: View => {

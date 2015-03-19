@@ -3,7 +3,6 @@ package com.ottogroup.bi.soda.bottler
 import java.lang.Math.max
 import java.security.PrivilegedAction
 
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
 import org.apache.hadoop.fs.FileSystem
@@ -15,6 +14,7 @@ import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
+import com.ottogroup.bi.soda.queryActor
 
 import akka.actor.Actor
 import akka.actor.ActorRef
@@ -22,8 +22,6 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import akka.pattern.ask
-import akka.util.Timeout
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
@@ -78,9 +76,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: default for views with dependencies
   // transitions: waiting
   def defaultForViewWithDependencies: Receive = LoggingReceive({
-    case _: GetStatus                      => sender ! ViewStatusResponse("receive", view)
+    case _: GetStatus => sender ! ViewStatusResponse("receive", view)
 
-    case MaterializeView()                 => toWaiting()
+    case MaterializeView() => toWaiting()
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
   })
@@ -88,7 +86,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
   def waiting: Receive = LoggingReceive {
-    case _: GetStatus      => sender ! ViewStatusResponse("waiting", view)
+    case _: GetStatus => sender ! ViewStatusResponse("waiting", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -124,7 +122,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
-      
+
       setVersion(view)
       touchSuccessFlag(view)
       logTransformationTimestamp(view)
@@ -132,9 +130,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       toMaterialize()
     }
 
-    case _: ActionFailure[_]               => toRetrying(retries)
+    case _: ActionFailure[_] => toRetrying(retries)
 
-    case MaterializeView()                 => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
@@ -142,7 +140,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: retrying
   // transitions: failed, transforming
   def retrying(retries: Int): Receive = LoggingReceive({
-    case _: GetStatus      => sender ! ViewStatusResponse("retrying", view)
+    case _: GetStatus => sender ! ViewStatusResponse("retrying", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -165,11 +163,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: materialized, view has been computed and materialized
   // transitions: default,transforming
   def materialized: Receive = LoggingReceive({
-    case _: GetStatus      => sender ! ViewStatusResponse("materialized", view)
+    case _: GetStatus => sender ! ViewStatusResponse("materialized", view)
 
     case MaterializeView() => sender ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors)
 
-    case Invalidate()      => toDefault()
+    case Invalidate() => toDefault()
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
     else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
@@ -184,7 +182,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
       else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
 
-    case Invalidate()      => toDefault()
+    case Invalidate() => toDefault()
 
     case MaterializeView() => sender ! Failed(view)
   })
@@ -240,7 +238,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
         log.debug("materializing dependency " + d)
 
-        val dependencyActor = Await.result(ask(viewManagerActor, d)(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout).asInstanceOf[ActorRef]
+        val dependencyActor: ActorRef = queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
 
         dependencyActor ! MaterializeView()
       }
@@ -345,13 +343,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def touchSuccessFlag(view: View) {
-    Await.result(ask(actionsManagerActor, Touch(view.fullPath + "/_SUCCESS"))(settings.filesystemTimeout), settings.filesystemTimeout)
+    queryActor(actionsManagerActor, Touch(view.fullPath + "/_SUCCESS"), settings.filesystemTimeout)
   }
 
   def hasVersionMismatch(view: View) = {
-    val versionInfo = Await.result(ask(schemaActor, CheckViewVersion(view))(settings.schemaTimeout), settings.schemaTimeout)
-
-    log.debug(versionInfo.toString)
+    val versionInfo: AnyRef = queryActor(schemaActor, CheckViewVersion(view), settings.schemaTimeout)
 
     versionInfo match {
       case SchemaActionFailure() => {
@@ -370,16 +366,16 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def getTransformationTimestamp(view: View) = {
     if (lastTransformationTimestamp == 0l) {
-      lastTransformationTimestamp = Await.result(ask(schemaActor, GetTransformationTimestamp(view))(settings.schemaTimeout), settings.schemaTimeout) match {
+      lastTransformationTimestamp = queryActor(schemaActor, GetTransformationTimestamp(view), settings.schemaTimeout).asInstanceOf[AnyRef] match {
         case TransformationTimestamp(_, ts) => ts
-        case _                              => 0l
+        case _ => 0l
       }
     }
     lastTransformationTimestamp
   }
 
   def logTransformationTimestamp(view: View) = {
-    Await.result(ask(schemaActor, LogTransformationTimestamp(view))(settings.schemaTimeout), settings.schemaTimeout)
+    queryActor(schemaActor, LogTransformationTimestamp(view), settings.schemaTimeout)
     getTransformationTimestamp(view)
   }
 
@@ -391,15 +387,15 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def addPartition(view: View) {
-    Await.result(ask(schemaActor, AddPartition(view))(settings.schemaTimeout), settings.schemaTimeout)
+    queryActor(schemaActor, AddPartition(view), settings.schemaTimeout)
   }
 
   def deletePartitionData(view: View) {
-    Await.result(ask(actionsManagerActor, Delete(view.fullPath, true))(settings.filesystemTimeout), settings.filesystemTimeout)
+    queryActor(actionsManagerActor, Delete(view.fullPath, true), settings.filesystemTimeout)
   }
 
   def setVersion(view: View) {
-    Await.result(ask(schemaActor, SetViewVersion(view))(settings.schemaTimeout), settings.schemaTimeout)
+    queryActor(schemaActor, SetViewVersion(view), settings.schemaTimeout)
   }
 
   def stateInfo(stateName: String) =

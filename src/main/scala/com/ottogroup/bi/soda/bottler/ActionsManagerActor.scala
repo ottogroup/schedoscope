@@ -1,15 +1,17 @@
 package com.ottogroup.bi.soda.bottler
 
-import scala.Option.option2Iterable
 import scala.collection.JavaConversions.asScalaSet
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.DurationInt
+
 import org.apache.hadoop.conf.Configuration
+
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.bottler.driver.DriverException
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
+
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -20,7 +22,6 @@ import akka.actor.actorRef2Scala
 import akka.contrib.pattern.Aggregator
 import akka.event.Logging
 import akka.event.LoggingReceive
-import com.ottogroup.bi.soda.Settings
 
 class ActionStatusRetriever() extends Actor with Aggregator {
   expectOnce {
@@ -31,13 +32,19 @@ class ActionStatusRetriever() extends Actor with Aggregator {
     import context.dispatcher
     import collection.mutable.ArrayBuffer
 
-    val values = ArrayBuffer.empty[ActionStatusResponse[_]]
+    val values = ListBuffer[ActionStatusResponse[_]]()
 
     driverActors.foreach(_ ! GetStatus())
     context.system.scheduler.scheduleOnce(Settings().statusListAggregationTimeout, self, "timeout")
 
     val handle = expect {
-      case actionStatus: ActionStatusResponse[_] => values += actionStatus
+      case actionStatus: ActionStatusResponse[_] => {
+        values += actionStatus
+      
+        if (values.size == actionQueueStatus.size)
+          processFinal(values.toList)
+      }
+      
       case "timeout" => processFinal(values.toList)
     }
 

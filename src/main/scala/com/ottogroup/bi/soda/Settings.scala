@@ -6,37 +6,43 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
+import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import scala.concurrent.duration.FiniteDuration
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver.fileSystem
 import com.ottogroup.bi.soda.dsl.Parameter.p
+import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
 import com.typesafe.config.Config
+import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.ExtendedActorSystem
 import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
-import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
+import akka.pattern.Patterns
+import akka.util.Timeout
 import com.ottogroup.bi.soda.bottler.driver.Driver
-import com.ottogroup.bi.soda.dsl.Transformation
+
 
 class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem
 
   private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
   
-  val env = config.getString("soda.app.environment")
+  lazy val env = config.getString("soda.app.environment")
 
-  val earliestDay = {
+  lazy val earliestDay = {
     val conf = config.getString("soda.scheduler.earliestDay")
     val Array(year, month, day) = conf.split("-")
     DateParameterizationUtils.parametersToDay(p(year), p(month), p(day))
   }
 
-  val latestDay = {
+  lazy val latestDay = {
     val conf = config.getString("soda.scheduler.latestDay")
     if (conf == "now") {
       val now = Calendar.getInstance()
@@ -51,27 +57,27 @@ class SettingsImpl(val config: Config) extends Extension {
     }
   }
 
-  val webserviceTimeOut: Duration =
-  Duration(config.getDuration("soda.webservice.timeout", TimeUnit.MILLISECONDS),
+  lazy val webserviceTimeOut: Duration =
+    Duration(config.getDuration("soda.webservice.timeout", TimeUnit.MILLISECONDS),
       TimeUnit.MILLISECONDS)
 
-  val port = config.getInt("soda.webservice.port")
+  lazy val port = config.getInt("soda.webservice.port")
 
-  val jdbcUrl = config.getString("soda.metastore.jdbcUrl")
+  lazy val jdbcUrl = config.getString("soda.metastore.jdbcUrl")
 
-  val kerberosPrincipal = config.getString("soda.kerberos.principal")
+  lazy val kerberosPrincipal = config.getString("soda.kerberos.principal")
 
-  val metastoreUri = config.getString("soda.metastore.metastoreUri")
+  lazy val metastoreUri = config.getString("soda.metastore.metastoreUri")
 
-  val parsedViewAugmentorClass = config.getString("soda.app.parsedViewAugmentorClass")
+  lazy val parsedViewAugmentorClass = config.getString("soda.app.parsedViewAugmentorClass")
 
-  val availableTransformations = config.getObject("soda.transformations")
+  lazy val availableTransformations = config.getObject("soda.transformations")
 
-  val hadoopConf = new Configuration(true)
+  lazy val hadoopConf = new Configuration(true)
 
-  val transformationVersioning = config.getBoolean("soda.versioning.transformations")
+  lazy val transformationVersioning = config.getBoolean("soda.versioning.transformations")
 
-  val jobTrackerOrResourceManager = {
+  lazy val jobTrackerOrResourceManager = {
     val yarnConf = new YarnConfiguration(hadoopConf)
     if (yarnConf.get("yarn.resourcemanager.address") == null)
       config.getString("soda.hadoop.resourceManager")
@@ -79,20 +85,20 @@ class SettingsImpl(val config: Config) extends Extension {
       yarnConf.get("yarn.resourcemanager.address")
   }
 
-  val nameNode = if (hadoopConf.get("fs.defaultFS") == null)
+  lazy val nameNode = if (hadoopConf.get("fs.defaultFS") == null)
     config.getString("soda.hadoop.nameNode")
   else
     hadoopConf.get("fs.defaultFS")
 
-  def filesystemTimeout = getDriverSettings("filesystem").timeout
-  val schemaTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  val statusListAggregationTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  val viewManagerResponseTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  val completitionTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.completion", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val filesystemTimeout = getDriverSettings("filesystem").timeout
+  lazy val schemaTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val statusListAggregationTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val viewManagerResponseTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val completitionTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.completion", TimeUnit.SECONDS), TimeUnit.SECONDS)
   
-  val retries = config.getInt("soda.action.retry")
+  lazy val retries = config.getInt("soda.action.retry")
 
-  val userGroupInformation = {
+  lazy val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()
     ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
@@ -142,14 +148,14 @@ object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
 }
 
 class DriverSettings(val config: Config, val name: String) {
-  val location = Settings().nameNode + config.getString("location")
-  val libDirectory = config.getString("libDirectory")
-  val concurrency = config.getInt("concurrency")
-  val unpack = config.getBoolean("unpack")
-  val url = config.getString("url")
-  val timeout = Duration.create(config.getDuration("timeout", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val location = Settings().nameNode + config.getString("location")
+  lazy val libDirectory = config.getString("libDirectory")
+  lazy val concurrency = config.getInt("concurrency")
+  lazy val unpack = config.getBoolean("unpack")
+  lazy val url = config.getString("url")
+  lazy val timeout = Duration.create(config.getDuration("timeout", TimeUnit.SECONDS), TimeUnit.SECONDS)
   
-  val libJars = {
+  lazy val libJars = {
     val fromLibDir = libDirectory
       .split(",")
       .toList
@@ -171,7 +177,7 @@ class DriverSettings(val config: Config, val name: String) {
     (fromLibDir ++ fromClasspath).toList
   }
 
-  val libJarsHdfs = {
+  lazy val libJarsHdfs = {
     if (unpack)
       List[String]()
     else {

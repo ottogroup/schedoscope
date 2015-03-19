@@ -197,7 +197,7 @@ object View {
     val parameterValuesPassed = ListBuffer[TypedAny]()
     parameterValuesPassed ++= parameterValues
     
-    if (viewConstructor.getParameterTypes.size.equals(parameterValues.size)) {
+    if (viewConstructor.getParameterTypes.size != parameterValues.size) {
       throw new RuntimeException(s"Wrong number of arguments for constructing view ${viewClass.getSimpleName}; required ${viewConstructor.getParameterTypes.size}, found ${parameterValues.size}")
     }
 
