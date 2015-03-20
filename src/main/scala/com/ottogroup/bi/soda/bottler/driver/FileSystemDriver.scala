@@ -85,7 +85,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       FileUtils.touch(tempFile)
       FileUtils.copyInputStreamToFile(inputStream, tempFile)
 
-      "file:" + tempFile.toString()
+      "file:/" + tempFile.toString()
     }
     
     try {
@@ -113,7 +113,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       FileUtils.touch(tempFile)
       FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/" + remainingPath), tempFile)
 
-      "file:" + tempFile.toString()
+      "file:/" + tempFile.toString()
     }
 
     def inner(fromFS: FileSystem, toFS: FileSystem, files: Seq[FileStatus], to: Path): Unit = {
