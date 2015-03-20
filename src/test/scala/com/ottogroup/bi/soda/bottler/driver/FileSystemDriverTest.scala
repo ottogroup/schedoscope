@@ -147,6 +147,30 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     new File(s"${product.fullPath}${/}aTest.file") shouldBe 'exists
   }
 
+  it should "execute CopyFrom file transformations by copying a single file from java resources to partition path of view" taggedAs (DriverTests) in {
+    val product = new Product(p("EC0106"), p("2014"), p("01"), p("01")) {
+      override def fullPath = out
+    }
+
+    new File(s"${product.fullPath}${/}classpathtest.txt") should not be 'exists
+
+    driver.runAndWait(CopyFrom("classpath://input/classpathtest.txt", product, false)) shouldBe a[DriverRunSucceeded[_]]
+
+    new File(s"${product.fullPath}${/}classpathtest.txt") shouldBe 'exists
+  }
+   
+  it should "execute StoreFrom file transformations by copying an input stream to partition path of view" taggedAs (DriverTests) in {
+    val product = new Product(p("EC0106"), p("2014"), p("01"), p("01")) {
+      override def fullPath = out
+    }
+
+    new File(s"${product.fullPath}${/}stream.out") should not be 'exists
+
+    driver.runAndWait(StoreFrom(this.getClass().getResourceAsStream("/input/classpathtest.txt"), product)) shouldBe a[DriverRunSucceeded[_]]
+
+    new File(s"${product.fullPath}${/}stream.out") shouldBe 'exists
+  }
+  
   it should "execute CopyFrom file transformations by copying a folder recursively to partition path of view" taggedAs (DriverTests) in {
     val product = new Product(p("EC0106"), p("2014"), p("01"), p("01")) {
       override def fullPath = out

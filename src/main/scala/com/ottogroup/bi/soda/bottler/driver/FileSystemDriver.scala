@@ -2,6 +2,7 @@ package com.ottogroup.bi.soda.bottler.driver
 
 import java.io.File
 import java.io.IOException
+import java.io.InputStream
 import java.net.URI
 import java.nio.file.Files
 import java.security.PrivilegedAction
@@ -31,6 +32,7 @@ import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfExists
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfNotExists
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Move
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
+import com.ottogroup.bi.soda.dsl.transformations.filesystem.StoreFrom
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver._
 
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
@@ -60,6 +62,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       })
 
       case CopyFrom(from, view, recursive) => doAs(() => copy(from, view.fullPath, recursive))
+      case StoreFrom(inputStream, view) => doAs(() => storeFromStream(inputStream, view.fullPath))
       case Copy(from, to, recursive) => doAs(() => copy(from, to, recursive))
       case Move(from, to) => doAs(() => move(from, to))
       case Delete(path, recursive) => doAs(() => delete(path, recursive))
@@ -74,6 +77,34 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     }
   })
 
+  def storeFromStream(inputStream: InputStream, to: String): DriverRunState[FilesystemTransformation] = {
+    def inputStreamToFile(inputStream: InputStream) = {
+      val remainingPath = "stream.out"
+      val tempDir = Files.createTempDirectory("classpath").toFile.toString()
+      val tempFile = new File(tempDir + File.separator + remainingPath)
+      FileUtils.touch(tempFile)
+      FileUtils.copyInputStreamToFile(inputStream, tempFile)
+
+      "file:" + tempFile.toString()
+    }
+    
+    try {
+      val streamInFile = inputStreamToFile(inputStream)
+      
+      val fromFS = fileSystem(streamInFile, conf)
+      val toFS = fileSystem(to, conf)
+      
+      toFS.mkdirs(new Path(to))
+      
+      FileUtil.copy(fromFS, new Path(streamInFile), toFS, new Path(to), false, true, conf)
+      
+      DriverRunSucceeded(this, s"Storing from InputStream to ${to} succeeded")
+    } catch {
+      case i: IOException => DriverRunFailed(this, s"Caught IO exception while storing InputStream to ${to}", i)
+      case t: Throwable => throw DriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
+    }
+  }
+  
   def copy(from: String, to: String, recursive: Boolean): DriverRunState[FilesystemTransformation] = {
     def classpathResourceToFile(classpathResourceUrl: String) = {
       val remainingPath = classpathResourceUrl.replace("classpath://", "")
