@@ -37,14 +37,14 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def module = Named.formatName(moduleNameBuilder()).replaceAll("[.]", "_")
 
   def getCanonicalClassname = this.getClass.getCanonicalName
-
-  var moduleNameBuilder: () => String = () => this.getClass().getPackage().getName()
+  
   var env = "dev"
+  
+  var moduleNameBuilder: () => String = () => this.getClass().getPackage().getName()
   var dbNameBuilder: String => String = (env: String) => env.toLowerCase() + "_" + module
   var moduleLocationPathBuilder: String => String = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + module.replaceFirst("app", "applications")).replaceAll("_", "/")
   var locationPathBuilder: String => String = (env: String) => moduleLocationPathBuilder(env) + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
   var partitionPathBuilder: () => String = () => partitionSpec
-
   var avroSchemaPathPrefixBuilder: String => String = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
 
   def partitionSpec = "/" + partitionParameters.map(p => s"${p.n}=${p.v.getOrElse("")}").mkString("/")
@@ -52,9 +52,13 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def partitionValues = partitionParameters.map(p => p.v.getOrElse("").toString).toList
 
   def dbName = dbNameBuilder(env)
+  
   def tableName = dbName + "." + n
+  
   def locationPath = locationPathBuilder(env)
+  
   def fullPath = locationPath + partitionPathBuilder()
+  
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
   def urlPath = s"${Named.formatName(moduleNameBuilder())}/${n}/${partitionValues.mkString("/")}"

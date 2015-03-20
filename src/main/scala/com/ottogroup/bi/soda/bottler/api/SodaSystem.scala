@@ -23,8 +23,8 @@ import akka.actor.ActorSelection.toScala
 import akka.util.Timeout
 import com.ottogroup.bi.soda.bottler.Invalidate
 import com.ottogroup.bi.soda.bottler.Deploy
-import com.ottogroup.bi.soda.queryActorWithMessages
-import com.ottogroup.bi.soda.queryActor
+import com.ottogroup.bi.soda.bottler.queryActors
+import com.ottogroup.bi.soda.bottler.queryActor
 import akka.pattern.Patterns
 import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
@@ -58,7 +58,7 @@ class SodaSystem extends SodaInterface {
 
   private def getViewActors(viewUrlPath: String) = {
     val views = View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
-    queryActorWithMessages(viewManagerActor, views, settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
+    queryActors(viewManagerActor, views, settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
   }
 
   private def commandId(command: Any, args: Seq[String], start: Option[LocalDateTime] = None) = {

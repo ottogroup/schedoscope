@@ -14,7 +14,6 @@ import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
-import com.ottogroup.bi.soda.queryActor
 
 import akka.actor.Actor
 import akka.actor.ActorRef
