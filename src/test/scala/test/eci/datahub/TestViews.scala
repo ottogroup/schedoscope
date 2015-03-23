@@ -8,10 +8,10 @@ import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.Parquet
 import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation.oozieWFPath
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.insertInto
+import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation.oozieWFPath
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.insertInto
 import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.views.Id
 import com.ottogroup.bi.soda.dsl.views.JobMetadata

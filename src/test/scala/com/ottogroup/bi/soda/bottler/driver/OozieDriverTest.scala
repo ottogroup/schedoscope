@@ -6,7 +6,7 @@ import org.scalatest.Matchers
 
 import com.ottogroup.bi.soda.DriverTests
 import com.ottogroup.bi.soda.OozieTests
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
 import com.ottogroup.bi.soda.test.resources.OozieTestResources
 
 class OozieDriverTest extends FlatSpec with Matchers {

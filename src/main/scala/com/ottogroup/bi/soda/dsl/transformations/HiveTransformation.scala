@@ -1,22 +1,18 @@
-package com.ottogroup.bi.soda.dsl.transformations.sql
+package com.ottogroup.bi.soda.dsl.transformations
 
 import java.io.FileInputStream
 import java.io.InputStream
-
-import scala.collection.JavaConversions.asScalaBuffer
-import scala.collection.JavaConversions.seqAsJavaList
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
-
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.ResourceUri
-
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.Version
 import com.ottogroup.bi.soda.dsl.View
+import scala.collection.JavaConversions._
 
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 

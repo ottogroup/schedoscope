@@ -21,8 +21,8 @@ import org.joda.time.LocalDateTime
 
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.replaceParameters
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.replaceParameters
 
 class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 

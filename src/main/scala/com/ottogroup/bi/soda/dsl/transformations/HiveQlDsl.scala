@@ -1,9 +1,6 @@
-package com.ottogroup.bi.soda.dsl.transformations.sql
+package com.ottogroup.bi.soda.dsl.transformations
 
 import java.util.Date
-
-import scala.collection.JavaConverters.asScalaBufferConverter
-
 import org.jooq.Param
 import org.jooq.Query
 import org.jooq.SQLDialect
@@ -13,10 +10,11 @@ import org.jooq.impl.DSL.function
 import org.jooq.impl.DSL.inline
 import org.jooq.impl.DefaultDSLContext
 import org.jooq.impl.ViewTable
-
 import com.openpojo.reflection.impl.PojoClassFactory
 import com.ottogroup.bi.soda.dsl.FieldLike
 import com.ottogroup.bi.soda.dsl.Structure
+import org.jooq.impl.DSL
+import scala.collection.JavaConverters._
 
 object HiveQlDsl {
   def dsl(specification: HiveDSLContext => Query) = {

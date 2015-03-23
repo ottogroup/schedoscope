@@ -4,7 +4,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import com.ottogroup.bi.soda.DriverTests
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.test.resources.LocalTestResources
 
 class HiveDriverTest extends FlatSpec with Matchers {

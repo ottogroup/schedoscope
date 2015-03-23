@@ -7,8 +7,7 @@ import org.scalatest.Matchers
 import com.ottogroup.bi.soda.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation.configurationFromResource
+import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation.configurationFromResource
 
 case class Productfeed(
   ecShopCode: Parameter[String],

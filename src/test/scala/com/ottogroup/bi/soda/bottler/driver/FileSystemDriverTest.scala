@@ -2,13 +2,14 @@ package com.ottogroup.bi.soda.bottler.driver
 
 import org.scalatest.Matchers
 import org.scalatest.FlatSpec
-import com.ottogroup.bi.soda.dsl.transformations.filesystem._
+import com.ottogroup.bi.soda.dsl.transformations._
 import java.io.File
 import test.eci.datahub.Product
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.DriverTests
+import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
 
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: FileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())

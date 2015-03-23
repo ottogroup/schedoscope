@@ -9,8 +9,8 @@ import com.ottogroup.bi.soda.dsl.FieldLike
 import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.test.resources.OozieTestResources
 
 trait TestableView extends FillableView {}

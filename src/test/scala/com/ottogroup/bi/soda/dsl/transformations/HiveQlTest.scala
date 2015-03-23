@@ -10,13 +10,12 @@ import com.ottogroup.bi.soda.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl.dsl
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl.f
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl.get
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveQlDsl.t
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.queryFromResource
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation.replaceParameters
+import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.dsl
+import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.f
+import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.get
+import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.t
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.queryFromResource
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.replaceParameters
 
 case class Article() extends Structure {
   val name = fieldOf[String]

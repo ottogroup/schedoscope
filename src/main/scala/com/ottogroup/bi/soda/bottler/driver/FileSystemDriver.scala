@@ -24,15 +24,15 @@ import org.joda.time.LocalDateTime
 
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Copy
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.CopyFrom
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfExists
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.IfNotExists
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Move
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.StoreFrom
+import com.ottogroup.bi.soda.dsl.transformations.Copy
+import com.ottogroup.bi.soda.dsl.transformations.CopyFrom
+import com.ottogroup.bi.soda.dsl.transformations.Delete
+import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
+import com.ottogroup.bi.soda.dsl.transformations.IfExists
+import com.ottogroup.bi.soda.dsl.transformations.IfNotExists
+import com.ottogroup.bi.soda.dsl.transformations.Move
+import com.ottogroup.bi.soda.dsl.transformations.Touch
+import com.ottogroup.bi.soda.dsl.transformations.StoreFrom
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver._
 
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
@@ -85,7 +85,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       FileUtils.touch(tempFile)
       FileUtils.copyInputStreamToFile(inputStream, tempFile)
 
-      "file:/" + tempFile.toString()
+      "file://" + tempFile.toString()
     }
     
     try {
@@ -113,7 +113,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       FileUtils.touch(tempFile)
       FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/" + remainingPath), tempFile)
 
-      "file:/" + tempFile.toString()
+      "file://" + tempFile.toString()
     }
 
     def inner(fromFS: FileSystem, toFS: FileSystem, files: Seq[FileStatus], to: Path): Unit = {

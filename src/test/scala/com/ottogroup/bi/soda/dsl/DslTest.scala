@@ -8,7 +8,7 @@ import org.scalatest.Matchers
 import com.ottogroup.bi.soda.crate.ddl.HiveQl.ddl
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.View.t
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.views.JobMetadata
 import com.ottogroup.bi.soda.dsl.views.PointOccurrence

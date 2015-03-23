@@ -11,9 +11,9 @@ import org.apache.hadoop.fs.Path
 import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.dsl.NoOp
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Delete
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.Touch
+import com.ottogroup.bi.soda.dsl.transformations.Delete
+import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
+import com.ottogroup.bi.soda.dsl.transformations.Touch
 
 import akka.actor.Actor
 import akka.actor.ActorRef

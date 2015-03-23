@@ -16,7 +16,7 @@ import org.joda.time.LocalDateTime
 
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
 import com.typesafe.config.ConfigFactory
 
 class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {

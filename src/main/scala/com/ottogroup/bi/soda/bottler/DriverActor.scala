@@ -22,9 +22,9 @@ import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
 import akka.routing.BroadcastRouter
-import com.ottogroup.bi.soda.dsl.transformations.sql.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
-import com.ottogroup.bi.soda.dsl.transformations.oozie.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
+import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
 
 class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._

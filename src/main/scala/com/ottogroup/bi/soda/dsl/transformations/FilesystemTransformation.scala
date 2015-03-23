@@ -1,8 +1,9 @@
-package com.ottogroup.bi.soda.dsl.transformations.filesystem
+package com.ottogroup.bi.soda.dsl.transformations
 
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import java.io.InputStream
+import com.ottogroup.bi.soda.dsl.View
 
 sealed class FilesystemTransformation extends Transformation {
   override def name = "filesystem"

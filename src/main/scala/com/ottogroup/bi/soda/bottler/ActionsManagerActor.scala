@@ -10,7 +10,7 @@ import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.bottler.driver.DriverException
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.filesystem.FilesystemTransformation
+import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
 
 import akka.actor.Actor
 import akka.actor.ActorRef
