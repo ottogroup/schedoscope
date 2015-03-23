@@ -25,7 +25,13 @@ import akka.event.LoggingReceive
 
 class ActionStatusRetriever() extends Actor with Aggregator {
   expectOnce {
-    case GetActionStatusList(statusRequester, actionQueueStatus, driverActors: Seq[ActorRef]) => new MultipleResponseHandler(statusRequester, actionQueueStatus, driverActors)
+    case GetActionStatusList(statusRequester, actionQueueStatus, driverActors: Seq[ActorRef]) =>
+      if (driverActors.isEmpty) {
+        statusRequester ! ActionStatusListResponse(List(), actionQueueStatus)
+        context.stop(self)
+      } else
+        new MultipleResponseHandler(statusRequester, actionQueueStatus, driverActors)
+
   }
 
   class MultipleResponseHandler(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Iterable[ActorRef]) {
@@ -40,11 +46,11 @@ class ActionStatusRetriever() extends Actor with Aggregator {
     val handle = expect {
       case actionStatus: ActionStatusResponse[_] => {
         values += actionStatus
-      
-        if (values.size == actionQueueStatus.size)
+
+        if (values.size == driverActors.size)
           processFinal(values.toList)
       }
-      
+
       case "timeout" => processFinal(values.toList)
     }
 
@@ -79,7 +85,7 @@ class ActionsManagerActor() extends Actor {
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: DriverException => Restart
-      case _: Throwable => Escalate
+      case _: Throwable       => Escalate
     }
 
   override def preStart {
@@ -121,11 +127,11 @@ class ActionsManagerActor() extends Actor {
 
     }
 
-    case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
+    case viewAction: View                                         => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
 
     case filesystemTransformationAction: FilesystemTransformation => self ! CommandWithSender(filesystemTransformationAction, sender)
 
-    case deployAction: Deploy => self ! CommandWithSender(deployAction, sender)
+    case deployAction: Deploy                                     => self ! CommandWithSender(deployAction, sender)
   })
 }
 

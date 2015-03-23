@@ -14,7 +14,12 @@ import akka.contrib.pattern.Aggregator
 
 class ViewStatusRetriever() extends Actor with Aggregator {
   expectOnce {
-    case GetViewStatusList(statusRequester, viewActors) => new MultipleResponseHandler(statusRequester, viewActors)
+    case GetViewStatusList(statusRequester, viewActors) => if (viewActors.isEmpty) {
+      statusRequester ! ViewStatusListResponse(List())
+      context.stop(self)
+    }
+    else
+      new MultipleResponseHandler(statusRequester, viewActors)
   }
 
   class MultipleResponseHandler(statusRequester: ActorRef, viewActors: Seq[ActorRef]) {
