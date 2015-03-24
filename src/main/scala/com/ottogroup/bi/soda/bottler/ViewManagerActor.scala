@@ -17,8 +17,7 @@ class ViewStatusRetriever() extends Actor with Aggregator {
     case GetViewStatusList(statusRequester, viewActors) => if (viewActors.isEmpty) {
       statusRequester ! ViewStatusListResponse(List())
       context.stop(self)
-    }
-    else
+    } else
       new MultipleResponseHandler(statusRequester, viewActors)
   }
 
@@ -32,14 +31,14 @@ class ViewStatusRetriever() extends Actor with Aggregator {
     context.system.scheduler.scheduleOnce(settings.statusListAggregationTimeout, self, "timeout")
 
     val handle = expect {
-      
-    case viewStatus: ViewStatusResponse => {
+
+      case viewStatus: ViewStatusResponse => {
         values += viewStatus
 
         if (values.size == viewActors.size)
           processFinal(values.toList)
       }
-      
+
       case "timeout" => processFinal(values.toList)
     }
 
@@ -66,7 +65,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     case v: View => {
       //generate a unique id for every actor
       val actor = ViewManagerActor.actorForView(v)
-      
+
       sender ! (if (actor.isTerminated)
         actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))
       else
@@ -79,6 +78,7 @@ object ViewManagerActor {
   def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor)
 
   def actorNameForView(v: View) = v.module + v.n + v.parameters.foldLeft("") { (s, p) => s"${s}+${p.n}=${p.v.get}" }
-  
+
   def actorForView(v: View) = SodaRootActor.settings.system.actorFor(SodaRootActor.viewManagerActor.path.child(actorNameForView(v)))
+
 }
