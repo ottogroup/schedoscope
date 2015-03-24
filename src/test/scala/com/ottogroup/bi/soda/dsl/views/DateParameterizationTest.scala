@@ -29,8 +29,8 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
 
     for (day <- days) {
       if (firstDay == null)
-        firstDay = s"${day._1.v.get}${day._2.v.get}${day._3.v.get}"
-      lastDay = s"${day._1.v.get}${day._2.v.get}${day._3.v.get}"
+        firstDay = s"${day._1}${day._2}${day._3}"
+      lastDay = s"${day._1}${day._2}${day._3}"
     }
 
     firstDay shouldEqual "20140111"

@@ -59,8 +59,8 @@ object ViewUrlParser {
       typeMonthlyRangeParameter(laterYear, laterMonth, earlierYear, earlierMonth)
     else
       thisAndPrevMonths(p(laterYear), p(laterMonth))
-        .takeWhile { case (year, month) => s"${earlierYear}${earlierMonth}" <= s"${year.v.get}${month.v.get}" }
-        .map { case (year, month) => List(t(year), t(month)) }
+        .takeWhile { case (year, month) => s"${earlierYear}${earlierMonth}" <= s"${year}${month}" }
+        .map { case (year, month) => List(t(p(year)), t(p(month))) }
         .toList
 
   def typeDailyRangeParameter(earlierYear: String, earlierMonth: String, earlierDay: String, laterYear: String, laterMonth: String, laterDay: String): List[List[TypedAny]] =
@@ -68,8 +68,8 @@ object ViewUrlParser {
       typeDailyRangeParameter(laterYear, laterMonth, laterDay, earlierYear, earlierMonth, earlierDay)
     else
       thisAndPrevDays(p(laterYear), p(laterMonth), p(laterDay))
-        .takeWhile { case (year, month, day) => s"${earlierYear}${earlierMonth}${earlierDay}" <= s"${year.v.get}${month.v.get}${day.v.get}" }
-        .map { case (year, month, day) => List(t(year), t(month), t(day)) }
+        .takeWhile { case (year, month, day) => s"${earlierYear}${earlierMonth}${earlierDay}" <= s"${year}${month}${day}" }
+        .map { case (year, month, day) => List(t(p(year)), t(p(month)), t(p(day))) }
         .toList
 
   def typeEnumerationParameter(enumerationType: String, enumerationValues: String): List[List[TypedAny]] = {
