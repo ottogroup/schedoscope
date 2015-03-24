@@ -38,9 +38,9 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
 object SodaRootActor {
   def props(settings: SettingsImpl) = Props(classOf[SodaRootActor], settings)
 
-  lazy val settings = Settings()
+  val settings = Settings()
 
-  lazy val sodaRootActor = settings.system.actorOf(props(settings), "root")
+  val sodaRootActor = settings.system.actorOf(props(settings), "root")
 
   def actorSelectionToRef(actorSelection: ActorSelection) =
     Await.result(actorSelection.resolveOne(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout)
