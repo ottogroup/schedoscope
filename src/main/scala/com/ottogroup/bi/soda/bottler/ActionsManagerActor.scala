@@ -3,15 +3,12 @@ package com.ottogroup.bi.soda.bottler
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration.DurationInt
-
 import org.apache.hadoop.conf.Configuration
-
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.bottler.driver.DriverException
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -22,6 +19,7 @@ import akka.actor.actorRef2Scala
 import akka.contrib.pattern.Aggregator
 import akka.event.Logging
 import akka.event.LoggingReceive
+import scala.util.Random
 
 class ActionStatusRetriever() extends Actor with Aggregator {
   expectOnce {
@@ -65,13 +63,60 @@ class ActionStatusRetriever() extends Actor with Aggregator {
 class ActionsManagerActor() extends Actor {
   import context._
   val log = Logging(system, ActionsManagerActor.this)
+
   val settings = Settings.get(system)
 
   val availableTransformations = settings.availableTransformations.keySet()
 
-  val queues = availableTransformations.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
-    (registeredDriverQueues, driverName) => registeredDriverQueues + (driverName -> new collection.mutable.Queue[CommandWithSender]())
+  val nonFilesystemQueues = availableTransformations.filter { _ != "filesystem" }.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
+    (nonFilesystemQueuesSoFar, driverName) =>
+      nonFilesystemQueuesSoFar + (driverName -> new collection.mutable.Queue[CommandWithSender]())
   }
+
+  val filesystemConcurrency = settings.getDriverSettings("filesystem").concurrency
+
+  val filesystemQueues = (0 until filesystemConcurrency).foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
+    (filesystemQueuesSoFar, n) => filesystemQueuesSoFar + (s"filesystem-${n}" -> new collection.mutable.Queue[CommandWithSender]())
+  }
+
+  val queues = nonFilesystemQueues ++ filesystemQueues
+
+  val randomizer = Random
+
+  def hash(t: Transformation) = Math.min(0,
+    (if (t.view.isDefined)
+      t.view.get.fullPath
+    else
+      "/").hashCode().abs % filesystemConcurrency)
+
+  def queueNameForTransformationAction(t: Transformation) =
+    if (t.name != "filesystem")
+      t.name
+    else
+      s"filesystem-${hash(t)}"
+
+  def queueNameForTransformationType(transformationType: String) =
+    if (transformationType != "filesystem") {
+      transformationType
+    } else {
+      val allFilesystemQueuesEmpty = filesystemQueues.values.foldLeft(true) {
+        (emptySoFar, currentQueue) => emptySoFar && currentQueue.isEmpty
+      }
+
+      if (allFilesystemQueuesEmpty)
+        "filesystem-0"
+      else {
+        var foundNonEmptyQueue = false
+        var randomPick = ""
+
+        while (!foundNonEmptyQueue) {
+          randomPick = s"filesystem-${randomizer.nextInt(filesystemConcurrency)}"
+          foundNonEmptyQueue = !queues.get(randomPick).isEmpty
+        }
+
+        randomPick
+      }
+    }
 
   private def actionQueueStatus() = {
     queues.map(q => (q._1, q._2.map(c => {
@@ -85,7 +130,7 @@ class ActionsManagerActor() extends Actor {
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: DriverException => Restart
-      case _: Throwable       => Escalate
+      case _: Throwable => Escalate
     }
 
   override def preStart {
@@ -98,7 +143,7 @@ class ActionsManagerActor() extends Actor {
     case GetStatus() => actorOf(Props[ActionStatusRetriever]) ! GetActionStatusList(sender(), actionQueueStatus(), children.toList)
 
     case PollCommand(transformationType) => {
-      val queueForType = queues.get(transformationType).get
+      val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
 
       if (!queueForType.isEmpty) {
         val cmd = queueForType.dequeue()
@@ -116,7 +161,7 @@ class ActionsManagerActor() extends Actor {
     case actionCommand: CommandWithSender => {
       if (actionCommand.command.isInstanceOf[Transformation]) {
         val transformation = actionCommand.command.asInstanceOf[Transformation]
-        val queueName = transformation.name
+        val queueName = queueNameForTransformationAction(transformation)
 
         queues.get(queueName).get.enqueue(actionCommand)
         log.info(s"ACTIONMANAGER ENQUEUE: Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
@@ -127,11 +172,11 @@ class ActionsManagerActor() extends Actor {
 
     }
 
-    case viewAction: View                                         => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
+    case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
 
     case filesystemTransformationAction: FilesystemTransformation => self ! CommandWithSender(filesystemTransformationAction, sender)
 
-    case deployAction: Deploy                                     => self ! CommandWithSender(deployAction, sender)
+    case deployAction: Deploy => self ! CommandWithSender(deployAction, sender)
   })
 }
 
