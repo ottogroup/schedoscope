@@ -8,7 +8,7 @@ import com.ottogroup.bi.soda.dsl.Parameter.p
 class DailyParameterizationTest extends FlatSpec with Matchers {
   "prevDay" should "compute the previous date" in {
     val prevDate = DateParameterizationUtils.prevDay(p("2014"), p("01"), p("01")) match {
-      case Some((prevYear, prevMonth, prevDay)) => (prevYear.v.get, prevMonth.v.get, prevDay.v.get)
+      case Some((prevYear, prevMonth, prevDay)) => (prevYear, prevMonth, prevDay)
       case None => null
     }
 

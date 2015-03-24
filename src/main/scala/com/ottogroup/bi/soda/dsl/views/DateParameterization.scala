@@ -44,9 +44,9 @@ object DateParameterizationUtils {
     }
   }
 
-  def prevDay(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Option[(Parameter[String], Parameter[String], Parameter[String])] = {
+  def prevDay(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Option[(String, String, String)] = {
     prevDay(parametersToDay(year, month, day)) match {
-      case Some(previousDay) => Some(dayToParameters(previousDay))
+      case Some(previousDay) => Some(dayToStrings(previousDay))
       case None => None
     }
   }
