@@ -96,13 +96,6 @@
 			<artifactId>openpojo</artifactId>
 			<version>0.6.2</version>
 		</dependency>
-		<!-- 
-		<dependency>
-			<groupId>com.tumblr</groupId>
-			<artifactId>colossus_${scala.version}</artifactId>
-			<version>0.5.1</version>
-		</dependency>
-		 -->
 		<dependency>
 			<groupId>net.lingala.zip4j</groupId>
 			<artifactId>zip4j</artifactId>
