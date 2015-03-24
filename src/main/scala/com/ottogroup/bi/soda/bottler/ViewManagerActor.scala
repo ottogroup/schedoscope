@@ -55,7 +55,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   import context._
 
   override def preRestart(reason: Throwable, message: Option[Any]) {
-    // prevent termination of children durin restart and cause their own restart
+    // prevent termination of children during restart and cause their own restart
   }
 
   def receive = {
@@ -65,11 +65,10 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
     case v: View => {
       //generate a unique id for every actor
-      val actorName = v.module + v.n + v.parameters.foldLeft("") { (s, p) => s"${s}+${p.n}=${p.v.get}" }
-
-      val actor = actorFor(actorName)
+      val actor = ViewManagerActor.actorForView(v)
+      
       sender ! (if (actor.isTerminated)
-        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), actorName)
+        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))
       else
         actor)
     }
@@ -78,4 +77,8 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
 object ViewManagerActor {
   def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor)
+
+  def actorNameForView(v: View) = v.module + v.n + v.parameters.foldLeft("") { (s, p) => s"${s}+${p.n}=${p.v.get}" }
+  
+  def actorForView(v: View) = SodaRootActor.settings.system.actorFor(SodaRootActor.viewManagerActor.path.child(actorNameForView(v)))
 }

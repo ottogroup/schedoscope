@@ -237,9 +237,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
         log.debug("materializing dependency " + d)
 
-        val dependencyActor: ActorRef = queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
-
-        dependencyActor ! MaterializeView()
+        getViewActor(d) ! MaterializeView()
       }
     }
 
@@ -361,6 +359,15 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
       case ViewVersionOk(v) => false
     }
+  }
+
+  def getViewActor(view: View) = {
+    val viewActor = ViewManagerActor.actorForView(view)
+
+    if (!viewActor.isTerminated)
+      viewActor
+    else
+      queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout)
   }
 
   def getTransformationTimestamp(view: View) = {
