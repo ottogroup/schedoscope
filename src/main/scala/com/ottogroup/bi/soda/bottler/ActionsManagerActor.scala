@@ -19,7 +19,7 @@ import akka.actor.actorRef2Scala
 import akka.contrib.pattern.Aggregator
 import akka.event.Logging
 import akka.event.LoggingReceive
-import scala.util.Random
+import java.util.UUID
 
 class ActionStatusRetriever() extends Actor with Aggregator {
   expectOnce {
@@ -140,7 +140,7 @@ class ActionsManagerActor() extends Actor {
   }
 
   def receive = LoggingReceive({
-    case GetStatus() => actorOf(Props[ActionStatusRetriever]) ! GetActionStatusList(sender(), actionQueueStatus(), children.toList)
+    case GetStatus() => actorOf(Props[ActionStatusRetriever], "aggregator-" + UUID.randomUUID()) ! GetActionStatusList(sender(), actionQueueStatus(), children.toList.filter { !_.path.toStringWithoutAddress.contains("aggregator-") })
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
