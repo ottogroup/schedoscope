@@ -2,25 +2,22 @@ package com.ottogroup.bi.soda.bottler
 
 import java.lang.Math.max
 import java.security.PrivilegedAction
-
 import scala.concurrent.duration.Duration
-
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-
 import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.dsl.NoOp
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.Delete
 import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.Touch
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
+import com.ottogroup.bi.soda.dsl.transformations.MkDir
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
@@ -392,7 +389,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     if (view.isPartitioned())
       queryActor(schemaActor, AddPartition(view), settings.schemaTimeout)
     else
-      queryActor(actionsManagerActor, Touch(view.fullPath), settings.filesystemTimeout)
+      queryActor(actionsManagerActor, MkDir(view.fullPath), settings.filesystemTimeout)
   }
 
   def deletePartitionData(view: View) {

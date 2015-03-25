@@ -33,6 +33,7 @@ import com.ottogroup.bi.soda.dsl.transformations.IfNotExists
 import com.ottogroup.bi.soda.dsl.transformations.Move
 import com.ottogroup.bi.soda.dsl.transformations.Touch
 import com.ottogroup.bi.soda.dsl.transformations.StoreFrom
+import com.ottogroup.bi.soda.dsl.transformations.MkDir
 import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver._
 
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
@@ -66,6 +67,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       case Copy(from, to, recursive) => doAs(() => copy(from, to, recursive))
       case Move(from, to) => doAs(() => move(from, to))
       case Delete(path, recursive) => doAs(() => delete(path, recursive))
+      case MkDir(path) => doAs(() => mkdirs(path))
       case Touch(path) => doAs(() => touch(path))
 
       case _ => throw DriverException("FileSystemDriver can only run file transformations.")
@@ -164,10 +166,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
       val toCreate = new Path(path)
 
-      if (filesys.isFile(toCreate))
-        filesys.create(new Path(path))
-      if (filesys.isDirectory(toCreate))
-        filesys.mkdirs(toCreate)
+      filesys.create(new Path(path))
 
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
