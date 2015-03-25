@@ -189,5 +189,9 @@ class SodaSystem extends SodaInterface {
       .filter(c => if (!status.isDefined) true else (c.status.get(status.get).isDefined && c.status(status.get) > 0))
       .toList
   }
+  
+  def shutdown() {
+    settings.system.shutdown()
+  }
 
 }

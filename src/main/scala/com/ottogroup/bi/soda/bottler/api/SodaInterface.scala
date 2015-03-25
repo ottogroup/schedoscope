@@ -15,4 +15,6 @@ trait SodaInterface {
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false): ViewStatusList
 
   def actions(status: Option[String]): ActionStatusList
+  
+  def shutdown()
 }

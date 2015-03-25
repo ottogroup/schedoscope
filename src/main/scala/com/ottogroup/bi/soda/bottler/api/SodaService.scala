@@ -69,5 +69,9 @@ object SodaService extends App with SimpleRoutingApp {
         }
     }
   }
+  
+//  while (true) {
+//    ctrl.run(readLine("soda> ").split(" "))
+//  }
 
 }

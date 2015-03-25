@@ -88,7 +88,7 @@ class SodaRestClient extends SodaInterface {
     s"http://${host}:${port}${u}"
   }
 
-  def close() {
+  def shutdown() {
     system.shutdown()
   }
 
@@ -118,16 +118,24 @@ class SodaRestClient extends SodaInterface {
   }
 }
 
-object SodaControl {
+
+object SodaClientControl {
+  val soda = new SodaRestClient()
+  val ctrl = new SodaControl(soda)
+  def main(args: Array[String]) {
+    ctrl.run(args)
+    soda.shutdown()
+    System.exit(0)
+  }
+}
+
+class SodaControl(soda: SodaInterface) {
   object Action extends Enumeration {
     val VIEWS, ACTIONS, MATERIALIZE, COMMANDS = Value
   }
   import Action._
 
   case class Config(action: Option[Action.Value] = None, viewUrlPath: String = "", status: Option[String] = None)
-
-  val soda = new SodaRestClient()
-  val log = Logging(soda.system, getClass)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -148,7 +156,7 @@ object SodaControl {
     }
   }
 
-  def main(args: Array[String]) {
+  def run(args: Array[String]) {
     parser.parse(args, Config()) match {
       case Some(config) => {
         println("Starting " + config.action.get.toString + " ...")
@@ -171,8 +179,6 @@ object SodaControl {
         }
         println("\nRESULTS\n=======")
         println(CliFormat.serialize(res))
-        soda.close()
-        System.exit(0)
       }
       case None => // usage information has already been displayed
     }
