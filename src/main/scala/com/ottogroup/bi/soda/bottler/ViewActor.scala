@@ -286,8 +286,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         if (getTransformationTimestamp(view) > 0l) {
           toMaterialize()
         } else {
-          deletePartitionData(view)
-
           actionsManagerActor ! view
 
           log.info(stateInfo("transforming"))
@@ -298,8 +296,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
 
       case _ => {
-        deletePartitionData(view)
-
         actionsManagerActor ! view
 
         log.info(stateInfo("transforming"))
@@ -393,7 +389,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def addPartition(view: View) {
-    queryActor(schemaActor, AddPartition(view), settings.schemaTimeout)
+    if (view.isPartitioned())
+      queryActor(schemaActor, AddPartition(view), settings.schemaTimeout)
+    else
+      queryActor(actionsManagerActor, Touch(view.fullPath), settings.filesystemTimeout)
   }
 
   def deletePartitionData(view: View) {
