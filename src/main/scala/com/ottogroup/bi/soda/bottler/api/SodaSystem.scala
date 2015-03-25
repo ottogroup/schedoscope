@@ -124,7 +124,6 @@ class SodaSystem extends SodaInterface {
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false) = {
-    println("Fetching views ...")
     val result: ViewStatusListResponse = queryActor(viewManagerActor, GetStatus(), settings.statusListAggregationTimeout)
     val views = result.viewStatusList
       .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!withDependencies) None else Some(v.view.dependencies.map(d => d.urlPath).toList)))
@@ -134,7 +133,6 @@ class SodaSystem extends SodaInterface {
   }
 
   def actions(status: Option[String]) = {
-    println("Fetching actions ...")
     val result: ActionStatusListResponse = queryActor(actionsManagerActor, GetStatus(), settings.statusListAggregationTimeout)
     val actions = result.actionStatusList
       .map(a => SodaJsonProtocol.parseActionStatus(a))
