@@ -69,15 +69,14 @@ object SodaService extends App with SimpleRoutingApp {
         }
     }
   }
-  
+
   Thread.sleep(10000)
   println("\n\n============= SODA initialization finished ============== \n\n")
   val ctrl = new SodaControl(soda)
   while (true) {
     try {
       ctrl.run(readLine("soda> ").split(" "))
-    } 
-    catch {
+    } catch {
       case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()
     }
   }

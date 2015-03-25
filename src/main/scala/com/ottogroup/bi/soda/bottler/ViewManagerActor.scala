@@ -25,7 +25,7 @@ class ViewStatusRetriever() extends Actor with Aggregator {
     import collection.mutable.ArrayBuffer
 
     val values = ListBuffer[ViewStatusResponse]()
-    
+
     viewActors.foreach(_ ! GetStatus())
     context.system.scheduler.scheduleOnce(settings.statusListAggregationTimeout, self, "timeout")
 
