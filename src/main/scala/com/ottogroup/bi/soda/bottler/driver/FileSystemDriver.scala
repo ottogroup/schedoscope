@@ -161,9 +161,14 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
   def touch(path: String): DriverRunState[FilesystemTransformation] =
     try {
       val filesys = fileSystem(path, conf)
-
-      filesys.create(new Path(path))
-
+      
+      val toCreate = new Path(path)
+      
+      if (filesys.isFile(toCreate))
+        filesys.create(new Path(path))
+      if (filesys.isDirectory(toCreate))
+        filesys.mkdirs(toCreate)
+        
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while touching ${path}", i)
