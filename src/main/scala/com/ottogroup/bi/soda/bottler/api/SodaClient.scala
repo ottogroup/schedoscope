@@ -38,10 +38,12 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
       }
       case vl: ViewStatusList => {
         sb.append(vl.overview.map(el => s"${el._1}: ${el._2}").mkString("\n") + "\n")
-        sb.append(s"Details:\n")
-        val header = Array("VIEW", "STATUS", "PROPS")
-        val data = vl.views.map(d => Array(d.view, d.status, d.properties.mkString(","))).toArray
-        sb.append(ASCIITable.getInstance.getTable(header, data))
+        if (!vl.views.isEmpty) {
+          sb.append(s"Details:\n")
+          val header = Array("VIEW", "STATUS", "PROPS")
+          val data = vl.views.map(d => Array(d.view, d.status, d.properties.mkString(","))).toArray
+          sb.append(ASCIITable.getInstance.getTable(header, data))
+        }
       }
       case sc: SodaCommandStatus => {
         sb.append(s"id: ${sc.id}\n")
