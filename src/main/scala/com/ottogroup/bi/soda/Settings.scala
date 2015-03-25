@@ -28,12 +28,11 @@ import akka.pattern.Patterns
 import akka.util.Timeout
 import com.ottogroup.bi.soda.bottler.driver.Driver
 
-
 class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem
 
   private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
-  
+
   lazy val env = config.getString("soda.app.environment")
 
   lazy val earliestDay = {
@@ -95,7 +94,7 @@ class SettingsImpl(val config: Config) extends Extension {
   lazy val statusListAggregationTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
   lazy val viewManagerResponseTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
   lazy val completitionTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.completion", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  
+
   lazy val retries = config.getInt("soda.action.retry")
 
   lazy val userGroupInformation = {
@@ -105,7 +104,6 @@ class SettingsImpl(val config: Config) extends Extension {
     ugi.reloginFromKeytab();
     ugi
   }
-  
 
   def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
     getDriverSettings(d.transformationName)
@@ -124,12 +122,12 @@ class SettingsImpl(val config: Config) extends Extension {
 
     driverSettings(n)
   }
-  
+
   def getTransformationSetting(typ: String, setting: String) = {
     val confName = s"soda.transformations.${typ}.transformation.${setting}"
     config.getString(confName)
   }
-  
+
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
@@ -154,7 +152,7 @@ class DriverSettings(val config: Config, val name: String) {
   lazy val unpack = config.getBoolean("unpack")
   lazy val url = config.getString("url")
   lazy val timeout = Duration.create(config.getDuration("timeout", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  
+
   lazy val libJars = {
     val fromLibDir = libDirectory
       .split(",")

@@ -87,24 +87,24 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
       tempFile.toURI().toString()
     }
-    
+
     try {
       val streamInFile = inputStreamToFile(inputStream)
-      
+
       val fromFS = fileSystem(streamInFile, conf)
       val toFS = fileSystem(to, conf)
-      
+
       toFS.mkdirs(new Path(to))
-      
+
       FileUtil.copy(fromFS, new Path(streamInFile), toFS, new Path(to), false, true, conf)
-      
+
       DriverRunSucceeded(this, s"Storing from InputStream to ${to} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while storing InputStream to ${to}", i)
       case t: Throwable => throw DriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
     }
   }
-  
+
   def copy(from: String, to: String, recursive: Boolean): DriverRunState[FilesystemTransformation] = {
     def classpathResourceToFile(classpathResourceUrl: String) = {
       val remainingPath = classpathResourceUrl.replace("classpath://", "")
@@ -161,14 +161,14 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
   def touch(path: String): DriverRunState[FilesystemTransformation] =
     try {
       val filesys = fileSystem(path, conf)
-      
+
       val toCreate = new Path(path)
-      
+
       if (filesys.isFile(toCreate))
         filesys.create(new Path(path))
       if (filesys.isDirectory(toCreate))
         filesys.mkdirs(toCreate)
-        
+
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while touching ${path}", i)

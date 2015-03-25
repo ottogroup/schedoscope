@@ -23,7 +23,7 @@ object DateParameterizationUtils {
 
     (year, month, day)
   }
-  
+
   def dayToParameters(thisDay: Calendar) = {
     val year: Parameter[String] = p(s"${"%04d".format(thisDay.get(Calendar.YEAR))}")
     val month: Parameter[String] = p(s"${"%02d".format(thisDay.get(Calendar.MONTH) + 1)}")
@@ -68,7 +68,7 @@ object DateParameterizationUtils {
   }
 
   def thisAndPrevDays(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Seq[(String, String, String)] =
-    prevDaysFrom(parametersToDay(year, month, day)).map { dayToStrings(_)}
+    prevDaysFrom(parametersToDay(year, month, day)).map { dayToStrings(_) }
 
   def thisAndPrevDays(year: Parameter[String], month: Parameter[String]): Seq[(String, String, String)] = {
     val lastOfMonth = parametersToDay(year, month, p("01"))

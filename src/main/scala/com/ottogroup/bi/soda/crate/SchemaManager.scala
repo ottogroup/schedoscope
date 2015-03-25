@@ -85,10 +85,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def schemaExists(view: View): Boolean = {
     val d = Version.digest(HiveQl.ddl(view))
-    
+
     if (existingSchemas.contains(d))
       return true
-      
+
     if (!metastoreClient.tableExists(view.dbName, view.n))
       false
     else {
@@ -121,10 +121,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     if (!schemaExists(view)) {
       dropAndCreateTableSchema(view)
     }
-    
+
     if (!view.isPartitioned())
       throw new RuntimeException(s"Cannot create partition on non-partitioned view ${view.tableName}")
-    
+
     try {
       val now = new DateTime().getMillis.toInt
       val sd = metastoreClient.getTable(view.dbName, view.n).getSd

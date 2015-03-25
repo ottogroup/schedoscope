@@ -118,7 +118,6 @@ class SodaRestClient extends SodaInterface {
   }
 }
 
-
 object SodaClientControl {
   val soda = new SodaRestClient()
   val ctrl = new SodaControl(soda)

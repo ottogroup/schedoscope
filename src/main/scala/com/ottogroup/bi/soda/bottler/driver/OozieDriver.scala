@@ -65,7 +65,6 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
   }
 
   def runOozieJob(jobProperties: Properties): String = client.run(jobProperties)
- 
 
   def getJobInfo(jobId: String) = client.getJobInfo(jobId)
 
