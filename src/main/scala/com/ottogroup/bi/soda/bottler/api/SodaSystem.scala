@@ -58,7 +58,7 @@ class SodaSystem extends SodaInterface {
 
   private def getViewActors(viewUrlPath: String) = {
     val views = View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
-    queryActors(viewManagerActor, views, settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
+    queryActor(viewManagerActor, views, settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
   }
 
   private def commandId(command: Any, args: Seq[String], start: Option[LocalDateTime] = None) = {

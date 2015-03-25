@@ -83,17 +83,17 @@ class ActionsManagerActor() extends Actor {
 
   val randomizer = Random
 
-  def hash(t: Transformation) = Math.min(0,
-    (if (t.view.isDefined)
-      t.view.get.fullPath
-    else
-      "/").hashCode().abs % filesystemConcurrency)
+  def hash(s: String) = Math.max(0,
+    s.hashCode().abs % filesystemConcurrency)
 
-  def queueNameForTransformationAction(t: Transformation) =
+  def queueNameForTransformationAction(t: Transformation, s: ActorRef) =
     if (t.name != "filesystem")
       t.name
-    else
-      s"filesystem-${hash(t)}"
+    else {
+      val h = s"filesystem-${hash(s.path.name)}"
+      log.debug("computed hash: " + h + " for " + s.path.name)
+      h
+    }
 
   def queueNameForTransformationType(transformationType: String) =
     if (transformationType != "filesystem") {
@@ -152,7 +152,7 @@ class ActionsManagerActor() extends Actor {
 
         if (cmd.command.isInstanceOf[Transformation]) {
           val transformation = cmd.command.asInstanceOf[Transformation]
-          log.info(s"ACTIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(transformationType).get.size}")
+          log.info(s"ACTIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
         } else
           log.info("ACTIONMANAGER DEQUEUE: Dequeued deploy action")
       }
@@ -160,8 +160,8 @@ class ActionsManagerActor() extends Actor {
 
     case actionCommand: CommandWithSender => {
       if (actionCommand.command.isInstanceOf[Transformation]) {
-        val transformation = actionCommand.command.asInstanceOf[Transformation]
-        val queueName = queueNameForTransformationAction(transformation)
+        val transformation = actionCommand.command.asInstanceOf[Transformation]        
+        val queueName = queueNameForTransformationAction(transformation, actionCommand.sender)
 
         queues.get(queueName).get.enqueue(actionCommand)
         log.info(s"ACTIONMANAGER ENQUEUE: Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")

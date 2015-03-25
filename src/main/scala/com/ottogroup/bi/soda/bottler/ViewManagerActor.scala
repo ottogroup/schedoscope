@@ -10,6 +10,7 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.contrib.pattern.Aggregator
 import java.util.UUID
+import akka.event.Logging
 
 class ViewStatusRetriever() extends Actor with Aggregator {
   expectOnce {
@@ -51,6 +52,7 @@ class ViewStatusRetriever() extends Actor with Aggregator {
 
 class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
+  val log = Logging(system, ViewManagerActor.this)
 
   override def preRestart(reason: Throwable, message: Option[Any]) {
     // prevent termination of children during restart and cause their own restart
@@ -61,15 +63,41 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
 
-    case v: View => {
+    case vs : List[View] => {
+      val refs = vs.map( v => {
+      val actor = ViewManagerActor.actorForView(v)
+      if (actor.isTerminated) {
+        initializeDependencyActors(v)
+        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))        
+      }
+      else
+        actor        
+      })
+      sender ! refs
+    }
+    
+    case v: View => {   
       //generate a unique id for every actor
       val actor = ViewManagerActor.actorForView(v)
 
-      sender ! (if (actor.isTerminated)
-        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))
+      sender ! (if (actor.isTerminated) {
+        initializeDependencyActors(v)
+        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))        
+      }
       else
         actor)
     }
+  }
+  
+  def initializeDependencyActors(v: View) {
+    v.dependencies.foreach( d => {
+      val actor = ViewManagerActor.actorForView(d)
+      if (actor.isTerminated) {
+        val act = actorOf(ViewActor.props(d, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(d))
+        log.debug("Initialized dependency actor " + act.path.toString)
+        initializeDependencyActors(d)
+      }      
+    })    
   }
 }
 
