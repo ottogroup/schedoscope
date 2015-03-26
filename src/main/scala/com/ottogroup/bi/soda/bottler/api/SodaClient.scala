@@ -136,22 +136,23 @@ class SodaControl(soda: SodaInterface) {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: String = "", status: Option[String] = None)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] =None, status: Option[String] = None)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
     head("soda-control", "0.0.1")
     help("help") text ("print usage")
     cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text ("lists all view actors, along with their status") children (
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views by their status (e.g. 'transforming')"))
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views by their status (e.g. 'transforming')"),
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
     cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children ()
     cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children ()
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = x) } required () valueName ("<viewUrlPath>") required () text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
     checkConfig { c =>
       {
         if (!c.action.isDefined) failure("A command is required")
-        else if (c.action.get.equals("materialize") && Try(ViewUrlParser.parse(Settings().env, c.viewUrlPath)).isFailure) failure("Cannot parse view url path")
+        else if (c.action.get.equals("materialize") && c.viewUrlPath.isDefined && Try(ViewUrlParser.parse(Settings().env, c.viewUrlPath.get)).isFailure) failure("Cannot parse view url path")
         else success
       }
     }
@@ -161,25 +162,30 @@ class SodaControl(soda: SodaInterface) {
     parser.parse(args, Config()) match {
       case Some(config) => {
         println("Starting " + config.action.get.toString + " ...")
-        val res = config.action.get match {
-          case ACTIONS => {
-            soda.actions(config.status)
+        try {
+          val res = config.action.get match {
+            case ACTIONS => {
+              soda.actions(config.status)
+            }
+            case VIEWS => {
+              soda.views(config.viewUrlPath, config.status, false)
+            }
+            case MATERIALIZE => {
+              soda.materialize(config.viewUrlPath.get)
+            }
+            case COMMANDS => {
+              soda.commands(None)
+            }
+            case _ => {
+              println("Unsupported Action: " + config.action.get.toString)
+            }
           }
-          case VIEWS => {
-            soda.views(None, config.status, false)
-          }
-          case MATERIALIZE => {
-            soda.materialize(config.viewUrlPath)
-          }
-          case COMMANDS => {
-            soda.commands(None)
-          }
-          case _ => {
-            println("Unsupported Action: " + config.action.get.toString)
-          }
+          println("\nRESULTS\n=======")
+          println(CliFormat.serialize(res))
         }
-        println("\nRESULTS\n=======")
-        println(CliFormat.serialize(res))
+        catch {
+          case t : Throwable => println(s"\nERROR: ${t.getMessage}\n") 
+        }
       }
       case None => // usage information has already been displayed
     }

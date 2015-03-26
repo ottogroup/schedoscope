@@ -27,6 +27,7 @@ import akka.actor.ExtensionIdProvider
 import akka.pattern.Patterns
 import akka.util.Timeout
 import com.ottogroup.bi.soda.bottler.driver.Driver
+import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 
 class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem
@@ -69,6 +70,8 @@ class SettingsImpl(val config: Config) extends Extension {
   lazy val metastoreUri = config.getString("soda.metastore.metastoreUri")
 
   lazy val parsedViewAugmentorClass = config.getString("soda.app.parsedViewAugmentorClass")
+  
+  def viewAugmentor = Class.forName(parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
 
   lazy val availableTransformations = config.getObject("soda.transformations")
 

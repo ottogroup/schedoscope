@@ -61,7 +61,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
-  def urlPath = s"${Named.formatName(moduleNameBuilder())}/${n}/${partitionValues.mkString("/")}"
+  def urlPath = s"${Named.formatName(moduleNameBuilder())}/${namingBase.replaceAll("[^a-zA-Z]", "")}/${partitionValues.mkString("/")}"
 
   private val suffixPartitions = new HashSet[Parameter[_]]()
 
@@ -224,10 +224,15 @@ object View {
     register(env, viewConstructor.invoke(viewCompanionObject, parametersToPass.asInstanceOf[Seq[Object]]: _*).asInstanceOf[V])
   }
 
-  def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] = ViewUrlParser
-    .parse(env, viewUrlPath)
-    .map { parsedViewAugmentor.augment(_) }
-    .filter { _ != null }
-    .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
+  def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] = 
+    try {
+      ViewUrlParser
+      .parse(env, viewUrlPath)
+      .map { parsedViewAugmentor.augment(_) }
+      .filter { _ != null }
+      .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
+    } catch {
+      case t: Throwable => throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
+    }
 
 }

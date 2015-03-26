@@ -21,6 +21,8 @@ case class SchemaActionFailure() extends Failure
 
 sealed class CommandRequest
 case class AddPartition(view: View) extends CommandRequest
+case class AddPartitions(views: List[View]) extends CommandRequest
+case class ViewList(views: List[View]) extends CommandRequest
 case class NewDataAvailable(view: View) extends CommandRequest
 case class KillAction() extends CommandRequest
 case class Suspend() extends CommandRequest
@@ -34,6 +36,7 @@ case class SetViewVersion(view: View) extends CommandRequest
 case class LogTransformationTimestamp(view: View) extends CommandRequest
 case class GetTransformationTimestamp(view: View) extends CommandRequest
 case class GetStatus() extends CommandRequest
+case class GetViewStatus(views: List[View]) extends CommandRequest
 case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Seq[ActorRef]) extends CommandRequest
 case class MaterializeView() extends CommandRequest

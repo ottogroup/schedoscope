@@ -42,9 +42,13 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // one of the dependencies' transformations failed
   var withErrors = false
 
-  override def postRestart(reason: Throwable) {
-    self ! MaterializeView()
-  }
+//  override def postRestart(reason: Throwable) {
+//    self ! MaterializeView()
+//  }
+  
+//  override def preStart() {
+//    addPartition(view)
+//  }
 
   // State: default
   // transitions: defaultForViewWithoutDependencies, defaultForViewWithDependencies
@@ -55,11 +59,15 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     log.info(stateInfo("defaultForViewWithDependencies"))
     defaultForViewWithDependencies
   }
+  
+//  def changing: Receive = LoggingReceive({
+//    case GetStatus() => sender ! ViewStatusResponse("changing", view)
+//  })
 
   // State: default for non-NoOp views without dependencies
   // transitions: transforming
   def defaultForViewWithoutDependencies: Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("receive", view)
+    case GetStatus() => sender ! ViewStatusResponse("receive", view)
 
     case MaterializeView() => {
       listenersWaitingForMaterialize.add(sender)
@@ -72,17 +80,17 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: default for views with dependencies
   // transitions: waiting
   def defaultForViewWithDependencies: Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("receive", view)
+    case GetStatus() => sender ! ViewStatusResponse("receive", view)
 
     case MaterializeView() => toWaiting()
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
   })
-
+  
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
   def waiting: Receive = LoggingReceive {
-    case _: GetStatus => sender ! ViewStatusResponse("waiting", view)
+    case GetStatus() => sender ! ViewStatusResponse("waiting", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -114,7 +122,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: transforming, view actor in process of applying transformation
   // transitions: materialized,retrying
   def transforming(retries: Int): Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
+    case GetStatus() => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
 
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
@@ -136,7 +144,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: retrying
   // transitions: failed, transforming
   def retrying(retries: Int): Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("retrying", view)
+    case GetStatus() => sender ! ViewStatusResponse("retrying", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -146,8 +154,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
       log.warning(stateInfo("failed"))
 
-      unbecome()
-      become(failed)
+      unbecomeBecome(failed)
 
       listenersWaitingForMaterialize.foreach(_ ! Failed(view))
       listenersWaitingForMaterialize.clear()
@@ -159,7 +166,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: materialized, view has been computed and materialized
   // transitions: default,transforming
   def materialized: Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("materialized", view)
+    case GetStatus() => sender ! ViewStatusResponse("materialized", view)
 
     case MaterializeView() => sender ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors)
 
@@ -172,7 +179,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: failed, view actor failed to materialize
   // transitions:  default, transforming
   def failed: Receive = LoggingReceive({
-    case _: GetStatus => sender ! ViewStatusResponse("failed", view)
+    case GetStatus() => sender ! ViewStatusResponse("failed", view)
 
     case NewDataAvailable(viewWithNewData) =>
       if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
@@ -215,16 +222,16 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     log.info(stateInfo("default"))
 
-    unbecome()
-    become(receive)
+    unbecomeBecome(receive)
   }
 
   def toWaiting() {
+    //unbecomeBecome(changing)
     withErrors = false
     incomplete = false
     dependenciesFreshness = 0l
 
-    addPartition(view)
+    //addPartition(view)
 
     listenersWaitingForMaterialize.add(sender)
 
@@ -240,8 +247,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     log.info(stateInfo("waiting"))
 
-    unbecome()
-    become(waiting)
+    unbecomeBecome(waiting)
   }
 
   def toMaterialize() {
@@ -250,15 +256,15 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors))
     listenersWaitingForMaterialize.clear
 
-    unbecome()
-    become(materialized)
+    unbecomeBecome(materialized)
 
     oneDependencyReturnedData = false
     dependenciesFreshness = 0l
   }
 
   def toTransformOrMaterialize(retries: Int) {
-    addPartition(view)
+    //unbecomeBecome(changing)
+    //addPartition(view)
 
     view.transformation() match {
       case NoOp() => {
@@ -287,8 +293,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
           log.info(stateInfo("transforming"))
 
-          unbecome()
-          become(transforming(retries))
+          unbecomeBecome(transforming(retries))
         }
       }
 
@@ -297,8 +302,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
         log.info(stateInfo("transforming"))
 
-        unbecome()
-        become(transforming(retries))
+        unbecomeBecome(transforming(retries))
       }
     }
 
@@ -307,8 +311,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def toRetrying(retries: Int): akka.actor.Cancellable = {
     log.info(stateInfo("retrying"))
 
-    unbecome()
-    become(retrying(retries))
+    unbecomeBecome(retrying(retries))
 
     // exponential backoff
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
@@ -357,8 +360,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def getViewActor(view: View) = {
     val viewActor = ViewManagerActor.actorForView(view)
 
-    if (!viewActor.isTerminated)
+    if (!viewActor.isTerminated) {
+      log.debug("Lookup of view actor " + viewActor.path.toStringWithoutAddress + " successful")
       viewActor
+    }
     else
       queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout)
   }
@@ -392,12 +397,17 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       queryActor(actionsManagerActor, MkDir(view.fullPath), settings.filesystemTimeout)
   }
 
-  def deletePartitionData(view: View) {
-    queryActor(actionsManagerActor, Delete(view.fullPath, true), settings.filesystemTimeout)
-  }
+//  def deletePartitionData(view: View) {
+//    queryActor(actionsManagerActor, Delete(view.fullPath, true), settings.filesystemTimeout)
+//  }
 
   def setVersion(view: View) {
     queryActor(schemaActor, SetViewVersion(view), settings.schemaTimeout)
+  }
+  
+  private def unbecomeBecome(behaviour: Actor.Receive) {
+    unbecome()
+    become(behaviour)
   }
 
   def stateInfo(stateName: String) =

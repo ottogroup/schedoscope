@@ -17,10 +17,10 @@ import com.ottogroup.bi.soda.bottler.ViewMaterialized
 import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 import com.ottogroup.bi.soda.dsl.Named
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import akka.actor.ActorRef
 import akka.actor.ActorSelection.toScala
 import akka.util.Timeout
+import akka.event.Logging
 import com.ottogroup.bi.soda.bottler.Invalidate
 import com.ottogroup.bi.soda.bottler.Deploy
 import com.ottogroup.bi.soda.bottler.queryActors
@@ -28,6 +28,9 @@ import com.ottogroup.bi.soda.bottler.queryActor
 import akka.pattern.Patterns
 import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
+import com.ottogroup.bi.soda.bottler.ViewList
+import com.ottogroup.bi.soda.bottler.GetViewStatus
+import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 
 class SodaSystem extends SodaInterface {
   /*
@@ -35,6 +38,7 @@ class SodaSystem extends SodaInterface {
    */
   val settings = SodaRootActor.settings
   implicit val ec = ExecutionContext.global
+  val log = Logging(settings.system, classOf[SodaRootActor])
 
   val viewAugmentor = Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
   val viewManagerActor = SodaRootActor.viewManagerActor
@@ -56,9 +60,12 @@ class SodaSystem extends SodaInterface {
    * helper methods
    */
 
+  private def getViews(viewUrlPath: String) = {
+    View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
+  }  
+  
   private def getViewActors(viewUrlPath: String) = {
-    val views = View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
-    queryActor(viewManagerActor, views, settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
+    queryActor(viewManagerActor, ViewList(getViews(viewUrlPath)), settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
   }
 
   private def commandId(command: Any, args: Seq[String], start: Option[LocalDateTime] = None) = {
@@ -124,7 +131,9 @@ class SodaSystem extends SodaInterface {
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false) = {
-    val result: ViewStatusListResponse = queryActor(viewManagerActor, GetStatus(), settings.statusListAggregationTimeout)
+    val req = if (viewUrlPath.isDefined) GetViewStatus(getViews(viewUrlPath.get)) else GetStatus()
+    log.debug("submitting request to ViewManagerActor")
+    val result: ViewStatusListResponse = queryActor(viewManagerActor, req, settings.statusListAggregationTimeout)
     val views = result.viewStatusList
       .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!withDependencies) None else Some(v.view.dependencies.map(d => d.urlPath).toList)))
       .filter(v => status.getOrElse(v.status).equals(v.status))

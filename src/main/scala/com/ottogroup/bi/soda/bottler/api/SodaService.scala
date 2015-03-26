@@ -7,10 +7,13 @@ import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
 import spray.routing.Directive.pimpApply
 import spray.routing.SimpleRoutingApp
+import akka.util.Timeout
+import scala.concurrent.duration._
 
 object SodaService extends App with SimpleRoutingApp {
 
   implicit val system = ActorSystem("soda-webservice")
+  implicit val timeout = Timeout(600.seconds)
   val soda = new SodaSystem()
 
   import SodaJsonProtocol._
