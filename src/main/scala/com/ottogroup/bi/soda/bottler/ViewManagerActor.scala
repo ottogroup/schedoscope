@@ -78,48 +78,57 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   def receive = LoggingReceive({
     case GetStatus() => actorOf(Props[ViewStatusRetriever], "aggregator-" + UUID.randomUUID()) ! GetViewStatusList(sender, children.toList.filter { !_.path.toStringWithoutAddress.contains("aggregator-") })
 
-    case GetViewStatus(views) => actorOf(Props[ViewStatusRetriever], "aggregator-" + UUID.randomUUID()) ! GetViewStatusList(sender, views.map(v => ViewManagerActor.actorForView(v)))
+    case GetViewStatus(views, withDependencies) => {
+      val viewActors = initializeViewActors(views, withDependencies)
+      actorOf(Props[ViewStatusRetriever], "aggregator-" + UUID.randomUUID()) ! GetViewStatusList(sender, viewActors)
+    }
 
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
 
     case ViewList(views) => {      
-      sender ! initializeViewActors(views)
+      sender ! initializeViewActors(views, false)
     }
     
     case v: View => {
-      sender ! initializeViewActors(List(v)).head
+      sender ! initializeViewActors(List(v), false).head
     }
   })
   
-  def initializeViewActors(vl: List[View]) : List[ActorRef] = {
+  def initializeViewActors(vl: List[View], withDeps: Boolean) : List[ActorRef] = {
     val initializedViews = HashSet[View]()
+    val dependencyActors = HashSet[ActorRef]()
     val actors = vl.map( v => {
       val actor = ViewManagerActor.actorForView(v)
       if (actor.isTerminated) {
-        initializeDependencyActors(v, initializedViews)
+        initializeDependencyActors(v, initializedViews, dependencyActors)
         initializedViews.add(v)
         actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))        
       }
-      else
-        actor        
+      else {
+        if (withDeps) initializeDependencyActors(v, initializedViews, dependencyActors)
+        actor 
+      }        
       })
+      
     val viewsPerTable = initializedViews
       .groupBy(v => v.tableName)
       .values
       .map(perTable => AddPartitions(perTable.toList)).toList
     queryActors(schemaActor, viewsPerTable, settings.schemaTimeout)
-    actors
+    
+    if(withDeps) actors ::: dependencyActors.toList else actors
   } 
   
-  def initializeDependencyActors(v: View, initializedViews: HashSet[View]) {
+  def initializeDependencyActors(v: View, initialized: HashSet[View], actors: HashSet[ActorRef]) {
     v.dependencies.foreach( d => {
-      val actor = ViewManagerActor.actorForView(d)
+      var actor = ViewManagerActor.actorForView(d)
       if (actor.isTerminated) {
-        val act = actorOf(ViewActor.props(d, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(d))
-        log.debug("Initialized dependency actor " + act.path.toStringWithoutAddress)
-        initializedViews.add(v)
-        initializeDependencyActors(d, initializedViews)
-      }      
+        actor = actorOf(ViewActor.props(d, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(d))
+        log.debug("Initialized dependency actor " + actor.path.toStringWithoutAddress)
+        initialized.add(v)        
+      }
+      actors.add(actor)
+      initializeDependencyActors(d, initialized, actors)
     })    
   }
 }

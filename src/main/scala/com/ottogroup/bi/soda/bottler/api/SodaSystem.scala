@@ -131,16 +131,16 @@ class SodaSystem extends SodaInterface {
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false) = {
-    val req = if (viewUrlPath.isDefined) GetViewStatus(getViews(viewUrlPath.get)) else GetStatus()
+    val req = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty) GetViewStatus(getViews(viewUrlPath.get), withDependencies) else GetStatus()
     log.debug("submitting request to ViewManagerActor")
     val result: ViewStatusListResponse = queryActor(viewManagerActor, req, settings.statusListAggregationTimeout)
     val views = result.viewStatusList
-      .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!withDependencies) None else Some(v.view.dependencies.map(d => d.urlPath).toList)))
+      .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!withDependencies) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, "", None, None)).toList)))
       .filter(v => status.getOrElse(v.status).equals(v.status))
     val overview = views.groupBy(_.status).mapValues(_.size)
     ViewStatusList(overview, views)
   }
-
+  
   def actions(status: Option[String]) = {
     val result: ActionStatusListResponse = queryActor(actionsManagerActor, GetStatus(), settings.statusListAggregationTimeout)
     val actions = result.actionStatusList
@@ -193,7 +193,7 @@ class SodaSystem extends SodaInterface {
       .map(p => p._2.head)
       .toSeq
       .sortBy(_.start.toString)
-      .filter(c => if (!status.isDefined) true else (c.status.get(status.get).isDefined && c.status(status.get) > 0))
+      .filter(c => if (!status.isDefined || status.get.isEmpty) true else (c.status.get(status.get).isDefined && c.status(status.get) > 0))
       .toList
   }
 

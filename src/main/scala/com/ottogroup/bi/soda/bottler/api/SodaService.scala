@@ -21,55 +21,26 @@ object SodaService extends App with SimpleRoutingApp {
   startServer(interface = "localhost", port = settings.port) {
     get {
       path("actions") {
-        complete {
-          soda.actions(None)
+        parameters("status"?) { status =>
+          complete(soda.actions(status))
         }
       } ~
-        path("actions" / Rest) { status =>
-          {
-            complete {
-              soda.actions(Some(status))
-            }
-          }
-        } ~
-        path("views") {
-          complete {
-            soda.views(None, None, false)
-          }
-        } ~
-        path("views" / Rest) { status =>
-          {
-            complete {
-              soda.views(None, Some(status), false)
-            }
-          }
-        } ~
-        path("materialize" / Rest) { viewUrlPath =>
-          {
-            complete {
-              soda.materialize(viewUrlPath)
-            }
-          }
-        } ~
-        path("command" / Rest) { commandId =>
-          {
-            complete {
-              soda.commandStatus(commandId)
-            }
-          }
-        } ~
-        path("commands") {
-          complete {
-            soda.commands(None)
-          }
-        } ~
-        path("commands" / Rest) { status =>
-          {
-            complete {
-              soda.commands(Some(status))
-            }
-          }
+      path("commands") {
+        parameters("status"?) { status =>
+          complete(soda.commands(status))
         }
+      }
+      path("views" / Rest ?) { viewUrlPath =>
+        parameters("status" ?, "dependencies".as[Boolean] ? false) { (status, withDependencies) =>
+          complete(soda.views(viewUrlPath, status, withDependencies))
+        }
+      } ~
+      path("materialize" / Rest) { viewUrlPath =>
+        complete(soda.materialize(viewUrlPath))
+      } ~
+      path("command" / Rest) { commandId =>
+        complete(soda.commandStatus(commandId))
+      }
     }
   }
 
@@ -78,7 +49,9 @@ object SodaService extends App with SimpleRoutingApp {
   val ctrl = new SodaControl(soda)
   while (true) {
     try {
-      ctrl.run(readLine("soda> ").split(" "))
+      val cmd = readLine("soda> ")
+      if (!cmd.trim().replaceAll(";", "").isEmpty())
+        ctrl.run(cmd.split("\\s+"))
     } catch {
       case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()
     }
