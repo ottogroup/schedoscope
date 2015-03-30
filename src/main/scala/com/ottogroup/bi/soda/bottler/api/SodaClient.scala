@@ -110,7 +110,7 @@ class SodaRestClient extends SodaInterface {
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false): ViewStatusList = {
-    val params = s"?withDependencies=${withDependencies}${if (status.isDefined) "&status="+status.get else ""}"
+    val params = s"?withDependencies=${withDependencies}${if (status.isDefined) "&status=" + status.get else ""}"
     Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}${params}"), 20.seconds)
   }
 
@@ -136,7 +136,7 @@ class SodaControl(soda: SodaInterface) {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] =None, status: Option[String] = None, withDependencies: Boolean = false)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, withDependencies: Boolean = false)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
