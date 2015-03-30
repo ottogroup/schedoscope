@@ -12,6 +12,9 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
 
 package object bottler {
+
+  implicit val executionContext = Settings().system.dispatchers.lookup("blocking-call-dispatcher")
+
   def queryActor[T](actor: ActorRef, queryMessage: Any, timeoutDuration: FiniteDuration): T = {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
     val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
@@ -25,7 +28,6 @@ package object bottler {
 
     val responseFutures = queryMessages.map { m => Patterns.ask(actor, m, askTimeOut) }
 
-    implicit val ec = ExecutionContext.global
     val responsesFuture = Future.sequence(responseFutures)
 
     Await.result(responsesFuture, waitTimeOut.duration * queryMessages.size).asInstanceOf[List[T]]
@@ -36,7 +38,6 @@ package object bottler {
     val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
     val responseFutures = actors.map { a => Patterns.ask(a, queryMessage, askTimeOut) }
 
-    implicit val ec = ExecutionContext.global
     val responsesFuture = Future.sequence(responseFutures)
 
     Await.result(responsesFuture, waitTimeOut.duration * actors.size).asInstanceOf[List[T]]

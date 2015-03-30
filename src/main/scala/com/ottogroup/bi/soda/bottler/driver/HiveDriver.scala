@@ -28,11 +28,13 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
   override def transformationName = "hive"
 
+  implicit val executionContext = Settings().system.dispatchers.lookup("blocking-call-dispatcher")
+
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {
       t.udfs.foreach(this.registerFunction(_))
       executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
-    }(ExecutionContext.global))
+    })
 
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
     val queryStack = Stack[String]("")
