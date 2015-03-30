@@ -23,7 +23,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   import context._
 
   val log = Logging(system, this)
-  //implicit val timeout = new Timeout(settings.dependencyTimout)
 
   val listenersWaitingForMaterialize = collection.mutable.HashSet[ActorRef]()
   val dependenciesMaterializing = collection.mutable.HashSet[View]()
@@ -32,6 +31,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // state variables
   // timestamp of last transformation
   var lastTransformationTimestamp = 0l
+
+  // has version mismatch checking already occurred with the current transformation
+  var versionMismatchCheckedAlready = false
 
   // one of the dependencies was not available (no data)
   var incomplete = false
@@ -42,13 +44,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // one of the dependencies' transformations failed
   var withErrors = false
 
-//  override def postRestart(reason: Throwable) {
-//    self ! MaterializeView()
-//  }
-  
-//  override def preStart() {
-//    addPartition(view)
-//  }
+  override def postRestart(reason: Throwable) {
+    self ! MaterializeView()
+  }
 
   // State: default
   // transitions: defaultForViewWithoutDependencies, defaultForViewWithDependencies
@@ -59,10 +57,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     log.info(stateInfo("defaultForViewWithDependencies"))
     defaultForViewWithDependencies
   }
-  
-//  def changing: Receive = LoggingReceive({
-//    case GetStatus() => sender ! ViewStatusResponse("changing", view)
-//  })
+
+  //  def changing: Receive = LoggingReceive({
+  //    case GetStatus() => sender ! ViewStatusResponse("changing", view)
+  //  })
 
   // State: default for non-NoOp views without dependencies
   // transitions: transforming
@@ -86,7 +84,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
   })
-  
+
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
   def waiting: Receive = LoggingReceive {
@@ -172,8 +170,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     case Invalidate() => toDefault()
 
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
-    else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
+    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData))
+      toDefaultAndReload()
+    else if (view.dependencies.isEmpty && view == viewWithNewData)
+      toDefaultAndReload(false)
   })
 
   // State: failed, view actor failed to materialize
@@ -226,12 +226,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def toWaiting() {
-    //unbecomeBecome(changing)
     withErrors = false
     incomplete = false
     dependenciesFreshness = 0l
-
-    //addPartition(view)
 
     listenersWaitingForMaterialize.add(sender)
 
@@ -263,9 +260,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def toTransformOrMaterialize(retries: Int) {
-    //unbecomeBecome(changing)
-    //addPartition(view)
-
     view.transformation() match {
       case NoOp() => {
         setVersion(view)
@@ -340,21 +334,27 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def hasVersionMismatch(view: View) = {
-    val versionInfo: AnyRef = queryActor(schemaActor, CheckViewVersion(view), settings.schemaTimeout)
+    if (!versionMismatchCheckedAlready) {
+      versionMismatchCheckedAlready = true
 
-    versionInfo match {
-      case SchemaActionFailure() => {
-        log.warning("got error from versioncheck, assuming version mismatch")
-        true
+      val versionInfo: AnyRef = queryActor(schemaActor, CheckViewVersion(view), settings.schemaTimeout)
+
+      versionInfo match {
+        case SchemaActionFailure() => {
+          log.warning("got error from versioncheck, assuming version mismatch")
+          true
+        }
+
+        case ViewVersionMismatch(v, version) => {
+          log.debug("version mismatch")
+          true
+        }
+
+        case ViewVersionOk(v) => false
       }
-
-      case ViewVersionMismatch(v, version) => {
-        log.debug("version mismatch")
-        true
-      }
-
-      case ViewVersionOk(v) => false
     }
+
+    false
   }
 
   def getViewActor(view: View) = {
@@ -363,8 +363,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     if (!viewActor.isTerminated) {
       log.debug("Lookup of view actor " + viewActor.path.toStringWithoutAddress + " successful")
       viewActor
-    }
-    else
+    } else
       queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout)
   }
 
@@ -397,14 +396,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       queryActor(actionsManagerActor, MkDir(view.fullPath), settings.filesystemTimeout)
   }
 
-//  def deletePartitionData(view: View) {
-//    queryActor(actionsManagerActor, Delete(view.fullPath, true), settings.filesystemTimeout)
-//  }
-
   def setVersion(view: View) {
     queryActor(schemaActor, SetViewVersion(view), settings.schemaTimeout)
   }
-  
+
   private def unbecomeBecome(behaviour: Actor.Receive) {
     unbecome()
     become(behaviour)

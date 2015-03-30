@@ -120,108 +120,37 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def createPartitions(views: List[View]): List[Partition] = {
-    // ATTENTION: assumes all views belong to the same table
     if (views.size == 0)
       List()
     else {
-      val tablePrototype = views.head      
+      val tablePrototype = views.head
+
       if (!schemaExists(tablePrototype)) {
         dropAndCreateTableSchema(tablePrototype)
       }
+
       val sd = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getSd
-      val partitions = views.map({ view =>
-        if (!view.isPartitioned())
-          throw new RuntimeException(s"Cannot create partition on non-partitioned view ${view.tableName}")
-        val now = new DateTime().getMillis.toInt
-        sd.setLocation(view.fullPath)
-        new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String, String]())
-      })
+
+      val partitions = views
+        .filter { _.isPartitioned }
+        .map({ v =>
+          val now = new DateTime().getMillis.toInt
+          sd.setLocation(v.fullPath)
+
+          new Partition(v.partitionValues, v.dbName, v.n, now, now, sd, HashMap[String, String]())
+        })
+
       try {
         metastoreClient.add_partitions(partitions, true, false)
-        List()
+        partitions
       } catch {
-        case e: AlreadyExistsException => {
-          if (views.size == 1)
-            List(metastoreClient.getPartition(views.head.dbName, views.head.n, views.head.partitionSpec))
-          else
-            List()
-        }
+        case e: AlreadyExistsException => partitions
+        case t: Throwable => throw t
       }
     }
-
-    //     val partitionsByTable = views
-    //       .groupBy(v => v.tableName)
-    //       .values
-    //       .map({ viewsPerTable => 
-    //         viewsPerTable.map( view => {
-    //          if (!schemaExists(view)) {
-    //            dropAndCreateTableSchema(view)
-    //          }       
-    //          if (!view.isPartitioned())
-    //            throw new RuntimeException(s"Cannot create partition on non-partitioned view ${view.tableName}")
-    //          val now = new DateTime().getMillis.toInt
-    //          val sd = metastoreClient.getTable(view.dbName, view.n).getSd        
-    //          sd.setLocation(view.fullPath)
-    //          new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String, String]())
-    //         })
-    //       })
-    //     try {
-    //       partitionsByTable.foreach(partitions => {
-    //         if (partitions != null)
-    //           metastoreClient.add_partitions(partitions, true, false)
-    //       })
-    //       List()
-    //     } catch {
-    //      case e: AlreadyExistsException => {
-    //        if (views.size == 1)
-    //          List(metastoreClient.getPartition(views.head.dbName, views.head.n, views.head.partitionSpec))
-    //        else
-    //          List()
-    //      } 
-    //    }       
-
-    //     val partitions = views.map( view => {
-    //        if (!schemaExists(view)) {
-    //          dropAndCreateTableSchema(view)
-    //        }       
-    //        if (!view.isPartitioned())
-    //          throw new RuntimeException(s"Cannot create partition on non-partitioned view ${view.tableName}")
-    //        val now = new DateTime().getMillis.toInt
-    //        val sd = metastoreClient.getTable(view.dbName, view.n).getSd        
-    //        sd.setLocation(view.fullPath)
-    //        new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String, String]())        
-    //     })
-    //     try {     
-    //       metastoreClient.add_partitions(partitions, true, false).toList
-    //     } catch {
-    //      case e: AlreadyExistsException => {
-    //        if (views.size == 1)
-    //          List(metastoreClient.getPartition(views.head.dbName, views.head.n, views.head.partitionSpec))
-    //        else
-    //          List()
-    //      } 
-    //    }  
   }
 
   def createPartition(view: View): Partition = createPartitions(List(view)).head
-  //    if (!schemaExists(view)) {
-  //      dropAndCreateTableSchema(view)
-  //    }
-  //
-  //    if (!view.isPartitioned())
-  //      throw new RuntimeException(s"Cannot create partition on non-partitioned view ${view.tableName}")
-  //
-  //    try {
-  //      val now = new DateTime().getMillis.toInt
-  //      val sd = metastoreClient.getTable(view.dbName, view.n).getSd
-  //      
-  //      sd.setLocation(view.fullPath)
-  //      val part = new Partition(view.partitionValues, view.dbName, view.n, now, now, sd, HashMap[String, String]())
-  //      metastoreClient.add_partitions(List(part), true, false)
-  //      metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
-  //    } catch {
-  //      case e: AlreadyExistsException => metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
-  //    }
 
   def removeObsoleteTables(dbname: String, validTables: List[String]) = {
     val tables = metastoreClient.getTables(dbname, "*")

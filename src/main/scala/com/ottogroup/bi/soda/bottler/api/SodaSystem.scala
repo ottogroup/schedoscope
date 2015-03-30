@@ -62,8 +62,8 @@ class SodaSystem extends SodaInterface {
 
   private def getViews(viewUrlPath: String) = {
     View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
-  }  
-  
+  }
+
   private def getViewActors(viewUrlPath: String) = {
     queryActor(viewManagerActor, ViewList(getViews(viewUrlPath)), settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
   }
@@ -140,7 +140,7 @@ class SodaSystem extends SodaInterface {
     val overview = views.groupBy(_.status).mapValues(_.size)
     ViewStatusList(overview, views)
   }
-  
+
   def actions(status: Option[String]) = {
     val result: ActionStatusListResponse = queryActor(actionsManagerActor, GetStatus(), settings.statusListAggregationTimeout)
     val actions = result.actionStatusList

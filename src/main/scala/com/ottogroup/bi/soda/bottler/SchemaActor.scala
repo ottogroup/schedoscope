@@ -26,7 +26,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
     } catch {
       case e: Throwable => { this.sender ! SchemaActionFailure() }
     }
-    
+
     case AddPartitions(views) => try {
       log.debug("Creating partitions " + views.size)
       crate.createPartitions(views)
@@ -35,10 +35,9 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
     } catch {
       case e: Throwable => {
         log.error("Partition creation failed: " + e.getMessage)
-        e.printStackTrace()
-        this.sender ! SchemaActionFailure() 
+        this.sender ! SchemaActionFailure()
       }
-    }    
+    }
 
     case CheckViewVersion(view) =>
       try {

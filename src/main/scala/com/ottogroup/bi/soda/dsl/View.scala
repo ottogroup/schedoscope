@@ -224,13 +224,13 @@ object View {
     register(env, viewConstructor.invoke(viewCompanionObject, parametersToPass.asInstanceOf[Seq[Object]]: _*).asInstanceOf[V])
   }
 
-  def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] = 
+  def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] =
     try {
       ViewUrlParser
-      .parse(env, viewUrlPath)
-      .map { parsedViewAugmentor.augment(_) }
-      .filter { _ != null }
-      .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
+        .parse(env, viewUrlPath)
+        .map { parsedViewAugmentor.augment(_) }
+        .filter { _ != null }
+        .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
     } catch {
       case t: Throwable => throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
     }

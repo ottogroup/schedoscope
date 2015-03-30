@@ -160,7 +160,7 @@ class ActionsManagerActor() extends Actor {
 
     case actionCommand: CommandWithSender => {
       if (actionCommand.command.isInstanceOf[Transformation]) {
-        val transformation = actionCommand.command.asInstanceOf[Transformation]        
+        val transformation = actionCommand.command.asInstanceOf[Transformation]
         val queueName = queueNameForTransformationAction(transformation, actionCommand.sender)
 
         queues.get(queueName).get.enqueue(actionCommand)

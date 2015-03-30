@@ -31,8 +31,8 @@ class ViewStatusRetriever() extends Actor with Aggregator {
     import context.dispatcher
     import collection.mutable.ArrayBuffer
 
-    val receivedViewStats = HashMap[String,ViewStatusResponse]() //  ListBuffer[ViewStatusResponse]()
-    
+    val receivedViewStats = HashMap[String, ViewStatusResponse]() //  ListBuffer[ViewStatusResponse]()
+
     log.debug("VIEW AGGREGATION: sending getStatus")
     viewActors.foreach(_ ! GetStatus())
     log.debug("VIEW AGGREGATION: sending getStatus done")
@@ -40,7 +40,7 @@ class ViewStatusRetriever() extends Actor with Aggregator {
 
     val handle = expect {
 
-      case viewStatus: ViewStatusResponse => {        
+      case viewStatus: ViewStatusResponse => {
         receivedViewStats.put(viewStatus.view.urlPath, viewStatus)
         log.debug("VIEW AGGREGATION: received response " + receivedViewStats.size)
 
@@ -50,7 +50,7 @@ class ViewStatusRetriever() extends Actor with Aggregator {
 
       case "timeout" => {
         log.debug("VIEW AGGREGATION: received timeout")
-        processFinal()        
+        processFinal()
       }
     }
 
@@ -85,51 +85,54 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
 
-    case ViewList(views) => {      
+    case ViewList(views) => {
       sender ! initializeViewActors(views, false)
     }
-    
+
     case v: View => {
       sender ! initializeViewActors(List(v), false).head
     }
   })
-  
-  def initializeViewActors(vl: List[View], withDeps: Boolean) : List[ActorRef] = {
+
+  def initializeViewActors(vl: List[View], withDeps: Boolean): List[ActorRef] = {
     val initializedViews = HashSet[View]()
     val dependencyActors = HashSet[ActorRef]()
-    val actors = vl.map( v => {
+
+    val actors = vl.map(v => {
       val actor = ViewManagerActor.actorForView(v)
       if (actor.isTerminated) {
         initializeDependencyActors(v, initializedViews, dependencyActors)
         initializedViews.add(v)
-        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))        
-      }
-      else {
+        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))
+      } else {
         if (withDeps) initializeDependencyActors(v, initializedViews, dependencyActors)
-        actor 
-      }        
-      })
-      
+        actor
+      }
+    })
+
     val viewsPerTable = initializedViews
-      .groupBy(v => v.tableName)
+      .groupBy { _.tableName }
       .values
       .map(perTable => AddPartitions(perTable.toList)).toList
+
     queryActors(schemaActor, viewsPerTable, settings.schemaTimeout)
-    
-    if(withDeps) actors ::: dependencyActors.toList else actors
-  } 
-  
+
+    if (withDeps) actors ::: dependencyActors.toList else actors
+  }
+
   def initializeDependencyActors(v: View, initialized: HashSet[View], actors: HashSet[ActorRef]) {
-    v.dependencies.foreach( d => {
+    v.dependencies.foreach(d => {
       var actor = ViewManagerActor.actorForView(d)
+
       if (actor.isTerminated) {
         actor = actorOf(ViewActor.props(d, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(d))
         log.debug("Initialized dependency actor " + actor.path.toStringWithoutAddress)
-        initialized.add(v)        
+        initialized.add(v)
       }
+
       actors.add(actor)
       initializeDependencyActors(d, initialized, actors)
-    })    
+    })
   }
 }
 
@@ -137,13 +140,9 @@ object ViewManagerActor {
   def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor)
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
-  
-  def viewForActor(a: ActorRef) = try {
+
+  def viewForActor(a: ActorRef) =
     View.viewsFromUrl(settings.env, a.path.name.replaceAll(":", "/"), settings.viewAugmentor).head
-  } catch {
-    case t : Throwable => println("***** Could not instantiate view for actor with path " + a.path.name.replaceAll(":", "/"))
-    null
-  }
 
   def actorForView(v: View) = SodaRootActor.settings.system.actorFor(SodaRootActor.viewManagerActor.path.child(actorNameForView(v)))
 

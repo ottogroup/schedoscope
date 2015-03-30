@@ -25,22 +25,22 @@ object SodaService extends App with SimpleRoutingApp {
           complete(soda.actions(status))
         }
       } ~
-      path("commands") {
-        parameters("status"?) { status =>
-          complete(soda.commands(status))
+        path("commands") {
+          parameters("status"?) { status =>
+            complete(soda.commands(status))
+          }
         }
-      }
       path("views" / Rest ?) { viewUrlPath =>
         parameters("status" ?, "dependencies".as[Boolean] ? false) { (status, withDependencies) =>
           complete(soda.views(viewUrlPath, status, withDependencies))
         }
       } ~
-      path("materialize" / Rest) { viewUrlPath =>
-        complete(soda.materialize(viewUrlPath))
-      } ~
-      path("command" / Rest) { commandId =>
-        complete(soda.commandStatus(commandId))
-      }
+        path("materialize" / Rest) { viewUrlPath =>
+          complete(soda.materialize(viewUrlPath))
+        } ~
+        path("command" / Rest) { commandId =>
+          complete(soda.commandStatus(commandId))
+        }
     }
   }
 

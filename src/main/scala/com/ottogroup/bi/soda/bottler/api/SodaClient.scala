@@ -136,7 +136,7 @@ class SodaControl(soda: SodaInterface) {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] =None, status: Option[String] = None)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -182,9 +182,8 @@ class SodaControl(soda: SodaInterface) {
           }
           println("\nRESULTS\n=======")
           println(CliFormat.serialize(res))
-        }
-        catch {
-          case t : Throwable => println(s"\nERROR: ${t.getMessage}\n") 
+        } catch {
+          case t: Throwable => println(s"\nERROR: ${t.getMessage}\n")
         }
       }
       case None => // usage information has already been displayed
