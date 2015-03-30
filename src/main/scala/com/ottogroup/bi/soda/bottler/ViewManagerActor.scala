@@ -90,7 +90,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }
 
     case v: View => {
-      sender ! initializeViewActors(List(v), false).head
+      sender ! initializeViewActors(List(v), false).headOption.getOrElse(List())
     }
   })
 

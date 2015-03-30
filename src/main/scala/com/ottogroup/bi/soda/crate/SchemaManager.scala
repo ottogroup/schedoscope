@@ -150,18 +150,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     }
   }
 
-  def createPartition(view: View): Partition = createPartitions(List(view)).head
-
-  def removeObsoleteTables(dbname: String, validTables: List[String]) = {
-    val tables = metastoreClient.getTables(dbname, "*")
-    tables.diff(validTables).foreach { tableName =>
-      {
-        val table = metastoreClient.getTable(dbname, tableName)
-        if (table.getParameters().containsKey(Version.SchemaVersion.checksumProperty))
-          metastoreClient.dropTable(dbname, tableName, false, true)
-      }
-    }
-  }
+  def createPartition(view: View): Partition = createPartitions(List(view)).headOption.getOrElse(null)
 
   def deploySchemataForViews(views: Seq[View]): Unit = {
     val hashSet = HashSet[String]()
