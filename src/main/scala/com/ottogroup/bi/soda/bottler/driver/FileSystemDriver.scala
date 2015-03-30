@@ -40,7 +40,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
   override def transformationName = "filesystem"
 
-  implicit val executionContext = Settings().system.dispatchers.lookup("blocking-call-dispatcher")
+  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.blocking-call-dispatcher")
 
   def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
     new DriverRunHandle(this, new LocalDateTime(), t, future {

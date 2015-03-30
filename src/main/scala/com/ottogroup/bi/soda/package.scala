@@ -13,7 +13,7 @@ import scala.concurrent.duration.FiniteDuration
 
 package object bottler {
 
-  implicit val executionContext = Settings().system.dispatchers.lookup("blocking-call-dispatcher")
+  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.blocking-call-dispatcher")
 
   def queryActor[T](actor: ActorRef, queryMessage: Any, timeoutDuration: FiniteDuration): T = {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
