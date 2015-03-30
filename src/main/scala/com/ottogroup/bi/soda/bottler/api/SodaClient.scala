@@ -110,8 +110,8 @@ class SodaRestClient extends SodaInterface {
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false): ViewStatusList = {
-    val stat = if (status.isDefined) "/" + status else ""
-    Await.result(get[ViewStatusList](s"/views${stat}"), 20.seconds)
+    val params = s"?withDependencies=${withDependencies}${if (status.isDefined) "&status="+status.get else ""}"
+    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}${params}"), 20.seconds)
   }
 
   def actions(status: Option[String]): ActionStatusList = {
@@ -136,7 +136,7 @@ class SodaControl(soda: SodaInterface) {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] =None, status: Option[String] = None, withDependencies: Boolean = false)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -144,7 +144,8 @@ class SodaControl(soda: SodaInterface) {
     help("help") text ("print usage")
     cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text ("lists all view actors, along with their status") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views by their status (e.g. 'transforming')"),
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
+      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(withDependencies = true) } optional () text ("include dependencies"))
     cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children ()
     cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children ()
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
@@ -168,7 +169,7 @@ class SodaControl(soda: SodaInterface) {
               soda.actions(config.status)
             }
             case VIEWS => {
-              soda.views(config.viewUrlPath, config.status, false)
+              soda.views(config.viewUrlPath, config.status, config.withDependencies)
             }
             case MATERIALIZE => {
               soda.materialize(config.viewUrlPath.get)
