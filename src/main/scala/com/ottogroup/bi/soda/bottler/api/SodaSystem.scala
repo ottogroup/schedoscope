@@ -121,12 +121,12 @@ class SodaSystem extends SodaInterface {
     submitCommandInternal(viewActors, MaterializeView(), viewUrlPath)
   }
 
-  def invalidate(viewUrlPath: String) = { // FIXME: incomplete
+  def invalidate(viewUrlPath: String) = { 
     val viewActors = getViewActors(viewUrlPath)
     submitCommandInternal(viewActors, Invalidate(), viewUrlPath)
   }
 
-  def newdata(viewUrlPath: String) = { // FIXME: incomplete
+  def newdata(viewUrlPath: String) = { 
     val viewActors = getViewActors(viewUrlPath)
     submitCommandInternal(viewActors, "newdata", viewUrlPath)
   }
