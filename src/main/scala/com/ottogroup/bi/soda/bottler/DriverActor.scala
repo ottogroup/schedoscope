@@ -61,6 +61,8 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
       driver.killRun(runHandle)
       toReceive()
     }
+    
+    case c: CommandWithSender => actionsManagerActor ! c
 
     case "tick" => try {
       driver.getDriverRunState(runHandle) match {
@@ -74,7 +76,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
         }
 
         case failure: DriverRunFailed[T] => {
-          log.error(s"DRIVER ACTOR: Oozie workflow ${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
+          log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
           s ! ActionFailure(runHandle, failure)
           toReceive()
           tick()
@@ -150,15 +152,15 @@ object DriverActor {
     driverName match {
       case "hive" => Props(
         classOf[DriverActor[HiveTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.future-call-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.driver-actor-dispatcher")
 
       case "filesystem" => Props(
         classOf[DriverActor[FilesystemTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds).withDispatcher("akka.actor.future-call-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds).withDispatcher("akka.actor.driver-actor-dispatcher")
 
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds)
+        actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds).withDispatcher("akka.actor.driver-actor-dispatcher")
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }

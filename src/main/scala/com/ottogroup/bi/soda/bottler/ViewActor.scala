@@ -323,7 +323,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def touchSuccessFlag(view: View) {
-    queryActor(actionsManagerActor, Touch(view.fullPath + "/_SUCCESS"), settings.filesystemTimeout)
+    actionsManagerActor ! Touch(view.fullPath + "/_SUCCESS")
   }
 
   def hasVersionMismatch(view: View) = {
@@ -370,9 +370,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def logTransformationTimestamp(view: View) = {
-    val timestamp = new Date().getTime()
-    schemaActor ! LogTransformationTimestamp(view, timestamp)
-    timestamp
+    lastTransformationTimestamp = new Date().getTime()
+    schemaActor ! LogTransformationTimestamp(view, lastTransformationTimestamp)
+    lastTransformationTimestamp
   }
 
   def getOrLogTransformationTimestamp(view: View) = {
@@ -383,7 +383,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def setVersion(view: View) {
-    queryActor(schemaActor, SetViewVersion(view), settings.schemaTimeout)
+    versionMismatchCheckedAlready = true
+    schemaActor ! SetViewVersion(view)
   }
 
   private def unbecomeBecome(behaviour: Actor.Receive) {
