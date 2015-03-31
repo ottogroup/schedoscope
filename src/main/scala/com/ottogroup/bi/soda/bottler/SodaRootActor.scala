@@ -63,6 +63,6 @@ object SodaRootActor {
   lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("schema")))
 
   lazy val partitionMetadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("schema-writer-delegate")))
- 
+
   lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("actions")))
 }

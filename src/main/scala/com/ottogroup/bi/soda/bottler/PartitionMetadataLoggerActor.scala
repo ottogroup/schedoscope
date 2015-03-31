@@ -10,7 +10,7 @@ import akka.event.LoggingReceive
 class PartitionMetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   import context._
   val log = Logging(system, PartitionMetadataLoggerActor.this)
-  
+
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
 
   def receive = LoggingReceive({

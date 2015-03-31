@@ -1,5 +1,6 @@
 package com.ottogroup.bi.soda.bottler
 
+import scala.annotation.migration
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
@@ -109,7 +110,7 @@ class ActionsManagerActor() extends Actor {
 
       if (!queueForType.isEmpty) {
         val cmd = queueForType.dequeue()
-        
+
         sender ! cmd
 
         if (cmd.command.isInstanceOf[Transformation]) {
