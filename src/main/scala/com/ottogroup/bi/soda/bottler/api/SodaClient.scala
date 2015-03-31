@@ -34,7 +34,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
               }
             Array(p.actor, p.status, s, d, t, p.properties.mkString(","))
           }).toArray
-          val queued = as.queues.flatMap(q => q._2.map(e => Array(s"${q._1}-queue", "queued", "no", q._2.toString, "", ""))).toArray
+          val queued = as.queues.flatMap(q => q._2.map(e => Array(s"${q._1}-queue", "queued", "no", e.description, e.targetView, e.properties.getOrElse("").toString))).toArray                    
           sb.append(ASCIITable.getInstance.getTable(header, running ++ queued))
         }
       }

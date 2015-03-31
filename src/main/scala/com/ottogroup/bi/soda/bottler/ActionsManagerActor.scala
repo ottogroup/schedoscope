@@ -84,12 +84,7 @@ class ActionsManagerActor() extends Actor {
     }
 
   private def actionQueueStatus() = {
-    queues.map(q => (q._1, q._2.map(c => {
-      if (c.command.isInstanceOf[Transformation])
-        c.command.asInstanceOf[Transformation].description
-      else
-        "deploy"
-    }).toList))
+    queues.map(q => (q._1, q._2.map(c => c.command).toList))
   }
 
   override val supervisorStrategy =

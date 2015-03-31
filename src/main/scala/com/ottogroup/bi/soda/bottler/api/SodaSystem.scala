@@ -31,6 +31,7 @@ import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
 import com.ottogroup.bi.soda.bottler.ViewList
 import com.ottogroup.bi.soda.bottler.GetViewStatus
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
+import com.ottogroup.bi.soda.dsl.Transformation
 
 class SodaSystem extends SodaInterface {
   /*
@@ -147,6 +148,7 @@ class SodaSystem extends SodaInterface {
       .filter(a => status.getOrElse(a.status).equals(a.status))
     val queues = result.actionQueueStatus
       .filter(el => status.getOrElse("queued").equals("queued"))
+      .map( el => (el._1, SodaJsonProtocol.parseQueueElements(el._2)) )
     val running = actions
       .groupBy(_.status)
       .map(el => (el._1, el._2.size))

@@ -45,7 +45,7 @@ sealed class CommandResponse
 case class DeployActionSuccess() extends CommandResponse
 case class SchemaActionSuccess() extends CommandResponse
 case class ActionSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends CommandResponse
-case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]], val actionQueueStatus: Map[String, List[String]]) extends CommandResponse
+case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]], val actionQueueStatus: Map[String, List[AnyRef]]) extends CommandResponse
 case class ActionStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
 case class ViewStatusResponse(val status: String, view: View) extends CommandResponse
 case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends CommandResponse

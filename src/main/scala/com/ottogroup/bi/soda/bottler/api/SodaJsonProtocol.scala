@@ -21,7 +21,7 @@ import spray.json.RootJsonFormat
 case class SodaCommand(id: String, start: LocalDateTime, parts: List[Future[_]])
 case class SodaCommandStatus(id: String, start: LocalDateTime, end: LocalDateTime, status: Map[String, Int])
 case class ActionStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]])
-case class ActionStatusList(overview: Map[String, Int], queues: Map[String, List[String]], actions: List[ActionStatus])
+case class ActionStatusList(overview: Map[String, Int], queues: Map[String, List[RunStatus]], actions: List[ActionStatus])
 case class ViewStatus(view: String, status: String, properties: Option[Map[String, String]], dependencies: Option[List[ViewStatus]])
 case class ViewStatusList(overview: Map[String, Int], views: List[ViewStatus])
 case class RunStatus(description: String, targetView: String, started: LocalDateTime, comment: String, properties: Option[Map[String, String]])
@@ -65,8 +65,8 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
         case s: DriverRunSucceeded[_] => { comment = s.comment; status = "succeeded" }
-        case f: DriverRunFailed[_] => { comment = f.reason; status = "failed" }
-        case o: DriverRunOngoing[_] => { drh = o.runHandle }
+        case f: DriverRunFailed[_]    => { comment = f.reason; status = "failed" }
+        case o: DriverRunOngoing[_]   => { drh = o.runHandle }
       }
     }
     if (drh != null) {
@@ -77,6 +77,17 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
     } else {
       ActionStatus(actor, typ, status, None, None)
     }
+  }
+
+  def parseQueueElements(q: List[AnyRef]) : List[RunStatus] = {
+    q.map(o => {
+      if (o.isInstanceOf[Transformation]) {
+        val trans = o.asInstanceOf[Transformation]
+        RunStatus(trans.description, trans.getView(), null, "", None)
+      } else {
+        RunStatus(o.toString, "", null, "", None)
+      }
+    })
   }
 
 }
