@@ -15,9 +15,8 @@ import akka.actor.SupervisorStrategy.Restart
 import akka.event.Logging
 
 class SodaRootActor(settings: SettingsImpl) extends Actor {
-
   import context._
-
+  
   val log = Logging(system, SodaRootActor.this)
 
   var actionsManagerActor: ActorRef = null
@@ -41,7 +40,6 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
     // we do not process any messages as we are merely a supervisor
     case _ => {}
   }
-
 }
 
 object SodaRootActor {
