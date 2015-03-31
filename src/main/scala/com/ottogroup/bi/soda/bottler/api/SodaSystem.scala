@@ -12,6 +12,7 @@ import com.ottogroup.bi.soda.bottler.Failed
 import com.ottogroup.bi.soda.bottler.GetStatus
 import com.ottogroup.bi.soda.bottler.MaterializeView
 import com.ottogroup.bi.soda.bottler.NoDataAvailable
+import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 import com.ottogroup.bi.soda.bottler.SodaRootActor
 import com.ottogroup.bi.soda.bottler.ViewMaterialized
 import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
@@ -169,6 +170,7 @@ class SodaSystem extends SodaInterface {
               case ViewMaterialized(view, incomplete, changed, errors) => "materialized"
               case NoDataAvailable(view) => "no-data"
               case Failed(view) => "failed"
+              case ViewStatusResponse(status, view) => status
               case _ => "other"
             }
           else

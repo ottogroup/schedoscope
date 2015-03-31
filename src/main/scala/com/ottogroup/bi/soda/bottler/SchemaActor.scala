@@ -18,7 +18,7 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
 
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
 
-  val tableVersions = HashMap[String, String]()
+  val transformationVersions = HashMap[String, HashMap[String,String]]()
   val transformationTimestamps = HashMap[String, HashMap[String, Long]]()
 
   def receive = LoggingReceive({
@@ -46,26 +46,32 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
       if (!Settings().transformationVersioning) {
         sender ! ViewVersionOk(view)
       } else {
-        val transformationVersion = tableVersions.get(view.tableName).getOrElse {
-          val version = crate.getTransformationVersion(view)
-          tableVersions.put(view.tableName, version)
+        val versions = transformationVersions.get(view.tableName).getOrElse {
+          val version = crate.getTransformationVersions(view.dbName, view.n)
+          transformationVersions.put(view.tableName, version)
           version
         }
-
-        if (transformationVersion.equals(view.transformation().versionDigest()))
+        
+        if (versions.get(view.partitionValues.mkString("/")).get.equals(view.transformation().versionDigest()))
           sender ! ViewVersionOk(view)
         else
-          sender ! ViewVersionMismatch(view, transformationVersion)
+          sender ! ViewVersionMismatch(view, versions.get(view.partitionValues.mkString("/")).get)
       }
     } catch {
       case e: Throwable => { e.printStackTrace(); this.sender ! SchemaActionFailure() }
     }
 
     case SetViewVersion(view) => try {
-      if (tableVersions.contains(view.tableName) && tableVersions.get(view.tableName).get.equals(view.transformation().versionDigest())) {
+      val viewTransformationVersions = transformationVersions.get(view.tableName).getOrElse {
+        val noVersionsYet = HashMap[String, String]()
+        transformationVersions.put(view.tableName, noVersionsYet)
+        noVersionsYet
+      }      
+      
+      if (viewTransformationVersions.contains(view.partitionValues.mkString("/")) && viewTransformationVersions.get(view.partitionValues.mkString("/")).get.equals(view.transformation().versionDigest())) {
         sender ! SchemaActionSuccess()
       } else {
-        tableVersions.put(view.tableName, view.transformation().versionDigest())
+        viewTransformationVersions.put(view.partitionValues.mkString("/"), view.transformation().versionDigest())
 
         partitionWriterActor ! SetViewVersion(view)
         sender ! SchemaActionSuccess()
@@ -94,9 +100,9 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
         val timestampsFromMetastore = crate.getTransformationTimestamps(view.dbName, view.n)
         transformationTimestamps.put(view.tableName, timestampsFromMetastore)
         timestampsFromMetastore
-      }
-
-      val partitionTimestamp = viewTransformationTimestamps.get(view.partitionValues.mkString("/")).get
+      }      
+      
+      val partitionTimestamp = viewTransformationTimestamps.get(view.partitionValues.mkString("/")).get      
 
       sender ! TransformationTimestamp(view, partitionTimestamp)
     } catch {

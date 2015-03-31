@@ -24,7 +24,7 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
     udfs.flatMap(udf => udf.getResourceUris.map(uri => uri.getUri))
   }
 
-  description = StringUtils.abbreviate(sql, 100).replaceAll("\n", "").replaceAll("\t", "")
+  description = "[..]" + StringUtils.abbreviate(sql.replaceAll("\n", "").replaceAll("\t", "").replaceAll(".*SELECT", "SELECT").replaceAll("\\s+", " "), 60)
 }
 
 object HiveTransformation {

@@ -156,7 +156,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
     }
 
-    case Invalidate() => toDefault()
+    case Invalidate() => {
+      sender ! ViewStatusResponse("invalidated", view)
+      toDefault(true)
+    }
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData))
       toDefaultAndReload()
@@ -171,7 +174,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
       else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
 
-    case Invalidate() => toDefault()
+    case Invalidate() => {
+      sender ! ViewStatusResponse("invalidated", view)
+      toDefault(true)
+    }
 
     case MaterializeView() => sender ! Failed(view)
   })
@@ -200,13 +206,13 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
   }
 
-  def toDefault() {
-    lastTransformationTimestamp = 0l
+  def toDefault(invalidate: Boolean = false) {
+    lastTransformationTimestamp = if (invalidate) -1l else 0l
     dependenciesFreshness = 0l
     withErrors = false
     incomplete = false
 
-    logStateInfo("receive")
+    logStateInfo(if (invalidate) "invalidated" else "receive")
 
     unbecomeBecome(receive)
   }
@@ -371,7 +377,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def getOrLogTransformationTimestamp(view: View) = {
     val ts = getTransformationTimestamp(view)
-    if (ts == 0l)
+    if (ts <= 0l)
       logTransformationTimestamp(view)
     else ts
   }
