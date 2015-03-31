@@ -1,17 +1,14 @@
 package com.ottogroup.bi.soda.bottler
 
-import com.ottogroup.bi.soda.dsl.View
-import java.util.Properties
-import akka.actor.ActorRef
-import org.joda.time.LocalDate
-import org.joda.time.LocalDateTime
-import com.ottogroup.bi.soda.bottler.driver.DriverRunState
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.bottler.driver.DriverRunHandle
 import com.ottogroup.bi.soda.bottler.driver.Driver
-import com.ottogroup.bi.soda.bottler.driver.DriverRunSucceeded
 import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
-import com.ottogroup.bi.soda.bottler.driver.DriverException
+import com.ottogroup.bi.soda.bottler.driver.DriverRunHandle
+import com.ottogroup.bi.soda.bottler.driver.DriverRunState
+import com.ottogroup.bi.soda.bottler.driver.DriverRunSucceeded
+import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.dsl.View
+
+import akka.actor.ActorRef
 
 sealed class Failure
 case class Error(view: View, reason: String) extends Failure

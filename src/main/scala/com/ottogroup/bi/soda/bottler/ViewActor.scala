@@ -2,23 +2,25 @@ package com.ottogroup.bi.soda.bottler
 
 import java.lang.Math.max
 import java.security.PrivilegedAction
+import java.util.Date
+
 import scala.concurrent.duration.Duration
+
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
+
 import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.dsl.NoOp
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.Delete
 import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.Touch
+
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import com.ottogroup.bi.soda.dsl.transformations.MkDir
-import java.util.Date
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
@@ -116,9 +118,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       toMaterialize()
     }
 
-    case _: ActionFailure[_]               => toRetrying(retries)
+    case _: ActionFailure[_] => toRetrying(retries)
 
-    case MaterializeView()                 => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
@@ -132,9 +134,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case Retry() => if (retries <= settings.retries)
       toTransformOrMaterialize(retries + 1)
     else {
-
       logStateInfo("failed")
-
       unbecomeBecome(failed)
 
       listenersWaitingForMaterialize.foreach(_ ! Failed(view))
@@ -151,13 +151,12 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case MaterializeView() => {
       if (view.dependencies.isEmpty) {
         sender ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors)
+      } else {
+        toWaiting()
       }
-      else {
-        toWaiting() 
-      }      
     }
 
-    case Invalidate()      => toDefault()
+    case Invalidate() => toDefault()
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData))
       toDefaultAndReload()
@@ -168,12 +167,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: failed, view actor failed to materialize
   // transitions:  default, transforming
   def failed: Receive = LoggingReceive({
-
     case NewDataAvailable(viewWithNewData) =>
       if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
       else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
 
-    case Invalidate()      => toDefault()
+    case Invalidate() => toDefault()
 
     case MaterializeView() => sender ! Failed(view)
   })
@@ -347,14 +345,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def getViewActor(view: View) = {
-    log.info("into get view actor")
     val viewActor = ViewManagerActor.actorForView(view)
-    log.info("checking for terminated")
     if (!viewActor.isTerminated) {
-      log.info("Lookup of view actor " + viewActor.path.toStringWithoutAddress + " successful")
       viewActor
     } else {
-      log.info("need to re-instantiate view actor, should NEVER happen (now)")
       queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout)
     }
   }
@@ -363,7 +357,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     if (lastTransformationTimestamp == 0l) {
       lastTransformationTimestamp = queryActor(schemaActor, GetTransformationTimestamp(view), settings.schemaTimeout).asInstanceOf[AnyRef] match {
         case TransformationTimestamp(_, ts) => ts
-        case _                              => 0l
+        case _ => 0l
       }
     }
     lastTransformationTimestamp

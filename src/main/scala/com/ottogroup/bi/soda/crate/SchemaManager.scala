@@ -1,6 +1,5 @@
 package com.ottogroup.bi.soda.crate
 
-import java.io.InvalidObjectException
 import java.security.MessageDigest
 import java.security.PrivilegedAction
 import java.sql.Connection
@@ -17,7 +16,6 @@ import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.IMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
-import org.apache.hadoop.hive.metastore.api.MetaException
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.joda.time.DateTime
@@ -26,8 +24,6 @@ import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.crate.ddl.HiveQl
 import com.ottogroup.bi.soda.dsl.Version
 import com.ottogroup.bi.soda.dsl.View
-
-import scala.collection.JavaConversions._
 
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
@@ -45,10 +41,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     metastoreClient.alter_partition(dbName, tableName, partition)
   }
 
-//  def setPartitionVersion(view: View) = {
-//    setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
-//  }
-  
+  //  def setPartitionVersion(view: View) = {
+  //    setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+  //  }
+
   def setTransformationVersion(view: View) = {
     setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
   }
@@ -65,15 +61,15 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
   }
 
-  def getTransformationTimestamps(dbName: String, tableName: String) = {    
+  def getTransformationTimestamps(dbName: String, tableName: String) = {
     val parts = metastoreClient.listPartitions(dbName, tableName, Short.MaxValue)
-    val res = new HashMap[String,Long]()
-    res ++ parts.map( p => {
+    val res = new HashMap[String, Long]()
+    res ++ parts.map(p => {
       (p.getValues.mkString("/"), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)
     }).toMap
     res
   }
-  
+
   def getTransformationTimestamp(view: View) = {
     val part = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
     if (part == null || part.getParameters == null)

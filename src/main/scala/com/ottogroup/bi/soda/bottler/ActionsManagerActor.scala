@@ -1,14 +1,18 @@
 package com.ottogroup.bi.soda.bottler
 
 import scala.collection.JavaConversions.asScalaSet
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
+import scala.util.Random
+
 import org.apache.hadoop.conf.Configuration
+
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.bottler.driver.DriverException
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
+
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -16,18 +20,16 @@ import akka.actor.Props
 import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.actorRef2Scala
-import akka.contrib.pattern.Aggregator
 import akka.event.Logging
 import akka.event.LoggingReceive
-import java.util.UUID
-import scala.util.Random
-import scala.collection.mutable.HashMap
 
 class ActionsManagerActor() extends Actor {
   import context._
+
   val log = Logging(system, ActionsManagerActor.this)
-  
   val settings = Settings.get(system)
+
+  val driverStates = HashMap[String, ActionStatusResponse[_]]()
 
   val availableTransformations = settings.availableTransformations.keySet()
 
@@ -43,8 +45,6 @@ class ActionsManagerActor() extends Actor {
   }
 
   val queues = nonFilesystemQueues ++ filesystemQueues
-  
-  val driverStates = HashMap[String,ActionStatusResponse[_]]()
 
   val randomizer = Random
 
@@ -100,11 +100,10 @@ class ActionsManagerActor() extends Actor {
   }
 
   def receive = LoggingReceive({
-    
     case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
-    
+
     case GetStatus() => sender ! ActionStatusListResponse(driverStates.values.toList, actionQueueStatus)
-      
+
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
 
@@ -132,7 +131,6 @@ class ActionsManagerActor() extends Actor {
         queues.values.foreach { _.enqueue(actionCommand) }
         log.info("ACTIONMANAGER ENQUEUE: Enqueued deploy action")
       }
-
     }
 
     case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)

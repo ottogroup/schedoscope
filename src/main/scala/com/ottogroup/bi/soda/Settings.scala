@@ -6,9 +6,7 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
-import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-import scala.concurrent.duration.FiniteDuration
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
@@ -17,17 +15,14 @@ import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver.fileSystem
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
+import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import com.typesafe.config.Config
-import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.ExtendedActorSystem
 import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
-import akka.pattern.Patterns
-import akka.util.Timeout
 import com.ottogroup.bi.soda.bottler.driver.Driver
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 
 class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem

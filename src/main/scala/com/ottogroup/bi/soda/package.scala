@@ -1,19 +1,21 @@
 package com.ottogroup.bi.soda
 
-import akka.actor.ActorRef
-import akka.util.Timeout
-import akka.pattern.Patterns
-import scala.concurrent.Await
-import akka.actor.ActorSelection
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext
 import java.util.concurrent.TimeUnit
-import scala.concurrent.duration.Duration
+
+import scala.annotation.implicitNotFound
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
+
 import com.ottogroup.bi.soda.bottler.SodaRootActor
 
+import akka.actor.ActorRef
+import akka.pattern.Patterns
+import akka.util.Timeout
+
 package object bottler {
-  implicit val executionContext : ExecutionContext = SodaRootActor.settings.system.dispatchers.lookup("akka.actor.future-call-dispatcher")
+  implicit val executionContext: ExecutionContext = SodaRootActor.settings.system.dispatchers.lookup("akka.actor.future-call-dispatcher")
 
   def queryActor[T](actor: ActorRef, queryMessage: Any, timeoutDuration: FiniteDuration): T = {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
