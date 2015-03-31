@@ -37,10 +37,10 @@ class SodaSystem extends SodaInterface {
    *  setup soda actor system
    */
   val settings = SodaRootActor.settings
-  implicit val ec = ExecutionContext.global
   val log = Logging(settings.system, classOf[SodaRootActor])
 
   val viewAugmentor = Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
+  val root = SodaRootActor.sodaRootActor
   val viewManagerActor = SodaRootActor.viewManagerActor
   val actionsManagerActor = SodaRootActor.actionsManagerActor
   val schemaActor = SodaRootActor.schemaActor
@@ -63,7 +63,7 @@ class SodaSystem extends SodaInterface {
   private def getViews(viewUrlPath: String) = {
     View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
   }
-
+  
   private def getViewActors(viewUrlPath: String) = {
     queryActor(viewManagerActor, ViewList(getViews(viewUrlPath)), settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
   }
@@ -131,8 +131,7 @@ class SodaSystem extends SodaInterface {
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false) = {
-    val req = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty) GetViewStatus(getViews(viewUrlPath.get), withDependencies) else GetStatus()
-    log.debug("submitting request to ViewManagerActor")
+    val req = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty) GetViewStatus(getViews(viewUrlPath.get), withDependencies) else GetStatus()    
     val result: ViewStatusListResponse = queryActor(viewManagerActor, req, settings.statusListAggregationTimeout)
     val views = result.viewStatusList
       .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!withDependencies) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, "", None, None)).toList)))

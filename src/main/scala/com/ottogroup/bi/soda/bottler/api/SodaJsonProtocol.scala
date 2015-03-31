@@ -58,7 +58,7 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
 
   def parseActionStatus(a: ActionStatusResponse[_]): ActionStatus = {
     val actor = a.actor.path.toStringWithoutAddress
-    val typ = a.driver.transformationName
+    val typ = if (a.driver != null) a.driver.transformationName else "unknown"
     var drh = a.driverRunHandle
     var status = a.message
     var comment: String = ""

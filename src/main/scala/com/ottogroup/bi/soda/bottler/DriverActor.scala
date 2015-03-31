@@ -25,8 +25,9 @@ import akka.routing.BroadcastRouter
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
+import com.ottogroup.bi.soda.bottler.driver.DriverRunState
 
-class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
+class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
   val log = Logging(system, this)
 
@@ -37,10 +38,8 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
   def receive = LoggingReceive {
     case CommandWithSender(command, sender) => becomeRunning(CommandWithSender(command, sender))
 
-    case GetStatus() => sender ! ActionStatusResponse("idle", self, driver, null, null)
-
-    case "tick" => { 
-      actionsRouter ! PollCommand(driver.transformationName)
+    case "tick" => {
+      actionsManagerActor ! PollCommand(driver.transformationName)
       tick()
     }
   }
@@ -50,8 +49,6 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
       driver.killRun(runHandle)
       becomeReceive()
     }
-
-    case GetStatus() => sender ! ActionStatusResponse("running", self, driver, runHandle, driver.getDriverRunState(runHandle))
 
     case "tick" => try {
       driver.getDriverRunState(runHandle) match {
@@ -85,12 +82,13 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
   }
 
   override def preStart() {
+    logStateInfo("idle", "DRIVER ACTOR: initialized actor")
     tick()
   }
 
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
-      actionsRouter ! runningCommand.get
+      actionsManagerActor ! runningCommand.get
   }
   
   def tick() {
@@ -99,6 +97,8 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
 
   def becomeReceive() {
     runningCommand = None
+    
+    logStateInfo("idle", "DRIVER ACTOR: becoming idle")
 
     unbecome()
     become(receive)
@@ -109,16 +109,19 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
 
     try {
       if (commandToRun.command.isInstanceOf[Deploy]) {
-        log.info(s"DRIVER ACTOR: Running Deploy command")
+
+        logStateInfo("deploy", s"DRIVER ACTOR: Running Deploy command")
 
         driver.deployAll(ds)
         commandToRun.sender ! DeployActionSuccess()
 
+        logStateInfo("idle", "DRIVER ACTOR: becoming idle")
+        
         runningCommand = None
       } else {
         val runHandle = driver.run(commandToRun.command.asInstanceOf[T])
 
-        log.info(s"DRIVER ACTOR: Running command ${commandToRun}, runHandle=${runHandle}")
+        logStateInfo("running", s"DRIVER ACTOR: Running command ${commandToRun}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))        
 
         unbecome()
         become(running(runHandle, commandToRun.sender))
@@ -135,6 +138,11 @@ class DriverActor[T <: Transformation](actionsRouter: ActorRef, ds: DriverSettin
       }
     }
   }
+  
+  def logStateInfo(state: String, message: String, runHandle: DriverRunHandle[T] = null, runState: DriverRunState[T] = null) {
+    actionsManagerActor ! ActionStatusResponse(state, self, driver, runHandle, runState)
+    log.info(message)
+  }  
 }
 
 object DriverActor {
@@ -144,11 +152,11 @@ object DriverActor {
     driverName match {
       case "hive" => Props(
         classOf[DriverActor[HiveTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds)
+        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.future-call-dispatcher")
 
       case "filesystem" => Props(
         classOf[DriverActor[FilesystemTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds)
+        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds).withDispatcher("akka.actor.future-call-dispatcher")
 
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],

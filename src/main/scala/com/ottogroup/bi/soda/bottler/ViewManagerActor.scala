@@ -14,73 +14,31 @@ import akka.event.Logging
 import akka.event.LoggingReceive
 import scala.concurrent.duration.Duration
 import java.util.concurrent.TimeUnit
-import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
+import scala.concurrent.duration.DurationInt
+import scala.collection.mutable.HashMap
 
-class ViewStatusRetriever() extends Actor with Aggregator {
-  expectOnce {
-    case GetViewStatusList(statusRequester, viewActors) => if (viewActors.isEmpty) {
-      statusRequester ! ViewStatusListResponse(List())
-      context.stop(self)
-    } else
-      new MultipleResponseHandler(statusRequester, viewActors)
-  }
-
-  class MultipleResponseHandler(statusRequester: ActorRef, viewActors: Seq[ActorRef]) {
-    val log = Logging(settings.system, ViewStatusRetriever.this)
-    import context.dispatcher
-    import collection.mutable.ArrayBuffer
-
-    val receivedViewStats = HashMap[String, ViewStatusResponse]() //  ListBuffer[ViewStatusResponse]()
-
-    log.debug("VIEW AGGREGATION: sending getStatus")
-    viewActors.foreach(_ ! GetStatus())
-    log.debug("VIEW AGGREGATION: sending getStatus done")
-    context.system.scheduler.scheduleOnce(settings.statusListAggregationTimeout / 2, self, "timeout")
-
-    val handle = expect {
-
-      case viewStatus: ViewStatusResponse => {
-        receivedViewStats.put(viewStatus.view.urlPath, viewStatus)
-        log.debug("VIEW AGGREGATION: received response " + receivedViewStats.size)
-
-        if (receivedViewStats.size == viewActors.size)
-          processFinal()
-      }
-
-      case "timeout" => {
-        log.debug("VIEW AGGREGATION: received timeout")
-        processFinal()
-      }
-    }
-
-    def processFinal() {
-      unexpect(handle)
-      viewActors.foreach(va => {
-        val view = ViewManagerActor.viewForActor(va)
-        if (!receivedViewStats.get(view.urlPath).isDefined)
-          receivedViewStats.put(view.urlPath, ViewStatusResponse("no-response", view))
-      })
-      statusRequester ! ViewStatusListResponse(receivedViewStats.values.toList)
-      context.stop(self)
-    }
-  }
-}
 
 class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
   val log = Logging(system, ViewManagerActor.this)
+    
+  val viewStatusMap = HashMap[String,ViewStatusResponse]()
 
   override def preRestart(reason: Throwable, message: Option[Any]) {
     // prevent termination of children during restart and cause their own restart
   }
 
   def receive = LoggingReceive({
-    case GetStatus() => actorOf(Props[ViewStatusRetriever], "aggregator-" + UUID.randomUUID()) ! GetViewStatusList(sender, children.toList.filter { !_.path.toStringWithoutAddress.contains("aggregator-") })
-
+    
+    case vsr: ViewStatusResponse => viewStatusMap.put(vsr.view.urlPath, vsr)
+    
+    case GetStatus() => sender ! ViewStatusListResponse(viewStatusMap.values.toList)
+    
     case GetViewStatus(views, withDependencies) => {
-      val viewActors = initializeViewActors(views, withDependencies)
-      actorOf(Props[ViewStatusRetriever], "aggregator-" + UUID.randomUUID()) ! GetViewStatusList(sender, viewActors)
+      val viewUrls = views.map(v => v.urlPath).toSet
+      initializeViewActors(views, withDependencies)
+      sender ! ViewStatusListResponse(viewStatusMap.filter( url => viewUrls.contains(url._1)).values.toList)
     }
 
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
@@ -94,50 +52,44 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }
   })
 
-  def initializeViewActors(vl: List[View], withDeps: Boolean): List[ActorRef] = {
-    val initializedViews = HashSet[View]()
-    val dependencyActors = HashSet[ActorRef]()
+  def actorsForViews(vs: List[View], forceDependencies: Boolean = false, depth: Int = 0): List[(ActorRef, View, Boolean, Int)] = {
+    vs.map {
+      v =>
+        val actor = ViewManagerActor.actorForView(v)
+        if (actor.isTerminated) {
+          val createdActor = (actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v)), v, true, depth)
+          actorsForViews(v.dependencies.toList, forceDependencies, depth+1) ++ List(createdActor)
+        } else {
+          if (forceDependencies) { 
+            val existingActor = (actor, v, false, depth)
+            actorsForViews(v.dependencies.toList, forceDependencies, depth+1) ++ List(existingActor)
+          } else List((actor, v, false, depth))
+        }
+    }.flatten
+  }
 
-    val actors = vl.map(v => {
-      val actor = ViewManagerActor.actorForView(v)
-      if (actor.isTerminated) {
-        initializeDependencyActors(v, initializedViews, dependencyActors)
-        initializedViews.add(v)
-        actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v))
-      } else {
-        if (withDeps) initializeDependencyActors(v, initializedViews, dependencyActors)
-        actor
-      }
-    })
-
-    val viewsPerTable = initializedViews
+  def initializeViewActors(vs: List[View], forceDependencies: Boolean = false): List[ActorRef] = {
+    val resolved = actorsForViews(vs, forceDependencies)
+    
+    val viewsPerTable = resolved
+      .filter { _._3 }
+      .map { _._2 }
+      .distinct
       .groupBy { _.tableName }
       .values
       .map(perTable => AddPartitions(perTable.toList)).toList
 
-    queryActors(schemaActor, viewsPerTable, settings.schemaTimeout)
+    if (viewsPerTable.size > 0) queryActors(schemaActor, viewsPerTable, settings.schemaTimeout)
 
-    if (withDeps) actors ::: dependencyActors.toList else actors
-  }
-
-  def initializeDependencyActors(v: View, initialized: HashSet[View], actors: HashSet[ActorRef]) {
-    v.dependencies.foreach(d => {
-      var actor = ViewManagerActor.actorForView(d)
-
-      if (actor.isTerminated) {
-        actor = actorOf(ViewActor.props(d, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(d))
-        log.debug("Initialized dependency actor " + actor.path.toStringWithoutAddress)
-        initialized.add(v)
-      }
-
-      actors.add(actor)
-      initializeDependencyActors(d, initialized, actors)
-    })
+    if (forceDependencies)
+      resolved.map( _._1).distinct
+    else
+      resolved.filter( _._4 == 0).map( _._1).distinct
   }
 }
 
 object ViewManagerActor {
-  def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor)
+  def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor).withDispatcher("akka.aktor.views-dispatcher")
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
 

@@ -10,10 +10,10 @@ import scala.concurrent.ExecutionContext
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.concurrent.duration.FiniteDuration
+import com.ottogroup.bi.soda.bottler.SodaRootActor
 
 package object bottler {
-
-  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.blocking-call-dispatcher")
+  implicit val executionContext : ExecutionContext = SodaRootActor.settings.system.dispatchers.lookup("akka.actor.future-call-dispatcher")
 
   def queryActor[T](actor: ActorRef, queryMessage: Any, timeoutDuration: FiniteDuration): T = {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))

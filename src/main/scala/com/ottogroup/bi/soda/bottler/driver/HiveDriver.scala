@@ -28,7 +28,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
   override def transformationName = "hive"
 
-  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.blocking-call-dispatcher")
+  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {

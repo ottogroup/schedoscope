@@ -45,22 +45,35 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     metastoreClient.alter_partition(dbName, tableName, partition)
   }
 
-  def setPartitionVersion(view: View) = {
-    setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+//  def setPartitionVersion(view: View) = {
+//    setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+//  }
+  
+  def setTransformationVersion(view: View) = {
+    setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
   }
 
-  def getPartitionVersion(view: View): String = {
-    val part = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
-    if (part == null || part.getParameters == null)
+  def getTransformationVersion(view: View): String = {
+    val tab = metastoreClient.getTable(view.dbName, view.n)
+    if (tab == null || tab.getParameters == null)
       Version.default
     else
-      part.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default)
+      tab.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default)
   }
 
   def setTransformationTimestamp(view: View, timestamp: Long) = {
     setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
   }
 
+  def getTransformationTimestamps(dbName: String, tableName: String) = {    
+    val parts = metastoreClient.listPartitions(dbName, tableName, Short.MaxValue)
+    val res = new HashMap[String,Long]()
+    res ++ parts.map( p => {
+      (p.getValues.mkString("/"), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)
+    }).toMap
+    res
+  }
+  
   def getTransformationTimestamp(view: View) = {
     val part = metastoreClient.getPartition(view.dbName, view.n, view.partitionSpec)
     if (part == null || part.getParameters == null)

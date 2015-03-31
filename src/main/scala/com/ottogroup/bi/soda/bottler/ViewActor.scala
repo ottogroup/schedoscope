@@ -18,6 +18,7 @@ import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
 import com.ottogroup.bi.soda.dsl.transformations.MkDir
+import java.util.Date
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
   import context._
@@ -44,51 +45,34 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // one of the dependencies' transformations failed
   var withErrors = false
 
+  override def preStart {
+    logStateInfo("receive")
+  }
+
   override def postRestart(reason: Throwable) {
     self ! MaterializeView()
   }
 
   // State: default
   // transitions: defaultForViewWithoutDependencies, defaultForViewWithDependencies
-  def receive = if (view.dependencies.isEmpty) {
-    log.info(stateInfo("defaultForViewWithoutDependencies"))
-    defaultForViewWithoutDependencies
-  } else {
-    log.info(stateInfo("defaultForViewWithDependencies"))
-    defaultForViewWithDependencies
-  }
-
-  //  def changing: Receive = LoggingReceive({
-  //    case GetStatus() => sender ! ViewStatusResponse("changing", view)
-  //  })
-
-  // State: default for non-NoOp views without dependencies
-  // transitions: transforming
-  def defaultForViewWithoutDependencies: Receive = LoggingReceive({
-    case GetStatus() => sender ! ViewStatusResponse("receive", view)
-
-    case MaterializeView() => {
+  def receive: Receive = LoggingReceive({
+    case MaterializeView() => if (view.dependencies.isEmpty) {
       listenersWaitingForMaterialize.add(sender)
       toTransformOrMaterialize(0)
+    } else {
+      toWaiting()
     }
 
-    case NewDataAvailable(viewWithNewData) => if (view == viewWithNewData) toDefaultAndReload(false)
-  })
-
-  // State: default for views with dependencies
-  // transitions: waiting
-  def defaultForViewWithDependencies: Receive = LoggingReceive({
-    case GetStatus() => sender ! ViewStatusResponse("receive", view)
-
-    case MaterializeView() => toWaiting()
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
+    case NewDataAvailable(viewWithNewData) => if (view.dependencies.isEmpty) {
+      if (view == viewWithNewData) toDefaultAndReload(false)
+    } else {
+      if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
+    }
   })
 
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
   def waiting: Receive = LoggingReceive {
-    case GetStatus() => sender ! ViewStatusResponse("waiting", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -120,7 +104,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: transforming, view actor in process of applying transformation
   // transitions: materialized,retrying
   def transforming(retries: Int): Receive = LoggingReceive({
-    case GetStatus() => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
+    //case GetStatus() => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
 
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
@@ -132,9 +116,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       toMaterialize()
     }
 
-    case _: ActionFailure[_] => toRetrying(retries)
+    case _: ActionFailure[_]               => toRetrying(retries)
 
-    case MaterializeView() => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView()                 => listenersWaitingForMaterialize.add(sender)
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
@@ -142,7 +126,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: retrying
   // transitions: failed, transforming
   def retrying(retries: Int): Receive = LoggingReceive({
-    case GetStatus() => sender ! ViewStatusResponse("retrying", view)
 
     case MaterializeView() => listenersWaitingForMaterialize.add(sender)
 
@@ -150,7 +133,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       toTransformOrMaterialize(retries + 1)
     else {
 
-      log.warning(stateInfo("failed"))
+      logStateInfo("failed")
 
       unbecomeBecome(failed)
 
@@ -164,11 +147,17 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: materialized, view has been computed and materialized
   // transitions: default,transforming
   def materialized: Receive = LoggingReceive({
-    case GetStatus() => sender ! ViewStatusResponse("materialized", view)
 
-    case MaterializeView() => sender ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors)
+    case MaterializeView() => {
+      if (view.dependencies.isEmpty) {
+        sender ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors)
+      }
+      else {
+        toWaiting() 
+      }      
+    }
 
-    case Invalidate() => toDefault()
+    case Invalidate()      => toDefault()
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData))
       toDefaultAndReload()
@@ -179,13 +168,12 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: failed, view actor failed to materialize
   // transitions:  default, transforming
   def failed: Receive = LoggingReceive({
-    case GetStatus() => sender ! ViewStatusResponse("failed", view)
 
     case NewDataAvailable(viewWithNewData) =>
       if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
       else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
 
-    case Invalidate() => toDefault()
+    case Invalidate()      => toDefault()
 
     case MaterializeView() => sender ! Failed(view)
   })
@@ -220,7 +208,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     withErrors = false
     incomplete = false
 
-    log.info(stateInfo("default"))
+    logStateInfo("receive")
 
     unbecomeBecome(receive)
   }
@@ -232,23 +220,24 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     listenersWaitingForMaterialize.add(sender)
 
+    logStateInfo("waiting")
+
     view.dependencies.foreach { d =>
       {
         dependenciesMaterializing.add(d)
 
-        log.debug("materializing dependency " + d)
+        log.debug("sending materialize to dependency " + d)
 
         getViewActor(d) ! MaterializeView()
       }
     }
 
-    log.info(stateInfo("waiting"))
-
     unbecomeBecome(waiting)
+
   }
 
   def toMaterialize() {
-    log.info(stateInfo("materialized"))
+    logStateInfo("materialized")
 
     listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors))
     listenersWaitingForMaterialize.clear
@@ -285,7 +274,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         } else {
           actionsManagerActor ! view
 
-          log.info(stateInfo("transforming"))
+          logStateInfo("transforming")
 
           unbecomeBecome(transforming(retries))
         }
@@ -294,7 +283,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       case _ => {
         actionsManagerActor ! view
 
-        log.info(stateInfo("transforming"))
+        logStateInfo("transforming")
 
         unbecomeBecome(transforming(retries))
       }
@@ -303,7 +292,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def toRetrying(retries: Int): akka.actor.Cancellable = {
-    log.info(stateInfo("retrying"))
+    logStateInfo("retrying")
 
     unbecomeBecome(retrying(retries))
 
@@ -358,28 +347,32 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def getViewActor(view: View) = {
+    log.info("into get view actor")
     val viewActor = ViewManagerActor.actorForView(view)
-
+    log.info("checking for terminated")
     if (!viewActor.isTerminated) {
-      log.debug("Lookup of view actor " + viewActor.path.toStringWithoutAddress + " successful")
+      log.info("Lookup of view actor " + viewActor.path.toStringWithoutAddress + " successful")
       viewActor
-    } else
+    } else {
+      log.info("need to re-instantiate view actor, should NEVER happen (now)")
       queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout)
+    }
   }
 
   def getTransformationTimestamp(view: View) = {
     if (lastTransformationTimestamp == 0l) {
       lastTransformationTimestamp = queryActor(schemaActor, GetTransformationTimestamp(view), settings.schemaTimeout).asInstanceOf[AnyRef] match {
         case TransformationTimestamp(_, ts) => ts
-        case _ => 0l
+        case _                              => 0l
       }
     }
     lastTransformationTimestamp
   }
 
   def logTransformationTimestamp(view: View) = {
-    queryActor(schemaActor, LogTransformationTimestamp(view), settings.schemaTimeout)
-    getTransformationTimestamp(view)
+    val timestamp = new Date().getTime()
+    schemaActor ! LogTransformationTimestamp(view, timestamp)
+    timestamp
   }
 
   def getOrLogTransformationTimestamp(view: View) = {
@@ -387,13 +380,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     if (ts == 0l)
       logTransformationTimestamp(view)
     else ts
-  }
-
-  def addPartition(view: View) {
-    if (view.isPartitioned())
-      queryActor(schemaActor, AddPartition(view), settings.schemaTimeout)
-    else
-      queryActor(actionsManagerActor, MkDir(view.fullPath), settings.filesystemTimeout)
   }
 
   def setVersion(view: View) {
@@ -405,8 +391,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     become(behaviour)
   }
 
-  def stateInfo(stateName: String) =
-    s"VIEWACTOR STATE CHANGE ===> ${stateName.toUpperCase()}: lastTransformationTimestamp=${lastTransformationTimestamp} dependenciesFreshness=${dependenciesFreshness} incomplete=${incomplete} withErrors=${withErrors}"
+  def logStateInfo(stateName: String) {
+    viewManagerActor ! ViewStatusResponse(stateName, view)
+    log.info(s"VIEWACTOR STATE CHANGE ===> ${stateName.toUpperCase()}: lastTransformationTimestamp=${lastTransformationTimestamp} dependenciesFreshness=${dependenciesFreshness} incomplete=${incomplete} withErrors=${withErrors}")
+  }
 }
 
 object ViewActor {

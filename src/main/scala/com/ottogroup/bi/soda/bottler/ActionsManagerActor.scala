@@ -20,50 +20,13 @@ import akka.contrib.pattern.Aggregator
 import akka.event.Logging
 import akka.event.LoggingReceive
 import java.util.UUID
-
-class ActionStatusRetriever() extends Actor with Aggregator {
-  expectOnce {
-    case GetActionStatusList(statusRequester, actionQueueStatus, driverActors: Seq[ActorRef]) =>
-      if (driverActors.isEmpty) {
-        statusRequester ! ActionStatusListResponse(List(), actionQueueStatus)
-        context.stop(self)
-      } else
-        new MultipleResponseHandler(statusRequester, actionQueueStatus, driverActors)
-
-  }
-
-  class MultipleResponseHandler(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Iterable[ActorRef]) {
-    import context.dispatcher
-    import collection.mutable.ArrayBuffer
-
-    val values = ListBuffer[ActionStatusResponse[_]]()
-
-    driverActors.foreach(_ ! GetStatus())
-    context.system.scheduler.scheduleOnce(Settings().statusListAggregationTimeout, self, "timeout")
-
-    val handle = expect {
-      case actionStatus: ActionStatusResponse[_] => {
-        values += actionStatus
-
-        if (values.size == driverActors.size)
-          processFinal(values.toList)
-      }
-
-      case "timeout" => processFinal(values.toList)
-    }
-
-    def processFinal(actionStatus: List[ActionStatusResponse[_]]) {
-      unexpect(handle)
-      statusRequester ! ActionStatusListResponse(actionStatus, actionQueueStatus)
-      context.stop(self)
-    }
-  }
-}
+import scala.util.Random
+import scala.collection.mutable.HashMap
 
 class ActionsManagerActor() extends Actor {
   import context._
   val log = Logging(system, ActionsManagerActor.this)
-
+  
   val settings = Settings.get(system)
 
   val availableTransformations = settings.availableTransformations.keySet()
@@ -80,6 +43,8 @@ class ActionsManagerActor() extends Actor {
   }
 
   val queues = nonFilesystemQueues ++ filesystemQueues
+  
+  val driverStates = HashMap[String,ActionStatusResponse[_]]()
 
   val randomizer = Random
 
@@ -140,8 +105,11 @@ class ActionsManagerActor() extends Actor {
   }
 
   def receive = LoggingReceive({
-    case GetStatus() => actorOf(Props[ActionStatusRetriever], "aggregator-" + UUID.randomUUID()) ! GetActionStatusList(sender(), actionQueueStatus(), children.toList.filter { !_.path.toStringWithoutAddress.contains("aggregator-") })
-
+    
+    case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
+    
+    case GetStatus() => sender ! ActionStatusListResponse(driverStates.values.toList, actionQueueStatus)
+      
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
 

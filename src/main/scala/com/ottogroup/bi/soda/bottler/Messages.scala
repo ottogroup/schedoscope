@@ -33,12 +33,12 @@ case class PollCommand(typ: String) extends CommandRequest
 case class CommandWithSender(command: AnyRef, sender: ActorRef) extends CommandRequest
 case class CheckViewVersion(view: View) extends CommandRequest
 case class SetViewVersion(view: View) extends CommandRequest
-case class LogTransformationTimestamp(view: View) extends CommandRequest
+case class LogTransformationTimestamp(view: View, timestamp: Long) extends CommandRequest
 case class GetTransformationTimestamp(view: View) extends CommandRequest
 case class GetStatus() extends CommandRequest
 case class GetViewStatus(views: List[View], withDependencies: Boolean) extends CommandRequest
 case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
-case class GetViewStatusList(statusRequester: ActorRef, viewActors: Seq[ActorRef]) extends CommandRequest
+case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
 case class MaterializeView() extends CommandRequest
 
 sealed class CommandResponse
