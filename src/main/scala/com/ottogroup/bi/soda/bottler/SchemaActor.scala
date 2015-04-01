@@ -31,9 +31,9 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
     }
 
     case AddPartitions(views) => try {
-      log.debug("Creating partitions for table " + views.size)
+      log.debug(s"Creating ${views.size} partitions for table ${views.head.tableName}")
       crate.createPartitions(views)
-      log.debug("Created partitions " + views.size)
+      log.debug(s"Created ${views.size} partitions for table ${views.head.tableName}")
       sender ! SchemaActionSuccess()
     } catch {
       case e: Throwable => {
