@@ -45,7 +45,7 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
 object SodaRootActor {
   def props(settings: SettingsImpl) = Props(classOf[SodaRootActor], settings)
 
-  lazy val settings = Settings()
+  val settings = Settings()
 
   lazy val sodaRootActor = {
     val actorRef = settings.system.actorOf(props(settings), "root")
