@@ -47,7 +47,7 @@ case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) exte
 case class ViewVersionOk(view: View) extends CommandResponse
 case class ViewVersionMismatch(view: View, dataVersion: String) extends CommandResponse
 case class TransformationTimestamp(view: View, timestamp: Long) extends CommandResponse
-case class TransformationMetadata(metadata: Map[View, (String,Long)]) extends CommandResponse
+case class TransformationMetadata(metadata: Map[View, (String, Long)]) extends CommandResponse
 case class NoDataAvailable(view: View) extends CommandResponse
 case class ViewMaterialized(view: View, incomplete: Boolean, transformationTimestamp: Long, errors: Boolean) extends CommandResponse
 

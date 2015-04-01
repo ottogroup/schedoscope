@@ -26,7 +26,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   def receive = LoggingReceive({
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
-    case GetStatus()             => sender ! ViewStatusListResponse(viewStatusMap.values.toList)
+    case GetStatus() => sender ! ViewStatusListResponse(viewStatusMap.values.toList)
 
     case GetViewStatus(views, withDependencies) => {
       val actorPaths = initializeViewActors(views, withDependencies).map(a => a.path.toStringWithoutAddress).toSet
@@ -79,15 +79,17 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
       .map(views => AddPartitions(views.toList))
       .toList
 
-    log.debug(s"Views per table size: ${viewsPerTable.size}")  
-      
+    log.debug(s"Views per table size: ${viewsPerTable.size}")
+
     if (viewsPerTable.size > 0) {
       log.debug(s"Submitting table creation job")
       val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, viewsPerTable, settings.schemaTimeout)
       log.debug(s"Done")
       viewsWithMetadataToCreate.foreach(m => {
-        m.metadata.foreach { case (view, (version, timestamp)) => 
-          actorOf(ViewActor.props(view, settings, self, actionsManagerActor, schemaActor, version, timestamp), ViewManagerActor.actorNameForView(view)) }
+        m.metadata.foreach {
+          case (view, (version, timestamp)) =>
+            actorOf(ViewActor.props(view, settings, self, actionsManagerActor, schemaActor, version, timestamp), ViewManagerActor.actorNameForView(view))
+        }
       })
     }
 

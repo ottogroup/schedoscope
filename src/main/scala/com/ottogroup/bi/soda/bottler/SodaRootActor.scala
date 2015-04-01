@@ -22,7 +22,6 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
   var actionsManagerActor: ActorRef = null
   var schemaActor: ActorRef = null
   var viewManagerActor: ActorRef = null
-  var partitionMetadataLoggerActor: ActorRef = null
 
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
@@ -31,8 +30,7 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
 
   override def preStart {
     actionsManagerActor = actorOf(ActionsManagerActor.props(settings.hadoopConf).withDispatcher("akka.actor.actions-manager-dispatcher"), "actions")
-    partitionMetadataLoggerActor = actorOf(PartitionMetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withDispatcher("akka.actor.default-dispatcher"), "schema-writer-delegate")
-    schemaActor = actorOf(SchemaActor.props(partitionMetadataLoggerActor, settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withDispatcher("akka.actor.default-dispatcher"), "schema")
+    schemaActor = actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withDispatcher("akka.actor.default-dispatcher"), "schema")
     viewManagerActor = actorOf(ViewManagerActor.props(settings, actionsManagerActor, schemaActor).withDispatcher("akka.actor.view-manager-dispatcher"), "views")
   }
 
@@ -47,14 +45,10 @@ object SodaRootActor {
 
   lazy val settings = Settings()
 
-  lazy val sodaRootActor = {
-    val actorRef = settings.system.actorOf(props(settings), "root")
-    val future = settings.system.actorSelection(actorRef.path).resolveOne(10 seconds)
-    Await.result(future, 10 seconds)
-  }
-
   def actorSelectionToRef(actorSelection: ActorSelection) =
     Await.result(actorSelection.resolveOne(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout)
+
+  lazy val sodaRootActor = actorSelectionToRef(settings.system.actorSelection(settings.system.actorOf(props(settings), "root").path))
 
   lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("views")))
 

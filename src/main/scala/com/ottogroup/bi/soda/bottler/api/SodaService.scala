@@ -13,9 +13,9 @@ import jline.ConsoleReader
 object SodaService extends App with SimpleRoutingApp {
 
   val soda = new SodaSystem()
-  
+
   implicit val system = ActorSystem("soda-webservice")
-  implicit val timeout = Timeout(600.seconds)  
+  implicit val timeout = Timeout(600.seconds)
 
   import SodaJsonProtocol._
 

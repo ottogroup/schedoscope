@@ -323,8 +323,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def hasVersionMismatch(view: View) = view.transformation().versionDigest() != versionChecksum
-  
-  
+
   def getViewActor(view: View) = {
     val viewActor = ViewManagerActor.actorForView(view)
     if (!viewActor.isTerminated) {

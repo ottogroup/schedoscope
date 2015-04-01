@@ -24,16 +24,15 @@ import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.crate.ddl.HiveQl
 import com.ottogroup.bi.soda.dsl.Version
 import com.ottogroup.bi.soda.dsl.View
-import collection.JavaConversions._
 
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
 
   def getPartitionKey(viewOrPartition: Any) = viewOrPartition match {
-    case v: View      => if (v.isPartitioned()) v.partitionValues.mkString("/") else "no-partition"
+    case v: View => if (v.isPartitioned()) v.partitionValues.mkString("/") else "no-partition"
     case p: Partition => p.getValues.mkString("/")
-    case _            => throw new RuntimeException("Cannot create partition key for " + viewOrPartition)
+    case _ => throw new RuntimeException("Cannot create partition key for " + viewOrPartition)
   }
 
   def setTableProperty(dbName: String, tableName: String, key: String, value: String): Unit = {
@@ -82,13 +81,13 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
     }
   }
-  
+
   def getTransformationVersions(view: View) = {
-    HashMap[String, String]() ++= getTransformationMetadata(List(view)).map {case (view, (version, _)) => (getPartitionKey(view), version)}
+    HashMap[String, String]() ++= getTransformationMetadata(List(view)).map { case (view, (version, _)) => (getPartitionKey(view), version) }
   }
 
   def getTransformationTimestamps(view: View) = {
-    HashMap[String, Long]() ++= getTransformationMetadata(List(view)).map {case (view, (_, timeStamp)) => (getPartitionKey(view), timeStamp)}
+    HashMap[String, Long]() ++= getTransformationMetadata(List(view)).map { case (view, (_, timeStamp)) => (getPartitionKey(view), timeStamp) }
   }
 
   def dropAndCreateTableSchema(view: View): Unit = {

@@ -193,8 +193,7 @@ class SodaControl(soda: SodaInterface) {
                 val filtered = statusList.views.filter(_.view.matches(config.filter.get))
                 val filteredOverview = filtered.groupBy(_.status).mapValues(_.size)
                 ViewStatusList(filteredOverview, filtered)
-              }
-              else {
+              } else {
                 statusList
               }
             }
