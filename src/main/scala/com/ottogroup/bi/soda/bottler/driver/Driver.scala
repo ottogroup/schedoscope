@@ -65,8 +65,6 @@ trait Driver[T <: Transformation]  {
       .map(stat => stat.getPath.toString)
       .toList
 
-    println("registered libjars for " + transformationName + ": " + libJars.mkString(","))
-
     succ.filter(_.isInstanceOf[DriverRunFailed[_]]).isEmpty
   }
 }
