@@ -24,16 +24,14 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   }
 
   def receive = LoggingReceive({
-    case vsr: ViewStatusResponse => viewStatusMap.put(vsr.view.urlPath, vsr)
+    case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
     case GetStatus() => sender ! ViewStatusListResponse(viewStatusMap.values.toList)
 
     case GetViewStatus(views, withDependencies) => {
-      initializeViewActors(views, withDependencies)
+      val actorPaths = initializeViewActors(views, withDependencies).map(a => a.path.toStringWithoutAddress).toSet
 
-      val viewUrls = views.map(_.urlPath).toSet
-
-      sender ! ViewStatusListResponse(viewStatusMap.filter { case (url, _) => viewUrls.contains(url) }.values.toList)
+      sender ! ViewStatusListResponse(viewStatusMap.filter { case (actorPath, _) => actorPaths.contains(actorPath) }.values.toList)
     }
 
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }

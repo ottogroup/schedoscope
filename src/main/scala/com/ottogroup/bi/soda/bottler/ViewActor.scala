@@ -158,7 +158,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     case Invalidate() => {
       sender ! ViewStatusResponse("invalidated", view)
-      toDefault(true)
+      toDefault(true, "invalidated")
     }
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData))
@@ -176,7 +176,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     case Invalidate() => {
       sender ! ViewStatusResponse("invalidated", view)
-      toDefault(true)
+      toDefault(true, "invalidated")
     }
 
     case MaterializeView() => sender ! Failed(view)
@@ -202,17 +202,17 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
       listenersWaitingForMaterialize.clear
 
-      toDefault()
+      toDefault(false, "nodata")
     }
   }
 
-  def toDefault(invalidate: Boolean = false) {
+  def toDefault(invalidate: Boolean = false, state: String = "receive") {
     lastTransformationTimestamp = if (invalidate) -1l else 0l
     dependenciesFreshness = 0l
     withErrors = false
     incomplete = false
 
-    logStateInfo(if (invalidate) "invalidated" else "receive")
+    logStateInfo(state)
 
     unbecomeBecome(receive)
   }
@@ -268,7 +268,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
           listenersWaitingForMaterialize.foreach(s => s ! NoDataAvailable(view))
           listenersWaitingForMaterialize.clear
 
-          toDefault()
+          toDefault(false, "nodata")
         }
       }
 
