@@ -47,15 +47,15 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
         sender ! ViewVersionOk(view)
       } else {
         val versions = transformationVersions.get(view.tableName).getOrElse {
-          val version = crate.getTransformationVersions(view.dbName, view.n)
+          val version = crate.getTransformationVersions(view)
           transformationVersions.put(view.tableName, version)
           version
         }
-        
-        if (versions.get(view.partitionValues.mkString("/")).get.equals(view.transformation().versionDigest()))
+        val pKey = crate.getPartitionKey(view)
+        if (versions.get(pKey).get.equals(view.transformation().versionDigest()))
           sender ! ViewVersionOk(view)
         else
-          sender ! ViewVersionMismatch(view, versions.get(view.partitionValues.mkString("/")).get)
+          sender ! ViewVersionMismatch(view, versions.get(pKey).get)
       }
     } catch {
       case e: Throwable => { e.printStackTrace(); this.sender ! SchemaActionFailure() }
@@ -68,10 +68,11 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
         noVersionsYet
       }      
       
-      if (viewTransformationVersions.contains(view.partitionValues.mkString("/")) && viewTransformationVersions.get(view.partitionValues.mkString("/")).get.equals(view.transformation().versionDigest())) {
+      val pKey = crate.getPartitionKey(view)
+      if (viewTransformationVersions.contains(pKey) && viewTransformationVersions.get(pKey).get.equals(view.transformation().versionDigest())) {
         sender ! SchemaActionSuccess()
       } else {
-        viewTransformationVersions.put(view.partitionValues.mkString("/"), view.transformation().versionDigest())
+        viewTransformationVersions.put(pKey, view.transformation().versionDigest())
 
         partitionWriterActor ! SetViewVersion(view)
         sender ! SchemaActionSuccess()
@@ -87,7 +88,8 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
         noTimestampsYet
       }
 
-      viewTransformationTimestamps.put(view.partitionValues.mkString("/"), timestamp)
+      val pKey = crate.getPartitionKey(view)
+      viewTransformationTimestamps.put(pKey, timestamp)
 
       partitionWriterActor ! LogTransformationTimestamp(view, timestamp)
       sender ! SchemaActionSuccess()
@@ -97,12 +99,12 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
 
     case GetTransformationTimestamp(view) => try {
       val viewTransformationTimestamps = transformationTimestamps.get(view.tableName).getOrElse {
-        val timestampsFromMetastore = crate.getTransformationTimestamps(view.dbName, view.n)
+        val timestampsFromMetastore = crate.getTransformationTimestamps(view)
         transformationTimestamps.put(view.tableName, timestampsFromMetastore)
         timestampsFromMetastore
       }      
-      
-      val partitionTimestamp = viewTransformationTimestamps.get(view.partitionValues.mkString("/")).get      
+      val pKey = crate.getPartitionKey(view)
+      val partitionTimestamp = viewTransformationTimestamps.get(pKey).get      
 
       sender ! TransformationTimestamp(view, partitionTimestamp)
     } catch {
