@@ -185,7 +185,7 @@ class SodaControl(soda: SodaInterface) {
         try {
           val res = config.action.get match {
             case ACTIONS => {
-              val statusList = soda.actions(config.status)
+              soda.actions(config.status)
             }
             case VIEWS => {
               val statusList = soda.views(config.viewUrlPath, config.status, config.withDependencies)
