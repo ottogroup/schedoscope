@@ -28,10 +28,8 @@ case class Retry() extends CommandRequest
 case class Invalidate() extends CommandRequest
 case class PollCommand(typ: String) extends CommandRequest
 case class CommandWithSender(command: AnyRef, sender: ActorRef) extends CommandRequest
-case class CheckViewVersion(view: View) extends CommandRequest
 case class SetViewVersion(view: View) extends CommandRequest
 case class LogTransformationTimestamp(view: View, timestamp: Long) extends CommandRequest
-case class GetTransformationTimestamp(view: View) extends CommandRequest
 case class GetStatus() extends CommandRequest
 case class GetViewStatus(views: List[View], withDependencies: Boolean) extends CommandRequest
 case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
@@ -49,6 +47,7 @@ case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) exte
 case class ViewVersionOk(view: View) extends CommandResponse
 case class ViewVersionMismatch(view: View, dataVersion: String) extends CommandResponse
 case class TransformationTimestamp(view: View, timestamp: Long) extends CommandResponse
+case class TransformationMetadata(metadata: Map[View, (String,Long)]) extends CommandResponse
 case class NoDataAvailable(view: View) extends CommandResponse
 case class ViewMaterialized(view: View, incomplete: Boolean, transformationTimestamp: Long, errors: Boolean) extends CommandResponse
 

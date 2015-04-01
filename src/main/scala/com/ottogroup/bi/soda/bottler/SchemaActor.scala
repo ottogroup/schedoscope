@@ -22,44 +22,39 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
   val transformationTimestamps = HashMap[String, HashMap[String, Long]]()
 
   def receive = LoggingReceive({
-    case AddPartition(view) => try {
-      crate.createPartition(view)
-      log.debug("Created partition " + view.urlPath)
-      sender ! SchemaActionSuccess()
-    } catch {
-      case e: Throwable => { this.sender ! SchemaActionFailure() }
-    }
 
     case AddPartitions(views) => try {
       log.debug(s"Creating ${views.size} partitions for table ${views.head.tableName}")
       crate.createPartitions(views)
+      val metadata = crate.getTransformationMetadata(views)
       log.debug(s"Created ${views.size} partitions for table ${views.head.tableName}")
-      sender ! SchemaActionSuccess()
+      sender ! TransformationMetadata(metadata)
     } catch {
       case e: Throwable => {
         log.error("Partition creation failed: " + e.getMessage)
+        e.printStackTrace()
         this.sender ! SchemaActionFailure()
       }
     }
 
-    case CheckViewVersion(view) => try {
-      if (!Settings().transformationVersioning) {
-        sender ! ViewVersionOk(view)
-      } else {
-        val versions = transformationVersions.get(view.tableName).getOrElse {
-          val version = crate.getTransformationVersions(view)
-          transformationVersions.put(view.tableName, version)
-          version
-        }
-        val pKey = crate.getPartitionKey(view)
-        if (versions.getOrElse(pKey, "THIS-DIGEST-DOESNT-EXIST").equals(view.transformation().versionDigest()))
-          sender ! ViewVersionOk(view)
-        else
-          sender ! ViewVersionMismatch(view, versions.getOrElse(pKey, "THIS-DIGEST-DOESNT-EXIST"))
-      }
-    } catch {
-      case e: Throwable => { e.printStackTrace(); this.sender ! SchemaActionFailure() }
-    }
+//    case CheckViewVersion(view) => try {
+//      if (!Settings().transformationVersioning) {
+//        sender ! ViewVersionOk(view)
+//      } else {
+//        val versions = transformationVersions.get(view.tableName).getOrElse {
+//          val version = crate.getTransformationVersions(view)
+//          transformationVersions.put(view.tableName, version)
+//          version
+//        }
+//        val pKey = crate.getPartitionKey(view)
+//        if (versions.getOrElse(pKey, "THIS-DIGEST-DOESNT-EXIST").equals(view.transformation().versionDigest()))
+//          sender ! ViewVersionOk(view)
+//        else
+//          sender ! ViewVersionMismatch(view, versions.getOrElse(pKey, "THIS-DIGEST-DOESNT-EXIST"))
+//      }
+//    } catch {
+//      case e: Throwable => { e.printStackTrace(); this.sender ! SchemaActionFailure() }
+//    }
 
     case SetViewVersion(view) => try {
       val viewTransformationVersions = transformationVersions.get(view.tableName).getOrElse {
@@ -97,19 +92,19 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
       case e: Throwable => { this.sender ! SchemaActionFailure() }
     }
 
-    case GetTransformationTimestamp(view) => try {
-      val viewTransformationTimestamps = transformationTimestamps.get(view.tableName).getOrElse {
-        val timestampsFromMetastore = crate.getTransformationTimestamps(view)
-        transformationTimestamps.put(view.tableName, timestampsFromMetastore)
-        timestampsFromMetastore
-      }
-      val pKey = crate.getPartitionKey(view)
-      val partitionTimestamp = viewTransformationTimestamps.getOrElse(pKey,0l)
-
-      sender ! TransformationTimestamp(view, partitionTimestamp)
-    } catch {
-      case e: Throwable => { this.sender ! SchemaActionFailure() }
-    }
+//    case GetTransformationTimestamp(view) => try {
+//      val viewTransformationTimestamps = transformationTimestamps.get(view.tableName).getOrElse {
+//        val timestampsFromMetastore = crate.getTransformationTimestamps(view)
+//        transformationTimestamps.put(view.tableName, timestampsFromMetastore)
+//        timestampsFromMetastore
+//      }
+//      val pKey = crate.getPartitionKey(view)
+//      val partitionTimestamp = viewTransformationTimestamps.getOrElse(pKey,0l)
+//
+//      sender ! TransformationTimestamp(view, partitionTimestamp)
+//    } catch {
+//      case e: Throwable => { this.sender ! SchemaActionFailure() }
+//    }
   })
 }
 

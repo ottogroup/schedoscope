@@ -22,7 +22,7 @@ import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
 
-class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
+class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
 
   val log = Logging(system, this)
@@ -33,10 +33,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   // state variables
   // timestamp of last transformation
-  var lastTransformationTimestamp = 0l
-
-  // has version mismatch checking already occurred with the current transformation
-  var versionMismatchCheckedAlready = false
 
   // one of the dependencies was not available (no data)
   var incomplete = false
@@ -150,7 +146,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
     case MaterializeView() => {
       if (view.dependencies.isEmpty) {
-        sender ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors)
+        sender ! ViewMaterialized(view, incomplete, lastTransformationTimestamp, withErrors)
       } else {
         toWaiting()
       }
@@ -191,7 +187,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
 
     if (oneDependencyReturnedData) {
-      if ((getTransformationTimestamp(view) <= dependenciesFreshness) || hasVersionMismatch(view))
+      if ((lastTransformationTimestamp <= dependenciesFreshness) || hasVersionMismatch(view))
         toTransformOrMaterialize(0)
       else {
         toMaterialize()
@@ -243,7 +239,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def toMaterialize() {
     logStateInfo("materialized")
 
-    listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, getTransformationTimestamp(view), withErrors))
+    listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, lastTransformationTimestamp, withErrors))
     listenersWaitingForMaterialize.clear
 
     unbecomeBecome(materialized)
@@ -273,7 +269,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
 
       case _: FilesystemTransformation => {
-        if (getTransformationTimestamp(view) > 0l) {
+        if (lastTransformationTimestamp > 0l) {
           toMaterialize()
         } else {
           actionsManagerActor ! view
@@ -326,30 +322,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     actionsManagerActor ! Touch(view.fullPath + "/_SUCCESS")
   }
 
-  def hasVersionMismatch(view: View) = {
-    if (!versionMismatchCheckedAlready) {
-      versionMismatchCheckedAlready = true
-
-      val versionInfo: AnyRef = queryActor(schemaActor, CheckViewVersion(view), settings.schemaTimeout)
-
-      versionInfo match {
-        case SchemaActionFailure() => {
-          log.warning("got error from versioncheck, assuming version mismatch")
-          true
-        }
-
-        case ViewVersionMismatch(v, version) => {
-          log.debug("version mismatch")
-          true
-        }
-
-        case ViewVersionOk(v) => false
-      }
-    }
-
-    false
-  }
-
+  def hasVersionMismatch(view: View) = view.transformation().versionDigest() != versionChecksum
+  
+  
   def getViewActor(view: View) = {
     val viewActor = ViewManagerActor.actorForView(view)
     if (!viewActor.isTerminated) {
@@ -359,16 +334,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
   }
 
-  def getTransformationTimestamp(view: View) = {
-    if (lastTransformationTimestamp == 0l) {
-      lastTransformationTimestamp = queryActor(schemaActor, GetTransformationTimestamp(view), settings.schemaTimeout).asInstanceOf[AnyRef] match {
-        case TransformationTimestamp(_, ts) => ts
-        case _ => 0l
-      }
-    }
-    lastTransformationTimestamp
-  }
-
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()
     schemaActor ! LogTransformationTimestamp(view, lastTransformationTimestamp)
@@ -376,14 +341,14 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def getOrLogTransformationTimestamp(view: View) = {
-    val ts = getTransformationTimestamp(view)
+    val ts = lastTransformationTimestamp
     if (ts <= 0l)
       logTransformationTimestamp(view)
     else ts
   }
 
   def setVersion(view: View) {
-    versionMismatchCheckedAlready = true
+    versionChecksum = view.transformation().versionDigest()
     schemaActor ! SetViewVersion(view)
   }
 
@@ -394,10 +359,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def logStateInfo(stateName: String) {
     viewManagerActor ! ViewStatusResponse(stateName, view)
-    log.info(s"VIEWACTOR STATE CHANGE ===> ${stateName.toUpperCase()}: lastTransformationTimestamp=${lastTransformationTimestamp} dependenciesFreshness=${dependenciesFreshness} incomplete=${incomplete} withErrors=${withErrors}")
+    log.info(s"VIEWACTOR STATE CHANGE ===> ${stateName.toUpperCase()}: lastTransformationTimestamp=${lastTransformationTimestamp} versionChecksum=${versionChecksum} dependenciesFreshness=${dependenciesFreshness} incomplete=${incomplete} withErrors=${withErrors}")
   }
 }
 
 object ViewActor {
-  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, schemaActor)
+  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, schemaActor, versionChecksum, lastTransformationTimestamp)
 }

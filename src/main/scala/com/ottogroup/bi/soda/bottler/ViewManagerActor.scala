@@ -26,7 +26,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   def receive = LoggingReceive({
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
-    case GetStatus() => sender ! ViewStatusListResponse(viewStatusMap.values.toList)
+    case GetStatus()             => sender ! ViewStatusListResponse(viewStatusMap.values.toList)
 
     case GetViewStatus(views, withDependencies) => {
       val actorPaths = initializeViewActors(views, withDependencies).map(a => a.path.toStringWithoutAddress).toSet
@@ -37,6 +37,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
 
     case ViewList(views) => {
+      log.debug(s"Got ViewList for ${views.size} views")
       sender ! initializeViewActors(views, false)
     }
 
@@ -45,43 +46,55 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }
   })
 
-  def actorsForViews(views: List[View], withDependencies: Boolean = false, depth: Int = 0): List[(ActorRef, View, Boolean, Int)] = {
+  def viewsToCreateActorsFor(views: List[View], withDependencies: Boolean = false, depth: Int = 0): List[(View, Boolean, Int)] = {
     views.map {
       v =>
-        val actor = ViewManagerActor.actorForView(v)
-
-        if (actor.isTerminated) {
-          val createdActor = (actorOf(ViewActor.props(v, settings, self, actionsManagerActor, schemaActor), ViewManagerActor.actorNameForView(v)), v, true, depth)
-          createdActor :: actorsForViews(v.dependencies.toList, withDependencies, depth + 1)
+        if (ViewManagerActor.actorForView(v).isTerminated) {
+          val createdActor = (v, true, depth)
+          createdActor :: viewsToCreateActorsFor(v.dependencies.toList, withDependencies, depth + 1)
         } else {
           if (withDependencies) {
-            val existingActor = (actor, v, false, depth)
-            existingActor :: actorsForViews(v.dependencies.toList, withDependencies, depth + 1)
+            val existingActor = (v, false, depth)
+            existingActor :: viewsToCreateActorsFor(v.dependencies.toList, withDependencies, depth + 1)
           } else {
-            List((actor, v, false, depth))
+            List((v, false, depth))
           }
         }
     }.flatten
   }
 
   def initializeViewActors(vs: List[View], withDependencies: Boolean = false): List[ActorRef] = {
-    val resolved = actorsForViews(vs, withDependencies)
 
-    val viewsPerTable = resolved
-      .filter { case (_, _, newlyCreated, _) => newlyCreated }
-      .map { case (_, view, _, _) => view }
+    val allViews = viewsToCreateActorsFor(vs, withDependencies)
+    log.debug(s"Computed ${allViews.size} views")
+    val actorsToCreate = allViews
+      .filter { case (_, needsCreation, _) => needsCreation }
+    log.debug(s"Need to create ${actorsToCreate.size} actors")
+
+    val viewsPerTable = actorsToCreate
+      .map { case (view, _, _) => view }
       .distinct
       .groupBy { _.tableName }
       .values
       .map(views => AddPartitions(views.toList))
       .toList
 
-    if (viewsPerTable.size > 0) queryActors(schemaActor, viewsPerTable, settings.schemaTimeout)
+    log.debug(s"Views per table size: ${viewsPerTable.size}")  
+      
+    if (viewsPerTable.size > 0) {
+      log.debug(s"Submitting table creation job")
+      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, viewsPerTable, settings.schemaTimeout)
+      log.debug(s"Done")
+      viewsWithMetadataToCreate.foreach(m => {
+        m.metadata.foreach { case (view, (version, timestamp)) => 
+          actorOf(ViewActor.props(view, settings, self, actionsManagerActor, schemaActor, version, timestamp), ViewManagerActor.actorNameForView(view)) }
+      })
+    }
 
     if (withDependencies)
-      resolved.map { case (viewActor, _, _, _) => viewActor }.distinct
+      allViews.map { case (view, _, _) => ViewManagerActor.actorForView(view) }.distinct
     else
-      resolved.filter { case (_, _, _, depth) => depth == 0 }.map { case (viewActor, _, _, _) => viewActor }.distinct
+      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => ViewManagerActor.actorForView(view) }.distinct
   }
 }
 
