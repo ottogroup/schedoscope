@@ -16,6 +16,7 @@ import spray.client.pipelining.sendReceive
 import spray.client.pipelining.unmarshal
 import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
 import com.ottogroup.bi.soda.Settings
+import scala.util.matching.Regex
 
 object CliFormat { // FIXME: a more generic parsing would be cool...
   def serialize(o: Any): String = {
@@ -121,7 +122,7 @@ class SodaRestClient extends SodaInterface {
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false): ViewStatusList = {
-    val params = s"?withDependencies=${withDependencies}${if (status.isDefined) "&status=" + status.get else ""}"
+    val params = s"?dependencies=${withDependencies}${if (status.isDefined) "&status=" + status.get else ""}"
     Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}${params}"), 3600 seconds)
   }
 
@@ -147,7 +148,7 @@ class SodaControl(soda: SodaInterface) {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, withDependencies: Boolean = false)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, withDependencies: Boolean = false, filter: Option[String] = None)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -156,6 +157,7 @@ class SodaControl(soda: SodaInterface) {
     cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text ("lists all view actors, along with their status") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views by their status (e.g. 'transforming')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter view display (e.g. 'my.database/.*/Partition1/.*'). "),
       opt[Unit]('d', "dependencies") action { (_, c) => c.copy(withDependencies = true) } optional () text ("include dependencies"))
     cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"))
@@ -183,10 +185,18 @@ class SodaControl(soda: SodaInterface) {
         try {
           val res = config.action.get match {
             case ACTIONS => {
-              soda.actions(config.status)
+              val statusList = soda.actions(config.status)
             }
             case VIEWS => {
-              soda.views(config.viewUrlPath, config.status, config.withDependencies)
+              val statusList = soda.views(config.viewUrlPath, config.status, config.withDependencies)
+              if (config.filter.isDefined) {
+                val filtered = statusList.views.filter(_.view.matches(config.filter.get))
+                val filteredOverview = filtered.groupBy(_.status).mapValues(_.size)
+                ViewStatusList(filteredOverview, filtered)
+              }
+              else {
+                statusList
+              }
             }
             case MATERIALIZE => {
               soda.materialize(config.viewUrlPath.get)
