@@ -21,7 +21,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
-      case as: ActionStatusList => {        
+      case as: ActionStatusList => {
         if (as.actions.size > 0) {
           val header = Array("ACTOR", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
           val running = as.actions.map(p => {
@@ -40,7 +40,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
         }
         sb.append("\n" + as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
       }
-      case vl: ViewStatusList => {        
+      case vl: ViewStatusList => {
         if (!vl.views.isEmpty) {
           sb.append(s"Details:\n")
           val header = Array("VIEW", "STATUS", "PROPS")
@@ -105,7 +105,7 @@ class SodaRestClient extends SodaInterface {
     Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath}"), 10.days)
   }
 
-  def invalidate(viewUrlPath: String): SodaCommandStatus = { 
+  def invalidate(viewUrlPath: String): SodaCommandStatus = {
     Await.result(get[SodaCommandStatus](s"/invalidate/${viewUrlPath}"), 3600 seconds)
   }
 
@@ -130,7 +130,6 @@ class SodaRestClient extends SodaInterface {
     Await.result(get[ActionStatusList](s"/actions${stat}"), 3600 seconds)
   }
 }
-
 
 object SodaClientControl {
   val soda = new SodaRestClient()
@@ -159,15 +158,15 @@ class SodaControl(soda: SodaInterface) {
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[Unit]('d', "dependencies") action { (_, c) => c.copy(withDependencies = true) } optional () text ("include dependencies"))
     cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children (
-        opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"))
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"))
     cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children (
-        opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter commands by their status (e.g. 'failed')"))
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter commands by their status (e.g. 'failed')"))
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
     cmd("invalidate") action { (_, c) => c.copy(action = Some(INVALIDATE)) } text ("invalidate view(s)") children (
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
     cmd("newdata") action { (_, c) => c.copy(action = Some(NEWDATA)) } text ("invalidate view(s)") children (
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))      
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
     checkConfig { c =>
       {
         if (!c.action.isDefined) failure("A command is required")
@@ -194,10 +193,10 @@ class SodaControl(soda: SodaInterface) {
             }
             case INVALIDATE => {
               soda.invalidate(config.viewUrlPath.get)
-            }            
+            }
             case NEWDATA => {
               soda.newdata(config.viewUrlPath.get)
-            }            
+            }
             case COMMANDS => {
               soda.commands(config.status)
             }

@@ -122,12 +122,12 @@ class SodaSystem extends SodaInterface {
     submitCommandInternal(viewActors, MaterializeView(), viewUrlPath)
   }
 
-  def invalidate(viewUrlPath: String) = { 
+  def invalidate(viewUrlPath: String) = {
     val viewActors = getViewActors(viewUrlPath)
     submitCommandInternal(viewActors, Invalidate(), viewUrlPath)
   }
 
-  def newdata(viewUrlPath: String) = { 
+  def newdata(viewUrlPath: String) = {
     val viewActors = getViewActors(viewUrlPath)
     submitCommandInternal(viewActors, "newdata", viewUrlPath)
   }
@@ -149,7 +149,7 @@ class SodaSystem extends SodaInterface {
       .filter(a => status.getOrElse(a.status).equals(a.status))
     val queues = result.actionQueueStatus
       .filter(el => status.getOrElse("queued").equals("queued"))
-      .map( el => (el._1, SodaJsonProtocol.parseQueueElements(el._2)) )
+      .map(el => (el._1, SodaJsonProtocol.parseQueueElements(el._2)))
     val running = actions
       .groupBy(_.status)
       .map(el => (el._1, el._2.size))

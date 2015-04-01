@@ -28,13 +28,13 @@ import com.ottogroup.bi.soda.dsl.View
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
-  
+
   def getPartitionKey(viewOrPartition: Any) = viewOrPartition match {
     case v: View => if (v.isPartitioned()) v.partitionValues.mkString("/") else "no-partition"
     case p: Partition => p.getValues.mkString("/")
     case _ => throw new RuntimeException("Cannot create partition key for " + viewOrPartition)
   }
-  
+
   def setTableProperty(dbName: String, tableName: String, key: String, value: String): Unit = {
     val table = metastoreClient.getTable(dbName, tableName)
     table.putToParameters(key, value)
@@ -50,8 +50,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   def setTransformationVersion(view: View) = {
     if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
-    }
-    else {
+    } else {
       setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
     }
   }
@@ -59,21 +58,18 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   def getTransformationVersions(view: View) = {
     if (view.isPartitioned()) {
       val parts = metastoreClient.listPartitions(view.dbName, view.n, Short.MaxValue)
-      new HashMap[String, String]() ++= parts.map(p =>       
-        (getPartitionKey(p) -> p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default))
-      ).toMap
-    }
-    else {
+      new HashMap[String, String]() ++= parts.map(p =>
+        (getPartitionKey(p) -> p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default))).toMap
+    } else {
       val table = metastoreClient.getTable(view.dbName, view.n)
-      new HashMap[String,String] ++= Map(getPartitionKey(view) -> table.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default))
+      new HashMap[String, String] ++= Map(getPartitionKey(view) -> table.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default))
     }
   }
 
   def setTransformationTimestamp(view: View, timestamp: Long) = {
     if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
-    }
-    else {
+    } else {
       setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
     }
   }
@@ -81,16 +77,13 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   def getTransformationTimestamps(view: View) = {
     if (view.isPartitioned()) {
       val parts = metastoreClient.listPartitions(view.dbName, view.n, Short.MaxValue)
-      new HashMap[String, Long]() ++= parts.map(p => 
-        (getPartitionKey(p) -> p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)
-      ).toMap
-    }
-    else {
+      new HashMap[String, Long]() ++= parts.map(p =>
+        (getPartitionKey(p) -> p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)).toMap
+    } else {
       val table = metastoreClient.getTable(view.dbName, view.n)
-      new HashMap[String,Long] ++= Map(getPartitionKey(view) -> table.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)      
+      new HashMap[String, Long] ++= Map(getPartitionKey(view) -> table.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)
     }
   }
-
 
   def dropAndCreateTableSchema(view: View): Unit = {
     val ddl = HiveQl.ddl(view)

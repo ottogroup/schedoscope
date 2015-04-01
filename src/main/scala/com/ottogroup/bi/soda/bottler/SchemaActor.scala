@@ -18,7 +18,7 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
 
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
 
-  val transformationVersions = HashMap[String, HashMap[String,String]]()
+  val transformationVersions = HashMap[String, HashMap[String, String]]()
   val transformationTimestamps = HashMap[String, HashMap[String, Long]]()
 
   def receive = LoggingReceive({
@@ -66,8 +66,8 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
         val noVersionsYet = HashMap[String, String]()
         transformationVersions.put(view.tableName, noVersionsYet)
         noVersionsYet
-      }      
-      
+      }
+
       val pKey = crate.getPartitionKey(view)
       if (viewTransformationVersions.contains(pKey) && viewTransformationVersions.get(pKey).get.equals(view.transformation().versionDigest())) {
         sender ! SchemaActionSuccess()
@@ -102,9 +102,9 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
         val timestampsFromMetastore = crate.getTransformationTimestamps(view)
         transformationTimestamps.put(view.tableName, timestampsFromMetastore)
         timestampsFromMetastore
-      }      
+      }
       val pKey = crate.getPartitionKey(view)
-      val partitionTimestamp = viewTransformationTimestamps.get(pKey).get      
+      val partitionTimestamp = viewTransformationTimestamps.get(pKey).get
 
       sender ! TransformationTimestamp(view, partitionTimestamp)
     } catch {

@@ -65,8 +65,8 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
         case s: DriverRunSucceeded[_] => { comment = s.comment; status = "succeeded" }
-        case f: DriverRunFailed[_]    => { comment = f.reason; status = "failed" }
-        case o: DriverRunOngoing[_]   => { drh = o.runHandle }
+        case f: DriverRunFailed[_] => { comment = f.reason; status = "failed" }
+        case o: DriverRunOngoing[_] => { drh = o.runHandle }
       }
     }
     if (drh != null) {
@@ -79,7 +79,7 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
     }
   }
 
-  def parseQueueElements(q: List[AnyRef]) : List[RunStatus] = {
+  def parseQueueElements(q: List[AnyRef]): List[RunStatus] = {
     q.map(o => {
       if (o.isInstanceOf[Transformation]) {
         val trans = o.asInstanceOf[Transformation]

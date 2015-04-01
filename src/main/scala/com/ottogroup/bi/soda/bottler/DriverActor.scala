@@ -61,7 +61,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
       driver.killRun(runHandle)
       toReceive()
     }
-    
+
     case c: CommandWithSender => actionsManagerActor ! c
 
     case "tick" => try {

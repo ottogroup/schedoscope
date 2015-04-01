@@ -16,7 +16,7 @@ import akka.event.Logging
 
 class SodaRootActor(settings: SettingsImpl) extends Actor {
   import context._
-  
+
   val log = Logging(system, SodaRootActor.this)
 
   var actionsManagerActor: ActorRef = null
