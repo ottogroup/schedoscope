@@ -1,7 +1,6 @@
 package com.ottogroup.bi.soda.bottler.api
 
 import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
-
 import akka.actor.ActorSystem
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
@@ -9,6 +8,7 @@ import spray.routing.Directive.pimpApply
 import spray.routing.SimpleRoutingApp
 import akka.util.Timeout
 import scala.concurrent.duration._
+import jline.ConsoleReader
 
 object SodaService extends App with SimpleRoutingApp {
 
@@ -53,10 +53,11 @@ object SodaService extends App with SimpleRoutingApp {
   Thread.sleep(10000)
   println("\n\n============= SODA initialization finished ============== \n\n")
   val ctrl = new SodaControl(soda)
+  val reader = new ConsoleReader()
   while (true) {
     try {
-      val cmd = readLine("soda> ")
-      if (!cmd.trim().replaceAll(";", "").isEmpty())
+      val cmd = reader.readLine("soda> ")
+      if (cmd != null && !cmd.trim().replaceAll(";", "").isEmpty())
         ctrl.run(cmd.split("\\s+"))
     } catch {
       case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()

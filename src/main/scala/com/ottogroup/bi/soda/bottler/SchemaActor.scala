@@ -52,10 +52,10 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
           version
         }
         val pKey = crate.getPartitionKey(view)
-        if (versions.get(pKey).get.equals(view.transformation().versionDigest()))
+        if (versions.getOrElse(pKey, "THIS-DIGEST-DOESNT-EXIST").equals(view.transformation().versionDigest()))
           sender ! ViewVersionOk(view)
         else
-          sender ! ViewVersionMismatch(view, versions.get(pKey).get)
+          sender ! ViewVersionMismatch(view, versions.getOrElse(pKey, "THIS-DIGEST-DOESNT-EXIST"))
       }
     } catch {
       case e: Throwable => { e.printStackTrace(); this.sender ! SchemaActionFailure() }
@@ -104,7 +104,7 @@ class SchemaActor(partitionWriterActor: ActorRef, jdbcUrl: String, metaStoreUri:
         timestampsFromMetastore
       }
       val pKey = crate.getPartitionKey(view)
-      val partitionTimestamp = viewTransformationTimestamps.get(pKey).get
+      val partitionTimestamp = viewTransformationTimestamps.getOrElse(pKey,0l)
 
       sender ! TransformationTimestamp(view, partitionTimestamp)
     } catch {

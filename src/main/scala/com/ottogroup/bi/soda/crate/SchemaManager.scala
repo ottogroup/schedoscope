@@ -57,7 +57,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def getTransformationVersions(view: View) = {
     if (view.isPartitioned()) {
-      val parts = metastoreClient.listPartitions(view.dbName, view.n, Short.MaxValue)
+      val parts = metastoreClient.listPartitions(view.dbName, view.n, -1) // -1 returns all partitions
       new HashMap[String, String]() ++= parts.map(p =>
         (getPartitionKey(p) -> p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default))).toMap
     } else {
@@ -76,7 +76,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def getTransformationTimestamps(view: View) = {
     if (view.isPartitioned()) {
-      val parts = metastoreClient.listPartitions(view.dbName, view.n, Short.MaxValue)
+      val parts = metastoreClient.listPartitions(view.dbName, view.n, -1) // -1 returns all partitions
       new HashMap[String, Long]() ++= parts.map(p =>
         (getPartitionKey(p) -> p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)).toMap
     } else {
