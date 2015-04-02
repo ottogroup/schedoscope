@@ -54,5 +54,5 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 }
 
 object SchemaActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withRouter(new RoundRobinRouter(SodaRootActor.settings.metastoreConcurrency))
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withRouter(new RoundRobinRouter(SodaRootActor.settings.metastoreConcurrency)) // FIXME: Why is RoundRobinRouter deprecated?
 }
