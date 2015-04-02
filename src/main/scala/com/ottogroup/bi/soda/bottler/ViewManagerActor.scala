@@ -79,10 +79,8 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
       .map(views => AddPartitions(views.toList))
       .toList
 
-    log.debug(s"Views per table size: ${viewsPerTable.size}")
-
     if (viewsPerTable.size > 0) {
-      log.debug(s"Submitting table creation job")
+      log.debug(s"Submitting ${viewsPerTable.size} view metadata batches to schema actor")
       val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, viewsPerTable, settings.schemaTimeout)
       log.debug(s"Done")
       viewsWithMetadataToCreate.foreach(m => {

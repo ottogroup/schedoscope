@@ -23,8 +23,12 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
   def receive = LoggingReceive({
     case AddPartitions(views) => try {
       log.debug(s"Creating ${views.size} partitions for table ${views.head.tableName}")
-
-      crate.createPartitions(views)
+      
+      views.grouped(SodaRootActor.settings.metastoreBatchSize).foreach( batch => {        
+        crate.createPartitions(batch)        
+        log.debug("created partitions batch of size " + batch.size + " for table " + views.head.tableName)
+      })
+      
       val metadata = crate.getTransformationMetadata(views)
 
       log.debug(s"Created ${views.size} partitions for table ${views.head.tableName}")

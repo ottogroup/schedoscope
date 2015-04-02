@@ -41,7 +41,7 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
 }
 
 object SodaRootActor {
-  def props(settings: SettingsImpl) = Props(classOf[SodaRootActor], settings)
+  def props(settings: SettingsImpl) = Props(classOf[SodaRootActor], settings).withDispatcher("akka.actor.root-actor-dispatcher")
 
   lazy val settings = Settings()
 
