@@ -1,14 +1,16 @@
 package com.ottogroup.bi.soda.bottler
 
 import scala.collection.mutable.HashMap
-
 import com.ottogroup.bi.soda.crate.SchemaManager
-
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
+import akka.routing.SmallestMailboxRoutingLogic
+import akka.routing.Router
+import akka.routing.RoundRobinRouter
+
 
 class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   import context._
@@ -53,5 +55,5 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 }
 
 object SchemaActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withRouter(new RoundRobinRouter(SodaRootActor.settings.metastoreConcurrency))
 }
