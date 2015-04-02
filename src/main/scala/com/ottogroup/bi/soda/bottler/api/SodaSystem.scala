@@ -42,7 +42,7 @@ class SodaSystem extends SodaInterface {
   val log = Logging(settings.system, classOf[SodaRootActor])
 
   val viewAugmentor = Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
-  val root = SodaRootActor.sodaRootActor.
+  val root = SodaRootActor.sodaRootActor
   val viewManagerActor = SodaRootActor.viewManagerActor
   val actionsManagerActor = SodaRootActor.actionsManagerActor
   val schemaActor = SodaRootActor.schemaActor
