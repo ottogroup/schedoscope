@@ -152,15 +152,15 @@ object DriverActor {
     driverName match {
       case "hive" => Props(
         classOf[DriverActor[HiveTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.driver-actor-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.view-dispatcher")
 
       case "filesystem" => Props(
         classOf[DriverActor[FilesystemTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds).withDispatcher("akka.actor.driver-actor-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds).withDispatcher("akka.actor.view-dispatcher")
 
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds).withDispatcher("akka.actor.driver-actor-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds).withDispatcher("akka.actor.view-dispatcher")
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
