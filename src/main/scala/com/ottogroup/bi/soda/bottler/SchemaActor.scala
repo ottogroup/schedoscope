@@ -24,14 +24,16 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
     case AddPartitions(views) => try {
       log.debug(s"Creating ${views.size} partitions for table ${views.head.tableName}")
       
-      views.grouped(SodaRootActor.settings.metastoreBatchSize).foreach( batch => {        
-        crate.createPartitions(batch)        
-        log.debug("created partitions batch of size " + batch.size + " for table " + views.head.tableName)
-      })
+//      views.grouped(SodaRootActor.settings.metastoreBatchSize).foreach( batch => {        
+//        crate.createPartitions(batch)        
+//        log.debug("created partitions batch of size " + batch.size + " for table " + views.head.tableName)
+//      })
       
+      // this fetches the metadata for existing partitions and creates new ones if not existent
       val metadata = crate.getTransformationMetadata(views)
 
       log.debug(s"Created ${views.size} partitions for table ${views.head.tableName}")
+      log.debug(s" sending metadata: ${metadata}")
 
       sender ! TransformationMetadata(metadata)
     } catch {

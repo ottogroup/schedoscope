@@ -61,7 +61,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
-  def urlPath = s"${Named.formatName(moduleNameBuilder())}/${namingBase.replaceAll("[^a-zA-Z]", "")}/${partitionValues.mkString("/")}"
+  def urlPath = s"${urlPathPrefix}${partitionValues.mkString("/")}"
+  
+  def urlPathPrefix = s"${Named.formatName(moduleNameBuilder())}/${namingBase.replaceAll("[^a-zA-Z]", "")}/"
 
   private val suffixPartitions = new HashSet[Parameter[_]]()
 
