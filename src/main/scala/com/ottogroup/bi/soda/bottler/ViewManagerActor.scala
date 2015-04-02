@@ -65,8 +65,9 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
   def initializeViewActors(vs: List[View], withDependencies: Boolean = false): List[ActorRef] = {
 
+    log.debug(s"Initializing ${vs.size} views")
     val allViews = viewsToCreateActorsFor(vs, withDependencies)
-    log.debug(s"Computed ${allViews.size} views")
+    log.debug(s"Computed ${allViews.size} views (with dependencies)")
     val actorsToCreate = allViews
       .filter { case (_, needsCreation, _) => needsCreation }
     log.debug(s"Need to create ${actorsToCreate.size} actors")

@@ -37,6 +37,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
     } catch {
       case e: Throwable => {
         log.error("Partition creation failed: " + e.getMessage)
+        e.printStackTrace()
         this.sender ! SchemaActionFailure()
       }
     }
