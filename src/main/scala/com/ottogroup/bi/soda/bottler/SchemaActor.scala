@@ -11,7 +11,6 @@ import akka.routing.SmallestMailboxRoutingLogic
 import akka.routing.Router
 import akka.routing.RoundRobinRouter
 
-
 class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   import context._
   val log = Logging(system, this)

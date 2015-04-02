@@ -87,7 +87,7 @@ class SettingsImpl(val config: Config) extends Extension {
   else
     hadoopConf.get("fs.defaultFS")
 
-  lazy val filesystemTimeout = getDriverSettings("filesystem").timeout  
+  lazy val filesystemTimeout = getDriverSettings("filesystem").timeout
   lazy val schemaTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
   lazy val statusListAggregationTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
   lazy val viewManagerResponseTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
@@ -96,7 +96,7 @@ class SettingsImpl(val config: Config) extends Extension {
   lazy val retries = config.getInt("soda.action.retry")
 
   lazy val metastoreConcurrency = config.getInt("soda.metastore.concurrency")
-  
+
   lazy val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()
