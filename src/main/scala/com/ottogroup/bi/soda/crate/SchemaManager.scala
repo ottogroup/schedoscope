@@ -22,6 +22,7 @@ import com.ottogroup.bi.soda.crate.ddl.HiveQl
 import com.ottogroup.bi.soda.dsl.Version
 import com.ottogroup.bi.soda.dsl.View
 import org.slf4j.LoggerFactory
+import org.apache.tools.ant.taskdefs.Sleep
 
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
@@ -107,10 +108,11 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     }
   } catch {
     case t: Throwable => if (retry > 0) {
-      log.info("Caught exception ${t}, retrying")
+      log.info(s"Caught exception ${t}, retrying")
+      Thread.sleep(5000)
       createNonExistingPartitions(tablePrototype, partitions, retry - 1)
-    }
-    else throw t
+    } else 
+      throw t
   }
 
   def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
