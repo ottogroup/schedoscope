@@ -64,12 +64,16 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   }
 
   def initializeViewActors(vs: List[View], withDependencies: Boolean = false): List[ActorRef] = {
-    log.debug(s"Initializing ${vs.size} views")
+    log.info(s"Initializing ${vs.size} views")
+    
     val allViews = viewsToCreateActorsFor(vs, withDependencies)
-    log.debug(s"Computed ${allViews.size} views (with dependencies=${withDependencies})")
+    
+    log.info(s"Computed ${allViews.size} views (with dependencies=${withDependencies})")
+    
     val actorsToCreate = allViews
       .filter { case (_, needsCreation, _) => needsCreation }
-    log.debug(s"Need to create ${actorsToCreate.size} actors")
+    
+    log.info(s"Need to create ${actorsToCreate.size} actors")
 
     val viewsPerTable = actorsToCreate
       .map { case (view, _, _) => view }
@@ -80,15 +84,15 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
       .toList
 
     if (viewsPerTable.size > 0) {
-      log.debug(s"Submitting ${viewsPerTable.size} view metadata batches to schema actor")
+      log.info(s"Submitting ${viewsPerTable.size} view metadata batches to schema actor")
+      
       val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, viewsPerTable, settings.schemaTimeout)
-      log.debug(s"Done")
-      viewsWithMetadataToCreate.foreach(m => {
-        m.metadata.foreach {
+      
+      viewsWithMetadataToCreate.foreach(
+        _.metadata.foreach {
           case (view, (version, timestamp)) =>
             actorOf(ViewActor.props(view, settings, self, actionsManagerActor, schemaActor, version, timestamp), ViewManagerActor.actorNameForView(view))
-        }
-      })
+        })
     }
 
     if (withDependencies)
@@ -99,7 +103,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 }
 
 object ViewManagerActor {
-  def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor).withDispatcher("akka.aktor.views-dispatcher")
+  def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor).withDispatcher("akka.aktor.view-manager-dispatcher")
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
 

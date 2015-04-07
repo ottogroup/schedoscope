@@ -363,5 +363,5 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 }
 
 object ViewActor {
-  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, schemaActor, versionChecksum, lastTransformationTimestamp)
+  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, schemaActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
 }

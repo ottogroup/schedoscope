@@ -29,9 +29,9 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
     }
 
   override def preStart {
-    actionsManagerActor = actorOf(ActionsManagerActor.props(settings.hadoopConf).withDispatcher("akka.actor.actions-manager-dispatcher"), "actions")
-    schemaActor = actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withDispatcher("akka.actor.default-dispatcher"), "schema")
-    viewManagerActor = actorOf(ViewManagerActor.props(settings, actionsManagerActor, schemaActor).withDispatcher("akka.actor.view-manager-dispatcher"), "views")
+    actionsManagerActor = actorOf(ActionsManagerActor.props(settings.hadoopConf), "actions")
+    schemaActor = actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "schema")
+    viewManagerActor = actorOf(ViewManagerActor.props(settings, actionsManagerActor, schemaActor), "views")
   }
 
   def receive = {
