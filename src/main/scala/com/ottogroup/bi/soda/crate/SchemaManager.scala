@@ -182,20 +182,14 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       .map { ep =>
         {
           log.info(s"Reading ${ep.size} partition metadata for view ${tablePrototype.module}.${tablePrototype.n}")
-          val p = getExistingTransformationMetadata(tablePrototype, ep)
-          log.info(s"Partition metadata for view ${tablePrototype.module}.${tablePrototype.n} read")
-          p
+          getExistingTransformationMetadata(tablePrototype, ep)
         }
       }.reduceOption(_ ++ _).getOrElse(Map())
-
-    log.info(s"Existing metadata for view ${tablePrototype.module}.${tablePrototype.n} retrieved")
 
     val createdMetadata = nonExistingPartitions.grouped(Settings().metastoreWriteBatchSize)
       .map(nep => {
         log.info(s"Creating ${nep.size} partitions for view ${tablePrototype.module}.${tablePrototype.n}")
-        val p = createNonExistingPartitions(tablePrototype, nep.values.toList)
-        log.info(s"Partitions for view ${tablePrototype.module}.${tablePrototype.n} created")
-        p
+        createNonExistingPartitions(tablePrototype, nep.values.toList)
       }).reduceOption(_ ++ _).getOrElse(Map())
 
     existingMetadata ++ createdMetadata
