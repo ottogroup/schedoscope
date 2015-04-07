@@ -45,10 +45,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     val ddl = HiveQl.ddl(view)
     val stmt = connection.createStatement()
     stmt.execute(s"CREATE DATABASE IF NOT EXISTS ${view.dbName}")
-   
-    if (metastoreClient.tableExists(view.dbName, view.n)) {
-      metastoreClient.dropTable(view.dbName, view.n, false, true)
-    }
+    stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
 
     stmt.execute(ddl)
     stmt.close()
@@ -101,13 +98,20 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     }.toMap
   }
 
-  def createNonexistingPartitions(tablePrototype: View, partitions: List[Partition]): Map[View, (String, Long)] =
+  def createNonExistingPartitions(tablePrototype: View, partitions: List[Partition], retry: Int = 3): Map[View, (String, Long)] = try {
     if (partitions.isEmpty || !tablePrototype.isPartitioned()) {
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
       partitions.map(p => (partitionToView(tablePrototype, p) -> (Version.default, 0.toLong))).toMap
     }
+  } catch {
+    case t: Throwable => if (retry > 0) {
+      log.info("Caught exception ${t}, retrying")
+      createNonExistingPartitions(tablePrototype, partitions, retry - 1)
+    }
+    else throw t
+  }
 
   def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
     if (tablePrototype.isPartitioned) {
@@ -124,7 +128,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   def createPartition(view: View): Partition = {
     val partition = viewsToPartitions(List(view)).values.head
     try {
-      createNonexistingPartitions(view, List(partition))
+      createNonExistingPartitions(view, List(partition))
     } catch {
       case are: AlreadyExistsException => // This is allowed here
       case t: Throwable => t
@@ -187,7 +191,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     val createdMetadata = nonExistingPartitions.grouped(Settings().metastoreWriteBatchSize)
       .map(nep => {
         log.info(s"Creating ${nep.size} partitions for view ${tablePrototype.module}.${tablePrototype.n}")
-        val p = createNonexistingPartitions(tablePrototype, nep.values.toList)
+        val p = createNonExistingPartitions(tablePrototype, nep.values.toList)
         log.info(s"Partitions for view ${tablePrototype.module}.${tablePrototype.n} created")
         p
       }).reduceOption(_ ++ _).getOrElse(Map())
