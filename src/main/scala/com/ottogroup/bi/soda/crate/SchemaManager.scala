@@ -44,9 +44,8 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   def dropAndCreateTableSchema(view: View): Unit = {
     val ddl = HiveQl.ddl(view)
     val stmt = connection.createStatement()
-    if (!metastoreClient.getAllDatabases.contains(view.dbName)) {
-      stmt.execute(s"CREATE DATABASE ${view.dbName}")
-    }
+    stmt.execute(s"CREATE DATABASE IF NOT EXISTS ${view.dbName}")
+   
     if (metastoreClient.tableExists(view.dbName, view.n)) {
       metastoreClient.dropTable(view.dbName, view.n, false, true)
     }
