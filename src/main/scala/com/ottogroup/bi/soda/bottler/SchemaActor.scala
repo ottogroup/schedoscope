@@ -22,12 +22,11 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 
   def receive = LoggingReceive({
     case AddPartitions(views) => try {
-      log.debug(s"Creating ${views.size} partitions for table ${views.head.tableName}")
+      log.debug(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
 
       val metadata = crate.getTransformationMetadata(views)
 
-      log.debug(s"Created ${views.size} partitions for table ${views.head.tableName}")
-      log.debug(s" sending metadata: ${metadata}")
+      log.debug(s"Created / loaded ${views.size} partitions for table ${views.head.tableName}")
 
       sender ! TransformationMetadata(metadata)
     } catch {

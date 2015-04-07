@@ -96,8 +96,9 @@ class SettingsImpl(val config: Config) extends Extension {
   lazy val retries = config.getInt("soda.action.retry")
 
   lazy val metastoreConcurrency = config.getInt("soda.metastore.concurrency")
-  lazy val metastoreBatchSize = config.getInt("soda.metastore.batchsize")
-
+  lazy val metastoreWriteBatchSize = config.getInt("soda.metastore.writeBatchSize")
+  lazy val metastoreReadBatchSize = config.getInt("soda.metastore.readBatchSize")
+  
   lazy val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()

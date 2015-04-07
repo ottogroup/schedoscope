@@ -4,14 +4,12 @@ import java.security.MessageDigest
 import java.security.PrivilegedAction
 import java.sql.Connection
 import java.sql.DriverManager
-
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.JavaConversions.mapAsScalaMap
 import scala.collection.JavaConversions.mutableMapAsJavaMap
 import scala.collection.JavaConversions.seqAsJavaList
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
-
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.IMetaStoreClient
@@ -19,15 +17,17 @@ import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.joda.time.DateTime
-
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.crate.ddl.HiveQl
 import com.ottogroup.bi.soda.dsl.Version
 import com.ottogroup.bi.soda.dsl.View
+import org.slf4j.LoggerFactory
 
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
+
+  val log = LoggerFactory.getLogger(classOf[SchemaManager])
 
   def setTableProperty(dbName: String, tableName: String, key: String, value: String): Unit = {
     val table = metastoreClient.getTable(dbName, tableName)
@@ -152,11 +152,15 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = {
     val tablePrototype = views.head
 
+    log.info(s"Reading partition names for view: ${tablePrototype.module}.${tablePrototype.n}")
+
     if (!schemaExists(tablePrototype)) {
+      log.info(s"Table for view ${tablePrototype.module}.${tablePrototype.n} does not yet exist, creating")
       dropAndCreateTableSchema(tablePrototype)
     }
 
     if (!tablePrototype.isPartitioned) {
+      log.info(s"View ${tablePrototype.module}.${tablePrototype.n} is not partitioned, returning metadata from table properties")
       return getExistingTransformationMetadata(tablePrototype, Map[String, Partition]())
     }
 
@@ -165,12 +169,28 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     val existingPartitions = viewsToPartitions(views.filter(v => existingPartitionNames.contains(v.partitionSpec)))
     val nonExistingPartitions = viewsToPartitions(views.filter(v => !existingPartitionNames.contains(v.partitionSpec)))
 
-    val existingMetadata = getExistingTransformationMetadata(tablePrototype, existingPartitions)
+    log.info(s"Table for view ${tablePrototype.module}.${tablePrototype.n} requires partitions: ${existingPartitions.size} existing / ${nonExistingPartitions.size} not yet existing")
 
-    val createdMetadata = nonExistingPartitions.grouped(Settings().metastoreBatchSize)
+    log.info(s"Retrieving existing transformation metadata for view ${tablePrototype.module}.${tablePrototype.n} from partitions.")
+
+    val existingMetadata = existingPartitions.grouped(Settings().metastoreReadBatchSize)
+      .map { ep =>
+        {
+          log.info(s"Reading ${ep.size} partition metadata for view ${tablePrototype.module}.${tablePrototype.n}")
+          val p = getExistingTransformationMetadata(tablePrototype, ep)
+          log.info(s"Partition metadata for view ${tablePrototype.module}.${tablePrototype.n} read")
+          p
+        }
+      }.reduceOption(_ ++ _).getOrElse(Map())
+
+    log.info(s"Existing metadata for view ${tablePrototype.module}.${tablePrototype.n} retrieved")
+
+    val createdMetadata = nonExistingPartitions.grouped(Settings().metastoreWriteBatchSize)
       .map(nep => {
-        println(s"Creating ${nep.size} partitions for ${tablePrototype.tableName}")
-        createNonexistingPartitions(tablePrototype, nep.values.toList)
+        log.info(s"Creating ${nep.size} partitions for view ${tablePrototype.module}.${tablePrototype.n}")
+        val p = createNonexistingPartitions(tablePrototype, nep.values.toList)
+        log.info(s"Partitions for view ${tablePrototype.module}.${tablePrototype.n} created")
+        p
       }).reduceOption(_ ++ _).getOrElse(Map())
 
     existingMetadata ++ createdMetadata
