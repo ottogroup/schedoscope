@@ -58,11 +58,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       case _: Throwable =>
     }
 
-    try {
-      stmt.execute(ddl)
-    } catch {
-      case _: Throwable =>
-    }
+    stmt.execute(ddl)
 
     stmt.close()
 
