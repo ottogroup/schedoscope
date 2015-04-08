@@ -143,5 +143,5 @@ class ActionsManagerActor() extends Actor {
 }
 
 object ActionsManagerActor {
-  def props(conf: Configuration) = Props[ActionsManagerActor].withDispatcher("akka.aktor.actions-manager-dispatcher")
+  def props(conf: Configuration) = Props[ActionsManagerActor].withDispatcher("akka.actor.actions-manager-dispatcher")
 }
