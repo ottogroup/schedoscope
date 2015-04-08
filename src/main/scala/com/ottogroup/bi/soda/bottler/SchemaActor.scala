@@ -54,5 +54,5 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 }
 
 object SchemaActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withRouter(new RoundRobinRouter(SodaRootActor.settings.metastoreConcurrency)).withDispatcher("akka.actor.views-dispatcher")
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withDispatcher("akka.actor.views-dispatcher").withRouter(new RoundRobinRouter(SodaRootActor.settings.metastoreConcurrency))
 }

@@ -45,10 +45,25 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   def dropAndCreateTableSchema(view: View): Unit = {
     val ddl = HiveQl.ddl(view)
     val stmt = connection.createStatement()
-    stmt.execute(s"CREATE DATABASE IF NOT EXISTS ${view.dbName}")
-    stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
 
-    stmt.execute(ddl)
+    try {
+      stmt.execute(s"CREATE DATABASE IF NOT EXISTS ${view.dbName}")
+    } catch {
+      case _: Throwable =>
+    }
+
+    try {
+      stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
+    } catch {
+      case _: Throwable =>
+    }
+
+    try {
+      stmt.execute(ddl)
+    } catch {
+      case _: Throwable =>
+    }
+
     stmt.close()
 
     setTableProperty(view.dbName, view.n, Version.SchemaVersion.checksumProperty, Version.digest(ddl))
@@ -111,7 +126,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       log.info(s"Caught exception ${t}, retrying")
       Thread.sleep(5000)
       createNonExistingPartitions(tablePrototype, partitions, retry - 1)
-    } else 
+    } else
       throw t
   }
 
