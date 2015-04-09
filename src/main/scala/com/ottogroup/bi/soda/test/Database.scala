@@ -16,8 +16,6 @@ class Database(conn: Connection, url: String) {
   def selectForViewByQuery(v: View, q: String, o: FieldLike[_]): List[Map[String, Any]] = {
     val res = ListBuffer[Map[String, Any]]()
     val rs = conn.createStatement().executeQuery(q)
-    println("RUNNING " + q)
-    println("AGAINST " + url)
     while (rs.next()) {
       val row = HashMap[String, Any]()
       v.fields.view.zipWithIndex.foreach(f => {

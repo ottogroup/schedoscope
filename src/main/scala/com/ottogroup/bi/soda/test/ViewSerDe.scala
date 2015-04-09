@@ -36,7 +36,6 @@ object ViewSerDe {
   }
 
   def deserializeField[T](t: Manifest[T], v: String): Any = {
-    //println("deserializing value " + v + " of type " + t)
     if (v == null || "null".equals(v)) {
       return v
     }

@@ -8,7 +8,6 @@ import com.ottogroup.bi.soda.dsl.Structure
 
 object FieldSequentialValue {
   def get(f: FieldLike[_], i: Int, p: String): Any = {
-    //println("Sequence value for " + f.n + ", type is " + f.t)
     if (f.t == manifest[Int])
       i
     else if (f.t == manifest[Long])

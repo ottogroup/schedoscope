@@ -32,30 +32,24 @@ trait test extends TestableView {
   }
 
   def then(sortedBy: FieldLike[_]) {
-    println("Creating empty target view")
     deploySchema()
 
     deps.map(d => {
-      println("Creating base view " + d.n)
       d.write()
     })
 
-    println("Deploying workflows, if needed")
     val trans = this.transformation() match {
       case ot: OozieTransformation => deployWorkflow(ot)
       case ht: HiveTransformation => deployFunctions(ht)
       case _ => this.transformation()
     }
 
-    println("Starting transformation; version is: " + trans.versionDigest())
     val d = driver()
     val rto = d.runTimeOut
     d.runAndWait(trans)
-    println("Populating results transformation, adding partition")
     // FIXME: some transformations may create the partition by themselves?
     if (this.isPartitioned()) {
       val part = resources().crate.createPartition(this)
-      println("Added partition: " + part.getSd.getLocation)
     }
     populate(sortedBy)
   }
@@ -114,7 +108,6 @@ trait test extends TestableView {
       if (fs.exists(target))
         fs.delete(target, false)
       fs.copyFromLocalFile(src, target)
-      println("UPLOADED " + src + " to " + target)
       configureTransformation(prop, target.toString.replaceAll("^file:/", "file:///"))
     })
   }

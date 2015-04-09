@@ -71,7 +71,6 @@ trait rows extends View {
   def deployWorkflow(wf: OozieTransformation) = {
     val fs = resources().fileSystem
     val dest = new Path(resources().namenode + new URI(wf.workflowAppPath).getPath)
-    println(s"Uploading workflow ${wf.workflow} to ${dest}")
 
     if (!fs.exists(dest))
       fs.mkdirs(dest)
@@ -93,10 +92,7 @@ trait rows extends View {
     })
 
     val files = fs.listFiles(dest, true)
-    println(s"Uploaded files for workflow ${wf.workflow}:")
-    while (files.hasNext()) {
-      println("-> " + files.next().getPath.toString)
-    }
+    
     // create copy of workflow with adapted workflow app path
     new OozieTransformation(wf.bundle, wf.workflow, dest.toString, wf.c).configureWith(wf.configuration.toMap)
   }
@@ -112,7 +108,6 @@ trait rows extends View {
 
   def deploySchema() {
     val d = resources().crate
-    println(HiveQl.ddl(this))
     if (!d.schemaExists(this)) {
       d.dropAndCreateTableSchema(this)
     }
@@ -126,7 +121,6 @@ trait rows extends View {
       new Path(this.fullPath)
 
     val partitionFile = new Path(partitionFilePath, "00000")
-    println("Writing data to " + partitionFile.toString())
     val fs = resources().fileSystem
     if (fs.exists(partitionFilePath))
       fs.delete(partitionFilePath, true)
