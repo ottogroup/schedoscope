@@ -179,11 +179,6 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     log.info(s"Reading partition names for view: ${tablePrototype.module}.${tablePrototype.n}")
 
-    if (!schemaExists(tablePrototype)) {
-      log.info(s"Table for view ${tablePrototype.module}.${tablePrototype.n} does not yet exist, creating")
-      dropAndCreateTableSchema(tablePrototype)
-    }
-
     if (!tablePrototype.isPartitioned) {
       log.info(s"View ${tablePrototype.module}.${tablePrototype.n} is not partitioned, returning metadata from table properties")
       return getExistingTransformationMetadata(tablePrototype, Map[String, Partition]())
