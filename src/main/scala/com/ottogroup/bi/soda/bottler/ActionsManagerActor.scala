@@ -101,6 +101,7 @@ class ActionsManagerActor() extends Actor {
   }
 
   def receive = LoggingReceive({
+    
     case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
     case GetStatus() => sender ! ActionStatusListResponse(driverStates.values.toList, actionQueueStatus)

@@ -358,6 +358,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def logStateInfo(stateName: String) {
     viewManagerActor ! ViewStatusResponse(stateName, view)
+    
     log.info(s"VIEWACTOR STATE CHANGE ===> ${stateName.toUpperCase()}: lastTransformationTimestamp=${lastTransformationTimestamp} versionChecksum=${versionChecksum} dependenciesFreshness=${dependenciesFreshness} incomplete=${incomplete} withErrors=${withErrors}")
   }
 }

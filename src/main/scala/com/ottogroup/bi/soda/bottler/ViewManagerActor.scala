@@ -65,28 +65,42 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
   def initializeViewActors(vs: List[View], withDependencies: Boolean = false): List[ActorRef] = {
     log.info(s"Initializing ${vs.size} views")
-    
+
     val allViews = viewsToCreateActorsFor(vs, withDependencies)
-    
+
     log.info(s"Computed ${allViews.size} views (with dependencies=${withDependencies})")
-    
+
     val actorsToCreate = allViews
       .filter { case (_, needsCreation, _) => needsCreation }
-    
+
     log.info(s"Need to create ${actorsToCreate.size} actors")
 
-    val viewsPerTable = actorsToCreate
+    val viewsPerTableName = actorsToCreate
       .map { case (view, _, _) => view }
       .distinct
       .groupBy { _.tableName }
       .values
-      .map(views => AddPartitions(views.toList))
       .toList
 
-    if (viewsPerTable.size > 0) {
-      log.info(s"Submitting ${viewsPerTable.size} view metadata batches to schema actor")
-      
-      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, viewsPerTable, settings.schemaTimeout)
+    val tablesToCreate = viewsPerTableName
+      .map { CheckOrCreateTables(_) }
+
+    if (tablesToCreate.nonEmpty) {
+      log.info(s"Submitting tables to check or create to schema actor")
+      tablesToCreate.foreach {
+        queryActor[Any](schemaActor, _, settings.schemaTimeout)
+      }
+    }
+
+    val partitionsToCreate = viewsPerTableName
+      .map { AddPartitions(_) }
+
+    if (partitionsToCreate.nonEmpty) {
+      log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")
+
+      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, partitionsToCreate, settings.schemaTimeout)
+
+      log.info(s"Partitions created, initializing actors")
       
       viewsWithMetadataToCreate.foreach(
         _.metadata.foreach {

@@ -21,8 +21,25 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
   val transformationTimestamps = HashMap[String, HashMap[String, Long]]()
 
   def receive = LoggingReceive({
-    case CheckOrCreateTables(views )=> try {
-      
+
+    case CheckOrCreateTables(views) => try {
+      views
+        .groupBy { v => (v.dbName, v.n) }
+        .map { case (_, views) => views.head }
+        .foreach {
+          tablePrototype =>
+            {
+              log.info(s"Checking or creating table for view ${tablePrototype.module}.${tablePrototype.n}")
+
+              if (!crate.schemaExists(tablePrototype)) {
+                log.info(s"Table for view ${tablePrototype.module}.${tablePrototype.n} does not yet exist, creating")
+
+                crate.dropAndCreateTableSchema(tablePrototype)
+              }
+            }
+        }
+
+      sender ! SchemaActionSuccess()
     } catch {
       case e: Throwable => {
         log.error("Table check failed: " + e.getMessage)
@@ -30,13 +47,13 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
         this.sender ! SchemaActionFailure()
       }
     }
-    
+
     case AddPartitions(views) => try {
-      log.debug(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
+      log.info(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
 
       val metadata = crate.getTransformationMetadata(views)
 
-      log.debug(s"Created / loaded ${views.size} partitions for table ${views.head.tableName}")
+      log.info(s"Created / loaded ${views.size} partitions for table ${views.head.tableName}")
 
       sender ! TransformationMetadata(metadata)
     } catch {
