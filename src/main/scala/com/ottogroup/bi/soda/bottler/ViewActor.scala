@@ -22,7 +22,7 @@ import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
 
-class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
+class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
 
   val log = Logging(system, this)
@@ -335,7 +335,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()
-    schemaActor ! LogTransformationTimestamp(view, lastTransformationTimestamp)
+    metadataLoggerActor ! LogTransformationTimestamp(view, lastTransformationTimestamp)
     lastTransformationTimestamp
   }
 
@@ -348,7 +348,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def setVersion(view: View) {
     versionChecksum = view.transformation().versionDigest()
-    schemaActor ! SetViewVersion(view)
+    metadataLoggerActor ! SetViewVersion(view)
   }
 
   private def unbecomeBecome(behaviour: Actor.Receive) {
@@ -364,5 +364,5 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 }
 
 object ViewActor {
-  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, schemaActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, schemaActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
+  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
 }

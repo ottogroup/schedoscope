@@ -13,7 +13,7 @@ import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
 
-class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef) extends Actor {
+class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
   val log = Logging(system, ViewManagerActor.this)
 
@@ -105,7 +105,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
       viewsWithMetadataToCreate.foreach(
         _.metadata.foreach {
           case (view, (version, timestamp)) =>
-            actorOf(ViewActor.props(view, settings, self, actionsManagerActor, schemaActor, version, timestamp), ViewManagerActor.actorNameForView(view))
+            actorOf(ViewActor.props(view, settings, self, actionsManagerActor, metadataLoggerActor, version, timestamp), ViewManagerActor.actorNameForView(view))
         })
     }
 
@@ -117,7 +117,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 }
 
 object ViewManagerActor {
-  def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor).withDispatcher("akka.actor.view-manager-dispatcher")
+  def props(settings: SettingsImpl, actionsManagerActor: ActorRef,  schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
 

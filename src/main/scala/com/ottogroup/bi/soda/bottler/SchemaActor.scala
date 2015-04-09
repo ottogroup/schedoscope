@@ -17,12 +17,8 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
 
-  val transformationVersions = HashMap[String, HashMap[String, String]]()
-  val transformationTimestamps = HashMap[String, HashMap[String, Long]]()
-
   def receive = LoggingReceive({
-
-    case CheckOrCreateTables(views) => try {
+    case CheckOrCreateTables(views) => {
       views
         .groupBy { v => (v.dbName, v.n) }
         .map { case (_, views) => views.head }
@@ -40,15 +36,9 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
         }
 
       sender ! SchemaActionSuccess()
-    } catch {
-      case e: Throwable => {
-        log.error("Table check failed: " + e.getMessage)
-        e.printStackTrace()
-        this.sender ! SchemaActionFailure()
-      }
     }
 
-    case AddPartitions(views) => try {
+    case AddPartitions(views) => {
       log.info(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
 
       val metadata = crate.getTransformationMetadata(views)
@@ -56,30 +46,10 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       log.info(s"Created / loaded ${views.size} partitions for table ${views.head.tableName}")
 
       sender ! TransformationMetadata(metadata)
-    } catch {
-      case e: Throwable => {
-        log.error("Partition creation failed: " + e.getMessage)
-        e.printStackTrace()
-        this.sender ! SchemaActionFailure()
-      }
-    }
-
-    case SetViewVersion(view) => try {
-      crate.setTransformationVersion(view)
-      sender ! SchemaActionSuccess()
-    } catch {
-      case e: Throwable => { this.sender ! SchemaActionFailure() }
-    }
-
-    case LogTransformationTimestamp(view, timestamp) => try {
-      crate.setTransformationTimestamp(view, timestamp)
-      sender ! SchemaActionSuccess()
-    } catch {
-      case e: Throwable => { this.sender ! SchemaActionFailure() }
     }
   })
 }
 
 object SchemaActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withDispatcher("akka.actor.views-dispatcher").withRouter(new RoundRobinRouter(SodaRootActor.settings.metastoreConcurrency))
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = (Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal)).withDispatcher("akka.actor.schema-actor-dispatcher")
 }

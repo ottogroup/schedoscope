@@ -42,6 +42,22 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     metastoreClient.alter_partition(dbName, tableName, partition)
   }
 
+  def setTransformationVersion(view: View) = {
+    if (view.isPartitioned()) {
+      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+    } else {
+      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+    }
+  }
+
+  def setTransformationTimestamp(view: View, timestamp: Long) = {
+    if (view.isPartitioned()) {
+      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
+    } else {
+      setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
+    }
+  }
+
   def dropAndCreateTableSchema(view: View): Unit = {
     val ddl = HiveQl.ddl(view)
     val stmt = connection.createStatement()
@@ -96,29 +112,6 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     }
   }
 
-  def partitionToView(tablePrototype: View, p: Partition) = {
-    val viewUrl = s"${tablePrototype.urlPathPrefix}/${p.getValues.mkString("/")}"
-    View.viewsFromUrl(Settings().env,
-      viewUrl,
-      Settings().viewAugmentor).head
-  }
-
-  def viewsToPartitions(views: List[View]): Map[String, Partition] = {
-    if (views.size == 0) {
-      return Map()
-    }
-
-    val tablePrototype = views.head
-    val sd = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getSd
-
-    views.map { v =>
-      val now = new DateTime().getMillis.toInt
-      sd.setLocation(v.fullPath)
-
-      (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues, v.dbName, v.n, now, now, sd, HashMap[String, String]()))
-    }.toMap
-  }
-
   def createNonExistingPartitions(tablePrototype: View, partitions: List[Partition], retry: Int = 3): Map[View, (String, Long)] = try {
     if (partitions.isEmpty || !tablePrototype.isPartitioned()) {
       Map()
@@ -128,23 +121,13 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     }
   } catch {
     case are: AlreadyExistsException => throw are
+
     case t: Throwable => if (retry > 0) {
       log.info(s"Caught exception ${t}, retrying")
       Thread.sleep(5000)
       createNonExistingPartitions(tablePrototype, partitions, retry - 1)
-    } else
-      throw t
-  }
-
-  def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
-    if (tablePrototype.isPartitioned) {
-      val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
-      existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)) }.toMap
     } else {
-      val tableMetadata = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getParameters
-      Map((tablePrototype,
-        (tableMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.default),
-          tableMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
+      throw t
     }
   }
 
@@ -158,19 +141,15 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     partition
   }
 
-  def setTransformationVersion(view: View) = {
-    if (view.isPartitioned()) {
-      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+  def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
+    if (tablePrototype.isPartitioned) {
+      val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
+      existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)) }.toMap
     } else {
-      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
-    }
-  }
-
-  def setTransformationTimestamp(view: View, timestamp: Long) = {
-    if (view.isPartitioned()) {
-      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
-    } else {
-      setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
+      val tableMetadata = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getParameters
+      Map((tablePrototype,
+        (tableMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.default),
+          tableMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
     }
   }
 
@@ -209,6 +188,29 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     existingMetadata ++ createdMetadata
   }
+
+  def partitionToView(tablePrototype: View, p: Partition) = {
+    val viewUrl = s"${tablePrototype.urlPathPrefix}/${p.getValues.mkString("/")}"
+    View.viewsFromUrl(Settings().env,
+      viewUrl,
+      Settings().viewAugmentor).head
+  }
+
+  def viewsToPartitions(views: List[View]): Map[String, Partition] = {
+    if (views.size == 0) {
+      return Map()
+    }
+
+    val tablePrototype = views.head
+    val sd = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getSd
+
+    views.map { v =>
+      val now = new DateTime().getMillis.toInt
+      sd.setLocation(v.fullPath)
+
+      (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues, v.dbName, v.n, now, now, sd, HashMap[String, String]()))
+    }.toMap
+  }
 }
 
 object SchemaManager {
@@ -230,8 +232,6 @@ object SchemaManager {
         true)
       conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
         serverKerberosPrincipal)
-      //conf.setIntVar(HiveConf.ConfVars.METASTORE_BATCH_RETRIEVE_MAX, 50000)
-      //conf.setIntVar(HiveConf.ConfVars.METASTORESERVERMAXMESSAGESIZE, 1000*1024*1024)
     }
     val metastoreClient = new HiveMetaStoreClient(conf)
     new SchemaManager(metastoreClient, connection)
