@@ -21,6 +21,16 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
   val transformationTimestamps = HashMap[String, HashMap[String, Long]]()
 
   def receive = LoggingReceive({
+    case CheckOrCreateTables(views )=> try {
+      
+    } catch {
+      case e: Throwable => {
+        log.error("Table check failed: " + e.getMessage)
+        e.printStackTrace()
+        this.sender ! SchemaActionFailure()
+      }
+    }
+    
     case AddPartitions(views) => try {
       log.debug(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
 

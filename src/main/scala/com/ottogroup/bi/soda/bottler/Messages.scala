@@ -17,8 +17,8 @@ case class ActionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T
 case class SchemaActionFailure() extends Failure
 
 sealed class CommandRequest
-case class AddPartition(view: View) extends CommandRequest
 case class AddPartitions(views: List[View]) extends CommandRequest
+case class CheckOrCreateTables(views: List[View]) extends CommandRequest
 case class ViewList(views: List[View]) extends CommandRequest
 case class NewDataAvailable(view: View) extends CommandRequest
 case class KillAction() extends CommandRequest
