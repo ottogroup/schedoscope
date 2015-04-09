@@ -69,25 +69,23 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     val d = Version.digest(HiveQl.ddl(view))
 
     log.info(s"Checking whether table exists: view ${view.dbName}.${view.n} -- Checksum: ${d}")
-    
+
     if (existingSchemas.contains(d)) {
       log.info(s"Table for view ${view.dbName}.${view.n} found in schema cache")
       return true
     }
 
-    if (!metastoreClient.tableExists(view.dbName, view.n)){
+    if (!metastoreClient.tableExists(view.dbName, view.n)) {
       log.info(s"Metastore claims table for view ${view.dbName}.${view.n} does not exist")
       false
-    }
-    else {
+    } else {
       val table = metastoreClient.getTable(view.dbName, view.n)
 
       val props = table.getParameters()
       if (!props.containsKey(Version.SchemaVersion.checksumProperty)) {
         log.info(s"Table for view exists ${view.dbName}.${view.n} but no checksum property defined")
         false
-      }
-      else if (d == props.get(Version.SchemaVersion.checksumProperty).toString()) {
+      } else if (d == props.get(Version.SchemaVersion.checksumProperty).toString()) {
         log.info(s"Table for view exists ${view.dbName}.${view.n} and checksum ${d} matches")
         existingSchemas += d
         true
@@ -129,6 +127,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       partitions.map(p => (partitionToView(tablePrototype, p) -> (Version.default, 0.toLong))).toMap
     }
   } catch {
+    case are: AlreadyExistsException => throw are
     case t: Throwable => if (retry > 0) {
       log.info(s"Caught exception ${t}, retrying")
       Thread.sleep(5000)
