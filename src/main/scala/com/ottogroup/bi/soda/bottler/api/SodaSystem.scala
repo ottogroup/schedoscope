@@ -14,6 +14,7 @@ import com.ottogroup.bi.soda.bottler.MaterializeView
 import com.ottogroup.bi.soda.bottler.NoDataAvailable
 import com.ottogroup.bi.soda.bottler.ViewStatusResponse
 import com.ottogroup.bi.soda.bottler.SodaRootActor
+import com.ottogroup.bi.soda.bottler.SodaRootActor._
 import com.ottogroup.bi.soda.bottler.ViewMaterialized
 import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 import com.ottogroup.bi.soda.dsl.Named
@@ -35,18 +36,9 @@ import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import com.ottogroup.bi.soda.dsl.Transformation
 
 class SodaSystem extends SodaInterface {
-  /*
-   *  setup soda actor system
-   */
-  val settings = SodaRootActor.settings
   val log = Logging(settings.system, classOf[SodaRootActor])
-
   val viewAugmentor = Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
-  val root = SodaRootActor.sodaRootActor
-  val viewManagerActor = SodaRootActor.viewManagerActor
-  val actionsManagerActor = SodaRootActor.actionsManagerActor
-  val schemaActor = SodaRootActor.schemaActor
-
+  
   /*
    * deploy transformation resources FIXME: we don't check for success here...
    */
