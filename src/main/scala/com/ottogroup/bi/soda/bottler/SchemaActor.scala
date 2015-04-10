@@ -16,10 +16,18 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
   val log = Logging(system, this)
 
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  var runningCommand: Option[Any] = None
 
+  override def preRestart(reason: Throwable, message: Option[Any]) {
+    if (runningCommand.isDefined)
+      self forward runningCommand.get
+  }
+  
   def receive = LoggingReceive({
-    case CheckOrCreateTables(views) => {
-      views
+    case c: CheckOrCreateTables => {
+      runningCommand = Some(c)
+      
+      c.views
         .groupBy { v => (v.dbName, v.n) }
         .map { case (_, views) => views.head }
         .foreach {
@@ -36,9 +44,14 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
         }
 
       sender ! SchemaActionSuccess()
+
+      runningCommand = None
     }
 
-    case AddPartitions(views) => {
+    case a: AddPartitions => {
+      runningCommand = Some(a)
+      
+      val views = a.views
       log.info(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
 
       val metadata = crate.getTransformationMetadata(views)
@@ -46,6 +59,8 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       log.info(s"Created / loaded ${views.size} partitions for table ${views.head.tableName}")
 
       sender ! TransformationMetadata(metadata)
+      
+      runningCommand = None
     }
   })
 }
