@@ -202,10 +202,11 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     }
 
     val tablePrototype = views.head
-    val sd = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getSd
+    val table = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n)
 
     views.map { v =>
       val now = new DateTime().getMillis.toInt
+      val sd = table.getSd().deepCopy()
       sd.setLocation(v.fullPath)
 
       (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues, v.dbName, v.n, now, now, sd, HashMap[String, String]()))
