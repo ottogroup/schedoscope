@@ -16,17 +16,27 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
   val log = Logging(system, MetadataLoggerActor.this)
 
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
-
+  var runningCommand: Option[Any] = None
+  
+  override def preRestart(reason: Throwable, message: Option[Any]) {
+    if (runningCommand.isDefined)
+      self ! runningCommand.get
+  }
+  
   def receive = LoggingReceive({
     
-    case SetViewVersion(view) => {
-      crate.setTransformationVersion(view)
+    case s: SetViewVersion => {
+      runningCommand = Some(s)
+      crate.setTransformationVersion(s.view)
       sender ! SchemaActionSuccess()
+      runningCommand = None
     }
 
-    case LogTransformationTimestamp(view, timestamp) => {
-      crate.setTransformationTimestamp(view, timestamp)
+    case l: LogTransformationTimestamp => {
+      runningCommand = Some(l)
+      crate.setTransformationTimestamp(l.view, l.timestamp)
       sender ! SchemaActionSuccess()
+      runningCommand = None
     }
   })
 }
