@@ -20,7 +20,7 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
   
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
-      self ! runningCommand.get
+      self forward runningCommand.get
   }
   
   def receive = LoggingReceive({
