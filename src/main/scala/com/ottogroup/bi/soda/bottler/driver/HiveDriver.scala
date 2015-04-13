@@ -63,6 +63,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
         closeConnection(con)
         return DriverRunFailed[HiveTransformation](this, s"SQL exception while preparing Hive query ${queriesToExecute}", e)
       }
+      
       case t: Throwable => {
         closeConnection(con)
         throw DriverException(s"Runtime exception while preparing Hive query ${queriesToExecute}", t)

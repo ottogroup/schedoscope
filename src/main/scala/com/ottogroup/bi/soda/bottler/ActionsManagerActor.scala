@@ -89,7 +89,7 @@ class ActionsManagerActor() extends Actor {
   }
 
   override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+    OneForOneStrategy(maxNrOfRetries = -1) {
       case _: DriverException => Restart
       case _: Throwable => Escalate
     }

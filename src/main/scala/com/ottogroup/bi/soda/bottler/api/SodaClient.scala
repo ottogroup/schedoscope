@@ -117,7 +117,7 @@ class SodaRestClient extends SodaInterface {
   def commandStatus(commandId: String): SodaCommandStatus = { null }
 
   def commands(status: Option[String]): List[SodaCommandStatus] = {
-    val stat = if (status.isDefined) "?status=" + status else ""
+    val stat = if (status.isDefined) "?status=" + status.get else ""
     Await.result(get[List[SodaCommandStatus]](s"/commands${stat}"), 3600 seconds)
   }
 
@@ -127,7 +127,7 @@ class SodaRestClient extends SodaInterface {
   }
 
   def actions(status: Option[String]): ActionStatusList = {
-    val stat = if (status.isDefined) "?status=" + status else ""
+    val stat = if (status.isDefined) "?status=" + status.get else ""
     Await.result(get[ActionStatusList](s"/actions${stat}"), 3600 seconds)
   }
 }
