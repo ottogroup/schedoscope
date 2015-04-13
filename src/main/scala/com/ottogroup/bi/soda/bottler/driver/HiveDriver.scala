@@ -2,6 +2,7 @@ package com.ottogroup.bi.soda.bottler.driver
 
 import java.security.PrivilegedAction
 import java.sql.Connection
+import java.sql.Statement
 import java.sql.DriverManager
 import java.sql.SQLException
 
@@ -49,22 +50,41 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
     val queriesToExecute = queryStack.reverse.filter(q => !StringUtils.isBlank(q))
 
-    val stmt = try { connection.createStatement() }
-    catch {
-      case e: SQLException =>
+    val con = try {
+      connection
+    } catch {
+      case t: Throwable => throw DriverException(s"Runtime exception while preparing Hive Server connection for query ${queriesToExecute}", t)
+    }
+
+    val stmt = try {
+      con.createStatement()
+    } catch {
+      case e: SQLException => {
+        closeConnection(con)
         return DriverRunFailed[HiveTransformation](this, s"SQL exception while preparing Hive query ${queriesToExecute}", e)
-      case t: Throwable => throw DriverException(s"Runtime exception while preparing Hive query ${queriesToExecute}", t)
+      }
+      case t: Throwable => {
+        closeConnection(con)
+        throw DriverException(s"Runtime exception while preparing Hive query ${queriesToExecute}", t)
+      }
     }
 
     queriesToExecute.foreach(
       q => try {
         stmt.execute(q.trim())
       } catch {
-        case e: SQLException =>
+        case e: SQLException => {
+          closeStatementAndConnection(con, stmt)
           return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
-        case t: Throwable => throw DriverException(s"Runtime exception while executing Hive query ${q}", t)
+        }
+
+        case t: Throwable => {
+          closeStatementAndConnection(con, stmt)
+          throw DriverException(s"Runtime exception while executing Hive query ${q}", t)
+        }
       })
-    stmt.close()
+
+    closeStatementAndConnection(con, stmt)
 
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
@@ -79,7 +99,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
     }
   }
 
-  def connection = {
+  private def connection = {
     Class.forName(JDBC_CLASS)
     ugi.reloginFromTicketCache()
     ugi.doAs(new PrivilegedAction[Connection]() {
@@ -87,6 +107,25 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
         DriverManager.getConnection(connectionUrl)
       }
     })
+  }
+
+  private def closeConnection(c: Connection) =
+    try {
+      c.close()
+    } catch {
+      case _: Throwable =>
+    }
+
+  private def closeStatement(s: Statement) =
+    try {
+      s.close()
+    } catch {
+      case _: Throwable =>
+    }
+
+  private def closeStatementAndConnection(c: Connection, s: Statement) {
+    closeStatement(s)
+    closeConnection(c)
   }
 
   def JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
