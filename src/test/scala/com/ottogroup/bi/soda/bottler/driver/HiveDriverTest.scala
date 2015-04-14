@@ -17,13 +17,13 @@ class HiveDriverTest extends FlatSpec with Matchers {
   it should "execute hive tranformations synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(HiveTransformation("SHOW TABLES"))
 
-    driverRunState shouldBe a[DriverRunSucceeded[HiveTransformation]]
+    driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "execute hive tranformations and return errors when running synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(HiveTransformation("FAIL ME"))
 
-    driverRunState shouldBe a[DriverRunFailed[HiveTransformation]]
+    driverRunState shouldBe a[DriverRunFailed[_]]
   }
 
   it should "execute hive tranformations asynchronously" taggedAs (DriverTests) in {
@@ -31,11 +31,11 @@ class HiveDriverTest extends FlatSpec with Matchers {
 
     var runWasAsynchronous = false
 
-    while (driver.getDriverRunState(driverRunHandle).isInstanceOf[DriverRunOngoing[HiveTransformation]])
+    while (driver.getDriverRunState(driverRunHandle).isInstanceOf[DriverRunOngoing[_]])
       runWasAsynchronous = true
 
     runWasAsynchronous shouldBe true
-    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[HiveTransformation]]
+    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "execute hive tranformations and return errors when running asynchronously" taggedAs (DriverTests) in {
@@ -43,10 +43,10 @@ class HiveDriverTest extends FlatSpec with Matchers {
 
     var runWasAsynchronous = false
 
-    while (driver.getDriverRunState(driverRunHandle).isInstanceOf[DriverRunOngoing[HiveTransformation]])
+    while (driver.getDriverRunState(driverRunHandle).isInstanceOf[DriverRunOngoing[_]])
       runWasAsynchronous = true
 
     runWasAsynchronous shouldBe true
-    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[HiveTransformation]]
+    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 }

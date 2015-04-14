@@ -196,7 +196,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
       runWasAsynchronous = true
 
     runWasAsynchronous shouldBe true
-    driver.getDriverRunState(runHandle) shouldBe a[DriverRunSucceeded[FilesystemTransformation]]
+    driver.getDriverRunState(runHandle) shouldBe a[DriverRunSucceeded[_]]
 
     outputFile("aTest.file") shouldBe 'exists
   }
@@ -213,7 +213,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
       runWasAsynchronous = true
 
     runWasAsynchronous shouldBe true
-    driver.getDriverRunState(runHandle) shouldBe a[DriverRunFailed[FilesystemTransformation]]
+    driver.getDriverRunState(runHandle) shouldBe a[DriverRunFailed[_]]
 
     inputFile("subfolder") shouldBe 'exists
   }
@@ -224,7 +224,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
 
     val runState = driver.runAndWait(Delete(inputPath("subfolder"), false))
 
-    runState shouldBe a[DriverRunFailed[FilesystemTransformation]]
+    runState shouldBe a[DriverRunFailed[_]]
 
     inputFile("subfolder") shouldBe 'exists
   }

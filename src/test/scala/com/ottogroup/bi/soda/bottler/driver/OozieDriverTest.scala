@@ -53,7 +53,7 @@ class OozieDriverTest extends FlatSpec with Matchers {
   it should "execute oozie tranformations synchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunState = driver.runAndWait(workingOozieTransformation)
 
-    driverRunState shouldBe a[DriverRunSucceeded[OozieTransformation]]
+    driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "execute oozie tranformations asynchronously" taggedAs (DriverTests, OozieTests) in {
@@ -65,13 +65,13 @@ class OozieDriverTest extends FlatSpec with Matchers {
       runWasAsynchronous = true
 
     runWasAsynchronous shouldBe true
-    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[OozieTransformation]]
+    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "execute oozie tranformations and return errors while running synchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunState = driver.runAndWait(failingOozieTransformation)
 
-    driverRunState shouldBe a[DriverRunFailed[OozieTransformation]]
+    driverRunState shouldBe a[DriverRunFailed[_]]
   }
 
   it should "execute oozie tranformations and return errors while running asynchronously" taggedAs (DriverTests, OozieTests) in {
@@ -79,22 +79,22 @@ class OozieDriverTest extends FlatSpec with Matchers {
 
     var runWasAsynchronous = false
 
-    while (driver.getDriverRunState(driverRunHandle).isInstanceOf[DriverRunOngoing[OozieTransformation]])
+    while (driver.getDriverRunState(driverRunHandle).isInstanceOf[DriverRunOngoing[_]])
       runWasAsynchronous = true
 
     runWasAsynchronous shouldBe true
-    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[OozieTransformation]]
+    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 
   it should "be able to kill running oozie transformations" taggedAs (DriverTests, OozieTests) in {
     val driverRunHandle = driver.run(workingOozieTransformation)
-    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunOngoing[OozieTransformation]]
+    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunOngoing[_]]
     driver.killRun(driverRunHandle)
 
     while (driver.getDriverRunState(driverRunHandle).isInstanceOf[DriverRunOngoing[OozieTransformation]]) {
       Thread.sleep(1000)
     }
 
-    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[OozieTransformation]]
+    driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 }
