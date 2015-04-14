@@ -24,6 +24,8 @@ import akka.event.LoggingReceive
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
+import com.ottogroup.bi.soda.bottler.driver.MorphlineDriver
 
 class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
@@ -161,6 +163,10 @@ object DriverActor {
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
         actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
+
+      case "morphline" => Props(
+        classOf[DriverActor[MorphlineTransformation]],
+        actionsRouter, ds, (d: DriverSettings) => MorphlineDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
