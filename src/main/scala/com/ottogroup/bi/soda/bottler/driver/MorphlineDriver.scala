@@ -156,9 +156,9 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
     }
     command
   }
-  def createSampler(inputConnector: MyConnector, sample: Double) = {
+  def createSampler(inputConnector: CommandConnector, sample: Double) = {
     val sampleConfig = ConfigFactory.empty().withValue("probability", sample)
-    val sampleConnector = new MyConnector(false, "sampleconnector")
+    val sampleConnector = new CommandConnector(false, "sampleconnector")
     sampleConnector.setParent(inputConnector.getParent)
     sampleConnector.setChild(inputConnector.getChild)
     val sampleCommand = new SampleBuilder().build(sampleConfig, inputConnector, sampleConnector, context)
@@ -168,10 +168,10 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 
   def createMorphline(transformation: MorphlineTransformation) = {
     val config = ConfigFactory.parseString(transformation.definition)
-    val outputConnector = new MyConnector(false, "outputconnector");
+    val outputConnector = new CommandConnector(false, "outputconnector");
     val finalCommand = createOutput(config, outputConnector)
     outputConnector.setChild(finalCommand)
-    val inputConnector = new MyConnector(false, "inputconnector");
+    val inputConnector = new CommandConnector(false, "inputconnector");
     val inputCommand = createInput(config, transformation.view.get.storageFormat, transformation.view.get.dependencies.head.n, Seq[String](), inputConnector)
     inputConnector.setParent(inputCommand)
     MorphlineClasspathUtil.setupJavaCompilerClasspath()
@@ -193,7 +193,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
     if (config.hasPath("anon")) {
       val anFields = config.getString("anon").split(",").toList
       val anonConfig = ConfigFactory.empty().withValue("fields", ConfigValueFactory.fromIterable(anFields))
-      val output2Connector = new MyConnector(false, "output2")
+      val output2Connector = new CommandConnector(false, "output2")
       output2Connector.setParent(outputConnector.getParent);
       output2Connector.setChild(outputConnector.getChild())
 
