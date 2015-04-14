@@ -15,25 +15,24 @@ object SodaService extends App with SimpleRoutingApp {
   val soda = new SodaSystem()
 
   implicit val system = ActorSystem("soda-webservice")
-  implicit val timeout = Timeout(600.seconds)
 
   import SodaJsonProtocol._
 
   startServer(interface = "localhost", port = settings.port) {
     get {
       path("actions") {
-        parameters("status"?) { status =>
-          complete(soda.actions(status))
+        parameters("status"?, "filter"?) { (status,filter) =>
+          complete(soda.actions(status, filter))
         }
       } ~
         path("commands") {
-          parameters("status"?) { status =>
-            complete(soda.commands(status))
+          parameters("status"?, "filter"?) { (status,filter) =>
+            complete(soda.commands(status, filter))
           }
         } ~
         path("views" / Rest ?) { viewUrlPath =>
-          parameters("status" ?, "dependencies".as[Boolean] ? false) { (status, withDependencies) =>
-            complete(soda.views(viewUrlPath, status, withDependencies))
+          parameters("status"?, "filter"?, "dependencies".as[Boolean]?) { (status, filter, dependencies) =>
+            complete(soda.views(viewUrlPath, status, filter, dependencies))
           }
         } ~
         path("materialize" / Rest) { viewUrlPath =>

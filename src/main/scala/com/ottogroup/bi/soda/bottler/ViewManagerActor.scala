@@ -28,8 +28,8 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
     case GetStatus() => sender ! ViewStatusListResponse(viewStatusMap.values.toList)
 
-    case GetViewStatus(views, withDependencies) => {
-      val actorPaths = initializeViewActors(views, withDependencies).map(a => a.path.toStringWithoutAddress).toSet
+    case GetViewStatus(views, dependencies) => {
+      val actorPaths = initializeViewActors(views, dependencies).map(a => a.path.toStringWithoutAddress).toSet
 
       sender ! ViewStatusListResponse(viewStatusMap.filter { case (actorPath, _) => actorPaths.contains(actorPath) }.values.toList)
     }
@@ -46,16 +46,16 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }
   })
 
-  def viewsToCreateActorsFor(views: List[View], withDependencies: Boolean = false, depth: Int = 0): List[(View, Boolean, Int)] = {
+  def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0): List[(View, Boolean, Int)] = {
     views.map {
       v =>
         if (ViewManagerActor.actorForView(v).isTerminated) {
           val createdActor = (v, true, depth)
-          createdActor :: viewsToCreateActorsFor(v.dependencies.toList, withDependencies, depth + 1)
+          createdActor :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1)
         } else {
-          if (withDependencies) {
+          if (dependencies) {
             val existingActor = (v, false, depth)
-            existingActor :: viewsToCreateActorsFor(v.dependencies.toList, withDependencies, depth + 1)
+            existingActor :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1)
           } else {
             List((v, false, depth))
           }
@@ -63,12 +63,12 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }.flatten.distinct
   }
 
-  def initializeViewActors(vs: List[View], withDependencies: Boolean = false): List[ActorRef] = {
+  def initializeViewActors(vs: List[View], dependencies: Boolean = false): List[ActorRef] = {
     log.info(s"Initializing ${vs.size} views")
 
-    val allViews = viewsToCreateActorsFor(vs, withDependencies)
+    val allViews = viewsToCreateActorsFor(vs, dependencies)
 
-    log.info(s"Computed ${allViews.size} views (with dependencies=${withDependencies})")
+    log.info(s"Computed ${allViews.size} views (with dependencies=${dependencies})")
 
     val actorsToCreate = allViews
       .filter { case (_, needsCreation, _) => needsCreation }
@@ -109,7 +109,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
         })
     }
 
-    if (withDependencies)
+    if (dependencies)
       allViews.map { case (view, _, _) => ViewManagerActor.actorForView(view) }.distinct
     else
       allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => ViewManagerActor.actorForView(view) }.distinct

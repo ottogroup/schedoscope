@@ -15,8 +15,13 @@ import spray.client.pipelining.WithTransformerConcatenation
 import spray.client.pipelining.sendReceive
 import spray.client.pipelining.unmarshal
 import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
+import spray.http.Uri
+import spray.http.Uri._
+import spray.http.Uri.Path.SingleSlash
 import com.ottogroup.bi.soda.Settings
 import scala.util.matching.Regex
+import scala.collection.immutable.Map
+import scala.collection.mutable.HashMap
 
 object CliFormat { // FIXME: a more generic parsing would be cool...
   def serialize(o: Any): String = {
@@ -80,55 +85,55 @@ class SodaRestClient extends SodaInterface {
   implicit val timeout = Timeout(10.days)
   val log = Logging(system, getClass)
 
-  def get[T](q: String): Future[T] = {
-    val pipeline = q match {
+  def get[T](path: String, query: Map[String,String]): Future[T] = {
+    val pipeline = path match {
       case u: String if u.startsWith("/views") => sendReceive ~> unmarshal[ViewStatusList]
       case u: String if u.startsWith("/actions") => sendReceive ~> unmarshal[ActionStatusList]
       case u: String if u.startsWith("/materialize") => sendReceive ~> unmarshal[SodaCommandStatus]
       case u: String if u.startsWith("/invalidate") => sendReceive ~> unmarshal[SodaCommandStatus]
       case u: String if u.startsWith("/newdata") => sendReceive ~> unmarshal[SodaCommandStatus]
       case u: String if u.startsWith("/commands") => sendReceive ~> unmarshal[List[SodaCommandStatus]]
-      case _ => throw new RuntimeException("Unsupported query: " + q)
+      case _ => throw new RuntimeException("Unsupported query path: " + path)
     }
-    println("Calling Soda API URL: " + url(q))
-    pipeline(Get(url(q))).asInstanceOf[Future[T]]
+    val uri = Uri.from("http", "", host, port, path) withQuery(query) 
+    println("Calling Soda API URL: " + uri)
+    pipeline(Get(uri)).asInstanceOf[Future[T]]
   }
 
-  private def url(u: String) = {
-    s"http://${host}:${port}${u}"
-  }
+  private def paramsFrom(params: (String,Option[Any])*) : Map[String,String] = {
+    params.filter( _._2.isDefined)
+      .map(p => (p._1 -> p._2.get.toString))
+      .toMap
+  }  
 
   def shutdown() {
     system.shutdown()
   }
 
   def materialize(viewUrlPath: String): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath}"), 10.days)
+    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath}", Map()), 10.days)
   }
 
   def invalidate(viewUrlPath: String): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/invalidate/${viewUrlPath}"), 3600 seconds)
+    Await.result(get[SodaCommandStatus](s"/invalidate/${viewUrlPath}", Map()), 3600 seconds)
   }
 
   def newdata(viewUrlPath: String): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/newdata/${viewUrlPath}"), 3600 seconds)
+    Await.result(get[SodaCommandStatus](s"/newdata/${viewUrlPath}", Map()), 3600 seconds)
   }
 
   def commandStatus(commandId: String): SodaCommandStatus = { null }
 
-  def commands(status: Option[String]): List[SodaCommandStatus] = {
-    val stat = if (status.isDefined) "?status=" + status.get else ""
-    Await.result(get[List[SodaCommandStatus]](s"/commands${stat}"), 3600 seconds)
+  def commands(status: Option[String], filter: Option[String]): List[SodaCommandStatus] = {
+    Await.result(get[List[SodaCommandStatus]](s"/commands", paramsFrom( ("status", status), ("filter", filter))), 3600 seconds)
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false): ViewStatusList = {
-    val params = s"?dependencies=${withDependencies}${if (status.isDefined) "&status=" + status.get else ""}"
-    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}${params}"), 3600 seconds)
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean] = None): ViewStatusList = {
+    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom( ("status", status), ("filter", filter), ("dependencies", dependencies) )), 3600 seconds)
   }
 
-  def actions(status: Option[String]): ActionStatusList = {
-    val stat = if (status.isDefined) "?status=" + status.get else ""
-    Await.result(get[ActionStatusList](s"/actions${stat}"), 3600 seconds)
+  def actions(status: Option[String], filter: Option[String]): ActionStatusList = {
+    Await.result(get[ActionStatusList](s"/actions", paramsFrom( ("status", status), ("filter", filter))), 3600 seconds)
   }
 }
 
@@ -148,7 +153,7 @@ class SodaControl(soda: SodaInterface) {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, withDependencies: Boolean = false, filter: Option[String] = None)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -158,11 +163,13 @@ class SodaControl(soda: SodaInterface) {
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views by their status (e.g. 'transforming')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter view display (e.g. 'my.database/.*/Partition1/.*'). "),
-      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(withDependencies = true) } optional () text ("include dependencies"))
+      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("include dependencies"))
     cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children (
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"))
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter action display (e.g. '.*hive-1.*'). "))
     cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children (
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter commands by their status (e.g. 'failed')"))
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter commands by their status (e.g. 'failed')"),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter command display (e.g. '.*201501.*'). "))
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
     cmd("invalidate") action { (_, c) => c.copy(action = Some(INVALIDATE)) } text ("invalidate view(s)") children (
@@ -185,17 +192,10 @@ class SodaControl(soda: SodaInterface) {
         try {
           val res = config.action.get match {
             case ACTIONS => {
-              soda.actions(config.status)
+              soda.actions(config.status, config.filter)
             }
             case VIEWS => {
-              val statusList = soda.views(config.viewUrlPath, config.status, config.withDependencies)
-              if (config.filter.isDefined) {
-                val filtered = statusList.views.filter(_.view.matches(config.filter.get))
-                val filteredOverview = filtered.groupBy(_.status).mapValues(_.size)
-                ViewStatusList(filteredOverview, filtered)
-              } else {
-                statusList
-              }
+              soda.views(config.viewUrlPath, config.status, config.filter, config.dependencies)
             }
             case MATERIALIZE => {
               soda.materialize(config.viewUrlPath.get)
@@ -207,7 +207,7 @@ class SodaControl(soda: SodaInterface) {
               soda.newdata(config.viewUrlPath.get)
             }
             case COMMANDS => {
-              soda.commands(config.status)
+              soda.commands(config.status, config.filter)
             }
             case _ => {
               println("Unsupported Action: " + config.action.get.toString)

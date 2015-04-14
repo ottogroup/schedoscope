@@ -37,7 +37,6 @@ import com.ottogroup.bi.soda.dsl.Transformation
 
 class SodaSystem extends SodaInterface {
   val log = Logging(settings.system, classOf[SodaRootActor])
-  val viewAugmentor = Class.forName(settings.parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
   
   /*
    * deploy transformation resources FIXME: we don't check for success here...
@@ -55,7 +54,7 @@ class SodaSystem extends SodaInterface {
    */
 
   private def getViews(viewUrlPath: String) = {
-    View.viewsFromUrl(settings.env, viewUrlPath, viewAugmentor)
+    View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
   }
 
   private def getViewActors(viewUrlPath: String) = {
@@ -124,21 +123,23 @@ class SodaSystem extends SodaInterface {
     submitCommandInternal(viewActors, "newdata", viewUrlPath)
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], withDependencies: Boolean = false) = {
-    val req = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty) GetViewStatus(getViews(viewUrlPath.get), withDependencies) else GetStatus()
-    val result: ViewStatusListResponse = queryActor(viewManagerActor, req, settings.statusListAggregationTimeout)
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
+    val req = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty) GetViewStatus(getViews(viewUrlPath.get), dependencies.getOrElse(false)) else GetStatus()
+    val result = queryActor[ViewStatusListResponse](viewManagerActor, req, settings.statusListAggregationTimeout)
     val views = result.viewStatusList
-      .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!withDependencies) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, "", None, None)).toList)))
-      .filter(v => status.getOrElse(v.status).equals(v.status))
+      .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!dependencies.getOrElse(false)) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, "", None, None)).toList)))
+      .filter(v => !status.isDefined || status.get.equals(v.status))
+      .filter(v => !filter.isDefined || v.view.matches(filter.get))
     val overview = views.groupBy(_.status).mapValues(_.size)
     ViewStatusList(overview, views)
   }
 
-  def actions(status: Option[String]) = {
+  def actions(status: Option[String], filter: Option[String]) = {
     val result: ActionStatusListResponse = queryActor(actionsManagerActor, GetStatus(), settings.statusListAggregationTimeout)
     val actions = result.actionStatusList
       .map(a => SodaJsonProtocol.parseActionStatus(a))
-      .filter(a => status.getOrElse(a.status).equals(a.status))
+      .filter(a => !status.isDefined || status.get.equals(a.status))
+      .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
     val queues = result.actionQueueStatus
       .filter(el => status.getOrElse("queued").equals("queued"))
       .map(el => (el._1, SodaJsonProtocol.parseQueueElements(el._2)))
@@ -179,7 +180,7 @@ class SodaSystem extends SodaInterface {
     }
   }
 
-  def commands(status: Option[String]) = {
+  def commands(status: Option[String], filter: Option[String]) = {
     val running = runningCommands.keys.map(id => {
       commandStatus(id)
     }).toList
@@ -189,6 +190,7 @@ class SodaSystem extends SodaInterface {
       .toSeq
       .sortBy(_.start.toString)
       .filter(c => if (!status.isDefined || status.get.isEmpty) true else (c.status.get(status.get).isDefined && c.status(status.get) > 0))
+      .filter(c => !filter.isDefined || c.id.matches(filter.get))
       .toList
   }
 
