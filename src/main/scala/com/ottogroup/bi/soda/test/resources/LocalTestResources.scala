@@ -53,8 +53,8 @@ class LocalTestResources extends TestResources {
     conf.put(HIVEAUXJARS.toString, compiledClassesPath())
     conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
     conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
-    conf.put(PLAN_SERIALIZATION.toString(), "javaXML")
-    conf.put(HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL.toString(), "60000")
+    //conf.put(PLAN_SERIALIZATION.toString(), "javaXML")
+    //conf.put(HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL.toString(), "60000")
     val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
     Files.write(Paths.get(hiveSiteXmlPath), ("<configuration>\n" + props + "\n</configuration>").getBytes());
 
