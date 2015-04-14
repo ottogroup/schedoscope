@@ -21,12 +21,12 @@ object SodaService extends App with SimpleRoutingApp {
   startServer(interface = "localhost", port = settings.port) {
     get {
       path("actions") {
-        parameters("status"?, "filter"?) { (status,filter) =>
+        parameters("status"?, "filter"?) { (status, filter) =>
           complete(soda.actions(status, filter))
         }
       } ~
         path("commands") {
-          parameters("status"?, "filter"?) { (status,filter) =>
+          parameters("status"?, "filter"?) { (status, filter) =>
             complete(soda.commands(status, filter))
           }
         } ~

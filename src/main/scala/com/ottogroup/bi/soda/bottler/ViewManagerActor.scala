@@ -101,7 +101,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
       val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, partitionsToCreate, settings.schemaTimeout)
 
       log.info(s"Partitions created, initializing actors")
-      
+
       viewsWithMetadataToCreate.foreach(
         _.metadata.foreach {
           case (view, (version, timestamp)) =>
@@ -117,7 +117,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 }
 
 object ViewManagerActor {
-  def props(settings: SettingsImpl, actionsManagerActor: ActorRef,  schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
+  def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
 

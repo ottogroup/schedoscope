@@ -15,7 +15,7 @@ trait SodaInterface {
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): ViewStatusList
 
   def actions(status: Option[String], filter: Option[String]): ActionStatusList
-  
+
   // def queues(typ: Option[String], filter: Option[String]) : QueueStatus FIXME: separate queues from actions
 
   def shutdown()

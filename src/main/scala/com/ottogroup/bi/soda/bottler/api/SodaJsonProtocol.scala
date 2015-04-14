@@ -39,6 +39,7 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
 
   implicit object localDateTimeSerDe extends RootJsonFormat[LocalDateTime] {
     val formatter = DateTimeFormat.shortDateTime()
+
     def read(value: JsValue) = {
       value match {
         case s: JsString => {
@@ -48,6 +49,7 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
         case _ => null
       }
     }
+
     def write(d: LocalDateTime) = {
       if (d == null)
         JsString("")
@@ -62,6 +64,7 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
     var drh = a.driverRunHandle
     var status = a.message
     var comment: String = ""
+
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
         case s: DriverRunSucceeded[_] => { comment = s.comment; status = "succeeded" }
@@ -69,6 +72,7 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
         case o: DriverRunOngoing[_] => { drh = o.runHandle }
       }
     }
+
     if (drh != null) {
       val desc = drh.transformation.asInstanceOf[Transformation].description
       val view = drh.transformation.asInstanceOf[Transformation].getView()
@@ -80,14 +84,13 @@ object SodaJsonProtocol extends DefaultJsonProtocol {
   }
 
   def parseQueueElements(q: List[AnyRef]): List[RunStatus] = {
-    q.map(o => {
+    q.map(o =>
       if (o.isInstanceOf[Transformation]) {
         val trans = o.asInstanceOf[Transformation]
         RunStatus(trans.description, trans.getView(), null, "", None)
       } else {
         RunStatus(o.toString, "", null, "", None)
-      }
-    })
+      })
   }
 
 }

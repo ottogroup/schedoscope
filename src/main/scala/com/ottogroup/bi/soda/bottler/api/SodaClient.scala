@@ -46,6 +46,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
         }
         sb.append("\n" + as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
       }
+
       case vl: ViewStatusList => {
         if (!vl.views.isEmpty) {
           sb.append(s"Details:\n")
@@ -56,17 +57,21 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
         }
         sb.append("\n" + vl.overview.map(el => s"${el._1}: ${el._2}").mkString("\n") + "\n")
       }
+
       case sc: SodaCommandStatus => {
         sb.append(s"id: ${sc.id}\n")
         sb.append(s"start: ${sc.start}\n")
         sb.append(s"status: ${sc.status}\n")
       }
+
       case f: Future[_] => {
         sb.append(s"submitted; isCompleted: ${f.isCompleted}\n")
       }
+
       case s: Seq[_] => {
         sb.append(s.map(el => serialize(el)).mkString("\n"))
       }
+
       case _ => sb.append(o)
     }
     sb.toString
@@ -85,7 +90,7 @@ class SodaRestClient extends SodaInterface {
   implicit val timeout = Timeout(10.days)
   val log = Logging(system, getClass)
 
-  def get[T](path: String, query: Map[String,String]): Future[T] = {
+  def get[T](path: String, query: Map[String, String]): Future[T] = {
     val pipeline = path match {
       case u: String if u.startsWith("/views") => sendReceive ~> unmarshal[ViewStatusList]
       case u: String if u.startsWith("/actions") => sendReceive ~> unmarshal[ActionStatusList]
@@ -95,16 +100,16 @@ class SodaRestClient extends SodaInterface {
       case u: String if u.startsWith("/commands") => sendReceive ~> unmarshal[List[SodaCommandStatus]]
       case _ => throw new RuntimeException("Unsupported query path: " + path)
     }
-    val uri = Uri.from("http", "", host, port, path) withQuery(query) 
+    val uri = Uri.from("http", "", host, port, path) withQuery (query)
     println("Calling Soda API URL: " + uri)
     pipeline(Get(uri)).asInstanceOf[Future[T]]
   }
 
-  private def paramsFrom(params: (String,Option[Any])*) : Map[String,String] = {
-    params.filter( _._2.isDefined)
+  private def paramsFrom(params: (String, Option[Any])*): Map[String, String] = {
+    params.filter(_._2.isDefined)
       .map(p => (p._1 -> p._2.get.toString))
       .toMap
-  }  
+  }
 
   def shutdown() {
     system.shutdown()
@@ -125,15 +130,15 @@ class SodaRestClient extends SodaInterface {
   def commandStatus(commandId: String): SodaCommandStatus = { null }
 
   def commands(status: Option[String], filter: Option[String]): List[SodaCommandStatus] = {
-    Await.result(get[List[SodaCommandStatus]](s"/commands", paramsFrom( ("status", status), ("filter", filter))), 3600 seconds)
+    Await.result(get[List[SodaCommandStatus]](s"/commands", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean] = None): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom( ("status", status), ("filter", filter), ("dependencies", dependencies) )), 3600 seconds)
+    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
   }
 
   def actions(status: Option[String], filter: Option[String]): ActionStatusList = {
-    Await.result(get[ActionStatusList](s"/actions", paramsFrom( ("status", status), ("filter", filter))), 3600 seconds)
+    Await.result(get[ActionStatusList](s"/actions", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
 }
 
@@ -159,23 +164,30 @@ class SodaControl(soda: SodaInterface) {
     override def showUsageOnError = true
     head("soda-control", "0.0.1")
     help("help") text ("print usage")
+    
     cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text ("lists all view actors, along with their status") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views by their status (e.g. 'transforming')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter view display (e.g. 'my.database/.*/Partition1/.*'). "),
       opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("include dependencies"))
+
     cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter action display (e.g. '.*hive-1.*'). "))
+
     cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter commands by their status (e.g. 'failed')"),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter command display (e.g. '.*201501.*'). "))
+
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
+
     cmd("invalidate") action { (_, c) => c.copy(action = Some(INVALIDATE)) } text ("invalidate view(s)") children (
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
+
     cmd("newdata") action { (_, c) => c.copy(action = Some(NEWDATA)) } text ("invalidate view(s)") children (
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
+
     checkConfig { c =>
       {
         if (!c.action.isDefined) failure("A command is required")

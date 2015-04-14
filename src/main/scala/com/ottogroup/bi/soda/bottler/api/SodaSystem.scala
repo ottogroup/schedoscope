@@ -37,7 +37,7 @@ import com.ottogroup.bi.soda.dsl.Transformation
 
 class SodaSystem extends SodaInterface {
   val log = Logging(settings.system, classOf[SodaRootActor])
-  
+
   /*
    * deploy transformation resources FIXME: we don't check for success here...
    */
