@@ -4,6 +4,7 @@ import java.util.Calendar
 import com.ottogroup.bi.soda.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.Settings
+import scala.collection.mutable.ListBuffer
 
 object DateParameterizationUtils {
   def earliestDay = Settings().earliestDay
@@ -99,6 +100,25 @@ object DateParameterizationUtils {
     val (todaysYear, todaysMonth, _) = today
     thisAndPrevMonths(todaysYear, todaysMonth)
   }
+
+  def allDaysOfMonth(year: Parameter[String], month: Parameter[String]) = {
+    val lastOfMonth = parametersToDay(year, month, p("01"))
+    lastOfMonth.add(Calendar.MONTH, 1)
+    lastOfMonth.add(Calendar.DAY_OF_MONTH, -1)
+
+    val days = ListBuffer[(String, String, String)]()
+    
+    var currentDate = lastOfMonth
+    var firstOfMonthReached = false
+
+    while (!firstOfMonthReached) {
+      firstOfMonthReached = currentDate.get(Calendar.DAY_OF_MONTH) == 1           
+      days += dayToStrings(currentDate)    
+      currentDate.add(Calendar.DAY_OF_MONTH, -1)
+    }
+    
+    days.toList
+  }
 }
 
 trait MonthlyParameterization {
@@ -112,6 +132,8 @@ trait MonthlyParameterization {
   def allDays() = DateParameterizationUtils.allDays()
 
   def allMonths() = DateParameterizationUtils.allMonths()
+  
+  def allDaysOfMonth() = DateParameterizationUtils.allDaysOfMonth(year, month)
 }
 
 trait DailyParameterization {
