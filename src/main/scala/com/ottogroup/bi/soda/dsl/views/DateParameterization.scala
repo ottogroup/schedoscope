@@ -91,6 +91,23 @@ object DateParameterizationUtils {
     thisAndPrevDays(lastOfMonthParameters._1, lastOfMonthParameters._2, lastOfMonthParameters._3).map { case (year, month, day) => (year, month) }.distinct
   }
 
+  def prevMonth(thisDay: Calendar): Option[Calendar] = {
+    if (thisDay.after(earliestDay)) {
+      val prevDay = thisDay.clone().asInstanceOf[Calendar]
+      prevDay.add(Calendar.MONTH, -1)
+      Some(prevDay)
+    } else {
+      None
+    }
+  }
+
+  def prevMonth(year: Parameter[String], month: Parameter[String]): Option[(String, String)] = {
+    prevMonth(parametersToDay(year, month, p("01"))) match {
+      case Some(previousDay) => Some((dayToStrings(previousDay)._1, dayToStrings(previousDay)._2))
+      case None => None
+    }
+  }
+
   def allDays() = {
     val (todaysYear, todaysMonth, todaysDay) = today
     thisAndPrevDays(todaysYear, todaysMonth, todaysDay)
@@ -107,16 +124,16 @@ object DateParameterizationUtils {
     lastOfMonth.add(Calendar.DAY_OF_MONTH, -1)
 
     val days = ListBuffer[(String, String, String)]()
-    
+
     var currentDate = lastOfMonth
     var firstOfMonthReached = false
 
     while (!firstOfMonthReached) {
-      firstOfMonthReached = currentDate.get(Calendar.DAY_OF_MONTH) == 1           
-      days += dayToStrings(currentDate)    
+      firstOfMonthReached = currentDate.get(Calendar.DAY_OF_MONTH) == 1
+      days += dayToStrings(currentDate)
       currentDate.add(Calendar.DAY_OF_MONTH, -1)
     }
-    
+
     days.toList
   }
 }
@@ -132,7 +149,7 @@ trait MonthlyParameterization {
   def allDays() = DateParameterizationUtils.allDays()
 
   def allMonths() = DateParameterizationUtils.allMonths()
-  
+
   def allDaysOfMonth() = DateParameterizationUtils.allDaysOfMonth(year, month)
 }
 

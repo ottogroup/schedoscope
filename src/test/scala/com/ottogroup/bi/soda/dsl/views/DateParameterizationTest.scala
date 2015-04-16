@@ -21,6 +21,21 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
     prevDate shouldBe None
   }
 
+  "prevMonth" should "compute the previous month" in {
+    val prevDate = DateParameterizationUtils.prevMonth(p("2014"), p("01")) match {
+      case Some((prevYear, prevMonth)) => (prevYear, prevMonth)
+      case None => null
+    }
+
+    prevDate shouldEqual ("2013", "12")
+  }
+
+  it should "stop at the earliest date" in {
+    val prevDate = DateParameterizationUtils.prevMonth(p("2013"), p("12"))
+
+    prevDate shouldBe None
+  }
+
   "thisAndPrevDays" should "deliver all days from the start date down to the earliest date" in {
     val days = DateParameterizationUtils.thisAndPrevDays(p("2014"), p("01"), p("11"))
 
