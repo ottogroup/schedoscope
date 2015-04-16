@@ -1,17 +1,16 @@
 package com.ottogroup.bi.soda.bottler
 
 import scala.collection.mutable.HashMap
-
 import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
 import com.ottogroup.bi.soda.dsl.View
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
+import scala.collection.mutable.HashSet
 
 class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
@@ -46,20 +45,22 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }
   })
 
-  def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0): List[(View, Boolean, Int)] = {
+  def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] = {
     views.map {
-      v =>
-        if (ViewManagerActor.actorForView(v).isTerminated) {
-          val createdActor = (v, true, depth)
-          createdActor :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1)
+      v => 
+        if (visited.contains(v))
+          List()
+        else if (ViewManagerActor.actorForView(v).isTerminated) {
+          visited += v
+          (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
+        } else if (dependencies) {
+          visited += v
+          (v, false, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
         } else {
-          if (dependencies) {
-            val existingActor = (v, false, depth)
-            existingActor :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1)
-          } else {
-            List((v, false, depth))
-          }
+          visited += v
+          List((v, false, depth))
         }
+
     }.flatten.distinct
   }
 
