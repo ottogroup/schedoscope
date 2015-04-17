@@ -36,6 +36,10 @@ abstract class Transformation {
   def name: String
 }
 
+abstract class ExternalTransformation extends Transformation
+
 case class NoOp() extends Transformation {
   override def name = "noop"
 }
+
+

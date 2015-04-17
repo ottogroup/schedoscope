@@ -42,173 +42,228 @@ import com.typesafe.config.ConfigValueFactory
 import scala.Option.option2Iterable
 import scala.collection.JavaConversions._
 import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.security.UserGroupInformation
 import java.security.PrivilegedAction
+import java.net.URI
 import Helper._
 import com.ottogroup.bi.soda.dsl.StorageFormat
-import com.ottogroup.bi.soda.dsl.Avro
+import com.ottogroup.bi.soda.dsl.ExternalAvro
 import com.ottogroup.bi.soda.dsl.Parquet
+import com.ottogroup.bi.soda.dsl.ExternalTextFile
+import com.ottogroup.bi.soda.dsl.ExaSol
 import com.ottogroup.bi.soda.dsl.TextFile
+import com.ottogroup.bi.soda.dsl.Redis
+import com.ottogroup.bi.soda.dsl.JDBC
+import com.ottogroup.bi.soda.dsl.NullStorage
+import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
+import com.ottogroup.bi.soda.dsl.ExternalStorageFormat
 
 object Helper {
 
-  implicit def AnyToConfigValue(x: Any) = ConfigValueFactory.fromAnyRef(x, "command line")
+	implicit def AnyToConfigValue(x: Any) = ConfigValueFactory.fromAnyRef(x, "command line")
 }
 
 class MorphlineDriver extends Driver[MorphlineTransformation] {
-  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
-  val context = new MorphlineContext.Builder().build()
-  override def run(t: MorphlineTransformation): DriverRunHandle[MorphlineTransformation] = {
-    val f = future {
+	implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
+	val context = new MorphlineContext.Builder().build()
+	override def run(t: MorphlineTransformation): DriverRunHandle[MorphlineTransformation] = {
+		val f = future {
+		  runMorphline(createMorphline(t), t)
 
-    }
-    new DriverRunHandle[MorphlineTransformation](this, new LocalDateTime(), t, f)
-  }
 
-  override def runAndWait(t: MorphlineTransformation): DriverRunState[MorphlineTransformation] =
-    Await.result(run(t).stateHandle.asInstanceOf[Future[DriverRunState[MorphlineTransformation]]], runTimeOut)
-  // Members declared in com.ottogroup.bi.soda.bottler.driver.Driver
-  def transformationName: String = "morphline"
-  //factory method for morphline input (reader) commands
-  def createInput(config: Config, format: StorageFormat, sourceTable: String, cols: Seq[String], finalCommand: Command): Command = {
+		}
+		new DriverRunHandle[MorphlineTransformation](this, new LocalDateTime(), t, f)
+	}
 
-    val root = new Command {
+	override def runAndWait(t: MorphlineTransformation): DriverRunState[MorphlineTransformation] =
+			Await.result(run(t).stateHandle.asInstanceOf[Future[DriverRunState[MorphlineTransformation]]], runTimeOut)
+			// Members declared in com.ottogroup.bi.soda.bottler.driver.Driver
+		
+	  def transformationName: String = "morphline"
+	  //factory method for morphline input (reader) commands
+	  def createInput(format: StorageFormat, sourceTable: String, cols: Seq[String], finalCommand: Command): Command = {
+	
+	    val root = new Command {
+	
+	      override def getParent(): Command = null
+	
+	      override def notify(notification: Record) {
+	        throw new UnsupportedOperationException("Root command should be invisible and must not be called")
+	      }
+	
+	      override def process(record: Record): Boolean = {
+	        throw new UnsupportedOperationException("Root command should be invisible and must not be called")
+	      }
+	    }
+	
+	    format match {
+	      case f: TextFile => {
+	
+	        new ReadCSVBuilder().build(ConfigFactory.empty().
+	          withValue("separator", f.fieldTerminator).
+	          withValue("trim", true).
+	          withValue("ignoreFirstLine", false).
+	          withValue("charset", "UTF-8").
+	          withValue("commentPrefix", "#").
+	          withValue("columns", ConfigValueFactory.fromIterable(cols)),
+	          root, finalCommand, context)
+	
+	      }
+	      case f: Parquet => {
+	
+	        val iConfig = ConfigFactory.empty()
+	        new ReadAvroParquetFileBuilder().build(iConfig, root, finalCommand, context)
+	      }
+	      case f: ExternalAvro => {
+	        val iConfig = ConfigFactory.empty()
+	        new ReadAvroContainerBuilder().build(iConfig, root, finalCommand, context)
+	      }
+	      case _ => throw new UnsupportedOperationException("unsupported  input format for morphline")
+	
+	    }
+	  }
+			// factory method for predefined output commands
+	def createOutput(parent: Command,transformation:MorphlineTransformation): Command = {
+						val view = transformation.view.get
+						val storageFormat = view.storageFormat.asInstanceOf[ExternalStorageFormat]
+						val child = new DropRecordBuilder().build(null, null, null, context);
+						val commandConfig = ConfigFactory.empty()
+						val fields = view.fields.map( field => field.n)
+						val command =storageFormat match {
+						case f:ExaSol => {
+							val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
+									withValue("", "")
+									new JDBCWriterBuilder().build(oConfig, parent, child, context)
+						}
+						case f:ExternalTextFile => {
 
-      override def getParent(): Command = null
+							val oConfig = ConfigFactory.empty().withValue("filename", view.locationPath+"/000000").
+									withValue("separator", f.fieldTerminator).
+									withValue("fields", ConfigValueFactory.fromIterable(fields))
+									new CSVWriterBuilder().build(oConfig, parent, child, context)
+						}
+						case f:Redis => {
 
-      override def notify(notification: Record) {
-        throw new UnsupportedOperationException("Root command should be invisible and must not be called")
-      }
+							val keys = f.keys
+									val oConfig = ConfigFactory.empty().withValue("server", f.host).
+									withValue("port",f.port).withValue("password", f.password).
+									withValue("keys", ConfigValueFactory.fromIterable(keys)).
+									withValue("fields", ConfigValueFactory.fromIterable(fields))
+									new REDISWriterBuilder().build(oConfig, parent, child, context)
+						}
+						case f:JDBC => {
+							val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
+									withValue("jdbcDriver", f.jdbcDriver).
+									withValue("username", f.userName).
+									withValue("targetTable", view.tableName).withValue("password", f.password).
+									withValue("fields", ConfigValueFactory.fromIterable(fields))
+									new JDBCWriterBuilder().build(oConfig, parent, child, context)
+						}
+						case f:ExternalAvro => {
+							val oConfig = commandConfig.withValue("filename",view.locationPath+"/000000")
+									new AvroWriterBuilder().build(oConfig, parent, child, context)
+						}
+						case _:NullStorage => {
+							child
+						}
+				}
+				command
+			}
+			def createSampler(inputConnector: CommandConnector, sample: Double) = {
+				val sampleConfig = ConfigFactory.empty().withValue("probability", sample)
+				val sampleConnector = new CommandConnector(false, "sampleconnector")
+				sampleConnector.setParent(inputConnector.getParent)
+				sampleConnector.setChild(inputConnector.getChild)
+				val sampleCommand = new SampleBuilder().build(sampleConfig, inputConnector, sampleConnector, context)
+				inputConnector.setChild(sampleCommand)
+				sampleCommand
+			}
 
-      override def process(record: Record): Boolean = {
-        throw new UnsupportedOperationException("Root command should be invisible and must not be called")
-      }
-    }
+			def createMorphline(transformation: MorphlineTransformation):Command = {
+			    val view = transformation.view.get
+				
+				val outputConnector = new CommandConnector(false, "outputconnector");
+				val finalCommand = createOutput(outputConnector, transformation)
+				val inputView = transformation.view.get.dependencies
+				outputConnector.setChild(finalCommand)
+				val inputConnector = new CommandConnector(false, "inputconnector");
+				val inputCommand = createInput( inputView.head.storageFormat, inputView.head.n, Seq[String](), inputConnector)
+				inputConnector.setParent(inputCommand)
+						MorphlineClasspathUtil.setupJavaCompilerClasspath()
+						// if the user did specify a morphline, plug it between reader and writer
+				if (transformation.definition!="") {
+				  val morphlineConfig = ConfigFactory.parseString(transformation.definition)
+									val morphline = new PipeBuilder().build(morphlineConfig, inputConnector, outputConnector, context)
+									outputConnector.setParent(morphline)
+									inputConnector.setChild(morphline)
+									morphline
+						} else {
+							// if the user did not specify a morphline, at least extract all avro paths so they can be anonymized
+							val extractAvroTreeCommand = new ExtractAvroTreeBuilder().build(ConfigFactory.empty(), inputConnector, outputConnector, context)
+									inputConnector.setChild(extractAvroTreeCommand)
+									outputConnector.setParent(extractAvroTreeCommand)
+									extractAvroTreeCommand
+						}
+				if (transformation.anonymize.size>0) {					
+					val anonConfig = ConfigFactory.empty().withValue("fields", ConfigValueFactory.fromIterable(transformation.anonymize))
+					val output2Connector = new CommandConnector(false, "output2")
+					output2Connector.setParent(outputConnector.getParent);
+					output2Connector.setChild(outputConnector.getChild())
+					val anonymizer = if (view.storageFormat.isInstanceOf[ExternalAvro])
+							new AnonymizeAvroBuilder().build(anonConfig, outputConnector, output2Connector, context)
+						else
+							new AnonymizeBuilder().build(anonConfig, outputConnector, output2Connector, context)
+					outputConnector.setChild(anonymizer)
+				}
+				if (transformation.sampling<100)
+					createSampler(inputConnector, transformation.sampling)
+			   else
+			     inputConnector
+			}
 
-    format match {
-      case f: TextFile => {
+			def runMorphline(command:Command,transformation:MorphlineTransformation) = {
+				Notifications.notifyBeginTransaction(command);
+				Notifications.notifyStartSession(command);
+				try {
+					Settings().userGroupInformation.doAs(new PrivilegedAction[Unit]() {
+						override def run():Unit = {
 
-        new ReadCSVBuilder().build(ConfigFactory.empty().
-          withValue("separator", f.fieldTerminator).
-          withValue("trim", true).
-          withValue("ignoreFirstLine", false).
-          withValue("charset", "UTF-8").
-          withValue("commentPrefix", "#").
-          withValue("columns", ConfigValueFactory.fromIterable(cols)),
-          root, finalCommand, context)
-
-      }
-      case f: Parquet => {
-
-        val iConfig = ConfigFactory.empty()
-        new ReadAvroParquetFileBuilder().build(iConfig, root, finalCommand, context)
-      }
-      case f: Avro => {
-        val iConfig = ConfigFactory.empty()
-        new ReadAvroContainerBuilder().build(iConfig, root, finalCommand, context)
-      }
-
-    }
-  }
-  // factory method for predefined output commands
-  def createOutput(config: Config, parent: Command): Command = {
-    val child = new DropRecordBuilder().build(null, null, null, context);
-    val commandConfig = ConfigFactory.empty().withValue("delta", config.getBoolean("delta"))
-    val fields = config.getString("cols").split(',').toList
-    val command = config.getString("sink") match {
-      case "exasol" => {
-        val oConfig = commandConfig.withValue("connectionURL", "jdbc:exasol://exasolhost").
-          withValue("", "")
-        new JDBCWriterBuilder().build(oConfig, parent, child, context)
-      }
-      case "csv" => {
-
-        val oConfig = ConfigFactory.empty().withValue("filename", config.getString("output")).
-          withValue("separator", config.getString("separator")).
-          withValue("fields", ConfigValueFactory.fromIterable(fields))
-        new CSVWriterBuilder().build(oConfig, parent, child, context)
-      }
-      case "redis" => {
-
-        val keys = config.getString("keys").split(',').toList
-        val oConfig = ConfigFactory.empty().withValue("server", config.getString("host")).
-          withValue("port", config.getInt("port")).withValue("password", config.getString("password")).
-          withValue("keys", ConfigValueFactory.fromIterable(keys)).
-          withValue("fields", ConfigValueFactory.fromIterable(fields))
-        new REDISWriterBuilder().build(oConfig, parent, child, context)
-      }
-      case "jdbc" => {
-        val oConfig = commandConfig.withValue("connectionURL", config.getString("jdbcurl")).
-          withValue("jdbcDriver", config.getString("jdbcdriver")).
-          withValue("username", config.getString("username")).
-          withValue("targetTable", config.getString("table")).withValue("password", config.getString("password")).
-          withValue("fields", ConfigValueFactory.fromIterable(fields))
-        new JDBCWriterBuilder().build(oConfig, parent, child, context)
-      }
-      case "avro" => {
-        val oConfig = commandConfig.withValue("filename", config.getString("output"))
-        new AvroWriterBuilder().build(oConfig, parent, child, context)
-      }
-      case "null" => {
-        child
-      }
-    }
-    command
-  }
-  def createSampler(inputConnector: CommandConnector, sample: Double) = {
-    val sampleConfig = ConfigFactory.empty().withValue("probability", sample)
-    val sampleConnector = new CommandConnector(false, "sampleconnector")
-    sampleConnector.setParent(inputConnector.getParent)
-    sampleConnector.setChild(inputConnector.getChild)
-    val sampleCommand = new SampleBuilder().build(sampleConfig, inputConnector, sampleConnector, context)
-    inputConnector.setChild(sampleCommand)
-    sampleCommand
-  }
-
-  def createMorphline(transformation: MorphlineTransformation) = {
-    val config = ConfigFactory.parseString(transformation.definition)
-    val outputConnector = new CommandConnector(false, "outputconnector");
-    val finalCommand = createOutput(config, outputConnector)
-    outputConnector.setChild(finalCommand)
-    val inputConnector = new CommandConnector(false, "inputconnector");
-    val inputCommand = createInput(config, transformation.view.get.storageFormat, transformation.view.get.dependencies.head.n, Seq[String](), inputConnector)
-    inputConnector.setParent(inputCommand)
-    MorphlineClasspathUtil.setupJavaCompilerClasspath()
-    // if the user did specify a morphline, plug it between reader and writer
-    val parent = if (config.hasPath("morphline")) {
-      val morphlineId = config.getString("morphline")
-      val morphlineConfig = new Compiler().find(morphlineId, config, "error")
-      val morphline = new PipeBuilder().build(morphlineConfig, inputConnector, outputConnector, context)
-      outputConnector.setParent(morphline)
-      inputConnector.setChild(morphline)
-      morphline
-    } else {
-      // if the user did not specify a morphline, at least extract all avro paths so they can be anonymized
-      val extractAvroTreeCommand = new ExtractAvroTreeBuilder().build(ConfigFactory.empty(), inputConnector, outputConnector, context)
-      inputConnector.setChild(extractAvroTreeCommand)
-      outputConnector.setParent(extractAvroTreeCommand)
-      extractAvroTreeCommand
-    }
-    if (config.hasPath("anon")) {
-      val anFields = config.getString("anon").split(",").toList
-      val anonConfig = ConfigFactory.empty().withValue("fields", ConfigValueFactory.fromIterable(anFields))
-      val output2Connector = new CommandConnector(false, "output2")
-      output2Connector.setParent(outputConnector.getParent);
-      output2Connector.setChild(outputConnector.getChild())
-
-      val anonymizer = if (config.getString("sink").equals("avro"))
-        new AnonymizeAvroBuilder().build(anonConfig, outputConnector, output2Connector, context)
-      else
-        new AnonymizeBuilder().build(anonConfig, outputConnector, output2Connector, context)
-      outputConnector.setChild(anonymizer)
-    }
-    if (config.hasPath("sample"))
-      createSampler(inputConnector, config.getDouble("sample"))
-  }
-
-}
-
+								try {
+									val fs = FileSystem.get(new URI("hdfs:/"),Settings().hadoopConf)
+											val view = transformation.view.get
+											view.dependencies.foreach{view => {
+												val test=fs.listStatus(new Path(view.locationPath)).map { status =>
+													val record: Record = new Record()
+													if (!status.getPath().getName().startsWith("_")) {
+														val in = fs.open(status.getPath()).getWrappedStream()
+																record.put(Fields.ATTACHMENT_BODY, in);
+														for (field <- view.partitionParameters)
+															record.put(field.n,field.v)
+														record.put("file_upload_url", status.getPath().toUri().toString())
+														if (!command.process(record))
+															println("Morphline failed to process record: " + record);
+														in.close();
+													}
+												}
+											}
+									}
+									Notifications.notifyCommitTransaction(command)
+									
+								} catch {
+									case e: Throwable => {
+											Notifications.notifyRollbackTransaction(command)
+											context.getExceptionHandler().handleException(e, null)
+										}
+								}
+								Notifications.notifyShutdown(command);
+						}
+					}
+							)
+				}
+			}
+}  
 object MorphlineDriver {
-  def apply(ds: DriverSettings) = new MorphlineDriver()
+	def apply(ds: DriverSettings) = new MorphlineDriver()
 }

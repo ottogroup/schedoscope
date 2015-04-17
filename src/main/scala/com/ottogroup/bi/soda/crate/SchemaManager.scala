@@ -23,6 +23,7 @@ import com.ottogroup.bi.soda.dsl.Version
 import com.ottogroup.bi.soda.dsl.View
 import org.slf4j.LoggerFactory
 import org.apache.tools.ant.taskdefs.Sleep
+import com.ottogroup.bi.soda.dsl.ExternalTransformation
 
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
@@ -145,6 +146,12 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
+    if (tablePrototype.transformation.isInstanceOf[ExternalTransformation]) {
+     val dbMetadata = metastoreClient.getDatabase(tablePrototype.dbName).getParameters
+      Map((tablePrototype,
+        (dbMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.default),
+          dbMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
+    } else
     if (tablePrototype.isPartitioned) {
       val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
       existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)) }.toMap
@@ -154,6 +161,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
         (tableMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.default),
           tableMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
     }
+   
   }
 
   def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = {

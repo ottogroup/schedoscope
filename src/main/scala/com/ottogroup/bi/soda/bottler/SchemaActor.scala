@@ -29,9 +29,9 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       
       c.views
         .groupBy { v => (v.dbName, v.n) }
-        .map { case (_, views) => views.head }
+        .map { case (_, views) => views.head }.filter ( table => table.isExternal)
         .foreach {
-          tablePrototype =>
+          tablePrototype => 
             {
               log.info(s"Checking or creating table for view ${tablePrototype.module}.${tablePrototype.n}")
 

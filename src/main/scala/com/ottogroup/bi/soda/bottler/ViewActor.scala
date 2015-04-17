@@ -3,24 +3,23 @@ package com.ottogroup.bi.soda.bottler
 import java.lang.Math.max
 import java.security.PrivilegedAction
 import java.util.Date
-
 import scala.concurrent.duration.Duration
-
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-
 import com.ottogroup.bi.soda.SettingsImpl
 import com.ottogroup.bi.soda.dsl.NoOp
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
 import com.ottogroup.bi.soda.dsl.transformations.Touch
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
+import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
+import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
+import com.ottogroup.bi.soda.dsl.ExternalTransformation
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
@@ -108,10 +107,14 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       log.info("SUCCESS")
 
       setVersion(view)
-      touchSuccessFlag(view)
-      logTransformationTimestamp(view)
-
-      toMaterialize()
+      view.transformation match {
+        case _ : ExternalTransformation => toMaterialize()
+        case _ => {
+        	touchSuccessFlag(view)
+        	logTransformationTimestamp(view)
+        	toMaterialize()
+        }
+      }
     }
 
     case _: ActionFailure[_] => toRetrying(retries)
@@ -267,7 +270,16 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
           toDefault(false, "nodata")
         }
       }
+      case _:MorphlineTransformation => {
+    	  setVersion(view)
 
+    	  actionsManagerActor ! view
+        
+    	  logStateInfo("transforming")
+
+    	  unbecomeBecome(transforming(retries))
+      
+      }
       case _: FilesystemTransformation => {
         if (lastTransformationTimestamp > 0l) {
           toMaterialize()

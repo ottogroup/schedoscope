@@ -4,7 +4,7 @@
 	<groupId>com.ottogroup.bi</groupId>
 	<artifactId>soda</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-
+ 
 	<properties>
 		<akka.version>2.3.6</akka.version>
 		<scala.version>2.10</scala.version>
