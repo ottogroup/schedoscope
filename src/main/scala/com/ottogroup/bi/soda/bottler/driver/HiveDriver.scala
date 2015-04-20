@@ -2,26 +2,27 @@ package com.ottogroup.bi.soda.bottler.driver
 
 import java.security.PrivilegedAction
 import java.sql.Connection
-import java.sql.Statement
 import java.sql.DriverManager
 import java.sql.SQLException
+import java.sql.Statement
+
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.Stack
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.Duration
 import scala.concurrent.future
+
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
+import org.apache.thrift.protocol.TProtocolException
 import org.joda.time.LocalDateTime
+
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.replaceParameters
-import org.apache.thrift.protocol.TProtocolException
 
 class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
@@ -48,48 +49,24 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
     val queriesToExecute = queryStack.reverse.filter(q => !StringUtils.isBlank(q))
 
-    val con = try {
-      connection
-    } catch {
-      case t: Throwable => throw DriverException(s"Runtime exception while preparing Hive Server connection for query ${queriesToExecute}", t)
-    }
-
-    val stmt = try {
-      con.createStatement()
-    } catch {
-      case e: SQLException => {
-        closeConnection(con)
-        if (e.getCause().isInstanceOf[TProtocolException])
-          throw DriverException(s"Runtime exception while preparing Hive query ${queriesToExecute}", e.getCause())
-        else
-          return DriverRunFailed[HiveTransformation](this, s"SQL exception while preparing Hive query ${queriesToExecute}", e)
-      }
-
-      case t: Throwable => {
-        closeConnection(con)
-        throw DriverException(s"Runtime exception while preparing Hive query ${queriesToExecute}", t)
-      }
-    }
-
     queriesToExecute.foreach(
       q => try {
-        stmt.execute(q.trim())
+        statement.execute(q.trim())
       } catch {
         case e: SQLException => {
-          closeStatementAndConnection(con, stmt)
-          if (e.getCause().isInstanceOf[TProtocolException])
+          if (e.getCause() != null && e.getCause().isInstanceOf[TProtocolException]) {
+            cleanupResources
             throw DriverException(s"Runtime exception while executing Hive query ${q}", e.getCause())
-          else
+          } else
             return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
+
         }
 
         case t: Throwable => {
-          closeStatementAndConnection(con, stmt)
+          cleanupResources
           throw DriverException(s"Runtime exception while executing Hive query ${q}", t)
         }
       })
-
-    closeStatementAndConnection(con, stmt)
 
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
@@ -104,33 +81,55 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
     }
   }
 
-  private def connection = {
-    Class.forName(JDBC_CLASS)
-    ugi.reloginFromTicketCache()
-    ugi.doAs(new PrivilegedAction[Connection]() {
-      def run(): Connection = {
-        DriverManager.getConnection(connectionUrl)
-      }
-    })
+  private val currentConnection = new ThreadLocal[Option[Connection]]() {
+    override def initialValue() = None
   }
 
-  private def closeConnection(c: Connection) =
-    try {
-      c.close()
-    } catch {
-      case _: Throwable =>
+  private def connection = {
+    if (currentConnection.get.isEmpty) {
+      Class.forName(JDBC_CLASS)
+      ugi.reloginFromTicketCache()
+      currentConnection.set(Some(ugi.doAs(new PrivilegedAction[Connection]() {
+        def run(): Connection = {
+          DriverManager.getConnection(connectionUrl)
+        }
+      })))
     }
 
-  private def closeStatement(s: Statement) =
+    currentConnection.get.get
+  }
+
+  private val currentStatement = new ThreadLocal[Option[Statement]]() {
+    override def initialValue() = None
+  }
+
+  private def statement = {
+    if (currentStatement.get.isEmpty)
+      currentStatement.set(Some(connection.createStatement()))
+
+    currentStatement.get.get
+  }
+
+  private def cleanupResources() {
     try {
-      s.close()
+      if (currentStatement.get.isDefined) {
+        currentStatement.get.get.close()
+      }
     } catch {
       case _: Throwable =>
+    } finally {
+      currentStatement.set(None)
     }
 
-  private def closeStatementAndConnection(c: Connection, s: Statement) {
-    closeStatement(s)
-    closeConnection(c)
+    try {
+      if (currentConnection.get.isDefined) {
+        currentConnection.get.get.close()
+      }
+    } catch {
+      case _: Throwable =>
+    } finally {
+      currentConnection.set(None)
+    }
   }
 
   def JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
