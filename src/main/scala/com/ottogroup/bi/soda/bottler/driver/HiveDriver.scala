@@ -5,25 +5,23 @@ import java.sql.Connection
 import java.sql.Statement
 import java.sql.DriverManager
 import java.sql.SQLException
-
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.Stack
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
 import scala.concurrent.future
-
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
-
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.replaceParameters
+import org.apache.thrift.protocol.TProtocolException
 
 class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
@@ -61,9 +59,12 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
     } catch {
       case e: SQLException => {
         closeConnection(con)
-        return DriverRunFailed[HiveTransformation](this, s"SQL exception while preparing Hive query ${queriesToExecute}", e)
+        if (e.getCause().isInstanceOf[TProtocolException])
+          throw DriverException(s"Runtime exception while preparing Hive query ${queriesToExecute}", e.getCause())
+        else
+          return DriverRunFailed[HiveTransformation](this, s"SQL exception while preparing Hive query ${queriesToExecute}", e)
       }
-      
+
       case t: Throwable => {
         closeConnection(con)
         throw DriverException(s"Runtime exception while preparing Hive query ${queriesToExecute}", t)
@@ -76,7 +77,10 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
       } catch {
         case e: SQLException => {
           closeStatementAndConnection(con, stmt)
-          return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
+          if (e.getCause().isInstanceOf[TProtocolException])
+            throw DriverException(s"Runtime exception while executing Hive query ${q}", e.getCause())
+          else
+            return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
         }
 
         case t: Throwable => {
