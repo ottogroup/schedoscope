@@ -88,7 +88,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
     if (tablesToCreate.nonEmpty) {
       log.info(s"Submitting tables to check or create to schema actor")
-      tablesToCreate.filter( p => !p.views.head.transformation.isInstanceOf[ExternalTransformation] ).foreach {
+      tablesToCreate.foreach {
         queryActor[Any](schemaActor, _, settings.schemaTimeout)
       }
     }
@@ -99,7 +99,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     if (partitionsToCreate.nonEmpty) {
       log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")
 
-      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, partitionsToCreate.filter(p => !p.views.head.transformation.isInstanceOf[ExternalTransformation]), settings.schemaTimeout)
+      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, partitionsToCreate, settings.schemaTimeout)
 
       log.info(s"Partitions created, initializing actors")
 
