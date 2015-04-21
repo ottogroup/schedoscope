@@ -120,8 +120,10 @@ var svg = d3.select("body").append("svg")
   var root = viewsMap[rootName];
 
   // if root has 1 child, the radial tree layout is broken -> add dummy node in such a case
+  var fixed = false;
   if (root.children.length <= 1) {
     root.children.push({name:"dummy",status:"dummy"});
+    fixed = true;
   }
 
   var nodes = tree.nodes(root),
@@ -146,6 +148,8 @@ var svg = d3.select("body").append("svg")
 
   node.append("title")
       .text(function(d) { return d.name + ": " + d.status; });
+  
+  if (fixed) root.children.pop();
 }
 
 });
