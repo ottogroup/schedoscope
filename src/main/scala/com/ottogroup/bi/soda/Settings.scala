@@ -57,6 +57,8 @@ class SettingsImpl(val config: Config) extends Extension {
       TimeUnit.MILLISECONDS)
 
   lazy val port = config.getInt("soda.webservice.port")
+  
+  lazy val webResourcesDirectory = config.getString("soda.webservice.resourceDirectory")
 
   lazy val jdbcUrl = config.getString("soda.metastore.jdbcUrl")
 

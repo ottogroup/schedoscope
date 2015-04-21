@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.node circle {
+  stroke: #ccc;
+  stroke-width: 0.5px;
+}
+
+.node {
+  font: 10px sans-serif;
+}
+
+.link {
+  fill: none;
+  stroke: #ccc;
+  stroke-width: 0.5px;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script>
+
+var diameter = 1400;
+
+var colors = {};
+colors['root'] = "black";
+colors['table'] = "brown";
+colors['dummy'] = "white";
+colors['receive'] = "grey";
+colors['materialized'] = "green";
+colors['waiting'] = "yellow";
+colors['transforming'] = "orange";
+colors['error'] = "red";
+
+var viewUrlPath = window.location.pathname.split("/").slice(2).join("/");
+
+var query = window.location.search.substring(1);
+var vars = query.split("&");
+var filter = new RegExp(".*");
+var initialRoot = "ROOT";
+vars.forEach(function(v) {
+    p=v.split("=");
+    if (p[0] == "filter") {
+        filter = new RegExp(".*" + p[1] + ".*");
+    }
+    if (p[0] == "root") {
+        initialRoot = p[1];
+    }
+
+})
+
+d3.json("/views/" + viewUrlPath + "?dependencies=true", function(error, views) {
+  // build lookup view-url -> view
+  var viewsMap = {};
+  var hasParentCount = {};
+  views.views.forEach(function(view) {
+    if (filter.test(view.view)) {
+      viewsMap[view.view] = view;
+      hasParentCount[view.view] = 0;
+    }
+  });
+
+  // reformat to tree-conform syntax
+  views.views.forEach(function(view) {
+    var par = viewsMap[view.view];
+    if (par) { 
+      par.name = par.view;
+      delete par.view;
+      if (!par.children) par.children = [];
+      view.dependencies.forEach(function(dep) {
+        var child = viewsMap[dep.view];
+        hasParentCount[dep.view] += 1;
+        par.children.push(child);
+      });
+      delete par.dependencies
+    }
+  });
+
+  // add top-level nodes for databases / root node
+  var rootNode = {name:"ROOT", status:"root", children: []};
+  viewsMap["ROOT"] = rootNode;
+  for (var key in hasParentCount) {
+    if (hasParentCount[key] == 0) {
+      var tableName = key.split("/").slice(0,2).join("/");
+      if (!(tableName in viewsMap)) {
+        var tableNode = {name: tableName, status:"table", children: []};
+        rootNode.children.push(tableNode);
+        viewsMap[tableName] = tableNode;
+      }
+      viewsMap[tableName].children.push(viewsMap[key]);
+    }
+  }
+  if (viewsMap["ROOT"].children.length == 1) {
+    viewsMap["ROOT"] = viewsMap["ROOT"].children[0];
+  }
+
+d3.select("body").append("p").attr("id", "nav").append("a").attr("href", "#").on("click", function(d) {draw("ROOT")}).text("root");
+
+draw(initialRoot);
+
+function draw(rootName) {
+
+var tree = d3.layout.tree()
+    .size([360, diameter / 2 - 120])
+    .separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; });
+
+var diagonal = d3.svg.diagonal.radial()
+    .projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
+
+d3.select("body").selectAll("svg").remove();
+
+var svg = d3.select("body").append("svg")
+    .attr("width", diameter)
+    .attr("height", diameter - 150)
+  .append("g")
+    .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
+
+  var root = viewsMap[rootName];
+
+  // if root has 1 child, the radial tree layout is broken -> add dummy node in such a case
+  if (root.children.length <= 1) {
+    root.children.push({name:"dummy",status:"dummy"});
+  }
+
+  var nodes = tree.nodes(root),
+      links = tree.links(nodes);
+ 
+  var link = svg.selectAll(".link")
+      .data(links)
+    .enter().append("path")
+      .attr("class", "link")
+      .attr("d", diagonal);
+
+  var node = svg.selectAll(".node")
+      .data(nodes)
+    .enter().append("g")
+      .attr("class", "node")
+      .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+      .on("click", function(d) { draw(d.name) } );
+
+  node.append("circle")
+      .attr("r", 3.5)
+      .style("fill", function(d) { return colors[d.status] });
+
+  node.append("title")
+      .text(function(d) { return d.name + ": " + d.status; });
+}
+
+});
+
+
+d3.select(self.frameElement).style("height", diameter - 150 + "px");
+
+</script>
+
