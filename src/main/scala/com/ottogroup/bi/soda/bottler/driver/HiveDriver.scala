@@ -73,9 +73,9 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
   def registerFunction(f: Function) {
     val existing = metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
-    if (existing == null || existing.size() == 0) {
+    if (existing == null || existing.isEmpty()) {
       val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
-      val createFunction = s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}"
+      val createFunction = s"DROP FUNCTION IF EXISTS ${f.getDbName}.${f.getFunctionName}; CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}"
 
       this.executeHiveQuery(createFunction)
     }
