@@ -5,12 +5,10 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 import java.sql.Statement
-
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.Stack
 import scala.concurrent.future
-
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
@@ -18,11 +16,11 @@ import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.thrift.protocol.TProtocolException
 import org.joda.time.LocalDateTime
-
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.replaceParameters
+import org.slf4j.LoggerFactory
 
 class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
@@ -30,6 +28,8 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 
+  val log = LoggerFactory.getLogger(classOf[HiveDriver])
+  
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {
       t.udfs.foreach(this.registerFunction(_))
@@ -87,6 +87,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
   private def connection = {
     if (currentConnection.get.isEmpty) {
+      log.info("HIVE-DRIVER: Establishing connection to HiveServer")
       Class.forName(JDBC_CLASS)
       ugi.reloginFromTicketCache()
       currentConnection.set(Some(ugi.doAs(new PrivilegedAction[Connection]() {
@@ -104,15 +105,17 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
   }
 
   private def statement = {
-    if (currentStatement.get.isEmpty)
+    if (currentStatement.get.isEmpty) {
+      log.info("HIVE-DRIVER: Creating statement on HiveServer")
       currentStatement.set(Some(connection.createStatement()))
-
+    }
     currentStatement.get.get
   }
 
   private def cleanupResources() {
     try {
       if (currentStatement.get.isDefined) {
+        log.warn("HIVE-DRIVER: Closing statement on HiveServer")
         currentStatement.get.get.close()
       }
     } catch {
@@ -123,6 +126,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 
     try {
       if (currentConnection.get.isDefined) {
+        log.warn("HIVE-DRIVER: Closing connection to HiveServer")
         currentConnection.get.get.close()
       }
     } catch {
