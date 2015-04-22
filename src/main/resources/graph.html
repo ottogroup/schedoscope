@@ -33,6 +33,7 @@ colors['materialized'] = "green";
 colors['waiting'] = "yellow";
 colors['transforming'] = "orange";
 colors['error'] = "red";
+colors['nodata'] = "white";
 
 var viewUrlPath = window.location.pathname.split("/").slice(2).join("/");
 
@@ -60,7 +61,7 @@ d3.json("/views/" + viewUrlPath + "?dependencies=true" + filter, function(error,
   var viewsMap = {};
   var hasParentCount = {};
   views.views.forEach(function(view) {
-    if (!exclude || !exclude.test(view.view)) {
+    if ((!exclude || !exclude.test(view.view)) && view.status != "nodata" && view.status != "receive") {
       viewsMap[view.view] = view;
       hasParentCount[view.view] = 0;
     }
