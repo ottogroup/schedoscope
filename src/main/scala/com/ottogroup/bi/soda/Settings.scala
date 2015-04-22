@@ -150,7 +150,7 @@ object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
 }
 
 class DriverSettings(val config: Config, val name: String) {
-  lazy val location = Settings().nameNode + config.getString("location")
+  lazy val location = Settings().nameNode + config.getString("location") + Settings().env + "/"
   lazy val libDirectory = config.getString("libDirectory")
   lazy val concurrency = config.getInt("concurrency")
   lazy val unpack = config.getBoolean("unpack")
