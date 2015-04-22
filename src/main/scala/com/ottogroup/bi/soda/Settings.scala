@@ -59,6 +59,8 @@ class SettingsImpl(val config: Config) extends Extension {
   lazy val port = config.getInt("soda.webservice.port")
   
   lazy val webResourcesDirectory = config.getString("soda.webservice.resourceDirectory")
+  
+  lazy val restApiConcurrency = config.getInt("soda.webservice.concurrency")
 
   lazy val jdbcUrl = config.getString("soda.metastore.jdbcUrl")
 

@@ -11,7 +11,7 @@ import scala.concurrent.duration._
 import jline.ConsoleReader
 import spray.http.HttpHeaders.RawHeader
 
-object SodaService extends App with SimpleRoutingApp {
+object SodaService extends App with SimpleParallelRoutingApp {
 
   val soda = new SodaSystem()
 
