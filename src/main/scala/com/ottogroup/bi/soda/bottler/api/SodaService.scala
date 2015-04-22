@@ -63,7 +63,8 @@ object SodaService extends App with SimpleParallelRoutingApp {
   while (true) {
     try {
       val cmd = reader.readLine("soda> ")
-      if (cmd != null && !cmd.trim().replaceAll(";", "").isEmpty())
+      // we have to intercept --help because otherwise jline seems to call System.exit :(
+      if (cmd != null && !cmd.trim().replaceAll(";", "").isEmpty() && !cmd.matches(".*--help.*"))
         ctrl.run(cmd.split("\\s+"))
     } catch {
       case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()
