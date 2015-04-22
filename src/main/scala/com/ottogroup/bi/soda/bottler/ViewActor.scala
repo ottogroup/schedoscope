@@ -252,8 +252,14 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def toTransformOrMaterialize(retries: Int) {
     view.transformation() match {
       case NoOp() => {
-        if (successFlagExists(view)) {
+        if (successFlagExists(view) && view.dependencies.isEmpty) {
           log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
+          setVersion(view)
+          getOrLogTransformationTimestamp(view)
+
+          toMaterialize()
+        } else if (!view.dependencies.isEmpty) {
+          log.debug("dependencies for " + view + ", and no transformation specified")
           setVersion(view)
           getOrLogTransformationTimestamp(view)
 
