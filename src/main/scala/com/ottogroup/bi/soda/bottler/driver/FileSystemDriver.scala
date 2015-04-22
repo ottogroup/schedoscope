@@ -216,7 +216,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
         fileChecksums(listFiles(p + "/*").map(f => f.getPath.toString()).toList, recursive)
       } else
         List()
-    }).toList
+    }).sorted
   }
 
   def listFiles(path: String): Array[FileStatus] = {
