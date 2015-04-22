@@ -196,8 +196,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         toMaterialize()
       }
     } else {
-      setVersion(view)
-
       listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
       listenersWaitingForMaterialize.clear
 
@@ -254,10 +252,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def toTransformOrMaterialize(retries: Int) {
     view.transformation() match {
       case NoOp() => {
-        setVersion(view)
-
         if (successFlagExists(view)) {
           log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
+          setVersion(view)
           getOrLogTransformationTimestamp(view)
 
           toMaterialize()
