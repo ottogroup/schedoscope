@@ -6,6 +6,7 @@ import com.ottogroup.bi.soda.dsl.Parquet
 import com.ottogroup.bi.soda.dsl.Structure
 import com.ottogroup.bi.soda.dsl.TextFile
 import com.ottogroup.bi.soda.dsl.View
+import com.ottogroup.bi.soda.dsl.ExternalStorageFormat
 
 object HiveQl {
   def typeDdl[T](scalaType: Manifest[T]): String = {
@@ -76,13 +77,13 @@ ${if (lineTerminator != null) s"\tLINES TERMINATED BY \42${lineTerminator}\42" e
 ${if (collectionItemTerminator != null) s"\tCOLLECTION ITEMS TERMINATED BY \42${collectionItemTerminator}\42" else ""}
 ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY \42${mapKeyTerminator}\42" else ""}
 \tSTORED AS TEXTFILE"""
-
+    case e : ExternalStorageFormat =>  "STORED BY 'org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler'"
     case _ => "STORED AS TEXTFILE"
   }
 
   def locationDdl(view: View): String = view.locationPath match {
     case "" => ""
-    case l => s"LOCATION '${l}'"
+    case l => if (!view.isExternal) s"LOCATION '${l}'" else ""
   }
 
   def ddl(view: View): String = s"""

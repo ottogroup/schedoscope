@@ -24,6 +24,7 @@ import com.ottogroup.bi.soda.dsl.View
 import org.slf4j.LoggerFactory
 import org.apache.tools.ant.taskdefs.Sleep
 import com.ottogroup.bi.soda.dsl.ExternalTransformation
+import org.hamcrest.core.IsInstanceOf
 
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
@@ -117,7 +118,8 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def createNonExistingPartitions(tablePrototype: View, partitions: List[Partition], retry: Int = 3): Map[View, (String, Long)] = try {
-    if (partitions.isEmpty || !tablePrototype.isPartitioned()) {
+    if (partitions.isEmpty || !tablePrototype.isPartitioned() || tablePrototype.transformation().isInstanceOf[ExternalTransformation]
+        ) {
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)

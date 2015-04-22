@@ -1,6 +1,6 @@
 package com.ottogroup.bi.soda.dsl.transformations
 
-import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.dsl._
 import org.kitesdk.morphline.stdlib.DropRecordBuilder
 import org.kitesdk.morphline.api.Command
 import com.ottogroup.bi.soda.dsl.Named
@@ -15,5 +15,11 @@ case class MorphlineTransformation(definition: String="",
                                    fieldMapping : Map[FieldLike[_],FieldLike[_]] = Map()
                                    ) extends ExternalTransformation {
   def name() = "morphline"
+    
+  override def versionDigest = Version.digest(resourceHashes :+ definition)
+
+  override def resources() = {
+    List()
+  }
 
 }

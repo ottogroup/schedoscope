@@ -29,7 +29,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 
       c.views
         .groupBy { v => (v.dbName, v.n) }
-        .map { case (_, views) => views.head }.filter ( table => table.isExternal)
+        .map { case (_, views) => views.head }
         .foreach {
           tablePrototype => 
             {
