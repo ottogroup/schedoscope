@@ -17,14 +17,14 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
 
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
-  
+
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
       self forward runningCommand.get
   }
-  
+
   def receive = LoggingReceive({
-    
+
     case s: SetViewVersion => {
       runningCommand = Some(s)
       crate.setTransformationVersion(s.view)

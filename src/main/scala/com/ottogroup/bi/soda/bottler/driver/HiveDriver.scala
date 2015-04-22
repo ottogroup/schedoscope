@@ -29,7 +29,7 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
-  
+
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {
       t.udfs.foreach(this.registerFunction(_))

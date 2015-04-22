@@ -170,7 +170,7 @@ trait MonthlyParameterization {
   import DateParameterizationUtils._
 
   def prevMonth() = DateParameterizationUtils.prevMonth(year, month)
-  
+
   def thisAndPrevMonths() = DateParameterizationUtils.thisAndPrevMonths(year, month)
 
   def thisAndPrevDays() = DateParameterizationUtils.thisAndPrevDays(year, month)
@@ -199,13 +199,13 @@ import DateParameterizationUtils._
   val dateId: Parameter[String] = p(s"${year.v.get}${month.v.get}${day.v.get}")
 
   def prevDay() = DateParameterizationUtils.prevDay(year, month, day)
-  
+
   def prevMonth() = DateParameterizationUtils.prevMonth(year, month)
 
   def thisAndPrevDays() = DateParameterizationUtils.thisAndPrevDays(year, month, day)
 
   def thisAndPrevMonths() = DateParameterizationUtils.thisAndPrevMonths(year, month)
-  
+
   def allDays() = DateParameterizationUtils.allDays()
   def lastMonths(c:Int) = {
     val to = parametersToDay(year, month, day)

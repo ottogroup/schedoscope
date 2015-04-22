@@ -31,12 +31,12 @@ trait SimpleParallelRoutingApp extends HttpService {
    * interested in it).
    */
   def startServer(interface: String,
-                  port: Int,
-                  serviceActorName: String = "simple-service-actor",
-                  backlog: Int = 100,
-                  options: immutable.Traversable[Inet.SocketOption] = Nil,
-                  settings: Option[ServerSettings] = None)(route: ⇒ Route)(implicit system: ActorSystem, sslEngineProvider: ServerSSLEngineProvider,
-                                                                           bindingTimeout: Timeout = 1.second): Future[Http.Bound] = {
+    port: Int,
+    serviceActorName: String = "simple-service-actor",
+    backlog: Int = 100,
+    options: immutable.Traversable[Inet.SocketOption] = Nil,
+    settings: Option[ServerSettings] = None)(route: ⇒ Route)(implicit system: ActorSystem, sslEngineProvider: ServerSSLEngineProvider,
+      bindingTimeout: Timeout = 1.second): Future[Http.Bound] = {
     val serviceActor = system.actorOf(
       props = Props {
         new Actor {

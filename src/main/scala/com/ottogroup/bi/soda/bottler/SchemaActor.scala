@@ -22,11 +22,11 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
     if (runningCommand.isDefined)
       self forward runningCommand.get
   }
-  
+
   def receive = LoggingReceive({
     case c: CheckOrCreateTables => {
       runningCommand = Some(c)
-      
+
       c.views
         .groupBy { v => (v.dbName, v.n) }
         .map { case (_, views) => views.head }.filter ( table => table.isExternal)
@@ -50,7 +50,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 
     case a: AddPartitions => {
       runningCommand = Some(a)
-      
+
       val views = a.views
       log.info(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
 
@@ -59,7 +59,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
       log.info(s"Created / loaded ${views.size} partitions for table ${views.head.tableName}")
 
       sender ! TransformationMetadata(metadata)
-      
+
       runningCommand = None
     }
   })

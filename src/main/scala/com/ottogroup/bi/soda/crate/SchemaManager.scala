@@ -61,7 +61,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def dropAndCreateTableSchema(view: View): Unit = {
     val ddl = HiveQl.ddl(view)
-       
+
     val stmt = connection.createStatement()
 
     try {
@@ -77,7 +77,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     }
 
     log.info(s"Creating table:\n${ddl}")
-    
+
     stmt.execute(ddl)
 
     stmt.close()

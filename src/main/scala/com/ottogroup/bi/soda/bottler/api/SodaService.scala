@@ -51,7 +51,7 @@ object SodaService extends App with SimpleParallelRoutingApp {
           } ~
           path("graph" / Rest) { viewUrlPath =>
             getFromFile(s"${settings.webResourcesDirectory}/graph.html")
-          }          
+          }
       }
     }
   }

@@ -57,9 +57,9 @@ class SettingsImpl(val config: Config) extends Extension {
       TimeUnit.MILLISECONDS)
 
   lazy val port = config.getInt("soda.webservice.port")
-  
+
   lazy val webResourcesDirectory = config.getString("soda.webservice.resourceDirectory")
-  
+
   lazy val restApiConcurrency = config.getInt("soda.webservice.concurrency")
 
   lazy val jdbcUrl = config.getString("soda.metastore.jdbcUrl")
@@ -102,7 +102,7 @@ class SettingsImpl(val config: Config) extends Extension {
   lazy val metastoreConcurrency = config.getInt("soda.metastore.concurrency")
   lazy val metastoreWriteBatchSize = config.getInt("soda.metastore.writeBatchSize")
   lazy val metastoreReadBatchSize = config.getInt("soda.metastore.readBatchSize")
-  
+
   lazy val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()

@@ -47,7 +47,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
   def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] = {
     views.map {
-      v => 
+      v =>
         if (visited.contains(v))
           List()
         else if (ViewManagerActor.actorForView(v).isTerminated) {

@@ -23,8 +23,6 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
   var schemaActor: ActorRef = null
   var viewManagerActor: ActorRef = null
 
-  
-  
   override val supervisorStrategy =
     AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
       case _: Throwable => Restart
@@ -58,7 +56,7 @@ object SodaRootActor {
   lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("schema")))
 
   lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("metadata-logger")))
-  
+
   lazy val partitionMetadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("schema-writer-delegate")))
 
   lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("actions")))
