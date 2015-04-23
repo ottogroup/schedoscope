@@ -5,7 +5,7 @@ import java.security.MessageDigest
 import scala.Array.canBuildFrom
 
 object Version {
-  val md5 = MessageDigest.getInstance("MD5")
+  def md5 = MessageDigest.getInstance("MD5")
 
   val default = "0"
 
@@ -15,12 +15,6 @@ object Version {
     default
   else
     md5.digest(strings.sorted.mkString.toCharArray().map(_.toByte)).map("%02X" format _).mkString
-
-  def check(v: String): String = {
-    if (v == null)
-      default
-    v
-  }
 
   object SchemaVersion {
     def checksumProperty() = "schema.checksum"

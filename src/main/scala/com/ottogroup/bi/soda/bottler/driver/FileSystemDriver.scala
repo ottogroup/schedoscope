@@ -207,7 +207,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
       val fs = fileSystem(p, conf)
       val path = new Path(p)
       if (fs.isFile(path)) {
-        val cs = ChecksumCache.lookup(p).getOrElse(path + "::" + fs.getLength(path))
+        val cs = ChecksumCache.lookup(p).getOrElse(fs.getFileChecksum(path))
         if (cs != null) {
           List(ChecksumCache.cache(p, cs.toString))
         } else
