@@ -203,7 +203,7 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     }
 
   def fileChecksums(paths: List[String], recursive: Boolean): List[String] = {
-    paths.flatMap(p => {
+    paths.sorted.flatMap(p => {
       val fs = fileSystem(p, conf)
       val path = new Path(p)
       if (fs.isFile(path)) {

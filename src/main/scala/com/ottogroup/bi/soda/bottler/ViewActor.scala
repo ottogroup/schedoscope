@@ -190,9 +190,15 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
 
     if (oneDependencyReturnedData) {
-      if ((lastTransformationTimestamp <= dependenciesFreshness) || hasVersionMismatch(view))
+      if ((lastTransformationTimestamp <= dependenciesFreshness) || hasVersionMismatch(view)) {
+        if (lastTransformationTimestamp <= dependenciesFreshness)
+          log.debug(s"Initiating transformation because of timestamp difference: ${lastTransformationTimestamp} <= ${dependenciesFreshness}")
+
+        if (hasVersionMismatch(view))
+          log.debug(s"Initiating transformation because of transformation checksum difference: ${view.transformation().versionDigest} != ${versionChecksum}")
+
         toTransformOrMaterialize(0)
-      else {
+      } else {
         toMaterialize()
       }
     } else {
