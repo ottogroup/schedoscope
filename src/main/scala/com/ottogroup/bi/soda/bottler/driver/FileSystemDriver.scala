@@ -6,13 +6,11 @@ import java.io.InputStream
 import java.net.URI
 import java.nio.file.Files
 import java.security.PrivilegedAction
-
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
 import scala.concurrent.future
-
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileStatus
@@ -21,7 +19,6 @@ import org.apache.hadoop.fs.FileUtil
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
-
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.Copy
@@ -206,15 +203,11 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
     paths.flatMap(p => {
       val fs = fileSystem(p, conf)
       val path = new Path(p)
-      if (fs.isFile(path)) {
-        val cs = ChecksumCache.lookup(p).getOrElse(fs.getFileChecksum(path))
-        if (cs != null) {
-          List(ChecksumCache.cache(p, cs.toString))
-        } else
-          List()
-      } else if (recursive) {
+      if (fs.isFile(path))
+        List(FileSystemDriver.fileChecksum(fs, path, p))
+      else if (recursive)
         fileChecksums(listFiles(p + "/*").map(f => f.getPath.toString()).toList, recursive)
-      } else
+      else
         List()
     }).sorted
   }
@@ -246,21 +239,17 @@ object FileSystemDriver {
   def apply(ds: DriverSettings) = {
     new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
   }
-}
 
-object ChecksumCache {
-  val checksums = HashMap[String, String]()
+  private val checksumCache = new HashMap[String, String]()
 
-  def lookup(file: String): Option[String] = {
-    checksums.get(file)
+  private def calcChecksum(fs: FileSystem, path: Path) = {
+    val cs = fs.getFileChecksum(path)
+    if (cs == null)
+      path.toUri().toString() + "::" + fs.getLength(path)
+    else cs.toString
   }
 
-  def cache(file: String, checksum: String): String = {
-    checksums.put(file, checksum)
-    checksum
-  }
-
-  def clear() {
-    checksums.clear()
+  def fileChecksum(fs: FileSystem, path: Path, pathString: String) = synchronized {
+    checksumCache.getOrElseUpdate(pathString, calcChecksum(fs, path))
   }
 }
