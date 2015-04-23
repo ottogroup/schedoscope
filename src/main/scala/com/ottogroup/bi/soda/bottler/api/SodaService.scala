@@ -10,6 +10,8 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import jline.ConsoleReader
 import spray.http.HttpHeaders.RawHeader
+import jline.History
+import java.io.File
 
 object SodaService extends App with SimpleParallelRoutingApp {
 
@@ -57,9 +59,13 @@ object SodaService extends App with SimpleParallelRoutingApp {
   }
 
   Thread.sleep(10000)
+  println("SODA")
   println("\n\n============= SODA initialization finished ============== \n\n")
   val ctrl = new SodaControl(soda)
   val reader = new ConsoleReader()
+  val history = new History()
+  history.setHistoryFile(new File(".soda_history"))
+  reader.setHistory(history)
   while (true) {
     try {
       val cmd = reader.readLine("soda> ")
