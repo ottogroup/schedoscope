@@ -18,10 +18,7 @@ abstract class Transformation {
 
   val configuration = HashMap[String, Any]()
 
-  def versionDigest() = if (resources().isEmpty)
-    Version.default
-  else
-    Version.digest(resourceHashes)
+  def versionDigest() = Version.digest(resourceHashes)
 
   def resources() = List[String]()
 

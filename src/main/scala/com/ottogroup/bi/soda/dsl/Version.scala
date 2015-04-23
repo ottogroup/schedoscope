@@ -9,13 +9,12 @@ object Version {
 
   val default = "0"
 
-  def digest(strings: String*): String = {
-    if (strings.size == 0)
-      default
-    md5.digest(strings.mkString.toCharArray().map(_.toByte)).map("%02X" format _).mkString
-  }
-
-  def digest(strings: List[String]): String = digest(strings: _*)
+  def digest(s: String): String = digest(List(s))
+    
+  def digest(strings: List[String]): String = if (strings.isEmpty)
+    default
+  else
+    md5.digest(strings.sorted.mkString.toCharArray().map(_.toByte)).map("%02X" format _).mkString
 
   def check(v: String): String = {
     if (v == null)
