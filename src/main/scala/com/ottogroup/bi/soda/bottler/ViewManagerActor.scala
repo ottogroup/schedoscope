@@ -26,8 +26,9 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
     
     case GetViews(views, status, filter, dependencies) => {
+      val viewActors = if (views.isDefined) initializeViewActors(views.get, dependencies) else List()
       val viewStates = viewStatusMap.values
-                        .filter(vs => !views.isDefined  || initializeViewActors(views.get, dependencies).contains(vs.actor))
+                        .filter(vs => !views.isDefined  || viewActors.contains(vs.actor))
                         .filter(vs => !status.isDefined || status.get.equals(vs.status))
                         .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
                         .toList
