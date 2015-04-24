@@ -9,7 +9,6 @@ import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
 import com.ottogroup.bi.soda.bottler.Failed
-import com.ottogroup.bi.soda.bottler.GetStatus
 import com.ottogroup.bi.soda.bottler.MaterializeView
 import com.ottogroup.bi.soda.bottler.NoDataAvailable
 import com.ottogroup.bi.soda.bottler.ViewStatusResponse
@@ -30,10 +29,10 @@ import com.ottogroup.bi.soda.bottler.queryActor
 import akka.pattern.Patterns
 import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
 import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
-import com.ottogroup.bi.soda.bottler.ViewList
-import com.ottogroup.bi.soda.bottler.GetViewStatus
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import com.ottogroup.bi.soda.dsl.Transformation
+import com.ottogroup.bi.soda.bottler.GetActions
+import com.ottogroup.bi.soda.bottler.GetViews
 
 class SodaSystem extends SodaInterface {
   val log = Logging(settings.system, classOf[SodaRootActor])
@@ -53,14 +52,15 @@ class SodaSystem extends SodaInterface {
    * helper methods
    */
 
-  private def getViews(viewUrlPath: String) = {
+  private def viewsFromUrl(viewUrlPath: String) = {
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
   }
 
-  private def getViewActors(viewUrlPath: String) = {
-    queryActor(viewManagerActor, ViewList(getViews(viewUrlPath)), settings.viewManagerResponseTimeout).asInstanceOf[List[ActorRef]]
+  private def getViews(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
+    val resolvedViews = if (viewUrlPath.isDefined) Some(viewsFromUrl(viewUrlPath.get)) else None
+    queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.viewManagerResponseTimeout).viewStatusList
   }
-
+  
   private def commandId(command: Any, args: Seq[String], start: Option[LocalDateTime] = None) = {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
     val c = command match {
@@ -108,34 +108,32 @@ class SodaSystem extends SodaInterface {
   /*
    * soda API
    */
-  def materialize(viewUrlPath: String) = {
-    val viewActors = getViewActors(viewUrlPath)
-    submitCommandInternal(viewActors, MaterializeView(), viewUrlPath)
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
+    val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
+    submitCommandInternal(viewActors, MaterializeView(), viewUrlPath.get)
   }
 
-  def invalidate(viewUrlPath: String) = {
-    val viewActors = getViewActors(viewUrlPath)
-    submitCommandInternal(viewActors, Invalidate(), viewUrlPath)
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
+    val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map( v => v.actor)
+    submitCommandInternal(viewActors, Invalidate(), viewUrlPath.get)
   }
 
-  def newdata(viewUrlPath: String) = {
-    val viewActors = getViewActors(viewUrlPath)
-    submitCommandInternal(viewActors, "newdata", viewUrlPath)
+  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
+    val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
+    submitCommandInternal(viewActors, "newdata", viewUrlPath.get)
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
-    val req = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty) GetViewStatus(getViews(viewUrlPath.get), dependencies.getOrElse(false)) else GetStatus()
-    val result = queryActor[ViewStatusListResponse](viewManagerActor, req, settings.statusListAggregationTimeout)
-    val views = result.viewStatusList
-      .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!dependencies.getOrElse(false)) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, "", None, None)).toList)))
-      .filter(v => !status.isDefined || status.get.equals(v.status))
-      .filter(v => !filter.isDefined || v.view.matches(filter.get))
-    val overview = views.groupBy(_.status).mapValues(_.size)
-    ViewStatusList(overview, views)
+    val views = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false))
+    val statusMap = views.map(v => (v.view.urlPath, v.status)).toMap // needed for status of dependencies in output
+    val viewStatusList = views
+      .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!dependencies.getOrElse(false)) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, statusMap.getOrElse(d.urlPath, ""), None, None)).toList)))
+    val overview = viewStatusList.groupBy(_.status).mapValues(_.size)
+    ViewStatusList(overview, viewStatusList)
   }
 
   def actions(status: Option[String], filter: Option[String]) = {
-    val result: ActionStatusListResponse = queryActor(actionsManagerActor, GetStatus(), settings.statusListAggregationTimeout)
+    val result = queryActor[ActionStatusListResponse](actionsManagerActor, GetActions(), settings.statusListAggregationTimeout)
     val actions = result.actionStatusList
       .map(a => SodaJsonProtocol.parseActionStatus(a))
       .filter(a => !status.isDefined || status.get.equals(a.status))
@@ -163,7 +161,7 @@ class SodaSystem extends SodaInterface {
               case ViewMaterialized(view, incomplete, changed, errors) => "materialized"
               case NoDataAvailable(view) => "no-data"
               case Failed(view) => "failed"
-              case ViewStatusResponse(status, view) => status
+              case ViewStatusResponse(status, view, actor) => status
               case _ => "other"
             }
           else

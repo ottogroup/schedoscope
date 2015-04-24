@@ -104,7 +104,7 @@ class ActionsManagerActor() extends Actor {
 
     case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
-    case GetStatus() => sender ! ActionStatusListResponse(driverStates.values.toList, actionQueueStatus)
+    case GetActions() => sender ! ActionStatusListResponse(driverStates.values.toList, actionQueueStatus)
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get

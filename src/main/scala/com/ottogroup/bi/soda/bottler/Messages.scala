@@ -18,7 +18,6 @@ case class ActionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T
 sealed class CommandRequest
 case class AddPartitions(views: List[View]) extends CommandRequest
 case class CheckOrCreateTables(views: List[View]) extends CommandRequest
-case class ViewList(views: List[View]) extends CommandRequest
 case class NewDataAvailable(view: View) extends CommandRequest
 case class KillAction() extends CommandRequest
 case class Suspend() extends CommandRequest
@@ -29,8 +28,8 @@ case class PollCommand(typ: String) extends CommandRequest
 case class CommandWithSender(command: AnyRef, sender: ActorRef) extends CommandRequest
 case class SetViewVersion(view: View) extends CommandRequest
 case class LogTransformationTimestamp(view: View, timestamp: Long) extends CommandRequest
-case class GetStatus() extends CommandRequest
-case class GetViewStatus(views: List[View], dependencies: Boolean) extends CommandRequest
+case class GetActions() extends CommandRequest
+case class GetViews(views: Option[List[View]], status: Option[String], filter: Option[String], dependencies: Boolean = false)
 case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
 case class MaterializeView() extends CommandRequest
@@ -41,7 +40,7 @@ case class SchemaActionSuccess() extends CommandResponse
 case class ActionSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends CommandResponse
 case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]], val actionQueueStatus: Map[String, List[AnyRef]]) extends CommandResponse
 case class ActionStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
-case class ViewStatusResponse(val status: String, view: View) extends CommandResponse
+case class ViewStatusResponse(val status: String, view: View, actor: ActorRef) extends CommandResponse
 case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends CommandResponse
 case class ViewVersionOk(view: View) extends CommandResponse
 case class ViewVersionMismatch(view: View, dataVersion: String) extends CommandResponse

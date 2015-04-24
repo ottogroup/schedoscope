@@ -115,19 +115,19 @@ class SodaRestClient extends SodaInterface {
     system.shutdown()
   }
 
-  def materialize(viewUrlPath: String): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath}", Map()), 10.days)
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SodaCommandStatus = {
+    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 10.days)
   }
 
-  def invalidate(viewUrlPath: String): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/invalidate/${viewUrlPath}", Map()), 3600 seconds)
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SodaCommandStatus = {
+    Await.result(get[SodaCommandStatus](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
   }
 
-  def newdata(viewUrlPath: String): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/newdata/${viewUrlPath}", Map()), 3600 seconds)
+  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SodaCommandStatus = {
+    Await.result(get[SodaCommandStatus](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
 
-  def commandStatus(commandId: String): SodaCommandStatus = { null }
+  def commandStatus(commandId: String): SodaCommandStatus = { null } // TODO
 
   def commands(status: Option[String], filter: Option[String]): List[SodaCommandStatus] = {
     Await.result(get[List[SodaCommandStatus]](s"/commands", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
@@ -180,14 +180,21 @@ class SodaControl(soda: SodaInterface) {
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter command display (e.g. '.*201501.*'). "))
 
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to be materialized by their status (e.g. 'failed')"),
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to be materialized (e.g. 'my.database/.*/Partition1/.*'). "))
 
     cmd("invalidate") action { (_, c) => c.copy(action = Some(INVALIDATE)) } text ("invalidate view(s)") children (
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to be materialized by their status (e.g. 'transforming')"),
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to be invalidated (e.g. 'my.database/.*/Partition1/.*'). "),
+      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("invalidate dependencies as well"))     
 
     cmd("newdata") action { (_, c) => c.copy(action = Some(NEWDATA)) } text ("invalidate view(s)") children (
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } required () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "))
-
+       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to send 'newdata' to by their status (e.g. 'failed')"),
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to send 'newdata' to (e.g. 'my.database/.*/Partition1/.*'). "))
+        
     checkConfig { c =>
       {
         if (!c.action.isDefined) failure("A command is required")
@@ -210,13 +217,13 @@ class SodaControl(soda: SodaInterface) {
               soda.views(config.viewUrlPath, config.status, config.filter, config.dependencies)
             }
             case MATERIALIZE => {
-              soda.materialize(config.viewUrlPath.get)
+              soda.materialize(config.viewUrlPath, config.status, config.filter)
             }
             case INVALIDATE => {
-              soda.invalidate(config.viewUrlPath.get)
+              soda.invalidate(config.viewUrlPath, config.status, config.filter, config.dependencies)
             }
             case NEWDATA => {
-              soda.newdata(config.viewUrlPath.get)
+              soda.newdata(config.viewUrlPath, config.status, config.filter)
             }
             case COMMANDS => {
               soda.commands(config.status, config.filter)

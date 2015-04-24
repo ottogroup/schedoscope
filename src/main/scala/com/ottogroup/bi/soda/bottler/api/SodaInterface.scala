@@ -2,11 +2,11 @@ package com.ottogroup.bi.soda.bottler.api
 
 trait SodaInterface {
 
-  def materialize(viewUrlPath: String): SodaCommandStatus
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SodaCommandStatus
 
-  def invalidate(viewUrlPath: String): SodaCommandStatus
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SodaCommandStatus
 
-  def newdata(viewUrlPath: String): SodaCommandStatus
+  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SodaCommandStatus
 
   def commandStatus(commandId: String): SodaCommandStatus
 

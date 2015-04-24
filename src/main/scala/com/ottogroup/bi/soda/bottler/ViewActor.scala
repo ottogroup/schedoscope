@@ -156,7 +156,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
 
     case Invalidate() => {
-      sender ! ViewStatusResponse("invalidated", view)
+      sender ! ViewStatusResponse("invalidated", view, self)
       toDefault(true, "invalidated")
     }
 
@@ -174,7 +174,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
 
     case Invalidate() => {
-      sender ! ViewStatusResponse("invalidated", view)
+      sender ! ViewStatusResponse("invalidated", view, self)
       toDefault(true, "invalidated")
     }
 
@@ -379,7 +379,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def logStateInfo(stateName: String) {
-    viewManagerActor ! ViewStatusResponse(stateName, view)
+    viewManagerActor ! ViewStatusResponse(stateName, view, self)
 
     log.info(s"VIEWACTOR STATE CHANGE ===> ${stateName.toUpperCase()}: lastTransformationTimestamp=${lastTransformationTimestamp} versionChecksum=${versionChecksum} dependenciesFreshness=${dependenciesFreshness} incomplete=${incomplete} withErrors=${withErrors}")
   }

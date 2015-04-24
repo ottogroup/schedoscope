@@ -24,29 +24,24 @@ object SodaService extends App with SimpleParallelRoutingApp {
   startServer(interface = "localhost", port = settings.port) {
     get {
       respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-        path("actions") {
-          parameters("status"?, "filter"?) { (status, filter) =>
-            complete(soda.actions(status, filter))
-          }
-        } ~
+        parameters("status"?, "filter"?, "dependencies".as[Boolean]?) { (status, filter, dependencies) => {
+          path("actions") {
+              complete(soda.actions(status, filter))
+          } ~
           path("commands") {
-            parameters("status"?, "filter"?) { (status, filter) =>
               complete(soda.commands(status, filter))
-            }
           } ~
           path("views" / Rest ?) { viewUrlPath =>
-            parameters("status"?, "filter"?, "dependencies".as[Boolean]?) { (status, filter, dependencies) =>
-              complete(soda.views(viewUrlPath, status, filter, dependencies))
-            }
+             complete(soda.views(viewUrlPath, status, filter, dependencies))
           } ~
-          path("materialize" / Rest) { viewUrlPath =>
-            complete(soda.materialize(viewUrlPath))
+          path("materialize" / Rest ?) { viewUrlPath =>
+            complete(soda.materialize(viewUrlPath, status, filter)) 
           } ~
-          path("invalidate" / Rest) { viewUrlPath =>
-            complete(soda.invalidate(viewUrlPath))
+          path("invalidate" / Rest ?) { viewUrlPath =>
+            complete(soda.invalidate(viewUrlPath, status, filter, dependencies))
           } ~
-          path("newdata" / Rest) { viewUrlPath =>
-            complete(soda.newdata(viewUrlPath))
+          path("newdata" / Rest ?) { viewUrlPath =>
+            complete(soda.newdata(viewUrlPath, status, filter))
           } ~
           path("command" / Rest) { commandId =>
             complete(soda.commandStatus(commandId))
@@ -54,7 +49,8 @@ object SodaService extends App with SimpleParallelRoutingApp {
           path("graph" / Rest) { viewUrlPath =>
             getFromFile(s"${settings.webResourcesDirectory}/graph.html")
           }
-      }
+        }
+      } }
     }
   }
 
