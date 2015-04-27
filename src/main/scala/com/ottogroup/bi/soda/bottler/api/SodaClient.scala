@@ -52,7 +52,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
           sb.append(ASCIITable.getInstance.getTable(header, queued))
           sb.append(s"Total: ${queued.size}")          
         }
-        sb.append("\n" + qs.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
+        sb.append("\n" + qs.overview.toSeq.sortBy(_._1).map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
       }
 
       case vl: ViewStatusList => {

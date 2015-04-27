@@ -33,11 +33,20 @@ object HiveTransformation {
     val functionBuff = ListBuffer[Function]()
 
     for ((funcName, cls) <- functions) {
-      val jarResources = Settings().getDriverSettings("hive").libJarsHdfs.map(lj => new ResourceUri(ResourceType.JAR, lj))
+      val jarName = try {
+        cls.getProtectionDomain().getCodeSource().getLocation().getFile.split("/").last
+      } catch {
+        case _: Throwable => null
+      }
+      
+      val jarResources = Settings().getDriverSettings("hive").libJarsHdfs
+        .filter(lj => jarName == null || lj.contains(jarName))
+        .map(lj => new ResourceUri(ResourceType.JAR, lj))
+        
       functionBuff.append(new Function(funcName, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
     }
 
-    functionBuff.toList
+    functionBuff.distinct.toList
   }
 
   def settingStatements(settings: Map[String, String] = Map()) = {
