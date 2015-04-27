@@ -57,7 +57,7 @@ class SodaSystem extends SodaInterface {
   }
 
   private def getViews(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
-    val resolvedViews = if (viewUrlPath.isDefined) Some(viewsFromUrl(viewUrlPath.get)) else None
+    val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
     queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.viewManagerResponseTimeout).viewStatusList
   }
 
@@ -67,7 +67,7 @@ class SodaSystem extends SodaInterface {
       case s: String => s
       case c: Any => Named.formatName(c.getClass.getSimpleName)
     }
-    val a = if (args.size == 0) "_" else args.mkString(":")
+    val a = if (args.size == 0) "_" else args.filter(!_.isEmpty).mkString(":")
     if (start.isDefined) {
       val s = format.print(start.get)
       s"${c}::${a}::${s}"
@@ -109,18 +109,18 @@ class SodaSystem extends SodaInterface {
    * soda API
    */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
-    submitCommandInternal(viewActors, MaterializeView(), viewUrlPath.get)
+    val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
+    submitCommandInternal(viewActors, MaterializeView(), viewUrlPath.getOrElse(""), status.getOrElse(""), filter.getOrElse(""))
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
-    val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map(v => v.actor)
-    submitCommandInternal(viewActors, Invalidate(), viewUrlPath.get)
+    val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map( v => v.actor)
+    submitCommandInternal(viewActors, Invalidate(), viewUrlPath.getOrElse(""), status.getOrElse(""), filter.getOrElse(""))
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
-    submitCommandInternal(viewActors, "newdata", viewUrlPath.get)
+    val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
+    submitCommandInternal(viewActors, "newdata",viewUrlPath.getOrElse(""), status.getOrElse(""), filter.getOrElse(""))
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
