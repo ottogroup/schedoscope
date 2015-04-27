@@ -60,11 +60,6 @@ trait Driver[T <: Transformation]  {
         }
       })
 
-    // write list of found libjars back into config                                        
-    val libJars = fsd.listFiles(ds.location + "*.jar")
-      .map(stat => stat.getPath.toString)
-      .toList
-
     succ.filter(_.isInstanceOf[DriverRunFailed[_]]).isEmpty
   }
 }
