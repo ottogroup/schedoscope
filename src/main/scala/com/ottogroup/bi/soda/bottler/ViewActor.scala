@@ -43,7 +43,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   var withErrors = false
 
   override def preStart {
-    logStateInfo("receive")
+    logStateInfo("receive", false)
   }
 
   override def postRestart(reason: Throwable) {
@@ -378,8 +378,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     become(behaviour)
   }
 
-  def logStateInfo(stateName: String) {
-    viewManagerActor ! ViewStatusResponse(stateName, view, self)
+  def logStateInfo(stateName: String, toViewManager: Boolean = true) {
+    if (toViewManager) viewManagerActor ! ViewStatusResponse(stateName, view, self)
 
     log.info(s"VIEWACTOR STATE CHANGE ===> ${stateName.toUpperCase()}: lastTransformationTimestamp=${lastTransformationTimestamp} versionChecksum=${versionChecksum} dependenciesFreshness=${dependenciesFreshness} incomplete=${incomplete} withErrors=${withErrors}")
   }
