@@ -154,7 +154,7 @@ object SodaClientControl {
 
 class SodaControl(soda: SodaInterface) {
   object Action extends Enumeration {
-    val VIEWS, ACTIONS, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA = Value
+    val VIEWS, ACTIONS, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
   }
   import Action._
 
@@ -194,6 +194,8 @@ class SodaControl(soda: SodaInterface) {
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to send 'newdata' to by their status (e.g. 'failed')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to send 'newdata' to (e.g. 'my.database/.*/Partition1/.*'). "))
+      
+    cmd("shutdown") action { (_, c) => c.copy(action = Some(SHUTDOWN)) } text ("shutdown program")  
 
     checkConfig { c =>
       {
@@ -227,6 +229,10 @@ class SodaControl(soda: SodaInterface) {
             }
             case COMMANDS => {
               soda.commands(config.status, config.filter)
+            }
+            case SHUTDOWN => {
+              soda.shutdown()
+              System.exit(0)
             }
             case _ => {
               println("Unsupported Action: " + config.action.get.toString)
