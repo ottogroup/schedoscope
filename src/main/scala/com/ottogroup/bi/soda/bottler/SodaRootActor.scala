@@ -19,22 +19,24 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
   val log = Logging(system, SodaRootActor.this)
 
   var actionsManagerActor: ActorRef = null
-  var metadataLoggerActor: ActorRef = null
-  var schemaActor: ActorRef = null
+  var schemaRootActor: ActorRef = null
   var viewManagerActor: ActorRef = null
 
   override val supervisorStrategy =
-    AllForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+    AllForOneStrategy() {
       case _: Throwable => Restart
     }
 
   override def preStart {
     actionsManagerActor = actorOf(ActionsManagerActor.props(settings.hadoopConf), "actions")
-    metadataLoggerActor = actorOf(MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "metadata-logger")
-    schemaActor = actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withRouter(new RoundRobinRouter(settings.metastoreConcurrency)), "schema")
-    viewManagerActor = actorOf(ViewManagerActor.props(settings, actionsManagerActor, schemaActor, metadataLoggerActor), "views")
+    schemaRootActor = actorOf(SchemaRootActor.props(settings), "schema-root")
+    viewManagerActor = actorOf(
+        ViewManagerActor.props(settings, actionsManagerActor, 
+        schemaRootActor, 
+        schemaRootActor
+        ), "views")
   }
-
+  
   def receive = {
     // we do not process any messages as we are merely a supervisor
     case _ => {}
@@ -53,11 +55,11 @@ object SodaRootActor {
 
   lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("views")))
 
-  lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("schema")))
+  lazy val schemaRootActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("schema-root")))
 
-  lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("metadata-logger")))
+  lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("schema")))
 
-  lazy val partitionMetadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("schema-writer-delegate")))
+  lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("metadata-logger")))
 
   lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("actions")))
 }
