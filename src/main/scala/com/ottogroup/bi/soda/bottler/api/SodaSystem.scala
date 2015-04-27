@@ -60,7 +60,7 @@ class SodaSystem extends SodaInterface {
     val resolvedViews = if (viewUrlPath.isDefined) Some(viewsFromUrl(viewUrlPath.get)) else None
     queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.viewManagerResponseTimeout).viewStatusList
   }
-  
+
   private def commandId(command: Any, args: Seq[String], start: Option[LocalDateTime] = None) = {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
     val c = command match {
@@ -109,17 +109,17 @@ class SodaSystem extends SodaInterface {
    * soda API
    */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
+    val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
     submitCommandInternal(viewActors, MaterializeView(), viewUrlPath.get)
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
-    val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map( v => v.actor)
+    val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map(v => v.actor)
     submitCommandInternal(viewActors, Invalidate(), viewUrlPath.get)
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
+    val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
     submitCommandInternal(viewActors, "newdata", viewUrlPath.get)
   }
 

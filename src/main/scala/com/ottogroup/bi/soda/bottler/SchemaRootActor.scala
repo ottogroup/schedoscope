@@ -32,11 +32,11 @@ class SchemaRootActor(settings: SettingsImpl) extends Actor {
 
   def receive = {
     case m: CheckOrCreateTables => schemaActor forward m
-    
+
     case a: AddPartitions => schemaActor forward a
-    
+
     case s: SetViewVersion => metadataLoggerActor forward s
-    
+
     case l: LogTransformationTimestamp => metadataLoggerActor forward l
   }
 }

@@ -24,15 +24,15 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
   def receive = LoggingReceive({
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
-    
+
     case GetViews(views, status, filter, dependencies) => {
       val viewActors = if (views.isDefined) initializeViewActors(views.get, dependencies) else List()
       val viewStates = viewStatusMap.values
-                        .filter(vs => !views.isDefined  || viewActors.contains(vs.actor))
-                        .filter(vs => !status.isDefined || status.get.equals(vs.status))
-                        .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
-                        .toList
-      sender ! ViewStatusListResponse(viewStates)       
+        .filter(vs => !views.isDefined || initializeViewActors(views.get, dependencies).contains(vs.actor))
+        .filter(vs => !status.isDefined || status.get.equals(vs.status))
+        .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
+        .toList
+      sender ! ViewStatusListResponse(viewStates)
     }
 
     case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }

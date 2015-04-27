@@ -188,13 +188,13 @@ class SodaControl(soda: SodaInterface) {
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to be materialized by their status (e.g. 'transforming')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to be invalidated (e.g. 'my.database/.*/Partition1/.*'). "),
-      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("invalidate dependencies as well"))     
+      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("invalidate dependencies as well"))
 
     cmd("newdata") action { (_, c) => c.copy(action = Some(NEWDATA)) } text ("invalidate view(s)") children (
-       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to send 'newdata' to by their status (e.g. 'failed')"),
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to send 'newdata' to by their status (e.g. 'failed')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to send 'newdata' to (e.g. 'my.database/.*/Partition1/.*'). "))
-        
+
     checkConfig { c =>
       {
         if (!c.action.isDefined) failure("A command is required")

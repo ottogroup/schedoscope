@@ -31,12 +31,11 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
     actionsManagerActor = actorOf(ActionsManagerActor.props(settings.hadoopConf), "actions")
     schemaRootActor = actorOf(SchemaRootActor.props(settings), "schema-root")
     viewManagerActor = actorOf(
-        ViewManagerActor.props(settings, actionsManagerActor, 
-        schemaRootActor, 
-        schemaRootActor
-        ), "views")
+      ViewManagerActor.props(settings, actionsManagerActor,
+        schemaRootActor,
+        schemaRootActor), "views")
   }
-  
+
   def receive = {
     // we do not process any messages as we are merely a supervisor
     case _ => {}

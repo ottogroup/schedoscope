@@ -10,7 +10,7 @@ object Version {
   val default = "0"
 
   def digest(s: String): String = digest(List(s))
-    
+
   def digest(strings: List[String]): String = if (strings.isEmpty)
     default
   else
