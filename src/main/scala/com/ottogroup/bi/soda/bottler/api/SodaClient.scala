@@ -235,7 +235,7 @@ class SodaControl(soda: SodaInterface) {
           println("\nRESULTS\n=======")
           println(CliFormat.serialize(res))
         } catch {
-          case t: Throwable => println(s"\nERROR: ${t.getMessage}\n")
+          case t: Throwable => println(s"\nERROR: ${t.getMessage}\n"); t.printStackTrace()
         }
       }
       case None => // usage information has already been displayed
