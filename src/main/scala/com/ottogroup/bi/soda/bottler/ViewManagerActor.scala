@@ -28,7 +28,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     case GetViews(views, status, filter, dependencies) => {
       val viewActors = if (views.isDefined) initializeViewActors(views.get, dependencies) else List()
       val viewStates = viewStatusMap.values
-        .filter(vs => !views.isDefined || initializeViewActors(views.get, dependencies).contains(vs.actor))
+        .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
         .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
         .toList
@@ -102,8 +102,10 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
       viewsWithMetadataToCreate.foreach(
         _.metadata.foreach {
-          case (view, (version, timestamp)) =>
-            actorOf(ViewActor.props(view, settings, self, actionsManagerActor, metadataLoggerActor, version, timestamp), ViewManagerActor.actorNameForView(view))
+          case (view, (version, timestamp)) => {
+            val actorRef = actorOf(ViewActor.props(view, settings, self, actionsManagerActor, metadataLoggerActor, version, timestamp), ViewManagerActor.actorNameForView(view))
+            viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
+          }
         })
     }
 
