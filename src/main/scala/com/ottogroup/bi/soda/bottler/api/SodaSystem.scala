@@ -33,6 +33,8 @@ import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.bottler.GetActions
 import com.ottogroup.bi.soda.bottler.GetViews
+import com.ottogroup.bi.soda.bottler.QueueStatusListResponse
+import com.ottogroup.bi.soda.bottler.GetQueues
 
 class SodaSystem extends SodaInterface {
   val log = Logging(settings.system, classOf[SodaRootActor])
@@ -138,15 +140,22 @@ class SodaSystem extends SodaInterface {
       .map(a => SodaJsonProtocol.parseActionStatus(a))
       .filter(a => !status.isDefined || status.get.equals(a.status))
       .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
-    val queues = result.actionQueueStatus
-      .filter(el => status.getOrElse("queued").equals("queued"))
-      .map(el => (el._1, SodaJsonProtocol.parseQueueElements(el._2)))
-    val running = actions
+    val overview = actions
       .groupBy(_.status)
       .map(el => (el._1, el._2.size))
-    val queued = Map("queued" -> queues.foldLeft(0)((s, el) => s + el._2.size))
-    ActionStatusList(running ++ queued, queues, actions)
+    ActionStatusList(overview,actions)
   }
+  
+   def queues(typ: Option[String], filter: Option[String]) : QueueStatusList = {
+     val result = queryActor[QueueStatusListResponse](actionsManagerActor, GetQueues(), settings.statusListAggregationTimeout)
+     val queues = result.actionQueues
+       .filterKeys( t => !typ.isDefined || typ.get.equals(t) )
+       .map{ case (t, queue) => (t, SodaJsonProtocol.parseQueueElements(queue)) }
+       .map{ case (t, queue) => (t, queue.filter( el => !filter.isDefined || el.targetView.matches(filter.get)))}
+     val overview = queues
+       .map(el => (el._1, el._2.size))
+     QueueStatusList(overview, queues)
+   }
 
   def commandStatus(commandId: String) = {
     val cmd = runningCommands.get(commandId)

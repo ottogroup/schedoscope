@@ -39,12 +39,20 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
               }
             Array(p.actor, p.status, s, d, t, p.properties.mkString(","))
           }).toArray
-          val queued = as.queues.flatMap(q => q._2.map(e => Array(s"${q._1}-queue", "queued", "no", e.description, e.targetView, e.properties.getOrElse("").toString))).toArray
-          val all = running ++ queued
-          sb.append(ASCIITable.getInstance.getTable(header, running ++ queued))
-          sb.append(s"Total: ${all.size}\n")
+          sb.append(ASCIITable.getInstance.getTable(header, running))
+          sb.append(s"Total: ${running.size}\n")
         }
         sb.append("\n" + as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
+      }
+      
+      case qs: QueueStatusList => {
+        if (qs.queues.flatMap(q => q._2).size > 0) {
+          val header = Array("TYP", "DESC", "TARGET_VIEW", "PROPS")
+          val queued = qs.queues.flatMap(q => q._2.map(e => Array(q._1, e.description, e.targetView, e.properties.getOrElse("").toString))).toArray
+          sb.append(ASCIITable.getInstance.getTable(header, queued))
+          sb.append(s"Total: ${queued.size}")          
+        }
+        sb.append("\n" + qs.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
       }
 
       case vl: ViewStatusList => {
@@ -140,6 +148,10 @@ class SodaRestClient extends SodaInterface {
   def actions(status: Option[String], filter: Option[String]): ActionStatusList = {
     Await.result(get[ActionStatusList](s"/actions", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
+  
+  def queues(typ: Option[String], filter: Option[String]) : QueueStatusList = {
+    Await.result(get[QueueStatusList](s"/queues", paramsFrom(("typ", typ), ("filter", filter))), 3600 seconds)
+  }
 }
 
 object SodaClientControl {
@@ -154,11 +166,11 @@ object SodaClientControl {
 
 class SodaControl(soda: SodaInterface) {
   object Action extends Enumeration {
-    val VIEWS, ACTIONS, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
+    val VIEWS, ACTIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -175,6 +187,10 @@ class SodaControl(soda: SodaInterface) {
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter action display (e.g. '.*hive-1.*'). "))
 
+    cmd("queues") action { (_, c) => c.copy(action = Some(QUEUES)) } text ("list queued actions") children (
+      opt[String]('t', "typ") action { (x, c) => c.copy(typ = Some(x)) } optional () valueName ("<type>") text ("filter queued actions by their type (e.g. 'oozie', 'filesystem', ...)"),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter queued actions (e.g. '.*my.dabatase/myView.*'). "))      
+      
     cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter commands by their status (e.g. 'failed')"),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter command display (e.g. '.*201501.*'). "))
@@ -215,6 +231,9 @@ class SodaControl(soda: SodaInterface) {
             case ACTIONS => {
               soda.actions(config.status, config.filter)
             }
+            case QUEUES => {
+              soda.queues(config.typ, config.filter)
+            }            
             case VIEWS => {
               soda.views(config.viewUrlPath, config.status, config.filter, config.dependencies)
             }

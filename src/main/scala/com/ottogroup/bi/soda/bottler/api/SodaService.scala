@@ -24,11 +24,14 @@ object SodaService extends App with SimpleParallelRoutingApp {
   startServer(interface = "localhost", port = settings.port) {
     get {
       respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-        parameters("status"?, "filter"?, "dependencies".as[Boolean]?) { (status, filter, dependencies) =>
+        parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?) { (status, filter, dependencies, typ) =>
           {
             path("actions") {
               complete(soda.actions(status, filter))
             } ~
+              path("queues") {
+                complete(soda.queues(typ, filter))
+              } ~
               path("commands") {
                 complete(soda.commands(status, filter))
               } ~

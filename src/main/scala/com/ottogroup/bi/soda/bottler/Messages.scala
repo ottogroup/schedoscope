@@ -29,6 +29,7 @@ case class CommandWithSender(command: AnyRef, sender: ActorRef) extends CommandR
 case class SetViewVersion(view: View) extends CommandRequest
 case class LogTransformationTimestamp(view: View, timestamp: Long) extends CommandRequest
 case class GetActions() extends CommandRequest
+case class GetQueues() extends CommandRequest
 case class GetViews(views: Option[List[View]], status: Option[String], filter: Option[String], dependencies: Boolean = false)
 case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
@@ -38,7 +39,8 @@ sealed class CommandResponse
 case class DeployActionSuccess() extends CommandResponse
 case class SchemaActionSuccess() extends CommandResponse
 case class ActionSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends CommandResponse
-case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]], val actionQueueStatus: Map[String, List[AnyRef]]) extends CommandResponse
+case class QueueStatusListResponse(val actionQueues: Map[String, List[AnyRef]]) extends CommandResponse
+case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]]) extends CommandResponse
 case class ActionStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
 case class ViewStatusResponse(val status: String, view: View, actor: ActorRef) extends CommandResponse
 case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends CommandResponse

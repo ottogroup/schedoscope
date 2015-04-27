@@ -16,7 +16,7 @@ trait SodaInterface {
 
   def actions(status: Option[String], filter: Option[String]): ActionStatusList
 
-  // def queues(typ: Option[String], filter: Option[String]) : QueueStatus FIXME: separate queues from actions
+  def queues(typ: Option[String], filter: Option[String]) : QueueStatusList 
 
   def shutdown()
 }
