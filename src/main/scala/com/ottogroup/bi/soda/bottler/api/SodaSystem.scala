@@ -61,13 +61,13 @@ class SodaSystem extends SodaInterface {
     queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.viewManagerResponseTimeout).viewStatusList
   }
 
-  private def commandId(command: Any, args: Seq[String], start: Option[LocalDateTime] = None) = {
+  private def commandId(command: Any, args: Seq[Option[String]], start: Option[LocalDateTime] = None) = {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
     val c = command match {
       case s: String => s
       case c: Any => Named.formatName(c.getClass.getSimpleName)
     }
-    val a = if (args.size == 0) "_" else args.filter(!_.isEmpty).mkString(":")
+    val a = if (args.size == 0) "_" else args.filter(_.isDefined).mkString(":")
     if (start.isDefined) {
       val s = format.print(start.get)
       s"${c}::${a}::${s}"
@@ -76,7 +76,7 @@ class SodaSystem extends SodaInterface {
     }
   }
 
-  private def submitCommandInternal(actors: List[ActorRef], command: Any, args: String*) = {
+  private def submitCommandInternal(actors: List[ActorRef], command: Any, args: Option[String]*) = {
     val currentCommandId = runningCommandId(command.toString, args: _*)
     if (currentCommandId.isDefined) {
       commandStatus(currentCommandId.get)
@@ -96,7 +96,7 @@ class SodaSystem extends SodaInterface {
     scs
   }
 
-  private def runningCommandId(command: String, args: String*): Option[String] = {
+  private def runningCommandId(command: String, args: Option[String]*): Option[String] = {
     val cidPrefix = commandId(command, args)
     runningCommands.keys
       .foreach(k =>
@@ -110,17 +110,17 @@ class SodaSystem extends SodaInterface {
    */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
-    submitCommandInternal(viewActors, MaterializeView(), viewUrlPath.getOrElse(""), status.getOrElse(""), filter.getOrElse(""))
+    submitCommandInternal(viewActors, MaterializeView(), viewUrlPath, status, filter)
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
     val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map( v => v.actor)
-    submitCommandInternal(viewActors, Invalidate(), viewUrlPath.getOrElse(""), status.getOrElse(""), filter.getOrElse(""))
+    submitCommandInternal(viewActors, Invalidate(), viewUrlPath, status, filter)
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
-    submitCommandInternal(viewActors, "newdata",viewUrlPath.getOrElse(""), status.getOrElse(""), filter.getOrElse(""))
+    submitCommandInternal(viewActors, "newdata", viewUrlPath, status, filter)
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
