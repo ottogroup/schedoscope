@@ -59,6 +59,7 @@ import com.ottogroup.bi.soda.dsl.JDBC
 import com.ottogroup.bi.soda.dsl.NullStorage
 import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
 import com.ottogroup.bi.soda.dsl.ExternalStorageFormat
+import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
 
 object Helper {
 
@@ -70,12 +71,15 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 	val context = new MorphlineContext.Builder().build()
 	override def run(t: MorphlineTransformation): DriverRunHandle[MorphlineTransformation] = {
 		val f = future {
-		  runMorphline(createMorphline(t), t)
-
-
+		  try {		  
+			  runMorphline(createMorphline(t), t) }
+		  catch {
+		    case e:Throwable=> DriverRunFailed[MorphlineTransformation](this,"could not create morphline",e)
+		  }
 		}
 		new DriverRunHandle[MorphlineTransformation](this, new LocalDateTime(), t, f)
 	}
+
 
 	override def runAndWait(t: MorphlineTransformation): DriverRunState[MorphlineTransformation] =
 			Await.result(run(t).stateHandle.asInstanceOf[Future[DriverRunState[MorphlineTransformation]]], runTimeOut)
@@ -131,7 +135,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 						val child = new DropRecordBuilder().build(null, null, null, context);
 						val commandConfig = ConfigFactory.empty()
 						val fields = view.fields.map( field => field.n)
-						val command =storageFormat match {
+						val command =storageFormat match { 
 						case f:ExaSol => {
 							val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
 									withValue("", "")
@@ -139,7 +143,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 						}
 						case f:ExternalTextFile => {
 
-							val oConfig = ConfigFactory.empty().withValue("filename", view.locationPath+"/000000").
+							val oConfig = ConfigFactory.empty().withValue("filename", view.locationPath).
 									withValue("separator", f.fieldTerminator).
 									withValue("fields", ConfigValueFactory.fromIterable(fields))
 									new CSVWriterBuilder().build(oConfig, parent, child, context)
@@ -182,30 +186,34 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 			}
 
 			def createMorphline(transformation: MorphlineTransformation):Command = {
-			    val view = transformation.view.get
-				
+			    val view = transformation.view.get				
 				val outputConnector = new CommandConnector(false, "outputconnector");
 				val finalCommand = createOutput(outputConnector, transformation)
 				val inputView = transformation.view.get.dependencies
 				outputConnector.setChild(finalCommand)
 				val inputConnector = new CommandConnector(false, "inputconnector");
-				val inputCommand = createInput( inputView.head.storageFormat, inputView.head.n, Seq[String](), inputConnector)
+				val inputCommand = createInput( inputView.head.storageFormat, inputView.head.n, inputView.head.fields.map( field => field.n), inputConnector)
 				inputConnector.setParent(inputCommand)
+				inputConnector.setChild(outputConnector)
+				outputConnector.setParent(inputConnector)
 						MorphlineClasspathUtil.setupJavaCompilerClasspath()
 						// if the user did specify a morphline, plug it between reader and writer
 				if (transformation.definition!="") {
-				  val morphlineConfig = ConfigFactory.parseString(transformation.definition)
+								val morphlineConfig = ConfigFactory.parseString(transformation.definition)
 									val morphline = new PipeBuilder().build(morphlineConfig, inputConnector, outputConnector, context)
 									outputConnector.setParent(morphline)
 									inputConnector.setChild(morphline)
 									morphline
-						} else {
-							// if the user did not specify a morphline, at least extract all avro paths so they can be anonymized
+				} else {inputView.head.storageFormat match  {
+						  case _:TextFile => inputCommand
+						
+						  case _=> {	// if the user did not specify a morphline, at least extract all avro paths so they can be anonymized
 							val extractAvroTreeCommand = new ExtractAvroTreeBuilder().build(ConfigFactory.empty(), inputConnector, outputConnector, context)
 									inputConnector.setChild(extractAvroTreeCommand)
 									outputConnector.setParent(extractAvroTreeCommand)
 									extractAvroTreeCommand
 						}
+				}
 				if (transformation.anonymize.size>0) {					
 					val anonConfig = ConfigFactory.empty().withValue("fields", ConfigValueFactory.fromIterable(transformation.anonymize))
 					val output2Connector = new CommandConnector(false, "output2")
@@ -220,31 +228,48 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 				if (transformation.sampling<100)
 					createSampler(inputConnector, transformation.sampling)
 			   else
-			     inputConnector
+			     inputConnector.parent
+				}
 			}
 
-			def runMorphline(command:Command,transformation:MorphlineTransformation) = {
+			def runMorphline(command:Command,transformation:MorphlineTransformation):DriverRunState[MorphlineTransformation] = {
 				Notifications.notifyBeginTransaction(command);
 				Notifications.notifyStartSession(command);
+
+			    val driver=this
 				try {
-					Settings().userGroupInformation.doAs(new PrivilegedAction[Unit]() {
-						override def run():Unit = {
+					Settings().userGroupInformation.doAs(new PrivilegedAction[ DriverRunState[MorphlineTransformation]]() {
+						override def run():DriverRunState[MorphlineTransformation] = {
 
 								try {
-									val fs = FileSystem.get(new URI("hdfs:/"),Settings().hadoopConf)
+
 											val view = transformation.view.get
-											view.dependencies.foreach{view => {
-												val test=fs.listStatus(new Path(view.locationPath)).map { status =>
+											view.dependencies.foreach{dep => {
+												val fs = FileSystem.get(new URI(dep.locationPath),Settings().hadoopConf)
+												val test=fs.listStatus(new Path(dep.locationPath)).map { status =>
 													val record: Record = new Record()
 													if (!status.getPath().getName().startsWith("_")) {
-														val in = fs.open(status.getPath()).getWrappedStream()
-																record.put(Fields.ATTACHMENT_BODY, in);
+													    
+														val in :java.io.InputStream = 
+														  fs.open(status.getPath()).getWrappedStream().asInstanceOf[java.io.InputStream]
+													    record.put(Fields.ATTACHMENT_BODY, in.asInstanceOf[java.io.InputStream]);
+														
 														for (field <- view.partitionParameters)
 															record.put(field.n,field.v)
 														record.put("file_upload_url", status.getPath().toUri().toString())
+														try {
 														if (!command.process(record))
 															println("Morphline failed to process record: " + record);
+													    }catch {
+													    	case e: Throwable => {
+													    		Notifications.notifyRollbackTransaction(command)
+											
+													    		context.getExceptionHandler().handleException(e, null)
+										   
+													    	}
+													    } finally {
 														in.close();
+													    }
 													}
 												}
 											}
@@ -254,10 +279,14 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 								} catch {
 									case e: Throwable => {
 											Notifications.notifyRollbackTransaction(command)
+											
 											context.getExceptionHandler().handleException(e, null)
+											return   DriverRunFailed[MorphlineTransformation](driver, s"Morphline failed",e)
+										  
 										}
 								}
 								Notifications.notifyShutdown(command);
+								DriverRunSucceeded[MorphlineTransformation](driver,"Morphline succeeded")
 						}
 					}
 							)

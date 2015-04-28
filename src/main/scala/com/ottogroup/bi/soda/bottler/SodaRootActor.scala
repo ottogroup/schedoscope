@@ -9,7 +9,7 @@ import akka.actor.ActorRef
 import akka.actor.ActorSelection
 import akka.actor.AllForOneStrategy
 import akka.actor.Props
-import akka.actor.SupervisorStrategy.Restart
+import akka.actor.SupervisorStrategy._
 import akka.event.Logging
 import akka.routing.RoundRobinRouter
 
@@ -24,7 +24,7 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
 
   override val supervisorStrategy =
     AllForOneStrategy() {
-      case _: Throwable => Restart
+      case _: Throwable => {this.context.system.shutdown();Escalate}
     }
 
   override def preStart {
