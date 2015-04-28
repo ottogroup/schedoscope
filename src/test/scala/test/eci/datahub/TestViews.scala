@@ -1,7 +1,6 @@
 package test.eci.datahub
 
 import java.util.Date
-
 import com.ottogroup.bi.soda.dsl.Avro
 import com.ottogroup.bi.soda.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
@@ -16,7 +15,10 @@ import com.ottogroup.bi.soda.dsl.views.DailyParameterization
 import com.ottogroup.bi.soda.dsl.views.Id
 import com.ottogroup.bi.soda.dsl.views.JobMetadata
 import com.ottogroup.bi.soda.dsl.views.PointOccurrence
-
+import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
+import com.ottogroup.bi.soda.dsl.ExternalTextFile
+import com.ottogroup.bi.soda.dsl.TextFile
+import com.ottogroup.bi.soda.dsl.Redis
 case class Brand(
   ecNr: Parameter[String]) extends View
   with Id
@@ -174,4 +176,43 @@ case class ClickOfEC0101ViaOozie(
       "bundle", "click",
       oozieWFPath(env, "bundle", "click"),
       Map()))
+}
+
+case class SimpleDependendView() extends View with Id{
+    val field1 = fieldOf[String]
+    locationPathBuilder= s=> "/tmp/input"
+    storedAs(TextFile())
+    
+}
+
+case class MorphlineView() extends View with Id {
+  val field1 = fieldOf[String]
+  dependsOn(() => SimpleDependendView())
+  transformVia(() =>MorphlineTransformation().forView(this))
+  locationPathBuilder= s=> "/tmp/blubb"
+  storedAs(ExternalTextFile())
+}
+
+case class CompilingMorphlineView() extends View with Id {
+  val field1 = fieldOf[String]
+  dependsOn(() => SimpleDependendView())
+  transformVia(() =>MorphlineTransformation("{dropRecord{}}").forView(this))
+  locationPathBuilder= s=> "/tmp/blubb1"
+  storedAs(ExternalTextFile())
+}
+case class FailingMorphlineView() extends View with Id {
+  dependsOn(() => SimpleDependendView())
+  transformVia(() =>MorphlineTransformation("invalid morphline code").forView(this))
+    locationPathBuilder= s=> "/tmp/blubb2"
+  storedAs(ExternalTextFile())
+
+}
+
+case class RedisMorphlineView() extends View with Id {
+  val field1 = fieldOf[String]
+  dependsOn(() => SimpleDependendView())
+  transformVia(() =>MorphlineTransformation().forView(this))
+    locationPathBuilder= s=> "/tmp/blubb2"
+  storedAs(Redis(host="localhost",port=6379))
+
 }
