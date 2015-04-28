@@ -110,9 +110,9 @@ class SodaSystem extends SodaInterface {
   /*
    * soda API
    */
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
-    submitCommandInternal(viewActors, MaterializeView(), viewUrlPath, status, filter)
+    submitCommandInternal(viewActors, MaterializeView(mode.getOrElse("DEFAULT")), viewUrlPath, status, filter)
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {

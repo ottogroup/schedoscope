@@ -123,8 +123,8 @@ class SodaRestClient extends SodaInterface {
     system.shutdown()
   }
 
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 10.days)
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SodaCommandStatus = {
+    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 10.days)
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SodaCommandStatus = {
@@ -170,7 +170,7 @@ class SodaControl(soda: SodaInterface) {
   }
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None, mode: Option[String] = None)
 
   val parser = new scopt.OptionParser[Config]("soda-control") {
     override def showUsageOnError = true
@@ -198,7 +198,8 @@ class SodaControl(soda: SodaInterface) {
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to be materialized by their status (e.g. 'failed')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to be materialized (e.g. 'my.database/.*/Partition1/.*'). "))
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to be materialized (e.g. 'my.database/.*/Partition1/.*'). "),
+      opt[String]('m', "mode") action { (x, c) => c.copy(mode = Some(x)) } optional () valueName ("<mode>") text ("materializatio mode. Supported modes are currently 'RESET_TRANSFORMATION_CHECKSUMS'"))
 
     cmd("invalidate") action { (_, c) => c.copy(action = Some(INVALIDATE)) } text ("invalidate view(s)") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to be invalidated by their status (e.g. 'transforming')"),
@@ -238,7 +239,7 @@ class SodaControl(soda: SodaInterface) {
               soda.views(config.viewUrlPath, config.status, config.filter, config.dependencies)
             }
             case MATERIALIZE => {
-              soda.materialize(config.viewUrlPath, config.status, config.filter)
+              soda.materialize(config.viewUrlPath, config.status, config.filter, config.mode)
             }
             case INVALIDATE => {
               soda.invalidate(config.viewUrlPath, config.status, config.filter, config.dependencies)

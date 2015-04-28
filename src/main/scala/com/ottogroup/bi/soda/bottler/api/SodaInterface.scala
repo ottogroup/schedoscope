@@ -2,7 +2,7 @@ package com.ottogroup.bi.soda.bottler.api
 
 trait SodaInterface {
 
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SodaCommandStatus
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SodaCommandStatus
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SodaCommandStatus
 

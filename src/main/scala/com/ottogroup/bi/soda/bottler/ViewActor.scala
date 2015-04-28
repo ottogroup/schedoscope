@@ -53,11 +53,18 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: default
   // transitions: defaultForViewWithoutDependencies, defaultForViewWithDependencies
   def receive: Receive = LoggingReceive({
-    case MaterializeView() => if (view.dependencies.isEmpty) {
-      listenersWaitingForMaterialize.add(sender)
-      toTransformOrMaterialize(0)
-    } else {
-      toWaiting()
+    case MaterializeView(mode) => {
+      if (MaterializeViewMode.resetTransformationChecksums.equals(mode)) {
+        val before = versionChecksum
+        setVersion(view)
+        log.info(s"VIEWACTOR CHECKSUM RESET ===> before=${before} , after=${versionChecksum}")
+      }
+      if (view.dependencies.isEmpty) {
+        listenersWaitingForMaterialize.add(sender)
+        toTransformOrMaterialize(0)
+      } else {
+        toWaiting(mode)
+      }
     }
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.isEmpty) {
@@ -71,7 +78,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // transitions: transforming, materialized, default
   def waiting: Receive = LoggingReceive {
 
-    case MaterializeView() => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
 
     case NoDataAvailable(dependency) => {
       log.debug("Nodata from " + dependency)
@@ -117,9 +124,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
     }
 
-    case _: ActionFailure[_] => toRetrying(retries)
+    case _: ActionFailure[_]               => toRetrying(retries)
 
-    case MaterializeView() => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView(mode)             => listenersWaitingForMaterialize.add(sender)
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
@@ -128,7 +135,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // transitions: failed, transforming
   def retrying(retries: Int): Receive = LoggingReceive({
 
-    case MaterializeView() => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
 
     case Retry() => if (retries <= settings.retries)
       toTransformOrMaterialize(retries + 1)
@@ -147,11 +154,16 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // transitions: default,transforming
   def materialized: Receive = LoggingReceive({
 
-    case MaterializeView() => {
+    case MaterializeView(mode) => {
+      if (MaterializeViewMode.resetTransformationChecksums.equals(mode)) {
+        val before = versionChecksum
+        setVersion(view)
+        log.info(s"VIEWACTOR CHECKSUM RESET ===> before=${before} , after=${versionChecksum}")
+      }
       if (view.dependencies.isEmpty) {
         sender ! ViewMaterialized(view, incomplete, lastTransformationTimestamp, withErrors)
       } else {
-        toWaiting()
+        toWaiting(mode)
       }
     }
 
@@ -178,7 +190,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       toDefault(true, "invalidated")
     }
 
-    case MaterializeView() => sender ! Failed(view)
+    case MaterializeView(mode) => sender ! Failed(view)
   })
 
   def dependencyAnswered(dependency: com.ottogroup.bi.soda.dsl.View) {
@@ -220,7 +232,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     unbecomeBecome(receive)
   }
 
-  def toWaiting() {
+  def toWaiting(mode: String) {
     withErrors = false
     incomplete = false
     dependenciesFreshness = 0l
@@ -235,7 +247,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
         log.debug("sending materialize to dependency " + d)
 
-        getViewActor(d) ! MaterializeView()
+        getViewActor(d) ! MaterializeView(mode)
       }
     }
 
