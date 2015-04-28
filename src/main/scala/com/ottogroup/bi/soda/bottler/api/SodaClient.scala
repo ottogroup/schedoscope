@@ -22,6 +22,7 @@ import com.ottogroup.bi.soda.Settings
 import scala.util.matching.Regex
 import scala.collection.immutable.Map
 import scala.collection.mutable.HashMap
+import com.ottogroup.bi.soda.bottler.MaterializeViewMode
 
 object CliFormat { // FIXME: a more generic parsing would be cool...
   def serialize(o: Any): String = {
@@ -218,6 +219,7 @@ class SodaControl(soda: SodaInterface) {
       {
         if (!c.action.isDefined) failure("A command is required")
         else if (c.action.get.equals("materialize") && c.viewUrlPath.isDefined && Try(ViewUrlParser.parse(Settings().env, c.viewUrlPath.get)).isFailure) failure("Cannot parse view url path")
+        else if (c.action.get.equals("materialize") && c.mode.isDefined && c.mode.equals(MaterializeViewMode.resetTransformationChecksums)) failure(s"mode ${c.mode.get} not supported; supported are: '${MaterializeViewMode.resetTransformationChecksums}'")
         else success
       }
     }

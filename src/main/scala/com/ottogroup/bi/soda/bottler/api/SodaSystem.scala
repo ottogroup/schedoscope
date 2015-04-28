@@ -35,6 +35,7 @@ import com.ottogroup.bi.soda.bottler.GetActions
 import com.ottogroup.bi.soda.bottler.GetViews
 import com.ottogroup.bi.soda.bottler.QueueStatusListResponse
 import com.ottogroup.bi.soda.bottler.GetQueues
+import com.ottogroup.bi.soda.bottler.MaterializeViewMode
 
 class SodaSystem extends SodaInterface {
   val log = Logging(settings.system, classOf[SodaRootActor])
@@ -112,7 +113,7 @@ class SodaSystem extends SodaInterface {
    */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
-    submitCommandInternal(viewActors, MaterializeView(mode.getOrElse("DEFAULT")), viewUrlPath, status, filter)
+    submitCommandInternal(viewActors, MaterializeView(mode.getOrElse(MaterializeViewMode.default)), viewUrlPath, status, filter)
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
