@@ -146,9 +146,9 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.ottogroup.bi</groupId>
+			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.0.6</version>
+			<version>0.1.0-SNAPSHOT</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>

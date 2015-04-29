@@ -1,6 +1,6 @@
 package com.ottogroup.bi.soda.test.resources
 
-import com.ottogroup.bi.eci.minioozie.MiniOozie
+import minioozie.MiniOozie
 import com.ottogroup.bi.soda.bottler.driver.OozieDriver
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.fs.FileSystem
