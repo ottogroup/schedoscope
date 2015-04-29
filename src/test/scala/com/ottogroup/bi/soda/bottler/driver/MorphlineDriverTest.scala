@@ -17,29 +17,31 @@ class MorphlineDriverTest extends FlatSpec with Matchers {
   lazy val failingView = FailingMorphlineView()
   lazy val compileView = CompilingMorphlineView()
   lazy val redisView = RedisMorphlineView()
-  "MorphlineDriver" should "have transformation name Morphline" taggedAs (DriverTests) in {
+  
+  
+  "MorphlineDriver" should "have transformation name morphline" taggedAs (DriverTests) in {
     driver.transformationName shouldBe "morphline"
   }
 
-  it should "execute Morphline tranformations synchronously" taggedAs (DriverTests) in {
+  it should "execute Morphline transformations synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(inputView.transformation().asInstanceOf[MorphlineTransformation])
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
   
-  it should "execute another Morphline tranformations synchronously" taggedAs (DriverTests) in {
+  it should "execute another Morphline transformations synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(inputView.transformation().asInstanceOf[MorphlineTransformation])
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute Morphline tranformations and return errors when running synchronously" taggedAs (DriverTests) in {
+  it should "execute Morphline transformations and return errors when running synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(failingView.transformation().asInstanceOf[MorphlineTransformation])
 
     driverRunState shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "execute Morphline tranformations asynchronously" taggedAs (DriverTests) in {
+  it should "execute Morphline transformations asynchronously" taggedAs (DriverTests) in {
     val driverRunHandle = driver.run(inputView.transformation().asInstanceOf[MorphlineTransformation])
 
     var runWasAsynchronous = false
@@ -51,7 +53,7 @@ class MorphlineDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute Morphline tranformations and return errors when running asynchronously" taggedAs (DriverTests) in {
+  it should "execute Morphline transformations and return errors when running asynchronously" taggedAs (DriverTests) in {
     val driverRunHandle = driver.run(failingView.transformation().asInstanceOf[MorphlineTransformation])
 
     var runWasAsynchronous = false
