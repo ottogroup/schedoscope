@@ -150,7 +150,7 @@ class SodaSystem extends SodaInterface {
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
     val result = queryActor[QueueStatusListResponse](actionsManagerActor, GetQueues(), settings.statusListAggregationTimeout)
     val queues = result.actionQueues
-      .filterKeys(t => !typ.isDefined || typ.get.equals(t))
+      .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
       .map { case (t, queue) => (t, SodaJsonProtocol.parseQueueElements(queue)) }
       .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
     val overview = queues
