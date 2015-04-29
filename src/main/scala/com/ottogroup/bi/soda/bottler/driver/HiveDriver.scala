@@ -72,7 +72,12 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
   }
 
   def registerFunction(f: Function) {
-    val existing = metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
+    val existing = try {
+      metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
+    } catch {
+      case t: Throwable =>  throw DriverException(s"Runtime exception while executing registering function ${f}", t)
+    }
+    
     if (existing == null || existing.isEmpty()) {
       val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
       val createFunction = s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}"
