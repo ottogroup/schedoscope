@@ -245,7 +245,7 @@ object FileSystemDriver {
   private def calcChecksum(fs: FileSystem, path: Path) = {
     // content-based checking disabled for jar files because maven builds produce
     // outputs with different hashes   
-    val cs = if (path.toString.endsWith(".jar")) path.toUri.toString else fs.getFileChecksum(path)      
+    val cs = if (path.toString.endsWith(".jar")) path.toUri else fs.getFileChecksum(path)      
     if (cs == null)
       path.toUri().toString() + "::" + fs.getLength(path)
     else cs.toString
