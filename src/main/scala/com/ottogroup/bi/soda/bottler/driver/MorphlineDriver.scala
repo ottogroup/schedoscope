@@ -50,6 +50,7 @@ import java.net.URI
 import Helper._
 import com.ottogroup.bi.soda.dsl.StorageFormat
 import com.ottogroup.bi.soda.dsl.ExternalAvro
+import com.ottogroup.bi.soda.dsl.Avro
 import com.ottogroup.bi.soda.dsl.Parquet
 import com.ottogroup.bi.soda.dsl.ExternalTextFile
 import com.ottogroup.bi.soda.dsl.ExaSol
@@ -61,20 +62,30 @@ import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
 import com.ottogroup.bi.soda.dsl.ExternalStorageFormat
 import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
 
+
+/**
+ * Helper implicit for generating ConfigValues. Can result in unusual conversions in this file
+ */
 object Helper {
 
-	implicit def AnyToConfigValue(x: Any) = ConfigValueFactory.fromAnyRef(x, "command line")
+	implicit def AnyToConfigValue(x: Any) = ConfigValueFactory.fromAnyRef(x, "")
 }
+
 
 class MorphlineDriver extends Driver[MorphlineTransformation] {
 	implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 	val context = new MorphlineContext.Builder().build()
+	def transformationName: String = "morphline"
+	
+	/*
+	 * Run morphline in Future, return handle containing this future
+	 */
 	override def run(t: MorphlineTransformation): DriverRunHandle[MorphlineTransformation] = {
 		val f = future {
 		  try {		  
 			  runMorphline(createMorphline(t), t) }
 		  catch {
-		    case e:Throwable=> DriverRunFailed[MorphlineTransformation](this,"could not create morphline",e)
+		    case e:Throwable=>DriverRunFailed[MorphlineTransformation](this,"could not create morphline",e)
 		  }
 		}
 		new DriverRunHandle[MorphlineTransformation](this, new LocalDateTime(), t, f)
@@ -85,18 +96,14 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 			Await.result(run(t).stateHandle.asInstanceOf[Future[DriverRunState[MorphlineTransformation]]], runTimeOut)
 			// Members declared in com.ottogroup.bi.soda.bottler.driver.Driver
 		
-	  def transformationName: String = "morphline"
 	  //factory method for morphline input (reader) commands
-	  def createInput(format: StorageFormat, sourceTable: String, cols: Seq[String], finalCommand: Command): Command = {
-	
-	    val root = new Command {
-	
+   def createInput(format: StorageFormat, sourceTable: String, cols: Seq[String], finalCommand: Command): Command = {
+		// stub to overcome checkNull()s when creating morphlines
+	    val root = new Command {	
 	      override def getParent(): Command = null
-	
 	      override def notify(notification: Record) {
 	        throw new UnsupportedOperationException("Root command should be invisible and must not be called")
 	      }
-	
 	      override def process(record: Record): Boolean = {
 	        throw new UnsupportedOperationException("Root command should be invisible and must not be called")
 	      }
@@ -104,7 +111,6 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 	
 	    format match {
 	      case f: TextFile => {
-	
 	        new ReadCSVBuilder().build(ConfigFactory.empty().
 	          withValue("separator", f.fieldTerminator).
 	          withValue("trim", true).
@@ -115,12 +121,11 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 	          root, finalCommand, context)
 	
 	      }
-	      case f: Parquet => {
-	
+	      case f: Parquet => {	
 	        val iConfig = ConfigFactory.empty()
 	        new ReadAvroParquetFileBuilder().build(iConfig, root, finalCommand, context)
 	      }
-	      case f: ExternalAvro => {
+	      case f: Avro => {
 	        val iConfig = ConfigFactory.empty()
 	        new ReadAvroContainerBuilder().build(iConfig, root, finalCommand, context)
 	      }
@@ -128,7 +133,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 	
 	    }
 	  }
-			// factory method for predefined output commands
+	// factory method for predefined output commands
 	def createOutput(parent: Command,transformation:MorphlineTransformation): Command = {
 						val view = transformation.view.get
 						val storageFormat = view.storageFormat.asInstanceOf[ExternalStorageFormat]
@@ -175,6 +180,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 				}
 				command
 			}
+	
 			def createSampler(inputConnector: CommandConnector, sample: Double) = {
 				val sampleConfig = ConfigFactory.empty().withValue("probability", sample)
 				val sampleConnector = new CommandConnector(false, "sampleconnector")
@@ -196,11 +202,14 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 				inputConnector.setParent(inputCommand)
 				inputConnector.setChild(outputConnector)
 				outputConnector.setParent(inputConnector)
-						MorphlineClasspathUtil.setupJavaCompilerClasspath()
+				MorphlineClasspathUtil.setupJavaCompilerClasspath()
+			
 						// if the user did specify a morphline, plug it between reader and writer
 				if (transformation.definition!="") {
 								val morphlineConfig = ConfigFactory.parseString(transformation.definition)
-									val morphline = new PipeBuilder().build(morphlineConfig, inputConnector, outputConnector, context)
+							//	val wholeConfig = ConfigFactory.empty().withValue("id", view.n).withValue ("commands", ConfigValueFactory.fromMap(morphlineConfig.entrySet()))
+								
+								val morphline = new PipeBuilder().build(morphlineConfig, inputConnector, outputConnector, context)
 									outputConnector.setParent(morphline)
 									inputConnector.setChild(morphline)
 									morphline
@@ -245,8 +254,9 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 
 											val view = transformation.view.get
 											view.dependencies.foreach{dep => {
-												val fs = FileSystem.get(new URI(dep.locationPath),Settings().hadoopConf)
-												val test=fs.listStatus(new Path(dep.locationPath)).map { status =>
+											  println(dep.fullPath)
+												val fs = FileSystem.get(new URI(dep.fullPath),Settings().hadoopConf)
+												val test=fs.listStatus(new Path(dep.fullPath)).map { status =>
 													val record: Record = new Record()
 													if (!status.getPath().getName().startsWith("_")) {
 													    
@@ -274,12 +284,10 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 												}
 											}
 									}
-									Notifications.notifyCommitTransaction(command)
-									
+									Notifications.notifyCommitTransaction(command)									
 								} catch {
 									case e: Throwable => {
-											Notifications.notifyRollbackTransaction(command)
-											
+											Notifications.notifyRollbackTransaction(command)											
 											context.getExceptionHandler().handleException(e, null)
 											return   DriverRunFailed[MorphlineTransformation](driver, s"Morphline failed",e)
 										  
