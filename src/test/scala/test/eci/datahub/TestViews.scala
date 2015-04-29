@@ -180,7 +180,8 @@ case class ClickOfEC0101ViaOozie(
 
 case class SimpleDependendView() extends View with Id{
     val field1 = fieldOf[String]
-    locationPathBuilder= s=> "/tmp/input"
+    locationPathBuilder= s=> "src/test/resources/input"
+    
     storedAs(TextFile())
     
 }
@@ -188,22 +189,33 @@ case class SimpleDependendView() extends View with Id{
 case class MorphlineView() extends View with Id {
   val field1 = fieldOf[String]
   dependsOn(() => SimpleDependendView())
-  transformVia(() =>MorphlineTransformation().forView(this))
-  locationPathBuilder= s=> "/tmp/blubb"
+  transformVia(() =>MorphlineTransformation(s"""{ id :"bla"
+      importCommands : ["org.kitesdk.**"]
+		  commands : [ {
+		  				if  { 
+                                          conditions: [{ not: {equals {ec_shop_code : ["${field1.n}"]}}}]
+    								      then : [{ dropRecord{} }]
+    										}}]}""").forView(this))
+  locationPathBuilder= s=> "src/test/resources/morphline.csv"
   storedAs(ExternalTextFile())
 }
 
 case class CompilingMorphlineView() extends View with Id {
   val field1 = fieldOf[String]
   dependsOn(() => SimpleDependendView())
-  transformVia(() =>MorphlineTransformation("{dropRecord{}}").forView(this))
-  locationPathBuilder= s=> "/tmp/blubb1"
+  
+  transformVia(() =>    MorphlineTransformation(s"""{if { 
+                                          conditions: [{ not {equals {ec_shop_code : ["${field1.n}"]}}}]
+    								      then : [{ dropRecord{} }]
+    										}}"""))
+  locationPathBuilder= s=> "src/test/resources/compling_morphline.csv"
   storedAs(ExternalTextFile())
 }
+
 case class FailingMorphlineView() extends View with Id {
   dependsOn(() => SimpleDependendView())
-  transformVia(() =>MorphlineTransformation("invalid morphline code").forView(this))
-    locationPathBuilder= s=> "/tmp/blubb2"
+  transformVia(() => MorphlineTransformation("invalid morphline code").forView(this))
+  locationPathBuilder= s=> "src/test/resources/failing_morphline.csv"
   storedAs(ExternalTextFile())
 
 }
@@ -212,7 +224,6 @@ case class RedisMorphlineView() extends View with Id {
   val field1 = fieldOf[String]
   dependsOn(() => SimpleDependendView())
   transformVia(() =>MorphlineTransformation().forView(this))
-    locationPathBuilder= s=> "/tmp/blubb2"
   storedAs(Redis(host="localhost",port=6379))
 
 }
