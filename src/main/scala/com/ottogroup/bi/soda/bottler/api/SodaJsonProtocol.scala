@@ -24,7 +24,7 @@ case class ActionStatus(actor: String, typ: String, status: String, runStatus: O
 case class ActionStatusList(overview: Map[String, Int], actions: List[ActionStatus])
 case class ViewStatus(view: String, status: String, properties: Option[Map[String, String]], dependencies: Option[List[ViewStatus]])
 case class ViewStatusList(overview: Map[String, Int], views: List[ViewStatus])
-case class QueueStatusList(overview: Map[String,Int], queues: Map[String, List[RunStatus]]) 
+case class QueueStatusList(overview: Map[String, Int], queues: Map[String, List[RunStatus]])
 case class RunStatus(description: String, targetView: String, started: LocalDateTime, comment: String, properties: Option[Map[String, String]])
 
 

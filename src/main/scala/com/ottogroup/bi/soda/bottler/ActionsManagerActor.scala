@@ -105,7 +105,7 @@ class ActionsManagerActor() extends Actor {
     case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
     case GetActions() => sender ! ActionStatusListResponse(driverStates.values.toList)
-    
+
     case GetQueues() => sender ! QueueStatusListResponse(actionQueueStatus)
 
     case PollCommand(transformationType) => {

@@ -19,7 +19,7 @@ class HiveDriverTest extends FlatSpec with Matchers {
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
-  
+
   it should "execute another hive tranformations synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(HiveTransformation("SHOW TABLES"))
 

@@ -124,9 +124,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
     }
 
-    case _: ActionFailure[_]               => toRetrying(retries)
+    case _: ActionFailure[_] => toRetrying(retries)
 
-    case MaterializeView(mode)             => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })

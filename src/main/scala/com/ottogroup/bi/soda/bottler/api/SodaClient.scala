@@ -45,13 +45,13 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
         }
         sb.append("\n" + as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
       }
-      
+
       case qs: QueueStatusList => {
         if (qs.queues.flatMap(q => q._2).size > 0) {
           val header = Array("TYP", "DESC", "TARGET_VIEW", "PROPS")
           val queued = qs.queues.flatMap(q => q._2.map(e => Array(q._1, e.description, e.targetView, e.properties.getOrElse("").toString))).toArray
           sb.append(ASCIITable.getInstance.getTable(header, queued))
-          sb.append(s"Total: ${queued.size}")          
+          sb.append(s"Total: ${queued.size}")
         }
         sb.append("\n" + qs.overview.toSeq.sortBy(_._1).map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
       }
@@ -149,8 +149,8 @@ class SodaRestClient extends SodaInterface {
   def actions(status: Option[String], filter: Option[String]): ActionStatusList = {
     Await.result(get[ActionStatusList](s"/actions", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
-  
-  def queues(typ: Option[String], filter: Option[String]) : QueueStatusList = {
+
+  def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
     Await.result(get[QueueStatusList](s"/queues", paramsFrom(("typ", typ), ("filter", filter))), 3600 seconds)
   }
 }
@@ -190,8 +190,8 @@ class SodaControl(soda: SodaInterface) {
 
     cmd("queues") action { (_, c) => c.copy(action = Some(QUEUES)) } text ("list queued actions") children (
       opt[String]('t', "typ") action { (x, c) => c.copy(typ = Some(x)) } optional () valueName ("<type>") text ("filter queued actions by their type (e.g. 'oozie', 'filesystem', ...)"),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter queued actions (e.g. '.*my.dabatase/myView.*'). "))      
-      
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter queued actions (e.g. '.*my.dabatase/myView.*'). "))
+
     cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter commands by their status (e.g. 'failed')"),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter command display (e.g. '.*201501.*'). "))
@@ -212,8 +212,8 @@ class SodaControl(soda: SodaInterface) {
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to send 'newdata' to by their status (e.g. 'failed')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to send 'newdata' to (e.g. 'my.database/.*/Partition1/.*'). "))
-      
-    cmd("shutdown") action { (_, c) => c.copy(action = Some(SHUTDOWN)) } text ("shutdown program")  
+
+    cmd("shutdown") action { (_, c) => c.copy(action = Some(SHUTDOWN)) } text ("shutdown program")
 
     checkConfig { c =>
       {
@@ -236,7 +236,7 @@ class SodaControl(soda: SodaInterface) {
             }
             case QUEUES => {
               soda.queues(config.typ, config.filter)
-            }            
+            }
             case VIEWS => {
               soda.views(config.viewUrlPath, config.status, config.filter, config.dependencies)
             }

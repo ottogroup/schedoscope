@@ -112,17 +112,17 @@ class SodaSystem extends SodaInterface {
    * soda API
    */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
-    val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
+    val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
     submitCommandInternal(viewActors, MaterializeView(mode.getOrElse(MaterializeViewMode.default)), viewUrlPath, status, filter)
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
-    val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map( v => v.actor)
+    val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map(v => v.actor)
     submitCommandInternal(viewActors, Invalidate(), viewUrlPath, status, filter)
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    val viewActors = getViews(viewUrlPath, status, filter).map( v => v.actor)
+    val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
     submitCommandInternal(viewActors, "newdata", viewUrlPath, status, filter)
   }
 
@@ -144,19 +144,19 @@ class SodaSystem extends SodaInterface {
     val overview = actions
       .groupBy(_.status)
       .map(el => (el._1, el._2.size))
-    ActionStatusList(overview,actions)
+    ActionStatusList(overview, actions)
   }
-  
-   def queues(typ: Option[String], filter: Option[String]) : QueueStatusList = {
-     val result = queryActor[QueueStatusListResponse](actionsManagerActor, GetQueues(), settings.statusListAggregationTimeout)
-     val queues = result.actionQueues
-       .filterKeys( t => !typ.isDefined || t.startsWith(typ.get) )
-       .map{ case (t, queue) => (t, SodaJsonProtocol.parseQueueElements(queue)) }
-       .map{ case (t, queue) => (t, queue.filter( el => !filter.isDefined || el.targetView.matches(filter.get)))}
-     val overview = queues
-       .map(el => (el._1, el._2.size))
-     QueueStatusList(overview, queues)
-   }
+
+  def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
+    val result = queryActor[QueueStatusListResponse](actionsManagerActor, GetQueues(), settings.statusListAggregationTimeout)
+    val queues = result.actionQueues
+      .filterKeys(t => !typ.isDefined || typ.get.equals(t))
+      .map { case (t, queue) => (t, SodaJsonProtocol.parseQueueElements(queue)) }
+      .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
+    val overview = queues
+      .map(el => (el._1, el._2.size))
+    QueueStatusList(overview, queues)
+  }
 
   def commandStatus(commandId: String) = {
     val cmd = runningCommands.get(commandId)

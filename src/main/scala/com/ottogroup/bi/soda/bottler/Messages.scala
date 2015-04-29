@@ -34,8 +34,7 @@ case class GetViews(views: Option[List[View]], status: Option[String], filter: O
 case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
 case class MaterializeView(mode: String = MaterializeViewMode.default) extends CommandRequest
-object MaterializeViewMode{val default = "DEFAULT"; val resetTransformationChecksums = "RESET_TRANSFORMATION_CHECKSUMS"}
-
+object MaterializeViewMode { val default = "DEFAULT"; val resetTransformationChecksums = "RESET_TRANSFORMATION_CHECKSUMS" }
 
 sealed class CommandResponse
 case class DeployActionSuccess() extends CommandResponse

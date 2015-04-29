@@ -38,11 +38,11 @@ object HiveTransformation {
       } catch {
         case _: Throwable => null
       }
-      
+
       val jarResources = Settings().getDriverSettings("hive").libJarsHdfs
         .filter(lj => jarName == null || lj.contains(jarName))
         .map(lj => new ResourceUri(ResourceType.JAR, lj))
-        
+
       functionBuff.append(new Function(funcName, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
     }
 

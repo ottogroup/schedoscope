@@ -32,6 +32,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
         .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
         .toList
+
       sender ! ViewStatusListResponse(viewStates)
     }
 
