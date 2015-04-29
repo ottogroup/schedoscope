@@ -114,14 +114,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       log.info("SUCCESS")
 
       setVersion(view)
-      view.transformation match {
-        case _ : ExternalTransformation => toMaterialize()
-        case _ => {
-        	touchSuccessFlag(view)
-        	logTransformationTimestamp(view)
-        	toMaterialize()
-        }
-      }
+      if (!view.isExternal()) 
+              	touchSuccessFlag(view)
+         
+
+     logTransformationTimestamp(view) 
     }
 
     case _: ActionFailure[_] => toRetrying(retries)
