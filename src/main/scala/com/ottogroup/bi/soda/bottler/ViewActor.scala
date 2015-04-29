@@ -46,10 +46,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     logStateInfo("receive", false)
   }
 
-  override def postRestart(reason: Throwable) {
-    self ! MaterializeView()
-  }
-
   // State: default
   // transitions: defaultForViewWithoutDependencies, defaultForViewWithDependencies
   def receive: Receive = LoggingReceive({
