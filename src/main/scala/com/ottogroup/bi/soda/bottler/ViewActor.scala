@@ -45,6 +45,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   override def preStart {
     logStateInfo("receive", false)
   }
+  
+  override def preRestart(reason: Throwable, message: Option[Any]) {
+    log.error("Encountered restart of view actor: ${reason} ${message}")
+  }
 
   // State: default
   // transitions: defaultForViewWithoutDependencies, defaultForViewWithDependencies
