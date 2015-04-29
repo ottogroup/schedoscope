@@ -242,14 +242,20 @@ object FileSystemDriver {
 
   private val checksumCache = new HashMap[String, String]()
 
-  private def calcChecksum(fs: FileSystem, path: Path) = {
-    // content-based checking disabled for jar files because maven builds produce
-    // outputs with different hashes   
-    val cs = if (path.toString.endsWith(".jar")) path.toUri else fs.getFileChecksum(path)      
-    if (cs == null)
-      path.toUri().toString() + "::" + fs.getLength(path)
-    else cs.toString
-  }
+  private def calcChecksum(fs: FileSystem, path: Path) =
+    if (path == null)
+      "null-checksum"
+    else if (path.toString.endsWith(".jar"))
+      path.toString
+    else try {
+      val cs = fs.getFileChecksum(path).toString()
+      if (cs == null)
+        path.toString()
+      else
+        cs
+    } catch {
+      case _: Throwable => path.toString()
+    }
 
   def fileChecksum(fs: FileSystem, path: Path, pathString: String) = synchronized {
     checksumCache.getOrElseUpdate(pathString, calcChecksum(fs, path))
