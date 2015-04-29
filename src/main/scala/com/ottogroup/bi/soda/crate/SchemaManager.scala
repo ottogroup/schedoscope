@@ -57,6 +57,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def setTransformationTimestamp(view: View, timestamp: Long) = {
+        if (view.isExternal()) {
+      setTableProperty(view.dbName,view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
+
+    } 
     if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
     } else {
