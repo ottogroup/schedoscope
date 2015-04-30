@@ -21,6 +21,7 @@ import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.replaceParameters
 import org.slf4j.LoggerFactory
+import HiveDriver.currentConnection
 
 class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
@@ -86,10 +87,6 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
     }
   }
 
-  private val currentConnection = new ThreadLocal[Option[Connection]]() {
-    override def initialValue() = None
-  }
-
   private def connection = {
     if (currentConnection.get.isEmpty) {
       log.info("HIVE-DRIVER: Establishing connection to HiveServer")
@@ -145,6 +142,10 @@ class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val m
 }
 
 object HiveDriver {
+  val currentConnection = new ThreadLocal[Option[Connection]]() {
+    override def initialValue() = None
+  }
+  
   def apply(ds: DriverSettings) = {
     val ugi = Settings().userGroupInformation
 
