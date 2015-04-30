@@ -15,6 +15,20 @@ import java.io.File
 
 object SodaService extends App with SimpleParallelRoutingApp {
 
+  case class Config(shell: Boolean = true)
+  
+  val parser = new scopt.OptionParser[Config]("soda-service") {
+    override def showUsageOnError = true
+    head("soda-service", "0.0.1")
+    help("help") text ("print usage")
+    opt[Unit]('n', "noshell") action { (_, c) => c.copy(shell = true) } optional () text ("disable soda shell")
+  }
+  
+  val config = parser.parse(args, Config()) match {
+      case Some(config) => config
+      case None => Config()
+  }
+
   val soda = new SodaSystem()
 
   implicit val system = ActorSystem("soda-webservice")
@@ -59,22 +73,24 @@ object SodaService extends App with SimpleParallelRoutingApp {
     }
   }
 
-  Thread.sleep(10000)
-  println("SODA")
-  println("\n\n============= SODA initialization finished ============== \n\n")
-  val ctrl = new SodaControl(soda)
-  val reader = new ConsoleReader()
-  val history = new History()
-  history.setHistoryFile(new File(".soda_history"))
-  reader.setHistory(history)
-  while (true) {
-    try {
-      val cmd = reader.readLine("soda> ")
-      // we have to intercept --help because otherwise jline seems to call System.exit :(
-      if (cmd != null && !cmd.trim().replaceAll(";", "").isEmpty() && !cmd.matches(".*--help.*"))
-        ctrl.run(cmd.split("\\s+"))
-    } catch {
-      case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()
+  if (config.shell) {
+    Thread.sleep(10000)
+    println("SODA")
+    println("\n\n============= SODA initialization finished ============== \n\n")
+    val ctrl = new SodaControl(soda)
+    val reader = new ConsoleReader()
+    val history = new History()
+    history.setHistoryFile(new File(".soda_history"))
+    reader.setHistory(history)
+    while (true) {
+      try {
+        val cmd = reader.readLine("soda> ")
+        // we have to intercept --help because otherwise jline seems to call System.exit :(
+        if (cmd != null && !cmd.trim().replaceAll(";", "").isEmpty() && !cmd.matches(".*--help.*"))
+          ctrl.run(cmd.split("\\s+"))
+      } catch {
+        case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()
+      }
     }
   }
 
