@@ -12,7 +12,7 @@ trait SodaInterface {
 
   def commands(status: Option[String], filter: Option[String]): List[SodaCommandStatus]
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): ViewStatusList
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]): ViewStatusList
 
   def actions(status: Option[String], filter: Option[String]): ActionStatusList
 

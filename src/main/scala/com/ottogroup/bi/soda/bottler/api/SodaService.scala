@@ -24,7 +24,7 @@ object SodaService extends App with SimpleParallelRoutingApp {
   startServer(interface = "localhost", port = settings.port) {
     get {
       respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-        parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?) { (status, filter, dependencies, typ, mode) =>
+        parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
           {
             path("actions") {
               complete(soda.actions(status, filter))
@@ -36,7 +36,7 @@ object SodaService extends App with SimpleParallelRoutingApp {
                 complete(soda.commands(status, filter))
               } ~
               path("views" / Rest ?) { viewUrlPath =>
-                complete(soda.views(viewUrlPath, status, filter, dependencies))
+                complete(soda.views(viewUrlPath, status, filter, dependencies, overview))
               } ~
               path("materialize" / Rest ?) { viewUrlPath =>
                 complete(soda.materialize(viewUrlPath, status, filter, mode))

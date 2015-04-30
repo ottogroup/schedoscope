@@ -126,13 +126,13 @@ class SodaSystem extends SodaInterface {
     submitCommandInternal(viewActors, "newdata", viewUrlPath, status, filter)
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]) = {
     val views = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false))
     val statusMap = views.map(v => (v.view.urlPath, v.status)).toMap // needed for status of dependencies in output
     val viewStatusList = views
       .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!dependencies.getOrElse(false)) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, statusMap.getOrElse(d.urlPath, ""), None, None)).toList)))
-    val overview = viewStatusList.groupBy(_.status).mapValues(_.size)
-    ViewStatusList(overview, viewStatusList)
+    val ov = viewStatusList.groupBy(_.status).mapValues(_.size)
+    ViewStatusList(ov, if (overview.getOrElse(false)) List() else viewStatusList)
   }
 
   def actions(status: Option[String], filter: Option[String]) = {
