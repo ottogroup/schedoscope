@@ -11,6 +11,7 @@ import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.dsl.Transformation
 import net.lingala.zip4j.core.ZipFile
 import com.ottogroup.bi.soda.Settings
+import org.apache.commons.io.FileUtils
 
 case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
@@ -53,7 +54,7 @@ trait Driver[T <: Transformation]  {
           val tmpDir = Files.createTempDirectory("soda-" + Random.nextLong.abs.toString).toFile
           new ZipFile(f.replaceAll("file:", "")).extractAll(tmpDir.getAbsolutePath)
           val succ = fsd.copy("file://" + tmpDir + "/*", ds.location, true)
-          tmpDir.delete
+          FileUtils.deleteDirectory(tmpDir)
           succ
         } else {
           fsd.copy(f, ds.location, true)
