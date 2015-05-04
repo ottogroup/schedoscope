@@ -12,22 +12,22 @@ import com.ottogroup.bi.soda.dsl.Transformation
 import net.lingala.zip4j.core.ZipFile
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
-import com.ottogroup.bi.eci.transformations.morphline._
+import com.ottogroup.bi.morphline._
 import scala.concurrent.future
 import org.kitesdk.morphline.avro.ExtractAvroTreeBuilder
 import org.kitesdk.morphline.hadoop.parquet.avro.ReadAvroParquetFileBuilder
-import com.ottogroup.bi.eci.transformations.morphline.command.JDBCWriterBuilder
+import com.ottogroup.bi.morphline.command.JDBCWriterBuilder
 import com.typesafe.config.ConfigFactory
 import org.kitesdk.morphline.stdlib.SampleBuilder
 import org.kitesdk.morphline.api.MorphlineContext
 import org.kitesdk.morphline.avro.ReadAvroContainerBuilder
-import com.ottogroup.bi.eci.transformations.morphline.command.anonymization.AnonymizeAvroBuilder
+import com.ottogroup.bi.morphline.command.anonymization.AnonymizeAvroBuilder
 import org.kitesdk.morphline.stdio.ReadCSVBuilder
 import org.kitesdk.morphline.stdlib.DropRecordBuilder
-import com.ottogroup.bi.eci.transformations.morphline.command.sink.AvroWriterBuilder
-import com.ottogroup.bi.eci.transformations.morphline.command.anonymization.AnonymizeBuilder
-import com.ottogroup.bi.eci.transformations.morphline.command.CSVWriterBuilder
-import com.ottogroup.bi.eci.transformations.morphline.command.REDISWriterBuilder
+import com.ottogroup.bi.morphline.command.sink.AvroWriterBuilder
+import com.ottogroup.bi.morphline.command.anonymization.AnonymizeBuilder
+import com.ottogroup.bi.morphline.command.CSVWriterBuilder
+import com.ottogroup.bi.morphline.command.REDISWriterBuilder
 import org.kitesdk.morphline.stdlib.PipeBuilder
 import org.kitesdk.morphline.api.Command
 import com.typesafe.config.Config
@@ -85,7 +85,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 		  try {		  
 			  runMorphline(createMorphline(t), t) }
 		  catch {
-		    case e:Throwable=>DriverRunFailed[MorphlineTransformation](this,"could not create morphline",e)
+		    case e:Throwable=>DriverRunFailed[MorphlineTransformation](this,"could not create morphline ",e)
 		  }
 		}
 		new DriverRunHandle[MorphlineTransformation](this, new LocalDateTime(), t, f)
@@ -210,9 +210,10 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 							//	val wholeConfig = ConfigFactory.empty().withValue("id", view.n).withValue ("commands", ConfigValueFactory.fromMap(morphlineConfig.entrySet()))
 								
 								val morphline = new PipeBuilder().build(morphlineConfig, inputConnector, outputConnector, context)
+							
 									outputConnector.setParent(morphline)
 									inputConnector.setChild(morphline)
-									morphline
+									inputConnector.parent
 				} else {inputView.head.storageFormat match  {
 						  case _:TextFile => inputCommand
 						
@@ -223,8 +224,9 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 									extractAvroTreeCommand
 						}
 				}
-				if (transformation.anonymize.size>0) {					
-					val anonConfig = ConfigFactory.empty().withValue("fields", ConfigValueFactory.fromIterable(transformation.anonymize))
+				val sensitive = (view.fields.filter( f => f.isPrivacySensitive).map (f => f.n)) ++ transformation.anonymize
+				if (sensitive.size>0 ) {					
+					val anonConfig = ConfigFactory.empty().withValue("fields", ConfigValueFactory.fromIterable(sensitive))
 					val output2Connector = new CommandConnector(false, "output2")
 					output2Connector.setParent(outputConnector.getParent);
 					output2Connector.setChild(outputConnector.getChild())
@@ -247,7 +249,14 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 
 			    val driver=this
 				try {
-					Settings().userGroupInformation.doAs(new PrivilegedAction[ DriverRunState[MorphlineTransformation]]() {
+//				      val ugi = UserGroupInformation.getCurrentUser()
+//    ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
+//   
+//    ugi.reloginFromKeytab();
+//				      ugi.getRealUser()
+//				     
+				      val ugi=Settings().userGroupInformation
+					ugi.doAs(new PrivilegedAction[ DriverRunState[MorphlineTransformation]]() {
 						override def run():DriverRunState[MorphlineTransformation] = {
 
 								try {
@@ -257,6 +266,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 											  println(dep.fullPath)
 												val fs = FileSystem.get(new URI(dep.fullPath),Settings().hadoopConf)
 												val test=fs.listStatus(new Path(dep.fullPath)).map { status =>
+												 
 													val record: Record = new Record()
 													if (!status.getPath().getName().startsWith("_")) {
 													    
@@ -265,9 +275,10 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 													    record.put(Fields.ATTACHMENT_BODY, in.asInstanceOf[java.io.InputStream]);
 														
 														for (field <- view.partitionParameters)
-															record.put(field.n,field.v)
+															record.put(field.n,field.v.get)
 														record.put("file_upload_url", status.getPath().toUri().toString())
 														try {
+														  println("processing:"+record)
 														if (!command.process(record))
 															println("Morphline failed to process record: " + record);
 													    }catch {
