@@ -119,6 +119,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
          
 
      logTransformationTimestamp(view) 
+     toMaterialize
     }
 
     case _: ActionFailure[_] => toRetrying(retries)
