@@ -172,7 +172,20 @@
 			<artifactId>mockito-core</artifactId>
 			<version>1.9.5</version>
 			<scope>test</scope>
-		</dependency>		
+
+		</dependency>
+		
+
+		<dependency>
+			<groupId>morphline-utils</groupId>
+			<artifactId>morphline-utils</artifactId>
+			<version>0.1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>com.exasol.jdbc</groupId>
+			<artifactId>com.exasol.jdbc</artifactId>
+			<version>5.0.0</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
