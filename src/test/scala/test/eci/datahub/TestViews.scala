@@ -211,11 +211,8 @@ case class CompilingMorphlineView() extends View with Id {
   
   transformVia(() =>MorphlineTransformation(s"""{ id :"bla"
       importCommands : ["org.kitesdk.**"]
-		  commands : [ { extractAvroTree{} },
-		  				if  { 
-                                          conditions: [{ not: {equals {site : ["dcspmhmy1000004n0bgqvasv2_3y7u"]}}}]
-    								      then : [{ dropRecord{} }]
-    										}}]}""").forView(this))
+		  commands : [ { extractAvroTree{} }
+		  				]}""").forView(this))
   locationPathBuilder= s=> "src/test/resources/compling_morphline.csv"
   storedAs(ExternalTextFile())
 }
@@ -273,7 +270,8 @@ case class JDBCMorphlineView(x:Parameter[String]) extends View  {
   val visit_id = fieldOf[String]
   val site = fieldOf[String]
   val search_term = fieldOf[String]
-  val number_of_results = fieldOf[String]
+  val number_of_results = fieldOf[Integer]
+  val has_result = fieldOf[Boolean]
   dependsOn(() => HDFSInputView())
 
   
@@ -288,10 +286,10 @@ case class JDBCMorphlineView(x:Parameter[String]) extends View  {
 		  								}} ,
                         {
 		  				if  { 
-                                          conditions: [{ not: {equals {site : "${x.v.get}"}}}]
-    								      then : [{ dropRecord{} }]
+                                          conditions: [{ not: {equals {number_of_results : "0"}}}]
+    								      then : [{ addValues { has_result : true} }]
     										}}]}""").forView(this))
-  locationPathBuilder= s=> "src/test/resources/bla_morphline.csv"
+  //locationPathBuilder= s=> "src/test/resources/bla_morphline.csv"
   val password =    {
 		  val src = Source.fromFile("/home/dev_hzorn/exasol_password")
 		  val line = src.getLines.take(1).next.toString.trim()
