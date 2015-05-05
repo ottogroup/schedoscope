@@ -28,6 +28,7 @@ import morphlineutils.morphline.command.sink.AvroWriterBuilder
 import morphlineutils.morphline.command.anonymization.AnonymizeBuilder
 import morphlineutils.morphline.command.CSVWriterBuilder
 import morphlineutils.morphline.command.REDISWriterBuilder
+
 import org.kitesdk.morphline.stdlib.PipeBuilder
 import org.kitesdk.morphline.api.Command
 import com.typesafe.config.Config
