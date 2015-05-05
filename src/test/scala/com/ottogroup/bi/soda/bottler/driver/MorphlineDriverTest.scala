@@ -102,7 +102,7 @@ class MorphlineDriverTest extends FlatSpec with Matchers {
    }
    })
   }
-    ignore should "store stuff in exasol"  taggedAs (DriverTests) in {
+   ignore should "store stuff in exasol"  taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(new JDBCMorphlineView(Parameter.asParameter("EC1903")).transformation().asInstanceOf[MorphlineTransformation])
     
     driverRunState shouldBe a[DriverRunSucceeded[_]]
