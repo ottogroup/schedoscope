@@ -164,10 +164,14 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 									new REDISWriterBuilder().build(oConfig, parent, child, context)
 						}
 						case f:JDBC => {
+						    val schema = view.fields.foldLeft(ConfigFactory.empty())((config,field) => config.withValue(field.n, field.t.erasure.getSimpleName()))
+						    println(schema.root().render())
 							val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
 									withValue("jdbcDriver", f.jdbcDriver).
 									withValue("username", f.userName).
-									withValue("targetTable", view.tableName).withValue("password", f.password).
+									withValue("schema",schema.root()).
+									withValue("targetTable", "USR_EXT_HZORN."
+									  +view.n).withValue("password", f.password).
 									withValue("fields", ConfigValueFactory.fromIterable(fields))
 									new JDBCWriterBuilder().build(oConfig, parent, child, context)
 						}
