@@ -19,6 +19,10 @@ import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
 import com.ottogroup.bi.soda.dsl.ExternalTextFile
 import com.ottogroup.bi.soda.dsl.TextFile
 import com.ottogroup.bi.soda.dsl.Redis
+import com.ottogroup.bi.soda.Settings
+import org.apache.hadoop.security.UserGroupInformation
+import com.ottogroup.bi.soda.dsl.JDBC
+import scala.io.Source
 case class Brand(
   ecNr: Parameter[String]) extends View
   with Id
@@ -201,13 +205,17 @@ case class MorphlineView() extends View with Id {
 }
 
 case class CompilingMorphlineView() extends View with Id {
-  val field1 = fieldOf[String]
+  val visit_id = fieldOf[String]
+  val site = fieldOf[String]
   dependsOn(() => SimpleDependendView())
   
-  transformVia(() =>    MorphlineTransformation(s"""{if { 
-                                          conditions: [{ not {equals {ec_shop_code : ["${field1.n}"]}}}]
+  transformVia(() =>MorphlineTransformation(s"""{ id :"bla"
+      importCommands : ["org.kitesdk.**"]
+		  commands : [ { extractAvroTree{} },
+		  				if  { 
+                                          conditions: [{ not: {equals {site : ["dcspmhmy1000004n0bgqvasv2_3y7u"]}}}]
     								      then : [{ dropRecord{} }]
-    										}}"""))
+    										}}]}""").forView(this))
   locationPathBuilder= s=> "src/test/resources/compling_morphline.csv"
   storedAs(ExternalTextFile())
 }
@@ -226,4 +234,70 @@ case class RedisMorphlineView() extends View with Id {
   transformVia(() =>MorphlineTransformation().forView(this))
   storedAs(Redis(host="localhost",port=6379))
 
+}
+
+case class HDFSInputView() extends View with Id{
+    val field1 = fieldOf[String]
+    locationPathBuilder= s=> "/home/dev_hzorn/testdaten"    
+    storedAs(Parquet())
+    
+}
+
+case class BlaMorphlineView(x:Parameter[String]) extends View  {
+  val visit_id = fieldOf[String]
+  val site = fieldOf[String]
+  val search_term = fieldOf[String]
+  val number_of_results = fieldOf[String]
+  dependsOn(() => HDFSInputView())
+
+  
+  transformVia(() =>MorphlineTransformation(s"""{ id :"bla"
+          importCommands : ["org.kitesdk.**"]
+		  commands : [ {extractAvroPaths{ flatten :true 
+                                         paths :{visit_id : "/visit_id"
+		  										 site : "/ec_shop_code"
+		  										 number_of_results : /number_of_results
+		  										 search_term : /search_term
+		  										} 
+		  								}} ,
+                        {
+		  				if  { 
+                                          conditions: [{ not: {equals {site : "${x.v.get}"}}}]
+    								      then : [{ dropRecord{} }]
+    										}}]}""").forView(this))
+  locationPathBuilder= s=> "src/test/resources/bla_morphline.csv"
+  storedAs(ExternalTextFile())
+}
+
+case class JDBCMorphlineView(x:Parameter[String]) extends View  {
+  val visit_id = fieldOf[String]
+  val site = fieldOf[String]
+  val search_term = fieldOf[String]
+  val number_of_results = fieldOf[String]
+  dependsOn(() => HDFSInputView())
+
+  
+  transformVia(() =>MorphlineTransformation(s"""{ id :"bla"
+          importCommands : ["org.kitesdk.**"]
+		  commands : [ {extractAvroPaths{ flatten :true 
+                                         paths :{visit_id : "/visit_id"
+		  										 site : "/ec_shop_code"
+		  										 number_of_results : /number_of_results
+		  										 search_term : /search_term
+		  										} 
+		  								}} ,
+                        {
+		  				if  { 
+                                          conditions: [{ not: {equals {site : "${x.v.get}"}}}]
+    								      then : [{ dropRecord{} }]
+    										}}]}""").forView(this))
+  locationPathBuilder= s=> "src/test/resources/bla_morphline.csv"
+  val password =    {
+		  val src = Source.fromFile("/home/dev_hzorn/exasol_password")
+		  val line = src.getLines.take(1).next.toString.trim()
+           src.close
+          line
+}
+ 
+  storedAs(JDBC(jdbcUrl="jdbc:exa:10.15.234.66,10.15.234.98..99:8563;schema=usr_ext_hzorn",userName="dev_hzorn",password=this.password,jdbcDriver="com.exasol.jdbc.EXADriver"))
 }
