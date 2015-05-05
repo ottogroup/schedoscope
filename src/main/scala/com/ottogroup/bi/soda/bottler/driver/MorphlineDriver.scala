@@ -12,22 +12,22 @@ import com.ottogroup.bi.soda.dsl.Transformation
 import net.lingala.zip4j.core.ZipFile
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
-import com.ottogroup.bi.morphline._
+import morphlineutils.morphline._
 import scala.concurrent.future
 import org.kitesdk.morphline.avro.ExtractAvroTreeBuilder
 import org.kitesdk.morphline.hadoop.parquet.avro.ReadAvroParquetFileBuilder
-import com.ottogroup.bi.morphline.command.JDBCWriterBuilder
+import morphlineutils.morphline.command.JDBCWriterBuilder
 import com.typesafe.config.ConfigFactory
 import org.kitesdk.morphline.stdlib.SampleBuilder
 import org.kitesdk.morphline.api.MorphlineContext
 import org.kitesdk.morphline.avro.ReadAvroContainerBuilder
-import com.ottogroup.bi.morphline.command.anonymization.AnonymizeAvroBuilder
+import morphlineutils.morphline.command.anonymization.AnonymizeAvroBuilder
 import org.kitesdk.morphline.stdio.ReadCSVBuilder
 import org.kitesdk.morphline.stdlib.DropRecordBuilder
-import com.ottogroup.bi.morphline.command.sink.AvroWriterBuilder
-import com.ottogroup.bi.morphline.command.anonymization.AnonymizeBuilder
-import com.ottogroup.bi.morphline.command.CSVWriterBuilder
-import com.ottogroup.bi.morphline.command.REDISWriterBuilder
+import morphlineutils.morphline.command.sink.AvroWriterBuilder
+import morphlineutils.morphline.command.anonymization.AnonymizeBuilder
+import morphlineutils.morphline.command.CSVWriterBuilder
+import morphlineutils.morphline.command.REDISWriterBuilder
 import org.kitesdk.morphline.stdlib.PipeBuilder
 import org.kitesdk.morphline.api.Command
 import com.typesafe.config.Config
@@ -85,7 +85,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 		  try {		  
 			  runMorphline(createMorphline(t), t) }
 		  catch {
-		    case e:Throwable=>DriverRunFailed[MorphlineTransformation](this,"could not create morphline ",e)
+		    case e:Throwable=>e.printStackTrace();DriverRunFailed[MorphlineTransformation](this,"could not create morphline ",e)
 		  }
 		}
 		new DriverRunHandle[MorphlineTransformation](this, new LocalDateTime(), t, f)
