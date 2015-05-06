@@ -165,7 +165,7 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 						}
 						case f:JDBC => {
 						    val schema = view.fields.foldLeft(ConfigFactory.empty())((config,field) => config.withValue(field.n, field.t.erasure.getSimpleName()))
-						    println(schema.root().render())
+						  
 							val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
 									withValue("jdbcDriver", f.jdbcDriver).
 									withValue("username", f.userName).
@@ -268,7 +268,6 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 
 											val view = transformation.view.get
 											view.dependencies.foreach{dep => {
-											  println(dep.fullPath)
 												val fs = FileSystem.get(new URI(dep.fullPath),Settings().hadoopConf)
 												val test=fs.listStatus(new Path(dep.fullPath)).map { status =>
 												 
@@ -283,7 +282,6 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 															record.put(field.n,field.v.get)
 														record.put("file_upload_url", status.getPath().toUri().toString())
 														try {
-														  println("processing:"+record)
 														if (!command.process(record))
 															println("Morphline failed to process record: " + record);
 													    }catch {
