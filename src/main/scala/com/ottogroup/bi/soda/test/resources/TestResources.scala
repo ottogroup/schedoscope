@@ -6,6 +6,7 @@ import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
 import com.ottogroup.bi.soda.bottler.driver.HiveDriver
+import com.ottogroup.bi.soda.bottler.driver.PigDriver
 import com.ottogroup.bi.soda.crate.SchemaManager
 import com.ottogroup.bi.soda.dsl.TextFile
 import com.ottogroup.bi.soda.test.Database
@@ -48,6 +49,8 @@ abstract class TestResources {
   val fileSystem: FileSystem
 
   lazy val oozieDriver: OozieDriver = null
+  
+  lazy val pigDriver: PigDriver = new PigDriver(ugi)
 
   val remoteTestDirectory: String
 

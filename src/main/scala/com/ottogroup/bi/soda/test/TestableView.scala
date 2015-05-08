@@ -11,6 +11,7 @@ import com.ottogroup.bi.soda.dsl.Transformation
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.PigTransformation
 import com.ottogroup.bi.soda.test.resources.OozieTestResources
 
 trait TestableView extends FillableView {}
@@ -22,6 +23,7 @@ trait test extends TestableView {
     this.transformation() match {
       case t: HiveTransformation => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
       case t: OozieTransformation => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
+      case t: PigTransformation => resources().pigDriver.asInstanceOf[Driver[Transformation]]
     }
   }
 
