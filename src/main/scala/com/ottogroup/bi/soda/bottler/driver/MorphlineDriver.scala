@@ -62,7 +62,7 @@ import com.ottogroup.bi.soda.dsl.NullStorage
 import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
 import com.ottogroup.bi.soda.dsl.ExternalStorageFormat
 import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
-
+import org.slf4j.LoggerFactory
 
 /**
  * Helper implicit for generating ConfigValues. Can result in unusual conversions in this file
@@ -77,7 +77,8 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 	implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 	val context = new MorphlineContext.Builder().build()
 	def transformationName: String = "morphline"
-	
+	 val log = LoggerFactory.getLogger(classOf[MorphlineDriver])
+	 
 	/*
 	 * Run morphline in Future, return handle containing this future
 	 */
@@ -86,16 +87,11 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 		  try {		  
 			  runMorphline(createMorphline(t), t) }
 		  catch {
-		    case e:Throwable=>e.printStackTrace();DriverRunFailed[MorphlineTransformation](this,"could not create morphline ",e)
+		    case e:Throwable=>log.error("Error when creating morphline",e);DriverRunFailed[MorphlineTransformation](this,"could not create morphline ",e)
 		  }
 		}
 		new DriverRunHandle[MorphlineTransformation](this, new LocalDateTime(), t, f)
 	}
-
-
-	override def runAndWait(t: MorphlineTransformation): DriverRunState[MorphlineTransformation] =
-			Await.result(run(t).stateHandle.asInstanceOf[Future[DriverRunState[MorphlineTransformation]]], runTimeOut)
-			// Members declared in com.ottogroup.bi.soda.bottler.driver.Driver
 		
 	  //factory method for morphline input (reader) commands
    def createInput(format: StorageFormat, sourceTable: String, cols: Seq[String], finalCommand: Command): Command = {
@@ -143,39 +139,39 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 						val fields = view.fields.map( field => field.n)
 						val command =storageFormat match { 
 						case f:ExaSol => {
-							val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
-									withValue("", "")
+									val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
+											withValue("", "")
 									new JDBCWriterBuilder().build(oConfig, parent, child, context)
 						}
 						case f:ExternalTextFile => {
-
-							val oConfig = ConfigFactory.empty().withValue("filename", view.locationPath).
+									val oConfig = ConfigFactory.empty().withValue("filename", view.locationPath).
 									withValue("separator", f.fieldTerminator).
 									withValue("fields", ConfigValueFactory.fromIterable(fields))
 									new CSVWriterBuilder().build(oConfig, parent, child, context)
 						}
 						case f:Redis => {
-
-							val keys = f.keys
+									log.info("creating RedisWriter")
+									val keys = f.keys
 									val oConfig = ConfigFactory.empty().withValue("server", f.host).
-									withValue("port",f.port).withValue("password", f.password).
-									withValue("keys", ConfigValueFactory.fromIterable(keys)).
-									withValue("fields", ConfigValueFactory.fromIterable(fields))
+										withValue("port",f.port).withValue("password", f.password).
+										withValue("keys", ConfigValueFactory.fromIterable(keys)).
+										withValue("fields", ConfigValueFactory.fromIterable(fields))
 									new REDISWriterBuilder().build(oConfig, parent, child, context)
 						}
 						case f:JDBC => {
-						    val schema = view.fields.foldLeft(ConfigFactory.empty())((config,field) => config.withValue(field.n, field.t.erasure.getSimpleName()))
-						  
+						    log.info("creating JDBCWriter")
+						    val schema = view.fields.foldLeft(ConfigFactory.empty())((config,field) => config.withValue(field.n, field.t.erasure.getSimpleName()))						  
 							val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
 									withValue("jdbcDriver", f.jdbcDriver).
 									withValue("username", f.userName).
 									withValue("schema",schema.root()).
-									withValue("targetTable", "USR_EXT_HZORN."
-									  +view.n).withValue("password", f.password).
+									withValue("targetTable", 
+									  view.n).withValue("password", f.password).
 									withValue("fields", ConfigValueFactory.fromIterable(fields))
 									new JDBCWriterBuilder().build(oConfig, parent, child, context)
 						}
 						case f:ExternalAvro => {
+						  log.info("creating AvroFile")
 							val oConfig = commandConfig.withValue("filename",view.locationPath+"/000000")
 									new AvroWriterBuilder().build(oConfig, parent, child, context)
 						}
@@ -185,8 +181,11 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 				}
 				command
 			}
-	
+			/**
+			 * Create a sampling command which drops a random ratio of records
+			 */
 			def createSampler(inputConnector: CommandConnector, sample: Double) = {
+			  log.info("creating sampler with rate "+sample)
 				val sampleConfig = ConfigFactory.empty().withValue("probability", sample)
 				val sampleConnector = new CommandConnector(false, "sampleconnector")
 				sampleConnector.setParent(inputConnector.getParent)
@@ -195,7 +194,9 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 				inputConnector.setChild(sampleCommand)
 				sampleCommand
 			}
-
+			/**
+			 * 
+			 */
 			def createMorphline(transformation: MorphlineTransformation):Command = {
 			    val view = transformation.view.get				
 				val outputConnector = new CommandConnector(false, "outputconnector");
@@ -207,30 +208,28 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 				inputConnector.setParent(inputCommand)
 				inputConnector.setChild(outputConnector)
 				outputConnector.setParent(inputConnector)
-				MorphlineClasspathUtil.setupJavaCompilerClasspath()
-			
+				MorphlineClasspathUtil.setupJavaCompilerClasspath()			
 						// if the user did specify a morphline, plug it between reader and writer
 				if (transformation.definition!="") {
+				  log.info ("compiling morphline...")
 								val morphlineConfig = ConfigFactory.parseString(transformation.definition)
-							//	val wholeConfig = ConfigFactory.empty().withValue("id", view.n).withValue ("commands", ConfigValueFactory.fromMap(morphlineConfig.entrySet()))
-								
 								val morphline = new PipeBuilder().build(morphlineConfig, inputConnector, outputConnector, context)
-							
-									outputConnector.setParent(morphline)
-									inputConnector.setChild(morphline)
-									inputConnector.parent
+								outputConnector.setParent(morphline)
+								inputConnector.setChild(morphline)
+								inputConnector.parent
 				} else {inputView.head.storageFormat match  {
-						  case _:TextFile => inputCommand
-						
+						  case _:TextFile => inputCommand						
 						  case _=> {	// if the user did not specify a morphline, at least extract all avro paths so they can be anonymized
-							val extractAvroTreeCommand = new ExtractAvroTreeBuilder().build(ConfigFactory.empty(), inputConnector, outputConnector, context)
+						    log.info("Empty morphline, inserting extractAvro")	
+						    val extractAvroTreeCommand = new ExtractAvroTreeBuilder().build(ConfigFactory.empty(), inputConnector, outputConnector, context)
 									inputConnector.setChild(extractAvroTreeCommand)
 									outputConnector.setParent(extractAvroTreeCommand)
 									extractAvroTreeCommand
 						}
 				}
 				val sensitive = (view.fields.filter( f => f.isPrivacySensitive).map (f => f.n)) ++ transformation.anonymize
-				if (sensitive.size>0 ) {					
+				if (sensitive.size>0 ) {	
+				    log.info("adding anonymizer")
 					val anonConfig = ConfigFactory.empty().withValue("fields", ConfigValueFactory.fromIterable(sensitive))
 					val output2Connector = new CommandConnector(false, "output2")
 					output2Connector.setParent(outputConnector.getParent);
@@ -248,72 +247,60 @@ class MorphlineDriver extends Driver[MorphlineTransformation] {
 				}
 			}
 
-			def runMorphline(command:Command,transformation:MorphlineTransformation):DriverRunState[MorphlineTransformation] = {
-				Notifications.notifyBeginTransaction(command);
-				Notifications.notifyStartSession(command);
+  def runMorphline(command: Command, transformation: MorphlineTransformation): DriverRunState[MorphlineTransformation] = {
+    Notifications.notifyBeginTransaction(command);
+    Notifications.notifyStartSession(command);
+    val driver = this
+    try {
+      val ugi = Settings().userGroupInformation
+      ugi.doAs(new PrivilegedAction[DriverRunState[MorphlineTransformation]]() {
+        override def run(): DriverRunState[MorphlineTransformation] = {
+          try {
+            val view = transformation.view.get
+            view.dependencies.foreach { dep =>
+              {
+                val fs = FileSystem.get(new URI(dep.fullPath), Settings().hadoopConf)
+                val test = fs.listStatus(new Path(dep.fullPath)).map { status =>
+                  val record: Record = new Record()
+                  if (!status.getPath().getName().startsWith("_")) {
+                	log.info("processing morphline on "+status.getPath().toUri().toString())  
+                    val in: java.io.InputStream =
+                      fs.open(status.getPath()).getWrappedStream().asInstanceOf[java.io.InputStream]
+                    record.put(Fields.ATTACHMENT_BODY, in.asInstanceOf[java.io.InputStream]);
+                    for (field <- view.partitionParameters)
+                      record.put(field.n, field.v.get)
+                    record.put("file_upload_url", status.getPath().toUri().toString())
+                    try {
+                      if (!command.process(record))
+                        log.error("Morphline failed to process record: "+record);
+                    } catch {
+                      case e: Throwable => {
+                        Notifications.notifyRollbackTransaction(command)
+                        context.getExceptionHandler().handleException(e, null)
 
-			    val driver=this
-				try {
-//				      val ugi = UserGroupInformation.getCurrentUser()
-//    ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
-//   
-//    ugi.reloginFromKeytab();
-//				      ugi.getRealUser()
-//				     
-				      val ugi=Settings().userGroupInformation
-					ugi.doAs(new PrivilegedAction[ DriverRunState[MorphlineTransformation]]() {
-						override def run():DriverRunState[MorphlineTransformation] = {
-
-								try {
-
-											val view = transformation.view.get
-											view.dependencies.foreach{dep => {
-												val fs = FileSystem.get(new URI(dep.fullPath),Settings().hadoopConf)
-												val test=fs.listStatus(new Path(dep.fullPath)).map { status =>
-												 
-													val record: Record = new Record()
-													if (!status.getPath().getName().startsWith("_")) {
-													    
-														val in :java.io.InputStream = 
-														  fs.open(status.getPath()).getWrappedStream().asInstanceOf[java.io.InputStream]
-													    record.put(Fields.ATTACHMENT_BODY, in.asInstanceOf[java.io.InputStream]);
-														
-														for (field <- view.partitionParameters)
-															record.put(field.n,field.v.get)
-														record.put("file_upload_url", status.getPath().toUri().toString())
-														try {
-														if (!command.process(record))
-															println("Morphline failed to process record: " + record);
-													    }catch {
-													    	case e: Throwable => {
-													    		Notifications.notifyRollbackTransaction(command)
-											
-													    		context.getExceptionHandler().handleException(e, null)
-										   
-													    	}
-													    } finally {
-														in.close();
-													    }
-													}
-												}
-											}
-									}
-									Notifications.notifyCommitTransaction(command)									
-								} catch {
-									case e: Throwable => {
-											Notifications.notifyRollbackTransaction(command)											
-											context.getExceptionHandler().handleException(e, null)
-											return   DriverRunFailed[MorphlineTransformation](driver, s"Morphline failed",e)
-										  
-										}
-								}
-								Notifications.notifyShutdown(command);
-								DriverRunSucceeded[MorphlineTransformation](driver,"Morphline succeeded")
-						}
-					}
-							)
-				}
-			}
+                      }
+                    } finally {
+                      in.close();
+                    }
+                  }
+                }
+              }
+            }
+            Notifications.notifyCommitTransaction(command)
+          } catch {
+            case e: Throwable => {
+              Notifications.notifyRollbackTransaction(command)
+              context.getExceptionHandler().handleException(e, null)
+              log.error("Morphline failed",e)
+              return DriverRunFailed[MorphlineTransformation](driver, s"Morphline failed", e)
+            }
+          }
+          Notifications.notifyShutdown(command);
+          DriverRunSucceeded[MorphlineTransformation](driver, "Morphline succeeded")
+        }
+      })
+    }
+  }
 }  
 object MorphlineDriver {
 	def apply(ds: DriverSettings) = new MorphlineDriver()
