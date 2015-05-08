@@ -33,54 +33,16 @@ object SodaService extends App with SimpleParallelRoutingApp {
 
   implicit val system = ActorSystem("soda-webservice")
 
-  import SodaJsonProtocol._
-
-  startServer(interface = "localhost", port = settings.port) {
-    get {
-      respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-        parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
-          {
-            path("actions") {
-              complete(soda.actions(status, filter))
-            } ~
-              path("queues") {
-                complete(soda.queues(typ, filter))
-              } ~
-              path("commands") {
-                complete(soda.commands(status, filter))
-              } ~
-              path("views" / Rest ?) { viewUrlPath =>
-                complete(soda.views(viewUrlPath, status, filter, dependencies, overview))
-              } ~
-              path("materialize" / Rest ?) { viewUrlPath =>
-                complete(soda.materialize(viewUrlPath, status, filter, mode))
-              } ~
-              path("invalidate" / Rest ?) { viewUrlPath =>
-                complete(soda.invalidate(viewUrlPath, status, filter, dependencies))
-              } ~
-              path("newdata" / Rest ?) { viewUrlPath =>
-                complete(soda.newdata(viewUrlPath, status, filter))
-              } ~
-              path("command" / Rest) { commandId =>
-                complete(soda.commandStatus(commandId))
-              } ~
-              path("graph" / Rest) { viewUrlPath =>
-                getFromFile(s"${settings.webResourcesDirectory}/graph.html")
-              }
-          }
-        }
-      }
-    }
-  }
-
-  if (config.shell) {
+  startSoda(system, soda)
+ 
+ 
     Thread.sleep(10000)
-    println("SODA")
     println("\n\n============= SODA initialization finished ============== \n\n")
     val ctrl = new SodaControl(soda)
     val reader = new ConsoleReader()
     val history = new History()
-    history.setHistoryFile(new File(".soda_history"))
+    
+    history.setHistoryFile(new File(System.getenv("HOME")+"/.soda_history"))
     reader.setHistory(history)
     while (true) {
       try {
@@ -92,6 +54,6 @@ object SodaService extends App with SimpleParallelRoutingApp {
         case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()
       }
     }
-  }
+ 
 
 }

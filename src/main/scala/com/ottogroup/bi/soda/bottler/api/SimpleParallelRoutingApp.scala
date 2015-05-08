@@ -14,15 +14,71 @@ import spray.routing.HttpService
 import spray.routing.Route
 import akka.routing.RoundRobinRouter
 import com.ottogroup.bi.soda.Settings
+import spray.http.HttpHeaders.RawHeader
+import com.ottogroup.bi.soda.Settings
+import com.typesafe.config.Config
+import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
+import akka.actor.ActorSystem
+import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
+import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
+import spray.routing.Directive.pimpApply
+import spray.routing.SimpleRoutingApp
+import akka.util.Timeout
+import scala.concurrent.duration._
+import jline.ConsoleReader
+import spray.http.HttpHeaders.RawHeader
+import jline.History
+import java.io.File
+
 
 trait SimpleParallelRoutingApp extends HttpService {
 
   @volatile private[this] var _refFactory: Option[ActorRefFactory] = None
+  import SodaJsonProtocol._
 
   implicit def actorRefFactory = _refFactory getOrElse sys.error(
     "Route creation is not fully supported before `startServer` has been called, " +
       "maybe you can turn your route definition into a `def` ?")
+ def startSoda(implicit system:ActorSystem,soda:SodaSystem) = {
+     startServer(interface = "localhost", port = settings.port) {
+    get {
+      respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
+        parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
+          {
+            path("actions") {
+              complete(soda.actions(status, filter))
+            } ~
+              path("queues") {
+                complete(soda.queues(typ, filter))
+              } ~
+              path("commands") {
+                complete(soda.commands(status, filter))
+              } ~
+              path("views" / Rest ?) { viewUrlPath =>
+                complete(soda.views(viewUrlPath, status, filter, dependencies, overview))
+              } ~
+              path("materialize" / Rest ?) { viewUrlPath =>
+                complete(soda.materialize(viewUrlPath, status, filter, mode))
+              } ~
+              path("invalidate" / Rest ?) { viewUrlPath =>
+                complete(soda.invalidate(viewUrlPath, status, filter, dependencies))
+              } ~
+              path("newdata" / Rest ?) { viewUrlPath =>
+                complete(soda.newdata(viewUrlPath, status, filter))
+              } ~
+              path("command" / Rest) { commandId =>
+                complete(soda.commandStatus(commandId))
+              } ~
+              path("graph" / Rest) { viewUrlPath =>
+                getFromFile(s"${settings.webResourcesDirectory}/graph.html")
+              }
+          }
+        }
+      }
+    }
+  }
 
+  }
   /**
    * Starts a new spray-can HTTP server with a default HttpService for the given route and binds the server to the
    * given interface and port.
