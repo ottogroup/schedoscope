@@ -11,3 +11,4 @@
 /metastore_db/
 /derby.log
 /src/test/resources/*morphline.csv
+/target
