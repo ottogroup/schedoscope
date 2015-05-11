@@ -21,7 +21,7 @@ case class PigTransformation(latin: String, c: Map[String, String]) extends Tran
   override def versionDigest = Version.digest(latin)
 
   description = "[..]" + StringUtils.abbreviate(latin.replaceAll("\n", "").replaceAll("\t", "").replaceAll("\\s+", " "), 60)
-  
+
   configureWith(c)
 }
 

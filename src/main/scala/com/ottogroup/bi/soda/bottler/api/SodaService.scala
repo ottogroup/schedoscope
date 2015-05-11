@@ -16,17 +16,17 @@ import java.io.File
 object SodaService extends App with SimpleParallelRoutingApp {
 
   case class Config(shell: Boolean = true)
-  
+
   val parser = new scopt.OptionParser[Config]("soda-service") {
     override def showUsageOnError = true
     head("soda-service", "0.0.1")
     help("help") text ("print usage")
     opt[Unit]('n', "noshell") action { (_, c) => c.copy(shell = false) } optional () text ("disable soda shell")
   }
-  
+
   val config = parser.parse(args, Config()) match {
-      case Some(config) => config
-      case None => Config()
+    case Some(config) => config
+    case None => Config()
   }
 
   val soda = new SodaSystem()

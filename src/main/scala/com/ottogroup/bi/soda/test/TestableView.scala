@@ -43,7 +43,7 @@ trait test extends TestableView {
     val trans = this.transformation() match {
       case ot: OozieTransformation => deployWorkflow(ot)
       case ht: HiveTransformation => deployFunctions(ht)
-      case _ => this.transformation()
+      case t: Transformation => t
     }
 
     val d = driver()

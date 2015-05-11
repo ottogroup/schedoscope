@@ -49,7 +49,7 @@ abstract class TestResources {
   val fileSystem: FileSystem
 
   lazy val oozieDriver: OozieDriver = null
-  
+
   lazy val pigDriver: PigDriver = new PigDriver(ugi)
 
   val remoteTestDirectory: String

@@ -43,29 +43,26 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
     })
 
   def executePigScript(latin: String, conf: Map[String, Any]): DriverRunState[PigTransformation] = {
-    
-    val actualLatin = HiveTransformation.replaceParameters(latin, conf) 
- 
+    val actualLatin = HiveTransformation.replaceParameters(latin, conf)
+
     val props = new Properties()
     conf.foreach(c => props.put(c._1, c._2.asInstanceOf[Object]))
-    
-    ugi.doAs(new PrivilegedAction[Unit]() {
-      def run(): Unit = {
+
+    val thisDriver = this
+    ugi.doAs(new PrivilegedAction[DriverRunState[PigTransformation]]() {
+      def run(): DriverRunState[PigTransformation] = {
         val ps = new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "LOCAL").toString), props)
         try {
-          ps.registerQuery(actualLatin) 
+          ps.registerQuery(actualLatin)
+          DriverRunSucceeded[PigTransformation](thisDriver, s"Pig script ${actualLatin} executed")
         } catch {
           // FIXME: do we need special handling for some exceptions here (similar to hive?)
-          case e: PigException => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", e.getCause())
-          case t: Throwable    => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
+          case e: PigException => DriverRunFailed(thisDriver, s"PigException encountered while executing pig script ${actualLatin}", e)
+          case t: Throwable => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
         }
       }
     })
-
-    DriverRunSucceeded[PigTransformation](this, s"Pig script ${actualLatin} executed")
-    
   }
-
 }
 
 object PigDriver {
