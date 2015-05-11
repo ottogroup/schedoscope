@@ -30,7 +30,6 @@ import spray.http.HttpHeaders.RawHeader
 import jline.History
 import java.io.File
 
-
 trait SimpleParallelRoutingApp extends HttpService {
 
   @volatile private[this] var _refFactory: Option[ActorRefFactory] = None
@@ -39,44 +38,44 @@ trait SimpleParallelRoutingApp extends HttpService {
   implicit def actorRefFactory = _refFactory getOrElse sys.error(
     "Route creation is not fully supported before `startServer` has been called, " +
       "maybe you can turn your route definition into a `def` ?")
- def startSoda(implicit system:ActorSystem,soda:SodaSystem) = {
-     startServer(interface = "localhost", port = settings.port) {
-    get {
-      respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-        parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
-          {
-            path("actions") {
-              complete(soda.actions(status, filter))
-            } ~
-              path("queues") {
-                complete(soda.queues(typ, filter))
+  def startSoda(implicit system: ActorSystem, soda: SodaSystem) = {
+    startServer(interface = "localhost", port = settings.port) {
+      get {
+        respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
+          parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
+            {
+              path("actions") {
+                complete(soda.actions(status, filter))
               } ~
-              path("commands") {
-                complete(soda.commands(status, filter))
-              } ~
-              path("views" / Rest ?) { viewUrlPath =>
-                complete(soda.views(viewUrlPath, status, filter, dependencies, overview))
-              } ~
-              path("materialize" / Rest ?) { viewUrlPath =>
-                complete(soda.materialize(viewUrlPath, status, filter, mode))
-              } ~
-              path("invalidate" / Rest ?) { viewUrlPath =>
-                complete(soda.invalidate(viewUrlPath, status, filter, dependencies))
-              } ~
-              path("newdata" / Rest ?) { viewUrlPath =>
-                complete(soda.newdata(viewUrlPath, status, filter))
-              } ~
-              path("command" / Rest) { commandId =>
-                complete(soda.commandStatus(commandId))
-              } ~
-              path("graph" / Rest) { viewUrlPath =>
-                getFromFile(s"${settings.webResourcesDirectory}/graph.html")
-              }
+                path("queues") {
+                  complete(soda.queues(typ, filter))
+                } ~
+                path("commands") {
+                  complete(soda.commands(status, filter))
+                } ~
+                path("views" / Rest ?) { viewUrlPath =>
+                  complete(soda.views(viewUrlPath, status, filter, dependencies, overview))
+                } ~
+                path("materialize" / Rest ?) { viewUrlPath =>
+                  complete(soda.materialize(viewUrlPath, status, filter, mode))
+                } ~
+                path("invalidate" / Rest ?) { viewUrlPath =>
+                  complete(soda.invalidate(viewUrlPath, status, filter, dependencies))
+                } ~
+                path("newdata" / Rest ?) { viewUrlPath =>
+                  complete(soda.newdata(viewUrlPath, status, filter))
+                } ~
+                path("command" / Rest) { commandId =>
+                  complete(soda.commandStatus(commandId))
+                } ~
+                path("graph" / Rest) { viewUrlPath =>
+                  getFromFile(s"${settings.webResourcesDirectory}/graph.html")
+                }
+            }
           }
         }
       }
     }
-  }
 
   }
   /**

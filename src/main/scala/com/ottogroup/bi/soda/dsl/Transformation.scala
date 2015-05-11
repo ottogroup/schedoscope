@@ -42,4 +42,3 @@ case class NoOp() extends Transformation {
   override def name = "noop"
 }
 
-

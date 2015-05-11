@@ -55,30 +55,31 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
   "thisMonthAndPrevDay" should "count down from the last day of the given month" in {
     DateParameterizationUtils.thisAndPrevDays(p("2014"), p("02")) shouldEqual DateParameterizationUtils.thisAndPrevDays(p("2014"), p("02"), p("28"))
   }
-  
+
   "lastDays" should "deliver all days between the current date and the specified one" in {
-	  import DateParameterizationUtils._
-	  val fromThisDay = Calendar.getInstance()
-	  fromThisDay.set(2014, Calendar.OCTOBER, 15)
-	  val toThisDay = Calendar.getInstance()
-	  toThisDay.set(2014,Calendar.NOVEMBER,14)
-      val days = dayParameterRange(dayRange(fromThisDay, toThisDay))
-      println(days.toList)
-      days.size shouldEqual 31
-      days.head shouldEqual ("2014","11","14")
-	  days.reverse.head shouldEqual ("2014","10","15")
+    import DateParameterizationUtils._
+    val fromThisDay = Calendar.getInstance()
+    fromThisDay.set(2014, Calendar.OCTOBER, 15)
+    val toThisDay = Calendar.getInstance()
+    toThisDay.set(2014, Calendar.NOVEMBER, 14)
+    val days = dayParameterRange(dayRange(fromThisDay, toThisDay))
+    println(days.toList)
+    days.size shouldEqual 31
+    days.head shouldEqual ("2014", "11", "14")
+    days.reverse.head shouldEqual ("2014", "10", "15")
   }
   "lastMonths" should "deliver all month between the current date and the specified one" in {
-	  import DateParameterizationUtils._
-	  val fromThisDay = Calendar.getInstance()
-	  fromThisDay.set(2013, Calendar.OCTOBER, 1)
-	  val toThisDay = Calendar.getInstance()
-	  toThisDay.set(2014,Calendar.NOVEMBER,16)
-      val days = monthParameterRange(dayRange(fromThisDay, toThisDay))
-      println(days.toList)
-      days.size shouldEqual 13
-      days.head shouldEqual ("2014","11")
-	  days.reverse.head shouldEqual ("2013","10")
+    import DateParameterizationUtils._
+    val fromThisDay = Calendar.getInstance()
+    val toThisDay = Calendar.getInstance()
+    fromThisDay.set(2013, Calendar.OCTOBER, 1)
+    toThisDay.set(2014, Calendar.NOVEMBER, 16)
+
+    val days = monthParameterRange(dayRange(fromThisDay, toThisDay))
+
+    days.size shouldEqual 13
+    days.head shouldEqual ("2014", "11")
+    days.reverse.head shouldEqual ("2013", "10")
 
   }
 }

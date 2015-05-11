@@ -114,12 +114,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       log.info("SUCCESS")
 
       setVersion(view)
-      if (!view.isExternal()) 
-              	touchSuccessFlag(view)
-         
+      if (!view.isExternal())
+        touchSuccessFlag(view)
 
-     logTransformationTimestamp(view) 
-     toMaterialize
+      logTransformationTimestamp(view)
+      toMaterialize
     }
 
     case _: ActionFailure[_] => toRetrying(retries)
@@ -290,15 +289,15 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
           toDefault(false, "nodata")
         }
       }
-      case _:MorphlineTransformation => {
-    	  setVersion(view)
+      case _: MorphlineTransformation => {
+        setVersion(view)
 
-    	  actionsManagerActor ! view
-        
-    	  logStateInfo("transforming")
+        actionsManagerActor ! view
 
-    	  unbecomeBecome(transforming(retries))
-      
+        logStateInfo("transforming")
+
+        unbecomeBecome(transforming(retries))
+
       }
       case _: FilesystemTransformation => {
         if (lastTransformationTimestamp > 0l) {

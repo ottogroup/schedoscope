@@ -46,10 +46,9 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def setTransformationVersion(view: View) = {
     if (view.isExternal()) {
-      setTableProperty(view.dbName,view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
 
-    } else
-    if (view.isPartitioned()) {
+    } else if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
     } else {
       setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
@@ -58,10 +57,9 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def setTransformationTimestamp(view: View, timestamp: Long) = {
     if (view.isExternal()) {
-      setTableProperty(view.dbName,view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
+      setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
 
-    } else
-    if (view.isPartitioned()) {
+    } else if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
     } else {
       setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
@@ -126,8 +124,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def createNonExistingPartitions(tablePrototype: View, partitions: List[Partition], retry: Int = 3): Map[View, (String, Long)] = try {
-    if (partitions.isEmpty || !tablePrototype.isPartitioned() || tablePrototype.transformation().isInstanceOf[ExternalTransformation]
-        ) {
+    if (partitions.isEmpty || !tablePrototype.isPartitioned() || tablePrototype.transformation().isInstanceOf[ExternalTransformation]) {
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
@@ -156,13 +153,12 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
-    if (tablePrototype.transformation.isInstanceOf[ExternalTransformation]) {
-     val dbMetadata = metastoreClient.getDatabase(tablePrototype.dbName).getParameters
+    if (tablePrototype.isExternal) {
+      val dbMetadata = metastoreClient.getDatabase(tablePrototype.dbName).getParameters
       Map((tablePrototype,
         (dbMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.default),
           dbMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
-    } else
-    if (tablePrototype.isPartitioned) {
+    } else if (tablePrototype.isPartitioned) {
       val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
       existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)) }.toMap
     } else {
@@ -171,7 +167,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
         (tableMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.default),
           tableMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
     }
-   
+
   }
 
   def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = {
@@ -179,7 +175,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     log.info(s"Reading partition names for view: ${tablePrototype.module}.${tablePrototype.n}")
 
-    if (!tablePrototype.isPartitioned ||tablePrototype.isExternal()) {
+    if (!tablePrototype.isPartitioned || tablePrototype.isExternal()) {
       log.info(s"View ${tablePrototype.module}.${tablePrototype.n} is not partitioned, returning metadata from table properties")
       return getExistingTransformationMetadata(tablePrototype, Map[String, Partition]())
     }

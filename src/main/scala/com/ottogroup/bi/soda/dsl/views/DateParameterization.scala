@@ -67,8 +67,8 @@ object DateParameterizationUtils {
       }
     }.toSeq
   }
-  
-  def dayRange(fromThisDay: Calendar, toThisDay:Calendar): Seq[Calendar] = {
+
+  def dayRange(fromThisDay: Calendar, toThisDay: Calendar): Seq[Calendar] = {
     new Iterator[Calendar] {
       var current: Option[Calendar] = Some(toThisDay)
 
@@ -77,23 +77,23 @@ object DateParameterizationUtils {
       override def next = current match {
         case Some(day) => {
           current = if (current.get.after(fromThisDay)) prevDay(day)
-        		    else None
+          else None
           day
         }
         case None => null
       }
     }.toSeq
   }
-  
-  def dayParameterRange(range:Seq[Calendar]): Seq[(String, String, String)] =
+
+  def dayParameterRange(range: Seq[Calendar]): Seq[(String, String, String)] =
     range.map { dayToStrings(_) }
-  
-  def monthParameterRange(range:Seq[Calendar]): Seq[(String, String)] =
-    range.map { dayToStrings(_) }.map  { case (year, month, day) => (year, month) }.distinct
-  
+
+  def monthParameterRange(range: Seq[Calendar]): Seq[(String, String)] =
+    range.map { dayToStrings(_) }.map { case (year, month, day) => (year, month) }.distinct
+
   def dayRangeAsParams(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Seq[(String, String, String)] =
     prevDaysFrom(parametersToDay(year, month, day)).map { dayToStrings(_) }
-  
+
   def thisAndPrevDays(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Seq[(String, String, String)] =
     prevDaysFrom(parametersToDay(year, month, day)).map { dayToStrings(_) }
 
@@ -174,20 +174,20 @@ trait MonthlyParameterization {
   def thisAndPrevMonths() = DateParameterizationUtils.thisAndPrevMonths(year, month)
 
   def thisAndPrevDays() = DateParameterizationUtils.thisAndPrevDays(year, month)
-  
-  def thisAndPrevDaysUntil(thisDay:Calendar) =
-    	DateParameterizationUtils.prevDaysFrom(thisDay)
+
+  def thisAndPrevDaysUntil(thisDay: Calendar) =
+    DateParameterizationUtils.prevDaysFrom(thisDay)
 
   def allDays() = DateParameterizationUtils.allDays()
 
   def allMonths() = DateParameterizationUtils.allMonths()
-  def lastMonths(c:Int) = {
+
+  def lastMonths(c: Int) = {
     val to = parametersToDay(year, month, p("1"))
-    val from =to
-    from.add(Calendar.MONTH,c)
-    monthParameterRange(dayRange(from,to))
-  
-   
+    val from = to
+    from.add(Calendar.MONTH, c)
+    monthParameterRange(dayRange(from, to))
+
   }
 }
 
@@ -195,7 +195,7 @@ trait DailyParameterization {
   val year: Parameter[String]
   val month: Parameter[String]
   val day: Parameter[String]
-import DateParameterizationUtils._
+  import DateParameterizationUtils._
   val dateId: Parameter[String] = p(s"${year.v.get}${month.v.get}${day.v.get}")
 
   def prevDay() = DateParameterizationUtils.prevDay(year, month, day)
@@ -207,16 +207,16 @@ import DateParameterizationUtils._
   def thisAndPrevMonths() = DateParameterizationUtils.thisAndPrevMonths(year, month)
 
   def allDays() = DateParameterizationUtils.allDays()
-  def lastMonths(c:Int) = {
+  def lastMonths(c: Int) = {
     val to = parametersToDay(year, month, day)
-    val from =to
-    from.add(Calendar.MONTH,c)
-    dayParameterRange(dayRange(from,to))
+    val from = to
+    from.add(Calendar.MONTH, c)
+    dayParameterRange(dayRange(from, to))
   }
-    def lastDays(c:Int) = {
+  def lastDays(c: Int) = {
     val to = parametersToDay(year, month, day)
-    val from =to
-    from.add(Calendar.DATE,c)
-    dayParameterRange(dayRange(from,to))
+    val from = to
+    from.add(Calendar.DATE, c)
+    dayParameterRange(dayRange(from, to))
   }
 }

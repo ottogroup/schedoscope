@@ -34,26 +34,24 @@ object SodaService extends App with SimpleParallelRoutingApp {
   implicit val system = ActorSystem("soda-webservice")
 
   startSoda(system, soda)
- 
- 
-    Thread.sleep(10000)
-    println("\n\n============= SODA initialization finished ============== \n\n")
-    val ctrl = new SodaControl(soda)
-    val reader = new ConsoleReader()
-    val history = new History()
-    
-    history.setHistoryFile(new File(System.getenv("HOME")+"/.soda_history"))
-    reader.setHistory(history)
-    while (true) {
-      try {
-        val cmd = reader.readLine("soda> ")
-        // we have to intercept --help because otherwise jline seems to call System.exit :(
-        if (cmd != null && !cmd.trim().replaceAll(";", "").isEmpty() && !cmd.matches(".*--help.*"))
-          ctrl.run(cmd.split("\\s+"))
-      } catch {
-        case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()
-      }
+
+  Thread.sleep(10000)
+  println("\n\n============= SODA initialization finished ============== \n\n")
+  val ctrl = new SodaControl(soda)
+  val reader = new ConsoleReader()
+  val history = new History()
+
+  history.setHistoryFile(new File(System.getenv("HOME") + "/.soda_history"))
+  reader.setHistory(history)
+  while (true) {
+    try {
+      val cmd = reader.readLine("soda> ")
+      // we have to intercept --help because otherwise jline seems to call System.exit :(
+      if (cmd != null && !cmd.trim().replaceAll(";", "").isEmpty() && !cmd.matches(".*--help.*"))
+        ctrl.run(cmd.split("\\s+"))
+    } catch {
+      case t: Throwable => println(s"ERROR: ${t.getMessage}\n\n"); t.printStackTrace()
     }
- 
+  }
 
 }

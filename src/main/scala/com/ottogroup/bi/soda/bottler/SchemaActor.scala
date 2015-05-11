@@ -31,7 +31,7 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
         .groupBy { v => (v.dbName, v.n) }
         .map { case (_, views) => views.head }
         .foreach {
-          tablePrototype => 
+          tablePrototype =>
             {
               log.info(s"Checking or creating table for view ${tablePrototype.module}.${tablePrototype.n}")
 

@@ -77,7 +77,7 @@ ${if (lineTerminator != null) s"\tLINES TERMINATED BY \42${lineTerminator}\42" e
 ${if (collectionItemTerminator != null) s"\tCOLLECTION ITEMS TERMINATED BY \42${collectionItemTerminator}\42" else ""}
 ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY \42${mapKeyTerminator}\42" else ""}
 \tSTORED AS TEXTFILE"""
-    case e : ExternalStorageFormat =>  "STORED BY 'org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler'"
+    case e: ExternalStorageFormat => "STORED BY 'org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler'"
     case _ => "STORED AS TEXTFILE"
   }
 

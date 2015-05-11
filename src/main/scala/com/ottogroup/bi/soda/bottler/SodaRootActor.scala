@@ -24,7 +24,7 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
 
   override val supervisorStrategy =
     AllForOneStrategy() {
-      case _: Throwable => {this.context.system.shutdown();Escalate}
+      case _: Throwable => { this.context.system.shutdown(); Escalate }
     }
 
   override def preStart {
