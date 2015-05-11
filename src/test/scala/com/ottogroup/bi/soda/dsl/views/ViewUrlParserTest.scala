@@ -3,7 +3,7 @@ package com.ottogroup.bi.soda.dsl.views
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.ottogroup.bi.soda.dsl.Parameter
+import org.schedoscope.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.View.t
 import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedView

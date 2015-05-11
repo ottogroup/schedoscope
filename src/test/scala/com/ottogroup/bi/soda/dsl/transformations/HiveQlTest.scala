@@ -5,16 +5,17 @@ import java.util.Date
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import org.schedoscope.dsl.transformations.HiveTransformation;
+import org.schedoscope.dsl.transformations.HiveQlDsl.dsl;
+import org.schedoscope.dsl.transformations.HiveQlDsl.f;
+import org.schedoscope.dsl.transformations.HiveQlDsl.get;
+import org.schedoscope.dsl.transformations.HiveQlDsl.t;
+import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource;
 
-import com.ottogroup.bi.soda.dsl.Parameter
+import org.schedoscope.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
-import com.ottogroup.bi.soda.dsl.Structure
+import org.schedoscope.dsl.Structure
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.dsl
-import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.f
-import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.get
-import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.t
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.queryFromResource
 import com.ottogroup.bi.soda.dsl.Transformation.replaceParameters
 
 case class Article() extends Structure {

@@ -2,10 +2,10 @@ package test.eci.datahub
 
 import java.util.Date
 import com.ottogroup.bi.soda.dsl.Avro
-import com.ottogroup.bi.soda.dsl.Parameter
+import org.schedoscope.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.Parquet
-import com.ottogroup.bi.soda.dsl.Structure
+import org.schedoscope.dsl.Structure
 import com.ottogroup.bi.soda.dsl.View
 import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
 import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation.oozieWFPath

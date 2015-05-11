@@ -3,11 +3,11 @@ package com.ottogroup.bi.soda.dsl.transformations
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
+import org.schedoscope.dsl.transformations.OozieTransformation.configurationFromResource;
 
-import com.ottogroup.bi.soda.dsl.Parameter
+import org.schedoscope.dsl.Parameter
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation.configurationFromResource
 
 case class Productfeed(
   ecShopCode: Parameter[String],

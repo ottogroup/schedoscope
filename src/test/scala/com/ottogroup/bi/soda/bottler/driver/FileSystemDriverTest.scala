@@ -2,11 +2,17 @@ package com.ottogroup.bi.soda.bottler.driver
 
 import org.scalatest.Matchers
 import org.scalatest.FlatSpec
+import org.schedoscope.scheduler.driver.FileSystemDriver;
+
 import com.ottogroup.bi.soda.dsl.transformations._
+
 import java.io.File
+
 import test.eci.datahub.Product
+
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
+
 import com.ottogroup.bi.soda.dsl.Parameter.p
 import com.ottogroup.bi.soda.DriverTests
 import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation

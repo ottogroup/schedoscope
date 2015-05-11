@@ -1,28 +1,33 @@
-package com.ottogroup.bi.soda
+package org.schedoscope
 
 import java.net.URLClassLoader
 import java.nio.file.Paths
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
+
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.Duration
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.yarn.conf.YarnConfiguration
-import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver.fileSystem
-import com.ottogroup.bi.soda.dsl.Parameter.p
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.views.DateParameterizationUtils
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
+import org.schedoscope.bottler.driver.FileSystemDriver.fileSystem
+import org.schedoscope.dsl.Parameter.p
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.views.DateParameterizationUtils
+import org.schedoscope.dsl.viewsrlParser.ParsedViewAugmentor;
+
 import com.typesafe.config.Config
+
 import akka.actor.ActorSystem
 import akka.actor.ExtendedActorSystem
 import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
-import com.ottogroup.bi.soda.bottler.driver.Driver
+
+import org.schedoscope.bottler.driver.Driver
 
 class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem

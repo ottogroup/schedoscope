@@ -1,4 +1,4 @@
-package com.ottogroup.bi.soda
+package org.schedoscope
 
 import java.util.concurrent.TimeUnit
 
@@ -8,7 +8,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-import com.ottogroup.bi.soda.bottler.SodaRootActor
+import org.schedoscope.bottler.SodaRootActor
 
 import akka.actor.ActorRef
 import akka.pattern.Patterns

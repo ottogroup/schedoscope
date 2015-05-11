@@ -11,7 +11,7 @@ import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
 import test.eci.datahub._
 import test.eci.datahub.CompilingMorphlineView
 import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.Parameter
+import org.schedoscope.dsl.Parameter
 import org.apache.hadoop.security.UserGroupInformation
 import java.security.PrivilegedAction
 import com.ottogroup.bi.soda.test.resources.LocalTestResources
