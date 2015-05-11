@@ -45,7 +45,6 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
     })
 
   def executePigTransformation(latin: String, conf: Map[String, Any]): DriverRunState[PigTransformation] = {
-
     val actualLatin = replaceParameters(latin, conf)
 
     val props = new Properties()
