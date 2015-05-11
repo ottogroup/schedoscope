@@ -19,7 +19,7 @@ import org.joda.time.LocalDateTime
 import com.ottogroup.bi.soda.DriverSettings
 import com.ottogroup.bi.soda.Settings
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.replaceParameters
+import com.ottogroup.bi.soda.dsl.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
 import HiveDriver.currentConnection
 

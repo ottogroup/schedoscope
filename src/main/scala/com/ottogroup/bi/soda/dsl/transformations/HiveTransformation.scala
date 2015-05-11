@@ -110,16 +110,6 @@ object HiveTransformation {
       .append(selectStatement).toString()
   }
 
-  def replaceParameters(selectStatement: String, parameters: Map[String, Any]): String = {
-    if (parameters.isEmpty)
-      selectStatement
-    else {
-      val (key, value) = parameters.head
-      val replacedStatement = selectStatement.replaceAll(java.util.regex.Pattern.quote("${" + key + "}"), value.toString().replaceAll("\\$", "|"))
-      replaceParameters(replacedStatement, parameters.tail)
-    }
-  }
-
   def queryFrom(inputStream: InputStream): String = io.Source.fromInputStream(inputStream, "UTF-8").mkString
 
   def queryFromResource(resourcePath: String): String = queryFrom(getClass().getClassLoader().getResourceAsStream(resourcePath))

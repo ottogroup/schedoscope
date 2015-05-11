@@ -42,3 +42,14 @@ case class NoOp() extends Transformation {
   override def name = "noop"
 }
 
+object Transformation {
+    def replaceParameters(query: String, parameters: Map[String, Any]): String = {
+    if (parameters.isEmpty)
+      query
+    else {
+      val (key, value) = parameters.head
+      val replacedStatement = query.replaceAll(java.util.regex.Pattern.quote("${" + key + "}"), value.toString().replaceAll("\\$", "|"))
+      replaceParameters(replacedStatement, parameters.tail)
+    }
+  }
+}

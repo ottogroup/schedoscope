@@ -15,7 +15,7 @@ import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.f
 import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.get
 import com.ottogroup.bi.soda.dsl.transformations.HiveQlDsl.t
 import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.queryFromResource
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.replaceParameters
+import com.ottogroup.bi.soda.dsl.Transformation.replaceParameters
 
 case class Article() extends Structure {
   val name = fieldOf[String]
@@ -108,7 +108,7 @@ SELECT * FROM STUFF"""
   }
 
   "HiveTransformation.replaceParameters" should "replace parameter parameter placeholders" in {
-    HiveTransformation.replaceParameters("${a} ${a} ${b}", Map("a" -> "A", "b" -> Boolean.box(true))) shouldEqual ("A A true")
+    replaceParameters("${a} ${a} ${b}", Map("a" -> "A", "b" -> Boolean.box(true))) shouldEqual ("A A true")
   }
 
   "HiveTransformation.queryFrom" should "read queries from external file" in {
