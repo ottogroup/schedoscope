@@ -57,12 +57,12 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
           // FIXME: we're doing parameter replacement by ourselves, because registerQuery doesn't support to specify parameters like 
           // registerScript does (and attention: pig doesn't support variable names containing a dot).
           // another workaround would be: ps.registerScript(IOUtils.toInputStream(latin, "UTF-8") , conf.filter(!_._1.contains(".")).map(c => (c._1, c._2.toString)))
-          ps.registerQuery(actualLatin) 
+          ps.registerQuery(actualLatin)
           DriverRunSucceeded[PigTransformation](driver, s"Pig script ${actualLatin} executed")
         } catch {
           // FIXME: do we need special handling for some exceptions here (similar to hive?)
-          case e: PigException => DriverRunFailed(thisDriver, s"PigException encountered while executing pig script ${actualLatin}", e)
-          case t: Throwable => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
+          case e: PigException => DriverRunFailed(driver, s"PigException encountered while executing pig script ${actualLatin}", e)
+          case t: Throwable    => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
         }
       }
     })

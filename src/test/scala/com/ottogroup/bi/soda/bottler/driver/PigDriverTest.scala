@@ -24,7 +24,6 @@ class PigDriverTest extends FlatSpec with Matchers {
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
-  
 
   it should "execute pig tranformations and return errors when running synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(PigTransformation("FAIL ME", Map()))
