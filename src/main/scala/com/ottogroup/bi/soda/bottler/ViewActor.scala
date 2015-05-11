@@ -267,7 +267,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def toTransformOrMaterialize(retries: Int) {
     view.transformation() match {
       case NoOp() => {
-
         if (successFlagExists(view) && view.dependencies.isEmpty) {
           log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
           setVersion(view)
@@ -289,6 +288,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
           toDefault(false, "nodata")
         }
       }
+      
       case _: MorphlineTransformation => {
         setVersion(view)
 
@@ -297,8 +297,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         logStateInfo("transforming")
 
         unbecomeBecome(transforming(retries))
-
       }
+      
       case _: FilesystemTransformation => {
         if (lastTransformationTimestamp > 0l) {
           toMaterialize()

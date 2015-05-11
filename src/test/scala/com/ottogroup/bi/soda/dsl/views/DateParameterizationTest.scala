@@ -58,28 +58,42 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
 
   "lastDays" should "deliver all days between the current date and the specified one" in {
     import DateParameterizationUtils._
-    val fromThisDay = Calendar.getInstance()
-    fromThisDay.set(2014, Calendar.OCTOBER, 15)
-    val toThisDay = Calendar.getInstance()
-    toThisDay.set(2014, Calendar.NOVEMBER, 14)
+    val fromThisDay = parametersToDay(p("2014"), p("10"), p("15"))
+    val toThisDay = parametersToDay(p("2014"), p("11"), p("14"))
+
     val days = dayParameterRange(dayRange(fromThisDay, toThisDay))
-    println(days.toList)
+   
     days.size shouldEqual 31
     days.head shouldEqual ("2014", "11", "14")
     days.reverse.head shouldEqual ("2014", "10", "15")
   }
-  "lastMonths" should "deliver all month between the current date and the specified one" in {
+  
+  "lastMonths" should "deliver all months between the current date and the specified one" in {
     import DateParameterizationUtils._
-    val fromThisDay = Calendar.getInstance()
-    val toThisDay = Calendar.getInstance()
-    fromThisDay.set(2013, Calendar.OCTOBER, 1)
-    toThisDay.set(2014, Calendar.NOVEMBER, 16)
+    val fromThisDay = parametersToDay(p("2014"), p("01"), p("11"))
+    val toThisDay = parametersToDay(p("2014"), p("11"), p("16"))
 
-    val days = monthParameterRange(dayRange(fromThisDay, toThisDay))
+    val months = monthParameterRange(dayRange(fromThisDay, toThisDay))
+    
+    months.size shouldEqual 11
+    months.head shouldEqual ("2014", "11")
+    months.reverse.head shouldEqual ("2014", "01")
 
-    days.size shouldEqual 13
-    days.head shouldEqual ("2014", "11")
-    days.reverse.head shouldEqual ("2013", "10")
+  }
+  
+  "allDaysOfMonth" should "return all days of a month" in {
+    val days = DateParameterizationUtils.allDaysOfMonth(p("2014"), p("02"))
 
+    var firstDay: String = null
+    var lastDay: String = null
+
+    for (day <- days) {
+      if (firstDay == null)
+        firstDay = s"${day._1}${day._2}${day._3}"
+      lastDay = s"${day._1}${day._2}${day._3}"
+    }
+
+    firstDay shouldEqual "20140228"
+    lastDay shouldEqual "20140201"
   }
 }

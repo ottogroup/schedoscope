@@ -40,21 +40,11 @@ import com.ottogroup.bi.soda.bottler.MaterializeViewMode
 class SodaSystem extends SodaInterface {
   val log = Logging(settings.system, classOf[SodaRootActor])
 
-  /*
-   * deploy transformation resources FIXME: we don't check for success here...
-   */
   actionsManagerActor ! Deploy()
 
-  /*
-   * job lists
-   */
   val runningCommands = collection.mutable.HashMap[String, SodaCommand]()
   val doneCommands = collection.mutable.HashMap[String, SodaCommandStatus]()
-
-  /*
-   * helper methods
-   */
-
+  
   private def viewsFromUrl(viewUrlPath: String) = {
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
   }

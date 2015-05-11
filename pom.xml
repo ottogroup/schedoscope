@@ -1,10 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.ottogroup.bi</groupId>
-	<artifactId>soda</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
- 
+	<groupId>schedoscope</groupId>
+	<artifactId>schedoscope-core</artifactId>
+	<version>0.1.0-SNAPSHOT</version>
+
 	<properties>
 		<akka.version>2.3.6</akka.version>
 		<scala.version>2.10</scala.version>
@@ -89,6 +89,11 @@
 			<version>2.4</version>
 		</dependency>
 		<dependency>
+			<groupId>commons-daemon</groupId>
+			<artifactId>commons-daemon</artifactId>
+			<version>1.0.13</version>
+		</dependency>
+		<dependency>
 			<groupId>com.googlecode.openpojo</groupId>
 			<artifactId>openpojo</artifactId>
 			<version>0.6.2</version>
@@ -134,6 +139,11 @@
 			<version>${oozie.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>morphline-utils</groupId>
+			<artifactId>morphline-utils</artifactId>
+			<version>0.1.0</version>
+		</dependency>
+		<dependency>
 			<groupId>com.ottogroup.bi</groupId>
 			<artifactId>hadoop-launcher</artifactId>
 			<version>0.0.6</version>
@@ -173,17 +183,8 @@
 			<version>1.9.5</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>morphline-utils</groupId>
-			<artifactId>morphline-utils</artifactId>
-			<version>0.1.0</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-daemon</groupId>
-			<artifactId>commons-daemon</artifactId>
-			<version>1.0.13</version>
-		</dependency>
 	</dependencies>
+
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
 		<testSourceDirectory>src/test/scala</testSourceDirectory>
@@ -226,6 +227,28 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.7</version>
@@ -259,8 +282,8 @@
 	</build>
 	<distributionManagement>
 		<repository>
-			<id>gbi-releases</id>
-			<url>https://nexus.scm.otto.de/content/repositories/gbi-releases/</url>
+			<id>bintray-ottogroup-maven</id>
+			<url>https://api.bintray.com/maven/ottogroup/maven/morphline-utils</url>
 		</repository>
 		<snapshotRepository>
 			<id>gbi-snapshots</id>

@@ -77,7 +77,8 @@ object DateParameterizationUtils {
       override def next = current match {
         case Some(day) => {
           current = if (current.get.after(fromThisDay)) prevDay(day)
-          else None
+          else
+            None
           day
         }
         case None => null

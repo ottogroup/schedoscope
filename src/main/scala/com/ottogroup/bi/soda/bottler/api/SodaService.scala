@@ -21,7 +21,6 @@ object SodaService extends App with SimpleParallelRoutingApp {
     override def showUsageOnError = true
     head("soda-service", "0.0.1")
     help("help") text ("print usage")
-    opt[Unit]('n', "noshell") action { (_, c) => c.copy(shell = false) } optional () text ("disable soda shell")
   }
 
   val config = parser.parse(args, Config()) match {

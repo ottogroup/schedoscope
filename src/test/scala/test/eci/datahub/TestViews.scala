@@ -235,7 +235,7 @@ case class RedisMorphlineView() extends View with Id {
 
 case class HDFSInputView() extends View with Id {
   val field1 = fieldOf[String]
-  locationPathBuilder = s => "/home/dev_hzorn/testdaten"
+  locationPathBuilder = s => "/tmp/test"
   storedAs(Parquet())
 
 }
@@ -287,13 +287,7 @@ case class JDBCMorphlineView(x: Parameter[String]) extends View {
                                           conditions: [{ not: {equals {number_of_results : "0"}}}]
     								      then : [{ addValues { has_result : true} }]
     										}}]}""").forView(this))
-  //locationPathBuilder= s=> "src/test/resources/bla_morphline.csv"
-  val password = {
-    val src = Source.fromFile("/home/dev_hzorn/exasol_password")
-    val line = src.getLines.take(1).next.toString.trim()
-    src.close
-    line
-  }
 
-  storedAs(JDBC(jdbcUrl = "jdbc:exa:10.15.234.66,10.15.234.98..99:8563;schema=usr_ext_hzorn", userName = "dev_hzorn", password = this.password, jdbcDriver = "com.exasol.jdbc.EXADriver"))
+
+  storedAs(JDBC(jdbcUrl = "jdbc:exa:127.0.0.1:8563;schema=test", userName = "test", password = "test", jdbcDriver = "com.exasol.jdbc.EXADriver"))
 }

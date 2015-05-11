@@ -34,10 +34,9 @@ abstract class AbstractApplicationDaemon extends Daemon {
 }
 
 class ApplicationDaemon() extends AbstractApplicationDaemon {
-  def application = new SodaDeamon
+  def application = new SodaDaemon
 }
 object SodaDaemon extends App {
-
   val application = createApplication()
 
   def createApplication() = new ApplicationDaemon
@@ -59,8 +58,7 @@ object SodaDaemon extends App {
   application.start()
 }
 
-class SodaDeamon extends ApplicationLifecycle with SimpleParallelRoutingApp {
-
+class SodaDaemon extends ApplicationLifecycle with SimpleParallelRoutingApp {
   val soda = new SodaSystem()
 
   implicit val system = ActorSystem("soda-webservice")
@@ -108,6 +106,7 @@ class SodaDeamon extends ApplicationLifecycle with SimpleParallelRoutingApp {
       }
     }
   }
+  
   def stop() {
     system.shutdown()
     system.awaitTermination(5 seconds)
