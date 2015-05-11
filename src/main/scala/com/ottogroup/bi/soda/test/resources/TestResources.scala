@@ -17,7 +17,7 @@ import org.apache.hadoop.conf.Configuration
 
 abstract class TestResources {
   val hiveConf: HiveConf
- 
+
   val hiveWarehouseDir: String
 
   lazy val connection: Connection = {
@@ -53,7 +53,7 @@ abstract class TestResources {
   lazy val oozieDriver: OozieDriver = null
 
   lazy val pigDriver: PigDriver = new PigDriver(ugi)
-  
+
   lazy val morphlineDriver = new MorphlineDriver(ugi, new Configuration(true))
 
   val remoteTestDirectory: String

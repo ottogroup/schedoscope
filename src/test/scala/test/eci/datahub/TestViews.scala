@@ -288,6 +288,5 @@ case class JDBCMorphlineView(x: Parameter[String]) extends View {
     								      then : [{ addValues { has_result : true} }]
     										}}]}""").forView(this))
 
-
   storedAs(JDBC(jdbcUrl = "jdbc:exa:127.0.0.1:8563;schema=test", userName = "test", password = "test", jdbcDriver = "com.exasol.jdbc.EXADriver"))
 }

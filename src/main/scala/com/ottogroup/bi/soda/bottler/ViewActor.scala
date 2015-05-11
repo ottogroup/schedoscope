@@ -288,7 +288,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
           toDefault(false, "nodata")
         }
       }
-      
+
       case _: MorphlineTransformation => {
         setVersion(view)
 
@@ -298,7 +298,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
         unbecomeBecome(transforming(retries))
       }
-      
+
       case _: FilesystemTransformation => {
         if (lastTransformationTimestamp > 0l) {
           toMaterialize()

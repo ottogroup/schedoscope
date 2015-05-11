@@ -36,19 +36,21 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
 
   val log = LoggerFactory.getLogger(classOf[PigDriver])
 
+  val driver = this // needed to access driver within ugi.doAs below
+
   def run(t: PigTransformation): DriverRunHandle[PigTransformation] =
     new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, future {
       // FIXME: future work: register jars, custom functions
       executePigScript(t.latin, t.configuration.toMap)
     })
 
-  def executePigScript(latin: String, conf: Map[String, Any]): DriverRunState[PigTransformation] = {
-    
-    val actualLatin = replaceParameters(latin, conf) 
- 
+  def executePigTransformation(latin: String, conf: Map[String, Any]): DriverRunState[PigTransformation] = {
+
+    val actualLatin = replaceParameters(latin, conf)
+
     val props = new Properties()
     conf.foreach(c => props.put(c._1, c._2.asInstanceOf[Object]))
-    
+
     ugi.doAs(new PrivilegedAction[Unit]() {
       def run(): Unit = {
         val ps = new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "MAPREDUCE").toString), props)
@@ -56,7 +58,7 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
           // FIXME: we're doing parameter replacement by ourselves, because registerQuery doesn't support to specify parameters like 
           // registerScript does (and attention: pig doesn't support variable names containing a dot).
           // another workaround would be: ps.registerScript(IOUtils.toInputStream(latin, "UTF-8") , conf.filter(!_._1.contains(".")).map(c => (c._1, c._2.toString)))
-          ps.registerQuery(actualLatin) 
+          ps.registerQuery(actualLatin)
         } catch {
           // FIXME: do we need special handling for some exceptions here (similar to hive?)
           case e: PigException => DriverRunFailed(thisDriver, s"PigException encountered while executing pig script ${actualLatin}", e)
@@ -64,6 +66,9 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
         }
       }
     })
+
+    DriverRunSucceeded[PigTransformation](this, s"Pig script ${actualLatin} executed")
+
   }
 }
 

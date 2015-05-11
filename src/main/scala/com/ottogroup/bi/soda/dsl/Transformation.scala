@@ -43,7 +43,7 @@ case class NoOp() extends Transformation {
 }
 
 object Transformation {
-    def replaceParameters(query: String, parameters: Map[String, Any]): String = {
+  def replaceParameters(query: String, parameters: Map[String, Any]): String = {
     if (parameters.isEmpty)
       query
     else {

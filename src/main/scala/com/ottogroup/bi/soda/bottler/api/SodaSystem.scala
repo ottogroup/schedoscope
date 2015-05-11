@@ -44,7 +44,7 @@ class SodaSystem extends SodaInterface {
 
   val runningCommands = collection.mutable.HashMap[String, SodaCommand]()
   val doneCommands = collection.mutable.HashMap[String, SodaCommandStatus]()
-  
+
   private def viewsFromUrl(viewUrlPath: String) = {
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
   }

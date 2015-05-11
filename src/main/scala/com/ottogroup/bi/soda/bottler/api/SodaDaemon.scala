@@ -106,7 +106,7 @@ class SodaDaemon extends ApplicationLifecycle with SimpleParallelRoutingApp {
       }
     }
   }
-  
+
   def stop() {
     system.shutdown()
     system.awaitTermination(5 seconds)

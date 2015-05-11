@@ -311,7 +311,7 @@ class DslTest extends FlatSpec with Matchers {
   it should "be queryable" in {
     val views = View.viewsInPackage("test.eci.datahub")
 
-    views should contain allOf(classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101], classOf[ClickOfEC0101ViaOozie])
+    views should contain allOf (classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101], classOf[ClickOfEC0101ViaOozie])
 
     val traits = View.getTraits(classOf[ProductBrand])
 

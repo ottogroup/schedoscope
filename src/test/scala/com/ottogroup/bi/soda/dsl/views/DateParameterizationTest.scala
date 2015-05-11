@@ -62,25 +62,25 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
     val toThisDay = parametersToDay(p("2014"), p("11"), p("14"))
 
     val days = dayParameterRange(dayRange(fromThisDay, toThisDay))
-   
+
     days.size shouldEqual 31
     days.head shouldEqual ("2014", "11", "14")
     days.reverse.head shouldEqual ("2014", "10", "15")
   }
-  
+
   "lastMonths" should "deliver all months between the current date and the specified one" in {
     import DateParameterizationUtils._
     val fromThisDay = parametersToDay(p("2014"), p("01"), p("11"))
     val toThisDay = parametersToDay(p("2014"), p("11"), p("16"))
 
     val months = monthParameterRange(dayRange(fromThisDay, toThisDay))
-    
+
     months.size shouldEqual 11
     months.head shouldEqual ("2014", "11")
     months.reverse.head shouldEqual ("2014", "01")
 
   }
-  
+
   "allDaysOfMonth" should "return all days of a month" in {
     val days = DateParameterizationUtils.allDaysOfMonth(p("2014"), p("02"))
 
