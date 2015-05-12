@@ -27,6 +27,7 @@ class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTra
   def run(t: MapreduceTransformation): DriverRunHandle[MapreduceTransformation] = try {
     ugi.doAs(new PrivilegedAction[DriverRunHandle[MapreduceTransformation]]() {
       def run(): DriverRunHandle[MapreduceTransformation] = {
+        t.configure();
         t.job.submit()
         new DriverRunHandle[MapreduceTransformation](driver, new LocalDateTime(), t, t.job)
       }
@@ -56,6 +57,7 @@ class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTra
     ugi.doAs(new PrivilegedAction[DriverRunState[MapreduceTransformation]]() {
       def run(): DriverRunState[MapreduceTransformation] = {
         val started = new LocalDateTime()
+        t.configure()
         t.job.waitForCompletion(true)
         getDriverRunState(new DriverRunHandle[MapreduceTransformation](driver, started, t, t.job))
       }
@@ -75,6 +77,11 @@ class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTra
   } catch {
     case e: Throwable => throw DriverException(s"Unexpected error occurred while killing Mapreduce job", e)
   }
+  
+//  override def deployAll(ds: DriverSettings) : Boolean = {
+//    super.deployAll(ds)
+//    ds.libJarsHdfs.foreach( lj => Unit)
+//  }
 }
 
 object MapreduceDriver {
