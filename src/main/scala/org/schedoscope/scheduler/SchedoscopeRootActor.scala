@@ -24,7 +24,11 @@ class SchedoscopeRootActor(settings: SettingsImpl) extends Actor {
 
   override val supervisorStrategy =
     AllForOneStrategy() {
-      case _: Throwable => { this.context.system.shutdown(); Escalate }
+      case t: Throwable => {
+        t.printStackTrace()
+        this.context.system.shutdown()
+        Escalate
+      }
     }
 
   override def preStart {
