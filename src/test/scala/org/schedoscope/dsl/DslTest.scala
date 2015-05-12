@@ -267,6 +267,15 @@ class DslTest extends FlatSpec with Matchers {
     (p1 == p2) shouldBe false
     (p1 == p3) shouldBe false
   }
+  
+  it should "be constructable from another parameter but have different weight" in  {
+    val p1 = p(1)
+    val pp1 = p(p1)
+    
+    p1 shouldBe pp1
+    pp1.orderWeight should be > p1.orderWeight
+    pp1.v.get shouldBe an[Integer]
+  }
 
   "Views" should "be equal based on their parameters" in {
     val productBrandView1 = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))

@@ -74,5 +74,7 @@ object Parameter {
     f
   }
 
+  def p[T: Manifest](v: Parameter[T]) = asParameter[T](v.v.get)
+  
   def p[T: Manifest](v: T) = asParameter[T](v)
 }
