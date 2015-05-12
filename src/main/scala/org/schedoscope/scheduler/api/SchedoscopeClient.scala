@@ -88,7 +88,6 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
 }
 
 class SchedoscopeRestClient extends SchedoscopeInterface {
-
   var host = "localhost"
   var port = Settings().port
 
