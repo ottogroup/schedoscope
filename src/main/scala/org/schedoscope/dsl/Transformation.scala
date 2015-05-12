@@ -9,8 +9,7 @@ import org.schedoscope.scheduler.driver.FileSystemDriver
 abstract class Transformation {
   var view: Option[View] = None
 
-  // FIXME: not so nice that each transformation has the file system driver .. 
-  val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))
+
 
   def configureWith(c: Map[String, Any]) = {
     configuration ++= c
@@ -23,7 +22,7 @@ abstract class Transformation {
 
   def resources() = List[String]()
 
-  def resourceHashes = fsd.fileChecksums(resources(), true)
+  def resourceHashes = Version.resourceHashes(resources())
 
   def forView(v: View) = {
     view = Some(v)
