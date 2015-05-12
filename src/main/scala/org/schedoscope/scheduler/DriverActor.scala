@@ -21,11 +21,15 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.dsl.transformations.FilesystemTransformation
-import org.schedoscope.dsl.transformations.OozieTransformation
-import org.schedoscope.dsl.transformations.MorphlineTransformation
-import org.schedoscope.scheduler.driver.MorphlineDriver
+import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
+import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
+import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
+import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
+import com.ottogroup.bi.soda.bottler.driver.MorphlineDriver
+import com.ottogroup.bi.soda.dsl.transformations.MapreduceTransformation
+import com.ottogroup.bi.soda.bottler.driver.MapreduceDriver
+import com.ottogroup.bi.soda.bottler.driver.PigDriver
+import com.ottogroup.bi.soda.dsl.transformations.PigTransformation
 
 class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
@@ -155,6 +159,14 @@ object DriverActor {
       case "hive" => Props(
         classOf[DriverActor[HiveTransformation]],
         actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
+
+      case "mapreduce" => Props(
+        classOf[DriverActor[MapreduceTransformation]],
+        actionsRouter, ds, (d: DriverSettings) => MapreduceDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
+
+      case "pig" => Props(
+        classOf[DriverActor[PigTransformation]],
+        actionsRouter, ds, (d: DriverSettings) => PigDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
 
       case "filesystem" => Props(
         classOf[DriverActor[FilesystemTransformation]],
