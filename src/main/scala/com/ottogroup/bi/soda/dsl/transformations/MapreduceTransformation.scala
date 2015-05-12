@@ -52,7 +52,7 @@ case class MapreduceTransformation(createJob: (Map[String, Any]) => Job, c: Map[
         }
       })
     }
-    configuration.foreach( c => job.getConfiguration.set(c._1, c._2.toString))
+    configuration.foreach(c => job.getConfiguration.set(c._1, c._2.toString))
   }
 
 }

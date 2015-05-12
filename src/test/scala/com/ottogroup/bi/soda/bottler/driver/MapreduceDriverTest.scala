@@ -19,15 +19,12 @@ import java.nio.file.Paths
 import java.nio.charset.StandardCharsets
 import com.ottogroup.bi.soda.dsl.transformations.FailingMapper
 
-
-
 class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: MapreduceDriver = new LocalTestResources().mapreduceDriver
-  
-  
-  def invalidJob: (Map[String,Any]) => Job = (m: Map[String,Any]) => Job.getInstance
-  
-  def failingJob: (Map[String,Any]) => Job = (m: Map[String,Any]) => {
+
+  def invalidJob: (Map[String, Any]) => Job = (m: Map[String, Any]) => Job.getInstance
+
+  def failingJob: (Map[String, Any]) => Job = (m: Map[String, Any]) => {
     writeData()
     val job = Job.getInstance
     job.setMapperClass(classOf[FailingMapper])
@@ -35,15 +32,15 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
     FileOutputFormat.setOutputPath(job, new Path(outputPath(System.nanoTime.toString)))
     job
   }
-  
-  def identityJob: (Map[String,Any]) => Job = (m: Map[String,Any]) => {
+
+  def identityJob: (Map[String, Any]) => Job = (m: Map[String, Any]) => {
     writeData()
     val job = Job.getInstance
     FileInputFormat.setInputPaths(job, new Path(inputPath("")))
     FileOutputFormat.setOutputPath(job, new Path(outputPath(System.nanoTime.toString)))
     job
   }
-  
+
   def writeData() {
     Files.write(Paths.get(s"${inputPath("")}/file.txt"), "some data".getBytes(StandardCharsets.UTF_8))
   }

@@ -77,11 +77,7 @@ class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTra
   } catch {
     case e: Throwable => throw DriverException(s"Unexpected error occurred while killing Mapreduce job", e)
   }
-  
-//  override def deployAll(ds: DriverSettings) : Boolean = {
-//    super.deployAll(ds)
-//    ds.libJarsHdfs.foreach( lj => Unit)
-//  }
+
 }
 
 object MapreduceDriver {
