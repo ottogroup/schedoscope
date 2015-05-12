@@ -9,8 +9,6 @@ import org.schedoscope.scheduler.driver.FileSystemDriver
 abstract class Transformation {
   var view: Option[View] = None
 
-
-
   def configureWith(c: Map[String, Any]) = {
     configuration ++= c
     this

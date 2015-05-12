@@ -71,7 +71,7 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
         } catch {
           // FIXME: do we need special handling for some exceptions here (similar to hive?)
           case e: PigException => DriverRunFailed(driver, s"PigException encountered while executing pig script ${actualLatin}", e)
-          case t: Throwable    => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
+          case t: Throwable => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
         }
       }
     })

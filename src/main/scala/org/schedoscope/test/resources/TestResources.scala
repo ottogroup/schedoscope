@@ -54,7 +54,7 @@ abstract class TestResources {
   lazy val oozieDriver: OozieDriver = null
 
   lazy val pigDriver: PigDriver = new PigDriver(ugi)
-  
+
   lazy val mapreduceDriver: MapreduceDriver = new MapreduceDriver(ugi)
 
   lazy val morphlineDriver = new MorphlineDriver(ugi, new Configuration(true))

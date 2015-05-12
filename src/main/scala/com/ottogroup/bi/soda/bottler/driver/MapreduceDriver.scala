@@ -43,8 +43,8 @@ class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTra
     ugi.doAs(new PrivilegedAction[DriverRunState[MapreduceTransformation]]() {
       def run(): DriverRunState[MapreduceTransformation] = {
         job.getJobState match {
-          case SUCCEEDED       => DriverRunSucceeded[MapreduceTransformation](driver, s"Mapreduce job ${jobId} succeeded")
-          case PREP | RUNNING  => DriverRunOngoing[MapreduceTransformation](driver, runHandle)
+          case SUCCEEDED => DriverRunSucceeded[MapreduceTransformation](driver, s"Mapreduce job ${jobId} succeeded")
+          case PREP | RUNNING => DriverRunOngoing[MapreduceTransformation](driver, runHandle)
           case FAILED | KILLED => DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${jobId} failed", DriverException(s"Failed Mapreduce job status ${job.getJobState}"))
         }
       }
