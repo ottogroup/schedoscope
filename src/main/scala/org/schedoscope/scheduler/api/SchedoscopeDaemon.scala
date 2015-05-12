@@ -14,7 +14,7 @@ import jline.History
 import java.io.File
 
 import org.apache.commons.daemon._
-import org.schedoscope.scheduler.SodaRootActor.settings;
+import org.schedoscope.scheduler.SchedoscopeRootActor.settings;
 
 import akka.actor.PoisonPill
 import akka.actor.Actor
@@ -37,9 +37,10 @@ abstract class AbstractApplicationDaemon extends Daemon {
 }
 
 class ApplicationDaemon() extends AbstractApplicationDaemon {
-  def application = new SodaDaemon
+  def application = new SchedosopeDaemon
 }
-object SodaDaemon extends App {
+
+object SchedosopeDaemon extends App {
   val application = createApplication()
 
   def createApplication() = new ApplicationDaemon
@@ -61,12 +62,12 @@ object SodaDaemon extends App {
   application.start()
 }
 
-class SodaDaemon extends ApplicationLifecycle with SimpleParallelRoutingApp {
-  val soda = new SodaSystem()
+class SchedosopeDaemon extends ApplicationLifecycle with SimpleParallelRoutingApp {
+  val schedoscope = new SchedoscopeSystem()
 
-  implicit val system = ActorSystem("soda-webservice")
+  implicit val system = ActorSystem("schedoscope-webservice")
 
-import SodaJsonProtocol._
+  import SchedoscopeJsonProtocol._
   def init(context: String): Unit = {}
   def init(context: DaemonContext) = {}
 
@@ -77,28 +78,28 @@ import SodaJsonProtocol._
           parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
             {
               path("actions") {
-                complete(soda.actions(status, filter))
+                complete(schedoscope.actions(status, filter))
               } ~
                 path("queues") {
-                  complete(soda.queues(typ, filter))
+                  complete(schedoscope.queues(typ, filter))
                 } ~
                 path("commands") {
-                  complete(soda.commands(status, filter))
+                  complete(schedoscope.commands(status, filter))
                 } ~
                 path("views" / Rest ?) { viewUrlPath =>
-                  complete(soda.views(viewUrlPath, status, filter, dependencies, overview))
+                  complete(schedoscope.views(viewUrlPath, status, filter, dependencies, overview))
                 } ~
                 path("materialize" / Rest ?) { viewUrlPath =>
-                  complete(soda.materialize(viewUrlPath, status, filter, mode))
+                  complete(schedoscope.materialize(viewUrlPath, status, filter, mode))
                 } ~
                 path("invalidate" / Rest ?) { viewUrlPath =>
-                  complete(soda.invalidate(viewUrlPath, status, filter, dependencies))
+                  complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
                 } ~
                 path("newdata" / Rest ?) { viewUrlPath =>
-                  complete(soda.newdata(viewUrlPath, status, filter))
+                  complete(schedoscope.newdata(viewUrlPath, status, filter))
                 } ~
                 path("command" / Rest) { commandId =>
-                  complete(soda.commandStatus(commandId))
+                  complete(schedoscope.commandStatus(commandId))
                 } ~
                 path("graph" / Rest) { viewUrlPath =>
                   getFromFile(s"${settings.webResourcesDirectory}/graph.html")

@@ -12,8 +12,8 @@ import org.schedoscope.scheduler.Failed
 import org.schedoscope.scheduler.MaterializeView
 import org.schedoscope.scheduler.NoDataAvailable
 import org.schedoscope.scheduler.ViewStatusResponse
-import org.schedoscope.scheduler.SodaRootActor
-import org.schedoscope.scheduler.SodaRootActor._
+import org.schedoscope.scheduler.SchedoscopeRootActor
+import org.schedoscope.scheduler.SchedoscopeRootActor._
 import org.schedoscope.scheduler.ViewMaterialized
 import org.schedoscope.scheduler.ViewStatusListResponse
 import org.schedoscope.dsl.Named
@@ -37,13 +37,13 @@ import org.schedoscope.scheduler.QueueStatusListResponse
 import org.schedoscope.scheduler.GetQueues
 import org.schedoscope.scheduler.MaterializeViewMode
 
-class SodaSystem extends SodaInterface {
-  val log = Logging(settings.system, classOf[SodaRootActor])
+class SchedoscopeSystem extends SchedoscopeInterface {
+  val log = Logging(settings.system, classOf[SchedoscopeRootActor])
 
   actionsManagerActor ! Deploy()
 
-  val runningCommands = collection.mutable.HashMap[String, SodaCommand]()
-  val doneCommands = collection.mutable.HashMap[String, SodaCommandStatus]()
+  val runningCommands = collection.mutable.HashMap[String, SchedoscopeCommand]()
+  val doneCommands = collection.mutable.HashMap[String, SchedoscopeCommandStatus]()
 
   private def viewsFromUrl(viewUrlPath: String) = {
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
@@ -77,14 +77,14 @@ class SodaSystem extends SodaInterface {
       val jobFutures = actors.map { actor => Patterns.ask(actor, command, Timeout(settings.completitionTimeout)) }
       val start = new LocalDateTime()
       val id = commandId(command, args, Some(start))
-      runningCommands.put(id, SodaCommand(id, start, jobFutures))
-      SodaCommandStatus(id, start, null, Map("submitted" -> jobFutures.size))
+      runningCommands.put(id, SchedoscopeCommand(id, start, jobFutures))
+      SchedoscopeCommandStatus(id, start, null, Map("submitted" -> jobFutures.size))
     }
   }
 
   private def finalizeInternal(commandId: String, start: LocalDateTime, status: Map[String, Int]) = {
     runningCommands.remove(commandId)
-    val scs = SodaCommandStatus(commandId, start, new LocalDateTime(), status)
+    val scs = SchedoscopeCommandStatus(commandId, start, new LocalDateTime(), status)
     doneCommands.put(commandId, scs)
     scs
   }
@@ -98,9 +98,6 @@ class SodaSystem extends SodaInterface {
     None
   }
 
-  /*
-   * soda API
-   */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
     submitCommandInternal(viewActors, MaterializeView(mode.getOrElse(MaterializeViewMode.default)), viewUrlPath, status, filter)
@@ -128,7 +125,7 @@ class SodaSystem extends SodaInterface {
   def actions(status: Option[String], filter: Option[String]) = {
     val result = queryActor[ActionStatusListResponse](actionsManagerActor, GetActions(), settings.statusListAggregationTimeout)
     val actions = result.actionStatusList
-      .map(a => SodaJsonProtocol.parseActionStatus(a))
+      .map(a => SchedoscopeJsonProtocol.parseActionStatus(a))
       .filter(a => !status.isDefined || status.get.equals(a.status))
       .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
     val overview = actions
@@ -141,7 +138,7 @@ class SodaSystem extends SodaInterface {
     val result = queryActor[QueueStatusListResponse](actionsManagerActor, GetQueues(), settings.statusListAggregationTimeout)
     val queues = result.actionQueues
       .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
-      .map { case (t, queue) => (t, SodaJsonProtocol.parseQueueElements(queue)) }
+      .map { case (t, queue) => (t, SchedoscopeJsonProtocol.parseQueueElements(queue)) }
       .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
     val overview = queues
       .map(el => (el._1, el._2.size))
@@ -151,7 +148,7 @@ class SodaSystem extends SodaInterface {
   def commandStatus(commandId: String) = {
     val cmd = runningCommands.get(commandId)
     if (!cmd.isDefined) {
-      SodaCommandStatus(commandId, null, null, Map("non-existent" -> 1))
+      SchedoscopeCommandStatus(commandId, null, null, Map("non-existent" -> 1))
     } else {
       val statusCounts = cmd.get.parts
         .map(f => {
@@ -173,7 +170,7 @@ class SodaSystem extends SodaInterface {
       if (statusCounts.get("running").getOrElse(0) == 0) {
         finalizeInternal(commandId, cmd.get.start, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
       } else {
-        SodaCommandStatus(commandId, cmd.get.start, null, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
+        SchedoscopeCommandStatus(commandId, cmd.get.start, null, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
       }
     }
   }

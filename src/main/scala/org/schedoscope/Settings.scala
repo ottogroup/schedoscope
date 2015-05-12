@@ -29,16 +29,16 @@ class SettingsImpl(val config: Config) extends Extension {
 
   private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
 
-  lazy val env = config.getString("soda.app.environment")
+  lazy val env = config.getString("schedoscope.app.environment")
 
   lazy val earliestDay = {
-    val conf = config.getString("soda.scheduler.earliestDay")
+    val conf = config.getString("schedoscope.scheduler.earliestDay")
     val Array(year, month, day) = conf.split("-")
     DateParameterizationUtils.parametersToDay(p(year), p(month), p(day))
   }
 
   lazy val latestDay = {
-    val conf = config.getString("soda.scheduler.latestDay")
+    val conf = config.getString("schedoscope.scheduler.latestDay")
     if (conf == "now") {
       val now = Calendar.getInstance()
       now.set(Calendar.HOUR_OF_DAY, 0)
@@ -53,55 +53,55 @@ class SettingsImpl(val config: Config) extends Extension {
   }
 
   lazy val webserviceTimeOut: Duration =
-    Duration(config.getDuration("soda.webservice.timeout", TimeUnit.MILLISECONDS),
+    Duration(config.getDuration("schedoscope.webservice.timeout", TimeUnit.MILLISECONDS),
       TimeUnit.MILLISECONDS)
 
-  lazy val port = config.getInt("soda.webservice.port")
+  lazy val port = config.getInt("schedoscope.webservice.port")
 
-  lazy val webResourcesDirectory = config.getString("soda.webservice.resourceDirectory")
+  lazy val webResourcesDirectory = config.getString("schedoscope.webservice.resourceDirectory")
 
-  lazy val restApiConcurrency = config.getInt("soda.webservice.concurrency")
+  lazy val restApiConcurrency = config.getInt("schedoscope.webservice.concurrency")
 
-  lazy val jdbcUrl = config.getString("soda.metastore.jdbcUrl")
+  lazy val jdbcUrl = config.getString("schedoscope.metastore.jdbcUrl")
 
-  lazy val kerberosPrincipal = config.getString("soda.kerberos.principal")
+  lazy val kerberosPrincipal = config.getString("schedoscope.kerberos.principal")
 
-  lazy val metastoreUri = config.getString("soda.metastore.metastoreUri")
+  lazy val metastoreUri = config.getString("schedoscope.metastore.metastoreUri")
 
-  lazy val parsedViewAugmentorClass = config.getString("soda.app.parsedViewAugmentorClass")
+  lazy val parsedViewAugmentorClass = config.getString("schedoscope.app.parsedViewAugmentorClass")
 
   def viewAugmentor = Class.forName(parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
 
-  lazy val availableTransformations = config.getObject("soda.transformations")
+  lazy val availableTransformations = config.getObject("schedoscope.transformations")
 
   lazy val hadoopConf = new Configuration(true)
 
-  lazy val transformationVersioning = config.getBoolean("soda.versioning.transformations")
+  lazy val transformationVersioning = config.getBoolean("schedoscope.versioning.transformations")
 
   lazy val jobTrackerOrResourceManager = {
     val yarnConf = new YarnConfiguration(hadoopConf)
     if (yarnConf.get("yarn.resourcemanager.address") == null)
-      config.getString("soda.hadoop.resourceManager")
+      config.getString("schedoscope.hadoop.resourceManager")
     else
       yarnConf.get("yarn.resourcemanager.address")
   }
 
   lazy val nameNode = if (hadoopConf.get("fs.defaultFS") == null)
-    config.getString("soda.hadoop.nameNode")
+    config.getString("schedoscope.hadoop.nameNode")
   else
     hadoopConf.get("fs.defaultFS")
 
   lazy val filesystemTimeout = getDriverSettings("filesystem").timeout
-  lazy val schemaTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  lazy val statusListAggregationTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  lazy val viewManagerResponseTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
-  lazy val completitionTimeout = Duration.create(config.getDuration("soda.scheduler.timeouts.completion", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val schemaTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val statusListAggregationTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val viewManagerResponseTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val completitionTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.completion", TimeUnit.SECONDS), TimeUnit.SECONDS)
 
-  lazy val retries = config.getInt("soda.action.retry")
+  lazy val retries = config.getInt("schedoscope.action.retry")
 
-  lazy val metastoreConcurrency = config.getInt("soda.metastore.concurrency")
-  lazy val metastoreWriteBatchSize = config.getInt("soda.metastore.writeBatchSize")
-  lazy val metastoreReadBatchSize = config.getInt("soda.metastore.readBatchSize")
+  lazy val metastoreConcurrency = config.getInt("schedoscope.metastore.concurrency")
+  lazy val metastoreWriteBatchSize = config.getInt("schedoscope.metastore.writeBatchSize")
+  lazy val metastoreReadBatchSize = config.getInt("schedoscope.metastore.readBatchSize")
 
   lazy val userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
@@ -122,7 +122,7 @@ class SettingsImpl(val config: Config) extends Extension {
 
   def getDriverSettings(n: String): DriverSettings = {
     if (!driverSettings.contains(n)) {
-      val confName = "soda.transformations." + n
+      val confName = "schedoscope.transformations." + n
       driverSettings.put(n, new DriverSettings(config.getConfig(confName), n))
     }
 
@@ -130,14 +130,14 @@ class SettingsImpl(val config: Config) extends Extension {
   }
 
   def getTransformationSetting(typ: String, setting: String) = {
-    val confName = s"soda.transformations.${typ}.transformation.${setting}"
+    val confName = s"schedoscope.transformations.${typ}.transformation.${setting}"
     config.getString(confName)
   }
 
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
-  val actorSystem = ActorSystem("soda")
+  val actorSystem = ActorSystem("schedoscope")
 
   override def lookup = Settings
 

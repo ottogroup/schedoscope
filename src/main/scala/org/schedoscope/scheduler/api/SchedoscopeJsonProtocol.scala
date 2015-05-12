@@ -18,8 +18,8 @@ import spray.json.JsValue
 import spray.json.JsonFormat
 import spray.json.RootJsonFormat
 
-case class SodaCommand(id: String, start: LocalDateTime, parts: List[Future[_]])
-case class SodaCommandStatus(id: String, start: LocalDateTime, end: LocalDateTime, status: Map[String, Int])
+case class SchedoscopeCommand(id: String, start: LocalDateTime, parts: List[Future[_]])
+case class SchedoscopeCommandStatus(id: String, start: LocalDateTime, end: LocalDateTime, status: Map[String, Int])
 case class ActionStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]])
 case class ActionStatusList(overview: Map[String, Int], actions: List[ActionStatus])
 case class ViewStatus(view: String, status: String, properties: Option[Map[String, String]], dependencies: Option[List[ViewStatus]])
@@ -27,13 +27,12 @@ case class ViewStatusList(overview: Map[String, Int], views: List[ViewStatus])
 case class QueueStatusList(overview: Map[String, Int], queues: Map[String, List[RunStatus]])
 case class RunStatus(description: String, targetView: String, started: LocalDateTime, comment: String, properties: Option[Map[String, String]])
 
-
-object SodaJsonProtocol extends DefaultJsonProtocol {
+object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
 
   implicit val runStatusFormat = jsonFormat5(RunStatus)
   implicit val actionStatusFormat = jsonFormat5(ActionStatus)
   implicit val actionStatusListFormat = jsonFormat2(ActionStatusList)
-  implicit val sodaCommandStatusFormat = jsonFormat4(SodaCommandStatus)
+  implicit val schedoscopeCommandStatusFormat = jsonFormat4(SchedoscopeCommandStatus)
   implicit val viewStatusFormat: JsonFormat[ViewStatus] = lazyFormat(jsonFormat4(ViewStatus))
   implicit val viewStatusListFormat = jsonFormat2(ViewStatusList)
   implicit val queueStatusListFormat = jsonFormat2(QueueStatusList)

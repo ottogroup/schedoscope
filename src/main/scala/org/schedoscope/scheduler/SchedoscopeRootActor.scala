@@ -13,10 +13,10 @@ import akka.actor.SupervisorStrategy._
 import akka.event.Logging
 import akka.routing.RoundRobinRouter
 
-class SodaRootActor(settings: SettingsImpl) extends Actor {
+class SchedoscopeRootActor(settings: SettingsImpl) extends Actor {
   import context._
 
-  val log = Logging(system, SodaRootActor.this)
+  val log = Logging(system, this)
 
   var actionsManagerActor: ActorRef = null
   var schemaRootActor: ActorRef = null
@@ -42,23 +42,23 @@ class SodaRootActor(settings: SettingsImpl) extends Actor {
   }
 }
 
-object SodaRootActor {
-  def props(settings: SettingsImpl) = Props(classOf[SodaRootActor], settings).withDispatcher("akka.actor.root-actor-dispatcher")
+object SchedoscopeRootActor {
+  def props(settings: SettingsImpl) = Props(classOf[SchedoscopeRootActor], settings).withDispatcher("akka.actor.root-actor-dispatcher")
 
   lazy val settings = Settings()
 
   def actorSelectionToRef(actorSelection: ActorSelection) =
     Await.result(actorSelection.resolveOne(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout)
 
-  lazy val sodaRootActor = actorSelectionToRef(settings.system.actorSelection(settings.system.actorOf(props(settings), "root").path))
+  lazy val schedoscopeRootActor = actorSelectionToRef(settings.system.actorSelection(settings.system.actorOf(props(settings), "root").path))
 
-  lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("views")))
+  lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(schedoscopeRootActor.path.child("views")))
 
-  lazy val schemaRootActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("schema-root")))
+  lazy val schemaRootActor = actorSelectionToRef(settings.system.actorSelection(schedoscopeRootActor.path.child("schema-root")))
 
   lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("schema")))
 
   lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("metadata-logger")))
 
-  lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(sodaRootActor.path.child("actions")))
+  lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(schedoscopeRootActor.path.child("actions")))
 }

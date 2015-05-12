@@ -33,7 +33,7 @@ class OozieDriverTest extends FlatSpec with Matchers {
   lazy val workingOozieTransformation = deployWorkflow(
     OozieTransformation(
       "bundle", "workflow",
-      "/tmp/soda/oozie/workflows/bundle/workflow/", Map(
+      "/tmp/schedoscope/oozie/workflows/bundle/workflow/", Map(
         "jobTracker" -> cluster.getJobTrackerUri(),
         "nameNode" -> cluster.getNameNodeUri(),
         "oozie.use.system.libpath" -> "false")))
@@ -41,7 +41,7 @@ class OozieDriverTest extends FlatSpec with Matchers {
   lazy val failingOozieTransformation = deployWorkflow(
     OozieTransformation(
       "bundle", "failflow",
-      "/tmp/soda/oozie/workflows/bundle/failflow/", Map(
+      "/tmp/schedoscope/oozie/workflows/bundle/failflow/", Map(
         "jobTracker" -> cluster.getJobTrackerUri(),
         "nameNode" -> cluster.getNameNodeUri(),
         "oozie.use.system.libpath" -> "false")))

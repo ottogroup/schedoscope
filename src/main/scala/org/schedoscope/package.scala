@@ -8,14 +8,14 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 
-import org.schedoscope.scheduler.SodaRootActor
+import org.schedoscope.scheduler.SchedoscopeRootActor
 
 import akka.actor.ActorRef
 import akka.pattern.Patterns
 import akka.util.Timeout
 
 package object scheduler {
-  implicit val executionContext: ExecutionContext = SodaRootActor.settings.system.dispatchers.lookup("akka.actor.future-call-dispatcher")
+  implicit val executionContext: ExecutionContext = SchedoscopeRootActor.settings.system.dispatchers.lookup("akka.actor.future-call-dispatcher")
 
   def queryActor[T](actor: ActorRef, queryMessage: Any, timeoutDuration: FiniteDuration): T = {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))

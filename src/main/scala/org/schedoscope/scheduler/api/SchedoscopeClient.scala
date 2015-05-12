@@ -67,7 +67,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
         sb.append("\n" + vl.overview.map(el => s"${el._1}: ${el._2}").mkString("\n") + "\n")
       }
 
-      case sc: SodaCommandStatus => {
+      case sc: SchedoscopeCommandStatus => {
         sb.append(s"id: ${sc.id}\n")
         sb.append(s"start: ${sc.start}\n")
         sb.append(s"status: ${sc.status}\n")
@@ -87,14 +87,14 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
   }
 }
 
-class SodaRestClient extends SodaInterface {
+class SchedoscopeRestClient extends SchedoscopeInterface {
 
   var host = "localhost"
   var port = Settings().port
 
-  import SodaJsonProtocol._
+  import SchedoscopeJsonProtocol._
 
-  implicit val system = ActorSystem("soda-spray-client")
+  implicit val system = ActorSystem("schedoscope-spray-client")
   import system.dispatcher // execution context for futures below
   implicit val timeout = Timeout(10.days)
   val log = Logging(system, getClass)
@@ -103,14 +103,14 @@ class SodaRestClient extends SodaInterface {
     val pipeline = path match {
       case u: String if u.startsWith("/views") => sendReceive ~> unmarshal[ViewStatusList]
       case u: String if u.startsWith("/actions") => sendReceive ~> unmarshal[ActionStatusList]
-      case u: String if u.startsWith("/materialize") => sendReceive ~> unmarshal[SodaCommandStatus]
-      case u: String if u.startsWith("/invalidate") => sendReceive ~> unmarshal[SodaCommandStatus]
-      case u: String if u.startsWith("/newdata") => sendReceive ~> unmarshal[SodaCommandStatus]
-      case u: String if u.startsWith("/commands") => sendReceive ~> unmarshal[List[SodaCommandStatus]]
+      case u: String if u.startsWith("/materialize") => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
+      case u: String if u.startsWith("/invalidate") => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
+      case u: String if u.startsWith("/newdata") => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
+      case u: String if u.startsWith("/commands") => sendReceive ~> unmarshal[List[SchedoscopeCommandStatus]]
       case _ => throw new RuntimeException("Unsupported query path: " + path)
     }
     val uri = Uri.from("http", "", host, port, path) withQuery (query)
-    println("Calling Soda API URL: " + uri)
+    println("Calling Schedoscope API URL: " + uri)
     pipeline(Get(uri)).asInstanceOf[Future[T]]
   }
 
@@ -124,22 +124,22 @@ class SodaRestClient extends SodaInterface {
     system.shutdown()
   }
 
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 10.days)
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SchedoscopeCommandStatus = {
+    Await.result(get[SchedoscopeCommandStatus](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 10.days)
   }
 
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SchedoscopeCommandStatus = {
+    Await.result(get[SchedoscopeCommandStatus](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
   }
 
-  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SodaCommandStatus = {
-    Await.result(get[SodaCommandStatus](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SchedoscopeCommandStatus = {
+    Await.result(get[SchedoscopeCommandStatus](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
 
-  def commandStatus(commandId: String): SodaCommandStatus = { null } // TODO
+  def commandStatus(commandId: String): SchedoscopeCommandStatus = { null } // TODO
 
-  def commands(status: Option[String], filter: Option[String]): List[SodaCommandStatus] = {
-    Await.result(get[List[SodaCommandStatus]](s"/commands", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  def commands(status: Option[String], filter: Option[String]): List[SchedoscopeCommandStatus] = {
+    Await.result(get[List[SchedoscopeCommandStatus]](s"/commands", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]): ViewStatusList = {
@@ -155,17 +155,17 @@ class SodaRestClient extends SodaInterface {
   }
 }
 
-object SodaClientControl {
-  val soda = new SodaRestClient()
-  val ctrl = new SodaControl(soda)
+object SchedoscopeClientControl {
+  val schedoscope = new SchedoscopeRestClient()
+  val ctrl = new SchedoscopeControl(schedoscope)
   def main(args: Array[String]) {
     ctrl.run(args)
-    soda.shutdown()
+    schedoscope.shutdown()
     System.exit(0)
   }
 }
 
-class SodaControl(soda: SodaInterface) {
+class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
   object Action extends Enumeration {
     val VIEWS, ACTIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
   }
@@ -173,9 +173,9 @@ class SodaControl(soda: SodaInterface) {
 
   case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None, mode: Option[String] = None, overview: Option[Boolean] = None)
 
-  val parser = new scopt.OptionParser[Config]("soda-control") {
+  val parser = new scopt.OptionParser[Config]("schedoscope-control") {
     override def showUsageOnError = true
-    head("soda-control", "0.0.1")
+    head("schedoscope-control", "0.0.1")
     help("help") text ("print usage")
 
     cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text ("lists all view actors, along with their status") children (
@@ -233,28 +233,28 @@ class SodaControl(soda: SodaInterface) {
         try {
           val res = config.action.get match {
             case ACTIONS => {
-              soda.actions(config.status, config.filter)
+              schedoscope.actions(config.status, config.filter)
             }
             case QUEUES => {
-              soda.queues(config.typ, config.filter)
+              schedoscope.queues(config.typ, config.filter)
             }
             case VIEWS => {
-              soda.views(config.viewUrlPath, config.status, config.filter, config.dependencies, config.overview)
+              schedoscope.views(config.viewUrlPath, config.status, config.filter, config.dependencies, config.overview)
             }
             case MATERIALIZE => {
-              soda.materialize(config.viewUrlPath, config.status, config.filter, config.mode)
+              schedoscope.materialize(config.viewUrlPath, config.status, config.filter, config.mode)
             }
             case INVALIDATE => {
-              soda.invalidate(config.viewUrlPath, config.status, config.filter, config.dependencies)
+              schedoscope.invalidate(config.viewUrlPath, config.status, config.filter, config.dependencies)
             }
             case NEWDATA => {
-              soda.newdata(config.viewUrlPath, config.status, config.filter)
+              schedoscope.newdata(config.viewUrlPath, config.status, config.filter)
             }
             case COMMANDS => {
-              soda.commands(config.status, config.filter)
+              schedoscope.commands(config.status, config.filter)
             }
             case SHUTDOWN => {
-              soda.shutdown()
+              schedoscope.shutdown()
               System.exit(0)
             }
             case _ => {

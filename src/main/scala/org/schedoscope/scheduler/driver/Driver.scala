@@ -51,7 +51,7 @@ trait Driver[T <: Transformation]  {
     val succ = ds.libJars
       .map(f => {
         if (ds.unpack) {
-          val tmpDir = Files.createTempDirectory("soda-" + Random.nextLong.abs.toString).toFile
+          val tmpDir = Files.createTempDirectory("schedoscope-" + Random.nextLong.abs.toString).toFile
           new ZipFile(f.replaceAll("file:", "")).extractAll(tmpDir.getAbsolutePath)
           val succ = fsd.copy("file://" + tmpDir + "/*", ds.location, true)
           FileUtils.deleteDirectory(tmpDir)

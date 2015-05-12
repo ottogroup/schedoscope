@@ -13,15 +13,15 @@ import jline.History
 
 import java.io.File
 
-import org.schedoscope.scheduler.SodaRootActor.settings;
+import org.schedoscope.scheduler.SchedoscopeRootActor.settings;
 
-object SodaService extends App with SimpleParallelRoutingApp {
+object SchedoscopeService extends App with SimpleParallelRoutingApp {
 
   case class Config(shell: Boolean = true)
 
-  val parser = new scopt.OptionParser[Config]("soda-service") {
+  val parser = new scopt.OptionParser[Config]("schedoscope-service") {
     override def showUsageOnError = true
-    head("soda-service", "0.0.1")
+    head("schedoscope-service", "0.0.1")
     help("help") text ("print usage")
   }
 
@@ -30,23 +30,23 @@ object SodaService extends App with SimpleParallelRoutingApp {
     case None => Config()
   }
 
-  val soda = new SodaSystem()
+  val schedoscope = new SchedoscopeSystem()
 
-  implicit val system = ActorSystem("soda-webservice")
+  implicit val system = ActorSystem("schedoscope-webservice")
 
-  startSoda(system, soda)
+  startSchedoscope(system, schedoscope)
 
   Thread.sleep(10000)
   println("\n\n============= SODA initialization finished ============== \n\n")
-  val ctrl = new SodaControl(soda)
+  val ctrl = new SchedoscopeControl(schedoscope)
   val reader = new ConsoleReader()
   val history = new History()
 
-  history.setHistoryFile(new File(System.getenv("HOME") + "/.soda_history"))
+  history.setHistoryFile(new File(System.getenv("HOME") + "/.schedoscope_history"))
   reader.setHistory(history)
   while (true) {
     try {
-      val cmd = reader.readLine("soda> ")
+      val cmd = reader.readLine("schedoscope> ")
       // we have to intercept --help because otherwise jline seems to call System.exit :(
       if (cmd != null && !cmd.trim().replaceAll(";", "").isEmpty() && !cmd.matches(".*--help.*"))
         ctrl.run(cmd.split("\\s+"))
