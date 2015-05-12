@@ -15,23 +15,22 @@ import com.ottogroup.bi.soda.dsl.View
 import scala.collection.JavaConversions._
 import org.apache.hadoop.mapreduce.Job
 
-case class MapreduceTransformation(factory: MapreduceJobFactory, c: Map[String, Object]) extends Transformation {
+case class MapreduceTransformation(createJob: (Map[String,Any]) => Job, c: Map[String, Any]) extends Transformation {
   
   configureWith(c)
   
-  lazy val job = factory.create(configuration.getOrElse("arguments", Array()).asInstanceOf[Array[String]])
-  
   override def name = "mapreduce"
+  
+  lazy val job = createJob(configuration.toMap) 
 
   override def versionDigest = Version.digest("") // TODO
 
-  description = StringUtils.abbreviate("jobname", 100) // FIXME: lazy val job.. 
+  description = StringUtils.abbreviate(createJob(configuration.toMap).getJobName, 100) 
+
 }
 
 object MapreduceTransformation {
-  
-  def fromFactory[P <: MapreduceJobFactory](jobFactoryClass: Class[P])  = jobFactoryClass.newInstance()
-
+ 
 }
 
 trait MapreduceJobFactory {
