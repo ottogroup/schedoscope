@@ -17,13 +17,13 @@ import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
 import org.apache.hadoop.hive.metastore.api.Partition
 import org.joda.time.DateTime
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.crate.ddl.HiveQl
+import org.schedoscope.Settings
+import org.schedoscope.schema.ddl.HiveQl
 import org.schedoscope.dsl.Version
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.dsl.View
 import org.slf4j.LoggerFactory
 import org.apache.tools.ant.taskdefs.Sleep
-import com.ottogroup.bi.soda.dsl.ExternalTransformation
+import org.schedoscope.dsl.ExternalTransformation
 import org.hamcrest.core.IsInstanceOf
 
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {

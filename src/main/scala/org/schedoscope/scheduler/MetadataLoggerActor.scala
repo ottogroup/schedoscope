@@ -1,7 +1,7 @@
 package org.schedoscope.scheduler
 
 import scala.collection.mutable.HashMap
-import com.ottogroup.bi.soda.crate.SchemaManager
+import org.schedoscope.schema.SchemaManager
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala

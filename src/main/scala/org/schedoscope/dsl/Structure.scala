@@ -2,11 +2,8 @@ package org.schedoscope.dsl
 
 import scala.Array.canBuildFrom
 import scala.collection.mutable.ListBuffer
-importimport org.schedoscope.dsl.StructureDsl
-import org.schedoscope.dsl.FieldLike
-import org.schedoscope.dsl.Field
-import org.schedoscope.dsl.Named
- com.ottogroup.bi.soda.dsl.Named
+
+
 
 abstract class Structure extends StructureDsl with Named {
   var parentField: FieldLike[Structure] = null

@@ -5,14 +5,14 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
-import com.ottogroup.bi.soda.bottler.driver.HiveDriver
-import com.ottogroup.bi.soda.bottler.driver.PigDriver
-import com.ottogroup.bi.soda.crate.SchemaManager
-import com.ottogroup.bi.soda.dsl.TextFile
-import com.ottogroup.bi.soda.test.Database
+import org.schedoscope.scheduler.driver.HiveDriver
+import org.schedoscope.scheduler.driver.PigDriver
+import org.schedoscope.schema.SchemaManager
+import org.schedoscope.dsl.TextFile
+import org.schedoscope.test.Database
 import java.sql.Connection
-import com.ottogroup.bi.soda.bottler.driver.OozieDriver
-import com.ottogroup.bi.soda.bottler.driver.MorphlineDriver
+import org.schedoscope.scheduler.driver.OozieDriver
+import org.schedoscope.scheduler.driver.MorphlineDriver
 import org.apache.hadoop.conf.Configuration
 import com.ottogroup.bi.soda.bottler.driver.MapreduceDriver
 

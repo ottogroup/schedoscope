@@ -1,12 +1,12 @@
 
 package org.schedoscope.schema.ddl
 
-import com.ottogroup.bi.soda.dsl.Avro
-import com.ottogroup.bi.soda.dsl.Parquet
+import org.schedoscope.dsl.Avro
+import org.schedoscope.dsl.Parquet
 import org.schedoscope.dsl.Structure
-import com.ottogroup.bi.soda.dsl.TextFile
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.ExternalStorageFormat
+import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.ExternalStorageFormat
 
 object HiveQl {
   def typeDdl[T](scalaType: Manifest[T]): String = {

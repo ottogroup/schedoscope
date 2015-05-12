@@ -1,14 +1,14 @@
-package com.ottogroup.bi.soda.dsl.views
+package org.schedoscope.dsl.views
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
 import org.schedoscope.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter.p
-import com.ottogroup.bi.soda.dsl.View.t
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedView
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.parse
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.parseParameters
+import org.schedoscope.dsl.Parameter.p
+import org.schedoscope.dsl.View.t
+import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
+import org.schedoscope.dsl.views.ViewUrlParser.parse
+import org.schedoscope.dsl.views.ViewUrlParser.parseParameters
 
 import test.eci.datahub.Brand
 import test.eci.datahub.Product

@@ -5,12 +5,12 @@ import scala.concurrent.Future
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 
-import com.ottogroup.bi.soda.bottler.ActionStatusResponse
-import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
-import com.ottogroup.bi.soda.bottler.driver.DriverRunOngoing
-import com.ottogroup.bi.soda.bottler.driver.DriverRunState
-import com.ottogroup.bi.soda.bottler.driver.DriverRunSucceeded
-import com.ottogroup.bi.soda.dsl.Transformation
+import org.schedoscope.scheduler.ActionStatusResponse
+import org.schedoscope.scheduler.driver.DriverRunFailed
+import org.schedoscope.scheduler.driver.DriverRunOngoing
+import org.schedoscope.scheduler.driver.DriverRunState
+import org.schedoscope.scheduler.driver.DriverRunSucceeded
+import org.schedoscope.dsl.Transformation
 
 import spray.json.DefaultJsonProtocol
 import spray.json.JsString

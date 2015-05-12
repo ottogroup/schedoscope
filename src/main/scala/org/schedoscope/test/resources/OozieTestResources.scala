@@ -1,7 +1,7 @@
 package org.schedoscope.test.resources
 
 import minioozie.MiniOozie
-import com.ottogroup.bi.soda.bottler.driver.OozieDriver
+import org.schedoscope.scheduler.driver.OozieDriver
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.fs.FileSystem
 

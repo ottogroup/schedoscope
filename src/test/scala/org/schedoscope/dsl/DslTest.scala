@@ -1,17 +1,17 @@
-package com.ottogroup.bi.soda.dsl
+package org.schedoscope.dsl
 
 import java.util.Date
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-iimport org.schedoscope.dsl.Parameter;
+import org.schedoscope.dsl.Parameter;
 import org.schedoscope.dsl.View;
 import org.schedoscope.dsl.Parameter.p;
 import org.schedoscope.dsl.View.t;
-mport com.ottogroup.bi.soda.crate.ddl.HiveQl.ddl
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
-import com.ottogroup.bi.soda.dsl.views.DailyParameterization
-import com.ottogroup.bi.soda.dsl.views.JobMetadata
-import com.ottogroup.bi.soda.dsl.views.PointOccurrence
+import org.schedoscope.schema.ddl.HiveQl.ddl
+import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.views.DailyParameterization
+import org.schedoscope.dsl.views.JobMetadata
+import org.schedoscope.dsl.views.PointOccurrence
 import test.eci.datahub.AvroView
 import test.eci.datahub.Brand
 import test.eci.datahub.Click
@@ -21,7 +21,6 @@ import test.eci.datahub.EdgeCasesView
 import test.eci.datahub.Product
 import test.eci.datahub.ProductBrand
 import test.eci.datahub.ViewWithDefaultParams
-import org.schedoscope.dsl.Parameter
 
 class DslTest extends FlatSpec with Matchers {
 

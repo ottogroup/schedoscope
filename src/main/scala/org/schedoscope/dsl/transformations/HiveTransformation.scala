@@ -8,10 +8,10 @@ import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.ResourceUri
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.Transformation
+import org.schedoscope.Settings
+import org.schedoscope.dsl.Transformation
 import org.schedoscope.dsl.Version
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.dsl.View
 import scala.collection.JavaConversions._
 
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {

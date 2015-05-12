@@ -1,4 +1,4 @@
-package com.ottogroup.bi.soda.dsl.transformations
+package org.schedoscope.dsl.transformations
 
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
@@ -6,8 +6,8 @@ import org.scalatest.Matchers
 import org.schedoscope.dsl.transformations.OozieTransformation.configurationFromResource;
 
 import org.schedoscope.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter.p
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.dsl.Parameter.p
+import org.schedoscope.dsl.View
 
 case class Productfeed(
   ecShopCode: Parameter[String],

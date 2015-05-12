@@ -8,9 +8,9 @@ import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.View.TypedAny
 import org.schedoscope.dsl.View.t
-import org.schedoscope.dsl.viewsarameterizationUtils.earliestDay;
-import org.schedoscope.dsl.viewsarameterizationUtils.thisAndPrevDays;
-import org.schedoscope.dsl.viewsarameterizationUtils.thisAndPrevMonths;
+import org.schedoscope.dsl.views.DateParameterizationUtils.earliestDay;
+import org.schedoscope.dsl.views.DateParameterizationUtils.thisAndPrevDays;
+import org.schedoscope.dsl.views.DateParameterizationUtils.thisAndPrevMonths;
 
 class NoAugmentation extends ViewUrlParser.ParsedViewAugmentor
 

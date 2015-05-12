@@ -1,16 +1,17 @@
-package com.ottogroup.bi.soda.test
+package org.schedoscope.test
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.ottogroup.bi.soda.DriverTests
-import com.ottogroup.bi.soda.dsl.Field.v
-import com.ottogroup.bi.soda.dsl.Parameter.p
+import org.schedoscope.DriverTests
+import org.schedoscope.OozieTests
+import org.schedoscope.dsl.Field.v
+import org.schedoscope.dsl.Parameter.p
 
 import test.eci.datahub.Click
-import test.eci.datahub.ClickOfEC0101
+import test.eci.datahub.ClickOfEC0101ViaOozie
 
-class HiveTestFrameworkTest extends FlatSpec with Matchers {
+class OozieTestFrameworkTest extends FlatSpec with Matchers {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
       v(id, "event01"),
@@ -35,9 +36,14 @@ class HiveTestFrameworkTest extends FlatSpec with Matchers {
       v(url, "http://ec0106.com/url3"))
   }
 
-  "Hive test framework" should "execute hive transformations locally" taggedAs (DriverTests) in {
-    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
+  "Oozie test framework" should "execute oozie workflows in MiniOozie cluster" taggedAs (DriverTests, OozieTests) in {
+    new ClickOfEC0101ViaOozie(p("2014"), p("01"), p("01")) with clustertest {
       basedOn(ec0101Clicks, ec0106Clicks)
+      withConfiguration(
+        ("jobTracker" -> cluster().getJobTrackerUri),
+        ("nameNode" -> cluster().getNameNodeUri),
+        ("input" -> s"${ec0101Clicks.fullPath}/*"),
+        ("output" -> s"${this.fullPath}/"))
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "event01",

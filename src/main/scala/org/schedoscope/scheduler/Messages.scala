@@ -1,12 +1,12 @@
 package org.schedoscope.scheduler
 
-import com.ottogroup.bi.soda.bottler.driver.Driver
-import com.ottogroup.bi.soda.bottler.driver.DriverRunFailed
-import com.ottogroup.bi.soda.bottler.driver.DriverRunHandle
-import com.ottogroup.bi.soda.bottler.driver.DriverRunState
-import com.ottogroup.bi.soda.bottler.driver.DriverRunSucceeded
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.scheduler.driver.Driver
+import org.schedoscope.scheduler.driver.DriverRunFailed
+import org.schedoscope.scheduler.driver.DriverRunHandle
+import org.schedoscope.scheduler.driver.DriverRunState
+import org.schedoscope.scheduler.driver.DriverRunSucceeded
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.View
 
 import akka.actor.ActorRef
 

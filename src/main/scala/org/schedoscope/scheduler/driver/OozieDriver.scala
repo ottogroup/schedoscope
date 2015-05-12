@@ -14,9 +14,9 @@ import org.apache.oozie.client.WorkflowJob.Status.SUCCEEDED
 import org.apache.oozie.client.WorkflowJob.Status.SUSPENDED
 import org.joda.time.LocalDateTime
 
-import com.ottogroup.bi.soda.DriverSettings
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
+import org.schedoscope.DriverSettings
+import org.schedoscope.Settings
+import org.schedoscope.dsl.transformations.OozieTransformation
 import com.typesafe.config.ConfigFactory
 
 class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {

@@ -1,4 +1,4 @@
-package com.ottogroup.bi.soda
+package org.schedoscope
 
 import org.scalatest.Tag
 

@@ -19,19 +19,19 @@ import org.apache.hadoop.fs.FileUtil
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
-import com.ottogroup.bi.soda.DriverSettings
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.transformations.Copy
-import com.ottogroup.bi.soda.dsl.transformations.CopyFrom
-import com.ottogroup.bi.soda.dsl.transformations.Delete
-import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
-import com.ottogroup.bi.soda.dsl.transformations.IfExists
-import com.ottogroup.bi.soda.dsl.transformations.IfNotExists
-import com.ottogroup.bi.soda.dsl.transformations.Move
-import com.ottogroup.bi.soda.dsl.transformations.Touch
-import com.ottogroup.bi.soda.dsl.transformations.StoreFrom
-import com.ottogroup.bi.soda.dsl.transformations.MkDir
-import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver._
+import org.schedoscope.DriverSettings
+import org.schedoscope.Settings
+import org.schedoscope.dsl.transformations.Copy
+import org.schedoscope.dsl.transformations.CopyFrom
+import org.schedoscope.dsl.transformations.Delete
+import org.schedoscope.dsl.transformations.FilesystemTransformation
+import org.schedoscope.dsl.transformations.IfExists
+import org.schedoscope.dsl.transformations.IfNotExists
+import org.schedoscope.dsl.transformations.Move
+import org.schedoscope.dsl.transformations.Touch
+import org.schedoscope.dsl.transformations.StoreFrom
+import org.schedoscope.dsl.transformations.MkDir
+import org.schedoscope.scheduler.driver.FileSystemDriver._
 
 class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
 

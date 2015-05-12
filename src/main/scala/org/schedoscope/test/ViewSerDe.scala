@@ -5,8 +5,8 @@ import java.util.Date
 import scala.Array.canBuildFrom
 
 import org.schedoscope.dsl.Structure
-import com.ottogroup.bi.soda.dsl.TextFile
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.View
 
 object ViewSerDe {
 

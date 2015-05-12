@@ -7,10 +7,10 @@ import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Random
 import org.joda.time.LocalDateTime
-import com.ottogroup.bi.soda.DriverSettings
-import com.ottogroup.bi.soda.dsl.Transformation
+import org.schedoscope.DriverSettings
+import org.schedoscope.dsl.Transformation
 import net.lingala.zip4j.core.ZipFile
-import com.ottogroup.bi.soda.Settings
+import org.schedoscope.Settings
 import org.apache.commons.io.FileUtils
 
 case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)

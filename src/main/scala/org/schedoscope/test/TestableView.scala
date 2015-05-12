@@ -4,16 +4,15 @@ import scala.collection.mutable.ListBuffer
 
 import org.apache.hadoop.fs.Path
 
-import com.ottogroup.bi.soda.bottler.driver.Driver
+import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.Structure
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.PigTransformation
-import com.ottogroup.bi.soda.dsl.transformations.MapreduceTransformation
-import com.ottogroup.bi.soda.test.resources.OozieTestResources
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.OozieTransformation
+import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.transformations.PigTransformation
+import org.schedoscope.test.resources.OozieTestResources
 
 trait TestableView extends FillableView {}
 

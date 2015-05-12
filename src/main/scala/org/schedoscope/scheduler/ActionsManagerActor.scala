@@ -8,11 +8,11 @@ import scala.util.Random
 
 import org.apache.hadoop.conf.Configuration
 
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.bottler.driver.DriverException
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
+import org.schedoscope.Settings
+import org.schedoscope.scheduler.driver.DriverException
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.FilesystemTransformation
 
 import akka.actor.Actor
 import akka.actor.ActorRef

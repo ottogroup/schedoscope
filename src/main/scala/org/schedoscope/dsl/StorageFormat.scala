@@ -1,6 +1,6 @@
 package org.schedoscope.dsl
 
-import org.schedoscope.dsl.Named
+
 
 abstract sealed class StorageFormat
 

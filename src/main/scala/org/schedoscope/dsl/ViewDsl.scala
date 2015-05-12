@@ -1,17 +1,6 @@
 package org.schedoscope.dsl
 
-importimport org.schedoscope.dsl.StructureDsl
 
-import org.schedoscope.dsl.PrivacySensitive
-
-import org.schedoscope.dsl.Parameter
-
- com.ottogroup.bi.soda.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.PrivacySensitive
-import com.ottogroup.bi.soda.dsl.StorageFormat
-import com.ottogroup.bi.soda.dsl.StructureDsl
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.View
 
 trait ViewDsl extends StructureDsl {
 

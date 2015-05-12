@@ -1,27 +1,27 @@
 package test.eci.datahub
 
 import java.util.Date
-import com.ottogroup.bi.soda.dsl.Avro
+import org.schedoscope.dsl.Avro
 import org.schedoscope.dsl.Parameter
-import com.ottogroup.bi.soda.dsl.Parameter.p
-import com.ottogroup.bi.soda.dsl.Parquet
+import org.schedoscope.dsl.Parameter.p
+import org.schedoscope.dsl.Parquet
 import org.schedoscope.dsl.Structure
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation.oozieWFPath
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation.insertInto
-import com.ottogroup.bi.soda.dsl.views.DailyParameterization
-import com.ottogroup.bi.soda.dsl.views.Id
-import com.ottogroup.bi.soda.dsl.views.JobMetadata
-import com.ottogroup.bi.soda.dsl.views.PointOccurrence
-import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
-import com.ottogroup.bi.soda.dsl.ExternalTextFile
-import com.ottogroup.bi.soda.dsl.TextFile
-import com.ottogroup.bi.soda.dsl.Redis
-import com.ottogroup.bi.soda.Settings
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.OozieTransformation
+import org.schedoscope.dsl.transformations.OozieTransformation.oozieWFPath
+import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
+import org.schedoscope.dsl.views.DailyParameterization
+import org.schedoscope.dsl.views.Id
+import org.schedoscope.dsl.views.JobMetadata
+import org.schedoscope.dsl.views.PointOccurrence
+import org.schedoscope.dsl.transformations.MorphlineTransformation
+import org.schedoscope.dsl.ExternalTextFile
+import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.Redis
+import org.schedoscope.Settings
 import org.apache.hadoop.security.UserGroupInformation
-import com.ottogroup.bi.soda.dsl.JDBC
+import org.schedoscope.dsl.JDBC
 import scala.io.Source
 case class Brand(
   ecNr: Parameter[String]) extends View

@@ -14,11 +14,11 @@ import spray.routing.HttpService
 import spray.routing.Route
 import akka.routing.RoundRobinRouter
 
-import com.ottogroup.bi.soda.Settings
+import org.schedoscope.Settings
 
 import spray.http.HttpHeaders.RawHeader
 
-import com.ottogroup.bi.soda.Settings
+import org.schedoscope.Settings
 import com.typesafe.config.Config
 
 import akka.actor.ActorSystem

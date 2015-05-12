@@ -1,8 +1,8 @@
-package com.ottogroup.bi.soda.dsl.views
+package org.schedoscope.dsl.views
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.dsl.Parameter.p
+import org.schedoscope.dsl.Parameter.p
 import java.util.Calendar
 
 class DailyParameterizationTest extends FlatSpec with Matchers {

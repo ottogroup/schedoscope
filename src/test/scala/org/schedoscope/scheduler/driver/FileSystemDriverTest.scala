@@ -1,10 +1,10 @@
-package com.ottogroup.bi.soda.bottler.driver
+package org.schedoscope.scheduler.driver
 
 import org.scalatest.Matchers
 import org.scalatest.FlatSpec
-import org.schedoscope.scheduler.driver.FileSystemDriver;
 
-import com.ottogroup.bi.soda.dsl.transformations._
+
+import org.schedoscope.dsl.transformations._
 
 import java.io.File
 
@@ -13,9 +13,9 @@ import test.eci.datahub.Product
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
 
-import com.ottogroup.bi.soda.dsl.Parameter.p
-import com.ottogroup.bi.soda.DriverTests
-import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
+import org.schedoscope.dsl.Parameter.p
+import org.schedoscope.DriverTests
+import org.schedoscope.dsl.transformations.FilesystemTransformation
 
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: FileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())

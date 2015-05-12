@@ -19,12 +19,10 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.thrift.protocol.TProtocolException
 import org.joda.time.LocalDateTime
 
-import com.ottogroup.bi.soda.DriverSettings
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.transformations.PigTransformation
-
+import org.schedoscope.DriverSettings
+import org.schedoscope.Settings
+import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.Transformation.replaceParameters;
-import org.schedoscope.scheduler.driver.PigDriver;
 import org.schedoscope.scheduler.driver.HiveDriver.currentConnection;
 import org.slf4j.LoggerFactory
 

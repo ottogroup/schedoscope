@@ -14,7 +14,7 @@ import org.jooq.impl.DSL.nullSafe
 import com.openpojo.reflection.impl.PojoClassFactory
 import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.Structure
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.dsl.View
 
 object ViewTable {
   def viewOrStructureTable(s: Structure) = {

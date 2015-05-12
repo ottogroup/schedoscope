@@ -1,13 +1,13 @@
-package com.ottogroup.bi.soda.bottler.driver
+package org.schedoscope.scheduler.driver
 
 import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 
-import com.ottogroup.bi.soda.DriverTests
-import com.ottogroup.bi.soda.OozieTests
-import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
-import com.ottogroup.bi.soda.test.resources.OozieTestResources
+import org.schedoscope.DriverTests
+import org.schedoscope.OozieTests
+import org.schedoscope.dsl.transformations.OozieTransformation
+import org.schedoscope.test.resources.OozieTestResources
 
 class OozieDriverTest extends FlatSpec with Matchers {
 

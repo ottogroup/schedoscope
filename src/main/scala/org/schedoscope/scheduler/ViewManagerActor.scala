@@ -1,16 +1,16 @@
 package org.schedoscope.scheduler
 
 import scala.collection.mutable.HashMap
-import com.ottogroup.bi.soda.SettingsImpl
-import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.SettingsImpl
+import org.schedoscope.scheduler.SodaRootActor.settings
+import org.schedoscope.dsl.View
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import com.ottogroup.bi.soda.dsl.ExternalTransformation
+import org.schedoscope.dsl.ExternalTransformation
 import scala.collection.mutable.HashSet
 
 class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {

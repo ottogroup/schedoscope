@@ -1,12 +1,10 @@
 package org.schedoscope.dsl
 
-import org.schedoscope.dsl.Transformation;
-import org.schedoscope.dsl.Version;
+
 
 import scala.collection.mutable.HashMap
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
-import org.schedoscope.dsl.Version
+import org.schedoscope.Settings
+import org.schedoscope.scheduler.driver.FileSystemDriver
 
 abstract class Transformation {
   var view: Option[View] = None

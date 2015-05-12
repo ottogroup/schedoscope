@@ -12,9 +12,9 @@ import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.ResourceUri
 import org.schedoscope.dsl.Version;
 
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.Transformation
- com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.Settings
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.View
 import
  scala.collection.JavaConversions._
 

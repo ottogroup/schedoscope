@@ -1,4 +1,4 @@
-package com.ottogroup.bi.soda.bottler.driver
+package org.schedoscope.scheduler.driver
 
 import java.io.File
 

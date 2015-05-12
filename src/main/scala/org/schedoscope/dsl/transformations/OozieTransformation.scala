@@ -4,8 +4,8 @@ import java.io.FileInputStream
 import java.io.InputStream
 import java.util.Properties
 import org.apache.commons.lang.StringUtils
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.Transformation
+import org.schedoscope.Settings
+import org.schedoscope.dsl.Transformation
 import scala.collection.JavaConversions._
 
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {

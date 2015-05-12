@@ -2,9 +2,9 @@ package org.schedoscope.test
 
 import java.sql.Connection
 import scala.collection.mutable.ListBuffer
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.dsl.View
 import org.schedoscope.dsl.Field
-import com.ottogroup.bi.soda.crate.ddl.HiveQl
+import org.schedoscope.schema.ddl.HiveQl
 import java.util.Date
 import scala.collection.generic.MutableMapFactory
 import scala.collection.mutable.HashMap

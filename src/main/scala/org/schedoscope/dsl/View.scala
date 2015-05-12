@@ -7,13 +7,12 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import com.openpojo.reflection.impl.PojoClassFactory
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.View._
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedView
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser.ParsedViewAugmentor
-import com.ottogroup.bi.soda.test.rows
-import org.schedoscope.dsl.Parameterimport org.schedoscope.dsl.Namedimport org.schedoscope.dsl.Structureimport org.schedoscope.dsl.ViewDsl
+import org.schedoscope.Settings
+import org.schedoscope.dsl.View._
+import org.schedoscope.dsl.views.ViewUrlParser
+import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
+import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
+import org.schedoscope.test.rows
 
 abstract class View extends Structure with ViewDsl with DelayedInit {
 

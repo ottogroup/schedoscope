@@ -12,13 +12,13 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.ResourceUri
 
-import com.ottogroup.bi.soda.crate.ddl.HiveQl
+import org.schedoscope.schema.ddl.HiveQl
 import org.schedoscope.dsl.FieldLike
-import com.ottogroup.bi.soda.dsl.View
-import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.test.resources.TestResources
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.OozieTransformation
+import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.test.resources.LocalTestResources
+import org.schedoscope.test.resources.TestResources
 
 trait FillableView extends View with rows {}
 

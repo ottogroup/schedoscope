@@ -1,6 +1,6 @@
 package org.schedoscope.scheduler
 
-import com.ottogroup.bi.soda.SettingsImpl
+import org.schedoscope.SettingsImpl
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -8,7 +8,7 @@ import akka.actor.Props
 import akka.actor.SupervisorStrategy.Restart
 import akka.event.Logging
 import akka.routing.RoundRobinRouter
-import com.ottogroup.bi.soda.Settings
+import org.schedoscope.Settings
 import akka.actor.ActorSelection
 import scala.concurrent.Await
 

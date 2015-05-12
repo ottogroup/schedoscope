@@ -1,10 +1,10 @@
-package com.ottogroup.bi.soda.bottler.driver
+package org.schedoscope.scheduler.driver
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.DriverTests
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.dsl.transformations.PigTransformation
+import org.schedoscope.DriverTests
+import org.schedoscope.test.resources.LocalTestResources
+import org.schedoscope.dsl.transformations.PigTransformation
 
 class PigDriverTest extends FlatSpec with Matchers {
   lazy val driver: PigDriver = new LocalTestResources().pigDriver

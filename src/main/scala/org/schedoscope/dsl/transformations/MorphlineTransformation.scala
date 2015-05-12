@@ -1,11 +1,11 @@
 package org.schedoscope.dsl.transformations
 
-import com.ottogroup.bi.soda.dsl._
+import org.schedoscope.dsl._
 import org.kitesdk.morphline.stdlib.DropRecordBuilder
 import org.kitesdk.morphline.api.Command
 import org.schedoscope.dsl.Named
-import com.otorg.schedoscopeieldLike
-import com.ottogroup.bi.soda.dsl.ExternalTransformation
+import org.schedoscope.dsl.FieldLike
+import org.schedoscope.dsl.ExternalTransformation
 
 case class MorphlineTransformation(definition: String = "",
   imports: Seq[String] = List(),

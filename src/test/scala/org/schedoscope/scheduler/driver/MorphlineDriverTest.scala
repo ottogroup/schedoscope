@@ -1,21 +1,21 @@
-package com.ottogroup.bi.soda.bottler.driver
+package org.schedoscope.scheduler.driver
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.DriverTests
-import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
+import org.schedoscope.DriverTests
+import org.schedoscope.dsl.transformations.MorphlineTransformation
+import org.schedoscope.test.resources.LocalTestResources
+import org.schedoscope.dsl.transformations.MorphlineTransformation
 import test.eci.datahub.MorphlineView
-import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
+import org.schedoscope.dsl.transformations.MorphlineTransformation
 import test.eci.datahub._
 import test.eci.datahub.CompilingMorphlineView
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.dsl.View
 import org.schedoscope.dsl.Parameter
 import org.apache.hadoop.security.UserGroupInformation
 import java.security.PrivilegedAction
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
+import org.schedoscope.test.resources.LocalTestResources
+import org.schedoscope.test.resources.LocalTestResources
 
 class MorphlineDriverTest extends FlatSpec with Matchers {
   lazy val driver: MorphlineDriver = new LocalTestResources().morphlineDriver

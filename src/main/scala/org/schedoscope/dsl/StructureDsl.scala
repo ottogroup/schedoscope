@@ -1,8 +1,6 @@
 package org.schedoscope.dsl
 
-import com.ottogroup.bi.soda.dsl.Field
 
-import org.schedoscope.dsl.Field
 
 trait StructureDsl {
   protected def registerField(f: Field[_]): Unit

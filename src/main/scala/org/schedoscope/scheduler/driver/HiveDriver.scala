@@ -16,10 +16,10 @@ import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.thrift.protocol.TProtocolException
 import org.joda.time.LocalDateTime
-import com.ottogroup.bi.soda.DriverSettings
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
-import com.ottogroup.bi.soda.dsl.Transformation.replaceParameters
+import org.schedoscope.DriverSettings
+import org.schedoscope.Settings
+import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
 import HiveDriver.currentConnection
 

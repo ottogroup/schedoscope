@@ -1,10 +1,6 @@
 package org.schedoscope.dsl
 
-import com.ottogroup.bi.soda.dsl.Named
 
-import org.schedoscope.dsl.Named
-
-import org.schedoscope.dsl.Structure
 
 abstract class FieldLike[T: Manifest] extends Named {
   val t = manifest[T]

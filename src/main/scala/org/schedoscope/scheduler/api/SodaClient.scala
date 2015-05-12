@@ -6,7 +6,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Try
 import com.bethecoder.ascii_table.ASCIITable
-import com.ottogroup.bi.soda.dsl.views.ViewUrlParser
+import org.schedoscope.dsl.views.ViewUrlParser
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.util.Timeout
@@ -18,11 +18,11 @@ import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
 import spray.http.Uri
 import spray.http.Uri._
 import spray.http.Uri.Path.SingleSlash
-import com.ottogroup.bi.soda.Settings
+import org.schedoscope.Settings
 import scala.util.matching.Regex
 import scala.collection.immutable.Map
 import scala.collection.mutable.HashMap
-import com.ottogroup.bi.soda.bottler.MaterializeViewMode
+import org.schedoscope.scheduler.MaterializeViewMode
 
 object CliFormat { // FIXME: a more generic parsing would be cool...
   def serialize(o: Any): String = {

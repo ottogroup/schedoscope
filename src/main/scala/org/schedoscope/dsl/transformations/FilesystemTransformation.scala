@@ -1,9 +1,9 @@
 package org.schedoscope.dsl.transformations
 
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.View
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.View
 import java.io.InputStream
-import com.ottogroup.bi.soda.dsl.View
+
 
 sealed class FilesystemTransformation extends Transformation {
   override def name = "filesystem"

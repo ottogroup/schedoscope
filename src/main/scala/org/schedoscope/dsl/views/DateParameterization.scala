@@ -4,8 +4,7 @@ import java.util.Calendar
 
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.views.DateParameterizationUtils;
-import org.schedoscope.dsl.viewsarameterizationUtils.*;
+
 import org.schedoscope.Settings
 
 import scala.collection.mutable.ListBuffer
