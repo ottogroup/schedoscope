@@ -36,6 +36,7 @@ case class MapreduceTransformation(createJob: (Map[String, Any]) => Job, c: Map[
     } catch {
       case _: Throwable => null
     }
+    
     Settings().getDriverSettings("mapreduce").libJarsHdfs
       .filter(lj => jarName == null || lj.contains(jarName))
   }
@@ -54,16 +55,4 @@ case class MapreduceTransformation(createJob: (Map[String, Any]) => Job, c: Map[
     }
     configuration.foreach(c => job.getConfiguration.set(c._1, c._2.toString))
   }
-
-}
-
-object MapreduceTransformation {
-
-}
-
-trait MapreduceJobFactory {
-
-  @throws(classOf[Exception])
-  def create(args: Array[String]): Job
-
 }
