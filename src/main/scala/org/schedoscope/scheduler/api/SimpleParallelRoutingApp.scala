@@ -5,7 +5,7 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 
 import org.schedoscope.Settings
-import org.schedoscope.scheduler.SchedoscopeRootActor.settings
+import org.schedoscope.scheduler.RootActor.settings
 
 import akka.actor.Actor
 import akka.actor.ActorRefFactory
@@ -34,7 +34,7 @@ trait SimpleParallelRoutingApp extends HttpService {
 
   @volatile private[this] var _refFactory: Option[ActorRefFactory] = None
 
-  import org.schedoscope.scheduler.SchedoscopeRootActor.settings
+  import org.schedoscope.scheduler.RootActor.settings
 
   import SchedoscopeJsonProtocol._
 
@@ -90,19 +90,19 @@ trait SimpleParallelRoutingApp extends HttpService {
     options: immutable.Traversable[Inet.SocketOption] = Nil,
     settings: Option[ServerSettings] = None)(route: ⇒ Route)(implicit system: ActorSystem, sslEngineProvider: ServerSSLEngineProvider,
       bindingTimeout: Timeout = 1.second): Future[Http.Bound] = {
-    
+
     val serviceActor = system.actorOf(
       props = Props {
         new Actor {
           _refFactory = Some(context)
           def receive = {
-            val system = 0 
+            val system = 0
             runRoute(route)
           }
         }
       }.withRouter(RoundRobinRouter(nrOfInstances = Settings().restApiConcurrency)),
       name = serviceActorName)
-      
+
     IO(Http).ask(Http.Bind(serviceActor, interface, port, backlog, options, settings)).flatMap {
       case b: Http.Bound ⇒ Future.successful(b)
       case Tcp.CommandFailed(b: Http.Bind) ⇒

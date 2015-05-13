@@ -1,7 +1,5 @@
 package org.schedoscope.dsl
 
-
-
 abstract class FieldLike[T: Manifest] extends Named {
   val t = manifest[T]
 
@@ -75,6 +73,6 @@ object Parameter {
   }
 
   def p[T: Manifest](v: Parameter[T]) = asParameter[T](v.v.get)
-  
+
   def p[T: Manifest](v: T) = asParameter[T](v)
 }

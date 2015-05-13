@@ -1,9 +1,8 @@
-package com.ottogroup.bi.soda.dsl.transformations
+package org.schedoscope.dsl.transformations
 
 import org.apache.hadoop.mapreduce.Mapper
 import org.apache.hadoop.io.Text
 import java.io.IOException
-import org.apache.hadoop.mapreduce.Reducer
 
 class FailingMapper extends Mapper[Text, Text, Text, Text] {
 

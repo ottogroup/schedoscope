@@ -1,23 +1,19 @@
-package com.ottogroup.bi.soda.bottler.driver
+package org.schedoscope.scheduler.driver
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import com.ottogroup.bi.soda.DriverTests
-import com.ottogroup.bi.soda.test.resources.LocalTestResources
-import com.ottogroup.bi.soda.dsl.transformations.MapreduceTransformation
 import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.io.Text
-import org.apache.hadoop.mapreduce.Mapper
-import org.apache.hadoop.mapreduce.Reducer
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
-import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
-import java.io.File
-import org.apache.hadoop.mapreduce.MRJobConfig
 import java.nio.file.Files
+import org.schedoscope.dsl.transformations.FailingMapper
+import org.schedoscope.dsl.transformations.FailingMapper
+import org.schedoscope.test.resources.LocalTestResources
+import org.apache.hadoop.fs.Path
 import java.nio.file.Paths
 import java.nio.charset.StandardCharsets
-import com.ottogroup.bi.soda.dsl.transformations.FailingMapper
+import org.schedoscope.DriverTests
+import org.schedoscope.dsl.transformations.MapreduceTransformation
 
 class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: MapreduceDriver = new LocalTestResources().mapreduceDriver

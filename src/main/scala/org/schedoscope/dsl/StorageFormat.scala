@@ -1,7 +1,5 @@
 package org.schedoscope.dsl
 
-
-
 abstract sealed class StorageFormat
 
 case class TextFile(val fieldTerminator: String = null, collectionItemTerminator: String = null, mapKeyTerminator: String = null, lineTerminator: String = null) extends StorageFormat

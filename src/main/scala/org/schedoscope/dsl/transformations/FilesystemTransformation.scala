@@ -4,7 +4,6 @@ import org.schedoscope.dsl.Transformation
 import org.schedoscope.dsl.View
 import java.io.InputStream
 
-
 sealed class FilesystemTransformation extends Transformation {
   override def name = "filesystem"
 }

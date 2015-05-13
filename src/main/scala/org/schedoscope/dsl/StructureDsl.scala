@@ -1,7 +1,5 @@
 package org.schedoscope.dsl
 
-
-
 trait StructureDsl {
   protected def registerField(f: Field[_]): Unit
 

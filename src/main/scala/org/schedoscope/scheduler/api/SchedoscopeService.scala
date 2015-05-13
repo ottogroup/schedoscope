@@ -13,7 +13,7 @@ import jline.History
 
 import java.io.File
 
-import org.schedoscope.scheduler.SchedoscopeRootActor.settings;
+import org.schedoscope.scheduler.RootActor.settings;
 
 object SchedoscopeService extends App with SimpleParallelRoutingApp {
 

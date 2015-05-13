@@ -199,7 +199,7 @@ trait DailyParameterization {
   val year: Parameter[String]
   val month: Parameter[String]
   val day: Parameter[String]
-import DateParameterizationUtils._
+  import DateParameterizationUtils._
   val dateId: Parameter[String] = p(s"${year.v.get}${month.v.get}${day.v.get}")
 
   def prevDay() = DateParameterizationUtils.prevDay(year, month, day)

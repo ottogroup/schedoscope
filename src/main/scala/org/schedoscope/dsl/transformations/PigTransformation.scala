@@ -15,8 +15,7 @@ import org.schedoscope.dsl.Version;
 import org.schedoscope.Settings
 import org.schedoscope.dsl.Transformation
 import org.schedoscope.dsl.View
-import
- scala.collection.JavaConversions._
+import scala.collection.JavaConversions._
 
 case class PigTransformation(latin: String, c: Map[String, String]) extends Transformation {
 

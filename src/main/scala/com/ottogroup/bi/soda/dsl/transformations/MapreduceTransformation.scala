@@ -1,19 +1,11 @@
-package com.ottogroup.bi.soda.dsl.transformations
+package org.schedoscope.dsl.transformations
 
-import java.io.FileInputStream
-import java.io.InputStream
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.ListBuffer
-import org.apache.commons.lang.StringUtils
-import org.apache.hadoop.hive.metastore.api.Function
-import org.apache.hadoop.hive.metastore.api.ResourceType
-import org.apache.hadoop.hive.metastore.api.ResourceUri
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.Transformation
-import com.ottogroup.bi.soda.dsl.Version
-import com.ottogroup.bi.soda.dsl.View
 import scala.collection.JavaConversions._
 import org.apache.hadoop.mapreduce.Job
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.Version
+import org.schedoscope.Settings
+import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.mapreduce.MRJobConfig
 import java.net.URI
 
@@ -36,7 +28,7 @@ case class MapreduceTransformation(createJob: (Map[String, Any]) => Job, c: Map[
     } catch {
       case _: Throwable => null
     }
-    
+
     Settings().getDriverSettings("mapreduce").libJarsHdfs
       .filter(lj => jarName == null || lj.contains(jarName))
   }

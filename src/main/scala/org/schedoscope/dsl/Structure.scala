@@ -3,8 +3,6 @@ package org.schedoscope.dsl
 import scala.Array.canBuildFrom
 import scala.collection.mutable.ListBuffer
 
-
-
 abstract class Structure extends StructureDsl with Named {
   var parentField: FieldLike[Structure] = null
 

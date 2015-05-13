@@ -14,7 +14,7 @@ import jline.History
 import java.io.File
 
 import org.apache.commons.daemon._
-import org.schedoscope.scheduler.SchedoscopeRootActor.settings;
+import org.schedoscope.scheduler.RootActor.settings;
 
 import akka.actor.PoisonPill
 import akka.actor.Actor
@@ -121,5 +121,4 @@ class SchedosopeDaemon extends ApplicationLifecycle with SimpleParallelRoutingAp
     else
       System.exit(1)
   }
-
 }

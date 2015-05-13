@@ -1,7 +1,5 @@
 package org.schedoscope.test
 
-
-
 import org.schedoscope.dsl._
 
 trait testStruct extends Structure with values {

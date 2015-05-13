@@ -2,8 +2,8 @@ package org.schedoscope.dsl
 
 import java.security.MessageDigest
 import scala.Array.canBuildFrom
-import com.ottogroup.bi.soda.bottler.driver.FileSystemDriver
-import com.ottogroup.bi.soda.Settings
+import org.schedoscope.scheduler.driver.FileSystemDriver
+import org.schedoscope.Settings
 
 object Version {
   def md5 = MessageDigest.getInstance("MD5")

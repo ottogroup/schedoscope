@@ -2,7 +2,7 @@ package org.schedoscope.scheduler
 
 import scala.collection.mutable.HashMap
 import org.schedoscope.SettingsImpl
-import org.schedoscope.scheduler.SchedoscopeRootActor.settings
+import org.schedoscope.scheduler.RootActor.settings
 import org.schedoscope.dsl.View
 import akka.actor.Actor
 import akka.actor.ActorRef
@@ -126,5 +126,5 @@ object ViewManagerActor {
   def viewForActor(a: ActorRef) =
     View.viewsFromUrl(settings.env, a.path.name.replaceAll(":", "/"), settings.viewAugmentor).head
 
-  def actorForView(v: View) = SchedoscopeRootActor.settings.system.actorFor(SchedoscopeRootActor.viewManagerActor.path.child(actorNameForView(v)))
+  def actorForView(v: View) = RootActor.settings.system.actorFor(RootActor.viewManagerActor.path.child(actorNameForView(v)))
 }

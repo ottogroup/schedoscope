@@ -13,6 +13,7 @@ import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.test.resources.OozieTestResources
+import org.schedoscope.dsl.transformations.MapreduceTransformation
 
 trait TestableView extends FillableView {}
 

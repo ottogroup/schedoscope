@@ -21,15 +21,15 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import com.ottogroup.bi.soda.dsl.transformations.HiveTransformation
-import com.ottogroup.bi.soda.dsl.transformations.FilesystemTransformation
-import com.ottogroup.bi.soda.dsl.transformations.OozieTransformation
-import com.ottogroup.bi.soda.dsl.transformations.MorphlineTransformation
-import com.ottogroup.bi.soda.bottler.driver.MorphlineDriver
-import com.ottogroup.bi.soda.dsl.transformations.MapreduceTransformation
-import com.ottogroup.bi.soda.bottler.driver.MapreduceDriver
-import com.ottogroup.bi.soda.bottler.driver.PigDriver
-import com.ottogroup.bi.soda.dsl.transformations.PigTransformation
+import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.transformations.FilesystemTransformation
+import org.schedoscope.dsl.transformations.OozieTransformation
+import org.schedoscope.dsl.transformations.MorphlineTransformation
+import org.schedoscope.scheduler.driver.MorphlineDriver
+import org.schedoscope.dsl.transformations.MapreduceTransformation
+import org.schedoscope.scheduler.driver.MapreduceDriver
+import org.schedoscope.scheduler.driver.PigDriver
+import org.schedoscope.dsl.transformations.PigTransformation
 
 class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._

@@ -1,7 +1,5 @@
 package org.schedoscope.dsl
 
-
-
 trait ViewDsl extends StructureDsl {
 
   def dependsOn[V <: View: Manifest](dsf: () => Seq[V]): Unit

@@ -1,7 +1,5 @@
 package org.schedoscope.dsl
 
-
-
 import scala.collection.mutable.HashMap
 import org.schedoscope.Settings
 import org.schedoscope.scheduler.driver.FileSystemDriver

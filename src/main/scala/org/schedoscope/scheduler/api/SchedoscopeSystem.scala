@@ -12,8 +12,8 @@ import org.schedoscope.scheduler.Failed
 import org.schedoscope.scheduler.MaterializeView
 import org.schedoscope.scheduler.NoDataAvailable
 import org.schedoscope.scheduler.ViewStatusResponse
-import org.schedoscope.scheduler.SchedoscopeRootActor
-import org.schedoscope.scheduler.SchedoscopeRootActor._
+import org.schedoscope.scheduler.RootActor
+import org.schedoscope.scheduler.RootActor._
 import org.schedoscope.scheduler.ViewMaterialized
 import org.schedoscope.scheduler.ViewStatusListResponse
 import org.schedoscope.dsl.Named
@@ -38,7 +38,7 @@ import org.schedoscope.scheduler.GetQueues
 import org.schedoscope.scheduler.MaterializeViewMode
 
 class SchedoscopeSystem extends SchedoscopeInterface {
-  val log = Logging(settings.system, classOf[SchedoscopeRootActor])
+  val log = Logging(settings.system, classOf[RootActor])
 
   actionsManagerActor ! Deploy()
 
