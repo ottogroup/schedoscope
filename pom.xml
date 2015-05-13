@@ -59,6 +59,12 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-nop</artifactId>
+			<version>1.7.5</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>ascii-table</groupId>
 			<artifactId>ascii-table</artifactId>
 			<version>1.0</version>

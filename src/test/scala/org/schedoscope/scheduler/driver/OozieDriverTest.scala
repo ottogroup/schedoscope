@@ -21,8 +21,6 @@ class OozieDriverTest extends FlatSpec with Matchers {
     val dest = new Path(s"${resources.namenode}/${wf.workflowAppPath}")
     val src = new Path(s"src/test/resources/oozie/${wf.bundle}/${wf.workflow}/workflow.xml")
 
-    println(s"Uploading workflow ${wf.workflow} from ${src} to ${dest}")
-
     if (!hdfs.exists(dest))
       hdfs.mkdirs(dest)
 
