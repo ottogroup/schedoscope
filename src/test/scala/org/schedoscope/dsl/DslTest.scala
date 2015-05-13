@@ -265,11 +265,11 @@ class DslTest extends FlatSpec with Matchers {
     (p1 == p2) shouldBe false
     (p1 == p3) shouldBe false
   }
-  
-  it should "be constructable from another parameter but have different weight" in  {
+
+  it should "be constructable from another parameter but have different weight" in {
     val p1 = p(1)
     val pp1 = p(p1)
-    
+
     p1 shouldBe pp1
     pp1.orderWeight should be > p1.orderWeight
     pp1.v.get shouldBe an[Integer]

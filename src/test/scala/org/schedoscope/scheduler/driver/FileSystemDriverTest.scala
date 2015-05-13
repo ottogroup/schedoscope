@@ -3,7 +3,6 @@ package org.schedoscope.scheduler.driver
 import org.scalatest.Matchers
 import org.scalatest.FlatSpec
 
-
 import org.schedoscope.dsl.transformations._
 
 import java.io.File

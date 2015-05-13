@@ -97,11 +97,14 @@ class LocalTestResources extends TestResources {
       FileUtils.deleteDirectory(hadoopLibDir)
     hadoopLibDir.mkdir
 
-    val jarCopyOperations = jarClassPathMembers.foldLeft(List[(File, File)]()) {
-      case (jarCopies, jarFile) =>
-        ((new File(new URL(jarFile).toURI()),
-          new File(new Path(System.getenv("HADOOP_HOME"), "lib" + File.separator + new Path(jarFile).getName).toString)) :: jarCopies)
-    }
+    val jarCopyOperations = jarClassPathMembers
+      .filter { !_.contains("slf4j-log4j12") }
+      .filter { !_.contains("slf4j-simple") }
+      .foldLeft(List[(File, File)]()) {
+        case (jarCopies, jarFile) =>
+          ((new File(new URL(jarFile).toURI()),
+            new File(new Path(System.getenv("HADOOP_HOME"), "lib" + File.separator + new Path(jarFile).getName).toString)) :: jarCopies)
+      }
 
     jarCopyOperations.foreach { case (source, target) => { FileUtils.copyFile(source, target) } }
   }
