@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.mapreduce.MRJobConfig
 import java.net.URI
 
-case class MapreduceTransformation(createJob: (Map[String, Any]) => Job, c: Map[String, Any]) extends Transformation {
+case class MapreduceTransformation(createJob: (Map[String, Any]) => Job, directoriesToDelete: List[String], c: Map[String, Any]) extends Transformation {
 
   configureWith(c)
 

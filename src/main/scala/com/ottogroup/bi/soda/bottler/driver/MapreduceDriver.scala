@@ -19,6 +19,8 @@ import org.apache.hadoop.mapreduce.JobStatus.State.SUCCEEDED
 import java.security.PrivilegedAction
 
 class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTransformation] {
+  
+  val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))
 
   def driver = this
 
@@ -28,6 +30,7 @@ class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTra
     ugi.doAs(new PrivilegedAction[DriverRunHandle[MapreduceTransformation]]() {
       def run(): DriverRunHandle[MapreduceTransformation] = {
         t.configure();
+        t.directoriesToDelete.foreach(d => fsd.delete(d, true))
         t.job.submit()
         new DriverRunHandle[MapreduceTransformation](driver, new LocalDateTime(), t, t.job)
       }
@@ -58,6 +61,7 @@ class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTra
       def run(): DriverRunState[MapreduceTransformation] = {
         val started = new LocalDateTime()
         t.configure()
+        t.directoriesToDelete.foreach(d => fsd.delete(d, true))
         t.job.waitForCompletion(true)
         getDriverRunState(new DriverRunHandle[MapreduceTransformation](driver, started, t, t.job))
       }

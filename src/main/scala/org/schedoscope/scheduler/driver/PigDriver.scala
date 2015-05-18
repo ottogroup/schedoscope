@@ -50,10 +50,10 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
   def run(t: PigTransformation): DriverRunHandle[PigTransformation] =
     new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, future {
       // FIXME: future work: register jars, custom functions
-      executePigTransformation(t.latin, t.outputDirs, t.configuration.toMap, t.getView())
+      executePigTransformation(t.latin, t.directoriesToDelete, t.configuration.toMap, t.getView())
     })
 
-  def executePigTransformation(latin: String, outputDirs: List[String], conf: Map[String, Any], view: String): DriverRunState[PigTransformation] = {
+  def executePigTransformation(latin: String, directoriesToDelete: List[String], conf: Map[String, Any], view: String): DriverRunState[PigTransformation] = {
     val actualLatin = replaceParameters(latin, conf)
 
     val props = new Properties()
@@ -67,7 +67,7 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
           // registerScript does (and attention: pig doesn't support variable names containing a dot).
           // another workaround would be: ps.registerScript(IOUtils.toInputStream(latin, "UTF-8") , conf.filter(!_._1.contains(".")).map(c => (c._1, c._2.toString)))
           ps.setJobName(view)
-          outputDirs.foreach(d => ps.deleteFile(d))
+          directoriesToDelete.foreach(d => ps.deleteFile(d))
           ps.registerQuery(actualLatin)
           DriverRunSucceeded[PigTransformation](driver, s"Pig script ${actualLatin} executed")
         } catch {
