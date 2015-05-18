@@ -22,6 +22,7 @@
 				<hadoop.version>2.5.0-cdh5.3.1</hadoop.version>
 				<hive.version>0.13.1-cdh5.3.1</hive.version>
 				<oozie.version>4.0.0-cdh5.3.1</oozie.version>
+				<pig.version>0.12.0-cdh5.3.1</pig.version>
 			</properties>
 		</profile>
 		<profile>
@@ -144,6 +145,17 @@
 			<artifactId>oozie-client</artifactId>
 			<version>${oozie.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.pig</groupId>
+			<artifactId>pig</artifactId>
+			<version>${pig.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-core</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>		
 		<dependency>
 			<groupId>morphline-utils</groupId>
 			<artifactId>morphline-utils</artifactId>

@@ -17,7 +17,7 @@ import org.schedoscope.dsl.Transformation
 import org.schedoscope.dsl.View
 import scala.collection.JavaConversions._
 
-case class PigTransformation(latin: String, c: Map[String, String]) extends Transformation {
+case class PigTransformation(latin: String, outputDirs: List[String], c: Map[String, String]) extends Transformation {
 
   override def name = "pig"
 
