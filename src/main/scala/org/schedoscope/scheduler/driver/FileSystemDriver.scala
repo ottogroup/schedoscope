@@ -155,8 +155,8 @@ class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) e
 
       DriverRunSucceeded(this, s"Deletion of ${from} succeeded")
     } catch {
-      case i: IOException => DriverRunFailed(this, s"Caught IO exception while copying ${from}", i)
-      case t: Throwable => throw DriverException(s"Runtime exception while copying ${from}", t)
+      case i: IOException => DriverRunFailed(this, s"Caught IO exception while deleting ${from}", i)
+      case t: Throwable => throw DriverException(s"Runtime exception while deleting ${from}", t)
     }
 
   def touch(path: String): DriverRunState[FilesystemTransformation] =
