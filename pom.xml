@@ -147,7 +147,7 @@
 		<dependency>
 			<groupId>morphline-utils</groupId>
 			<artifactId>morphline-utils</artifactId>
-			<version>0.1.0</version>			
+			<version>0.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.ottogroup.bi</groupId>
@@ -164,7 +164,7 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.0</version>
+			<version>0.1.1</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -289,7 +289,7 @@
 	<distributionManagement>
 		<repository>
 			<id>bintray-ottogroup-maven</id>
-			<url>https://api.bintray.com/maven/ottogroup/maven/morphline-utils</url>
+			<url>https://api.bintray.com/maven/ottogroup/maven/schedoscope</url>
 		</repository>
 		<snapshotRepository>
 			<id>gbi-snapshots</id>
