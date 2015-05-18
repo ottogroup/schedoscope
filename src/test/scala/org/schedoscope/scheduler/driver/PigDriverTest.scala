@@ -32,7 +32,7 @@ class PigDriverTest extends FlatSpec with Matchers {
   }
 
   it should "execute pig tranformations asynchronously" taggedAs (DriverTests) in {
-    val driverRunHandle = driver.run(PigTransformation("/* a comment */", List(),  Map()))
+    val driverRunHandle = driver.run(PigTransformation("/* a comment */", List(), Map()))
 
     var runWasAsynchronous = false
 
