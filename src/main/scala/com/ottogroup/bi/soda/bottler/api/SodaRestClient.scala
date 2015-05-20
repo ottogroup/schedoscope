@@ -31,13 +31,13 @@ class SodaRestClient extends SodaInterface {
 
   def get[T](path: String, query: Map[String, String]): Future[T] = {
     val pipeline = path match {
-      case u: String if u.startsWith("/views") => sendReceive ~> unmarshal[ViewStatusList]
-      case u: String if u.startsWith("/actions") => sendReceive ~> unmarshal[ActionStatusList]
+      case u: String if u.startsWith("/views")       => sendReceive ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/actions")     => sendReceive ~> unmarshal[ActionStatusList]
       case u: String if u.startsWith("/materialize") => sendReceive ~> unmarshal[SodaCommandStatus]
-      case u: String if u.startsWith("/invalidate") => sendReceive ~> unmarshal[SodaCommandStatus]
-      case u: String if u.startsWith("/newdata") => sendReceive ~> unmarshal[SodaCommandStatus]
-      case u: String if u.startsWith("/commands") => sendReceive ~> unmarshal[List[SodaCommandStatus]]
-      case _ => throw new RuntimeException("Unsupported query path: " + path)
+      case u: String if u.startsWith("/invalidate")  => sendReceive ~> unmarshal[SodaCommandStatus]
+      case u: String if u.startsWith("/newdata")     => sendReceive ~> unmarshal[SodaCommandStatus]
+      case u: String if u.startsWith("/commands")    => sendReceive ~> unmarshal[List[SodaCommandStatus]]
+      case _                                         => throw new RuntimeException("Unsupported query path: " + path)
     }
     val uri = Uri.from("http", "", host, port, path) withQuery (query)
     println("Calling Soda API URL: " + uri)
@@ -50,7 +50,7 @@ class SodaRestClient extends SodaInterface {
       .toMap
   }
 
-  def shutdown() : Boolean = {
+  def shutdown(): Boolean = {
     system.shutdown()
     system.isTerminated
   }

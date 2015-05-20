@@ -24,9 +24,9 @@ import spray.routing.PathMatcher.PimpedPathMatcher
 import spray.routing.directives.ParamDefMagnet.apply
 
 object SodaRestService {
-  
+
   val soda = new SodaSystem()
-  
+
   implicit val system = ActorSystem("soda-rest-service")
 
   case class Config(shell: Boolean = false)
@@ -60,13 +60,13 @@ object SodaRestService {
       SodaShell.start(soda)
     }
   }
-  
-  def stop() : Boolean = {
+
+  def stop(): Boolean = {
     val sodaTerminated = soda.shutdown()
     system.shutdown()
     system.awaitTermination(5 seconds)
     system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)
-    system.awaitTermination(5 seconds)  
+    system.awaitTermination(5 seconds)
     sodaTerminated && system.isTerminated
   }
 }

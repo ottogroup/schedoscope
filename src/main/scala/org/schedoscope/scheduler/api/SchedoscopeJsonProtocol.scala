@@ -69,8 +69,8 @@ object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
         case s: DriverRunSucceeded[_] => { comment = s.comment; status = "succeeded" }
-        case f: DriverRunFailed[_] => { comment = f.reason; status = "failed" }
-        case o: DriverRunOngoing[_] => { drh = o.runHandle }
+        case f: DriverRunFailed[_]    => { comment = f.reason; status = "failed" }
+        case o: DriverRunOngoing[_]   => { drh = o.runHandle }
       }
     }
 

@@ -48,7 +48,7 @@ object SchedosopeDaemon extends App {
   application.start()
 }
 
-class SodaDaemon extends ApplicationLifecycle  {
+class SodaDaemon extends ApplicationLifecycle {
 
   def init(context: String): Unit = {}
   def init(context: DaemonContext) = {}
