@@ -19,7 +19,7 @@ import org.apache.hadoop.mapreduce.JobStatus.State.SUCCEEDED
 import java.security.PrivilegedAction
 
 class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTransformation] {
-  
+
   val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))
 
   def driver = this

@@ -157,27 +157,27 @@ object DriverActor {
     driverName match {
       case "hive" => Props(
         classOf[DriverActor[HiveTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "mapreduce" => Props(
         classOf[DriverActor[MapreduceTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => MapreduceDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => MapreduceDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "pig" => Props(
         classOf[DriverActor[PigTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => PigDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => PigDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "filesystem" => Props(
         classOf[DriverActor[FilesystemTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds).withDispatcher("akka.actor.views-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "morphline" => Props(
         classOf[DriverActor[MorphlineTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => MorphlineDriver(d), 5 seconds).withDispatcher("akka.actor.views-dispatcher")
+        actionsRouter, ds, (d: DriverSettings) => MorphlineDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
