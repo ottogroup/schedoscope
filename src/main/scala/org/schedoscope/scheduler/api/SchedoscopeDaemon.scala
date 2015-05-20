@@ -1,23 +1,9 @@
 package org.schedoscope.scheduler.api
 
-import akka.actor.ActorSystem
-import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
-import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
-import spray.routing.Directive.pimpApply
-import spray.routing.SimpleRoutingApp
-import akka.util.Timeout
-import scala.concurrent.duration._
-import jline.ConsoleReader
-import spray.http.HttpHeaders.RawHeader
-import jline.History
+import org.apache.commons.daemon.Daemon
+import org.apache.commons.daemon.DaemonContext
 
-import java.io.File
-
-import org.apache.commons.daemon._
-import org.schedoscope.scheduler.RootActor.settings;
-
-import akka.actor.PoisonPill
-import akka.actor.Actor
+import com.ottogroup.bi.soda.bottler.api.SodaRestService.Config
 
 trait ApplicationLifecycle {
   def start(): Unit
@@ -62,61 +48,15 @@ object SchedosopeDaemon extends App {
   application.start()
 }
 
-class SchedosopeDaemon extends ApplicationLifecycle with SimpleParallelRoutingApp {
-  val schedoscope = new SchedoscopeSystem()
+class SodaDaemon extends ApplicationLifecycle  {
 
-  implicit val system = ActorSystem("schedoscope-webservice")
-
-  import SchedoscopeJsonProtocol._
   def init(context: String): Unit = {}
   def init(context: DaemonContext) = {}
 
-  def start() = {
-    startServer(interface = "localhost", port = settings.port) {
-      get {
-        respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-          parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
-            {
-              path("actions") {
-                complete(schedoscope.actions(status, filter))
-              } ~
-                path("queues") {
-                  complete(schedoscope.queues(typ, filter))
-                } ~
-                path("commands") {
-                  complete(schedoscope.commands(status, filter))
-                } ~
-                path("views" / Rest ?) { viewUrlPath =>
-                  complete(schedoscope.views(viewUrlPath, status, filter, dependencies, overview))
-                } ~
-                path("materialize" / Rest ?) { viewUrlPath =>
-                  complete(schedoscope.materialize(viewUrlPath, status, filter, mode))
-                } ~
-                path("invalidate" / Rest ?) { viewUrlPath =>
-                  complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
-                } ~
-                path("newdata" / Rest ?) { viewUrlPath =>
-                  complete(schedoscope.newdata(viewUrlPath, status, filter))
-                } ~
-                path("command" / Rest) { commandId =>
-                  complete(schedoscope.commandStatus(commandId))
-                } ~
-                path("graph" / Rest) { viewUrlPath =>
-                  getFromFile(s"${settings.webResourcesDirectory}/graph.html")
-                }
-            }
-          }
-        }
-      }
-    }
-  }
+  def start() = SodaRestService.start(Config())
 
   def stop() {
-    system.shutdown()
-    system.awaitTermination(5 seconds)
-    system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)
-    system.awaitTermination(5 seconds)
-    if (system.isTerminated)
+    if (SodaRestService.stop())
       System.exit(0)
     else
       System.exit(1)

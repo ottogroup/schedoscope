@@ -61,6 +61,8 @@ class SettingsImpl(val config: Config) extends Extension {
     Duration(config.getDuration("soda.webservice.timeout", TimeUnit.MILLISECONDS),
       TimeUnit.MILLISECONDS)
 
+  lazy val host = config.getString("soda.webservice.host")
+      
   lazy val port = config.getInt("soda.webservice.port")
 
   lazy val webResourcesDirectory = config.getString("soda.webservice.resourceDirectory")

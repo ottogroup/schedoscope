@@ -18,5 +18,5 @@ trait SchedoscopeInterface {
 
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList
 
-  def shutdown()
+  def shutdown() : Boolean
 }

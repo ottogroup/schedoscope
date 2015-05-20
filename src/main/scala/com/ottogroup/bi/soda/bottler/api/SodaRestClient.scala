@@ -1,0 +1,87 @@
+package com.ottogroup.bi.soda.bottler.api
+
+import scala.collection.immutable.Map
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.duration.DurationInt
+
+import com.ottogroup.bi.soda.Settings
+
+import akka.actor.ActorSystem
+import akka.event.Logging
+import akka.util.Timeout
+import spray.client.pipelining.Get
+import spray.client.pipelining.WithTransformerConcatenation
+import spray.client.pipelining.sendReceive
+import spray.client.pipelining.unmarshal
+import spray.http.Uri
+import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
+
+class SodaRestClient extends SodaInterface {
+
+  var host = Settings().host
+  var port = Settings().port
+
+  import SodaJsonProtocol._
+
+  implicit val system = ActorSystem("soda-rest-client")
+  import system.dispatcher // execution context for futures below
+  implicit val timeout = Timeout(10.days)
+  val log = Logging(system, getClass)
+
+  def get[T](path: String, query: Map[String, String]): Future[T] = {
+    val pipeline = path match {
+      case u: String if u.startsWith("/views") => sendReceive ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/actions") => sendReceive ~> unmarshal[ActionStatusList]
+      case u: String if u.startsWith("/materialize") => sendReceive ~> unmarshal[SodaCommandStatus]
+      case u: String if u.startsWith("/invalidate") => sendReceive ~> unmarshal[SodaCommandStatus]
+      case u: String if u.startsWith("/newdata") => sendReceive ~> unmarshal[SodaCommandStatus]
+      case u: String if u.startsWith("/commands") => sendReceive ~> unmarshal[List[SodaCommandStatus]]
+      case _ => throw new RuntimeException("Unsupported query path: " + path)
+    }
+    val uri = Uri.from("http", "", host, port, path) withQuery (query)
+    println("Calling Soda API URL: " + uri)
+    pipeline(Get(uri)).asInstanceOf[Future[T]]
+  }
+
+  private def paramsFrom(params: (String, Option[Any])*): Map[String, String] = {
+    params.filter(_._2.isDefined)
+      .map(p => (p._1 -> p._2.get.toString))
+      .toMap
+  }
+
+  def shutdown() : Boolean = {
+    system.shutdown()
+    system.isTerminated
+  }
+
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SodaCommandStatus = {
+    Await.result(get[SodaCommandStatus](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 10.days)
+  }
+
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SodaCommandStatus = {
+    Await.result(get[SodaCommandStatus](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
+  }
+
+  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SodaCommandStatus = {
+    Await.result(get[SodaCommandStatus](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  }
+
+  def commandStatus(commandId: String): SodaCommandStatus = { null } // TODO
+
+  def commands(status: Option[String], filter: Option[String]): List[SodaCommandStatus] = {
+    Await.result(get[List[SodaCommandStatus]](s"/commands", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  }
+
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]): ViewStatusList = {
+    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies), ("overview", overview))), 3600 seconds)
+  }
+
+  def actions(status: Option[String], filter: Option[String]): ActionStatusList = {
+    Await.result(get[ActionStatusList](s"/actions", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  }
+
+  def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
+    Await.result(get[QueueStatusList](s"/queues", paramsFrom(("typ", typ), ("filter", filter))), 3600 seconds)
+  }
+}

@@ -1,44 +1,43 @@
 package org.schedoscope.scheduler.api
 
-import scala.Option.option2Iterable
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
+
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
-import org.schedoscope.scheduler.ActionStatusListResponse
-import org.schedoscope.scheduler.Failed
-import org.schedoscope.scheduler.MaterializeView
-import org.schedoscope.scheduler.NoDataAvailable
-import org.schedoscope.scheduler.ViewStatusResponse
-import org.schedoscope.scheduler.RootActor
-import org.schedoscope.scheduler.RootActor._
-import org.schedoscope.scheduler.ViewMaterialized
-import org.schedoscope.scheduler.ViewStatusListResponse
-import org.schedoscope.dsl.Named
-import org.schedoscope.dsl.View
-import akka.actor.ActorRef
-import akka.actor.ActorSelection.toScala
-import akka.util.Timeout
-import akka.event.Logging
-import org.schedoscope.scheduler.Invalidate
-import org.schedoscope.scheduler.Deploy
-import org.schedoscope.scheduler.queryActors
-import org.schedoscope.scheduler.queryActor
-import akka.pattern.Patterns
-import org.schedoscope.scheduler.ViewStatusListResponse
-import org.schedoscope.scheduler.ActionStatusListResponse
-import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
-import org.schedoscope.dsl.Transformation
-import org.schedoscope.scheduler.GetActions
-import org.schedoscope.scheduler.GetViews
-import org.schedoscope.scheduler.QueueStatusListResponse
-import org.schedoscope.scheduler.GetQueues
-import org.schedoscope.scheduler.MaterializeViewMode
 
-class SchedoscopeSystem extends SchedoscopeInterface {
-  val log = Logging(settings.system, classOf[RootActor])
+import com.ottogroup.bi.soda.bottler.ActionStatusListResponse
+import com.ottogroup.bi.soda.bottler.Deploy
+import com.ottogroup.bi.soda.bottler.Failed
+import com.ottogroup.bi.soda.bottler.GetActions
+import com.ottogroup.bi.soda.bottler.GetQueues
+import com.ottogroup.bi.soda.bottler.GetViews
+import com.ottogroup.bi.soda.bottler.Invalidate
+import com.ottogroup.bi.soda.bottler.MaterializeView
+import com.ottogroup.bi.soda.bottler.MaterializeViewMode
+import com.ottogroup.bi.soda.bottler.NoDataAvailable
+import com.ottogroup.bi.soda.bottler.QueueStatusListResponse
+import com.ottogroup.bi.soda.bottler.SodaRootActor
+import com.ottogroup.bi.soda.bottler.SodaRootActor.actionsManagerActor
+import com.ottogroup.bi.soda.bottler.SodaRootActor.settings
+import com.ottogroup.bi.soda.bottler.SodaRootActor.viewManagerActor
+import com.ottogroup.bi.soda.bottler.ViewMaterialized
+import com.ottogroup.bi.soda.bottler.ViewStatusListResponse
+import com.ottogroup.bi.soda.bottler.ViewStatusResponse
+import com.ottogroup.bi.soda.bottler.queryActor
+import com.ottogroup.bi.soda.dsl.Named
+import com.ottogroup.bi.soda.dsl.View
+
+import akka.actor.Actor
+import akka.actor.ActorRef
+import akka.actor.PoisonPill
+import akka.actor.actorRef2Scala
+import akka.event.Logging
+import akka.pattern.Patterns
+import akka.util.Timeout
+
+class SodaSystem extends SodaInterface {
+  val log = Logging(settings.system, classOf[SodaRootActor])
 
   actionsManagerActor ! Deploy()
 
@@ -189,8 +188,12 @@ class SchedoscopeSystem extends SchedoscopeInterface {
       .toList
   }
 
-  def shutdown() {
+  def shutdown() : Boolean = {
     settings.system.shutdown()
+    settings.system.awaitTermination(5 seconds)
+    settings.system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)
+    settings.system.awaitTermination(5 seconds)  
+    settings.system.isTerminated    
   }
 
 }
