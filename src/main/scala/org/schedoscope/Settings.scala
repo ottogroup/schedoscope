@@ -56,6 +56,8 @@ class SettingsImpl(val config: Config) extends Extension {
     Duration(config.getDuration("schedoscope.webservice.timeout", TimeUnit.MILLISECONDS),
       TimeUnit.MILLISECONDS)
 
+  lazy val host = config.getString("schedoscope.webservice.host")
+      
   lazy val port = config.getInt("schedoscope.webservice.port")
 
   lazy val webResourcesDirectory = config.getString("schedoscope.webservice.resourceDirectory")
