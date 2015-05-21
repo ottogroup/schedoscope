@@ -1,25 +1,23 @@
 package org.schedoscope.scheduler.api
 
 import scala.concurrent.Future
-
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
-
 import org.schedoscope.scheduler.ActionStatusResponse
 import org.schedoscope.scheduler.driver.DriverRunFailed
 import org.schedoscope.scheduler.driver.DriverRunOngoing
 import org.schedoscope.scheduler.driver.DriverRunState
 import org.schedoscope.scheduler.driver.DriverRunSucceeded
 import org.schedoscope.dsl.Transformation
-
 import spray.json.DefaultJsonProtocol
 import spray.json.JsString
 import spray.json.JsValue
 import spray.json.JsonFormat
 import spray.json.RootJsonFormat
+import spray.json.NullOptions
 
 case class SchedoscopeCommand(id: String, start: LocalDateTime, parts: List[Future[_]])
-case class SchedoscopeCommandStatus(id: String, start: LocalDateTime, end: LocalDateTime, status: Map[String, Int])
+case class SchedoscopeCommandStatus(id: String, start: LocalDateTime, end: Option[LocalDateTime], status: Map[String, Int])
 case class ActionStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]])
 case class ActionStatusList(overview: Map[String, Int], actions: List[ActionStatus])
 case class ViewStatus(view: String, status: String, properties: Option[Map[String, String]], dependencies: Option[List[ViewStatus]])
@@ -30,7 +28,7 @@ case class RunStatus(description: String, targetView: String, started: LocalDate
 object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
 
   implicit val runStatusFormat = jsonFormat5(RunStatus)
-  implicit val actionStatusFormat = jsonFormat5(ActionStatus)
+  implicit val actionStatusFormat : JsonFormat[ActionStatus] = lazyFormat(jsonFormat5(ActionStatus))
   implicit val actionStatusListFormat = jsonFormat2(ActionStatusList)
   implicit val schedoscopeCommandStatusFormat = jsonFormat4(SchedoscopeCommandStatus)
   implicit val viewStatusFormat: JsonFormat[ViewStatus] = lazyFormat(jsonFormat4(ViewStatus))
@@ -41,35 +39,30 @@ object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
   implicit object localDateTimeSerDe extends RootJsonFormat[LocalDateTime] {
     val formatter = DateTimeFormat.shortDateTime()
 
-    def read(value: JsValue) = {
+    def read(value: JsValue) = try {
       value match {
-        case s: JsString => {
-          try { formatter.parseDateTime(s.value).toLocalDateTime() }
-          catch { case ie: IllegalArgumentException => null }
-        }
-        case _ => null
+        case s: JsString => formatter.parseDateTime(s.value).toLocalDateTime()
+        case _ => new LocalDateTime(0)
       }
-    }
+    } catch { case t: Throwable => new LocalDateTime(0) }
 
-    def write(d: LocalDateTime) = {
-      if (d == null)
-        JsString("")
-      else
+    def write(d: LocalDateTime) = try {
         JsString(formatter.print(d))
-    }
+      }
+      catch { case t : Throwable => JsString("")}
   }
 
   def parseActionStatus(a: ActionStatusResponse[_]): ActionStatus = {
-    val actor = a.actor.path.toStringWithoutAddress
-    val typ = if (a.driver != null) a.driver.transformationName else "unknown"
+    val actor = getOrElse(a.actor.path.toStringWithoutAddress, "unknown")
+    val typ = if (a.driver != null) getOrElse(a.driver.transformationName, "unknown") else "unknown"
     var drh = a.driverRunHandle
-    var status = a.message
-    var comment: String = ""
+    var status = if (a.message != null) a.message else "none"
+    var comment = ""
 
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
-        case s: DriverRunSucceeded[_] => { comment = s.comment; status = "succeeded" }
-        case f: DriverRunFailed[_]    => { comment = f.reason; status = "failed" }
+        case s: DriverRunSucceeded[_] => { comment = getOrElse(s.comment,"no-comment"); status = "succeeded" }
+        case f: DriverRunFailed[_]    => { comment = getOrElse(f.reason, "no-reason"); status = "failed" }
         case o: DriverRunOngoing[_]   => { drh = o.runHandle }
       }
     }
@@ -77,7 +70,8 @@ object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
     if (drh != null) {
       val desc = drh.transformation.asInstanceOf[Transformation].description
       val view = drh.transformation.asInstanceOf[Transformation].getView()
-      val runStatus = RunStatus(desc, view, drh.started, comment, None)
+      val started = drh.started
+      val runStatus = RunStatus(getOrElse(desc,"no-desc"), getOrElse(view,"no-view"), getOrElse(started,new LocalDateTime(0)), comment, None)
       ActionStatus(actor, typ, status, Some(runStatus), None)
     } else {
       ActionStatus(actor, typ, status, None, None)
@@ -92,6 +86,10 @@ object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
       } else {
         RunStatus(o.toString, "", null, "", None)
       })
+  }
+  
+  def getOrElse[T](o: T, d: T) = {
+    if (o != null) o else d;
   }
 
 }

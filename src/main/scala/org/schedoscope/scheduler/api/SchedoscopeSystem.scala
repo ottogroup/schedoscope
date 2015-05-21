@@ -59,7 +59,7 @@ class SodaSystem extends SodaInterface {
       case s: String => s
       case c: Any    => Named.formatName(c.getClass.getSimpleName)
     }
-    val a = if (args.size == 0) "_" else args.filter(_.isDefined).mkString(":")
+    val a = if (args.size == 0) "_" else args.filter(_.isDefined).map(_.getOrElse("_")).mkString(":")
     if (start.isDefined) {
       val s = format.print(start.get)
       s"${c}::${a}::${s}"
@@ -77,13 +77,13 @@ class SodaSystem extends SodaInterface {
       val start = new LocalDateTime()
       val id = commandId(command, args, Some(start))
       runningCommands.put(id, SchedoscopeCommand(id, start, jobFutures))
-      SchedoscopeCommandStatus(id, start, null, Map("submitted" -> jobFutures.size))
+      SchedoscopeCommandStatus(id, start, None, Map("submitted" -> jobFutures.size))
     }
   }
 
   private def finalizeInternal(commandId: String, start: LocalDateTime, status: Map[String, Int]) = {
     runningCommands.remove(commandId)
-    val scs = SchedoscopeCommandStatus(commandId, start, new LocalDateTime(), status)
+    val scs = SchedoscopeCommandStatus(commandId, start, Some(new LocalDateTime()), status)
     doneCommands.put(commandId, scs)
     scs
   }
@@ -147,7 +147,7 @@ class SodaSystem extends SodaInterface {
   def commandStatus(commandId: String) = {
     val cmd = runningCommands.get(commandId)
     if (!cmd.isDefined) {
-      SchedoscopeCommandStatus(commandId, null, null, Map("non-existent" -> 1))
+      SchedoscopeCommandStatus(commandId, new LocalDateTime(0), None, Map("non-existent" -> 1))
     } else {
       val statusCounts = cmd.get.parts
         .map(f => {
@@ -169,7 +169,7 @@ class SodaSystem extends SodaInterface {
       if (statusCounts.get("running").getOrElse(0) == 0) {
         finalizeInternal(commandId, cmd.get.start, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
       } else {
-        SchedoscopeCommandStatus(commandId, cmd.get.start, null, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
+        SchedoscopeCommandStatus(commandId, cmd.get.start, None, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
       }
     }
   }
