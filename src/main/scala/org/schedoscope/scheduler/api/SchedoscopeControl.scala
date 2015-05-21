@@ -54,6 +54,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
       case sc: SchedoscopeCommandStatus => {
         sb.append(s"id: ${sc.id}\n")
         sb.append(s"start: ${sc.start}\n")
+        sb.append(s"end: ${sc.end.getOrElse("n/a")}\n")
         sb.append(s"status: ${sc.status}\n")
       }
 

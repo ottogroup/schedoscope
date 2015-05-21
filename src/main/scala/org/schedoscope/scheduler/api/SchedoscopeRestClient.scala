@@ -33,6 +33,7 @@ class SchedoscopeRestClient extends SchedoscopeInterface {
     val pipeline = path match {
       case u: String if u.startsWith("/views")       => sendReceive ~> unmarshal[ViewStatusList]
       case u: String if u.startsWith("/actions")     => sendReceive ~> unmarshal[ActionStatusList]
+      case u: String if u.startsWith("/queues")      => sendReceive ~> unmarshal[QueueStatusList]
       case u: String if u.startsWith("/materialize") => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
       case u: String if u.startsWith("/invalidate")  => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
       case u: String if u.startsWith("/newdata")     => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
