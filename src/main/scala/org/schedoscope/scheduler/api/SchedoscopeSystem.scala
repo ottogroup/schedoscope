@@ -67,7 +67,7 @@ class SodaSystem extends SodaInterface {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
     val c = command match {
       case s: String => s
-      case c: Any    => Named.formatName(c.getClass.getSimpleName)
+      case c: Any => Named.formatName(c.getClass.getSimpleName)
     }
     val a = if (args.size == 0) "_" else args.filter(_.isDefined).map(_.getOrElse("_")).mkString(":")
     if (start.isDefined) {

@@ -3,7 +3,7 @@ package org.schedoscope.scheduler.api
 import org.apache.commons.daemon.Daemon
 import org.apache.commons.daemon.DaemonContext
 
-import com.ottogroup.bi.soda.bottler.api.SodaRestService.Config
+import org.schedoscope.scheduler.api.SchedoscopeRestService.Config
 
 trait ApplicationLifecycle {
   def start(): Unit

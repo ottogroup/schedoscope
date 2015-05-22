@@ -41,7 +41,7 @@ object SchedoscopeRestService {
   def main(args: Array[String]) {
     val config = parser.parse(args, Config()) match {
       case Some(config) => config
-      case None         => Config()
+      case None => Config()
     }
     start(config)
   }
@@ -113,5 +113,4 @@ class SchedoscopeRestServerActor(schedoscope: SchedoscopeInterface) extends Acto
     }
   }
 }
-
 

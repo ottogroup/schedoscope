@@ -57,7 +57,7 @@ class SettingsImpl(val config: Config) extends Extension {
       TimeUnit.MILLISECONDS)
 
   lazy val host = config.getString("schedoscope.webservice.host")
-      
+
   lazy val port = config.getInt("schedoscope.webservice.port")
 
   lazy val webResourcesDirectory = config.getString("schedoscope.webservice.resourceDirectory")
