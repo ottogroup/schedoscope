@@ -2,13 +2,14 @@ package org.schedoscope.scheduler.api
 
 import scala.concurrent.Future
 import scala.util.Try
-
 import com.bethecoder.ascii_table.ASCIITable
 import org.schedoscope.Settings
 import org.schedoscope.scheduler.MaterializeViewMode
 import org.schedoscope.dsl.views.ViewUrlParser
+import org.joda.time.format.DateTimeFormat
 
 object CliFormat { // FIXME: a more generic parsing would be cool...
+
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
@@ -18,7 +19,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
           val running = as.actions.map(p => {
             val (s, d, t): (String, String, String) =
               if (p.runStatus.isDefined) {
-                (p.runStatus.get.started.toString, p.runStatus.get.description, p.runStatus.get.targetView)
+                (p.runStatus.get.started, p.runStatus.get.description, p.runStatus.get.targetView)
               } else {
                 ("", "", "")
               }
@@ -54,7 +55,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
       case sc: SchedoscopeCommandStatus => {
         sb.append(s"id: ${sc.id}\n")
         sb.append(s"start: ${sc.start}\n")
-        sb.append(s"end: ${sc.end.getOrElse("n/a")}\n")
+        sb.append(s"end: ${sc.end.getOrElse("")}\n")
         sb.append(s"status: ${sc.status}\n")
       }
 

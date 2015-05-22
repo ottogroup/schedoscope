@@ -56,7 +56,7 @@ object SchedoscopeRestService {
 
     if (config.shell) {
       Thread.sleep(10000)
-      println("\n\n============= SODA initialization finished ============== \n\n")
+      println("\n\n============= schedoscope initialization finished ============== \n\n")
       SchedoscopeShell.start(schedoscope)
     }
   }

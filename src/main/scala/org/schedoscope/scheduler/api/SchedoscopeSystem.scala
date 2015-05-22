@@ -34,6 +34,16 @@ import akka.actor.PoisonPill
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.pattern.Patterns
+import org.schedoscope.scheduler.ViewStatusListResponse
+import org.schedoscope.scheduler.ActionStatusListResponse
+import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.scheduler.GetActions
+import org.schedoscope.scheduler.GetViews
+import org.schedoscope.scheduler.QueueStatusListResponse
+import org.schedoscope.scheduler.GetQueues
+import org.schedoscope.scheduler.MaterializeViewMode
+import org.schedoscope.scheduler.api.SchedoscopeJsonProtocol.formatDate
 import akka.util.Timeout
 
 class SodaSystem extends SodaInterface {
@@ -76,14 +86,14 @@ class SodaSystem extends SodaInterface {
       val jobFutures = actors.map { actor => Patterns.ask(actor, command, Timeout(settings.completitionTimeout)) }
       val start = new LocalDateTime()
       val id = commandId(command, args, Some(start))
-      runningCommands.put(id, SchedoscopeCommand(id, start, jobFutures))
-      SchedoscopeCommandStatus(id, start, None, Map("submitted" -> jobFutures.size))
+      runningCommands.put(id, SchedoscopeCommand(id, formatDate(start), jobFutures))
+      SchedoscopeCommandStatus(id, formatDate(start), None, Map("submitted" -> jobFutures.size))
     }
   }
 
-  private def finalizeInternal(commandId: String, start: LocalDateTime, status: Map[String, Int]) = {
+  private def finalizeInternal(commandId: String, start: String, status: Map[String, Int]) = {
     runningCommands.remove(commandId)
-    val scs = SchedoscopeCommandStatus(commandId, start, Some(new LocalDateTime()), status)
+    val scs = SchedoscopeCommandStatus(commandId, start, Some(formatDate(new LocalDateTime())), status)
     doneCommands.put(commandId, scs)
     scs
   }
@@ -147,7 +157,7 @@ class SodaSystem extends SodaInterface {
   def commandStatus(commandId: String) = {
     val cmd = runningCommands.get(commandId)
     if (!cmd.isDefined) {
-      SchedoscopeCommandStatus(commandId, new LocalDateTime(0), None, Map("non-existent" -> 1))
+      SchedoscopeCommandStatus(commandId, "", None, Map("non-existent" -> 1))
     } else {
       val statusCounts = cmd.get.parts
         .map(f => {
