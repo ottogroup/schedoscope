@@ -42,6 +42,6 @@ class OozieTestResources extends TestResources {
 
 object OozieTestResources {
   lazy val oozieTestResources = new OozieTestResources()
-  
+
   def apply() = oozieTestResources
 }

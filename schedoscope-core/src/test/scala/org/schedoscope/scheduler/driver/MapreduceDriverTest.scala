@@ -31,11 +31,6 @@ import org.schedoscope.test.resources.LocalTestResources
 import org.apache.hadoop.fs.Path
 import java.nio.file.Paths
 import java.nio.charset.StandardCharsets
-import org.schedoscope.scheduler.driver.TestFolder
-import org.schedoscope.scheduler.driver.MapreduceDriver
-import org.schedoscope.scheduler.driver.DriverRunSucceeded
-import org.schedoscope.scheduler.driver.DriverRunFailed
-import org.schedoscope.scheduler.driver.DriverRunOngoing
 import org.schedoscope.dsl.transformations.FailingMapper
 
 class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {

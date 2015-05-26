@@ -73,7 +73,7 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
 
     val props = new Properties()
     conf.foreach(c => props.put(c._1, c._2.asInstanceOf[Object]))
-    
+
     ugi.doAs(new PrivilegedAction[DriverRunState[PigTransformation]]() {
       def run(): DriverRunState[PigTransformation] = {
         val ps = new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "MAPREDUCE").toString), props)

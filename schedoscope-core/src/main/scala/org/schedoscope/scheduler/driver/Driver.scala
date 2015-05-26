@@ -37,7 +37,7 @@ case class DriverRunOngoing[T <: Transformation](override val driver: Driver[T],
 case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T], comment: String) extends DriverRunState[T](driver)
 case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
 
-trait Driver[T <: Transformation]  {
+trait Driver[T <: Transformation] {
   def transformationName: String
 
   def runTimeOut: Duration = Settings().getDriverSettings(transformationName).timeout

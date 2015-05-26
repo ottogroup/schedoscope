@@ -27,11 +27,11 @@ case class OozieTransformation(bundle: String, workflow: String, workflowAppPath
   configureWith(c)
 
   override def name = "oozie"
-  
+
   override def resources() = {
     List(workflowAppPath)
   }
-  
+
   description = StringUtils.abbreviate(s"${bundle}/${workflow}", 100)
 }
 
