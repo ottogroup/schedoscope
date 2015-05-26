@@ -81,7 +81,7 @@ class HiveTransformationTest extends FlatSpec with BeforeAndAfter with Matchers 
   "HiveTransformation.insertInto" should "generate correct static partitioning prefix by default" in {
     val orderAll = OrderAll(p(2014), p(10), p(12))
 
-    HiveTransformation.insertInto(orderAll, "SELECT * FROM STUFF") shouldEqual """INSERT OVERWRITE TABLE dev_com_ottogroup_bi_soda_dsl_transformations.order_all
+    HiveTransformation.insertInto(orderAll, "SELECT * FROM STUFF") shouldEqual """INSERT OVERWRITE TABLE dev_org_schedoscope_dsl_transformations.order_all
 PARTITION (year = '2014', month = '10', day = '12')
 SELECT * FROM STUFF"""
   }
@@ -92,7 +92,7 @@ SELECT * FROM STUFF"""
     HiveTransformation.insertInto(
       orderAll,
       "SELECT * FROM STUFF",
-      partition = false) shouldEqual """INSERT OVERWRITE TABLE dev_com_ottogroup_bi_soda_dsl_transformations.order_all
+      partition = false) shouldEqual """INSERT OVERWRITE TABLE dev_org_schedoscope_dsl_transformations.order_all
 SELECT * FROM STUFF"""
   }
 
@@ -106,7 +106,7 @@ SELECT * FROM STUFF"""
         "parquet.compression" -> "GZIP",
         "my.setting" -> "true")) shouldEqual """SET parquet.compression=GZIP;
 SET my.setting=true;
-INSERT OVERWRITE TABLE dev_com_ottogroup_bi_soda_dsl_transformations.order_all
+INSERT OVERWRITE TABLE dev_org_schedoscope_dsl_transformations.order_all
 PARTITION (year = '2014', month = '10', day = '12')
 SELECT * FROM STUFF"""
   }
@@ -118,7 +118,7 @@ SELECT * FROM STUFF"""
       orderAll,
       "SELECT * FROM STUFF") shouldEqual """SET hive.exec.dynamic.partition.mode=nonstrict;
 SET hive.exec.dynamic.partition=true;
-INSERT OVERWRITE TABLE dev_com_ottogroup_bi_soda_dsl_transformations.order_all
+INSERT OVERWRITE TABLE dev_org_schedoscope_dsl_transformations.order_all
 PARTITION (year, month, day)
 SELECT * FROM STUFF"""
   }
@@ -140,9 +140,9 @@ SELECT * FROM STUFF"""
         "parquet.compression" -> "GZIP",
         "my.setting" -> "true")) shouldEqual """SET parquet.compression=GZIP;
 SET my.setting=true;
-INSERT OVERWRITE TABLE dev_com_ottogroup_bi_soda_dsl_transformations.order_all
+INSERT OVERWRITE TABLE dev_org_schedoscope_dsl_transformations.order_all
 PARTITION (year = '2014', month = '10', day = '12')
-SELECT * 
+SELECT *
 FROM STUFF
 WHERE param = 2
 AND anotherParam = 'Value'"""

@@ -70,7 +70,7 @@ class OozieWFTest extends FlatSpec with BeforeAndAfter with Matchers {
       "oozie.use.system.libpath" -> true,
       "preprocMrIndir" -> "${stageDir}/preproc-in/${wtEcnr}/",
       "datahubBaseDir" -> "${nameNode}/hdp/${envDir}/applications/eci/datahub",
-      "output_folder" -> "/hdp/dev/com/ottogroup/bi/soda/dsl/transformations/productfeed",
+      "output_folder" -> "/hdp/dev/org/schedoscope/dsl/transformations/productfeed",
       "preprocMrOutdir" -> "${stageDir}/preproc-out/${wtEcnr}/",
       "preprocOrigDir" -> "${incomingDir}/",
       "year" -> "2014",
