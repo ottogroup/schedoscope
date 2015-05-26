@@ -206,8 +206,9 @@ trait MonthlyParameterization {
     val from = to
     from.add(Calendar.MONTH, c)
     monthParameterRange(dayRange(from, to))
-
   }
+  
+  def allDaysOfMonth() = DateParameterizationUtils.allDaysOfMonth(year, month)
 }
 
 trait DailyParameterization {
