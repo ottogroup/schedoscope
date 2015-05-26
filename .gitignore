@@ -4,7 +4,6 @@
 .classpath
 .cache
 target
-deploy
 metastore_db
 derby.log
 src/test/resources/*morphline.csv
