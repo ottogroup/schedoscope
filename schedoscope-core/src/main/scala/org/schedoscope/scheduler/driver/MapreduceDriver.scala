@@ -16,16 +16,15 @@
 package org.schedoscope.scheduler.driver
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
-import com.ottogroup.bi.soda.DriverSettings
-import com.ottogroup.bi.soda.Settings
-import com.ottogroup.bi.soda.dsl.transformations.MapreduceTransformation
-import com.typesafe.config.ConfigFactory
+import org.schedoscope.dsl.transformations.MapreduceTransformation
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.JobStatus.State.FAILED
 import org.apache.hadoop.mapreduce.JobStatus.State.KILLED
 import org.apache.hadoop.mapreduce.JobStatus.State.PREP
 import org.apache.hadoop.mapreduce.JobStatus.State.RUNNING
 import org.apache.hadoop.mapreduce.JobStatus.State.SUCCEEDED
+import org.schedoscope.Settings
+import org.schedoscope.DriverSettings
 import java.security.PrivilegedAction
 
 class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTransformation] {
