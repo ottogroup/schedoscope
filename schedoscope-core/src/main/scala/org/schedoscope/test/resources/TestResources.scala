@@ -29,7 +29,7 @@ import java.sql.Connection
 import org.schedoscope.scheduler.driver.OozieDriver
 import org.schedoscope.scheduler.driver.MorphlineDriver
 import org.apache.hadoop.conf.Configuration
-import com.ottogroup.bi.soda.bottler.driver.MapreduceDriver
+import org.schedoscope.scheduler.driver.MapreduceDriver
 
 abstract class TestResources {
   val hiveConf: HiveConf

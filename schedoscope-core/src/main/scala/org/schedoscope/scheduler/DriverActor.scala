@@ -44,6 +44,7 @@ import org.schedoscope.scheduler.driver.MorphlineDriver
 import org.schedoscope.dsl.transformations.MapreduceTransformation
 import org.schedoscope.scheduler.driver.MapreduceDriver
 import org.schedoscope.scheduler.driver.PigDriver
+import org.schedoscope.dsl.transformations.PigTransformation
 
 class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._

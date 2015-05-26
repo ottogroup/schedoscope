@@ -38,10 +38,10 @@ abstract class AbstractApplicationDaemon extends Daemon {
 }
 
 class ApplicationDaemon() extends AbstractApplicationDaemon {
-  def application = new SchedosopeDaemon
+  def application = new SchedoscopeDaemon
 }
 
-object SchedosopeDaemon extends App {
+object SchedoscopeDaemon extends App {
   val application = createApplication()
 
   def createApplication() = new ApplicationDaemon
@@ -63,15 +63,15 @@ object SchedosopeDaemon extends App {
   application.start()
 }
 
-class SodaDaemon extends ApplicationLifecycle {
+class SchedoscopeDaemon extends ApplicationLifecycle {
 
   def init(context: String): Unit = {}
   def init(context: DaemonContext) = {}
 
-  def start() = SodaRestService.start(Config())
+  def start() = SchedoscopeRestService.start(Config())
 
   def stop() {
-    if (SodaRestService.stop())
+    if (SchedoscopeRestService.stop())
       System.exit(0)
     else
       System.exit(1)

@@ -36,7 +36,7 @@ import org.schedoscope.scheduler.driver.MapreduceDriver
 import org.schedoscope.scheduler.driver.DriverRunSucceeded
 import org.schedoscope.scheduler.driver.DriverRunFailed
 import org.schedoscope.scheduler.driver.DriverRunOngoing
-import com.ottogroup.bi.soda.dsl.transformations.FailingMapper
+import org.schedoscope.dsl.transformations.FailingMapper
 
 class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: MapreduceDriver = new LocalTestResources().mapreduceDriver
