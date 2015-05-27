@@ -52,10 +52,6 @@
 			<id>conjars</id>
 			<url>http://conjars.org/repo</url>
 		</repository>
-		<repository>
-			<id>gbi-releases</id>
-			<url>https://nexus.scm.otto.de/content/repositories/gbi-releases/</url>
-		</repository>
 	</repositories>
 
 	<dependencies>
