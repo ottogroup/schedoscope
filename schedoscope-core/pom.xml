@@ -53,6 +53,10 @@
 			<url>http://conjars.org/repo</url>
 		</repository>
 		<repository>
+			<id>scratch</id>
+                	<url>http://pk11-scratch.googlecode.com/svn/trunk</url>
+                </repository>
+		<repository>
 			<id>otto-bintray</id>
 			<url>https://dl.bintray.com/ottogroup/maven</url>
 		</repository>
@@ -162,9 +166,9 @@
 			<version>0.1.1</version>
 		</dependency>
 		<dependency>
-			<groupId>com.ottogroup.bi</groupId>
+			<groupId>hadoop-launcher</groupId>
 			<artifactId>hadoop-launcher</artifactId>
-			<version>0.0.6</version>
+			<version>0.1.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
