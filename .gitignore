@@ -1,0 +1,12 @@
+*~
+*.class
+.settings
+.project
+/target
+/bin
+/.classpath
+/deploy/*/
+.cache
+/testResults
+/metastore_db/
+log/*
