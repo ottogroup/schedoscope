@@ -3,12 +3,21 @@ package schedoscope.example.osm.stage
 import org.schedoscope.dsl.views.Id
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.views.PointOccurrence
+import org.schedoscope.dsl.transformations.CopyFrom
 
-class Nodes extends View with Id {
-  val version = fieldOf[Integer]
-  val user_id = fieldOf[Integer]
-  val timestamp = fieldOf[String]
-  val changeSetId = fieldOf[Integer]
+case class Nodes() extends View
+    with Id
+    with PointOccurrence {
 
-  storedAs(TextFile(fieldTerminator = "\t"))
+  val version = fieldOf[Int](1002)
+  val user_id = fieldOf[Int](1001)
+  val changeset_id = fieldOf[Long](999)
+  val postgis_point_column = fieldOf[String](998)
+
+  transformVia(() => CopyFrom("classpath://osm-data/nodes.txt", this))
+
+  comment("Stage View for data from file nodes.txt")
+
+  storedAs(TextFile(fieldTerminator = "\\t", lineTerminator = "\\n"))
 }
