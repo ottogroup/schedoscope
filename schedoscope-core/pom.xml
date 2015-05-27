@@ -52,6 +52,10 @@
 			<id>conjars</id>
 			<url>http://conjars.org/repo</url>
 		</repository>
+		<repository>
+			<id>otto-bintray</id>
+			<url>https://dl.bintray.com/ottogroup/maven</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
