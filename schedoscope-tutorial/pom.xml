@@ -6,7 +6,6 @@
   <name>schedoscope tutorial</name>
   <description>Example schedoscope project</description>
   <build>
-    <sourceDirectory>src</sourceDirectory>
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
