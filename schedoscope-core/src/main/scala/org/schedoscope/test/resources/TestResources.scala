@@ -27,6 +27,7 @@ import org.schedoscope.dsl.TextFile
 import org.schedoscope.test.Database
 import java.sql.Connection
 import org.schedoscope.scheduler.driver.OozieDriver
+import org.schedoscope.scheduler.driver.FileSystemDriver
 import org.schedoscope.scheduler.driver.MorphlineDriver
 import org.apache.hadoop.conf.Configuration
 import org.schedoscope.scheduler.driver.MapreduceDriver
@@ -65,6 +66,8 @@ abstract class TestResources {
   }
 
   val fileSystem: FileSystem
+  
+  lazy val fileSystemDriver: FileSystemDriver = new FileSystemDriver(ugi, new Configuration(true))
 
   lazy val oozieDriver: OozieDriver = null
 

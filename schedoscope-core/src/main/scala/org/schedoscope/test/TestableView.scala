@@ -29,6 +29,7 @@ import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.test.resources.OozieTestResources
 import org.schedoscope.dsl.transformations.MapreduceTransformation
+import org.schedoscope.dsl.transformations.FilesystemTransformation
 
 trait TestableView extends FillableView {}
 
@@ -41,6 +42,7 @@ trait test extends TestableView {
       case t: OozieTransformation => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
       case t: PigTransformation => resources().pigDriver.asInstanceOf[Driver[Transformation]]
       case t: MapreduceTransformation => resources().mapreduceDriver.asInstanceOf[Driver[Transformation]]
+      case t: FilesystemTransformation => resources().fileSystemDriver.asInstanceOf[Driver[Transformation]]
     }
   }
 
