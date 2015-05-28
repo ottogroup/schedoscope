@@ -1,18 +1,16 @@
 package schedoscope.example.osm.stage
 
-import org.schedoscope.dsl.views.Id
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.TextFile
-import org.schedoscope.dsl.views.PointOccurrence
 import org.schedoscope.dsl.transformations.CopyFrom
 
-case class Ways() extends View
-    with Id
-    with PointOccurrence {
+case class Ways() extends View {
 
-  val version = fieldOf[Int](1002)
-  val user_id = fieldOf[Int](1001)
-  val changeset_id = fieldOf[Long](999)
+  val id = fieldOf[Long]
+  val version = fieldOf[Int]
+  val user_id = fieldOf[Int]
+  val tstamp = fieldOf[String]
+  val changeset_id = fieldOf[Long]
 
   transformVia(() => CopyFrom("classpath://osm-data/ways.txt", this))
 

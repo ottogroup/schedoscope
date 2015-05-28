@@ -6,7 +6,7 @@ import org.schedoscope.dsl.TextFile
 
 case class WayTags() extends View {
   
-  val way_id = fieldOf[String]
+  val way_id = fieldOf[Long]
   val key = fieldOf[String]
   val value = fieldOf[String]
 
