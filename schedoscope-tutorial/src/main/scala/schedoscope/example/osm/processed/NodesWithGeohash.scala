@@ -22,10 +22,8 @@ case class NodesWithGeohash() extends View {
   val longitude = fieldOf[Double]
   val latitude = fieldOf[Double]
   val geohash = fieldOf[String]
-  
-  val nodes = schedoscope.example.osm.stage.Nodes()
-  
-  dependsOn { () => nodes }
+    
+  val stageNodes = dependsOn { () => schedoscope.example.osm.stage.Nodes() }
 
   transformVia(() =>
     MapreduceTransformation(
@@ -46,7 +44,7 @@ case class NodesWithGeohash() extends View {
         job
       },
       List(fullPath),
-      Map(("input_path" -> nodes.fullPath),
+      Map(("input_path" -> stageNodes().fullPath),
         ("output_path" -> fullPath))))
 
   comment("nodes, extended with geohash")
