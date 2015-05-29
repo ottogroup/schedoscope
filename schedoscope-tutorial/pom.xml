@@ -60,10 +60,50 @@
 					</systemProperties>
 					<additionalClasspathElements>
 						<additionalClasspathElement>/etc/hadoop/conf</additionalClasspathElement>
-						<additionalClasspathElement>target/${project.artifactId}-${project.version}.jar</additionalClasspathElement>
+						<additionalClasspathElement>target/${project.build.finalName}-mapreduce.jar</additionalClasspathElement>
 					</additionalClasspathElements>
 				</configuration>
 			</plugin>
+			<plugin>
+				<groupId>com.github.wvengen</groupId>
+				<artifactId>proguard-maven-plugin</artifactId>
+				<version>2.0.8</version>
+				<executions>
+					<execution>
+						<id>package-mapreduce-resources</id>
+						<phase>package</phase>
+						<goals>
+							<goal>proguard</goal>
+						</goals>
+						<configuration>
+							<obfuscate>false</obfuscate>
+							<injar>classes</injar>
+							<libs>
+								<lib>${java.home}/lib/rt.jar</lib>
+							</libs>
+							<options>
+								<option>-keep public class schedoscope.example.osm.mapreduce.** {*; }</option>
+								<option>-dontnote **</option>
+								<option>-dontshrink</option>
+								<option>-dontwarn</option>
+								<option>-dontoptimize</option>
+								<option>-dontskipnonpubliclibraryclassmembers</option>
+							</options>
+							<includeDependency>false</includeDependency>
+							<outjar>${project.build.finalName}-mapreduce.jar</outjar>
+							<inFilter>!**Test*,schedoscope/example/osm/mapreduce/**.class</inFilter>
+							<assembly>
+								<inclusions>
+									<inclusion>
+										<groupId>ch.hsr</groupId>
+										<artifactId>geohash</artifactId>
+									</inclusion>
+								</inclusions>
+							</assembly>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>			
 		</plugins>
 	</build>
 
