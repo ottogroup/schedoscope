@@ -8,7 +8,6 @@
 	<description>Example schedoscope project</description>
 
 	<build>
-		<sourceDirectory>src/main/scala</sourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -19,7 +18,6 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<!-- see http://davidb.github.com/scala-maven-plugin -->
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
 				<executions>
