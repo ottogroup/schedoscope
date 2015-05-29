@@ -123,6 +123,12 @@
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
 			<version>0.1.0-SNAPSHOT</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>protobuf-java</artifactId>
+					<groupId>com.google.protobuf</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>schedoscope</groupId>
@@ -160,6 +166,10 @@
 				<exclusion>
 					<groupId>com.google.guava</groupId>
 					<artifactId>guava</artifactId>
+				</exclusion>
+				<exclusion>
+					<artifactId>protobuf-java</artifactId>
+					<groupId>com.google.protobuf</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
