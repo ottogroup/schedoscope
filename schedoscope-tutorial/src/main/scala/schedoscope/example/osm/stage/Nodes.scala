@@ -10,8 +10,8 @@ case class Nodes() extends View {
   val version = fieldOf[Int]
   val user_id = fieldOf[Int]
   val tstamp = fieldOf[String]
-  val changeset_id = fieldOf[Long]
-  val postgis_point_column = fieldOf[String]
+  val longitude = fieldOf[Double]
+  val latitude = fieldOf[Double]
 
   transformVia(() => CopyFrom("classpath://osm-data/nodes.txt", this))
 
