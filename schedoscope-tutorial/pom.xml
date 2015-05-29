@@ -60,6 +60,7 @@
 					</systemProperties>
 					<additionalClasspathElements>
 						<additionalClasspathElement>/etc/hadoop/conf</additionalClasspathElement>
+						<additionalClasspathElement>target/${project.artifactId}-${project.version}.jar</additionalClasspathElement>
 					</additionalClasspathElements>
 				</configuration>
 			</plugin>
