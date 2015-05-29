@@ -159,7 +159,7 @@
 		<dependency>
 			<groupId>morphline-utils</groupId>
 			<artifactId>morphline-utils</artifactId>
-			<version>0.1.1</version>
+			<version>0.1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.ottogroup.bi</groupId>
