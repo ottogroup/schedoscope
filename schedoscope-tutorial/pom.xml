@@ -140,5 +140,29 @@
 			<artifactId>geohash</artifactId>
 			<version>1.0.13</version>
 		</dependency>
+		<dependency>
+			<groupId>com.klout</groupId>
+			<artifactId>brickhouse</artifactId>
+			<version>0.6.0</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.apache.hadoop</groupId>
+					<artifactId>hadoop-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.hive</groupId>
+					<artifactId>hive-common</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.apache.hive</groupId>
+					<artifactId>hive-exec</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.google.guava</groupId>
+					<artifactId>guava</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		
 	</dependencies>
 </project> 
