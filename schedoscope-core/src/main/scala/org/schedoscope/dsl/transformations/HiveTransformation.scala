@@ -85,7 +85,7 @@ object HiveTransformation {
     insertStatement.toString()
   }
 
-  def insertInto(view: View, selectStatement: String, partition: Boolean = true, settings: Map[String, String] = Map(), functions: Map[String, Class[_]] = Map()) = {
+  def insertInto(view: View, selectStatement: String, partition: Boolean = true, settings: Map[String, String] = Map()) = {
     val queryPrelude = new StringBuffer()
 
     queryPrelude
