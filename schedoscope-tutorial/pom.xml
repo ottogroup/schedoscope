@@ -65,6 +65,23 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeScope>compile</includeScope>
+							<outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>com.github.wvengen</groupId>
 				<artifactId>proguard-maven-plugin</artifactId>
 				<version>2.0.8</version>
@@ -82,7 +99,8 @@
 								<lib>${java.home}/lib/rt.jar</lib>
 							</libs>
 							<options>
-								<option>-keep public class schedoscope.example.osm.mapreduce.** {*; }</option>
+								<option>-keep public class schedoscope.example.osm.mapreduce.**
+									{*; }</option>
 								<option>-dontnote **</option>
 								<option>-dontshrink</option>
 								<option>-dontwarn</option>
@@ -107,7 +125,7 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>			
+			</plugin>
 		</plugins>
 	</build>
 
@@ -173,6 +191,6 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		
+
 	</dependencies>
 </project> 
