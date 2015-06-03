@@ -227,12 +227,14 @@ trait DailyParameterization {
   def thisAndPrevMonths() = DateParameterizationUtils.thisAndPrevMonths(year, month)
 
   def allDays() = DateParameterizationUtils.allDays()
+  
   def lastMonths(c: Int) = {
     val to = parametersToDay(year, month, day)
     val from = to
     from.add(Calendar.MONTH, c)
     dayParameterRange(dayRange(from, to))
   }
+  
   def lastDays(c: Int) = {
     val to = parametersToDay(year, month, day)
     val from = to
