@@ -4,7 +4,7 @@ tags['name'] AS shop_name,
 tags['shop'] AS shop_type,
 substr(geohash,1,8) AS area,
 -- for testing the area
-,tags['addr:postcode'] AS postcode,
+tags['addr:postcode'] AS postcode,
 '${workflow_time}' AS createdAt,
 '${workflow_name}' AS createdBy
 
