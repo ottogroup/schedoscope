@@ -7,7 +7,9 @@ SELECT
   tagged_way.tags,
   ${env}_schedoscope_example_osm_processed.collect(cast(wn.node_id AS STRING)) AS nodes,
   '${workflow_time}' AS createdAt,
-  '${workflow_name}' AS createdBy
+  '${workflow_name}' AS createdBy,
+  '${year}',
+  '${month}'
 FROM (
   SELECT
     w.id,
@@ -19,10 +21,8 @@ FROM (
   JOIN ${env}_schedoscope_example_osm_stage.way_tags wt
     ON w.id = wt.way_id
 
-  WHERE year(w.tstamp) = 2014
-    AND month(w.tstamp) = 10
--- WHERE year(w.tstamp) = '${year}'
---   AND month(w.tstamp) = '${month}'
+  WHERE year(w.tstamp) = '${year}'
+    AND month(w.tstamp) = '${month}'
     
   GROUP BY
     w.id,

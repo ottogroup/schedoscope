@@ -12,8 +12,13 @@ import org.schedoscope.dsl.Parquet
 import schedoscope.example.osm.Globals._
 import brickhouse.udf.collect.CollectUDAF
 import schedoscope.example.osm.stage.NodeTags
+import org.schedoscope.dsl.views.MonthlyParameterization
+import org.schedoscope.dsl.Parameter
 
-case class Nodes() extends View
+case class Nodes(
+  year: Parameter[String],
+  month: Parameter[String]) extends View
+    with MonthlyParameterization
     with Id
     with PointOccurrence
     with JobMetadata {
@@ -33,7 +38,7 @@ case class Nodes() extends View
 
   transformVia(() =>
     HiveTransformation(
-      insertInto(
+        insertInto(
         this,
         queryFromResource("hiveql/processed/insert_nodes.sql"),
         settings = Map("parquet.compression" -> "GZIP")

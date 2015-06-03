@@ -6,6 +6,7 @@ import org.schedoscope.test.test
 import org.schedoscope.test.rows
 import org.schedoscope.dsl.Field._
 import schedoscope.example.osm.stage.NodeTags
+import org.schedoscope.dsl.Parameter.p
 
 case class NodesTest() extends FlatSpec
     with Matchers {
@@ -19,7 +20,7 @@ case class NodesTest() extends FlatSpec
       v(latitude, 53.5282633),
       v(geohash, "t1y140djfcq0"))
     set(v(id, 122318L),
-      v(tstamp, "2014-10-17 15:49:26Z"),
+      v(tstamp, "2013-06-17 15:49:26Z"),
       v(version, 6),
       v(user_id, 50299),
       v(longitude, 10.0243161),
@@ -41,38 +42,20 @@ case class NodesTest() extends FlatSpec
       v(key, "TMC:cid_58:tabcd_1:LocationCode"),
       v(value, "10696"))
   }
-  
+
   "processed.Nodes" should "load correctly from processed.nodes_with_geohash and stage.node_tags" in {
-    new Nodes() with test {
+    new Nodes(p("2013"),p("06")) with test {
       basedOn(nodeTags, nodes)
       then()
       numRows shouldBe 1
-      //      row(v(id) shouldBe "1880372",
-      //        v(occurredAt) shouldBe "2014-10-21 09:44:58+0100",
-      //        v(version) shouldBe 6,
-      //        v(user_id) shouldBe 1852
-      //        ,
-      //        v(nodes) shouldBe Map(),
-      //        v(tags) shouldBe 0
-      //        )
-      //      row(v(id) shouldBe "1880372",
-      //        v(occurredAt) shouldBe "2014-10-21 09:44:58+0100",
-      //        v(version) shouldBe 6,
-      //        v(user_id) shouldBe 1852,
-      //        v(changeset_id) shouldBe 20118576,
-      //        v(node_id) shouldBe "88105",
-      //        v(sequence_id) shouldBe 1)
-      //      row(v(id) shouldBe 1978,
-      //        v(occurredAt) shouldBe "2014-03-11 00:34:02+0100",
-      //        v(version) shouldBe 31,
-      //        v(user_id) shouldBe 161619,
-      //        v(changeset_id) shouldBe 21036622)
-
-      //      row(v(id) shouldBe 1880371,
-      //        v(tstamp) shouldBe "2012-03-04 09:24:37+0100",
-      //        v(version) shouldBe 9,
-      //        v(user_id) shouldBe 63375,
-      //        v(changeset_id) shouldBe 10865588)
+      row(v(id) shouldBe "122318",
+        v(occurredAt) shouldBe "2013-06-17 15:49:26Z",
+        v(version) shouldBe 6,
+        v(user_id) shouldBe 50299,
+        v(tags) shouldBe Map(
+          "TMC:cid_58:tabcd_1:Direction" -> "positive",
+          "TMC:cid_58:tabcd_1:LCLversion" -> "8.00",
+          "TMC:cid_58:tabcd_1:LocationCode" -> "10696"))
     }
   }
 }
