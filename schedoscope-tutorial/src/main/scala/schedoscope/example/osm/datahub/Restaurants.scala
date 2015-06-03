@@ -19,7 +19,6 @@ case class Restaurants() extends View
   val restaurant_name = fieldOf[String]
   val restaurant_type = fieldOf[String]
   val area = fieldOf[String]
-  val postcode = fieldOf[String]
 
   dependsOn { () =>
     for ((year, month) <- allMonths())

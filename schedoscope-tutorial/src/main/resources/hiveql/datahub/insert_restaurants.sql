@@ -2,9 +2,7 @@ SELECT
 id,
 tags['name'] AS restaurant_name,
 tags['cuisine'] AS restaurant_type,
-substr(geohash,1,8) AS area,
--- for testing the area
-tags['addr:postcode'] AS postcode,
+substr(geohash,1,7) AS area,
 '${workflow_time}' AS createdAt,
 '${workflow_name}' AS createdBy
 

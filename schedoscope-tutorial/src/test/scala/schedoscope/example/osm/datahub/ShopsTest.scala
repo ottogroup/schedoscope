@@ -37,11 +37,11 @@ case class ShopsTest() extends FlatSpec
       row(v(id) shouldBe "122317",
         v(shop_name) shouldBe "Netto",
         v(shop_type) shouldBe "supermarket",
-        v(area) shouldBe "t1y140dj")
+        v(area) shouldBe "t1y140d")
       row(v(id) shouldBe "274850441",
         v(shop_name) shouldBe "Schanzenbäckerei",
         v(shop_type) shouldBe "bakery",
-        v(area) shouldBe "t1y87ki9")
+        v(area) shouldBe "t1y87ki")
     }
   }
 }
