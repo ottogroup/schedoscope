@@ -44,7 +44,7 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
 
 object HiveTransformation {
 
-  def withFunctions(v: View, functions: Map[String, Class[_]] = Map()) = {
+  def withFunctions(view: View, functions: Map[String, Class[_]] = Map()) = {
     val functionBuff = ListBuffer[Function]()
 
     for ((funcName, cls) <- functions) {
@@ -58,7 +58,7 @@ object HiveTransformation {
         .filter(lj => jarName == null || lj.contains(jarName))
         .map(lj => new ResourceUri(ResourceType.JAR, lj))
 
-      functionBuff.append(new Function(funcName, v.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
+      functionBuff.append(new Function(funcName, view.dbName, cls.getCanonicalName, null, null, 0, null, jarResources))
     }
 
     functionBuff.distinct.toList
