@@ -9,7 +9,7 @@ import org.schedoscope.dsl.Field._
 import org.schedoscope.test.test
 
 case class TrainstationsTest() extends FlatSpec
-    with Matchers {
+  with Matchers {
 
   val nodes = new Nodes(p("2014"), p("09")) with rows {
     set(v(id, "122317"),
@@ -28,7 +28,6 @@ case class TrainstationsTest() extends FlatSpec
       v(geohash, "t1y77d8jfcq0"),
       v(tags, Map("name" -> "Wachtelstraße")))
   }
-
 
   "datahub.Trainstations" should "load correctly from processed.nodes" in {
     new Trainstations() with test {

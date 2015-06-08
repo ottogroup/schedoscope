@@ -6,19 +6,17 @@ import org.schedoscope.test.rows
 import org.schedoscope.test.test
 import org.schedoscope.dsl.Field._
 
-
-
 class NodesWithGeohashTest extends FlatSpec with Matchers {
-  
+
   val stageNodesInput = new schedoscope.example.osm.stage.Nodes() with rows {
     set(
-        v(longitude, 10.0232716), 
-        v(latitude, 53.5282633))
+      v(longitude, 10.0232716),
+      v(latitude, 53.5282633))
     set(
-        v(longitude, 10.0243161), 
-        v(latitude, 53.5297589))     
+      v(longitude, 10.0243161),
+      v(latitude, 53.5297589))
   }
-  
+
   "NodesWithGeoHash" should "load correctly from stage.nodes" in {
     new NodesWithGeohash() with test {
       basedOn(stageNodesInput)
@@ -28,6 +26,6 @@ class NodesWithGeohashTest extends FlatSpec with Matchers {
       row(v(geohash) shouldBe "t1y140djfcq0")
       row(v(geohash) shouldBe "t1y140g5vgcn")
     }
-    
-  } 
+
+  }
 }

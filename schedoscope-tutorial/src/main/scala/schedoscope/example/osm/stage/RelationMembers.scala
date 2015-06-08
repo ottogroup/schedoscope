@@ -11,7 +11,7 @@ case class RelationMembers() extends View {
   val member_type = fieldOf[String]
   val member_role = fieldOf[String]
   val sequence_id = fieldOf[Int]
-  
+
   transformVia(() => CopyFrom("classpath://osm-data/relation_members.txt", this))
 
   comment("Stage View for data from file relation_members.txt")

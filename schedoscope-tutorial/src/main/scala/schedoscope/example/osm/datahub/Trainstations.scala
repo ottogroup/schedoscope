@@ -13,8 +13,8 @@ import schedoscope.example.osm.Globals._
 import org.schedoscope.dsl.Parquet
 
 case class Trainstations() extends View
-    with Id
-    with JobMetadata {
+  with Id
+  with JobMetadata {
 
   val station_name = fieldOf[String]
   val area = fieldOf[String]
@@ -26,7 +26,9 @@ case class Trainstations() extends View
 
   transformVia { () =>
     HiveTransformation(
-      insertInto(this, queryFromResource("hiveql/datahub/insert_trainstations.sql"),
+      insertInto(
+        this,
+        queryFromResource("hiveql/datahub/insert_trainstations.sql"),
         settings = Map("parquet.compression" -> "GZIP")))
       .configureWith(defaultHiveQlParameters(this))
   }

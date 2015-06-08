@@ -19,10 +19,10 @@ import org.schedoscope.dsl.views.MonthlyParameterization
 case class Ways(
   year: Parameter[String],
   month: Parameter[String]) extends View
-    with MonthlyParameterization
-    with Id
-    with PointOccurrence
-    with JobMetadata {
+  with MonthlyParameterization
+  with Id
+  with PointOccurrence
+  with JobMetadata {
 
   val version = fieldOf[Int]
   val user_id = fieldOf[Int]
@@ -38,7 +38,8 @@ case class Ways(
       insertDynamicallyInto(
         this,
         queryFromResource("hiveql/processed/insert_ways.sql"),
-        settings = Map("parquet.compression" -> "GZIP")), withFunctions(this, Map("collect" -> classOf[CollectUDAF])))
+        settings = Map("parquet.compression" -> "GZIP")),
+      withFunctions(this, Map("collect" -> classOf[CollectUDAF])))
       .configureWith(defaultHiveQlParameters(this)))
 
   comment("View of ways, their referenced nodes and tags")

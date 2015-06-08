@@ -16,8 +16,8 @@ import schedoscope.example.osm.datahub.Trainstations
 import schedoscope.example.osm.datahub.Restaurants
 
 case class ShopProfiles() extends View
-    with Id
-    with JobMetadata {
+  with Id
+  with JobMetadata {
 
   val shop_name = fieldOf[String]
   val shop_type = fieldOf[String]

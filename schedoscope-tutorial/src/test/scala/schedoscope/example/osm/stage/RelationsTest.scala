@@ -5,7 +5,7 @@ import org.scalatest.Matchers
 import org.schedoscope.test.test
 
 class RelationsTest extends FlatSpec
-    with Matchers {
+  with Matchers {
 
   "stage.Relations" should "load correctly from file" in {
     new Relations() with test {

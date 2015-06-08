@@ -5,7 +5,7 @@ import org.scalatest.Matchers
 import org.schedoscope.test.test
 
 class RelationMembersTest extends FlatSpec
-    with Matchers {
+  with Matchers {
 
   "stage.RelationMembers" should "load correctly from file" in {
     new RelationMembers() with test {
@@ -21,11 +21,11 @@ class RelationMembersTest extends FlatSpec
         v(member_type) shouldBe "W",
         v(member_role) shouldBe "side_stream",
         v(sequence_id) shouldBe 1)
-        row(v(relation_id) shouldBe "2202",
+      row(v(relation_id) shouldBe "2202",
         v(member_id) shouldBe "320370233",
         v(member_type) shouldBe "W",
         v(member_role) shouldBe "side_stream",
-        v(sequence_id) shouldBe 2) 
+        v(sequence_id) shouldBe 2)
     }
   }
 }

@@ -12,7 +12,7 @@ import schedoscope.example.osm.datahub.Restaurants
 import schedoscope.example.osm.datahub.Shops
 
 case class ShopProfilesTest() extends FlatSpec
-    with Matchers {
+  with Matchers {
 
   val shops = new Shops() with rows {
     set(v(id, "122546"),
@@ -52,7 +52,7 @@ case class ShopProfilesTest() extends FlatSpec
       v(station_name, "Bönningstedt"),
       v(area, "t1y87ki"))
   }
-  
+
   "datamart.ShopProfiles" should "load correctly from datahub.shops, datahub.restaurants, datahub.trainstations" in {
     new ShopProfiles() with test {
       basedOn(shops, restaurants, trainstations)
@@ -65,10 +65,10 @@ case class ShopProfilesTest() extends FlatSpec
         v(cnt_competitors) shouldBe 1,
         v(cnt_restaurants) shouldBe 1,
         v(cnt_trainstations) shouldBe 1)
-//      row(v(id) shouldBe "274850441",
-//        v(shop_name) shouldBe "Schanzenbäckerei",
-//        v(shop_type) shouldBe "bakery",
-//        v(area) shouldBe "t1y87ki")
+      //      row(v(id) shouldBe "274850441",
+      //        v(shop_name) shouldBe "Schanzenbäckerei",
+      //        v(shop_type) shouldBe "bakery",
+      //        v(area) shouldBe "t1y87ki")
     }
   }
 }

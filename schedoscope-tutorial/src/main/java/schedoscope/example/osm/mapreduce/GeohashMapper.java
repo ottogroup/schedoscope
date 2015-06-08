@@ -26,5 +26,4 @@ public class GeohashMapper extends
 		String output = StringUtils.join(ArrayUtils.add(rec, hash), "\t");
 		context.write(NullWritable.get(), new Text(output));
 	}
-
 }

@@ -6,7 +6,7 @@ import org.schedoscope.dsl.TextFile
 import org.schedoscope.dsl.views.Id
 
 case class Users() extends View
-    with Id {
+  with Id {
   val name = fieldOf[String]
 
   transformVia(() => CopyFrom("classpath://osm-data/users.txt", this))

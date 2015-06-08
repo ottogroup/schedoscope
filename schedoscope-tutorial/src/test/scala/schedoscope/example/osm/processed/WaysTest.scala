@@ -10,7 +10,7 @@ import schedoscope.example.osm.stage.WayTags
 import org.schedoscope.dsl.Parameter.p
 
 case class WaysTest() extends FlatSpec
-    with Matchers {
+  with Matchers {
 
   val ways = new schedoscope.example.osm.stage.Ways() with rows {
     set(v(id, 1978L),

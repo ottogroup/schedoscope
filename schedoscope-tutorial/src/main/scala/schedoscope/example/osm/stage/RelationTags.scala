@@ -5,7 +5,7 @@ import org.schedoscope.dsl.transformations.CopyFrom
 import org.schedoscope.dsl.TextFile
 
 case class RelationTags() extends View {
-  
+
   val relation_id = fieldOf[String]
   val key = fieldOf[String]
   val value = fieldOf[String]

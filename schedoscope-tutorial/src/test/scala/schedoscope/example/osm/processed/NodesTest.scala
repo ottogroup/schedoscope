@@ -9,7 +9,7 @@ import schedoscope.example.osm.stage.NodeTags
 import org.schedoscope.dsl.Parameter.p
 
 case class NodesTest() extends FlatSpec
-    with Matchers {
+  with Matchers {
 
   val nodes = new NodesWithGeohash() with rows {
     set(v(id, 122317L),
@@ -44,7 +44,7 @@ case class NodesTest() extends FlatSpec
   }
 
   "processed.Nodes" should "load correctly from processed.nodes_with_geohash and stage.node_tags" in {
-    new Nodes(p("2013"),p("06")) with test {
+    new Nodes(p("2013"), p("06")) with test {
       basedOn(nodeTags, nodes)
       then()
       numRows shouldBe 1

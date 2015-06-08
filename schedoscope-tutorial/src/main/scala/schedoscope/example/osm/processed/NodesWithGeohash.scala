@@ -14,7 +14,6 @@ import org.apache.hadoop.fs.Path
 import schedoscope.example.osm.mapreduce.GeohashMapper
 
 case class NodesWithGeohash() extends View {
-
   val id = fieldOf[Long]
   val version = fieldOf[Int]
   val user_id = fieldOf[Int]
@@ -22,7 +21,7 @@ case class NodesWithGeohash() extends View {
   val longitude = fieldOf[Double]
   val latitude = fieldOf[Double]
   val geohash = fieldOf[String]
-    
+
   val stageNodes = dependsOn { () => schedoscope.example.osm.stage.Nodes() }
 
   transformVia(() =>
@@ -43,9 +42,10 @@ case class NodesWithGeohash() extends View {
         }
         job
       },
-      List(fullPath),
-      Map(("input_path" -> stageNodes().fullPath),
-        ("output_path" -> fullPath))))
+      directoriesToDelete = List(fullPath),
+      Map(
+        "input_path" -> stageNodes().fullPath,
+        "output_path" -> fullPath)))
 
   comment("nodes, extended with geohash")
 

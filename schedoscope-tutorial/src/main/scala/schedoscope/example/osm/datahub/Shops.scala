@@ -13,8 +13,8 @@ import schedoscope.example.osm.Globals._
 import org.schedoscope.dsl.Parquet
 
 case class Shops() extends View
-    with Id
-    with JobMetadata {
+  with Id
+  with JobMetadata {
 
   val shop_name = fieldOf[String]
   val shop_type = fieldOf[String]

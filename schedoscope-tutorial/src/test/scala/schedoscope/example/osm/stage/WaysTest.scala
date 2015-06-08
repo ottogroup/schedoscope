@@ -5,7 +5,7 @@ import org.scalatest.Matchers
 import org.schedoscope.test.test
 
 class WaysTest extends FlatSpec
-    with Matchers {
+  with Matchers {
 
   "stage.Ways" should "load correctly from file" in {
     new Ways() with test {

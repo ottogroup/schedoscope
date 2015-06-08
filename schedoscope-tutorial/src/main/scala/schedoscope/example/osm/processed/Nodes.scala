@@ -18,10 +18,10 @@ import org.schedoscope.dsl.Parameter
 case class Nodes(
   year: Parameter[String],
   month: Parameter[String]) extends View
-    with MonthlyParameterization
-    with Id
-    with PointOccurrence
-    with JobMetadata {
+  with MonthlyParameterization
+  with Id
+  with PointOccurrence
+  with JobMetadata {
 
   val version = fieldOf[Int]
   val user_id = fieldOf[Int]
@@ -30,19 +30,15 @@ case class Nodes(
   val geohash = fieldOf[String]
   val tags = fieldOf[Map[String, String]]
 
-  dependsOn { () =>
-    Seq(
-      NodesWithGeohash(),
-      NodeTags())
-  }
+  dependsOn(() => NodesWithGeohash())
+  dependsOn(() => NodeTags())
 
   transformVia(() =>
     HiveTransformation(
-        insertInto(
+      insertInto(
         this,
         queryFromResource("hiveql/processed/insert_nodes.sql"),
-        settings = Map("parquet.compression" -> "GZIP")
-        ), withFunctions(this, Map("collect" -> classOf[CollectUDAF])))
+        settings = Map("parquet.compression" -> "GZIP")), withFunctions(this, Map("collect" -> classOf[CollectUDAF])))
       .configureWith(defaultHiveQlParameters(this)))
 
   comment("View of nodes with tags and geohash")

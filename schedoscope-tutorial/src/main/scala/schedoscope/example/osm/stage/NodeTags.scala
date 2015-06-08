@@ -5,7 +5,7 @@ import org.schedoscope.dsl.transformations.CopyFrom
 import org.schedoscope.dsl.TextFile
 
 case class NodeTags() extends View {
-  
+
   val node_id = fieldOf[Long]
   val key = fieldOf[String]
   val value = fieldOf[String]
