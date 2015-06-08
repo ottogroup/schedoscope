@@ -17,20 +17,18 @@ package org.schedoscope.dsl.transformations
 
 import java.io.FileInputStream
 import java.io.InputStream
-
 import scala.collection.mutable.HashMap
 import scala.collection.mutable.ListBuffer
-
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.ResourceUri
-import org.schedoscope.dsl.Version;
-
+import org.schedoscope.dsl.Version
 import org.schedoscope.Settings
 import org.schedoscope.dsl.Transformation
 import org.schedoscope.dsl.View
 import scala.collection.JavaConversions._
+import org.apache.hcatalog.pig.HCatLoader
 
 case class PigTransformation(latin: String, directoriesToDelete: List[String], c: Map[String, String]) extends Transformation {
 
@@ -41,6 +39,16 @@ case class PigTransformation(latin: String, directoriesToDelete: List[String], c
   description = "[..]" + StringUtils.abbreviate(latin.replaceAll("\n", "").replaceAll("\t", "").replaceAll("\\s+", " "), 60)
 
   configureWith(c)
+  
+  def defaultLibraries = {
+    val classes = List(classOf[HCatLoader])
+    classes.map(cl => try {
+                  cl.getProtectionDomain().getCodeSource().getLocation().getFile
+                } catch {
+                  case t : Throwable => null
+                })
+           .filter(cl => cl != null && !"".equals(cl.trim))
+  }
 }
 
 object PigTransformation {

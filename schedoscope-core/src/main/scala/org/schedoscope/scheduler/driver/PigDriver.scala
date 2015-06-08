@@ -65,10 +65,10 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
   def run(t: PigTransformation): DriverRunHandle[PigTransformation] =
     new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, future {
       // FIXME: future work: register jars, custom functions
-      executePigTransformation(t.latin, t.directoriesToDelete, t.configuration.toMap, t.getView())
+      executePigTransformation(t.latin, t.directoriesToDelete, t.defaultLibraries, t.configuration.toMap, t.getView())
     })
 
-  def executePigTransformation(latin: String, directoriesToDelete: List[String], conf: Map[String, Any], view: String): DriverRunState[PigTransformation] = {
+  def executePigTransformation(latin: String, directoriesToDelete: List[String], libraries: List[String], conf: Map[String, Any], view: String): DriverRunState[PigTransformation] = {
     val actualLatin = replaceParameters(latin, conf)
 
     val props = new Properties()
@@ -83,6 +83,7 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
           // another workaround would be: ps.registerScript(IOUtils.toInputStream(latin, "UTF-8") , conf.filter(!_._1.contains(".")).map(c => (c._1, c._2.toString)))
           ps.setJobName(view)
           directoriesToDelete.foreach(d => ps.deleteFile(d))
+          libraries.foreach(l => ps.registerJar(l))
           ps.registerQuery(actualLatin)
           DriverRunSucceeded[PigTransformation](driver, s"Pig script ${actualLatin} executed")
         } catch {
