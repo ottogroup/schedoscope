@@ -30,15 +30,13 @@ import org.schedoscope.dsl.View
 import scala.collection.JavaConversions._
 import org.apache.hcatalog.pig.HCatLoader
 
-case class PigTransformation(latin: String, directoriesToDelete: List[String], c: Map[String, String]) extends Transformation {
+case class PigTransformation(latin: String, directoriesToDelete: List[String] = List()) extends Transformation {
 
   override def name = "pig"
 
   override def versionDigest = Version.digest(latin)
 
   description = "[..]" + StringUtils.abbreviate(latin.replaceAll("\n", "").replaceAll("\t", "").replaceAll("\\s+", " "), 60)
-
-  configureWith(c)
   
   def defaultLibraries = {
     val classes = List(classOf[HCatLoader])

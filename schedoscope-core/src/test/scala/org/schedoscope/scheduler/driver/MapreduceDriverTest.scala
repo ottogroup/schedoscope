@@ -32,6 +32,7 @@ import org.apache.hadoop.fs.Path
 import java.nio.file.Paths
 import java.nio.charset.StandardCharsets
 import org.schedoscope.dsl.transformations.FailingMapper
+import org.schedoscope.dsl.View
 
 class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: MapreduceDriver = new LocalTestResources().mapreduceDriver
@@ -54,6 +55,8 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
     FileOutputFormat.setOutputPath(job, new Path(outputPath(System.nanoTime.toString)))
     job
   }
+  
+  case class DummyView() extends View
 
   def writeData() {
     Files.write(Paths.get(s"${inputPath("")}/file.txt"), "some data".getBytes(StandardCharsets.UTF_8))
@@ -64,25 +67,25 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
   }
 
   it should "execute Mapreduce tranformations synchronously" taggedAs (DriverTests) in {
-    val driverRunState = driver.runAndWait(MapreduceTransformation(identityJob, List(), Map()))
+    val driverRunState = driver.runAndWait(MapreduceTransformation(new DummyView(), identityJob))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "execute another Mapreduce tranformations synchronously" taggedAs (DriverTests) in {
-    val driverRunState = driver.runAndWait(MapreduceTransformation(identityJob, List(), Map()))
+    val driverRunState = driver.runAndWait(MapreduceTransformation(new DummyView(), identityJob))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "execute Mapreduce tranformations and return errors when running synchronously" taggedAs (DriverTests) in {
-    val driverRunState = driver.runAndWait(MapreduceTransformation(invalidJob, List(), Map()))
+    val driverRunState = driver.runAndWait(MapreduceTransformation(new DummyView(), invalidJob))
 
     driverRunState shouldBe a[DriverRunFailed[_]]
   }
 
   it should "execute Mapreduce tranformations asynchronously" taggedAs (DriverTests) in {
-    val driverRunHandle = driver.run(MapreduceTransformation(identityJob, List(), Map()))
+    val driverRunHandle = driver.run(MapreduceTransformation(new DummyView(), identityJob))
 
     var runWasAsynchronous = false
 
@@ -94,7 +97,7 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
   }
 
   it should "execute Mapreduce tranformations and return errors when running asynchronously" taggedAs (DriverTests) in {
-    val driverRunHandle = driver.run(MapreduceTransformation(failingJob, List(), Map()))
+    val driverRunHandle = driver.run(MapreduceTransformation(new DummyView(), failingJob))
 
     var runWasAsynchronous = false
 

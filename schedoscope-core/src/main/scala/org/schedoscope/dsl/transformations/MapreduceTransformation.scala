@@ -24,19 +24,21 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.mapreduce.MRJobConfig
 import java.net.URI
 import org.schedoscope.Settings
+import org.schedoscope.dsl.View
+import scala.collection.mutable.ListBuffer
 
-case class MapreduceTransformation(createJob: (Map[String, Any]) => Job, directoriesToDelete: List[String], c: Map[String, Any]) extends Transformation {
-
-  configureWith(c)
+case class MapreduceTransformation(v: View, createJob: (Map[String, Any]) => Job, dirsToDelete: List[String] = List()) extends Transformation {
 
   override def name = "mapreduce"
 
   lazy val job = createJob(configuration.toMap)
+  
+  val directoriesToDelete = dirsToDelete ++ List(v.fullPath)
 
   // resource hash based on MR job jar (in HDFS)
   override def versionDigest = Version.digest(Version.resourceHashes(resources()))
 
-  description = StringUtils.abbreviate(createJob(configuration.toMap).getJobName, 100)
+  description = StringUtils.abbreviate(v.urlPath, 100)
 
   override def resources() = {
     val jarName = try {

@@ -29,25 +29,25 @@ class PigDriverTest extends FlatSpec with Matchers {
   }
 
   it should "execute pig tranformations synchronously" taggedAs (DriverTests) in {
-    val driverRunState = driver.runAndWait(PigTransformation("/* a comment */", List(), Map()))
+    val driverRunState = driver.runAndWait(PigTransformation("/* a comment */"))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "execute another pig tranformations synchronously" taggedAs (DriverTests) in {
-    val driverRunState = driver.runAndWait(PigTransformation("/* a comment */", List(), Map()))
+    val driverRunState = driver.runAndWait(PigTransformation("/* a comment */"))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "execute pig tranformations and return errors when running synchronously" taggedAs (DriverTests) in {
-    val driverRunState = driver.runAndWait(PigTransformation("FAIL ME", List(), Map()))
+    val driverRunState = driver.runAndWait(PigTransformation("FAIL ME"))
 
     driverRunState shouldBe a[DriverRunFailed[_]]
   }
 
   it should "execute pig tranformations asynchronously" taggedAs (DriverTests) in {
-    val driverRunHandle = driver.run(PigTransformation("/* a comment */", List(), Map()))
+    val driverRunHandle = driver.run(PigTransformation("/* a comment */"))
 
     var runWasAsynchronous = false
 
@@ -59,7 +59,7 @@ class PigDriverTest extends FlatSpec with Matchers {
   }
 
   it should "execute pig tranformations and return errors when running asynchronously" taggedAs (DriverTests) in {
-    val driverRunHandle = driver.run(PigTransformation("FAIL ME", List(), Map()))
+    val driverRunHandle = driver.run(PigTransformation("FAIL ME"))
 
     var runWasAsynchronous = false
 
