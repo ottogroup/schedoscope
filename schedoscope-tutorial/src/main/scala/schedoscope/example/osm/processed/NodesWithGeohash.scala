@@ -26,6 +26,7 @@ case class NodesWithGeohash() extends View {
 
   transformVia(() =>
     MapreduceTransformation(
+      this,
       (conf: Map[String, Any]) => {
         val job = Job.getInstance
         LazyOutputFormat.setOutputFormatClass(job, classOf[TextOutputFormat[Text, NullWritable]]);
@@ -41,11 +42,12 @@ case class NodesWithGeohash() extends View {
             System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
         }
         job
-      },
-      directoriesToDelete = List(fullPath),
-      Map(
+      }).configureWith(
+        Map(
         "input_path" -> stageNodes().fullPath,
-        "output_path" -> fullPath)))
+        "output_path" -> fullPath))          
+      )
+      
 
   comment("nodes, extended with geohash")
 
