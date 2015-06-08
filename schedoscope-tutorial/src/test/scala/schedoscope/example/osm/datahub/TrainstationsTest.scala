@@ -11,7 +11,7 @@ import org.schedoscope.test.test
 case class TrainstationsTest() extends FlatSpec
   with Matchers {
 
-  val nodes = new Nodes(p("2014"), p("09")) with rows {
+  val nodesInput = new Nodes(p("2014"), p("09")) with rows {
     set(v(id, "122317"),
       v(geohash, "t1y140djfcq0"),
       v(tags, Map("name" -> "Hagenbecks Tierpark",
@@ -31,7 +31,11 @@ case class TrainstationsTest() extends FlatSpec
 
   "datahub.Trainstations" should "load correctly from processed.nodes" in {
     new Trainstations() with test {
-      basedOn(nodes)
+      basedOn(nodesInput)
+      withConfiguration(
+          ("INPUT" -> nodesInput.fullPath),
+          ("exec.type" -> "LOCAL")
+          )      
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "122317",
