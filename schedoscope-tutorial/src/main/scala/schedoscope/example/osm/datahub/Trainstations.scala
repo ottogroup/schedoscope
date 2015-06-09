@@ -32,7 +32,7 @@ case class Trainstations() extends View
     PigTransformation(
       scriptFromResource("pig_scripts/datahub/insert_trainstations.pig")).configureWith(
         Map(
-          //"input_table" -> .tableName, FIXME: extract input table from nodes()
+          "input_table" -> dependencies(0).tableName,
           "output_table" -> this.tableName,
           "env" -> this.env,
           "exec.type" -> "MAPREDUCE",
