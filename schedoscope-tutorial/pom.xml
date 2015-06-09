@@ -191,7 +191,8 @@
 						</goals>
 						<configuration>
 							<includeScope>compile</includeScope>
-							<outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+							<includeArtifactIds>brickhouse</includeArtifactIds>
+							<outputDirectory>${project.build.directory}/hive-libraries</outputDirectory>
 						</configuration>
 					</execution>
 				</executions>
