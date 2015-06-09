@@ -54,8 +54,8 @@
 		</repository>
 		<repository>
 			<id>scratch</id>
-                	<url>http://pk11-scratch.googlecode.com/svn/trunk</url>
-                </repository>
+			<url>http://pk11-scratch.googlecode.com/svn/trunk</url>
+		</repository>
 		<repository>
 			<id>otto-bintray</id>
 			<url>https://dl.bintray.com/ottogroup/maven</url>
@@ -159,7 +159,7 @@
 					<artifactId>hadoop-core</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>		
+		</dependency>
 		<dependency>
 			<groupId>morphline-utils</groupId>
 			<artifactId>morphline-utils</artifactId>
@@ -204,6 +204,11 @@
 			<artifactId>mockito-core</artifactId>
 			<version>1.9.5</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive.hcatalog</groupId>
+			<artifactId>hive-hcatalog-pig-adapter</artifactId>
+			<version>${hive.version}</version>
 		</dependency>
 	</dependencies>
 
