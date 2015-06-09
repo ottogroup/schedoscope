@@ -20,7 +20,7 @@ object Globals {
     else baseParameters
   }
 
-  def defaultPigProperties(v:View) = Map(
+  def defaultPigProperties(v: View) = Map(
     "exec.type" -> "MAPREDUCE",
     "mapred.job.tracker" -> Settings().jobTrackerOrResourceManager,
     "fs.default.name" -> Settings().nameNode,

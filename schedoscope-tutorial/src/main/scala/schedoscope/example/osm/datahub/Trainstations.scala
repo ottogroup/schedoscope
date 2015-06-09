@@ -17,8 +17,8 @@ import org.schedoscope.dsl.transformations.PigTransformation.scriptFromResource
 import org.schedoscope.dsl.TextFile
 
 case class Trainstations() extends View
-    with Id
-    with JobMetadata {
+  with Id
+  with JobMetadata {
 
   val station_name = fieldOf[String]
   val area = fieldOf[String]

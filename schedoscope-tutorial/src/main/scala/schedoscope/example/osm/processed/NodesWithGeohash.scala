@@ -44,10 +44,8 @@ case class NodesWithGeohash() extends View {
         job
       }).configureWith(
         Map(
-        "input_path" -> stageNodes().fullPath,
-        "output_path" -> fullPath))          
-      )
-      
+          "input_path" -> stageNodes().fullPath,
+          "output_path" -> fullPath)))
 
   comment("nodes, extended with geohash")
 
