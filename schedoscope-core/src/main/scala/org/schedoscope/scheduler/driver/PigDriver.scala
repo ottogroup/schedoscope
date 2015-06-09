@@ -65,7 +65,7 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
   def run(t: PigTransformation): DriverRunHandle[PigTransformation] =
     new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, future {
       // FIXME: future work: register jars, custom functions
-      executePigTransformation(t.latin, t.directoriesToDelete, t.defaultLibraries, t.configuration.toMap, t.getView())
+      executePigTransformation(t.latin, t.dirsToDelete, t.defaultLibraries, t.configuration.toMap, t.getView())
     })
 
   def executePigTransformation(latin: String, directoriesToDelete: List[String], libraries: List[String], conf: Map[String, Any], view: String): DriverRunState[PigTransformation] = {

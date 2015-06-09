@@ -66,7 +66,7 @@ abstract class TestResources {
   }
 
   val fileSystem: FileSystem
-  
+
   lazy val fileSystemDriver: FileSystemDriver = new FileSystemDriver(ugi, new Configuration(true))
 
   lazy val oozieDriver: OozieDriver = null

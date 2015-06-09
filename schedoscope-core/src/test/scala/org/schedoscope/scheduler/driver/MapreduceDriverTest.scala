@@ -55,7 +55,7 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
     FileOutputFormat.setOutputPath(job, new Path(outputPath(System.nanoTime.toString)))
     job
   }
-  
+
   case class DummyView() extends View
 
   def writeData() {

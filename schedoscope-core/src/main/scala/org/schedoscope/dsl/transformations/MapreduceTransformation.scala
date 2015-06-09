@@ -32,7 +32,7 @@ case class MapreduceTransformation(v: View, createJob: (Map[String, Any]) => Job
   override def name = "mapreduce"
 
   lazy val job = createJob(configuration.toMap)
-  
+
   val directoriesToDelete = dirsToDelete ++ List(v.fullPath)
 
   // resource hash based on MR job jar (in HDFS)
