@@ -1,19 +1,19 @@
 
 SELECT
   tagged_way.id,
-  tagged_way.occurredAt,
+  tagged_way.occurred_at,
   tagged_way.version,
   tagged_way.user_id,
   tagged_way.tags,
   ${env}_schedoscope_example_osm_processed.collect(cast(wn.node_id AS STRING)) AS nodes,
-  '${workflow_time}' AS createdAt,
-  '${workflow_name}' AS createdBy,
+  '${workflow_time}' AS created_at,
+  '${workflow_name}' AS created_by,
   '${year}',
   '${month}'
 FROM (
   SELECT
     w.id,
-    w.tstamp AS occurredAt,
+    w.tstamp AS occurred_at,
     w.version,
     w.user_id,
     ${env}_schedoscope_example_osm_processed.collect(wt.key, wt.value) AS tags
@@ -36,7 +36,7 @@ JOIN ${env}_schedoscope_example_osm_stage.way_nodes wn
 
 GROUP BY
   tagged_way.id,
-  tagged_way.occurredAt,
+  tagged_way.occurred_at,
   tagged_way.version,
   tagged_way.user_id,
   tagged_way.tags,

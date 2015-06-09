@@ -6,8 +6,8 @@ SELECT
   COALESCE(nearby_competitors,0) AS nearby_competitors,
   COALESCE(nearby_restaurants,0) AS nearby_restaurants,
   COALESCE(nearby_trainstations,0) AS nearby_trainstations,
-  '${workflow_time}' AS createdAt,
-  '${workflow_name}' AS createdBy
+  '${workflow_time}' AS created_at,
+  '${workflow_name}' AS created_by
 FROM ${env}_schedoscope_example_osm_datahub.shops s
 LEFT OUTER JOIN (
   SELECT 
