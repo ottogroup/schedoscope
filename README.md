@@ -18,9 +18,10 @@ With Schedoscope,
 
 Please follow the Open Street Map tutorial to install, compile, and run Schedoscope in a standard Hadoop distribution image within minutes:
 
-- [Open Street Map Tutorial](Open Street Map Tutorial)
+- [Open Street Map Tutorial](https://github.com/ottogroup/schedoscope/wiki/Open%20Street%20Map%20Tutorial)
 
-Visit the [wiki](https://github.com/ottogroup/schedoscope/wiki) for more documentation.
+More documentation can be found here:
+* [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
 
 ## Core Team
 * [Utz Westermann](https://github.com/utzwestermann) (Otto Group): Maintainer, DSL concept and implementation 
