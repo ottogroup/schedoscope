@@ -5,11 +5,16 @@
 Schedoscope is a scheduling framework for painfree agile development, testing, (re)loading, and monitoring of your datahub, lake, or whatever you choose to call your Hadoop data warehouse these days.
 
 With Schedoscope,
-* you never have to think about schema DDL migration steps
+* you never have to create schema DDL and migration scripts;
+* you never have to manually determine which data must be deleted and recomputed in face of retroactive changes to logic or data structures;
+* you specify Hive table structures (called "views"), partitioning schemes, storage formats, dependent views, as well as the transformation logic in one file in a concise Scala DSL;
+* you have a wide range of options for expressing data transformations - from file operations and MapReduce jobs to Pig scripts, Hive queries, and Oozie workflows;
+* you benefit from your Scala IDE's code completion and have less typos hitting you during deployment;
+* you can easily write tests for your transformation logic and run them quickly;
+* you schedule jobs by expressing the views you need - Schedoscope takes care that all dependencies are computed as well;
+* you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume YARN capactity.
 
-Schedoscope supports a wide range of options for expressing data transformating, from file operations and MapReduce jobs to Pig scripts, Hive queries, and Oozie workflows.
-
-Based on a concise Scala DSL, 
+Based on Schedoscope's DSL, 
 
 * defining a partitioned Hive table (called "view") is as simple as:
 
