@@ -210,6 +210,11 @@
 			<artifactId>hive-hcatalog-pig-adapter</artifactId>
 			<version>${hive.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>parquet-pig-bundle</artifactId>
+			<version>1.5.0-cdh5.3.1</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -237,6 +242,7 @@
 				<!-- see http://davidb.github.com/scala-maven-plugin -->
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
+				<version>3.2.0</version>
 				<executions>
 					<execution>
 						<goals>
@@ -255,6 +261,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-source-plugin</artifactId>
+				<version>2.4</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -266,6 +273,7 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.10.3</version>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>

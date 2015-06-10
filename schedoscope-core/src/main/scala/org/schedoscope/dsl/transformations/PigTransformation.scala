@@ -28,7 +28,12 @@ import org.schedoscope.Settings
 import org.schedoscope.dsl.Transformation
 import org.schedoscope.dsl.View
 import scala.collection.JavaConversions._
-import org.apache.hcatalog.pig.HCatLoader
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
+import org.apache.hadoop.hive.ql.udf.UDFLength
+import org.apache.hive.hcatalog.pig.HCatLoader
+import org.apache.hive.hcatalog.data.schema.HCatSchema
+import parquet.pig.ParquetStorer
+import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege
 
 case class PigTransformation(latin: String, dirsToDelete: List[String] = List()) extends Transformation {
 
@@ -39,7 +44,12 @@ case class PigTransformation(latin: String, dirsToDelete: List[String] = List())
   description = "[..]" + StringUtils.abbreviate(latin.replaceAll("\n", "").replaceAll("\t", "").replaceAll("\\s+", " "), 60)
 
   def defaultLibraries = {
-    val classes = List(classOf[HCatLoader])
+    // FIXME: declare jars instead of any random class included in this jar
+    val classes = List(
+      // needed for usage of HCatalog table management
+      classOf[HCatLoader], classOf[HCatSchema], classOf[HiveObjectPrivilege], classOf[UDFLength],
+      // needed for usage of storage format Parquet with pig
+      classOf[ParquetStorer])
     classes.map(cl => try {
       cl.getProtectionDomain().getCodeSource().getLocation().getFile
     } catch {
