@@ -34,7 +34,7 @@ Should any of those assumptions not hold in your context, you should probably lo
 
 ## Origins
 
-Schedoscope was conceived and started at the Business Intelligence department of the [Otto Group](http://ottogroup.com/en/die-otto-group.php)
+Schedoscope has been created at the Business Intelligence department of [Otto Group](http://ottogroup.com/en/die-otto-group.php)
 
 ## Core Team
 * [Utz Westermann](https://github.com/utzwestermann): Maintainer, DSL concept and implementation 
