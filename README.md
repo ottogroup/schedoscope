@@ -14,35 +14,13 @@ With Schedoscope,
 * you schedule jobs by expressing the views you need - Schedoscope takes care that all dependencies are computed as well;
 * you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume YARN capactity.
 
-## Tutorials
+## Getting Started
 
 Please follow the Open Street Map tutorial to install, compile, and run Schedoscope in a standard Hadoop distribution image within minutes:
 
 - [Open Street Map Tutorial](Open Street Map Tutorial)
 
-## Implementing Views
-- [Setting up a Schedoscope Project](Setting up a Schedoscope Project)
-- [Schedoscope View DSL](Schedoscope View DSL)
-- [Storage formats](Storage Formats)
-- Transformations
- - [NoOp](NoOp Transformations)
- - [File System](File System Transformations)
- - [Hive](Hive Transformations)
- - [Pig](Pig-Transformations)
- - [MapReduce](MapReduce Transformations)
- - [Morphline](Morphline Transformations)
-- [Test Framework](Test Framework)
-
-## Operating Schedoscope
-- [Bundling and Deploying](Bundling and Deploying)
-- [Starting](Starting Schedoscope)
-- [Scheduling](Scheduling)
-- [REST API](Schedoscope REST API)
-- [Command Reference](Command Reference)
-- [View Pattern Reference](View Pattern Reference)
-
-## Extending Schedoscope
-- [Architecture](Architecture)
+Visit the [wiki](Home) for more documentation.
 
 ## Core Team
 * [Utz Westermann](https://github.com/utzwestermann) (Otto Group): Maintainer, DSL concept and implementation 
