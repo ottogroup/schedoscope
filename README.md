@@ -20,7 +20,7 @@ Please follow the Open Street Map tutorial to install, compile, and run Schedosc
 
 - [Open Street Map Tutorial](Open Street Map Tutorial)
 
-Visit the [wiki](Home) for more documentation.
+Visit the [wiki](https://github.com/ottogroup/schedoscope/wiki) for more documentation.
 
 ## Core Team
 * [Utz Westermann](https://github.com/utzwestermann) (Otto Group): Maintainer, DSL concept and implementation 
