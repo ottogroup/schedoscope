@@ -14,10 +14,6 @@ With Schedoscope,
 * you schedule jobs by expressing the views you need - Schedoscope takes care that all dependencies are computed as well;
 * you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume YARN capactity.
  
-To achieve these benefits, Schedoscope makes following assumptions:
-* there is enough time and capacity to allow for recomputation of data;
-* .
-
 ## Getting Started
 
 Please follow the Open Street Map tutorial to install, compile, and run Schedoscope in a standard Hadoop distribution image within minutes:
@@ -26,6 +22,15 @@ Please follow the Open Street Map tutorial to install, compile, and run Schedosc
 
 More documentation can be found here:
 * [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
+
+## When could Schedoscope be not for you?
+
+Schedoscope is based on the following assumptions:
+* data are largely relational and meaningfully representable as Hive tables;
+* there is enough cluster time and capacity to actually allow for retroactive recomputation of data;
+* it is acceptable to compile table structure, dependencies, and transformation logic into what is effectively a project-specific scheduler.
+
+Should any of those assumptions not hold in your context, you should probably look for a different scheduler.
 
 ## Core Team
 * [Utz Westermann](https://github.com/utzwestermann) (Otto Group): Maintainer, DSL concept and implementation 
