@@ -115,7 +115,25 @@ Running the Schedoscope shell,
 
         materialize -v schedoscope.example.osm.processed/Nodes/2013/06
 
+* monitoring a view's load state is as simple as:
 
+        views -v schedoscope.example.osm.processed/Nodes/2013/06
+        
+        RESULTS
+        =======
+        Details:
+        +------------------------------------------------------------+--------------+-------+
+        |                         VIEW                               |    STATUS    | PROPS |
+        +------------------------------------------------------------+--------------+-------+
+        |            schedoscope.example.osm.processed/Nodes/2013/06 | waiting      |       |
+        | schedoscope.example.osm.processed/NodesWithGeohash/2013/06 | materialized |       |
+        |             schedoscope.example.osm.stage/NodeTags/2013/06 | transforming |       |
+        +------------------------------------------------------------+--------------+-------+
+        Total: 3
+
+        materialized: 1
+        waiting: 1
+        transforming: 1
 
 ## Tutorials
 
