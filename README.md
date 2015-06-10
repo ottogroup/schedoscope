@@ -49,7 +49,7 @@ Please follow the Open Street Map tutorial to install, compile, and run Schedosc
 * [Hans-Peter Zorn](https://github.com/hpzorn) (Inovex GmbH): Scheduling architecture and implementation, Morphline support
 * [Dominik Benz](https://github.com/dominikbenz) (Inovex GmbH): Test framework, deployment system, transformations, command shell
 
-Please help making Schedoscope a better place!
+Please help making Schedoscope better!
 
 ## License
 Licensed under the [Apache License 2.0](https://github.com/ottogroup/schedoscope/blob/master/LICENSE)
