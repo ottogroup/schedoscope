@@ -32,10 +32,14 @@ Schedoscope is based on the following assumptions:
 
 Should any of those assumptions not hold in your context, you should probably look for a different scheduler.
 
+## Origins
+
+Schedoscope has originally been conceived and implemented at the Business Intelligence department of the [Otto Group](http://ottogroup.com/en/die-otto-group.php)
+
 ## Core Team
-* [Utz Westermann](https://github.com/utzwestermann) (Otto Group): Maintainer, DSL concept and implementation 
-* [Hans-Peter Zorn](https://github.com/hpzorn) (Inovex GmbH): Scheduling architecture and implementation, Morphline support
-* [Dominik Benz](https://github.com/dominikbenz) (Inovex GmbH): Test framework, deployment system, transformations, command shell
+* [Utz Westermann](https://github.com/utzwestermann): Maintainer, DSL concept and implementation 
+* [Hans-Peter Zorn](https://github.com/hpzorn): Scheduling architecture and implementation, Morphline support
+* [Dominik Benz](https://github.com/dominikbenz): Test framework, deployment system, transformations, command shell
 
 Please help making Schedoscope better!
 
