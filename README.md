@@ -52,13 +52,12 @@ Please follow the Open Street Map tutorial to install, compile, and run Schedosc
 ## Extending Schedoscope
 - [Architecture](Architecture)
 
-## Initial Concept and Development
-[Utz Westermann](https://github.com/utzwestermann) (Otto Group)
-[Hans-Peter Zorn](https://github.com/hpzorn) (Inovex GmbH)
-[Dominik Benz](https://github.com/dominikbenz) (Inovex GmbH)
+## Core Team
+* [Utz Westermann](https://github.com/utzwestermann) (Otto Group): Maintainer, DSL concept and implementation 
+* [Hans-Peter Zorn](https://github.com/hpzorn) (Inovex GmbH): Scheduling architecture and implementation, Morphline support
+* [Dominik Benz](https://github.com/dominikbenz) (Inovex GmbH): Test framework, deployment system, transformations, command shell
 
-## Maintainer
-[Utz Westermann](https://github.com/utzwestermann) (Otto Group)
+Please help to make Schedoscope a better place!
 
 ## License
 Licensed under the [Apache License 2.0](https://github.com/ottogroup/schedoscope/blob/master/LICENSE)
