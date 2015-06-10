@@ -5,14 +5,14 @@
 Schedoscope is a scheduling framework for painfree agile development, testing, (re)loading, and monitoring of your datahub, lake, or whatever you choose to call your Hadoop data warehouse these days.
 
 With Schedoscope,
-* you never have to create schema DDL and migration scripts;
-* you never have to manually determine which data must be deleted and recomputed in face of retroactive changes to logic or data structures;
-* you specify Hive table structures (called "views"), partitioning schemes, storage formats, dependent views, as well as transformation logic in one file in a concise Scala DSL;
+* you never have to create DDL and schema migration scripts;
+* you do not have to manually determine which data must be deleted and recomputed in face of retroactive changes to logic or data structures;
+* you specify Hive table structures (called "views"), partitioning schemes, storage formats, dependent views, as well as transformation logic in a concise Scala DSL;
 * you have a wide range of options for expressing data transformations - from file operations and MapReduce jobs to Pig scripts, Hive queries, and Oozie workflows;
-* you benefit from your Scala's static type system and IDE's code completion to make less typos that hit you late during deployment or runtime;
-* you can easily write tests for your transformation logic and run them quickly;
-* you schedule jobs by expressing the views you need - Schedoscope takes care that all dependencies are computed as well;
-* you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume YARN capactity.
+* you benefit from your Scala's static type system and your IDE's code completion to make less typos that hit you late during deployment or runtime;
+* you can easily write unit tests for your transformation logic and run them quickly right out of your IDE;
+* you schedule jobs by expressing the views you need - Schedoscope takes care that all required dependencies - and only those-  are computed as well;
+* you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capactity.
  
 ## Getting Started
 
