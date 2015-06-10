@@ -4,23 +4,116 @@
 
 Schedoscope is a scheduling framework for painfree and agile development, testing, (re)loading, and monitoring of your datahub, lake, or whatever you choose to call your Hadoop data warehouse these days.
 
-Based on a slick Scala DSL, 
+Based on a concise Scala DSL, 
 
 * defining a partitioned Hive table (called "view") is as simple as:
 
+        case class Nodes(
+          year: Parameter[String],
+          month: Parameter[String]) extends View
+          with MonthlyParameterization
+          with Id
+          with PointOccurrence
+          with JobMetadata {
+
+          val version = fieldOf[Int]
+          val user_id = fieldOf[Int]
+          val longitude = fieldOf[Double]
+          val latitude = fieldOf[Double]
+          val geohash = fieldOf[String]
+          val tags = fieldOf[Map[String, String]]
+
+          comment("View of nodes with tags and geohash")
+
+          storedAs(Parquet())
+        }
+
 * defining its dependencies is as simple as:
+
+        case class Nodes(
+          year: Parameter[String],
+          month: Parameter[String]) extends View
+          with MonthlyParameterization
+          with Id
+          with PointOccurrence
+          with JobMetadata {
+
+          val version = fieldOf[Int]
+          val user_id = fieldOf[Int]
+          val longitude = fieldOf[Double]
+          val latitude = fieldOf[Double]
+          val geohash = fieldOf[String]
+          val tags = fieldOf[Map[String, String]]
+
+          dependsOn(() => NodesWithGeohash(p(year), p(month)))
+          dependsOn(() => NodeTags(p(year), p(month)))
+
+          comment("View of nodes with tags and geohash")
+
+          storedAs(Parquet())
+        }
 
 * specifying its computation logic is as simple as:
 
+        case class Nodes(
+          year: Parameter[String],
+          month: Parameter[String]) extends View
+          with MonthlyParameterization
+          with Id
+          with PointOccurrence
+          with JobMetadata {
+
+          val version = fieldOf[Int]
+          val user_id = fieldOf[Int]
+          val longitude = fieldOf[Double]
+          val latitude = fieldOf[Double]
+          val geohash = fieldOf[String]
+          val tags = fieldOf[Map[String, String]]
+
+          dependsOn(() => NodesWithGeohash(year, month))
+          dependsOn(() => NodeTags(year, month))
+
+          transformVia(() =>
+            HiveTransformation(
+              insertInto(
+                this,
+                queryFromResource("hiveql/processed/insert_nodes.sql")))          
+            .configureWith(Map(
+               "year" -> year.v.get,
+               "month" -> month.v.get)))
+
+         comment("View of nodes with tags and geohash")
+
+         storedAs(Parquet())
+      }
+
 * testing it is as simple as:
+
+        "processed.Nodes" should "load correctly from processed.nodes_with_geohash and stage.node_tags" in {
+            new Nodes(p("2013"), p("06")) with test {
+              basedOn(nodeTags, nodes)
+              then()
+              numRows shouldBe 1
+              row(v(id) shouldBe "122318",
+              v(occurredAt) shouldBe "2013-06-17 15:49:26Z",
+              v(version) shouldBe 6,
+              v(user_id) shouldBe 50299,
+              v(tags) shouldBe Map(
+                "TMC:cid_58:tabcd_1:Direction" -> "positive",
+                "TMC:cid_58:tabcd_1:LCLversion" -> "8.00",
+                "TMC:cid_58:tabcd_1:LocationCode" -> "10696"))
+            }
+          }
 
 Running the Schedoscope shell, 
 
 * loading the view is as simple as:
 
-* reloading the view in case its dependencies, structure, or logic has changed is as simple as:
+        materialize -v schedoscope.example.osm.processed/Nodes/2013/06
 
-* monitoring what's going on is as simple as:
+* reloading the view in case its dependencies, structure, or logic have changed is as simple as (it is just the same):
+
+        materialize -v schedoscope.example.osm.processed/Nodes/2013/06
 
 ## Tutorials
 
