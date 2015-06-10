@@ -1,4 +1,6 @@
-# Introduction
+# Schedoscope
+
+## Introduction
 
 Schedoscope is a scheduling framework for painfree and agile development, testing, (re)loading, and monitoring of your datahub, lake, or whatever you choose to call your Hadoop data warehouse these days.
 
@@ -20,15 +22,13 @@ Running the Schedoscope shell,
 
 * monitoring what's going on is as simple as:
 
-
-
-# Tutorials
+## Tutorials
 
 Please follow the Open Street Map tutorial to install, compile, and run Schedoscope in a standard Hadoop distribution image within minutes:
 
 - [Open Street Map Tutorial](Open Street Map Tutorial)
 
-# Implementing Views
+## Implementing Views
 - [Setting up a Schedoscope Project](Setting up a Schedoscope Project)
 - [Schedoscope View DSL](Schedoscope View DSL)
 - [Storage formats](Storage Formats)
@@ -41,7 +41,7 @@ Please follow the Open Street Map tutorial to install, compile, and run Schedosc
  - [Morphline](Morphline Transformations)
 - [Test Framework](Test Framework)
 
-# Operating Schedoscope
+## Operating Schedoscope
 - [Bundling and Deploying](Bundling and Deploying)
 - [Starting](Starting Schedoscope)
 - [Scheduling](Scheduling)
@@ -49,5 +49,16 @@ Please follow the Open Street Map tutorial to install, compile, and run Schedosc
 - [Command Reference](Command Reference)
 - [View Pattern Reference](View Pattern Reference)
 
-# Extending Schedoscope
+## Extending Schedoscope
 - [Architecture](Architecture)
+
+## Initial Concept and Development
+[Utz Westermann](https://github.com/utzwestermann) (Otto Group)
+[Hans-Peter Zorn](https://github.com/hpzorn) (Inovex GmbH)
+[Dominik Benz](https://github.com/dominikbenz) (Inovex GmbH)
+
+## Maintainer
+[Utz Westermann](https://github.com/utzwestermann) (Otto Group)
+
+## License
+Licensed under the [Apache License 2.0](https://github.com/ottogroup/schedoscope/blob/master/LICENSE)
