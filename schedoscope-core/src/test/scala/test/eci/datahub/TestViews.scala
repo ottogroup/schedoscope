@@ -193,8 +193,7 @@ case class ClickOfEC0101ViaOozie(
   transformVia(
     () => OozieTransformation(
       "bundle", "click",
-      oozieWFPath(env, "bundle", "click"),
-      Map()))
+      oozieWFPath("bundle", "click")))
 }
 
 case class SimpleDependendView() extends View with Id {

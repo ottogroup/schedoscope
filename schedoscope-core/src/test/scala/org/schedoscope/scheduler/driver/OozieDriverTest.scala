@@ -46,18 +46,20 @@ class OozieDriverTest extends FlatSpec with Matchers {
   lazy val workingOozieTransformation = deployWorkflow(
     OozieTransformation(
       "bundle", "workflow",
-      "/tmp/schedoscope/oozie/workflows/bundle/workflow/", Map(
+      "/tmp/schedoscope/oozie/workflows/bundle/workflow/")
+      .configureWith(Map(
         "jobTracker" -> cluster.getJobTrackerUri(),
         "nameNode" -> cluster.getNameNodeUri(),
-        "oozie.use.system.libpath" -> "false")))
+        "oozie.use.system.libpath" -> "false")).asInstanceOf[OozieTransformation])
 
   lazy val failingOozieTransformation = deployWorkflow(
     OozieTransformation(
       "bundle", "failflow",
-      "/tmp/schedoscope/oozie/workflows/bundle/failflow/", Map(
+      "/tmp/schedoscope/oozie/workflows/bundle/failflow/")
+      .configureWith(Map(
         "jobTracker" -> cluster.getJobTrackerUri(),
         "nameNode" -> cluster.getNameNodeUri(),
-        "oozie.use.system.libpath" -> "false")))
+        "oozie.use.system.libpath" -> "false")).asInstanceOf[OozieTransformation])
 
   "Oozie" should "have transformation name oozie" taggedAs (DriverTests, OozieTests) in {
     driver.transformationName shouldBe "oozie"

@@ -23,9 +23,7 @@ import org.schedoscope.Settings
 import org.schedoscope.dsl.Transformation
 import scala.collection.JavaConversions._
 
-case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String, c: Map[String, String]) extends Transformation {
-  configureWith(c)
-
+case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String) extends Transformation {
   override def name = "oozie"
 
   override def resources() = {
@@ -36,7 +34,7 @@ case class OozieTransformation(bundle: String, workflow: String, workflowAppPath
 }
 
 object OozieTransformation {
-  def oozieWFPath(env: String, bundle: String, workflow: String) = s"${Settings().getDriverSettings("oozie").location}/workflows/${bundle}/${workflow}/"
+  def oozieWFPath(bundle: String, workflow: String) = s"${Settings().getDriverSettings("oozie").location}/workflows/${bundle}/${workflow}/"
 
   def configurationFrom(inputStream: InputStream): Map[String, String] = {
     val props = new Properties()

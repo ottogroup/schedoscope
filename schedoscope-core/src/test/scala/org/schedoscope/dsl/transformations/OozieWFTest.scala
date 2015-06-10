@@ -41,19 +41,20 @@ case class Productfeed(
     OozieTransformation(
       "products_processed-bundle",
       "workflow-processed_productfeed",
-      s"/hdp/${env}/applications/eci/scripts/oozie/products_processed-bundle/workflow-processed_productfeed/",
-      configurationFromResource("ooziewftest.properties") ++
-        Map(
-          "env" -> env,
-          "envDir" -> env,
-          "env_dir" -> env,
-          "success_flag" -> "_SUCCESS",
-          "app" -> "eci",
-          "output_folder" -> locationPath,
-          "wtEcnr" -> ecShopCode.v.get,
-          "day" -> day.v.get,
-          "month" -> month.v.get,
-          "year" -> year.v.get)))
+      s"/hdp/${env}/applications/eci/scripts/oozie/products_processed-bundle/workflow-processed_productfeed/")
+      .configureWith(
+        configurationFromResource("ooziewftest.properties") ++
+          Map(
+            "env" -> env,
+            "envDir" -> env,
+            "env_dir" -> env,
+            "success_flag" -> "_SUCCESS",
+            "app" -> "eci",
+            "output_folder" -> locationPath,
+            "wtEcnr" -> ecShopCode.v.get,
+            "day" -> day.v.get,
+            "month" -> month.v.get,
+            "year" -> year.v.get)))
 }
 
 class OozieWFTest extends FlatSpec with BeforeAndAfter with Matchers {

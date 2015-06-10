@@ -109,7 +109,7 @@ trait rows extends View {
     val files = fs.listFiles(dest, true)
 
     // create copy of workflow with adapted workflow app path
-    new OozieTransformation(wf.bundle, wf.workflow, dest.toString, wf.c).configureWith(wf.configuration.toMap)
+    new OozieTransformation(wf.bundle, wf.workflow, dest.toString).configureWith(wf.configuration.toMap)
   }
 
   def deployFunctions(ht: HiveTransformation) = {
