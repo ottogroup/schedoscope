@@ -48,8 +48,8 @@ case class TrainstationsTest() extends FlatSpec
     new Trainstations() with test {
       basedOn(nodesInput)
       withConfiguration(
-          ("exec.type" -> "LOCAL"),
-          ("storage_format" -> "PigStorage()"))      
+        ("exec.type" -> "LOCAL"),
+        ("storage_format" -> "PigStorage()"))
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "122317",
