@@ -18,9 +18,6 @@ package schedoscope.example.osm.datamart
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.views.Id
 import org.schedoscope.dsl.views.JobMetadata
-import schedoscope.example.osm.processed.Nodes
-import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.views.DateParameterizationUtils.allMonths
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource

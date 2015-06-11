@@ -21,6 +21,7 @@ import org.schedoscope.dsl.transformations.CopyFrom
 
 case class Nodes() extends View {
 
+  // Declare each column of the TSV-file
   val id = fieldOf[Long]
   val version = fieldOf[Int]
   val user_id = fieldOf[Int]

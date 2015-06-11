@@ -17,9 +17,7 @@ package schedoscope.example.osm.datamart
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-import schedoscope.example.osm.processed.Nodes
 import org.schedoscope.test.rows
-import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.Field._
 import org.schedoscope.test.test
 import schedoscope.example.osm.datahub.Trainstations
@@ -80,10 +78,6 @@ case class ShopProfilesTest() extends FlatSpec
         v(cnt_competitors) shouldBe 1,
         v(cnt_restaurants) shouldBe 1,
         v(cnt_trainstations) shouldBe 1)
-      //      row(v(id) shouldBe "274850441",
-      //        v(shop_name) shouldBe "Schanzenbäckerei",
-      //        v(shop_type) shouldBe "bakery",
-      //        v(area) shouldBe "t1y87ki")
     }
   }
 }
