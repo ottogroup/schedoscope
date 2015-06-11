@@ -40,6 +40,7 @@ Schedoscope was conceived at the Business Intelligence department of [Otto Group
 * [Utz Westermann](https://github.com/utzwestermann): Maintainer, DSL concept and implementation 
 * [Hans-Peter Zorn](https://github.com/hpzorn): Scheduling architecture and implementation, Morphline support
 * [Dominik Benz](https://github.com/dominikbenz): Test framework, deployment system, transformations, command shell
+* [Annika Leveringhaus](https://github.com/annikaleveringhaus): Tutorial
 
 Please help making Schedoscope better!
 
