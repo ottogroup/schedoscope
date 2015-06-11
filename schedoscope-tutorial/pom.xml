@@ -96,6 +96,12 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<dependency>
+			<groupId>com.ottogroup.bi</groupId>
+			<artifactId>hadoop-launcher</artifactId>
+			<version>0.0.6</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
