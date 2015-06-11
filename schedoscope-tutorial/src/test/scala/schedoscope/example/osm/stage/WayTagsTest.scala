@@ -25,7 +25,7 @@ class WayTagsTest extends FlatSpec
   "stage.WayTags" should "load correctly from file" in {
     new WayTags() with test {
       then()
-      numRows shouldBe 1499650
+      numRows shouldBe 10
       row(v(way_id) shouldBe 1978,
         v(key) shouldBe "cycleway",
         v(value) shouldBe "track")

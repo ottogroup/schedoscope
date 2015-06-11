@@ -1,0 +1,10 @@
+1978	cycleway	track
+1978	highway	primary
+1978	maxspeed	50
+1978	name	Stader Straße
+1978	postal_code	21075
+1978	ref	B 73
+1880371	cycleway	street
+1880371	highway	residential
+1880371	maxspeed	30
+1880371	name	Neehusenstraße

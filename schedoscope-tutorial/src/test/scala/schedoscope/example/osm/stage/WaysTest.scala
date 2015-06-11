@@ -25,7 +25,7 @@ class WaysTest extends FlatSpec
   "stage.Ways" should "load correctly from file" in {
     new Ways() with test {
       then()
-      numRows shouldBe 422235
+      numRows shouldBe 10
       row(v(id) shouldBe 1978,
         v(tstamp) shouldBe "2014-03-11 00:34:02+0100",
         v(version) shouldBe 31,

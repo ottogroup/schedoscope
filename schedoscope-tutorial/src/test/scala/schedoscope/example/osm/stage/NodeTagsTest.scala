@@ -25,7 +25,7 @@ class NodeTagsTest extends FlatSpec
   "stage.NodeTags" should "load correctly from file" in {
     new NodeTags() with test {
       then()
-      numRows shouldBe 411748
+      numRows shouldBe 10
       row(v(node_id) shouldBe 122317,
         v(key) shouldBe "TMC:cid_58:tabcd_1:Class",
         v(value) shouldBe "Point")

@@ -25,7 +25,7 @@ class WayNodesTest extends FlatSpec
   "stage.WayNodes" should "load correctly from file" in {
     new WayNodes() with test {
       then()
-      numRows shouldBe 2960106
+      numRows shouldBe 10
       row(v(way_id) shouldBe 1978,
         v(node_id) shouldBe 10210552,
         v(sequence_id) shouldBe 0)
