@@ -228,6 +228,8 @@ trait DailyParameterization {
 
   def allDays() = DateParameterizationUtils.allDays()
 
+  def allMonths() = DateParameterizationUtils.allMonths()
+
   def lastMonths(c: Int) = {
     val to = parametersToDay(year, month, day)
     val from = to
