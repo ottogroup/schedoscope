@@ -4,6 +4,9 @@
 	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-core</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
+	<name>Schedoscope Core</name>
+	<description>The Schedoscope Hadoop scheduler</description>
+
 
 	<properties>
 		<akka.version>2.3.6</akka.version>
