@@ -44,17 +44,17 @@ case class NodesWithGeohash() extends View {
       this,
       (conf: Map[String, Any]) => {
         val job = Job.getInstance
-        LazyOutputFormat.setOutputFormatClass(job, classOf[TextOutputFormat[Text, NullWritable]]);
+        LazyOutputFormat.setOutputFormatClass(job, classOf[TextOutputFormat[Text, NullWritable]])
         job.setJobName(this.urlPath)
         job.setJarByClass(classOf[GeohashMapper])
         job.setMapperClass(classOf[GeohashMapper])
         job.setNumReduceTasks(0)
-        FileInputFormat.setInputPaths(job, conf.get("input_path").get.toString);
-        FileOutputFormat.setOutputPath(job, new Path(conf.get("output_path").get.toString));
+        FileInputFormat.setInputPaths(job, conf.get("input_path").get.toString)
+        FileOutputFormat.setOutputPath(job, new Path(conf.get("output_path").get.toString))
         val cfg = job.getConfiguration();
         if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
           cfg.set("mapreduce.job.credentials.binary",
-            System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+            System.getenv("HADOOP_TOKEN_FILE_LOCATION"))
         }
         job
       }).configureWith(
