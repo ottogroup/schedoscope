@@ -166,7 +166,7 @@
 		<dependency>
 			<groupId>morphline-utils</groupId>
 			<artifactId>morphline-utils</artifactId>
-			<version>0.1.2</version>
+			<version>0.1.3</version>
 		</dependency>
 		<dependency>
 			<groupId>hadoop-launcher</groupId>
