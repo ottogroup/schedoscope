@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ottogroup/schedoscope.svg?branch=master)](https://travis-ci.org/ottogroup/schedoscope)
+
 # Schedoscope
 
 ## Introduction
