@@ -1,0 +1,10 @@
+122317	TMC:cid_58:tabcd_1:Class	Point
+122317	TMC:cid_58:tabcd_1:Direction	positive
+122317	TMC:cid_58:tabcd_1:LCLversion	8.00
+122317	TMC:cid_58:tabcd_1:LocationCode	10696
+122317	TMC:cid_58:tabcd_1:NextLocationCode	10697
+122317	TMC:cid_58:tabcd_1:PrevLocationCode	10695
+122318	highway	speed_camera
+122327	crossing	traffic_signals
+122327	highway	crossing
+122329	TMC:cid_58:tabcd_1:Class	Point

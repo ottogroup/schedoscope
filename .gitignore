@@ -8,3 +8,5 @@ metastore_db
 derby.log
 src/test/resources/*morphline.csv
 test-classes
+/metastore_db/
+*.log
