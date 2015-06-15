@@ -33,7 +33,7 @@ case class ShopProfilesTest() extends FlatSpec
       v(shop_type, "supermarket"),
       v(area, "t1y87ki"))
     set(v(id, "274850441"),
-      v(shop_name, "Schanzenbäckerei"),
+      v(shop_name, "Schanzenbaeckerei"),
       v(shop_type, "bakery"),
       v(area, "t1y87ki"))
     set(v(id, "279023080"),
@@ -52,7 +52,7 @@ case class ShopProfilesTest() extends FlatSpec
       v(restaurant_type, "japanese"),
       v(area, "t1y87ki"))
     set(v(id, "302281521"),
-      v(restaurant_name, "Walddörfer Croque Café"),
+      v(restaurant_name, "Walddoerfer Croque Cafe"),
       v(restaurant_type, "burger"),
       v(area, "t1y17m9"))
   }
@@ -62,7 +62,7 @@ case class ShopProfilesTest() extends FlatSpec
       v(station_name, "Hagenbecks Tierpark"),
       v(area, "t1y140d"))
     set(v(id, "122317"),
-      v(station_name, "Bönningstedt"),
+      v(station_name, "Boenningstedt"),
       v(area, "t1y87ki"))
   }
 

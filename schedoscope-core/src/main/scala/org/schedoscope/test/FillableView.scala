@@ -140,7 +140,7 @@ trait rows extends View {
     if (fs.exists(partitionFilePath))
       fs.delete(partitionFilePath, true)
     fs.mkdirs(partitionFilePath)
-    val out = new OutputStreamWriter(fs.create(partitionFile))
+    val out = new OutputStreamWriter(fs.create(partitionFile), "UTF-8")
     out.write(ViewSerDe.serialize(this))
     out.close
   }

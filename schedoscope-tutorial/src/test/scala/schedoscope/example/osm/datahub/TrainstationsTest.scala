@@ -33,7 +33,7 @@ case class TrainstationsTest() extends FlatSpec
         "railway" -> "station")))
     set(v(id, "274850441"),
       v(geohash, "t1y87ki9fcq0"),
-      v(tags, Map("name" -> "Bönningstedt",
+      v(tags, Map("name" -> "Boenningstedt",
         "railway" -> "station")))
     set(v(id, "279023080"),
       v(geohash, "t1y77d8jfcq0"),
@@ -41,7 +41,7 @@ case class TrainstationsTest() extends FlatSpec
         "railway" -> "station")))
     set(v(id, "279023080"),
       v(geohash, "t1y77d8jfcq0"),
-      v(tags, Map("name" -> "Wachtelstraße")))
+      v(tags, Map("name" -> "Wachtelstrasse")))
   }
 
   "datahub.Trainstations" should "load correctly from processed.nodes" in {
@@ -56,7 +56,7 @@ case class TrainstationsTest() extends FlatSpec
         v(station_name) shouldBe "Hagenbecks Tierpark",
         v(area) shouldBe "t1y140d")
       row(v(id) shouldBe "274850441",
-        v(station_name) shouldBe "Bönningstedt",
+        v(station_name) shouldBe "Boenningstedt",
         v(area) shouldBe "t1y87ki")
     }
   }

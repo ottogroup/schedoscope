@@ -33,7 +33,7 @@ case class ShopsTest() extends FlatSpec
         "shop" -> "supermarket")))
     set(v(id, "274850441"),
       v(geohash, "t1y87ki9fcq0"),
-      v(tags, Map("name" -> "Schanzenbäckerei",
+      v(tags, Map("name" -> "Schanzenbaeckerei",
         "shop" -> "bakery")))
     set(v(id, "279023080"),
       v(geohash, "t1y77d8jfcq0"),
@@ -54,7 +54,7 @@ case class ShopsTest() extends FlatSpec
         v(shop_type) shouldBe "supermarket",
         v(area) shouldBe "t1y140d")
       row(v(id) shouldBe "274850441",
-        v(shop_name) shouldBe "Schanzenbäckerei",
+        v(shop_name) shouldBe "Schanzenbaeckerei",
         v(shop_type) shouldBe "bakery",
         v(area) shouldBe "t1y87ki")
     }
