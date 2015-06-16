@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.org/ottogroup/schedoscope.svg?branch=master)](https://travis-ci.org/ottogroup/schedoscope)
-
 # Schedoscope
 
 ## Introduction
@@ -48,6 +46,10 @@ Schedoscope was conceived at the Business Intelligence department of [Otto Group
 * [Annika Leveringhaus](https://github.com/aleveringhaus): Tutorial
 
 Please help making Schedoscope better!
+
+## Build Status
+
+[![Build Status](https://travis-ci.org/ottogroup/schedoscope.svg?branch=master)](https://travis-ci.org/ottogroup/schedoscope)
 
 ## License
 Licensed under the [Apache License 2.0](https://github.com/ottogroup/schedoscope/blob/master/LICENSE)
