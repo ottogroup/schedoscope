@@ -47,6 +47,10 @@ Schedoscope was conceived at the Business Intelligence department of [Otto Group
 
 Please help making Schedoscope better!
 
+## Community / Forums
+
+- [Schedoscope Users](https://groups.google.com/forum/#!forum/schedoscope-users)
+
 ## Build Status
 
 [![Build Status](https://travis-ci.org/ottogroup/schedoscope.svg?branch=master)](https://travis-ci.org/ottogroup/schedoscope)
