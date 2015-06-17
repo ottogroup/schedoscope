@@ -39,7 +39,6 @@ import org.slf4j.LoggerFactory
 import org.schedoscope.DriverSettings
 import org.schedoscope.Settings
 import org.schedoscope.dsl.Avro
-import org.schedoscope.dsl.ExaSol
 import org.schedoscope.dsl.ExternalAvro
 import org.schedoscope.dsl.ExternalStorageFormat
 import org.schedoscope.dsl.ExternalTextFile
@@ -63,6 +62,7 @@ import morphlineutils.morphline.command.anonymization.AnonymizeBuilder
 import morphlineutils.morphline.command.sink.AvroWriterBuilder
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
+import org.schedoscope.dsl.ExaSolution
 
 object Helper {
   implicit def AnyToConfigValue(x: Any) = ConfigValueFactory.fromAnyRef(x, "")
@@ -135,9 +135,16 @@ class MorphlineDriver(val ugi: UserGroupInformation, val hadoopConf: Configurati
     val fields = view.fields.map(field => field.n)
 
     val command = storageFormat match {
-      case f: ExaSol => {
+      case f: ExaSolution => {
+        val schema = view.fields.foldLeft(ConfigFactory.empty())((config, field) => config.withValue(field.n, field.t.erasure.getSimpleName()))
         val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
-          withValue("", "")
+          withValue("key", f.mergeKey).
+          withValue("merge",f.merge).
+          withValue("username", f.userName).
+          withValue("schema", schema.root()).
+          withValue("targetTable",
+            view.n).withValue("password", f.password).
+            withValue("fields", ConfigValueFactory.fromIterable(fields))
         new JDBCWriterBuilder().build(oConfig, parent, child, context)
       }
 

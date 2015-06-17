@@ -30,6 +30,7 @@ import org.schedoscope.dsl.Parameter
 import org.apache.hadoop.security.UserGroupInformation
 import java.security.PrivilegedAction
 import org.schedoscope.test.resources.LocalTestResources
+import test.eci.datahub.RedisMorphlineView
 
 class MorphlineDriverTest extends FlatSpec with Matchers {
   lazy val driver: MorphlineDriver = new LocalTestResources().morphlineDriver
