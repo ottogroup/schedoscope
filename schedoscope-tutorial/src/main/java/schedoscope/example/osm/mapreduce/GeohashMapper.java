@@ -27,8 +27,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import ch.hsr.geohash.GeoHash;
 
 /**
- * GeohashMapper computes a geohash for each node 
- * based upon its longitude and latitude.
+ * GeohashMapper computes a geohash for each node based upon its longitude and
+ * latitude.
  */
 public class GeohashMapper extends
 		Mapper<LongWritable, Text, NullWritable, Text> {
