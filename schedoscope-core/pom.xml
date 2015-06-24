@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-core</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.1-SNAPSHOT</version>
 	<name>Schedoscope Core</name>
 	<description>The Schedoscope Hadoop scheduler</description>
 
@@ -22,10 +22,10 @@
 			</activation>
 			<id>cloudera</id>
 			<properties>
-				<hadoop.version>2.5.0-cdh5.3.1</hadoop.version>
-				<hive.version>0.13.1-cdh5.3.1</hive.version>
-				<oozie.version>4.0.0-cdh5.3.1</oozie.version>
-				<pig.version>0.12.0-cdh5.3.1</pig.version>
+				<hadoop.version>2.6.0-cdh5.4.2.1</hadoop.version>
+				<hive.version>0.13.1-cdh5.4.2.1</hive.version>
+				<oozie.version>4.0.0-cdh5.4.2.1</oozie.version>
+				<pig.version>0.12.0-cdh5.4.2.1</pig.version>
 			</properties>
 		</profile>
 		<profile>
@@ -164,9 +164,35 @@
 			</exclusions>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.hive.hcatalog</groupId>
+			<artifactId>hive-hcatalog-pig-adapter</artifactId>
+			<version>${hive.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>parquet-pig-bundle</artifactId>
+			<version>1.5.0-cdh5.3.1</version>
+		</dependency>
+		<dependency>
 			<groupId>morphline-utils</groupId>
 			<artifactId>morphline-utils</artifactId>
-			<version>0.1.3</version>
+			<version>0.1.5</version>
+		</dependency>
+		<dependency>
+			<groupId>minioozie</groupId>
+			<artifactId>minioozie</artifactId>
+			<version>0.1.6</version>
+			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>jersey-server</artifactId>
+					<groupId>com.sun.jersey</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>jline</artifactId>
+					<groupId>jline</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>hadoop-launcher</groupId>
@@ -181,22 +207,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>minioozie</groupId>
-			<artifactId>minioozie</artifactId>
-			<version>0.1.2</version>
-			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>jersey-server</artifactId>
-					<groupId>com.sun.jersey</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jline</artifactId>
-					<groupId>jline</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.version}</artifactId>
 			<version>2.2.0</version>
@@ -207,16 +217,6 @@
 			<artifactId>mockito-core</artifactId>
 			<version>1.9.5</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hive.hcatalog</groupId>
-			<artifactId>hive-hcatalog-pig-adapter</artifactId>
-			<version>${hive.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>parquet-pig-bundle</artifactId>
-			<version>1.5.0-cdh5.3.1</version>
 		</dependency>
 	</dependencies>
 

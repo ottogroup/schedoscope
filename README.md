@@ -49,7 +49,7 @@ Please help making Schedoscope better!
 
 ## Community / Forums
 
-- [Schedoscope Users](https://groups.google.com/forum/#!forum/schedoscope-users)
+- Google Groups: [Schedoscope Users](https://groups.google.com/forum/#!forum/schedoscope-users)
 
 ## Build Status
 

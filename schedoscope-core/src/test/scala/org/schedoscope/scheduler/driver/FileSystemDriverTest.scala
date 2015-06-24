@@ -215,7 +215,6 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[FilesystemTransformation]])
       runWasAsynchronous = true
 
-    runWasAsynchronous shouldBe true
     driver.getDriverRunState(runHandle) shouldBe a[DriverRunSucceeded[_]]
 
     outputFile("aTest.file") shouldBe 'exists
@@ -232,7 +231,6 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[FilesystemTransformation]])
       runWasAsynchronous = true
 
-    runWasAsynchronous shouldBe true
     driver.getDriverRunState(runHandle) shouldBe a[DriverRunFailed[_]]
 
     inputFile("subfolder") shouldBe 'exists
