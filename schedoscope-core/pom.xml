@@ -167,6 +167,12 @@
 			<groupId>org.apache.hive.hcatalog</groupId>
 			<artifactId>hive-hcatalog-pig-adapter</artifactId>
 			<version>${hive.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>jline</artifactId>
+					<groupId>jline</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.twitter</groupId>
