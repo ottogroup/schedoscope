@@ -12,7 +12,7 @@ With Schedoscope,
 * you benefit from Scala's static type system and your IDE's code completion to make less typos that hit you late during deployment or runtime;
 * you can easily write unit tests for your transformation logic and run them quickly right out of your IDE;
 * you schedule jobs by expressing the views you need - Schedoscope takes care that all required dependencies - and only those-  are computed as well;
-* you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capactity.
+* you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capacitity.
  
 ## Getting Started
 
