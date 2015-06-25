@@ -3,8 +3,7 @@
 		class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>target/logs/schedoscope.log</file>
 		<encoder>
-			<pattern>[%-4level] [%date{ISO8601}] [%thread %X{sourceThread}]
-				[%X{akkaSource}] [%logger{36}] - %msg%n</pattern>
+			<pattern>[%-4level] [%date{ISO8601}] [%thread %X{sourceThread}] [%X{akkaSource}] [%logger{36}] - %msg%n</pattern>
 		</encoder>
 		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
 			<fileNamePattern>target/logs/schedoscope.%i.log</fileNamePattern>
