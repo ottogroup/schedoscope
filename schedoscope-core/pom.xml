@@ -203,7 +203,7 @@
 		<dependency>
 			<groupId>morphline-utils</groupId>
 			<artifactId>morphline-utils</artifactId>
-			<version>0.1.6</version>
+			<version>0.1.7</version>
 		</dependency>
 		<dependency>
 			<groupId>minioozie</groupId>
