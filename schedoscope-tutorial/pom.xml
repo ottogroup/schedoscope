@@ -15,6 +15,24 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.scalatest</groupId>
+			<artifactId>scalatest_2.10</artifactId>
+			<version>2.2.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>hadoop-launcher</groupId>
+			<artifactId>hadoop-launcher</artifactId>
+			<version>0.1.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>minioozie</groupId>
+			<artifactId>minioozie</artifactId>
+			<version>0.1.6</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-core</artifactId>
 			<version>1.1.2</version>
@@ -33,12 +51,6 @@
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-tutorial-osm-data</artifactId>
 			<version>0.1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.scalatest</groupId>
-			<artifactId>scalatest_2.10</artifactId>
-			<version>2.2.0</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.hsr</groupId>
@@ -95,12 +107,6 @@
 					<groupId>org.codehaus.jackson</groupId>
 				</exclusion>
 			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>hadoop-launcher</groupId>
-			<artifactId>hadoop-launcher</artifactId>
-			<version>0.1.0</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
