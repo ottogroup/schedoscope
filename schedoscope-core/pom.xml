@@ -208,16 +208,12 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.6</version>
+			<version>0.1.7</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
 					<artifactId>jersey-server</artifactId>
 					<groupId>com.sun.jersey</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>slf4j-log4j12</artifactId>
-					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
