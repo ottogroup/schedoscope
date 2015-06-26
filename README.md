@@ -50,6 +50,7 @@ Please help making Schedoscope better!
 ## Community / Forums
 
 - Google Groups: [Schedoscope Users](https://groups.google.com/forum/#!forum/schedoscope-users)
+- Twitter: @Schedoscope
 
 ## Build Status
 
