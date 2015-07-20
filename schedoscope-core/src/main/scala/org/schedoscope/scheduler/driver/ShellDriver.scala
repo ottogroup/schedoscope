@@ -28,7 +28,7 @@ class ShellDriver extends Driver[ShellTransformation] {
     	  new ProcessBuilder(t.shell,t.scriptFile)
       else { 
         val file = File.createTempFile("_schedoscope", ".sh")
-        using(new FileWriter(file))(writer => {writer.write("#!/bin/bash\n");t.script.foreach(line => writer.write(line))})
+        using(new FileWriter(file))(writer => {writer.write(s"#!${t.shell}\n");t.script.foreach(line => writer.write(line))})
         scala.compat.Platform.collectGarbage() // JVM Windows related bug workaround JDK-4715154
         file.deleteOnExit()
         new ProcessBuilder(t.shell,file.getCanonicalPath())
