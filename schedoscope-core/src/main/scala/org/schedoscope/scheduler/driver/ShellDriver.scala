@@ -12,7 +12,7 @@ import java.lang.InterruptedException
 import java.io.File
 import java.io.FileWriter
 
-class ShellDriver extends Driver[ShellTransformation] {
+class ShellDriver(ds:DriverSettings) extends Driver[ShellTransformation] {
   override def transformationName = "shell"
 
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
@@ -53,4 +53,7 @@ class ShellDriver extends Driver[ShellTransformation] {
   def using[A <: {def close() : Unit}, B](resource: A)(f: A => B): B =
     try f(resource) finally resource.close()
 
+}
+object ShellDriver {
+  def apply(ds: DriverSettings) = new ShellDriver(ds)
 }
