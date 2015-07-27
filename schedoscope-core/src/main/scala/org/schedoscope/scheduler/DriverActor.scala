@@ -29,6 +29,7 @@ import org.schedoscope.scheduler.driver.DriverRunSucceeded
 import org.schedoscope.scheduler.driver.FileSystemDriver
 import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.driver.OozieDriver
+import org.schedoscope.scheduler.driver.ShellDriver
 import org.schedoscope.dsl.Transformation
 import akka.actor.Actor
 import akka.actor.ActorRef
@@ -45,6 +46,9 @@ import org.schedoscope.dsl.transformations.MapreduceTransformation
 import org.schedoscope.scheduler.driver.MapreduceDriver
 import org.schedoscope.scheduler.driver.PigDriver
 import org.schedoscope.dsl.transformations.PigTransformation
+import org.schedoscope.dsl.transformations.ShellTransformation
+
+
 
 class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
@@ -195,6 +199,11 @@ object DriverActor {
         classOf[DriverActor[MorphlineTransformation]],
         actionsRouter, ds, (d: DriverSettings) => MorphlineDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
+      case "shell" => Props(
+        classOf[DriverActor[ShellTransformation]],
+        actionsRouter, ds, (d: DriverSettings) => ShellDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        
+        
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
   }
