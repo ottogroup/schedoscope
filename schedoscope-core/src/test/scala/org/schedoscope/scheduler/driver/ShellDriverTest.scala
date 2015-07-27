@@ -4,9 +4,11 @@ import org.scalatest.Matchers
 import org.schedoscope.DriverTests
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.dsl.transformations.ShellTransformation
+import org.schedoscope.DriverSettings
+import com.typesafe.config.ConfigFactory
 class ShellDriverTest extends FlatSpec with Matchers {
   
-  lazy val driver: ShellDriver = new ShellDriver()
+  lazy val driver: ShellDriver = new ShellDriver(new DriverSettings(ConfigFactory.empty(),"shell"))
 
   
     "ShellDriver" should "have transformation name shell" taggedAs (DriverTests) in {
