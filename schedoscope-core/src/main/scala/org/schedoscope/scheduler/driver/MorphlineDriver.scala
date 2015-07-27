@@ -133,14 +133,14 @@ class MorphlineDriver(val ugi: UserGroupInformation, val hadoopConf: Configurati
     val storageFormat = view.storageFormat.asInstanceOf[ExternalStorageFormat]
     val child = new DropRecordBuilder().build(null, null, null, context);
     val commandConfig = ConfigFactory.empty()
-    val fields = if (transformation.definition!="") view.fields.map(field => field.n)
-    			 else view.fields.map(field => "/"+field.n)
+    val fields = if (transformation.definition != "") view.fields.map(field => field.n)
+    else view.fields.map(field => "/" + field.n)
     val command = storageFormat match {
       case f: ExaSolution => {
-        val schema = view.fields.foldLeft(ConfigFactory.empty())((config, field) => config.withValue((if (transformation.definition=="") "/" else "")+ field.n, field.t.erasure.getSimpleName()))
+        val schema = view.fields.foldLeft(ConfigFactory.empty())((config, field) => config.withValue((if (transformation.definition == "") "/" else "") + field.n, field.t.erasure.getSimpleName()))
         val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
           withValue("keys", ConfigValueFactory.fromIterable(f.mergeKeys)).
-          withValue("merge",f.merge).
+          withValue("merge", f.merge).
           withValue("username", f.userName).
           withValue("schema", schema.root()).
           withValue("targetTable", view.n).
