@@ -61,7 +61,7 @@ object SchedoscopeRestService {
   }
 
   def start(config: Config) {
-       
+
     val numActors = Settings().restApiConcurrency
     val host = Settings().host
     val port = Settings().port
@@ -78,7 +78,7 @@ object SchedoscopeRestService {
 
   def stop(): Boolean = {
     val schedoscopeTerminated = schedoscope.shutdown()
-   
+
     system.shutdown()
     system.awaitTermination(5 seconds)
     system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)

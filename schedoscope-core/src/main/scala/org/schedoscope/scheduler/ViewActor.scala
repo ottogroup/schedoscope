@@ -344,7 +344,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         val files = FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter() {
           def accept(p: Path): Boolean = !p.getName().startsWith("_")
         })
-        
+
         files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getBlockSize())
       }
     })

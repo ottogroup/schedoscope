@@ -211,7 +211,7 @@ class SchedoscopeSystem extends SchedoscopeInterface {
     settings.system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)
     settings.system.awaitTermination(5 seconds)
     settings.system.isTerminated
-   
+
   }
 
 }
