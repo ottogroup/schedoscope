@@ -316,7 +316,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
 
       case _: FilesystemTransformation => {
-        if (lastTransformationTimestamp > 0l && getDirectorySize>0) {          
+        if (lastTransformationTimestamp > 0l && getDirectorySize > 0) {
           toMaterialize()
         } else {
           actionsManagerActor ! view
@@ -337,17 +337,16 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
 
   }
-  def getDirectorySize() : Long = {
-		  settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
+  def getDirectorySize(): Long = {
+    settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
       def run() = {
-        val path= new Path(view.fullPath )     
-        val files =FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter()
-        {def accept(p:Path):Boolean = !p.getName().startsWith("_")})
-        files.foldLeft(0l)((size:Long,status:FileStatus) =>size+status.getBlockSize())
+        val path = new Path(view.fullPath)
+        val files = FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter() { def accept(p: Path): Boolean = !p.getName().startsWith("_") })
+        files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getBlockSize())
       }
-    })       
+    })
   }
-  
+
   def toRetrying(retries: Int): akka.actor.Cancellable = {
     logStateInfo("retrying")
 

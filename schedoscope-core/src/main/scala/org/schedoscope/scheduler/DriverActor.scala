@@ -48,8 +48,6 @@ import org.schedoscope.scheduler.driver.PigDriver
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.ShellTransformation
 
-
-
 class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
   val log = Logging(system, this)
@@ -202,8 +200,7 @@ object DriverActor {
       case "shell" => Props(
         classOf[DriverActor[ShellTransformation]],
         actionsRouter, ds, (d: DriverSettings) => ShellDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-        
-        
+
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }
   }

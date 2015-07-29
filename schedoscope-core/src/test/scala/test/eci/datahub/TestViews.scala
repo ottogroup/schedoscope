@@ -38,6 +38,7 @@ import org.schedoscope.Settings
 import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.dsl.JDBC
 import scala.io.Source
+
 case class Brand(
   ecNr: Parameter[String]) extends View
   with Id

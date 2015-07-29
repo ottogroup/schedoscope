@@ -8,9 +8,9 @@
 
 	<action name="waste-time">
 		<fs>
-			<mkdir path="/tmp/schedoscope/oozie/dummy1"/>
-			<mkdir path="/tmp/schedoscope/oozie/dummy1/dummy2"/>
-			<mkdir path="/tmp/schedoscope/oozie/dummy1/dummy2/dummy3"/>
+			<mkdir path="/tmp/schedoscope/oozie/dummy1" />
+			<mkdir path="/tmp/schedoscope/oozie/dummy1/dummy2" />
+			<mkdir path="/tmp/schedoscope/oozie/dummy1/dummy2/dummy3" />
 			<delete path="/tmp/schedoscope/oozie/dummy1" />
 		</fs>
 

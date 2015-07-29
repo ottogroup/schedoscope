@@ -1,26 +1,24 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-
 .node circle {
-  stroke: #ccc;
-  stroke-width: 0.5px;
+	stroke: #ccc;
+	stroke-width: 0.5px;
 }
 
 .node {
-  font: 10px sans-serif;
+	font: 10px sans-serif;
 }
 
 .link {
-  fill: none;
-  stroke: #ccc;
-  stroke-width: 0.5px;
+	fill: none;
+	stroke: #ccc;
+	stroke-width: 0.5px;
 }
-
 </style>
 <body>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script>
 
 var diameter = 1400;
 
@@ -166,4 +164,3 @@ var svg = d3.select("body").append("svg")
 d3.select(self.frameElement).style("height", diameter - 150 + "px");
 
 </script>
-

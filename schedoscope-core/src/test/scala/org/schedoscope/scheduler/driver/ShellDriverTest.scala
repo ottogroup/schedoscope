@@ -6,26 +6,28 @@ import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.dsl.transformations.ShellTransformation
 import org.schedoscope.DriverSettings
 import com.typesafe.config.ConfigFactory
-class ShellDriverTest extends FlatSpec with Matchers {
-  
-  lazy val driver: ShellDriver = new ShellDriver(new DriverSettings(ConfigFactory.empty(),"shell"))
+import org.schedoscope.ShellTests
 
-  
-    "ShellDriver" should "have transformation name shell" taggedAs (DriverTests) in {
+class ShellDriverTest extends FlatSpec with Matchers {
+
+  lazy val driver: ShellDriver = new ShellDriver(new DriverSettings(ConfigFactory.empty(), "shell"))
+
+  "ShellDriver" should "have transformation name shell" taggedAs (DriverTests, ShellTests) in {
     driver.transformationName shouldBe "shell"
   }
 
-  it should "execute shell tranformations synchronously" taggedAs (DriverTests) in {
+  it should "execute shell tranformations synchronously" taggedAs (DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("#"))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute another shell tranformations synchronously" taggedAs (DriverTests) in {
+  it should "execute another shell tranformations synchronously" taggedAs (DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("echo test >> /tmp/testout"))
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
-    it should "execute pig tranformations and return errors when running synchronously" taggedAs (DriverTests) in {
+
+  it should "execute pig tranformations and return errors when running synchronously" taggedAs (DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("exit 1"))
 
     driverRunState shouldBe a[DriverRunFailed[_]]

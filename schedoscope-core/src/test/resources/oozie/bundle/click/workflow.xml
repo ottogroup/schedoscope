@@ -7,11 +7,11 @@
 	<start to="elt" />
 
 	<action name="elt">
-		<fs>			
-			<mkdir path="${output}"/>
-			<move source="${input}" target="${output}"/>
+		<fs>
+			<mkdir path="${output}" />
+			<move source="${input}" target="${output}" />
 		</fs>
-	
+
 		<ok to="end" />
 		<error to="kill" />
 	</action>
