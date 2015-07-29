@@ -35,6 +35,8 @@ import akka.event.LoggingReceive
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.dsl.ExternalTransformation
+import org.apache.hadoop.fs.PathFilter
+import org.apache.hadoop.fs.FileStatus
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
@@ -196,7 +198,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case NewDataAvailable(viewWithNewData) =>
       if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
       else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
-
     case Invalidate() => {
       sender ! ViewStatusResponse("invalidated", view, self)
       toDefault(true, "invalidated")
@@ -315,7 +316,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
 
       case _: FilesystemTransformation => {
-        if (lastTransformationTimestamp > 0l) {
+        if (lastTransformationTimestamp > 0l && getDirectorySize>0) {          
           toMaterialize()
         } else {
           actionsManagerActor ! view
@@ -336,7 +337,17 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
 
   }
-
+  def getDirectorySize() : Long = {
+		  settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
+      def run() = {
+        val path= new Path(view.fullPath )     
+        val files =FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter()
+        {def accept(p:Path):Boolean = !p.getName().startsWith("_")})
+        files.foldLeft(0l)((size:Long,status:FileStatus) =>size+status.getBlockSize())
+      }
+    })       
+  }
+  
   def toRetrying(retries: Int): akka.actor.Cancellable = {
     logStateInfo("retrying")
 
