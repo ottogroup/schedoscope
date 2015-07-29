@@ -27,13 +27,14 @@ import akka.event.Logging
 import akka.event.LoggingReceive
 import org.schedoscope.dsl.ExternalTransformation
 import scala.collection.mutable.HashSet
+import kamon.Kamon
 
 class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
   val log = Logging(system, ViewManagerActor.this)
 
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
-
+  val viewCreationCounter = Kamon.metrics.counter("viewsCreated")
   override def preRestart(reason: Throwable, message: Option[Any]) {
     // prevent termination of children during restart and cause their own restart
   }
