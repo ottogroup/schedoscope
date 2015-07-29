@@ -340,8 +340,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def getDirectorySize() : Long = {
 		  settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
       def run() = {
-        val path= new Path(view.fullPath )     
-        val files =FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter()
+        val path = new Path(view.fullPath )     
+        val files = FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter()
         {def accept(p:Path):Boolean = !p.getName().startsWith("_")})
         files.foldLeft(0l)((size:Long,status:FileStatus) =>size+status.getBlockSize())
       }
