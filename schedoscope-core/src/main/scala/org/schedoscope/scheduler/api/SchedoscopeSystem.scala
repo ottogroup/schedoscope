@@ -51,6 +51,7 @@ import org.schedoscope.scheduler.MaterializeViewMode
 import org.schedoscope.scheduler.api.SchedoscopeJsonProtocol.formatDate
 import akka.util.Timeout
 import akka.actor.Actor
+import kamon.Kamon
 
 class SchedoscopeSystem extends SchedoscopeInterface {
   val log = Logging(settings.system, classOf[RootActor])
@@ -210,6 +211,7 @@ class SchedoscopeSystem extends SchedoscopeInterface {
     settings.system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)
     settings.system.awaitTermination(5 seconds)
     settings.system.isTerminated
+   
   }
 
 }
