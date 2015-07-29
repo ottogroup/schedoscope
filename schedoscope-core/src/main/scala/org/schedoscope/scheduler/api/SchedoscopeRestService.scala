@@ -16,11 +16,9 @@
 package org.schedoscope.scheduler.api
 
 import scala.concurrent.duration.DurationInt
-
 import org.schedoscope.Settings
 import org.schedoscope.scheduler.RootActor.settings
 import org.schedoscope.scheduler.api.SchedoscopeJsonProtocol._
-
 import akka.actor.Actor
 import akka.actor.ActorSystem
 import akka.actor.PoisonPill
@@ -37,9 +35,10 @@ import spray.routing.Directive.pimpApply
 import spray.routing.HttpService
 import spray.routing.PathMatcher.PimpedPathMatcher
 import spray.routing.directives.ParamDefMagnet.apply
+import kamon.Kamon
 
 object SchedoscopeRestService {
-
+  Kamon.start
   val schedoscope = new SchedoscopeSystem()
 
   implicit val system = ActorSystem("schedoscope-rest-service")
@@ -62,6 +61,7 @@ object SchedoscopeRestService {
   }
 
   def start(config: Config) {
+       
     val numActors = Settings().restApiConcurrency
     val host = Settings().host
     val port = Settings().port
@@ -78,10 +78,12 @@ object SchedoscopeRestService {
 
   def stop(): Boolean = {
     val schedoscopeTerminated = schedoscope.shutdown()
+   
     system.shutdown()
     system.awaitTermination(5 seconds)
     system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)
     system.awaitTermination(5 seconds)
+    Kamon.shutdown
     schedoscopeTerminated && system.isTerminated
   }
 }
