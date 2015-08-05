@@ -308,7 +308,7 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "be dynamically instantiatable" in {
-    val productBrandView = View.newView(classOf[ProductBrand], "dev", Parameter.asParameter("ec0106"), Parameter.asParameter("2014"), Parameter.asParameter("01"), Parameter.asParameter("01"))
+    val productBrandView = View.newView(classOf[ProductBrand], "dev", p("ec0106"), p("2014"), p("01"), p("01"))
 
     productBrandView shouldEqual ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
   }

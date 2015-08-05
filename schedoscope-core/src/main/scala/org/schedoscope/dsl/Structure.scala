@@ -17,17 +17,17 @@ package org.schedoscope.dsl
 
 import scala.Array.canBuildFrom
 import scala.collection.mutable.ListBuffer
+import java.util.concurrent.ConcurrentHashMap
+import java.lang.reflect.Method
 
 abstract class Structure extends StructureDsl with Named {
-  var parentField: FieldLike[Structure] = null
-
   override def namingBase = this.getClass().getSimpleName()
 
   private val fieldOrder = ListBuffer[Field[_]]()
 
   def registerField(f: Field[_]) {
     fieldOrder += f
-    f.structure = this
+    f.assignTo(this)
   }
 
   def fields = {
@@ -43,12 +43,17 @@ abstract class Structure extends StructureDsl with Named {
       .map { case (_, _, f) => f }.toSeq
   }
 
-  def nameOf[P <: FieldLike[_]](p: P) =
-    this.getClass().getMethods()
+  lazy val fieldLikeGetters =
+    this.getClass
+      .getMethods()
       .filter { _.getParameterTypes().length == 0 }
       .filter { !_.getName().contains("$") }
-      .filter { _.getReturnType().isAssignableFrom(p.getClass()) }
-      .filter { _.invoke(this) eq p }
+      .filter { m => classOf[FieldLike[_]].isAssignableFrom(m.getReturnType()) }
+
+  def nameOf[F <: FieldLike[_]](f: F) =
+    fieldLikeGetters
+      .filter { _.getReturnType().isAssignableFrom(f.getClass()) }
+      .filter { _.invoke(this) eq f }
       .map { _.getName() }
       .headOption
 }
