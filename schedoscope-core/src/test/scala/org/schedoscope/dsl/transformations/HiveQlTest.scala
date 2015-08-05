@@ -20,18 +20,12 @@ import java.util.Date
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-
-import org.schedoscope.dsl.transformations.HiveQlDsl.dsl;
-import org.schedoscope.dsl.transformations.HiveQlDsl.f;
-import org.schedoscope.dsl.transformations.HiveQlDsl.get;
-import org.schedoscope.dsl.transformations.HiveQlDsl.t;
-import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource;
-
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.Structure
-import org.schedoscope.dsl.View
 import org.schedoscope.dsl.Transformation.replaceParameters
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
 
 case class Article() extends Structure {
   val name = fieldOf[String]
@@ -63,17 +57,6 @@ case class OrderAll(year: Parameter[Int], month: Parameter[Int], day: Parameter[
 
   val orderItem = dependsOn(() => OrderItem(year, month, day))
   val order = dependsOn(() => Order(year, month, day))
-
-  transformVia(() =>
-    HiveTransformation(HiveTransformation.insertInto(
-      this,
-      dsl {
-        _.select(order().viewId, get(orderItem().eans, 0), orderItem().article)
-          .from(order())
-          .join(orderItem())
-          .on(order().viewId.equal(orderItem().orderId))
-          .where(order().viewId.equal(4711))
-      })))
 }
 
 class HiveTransformationTest extends FlatSpec with BeforeAndAfter with Matchers {
@@ -146,11 +129,5 @@ SELECT *
 FROM STUFF
 WHERE param = 2
 AND anotherParam = 'Value'"""
-  }
-
-  "HiveTransformationDsl.dsl" should "allow the typesafe specification of a query" in {
-    val orderAll = OrderAll(p(2014), p(10), p(12))
-
-    val t = orderAll.transformation().asInstanceOf[HiveTransformation]
   }
 }

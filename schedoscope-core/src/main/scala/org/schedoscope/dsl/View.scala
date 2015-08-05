@@ -31,9 +31,9 @@ import org.schedoscope.test.rows
 
 abstract class View extends Structure with ViewDsl with DelayedInit {
 
-  val settings = Settings()
+  var env = "dev"
 
-  private def partitioningSuffix = {
+  override def n = super.n + {
     val partitionings = parameters
       .filter { p => isPartition(p) && isSuffixPartition(p) }
       .map { p => p.v.get }
@@ -44,42 +44,37 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       "_" + partitionings.mkString("_").toLowerCase()
   }
 
-  override def n = super.n + partitioningSuffix
-
   def nWithoutPartitioningSuffix = super.n
 
+  var moduleNameBuilder: () => String = () => this.getClass().getPackage().getName()
   def module = Named.formatName(moduleNameBuilder()).replaceAll("[.]", "_")
 
-  def getCanonicalClassname = this.getClass.getCanonicalName
-
-  var env = "dev"
-
-  var moduleNameBuilder: () => String = () => this.getClass().getPackage().getName()
-  var dbNameBuilder: String => String = (env: String) => env.toLowerCase() + "_" + module
-  var moduleLocationPathBuilder: String => String = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + module.replaceFirst("app", "applications")).replaceAll("_", "/")
-  var locationPathBuilder: String => String = (env: String) => moduleLocationPathBuilder(env) + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
-  var partitionPathBuilder: () => String = () => partitionSpec
-  var avroSchemaPathPrefixBuilder: String => String = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
-
-  def partitionSpec = "/" + partitionParameters.map(p => s"${p.n}=${p.v.getOrElse("")}").mkString("/")
-
-  def partitionValues = partitionParameters.map(p => p.v.getOrElse("").toString).toList
-
-  def dbName = dbNameBuilder(env)
-
-  def tableName = dbName + "." + n
-
-  def locationPath = locationPathBuilder(env)
-
-  def fullPath = locationPath + partitionPathBuilder()
-
-  def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
-
+  def urlPathPrefix = s"${Named.formatName(moduleNameBuilder())}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}"
   def urlPath = s"${urlPathPrefix}/${partitionValues.mkString("/")}"
 
-  def urlPathPrefix = s"${Named.formatName(moduleNameBuilder())}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}"
+  override def toString() = urlPath
+
+  var dbNameBuilder: String => String = (env: String) => env.toLowerCase() + "_" + module
+  def dbName = dbNameBuilder(env)
+  def tableName = dbName + "." + n
+
+  var moduleLocationPathBuilder: String => String = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + module.replaceFirst("app", "applications")).replaceAll("_", "/")
+
+  var locationPathBuilder: String => String = (env: String) => moduleLocationPathBuilder(env) + (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") + "/" + n + (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
+  def locationPath = locationPathBuilder(env)
+
+  var partitionPathBuilder: () => String = () => partitionSpec
+  def fullPath = locationPath + partitionPathBuilder()
+
+  var avroSchemaPathPrefixBuilder: String => String = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
+  def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
   private val suffixPartitions = new HashSet[Parameter[_]]()
+
+  def asTableSuffix[P <: Parameter[_]](p: P): P = {
+    suffixPartitions.add(p)
+    p
+  }
 
   def isPartition(p: Parameter[_]) = parameters.contains(p)
 
@@ -87,16 +82,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   def isPartitioned() = !partitionParameters.isEmpty()
 
-  def isExternal() = transformation().isInstanceOf[ExternalTransformation]
-
-  def asTableSuffix[P <: Parameter[_]](p: P): P = {
-    suffixPartitions.add(p)
-    p
+  def registerParameter(p: Parameter[_]) {
+    p.assignTo(this)
   }
 
-  def parameters = this.getClass().getMethods()
-    .filter { _.getParameterTypes().length == 0 }
-    .filter { !_.getName().contains("$") }
+  def parameters = fieldLikeGetters
     .filter { m => classOf[Parameter[_]].isAssignableFrom(m.getReturnType()) }
     .map { m => m.invoke(this).asInstanceOf[Parameter[_]] }
     .filter { m => m != null }
@@ -106,14 +96,17 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def partitionParameters = parameters
     .filter { p => isPartition(p) && !isSuffixPartition(p) }
 
-  private val dependencyFutures = ListBuffer[() => Seq[View]]()
+  def partitionSpec = "/" + partitionParameters.map(p => s"${p.n}=${p.v.getOrElse("")}").mkString("/")
+  def partitionValues = partitionParameters.map(p => p.v.getOrElse("").toString).toList
 
-  def dependencies = dependencyFutures.flatMap { _() }.distinct
+  private val deferredDependencies = ListBuffer[() => Seq[View]]()
+
+  def dependencies = deferredDependencies.flatMap { _() }.distinct
 
   def dependsOn[V <: View: Manifest](dsf: () => Seq[V]) {
     val df = () => dsf().map { View.register(this.env, _) }
 
-    dependencyFutures += df
+    deferredDependencies += df
   }
 
   def dependsOn[V <: View: Manifest](df: () => V) = {
@@ -125,13 +118,13 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }
 
   var storageFormat: StorageFormat = TextFile()
-  var additionalStoragePathPrefix: String = null
-  var additionalStoragePathSuffix: String = null
+  var additionalStoragePathPrefix: Option[String] = None
+  var additionalStoragePathSuffix: Option[String] = None
 
   def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) {
     storageFormat = f
-    this.additionalStoragePathPrefix = additionalStoragePathPrefix
-    this.additionalStoragePathSuffix = additionalStoragePathSuffix
+    this.additionalStoragePathPrefix = if (additionalStoragePathPrefix != null) Some(additionalStoragePathPrefix) else None
+    this.additionalStoragePathSuffix = if (additionalStoragePathSuffix != null) Some(additionalStoragePathSuffix) else None
   }
 
   var comment: Option[String] = None
@@ -143,19 +136,10 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   var transformation: () => Transformation = () => NoOp()
 
   def transformVia(ft: () => Transformation) {
-    initViewReferences
-    transformation = ft
-  }
-
-  def initViewReferences() {
     for (p <- parameters)
-      p.structure = this
-  }
+      registerParameter(p)
 
-  def delayedInit(body: => Unit) {
-    body
-    initViewReferences
-
+    transformation = ft
   }
 
   def configureTransformation(k: String, v: Any) {
@@ -163,12 +147,14 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     transformVia(() => t.configureWith(Map((k, v))))
   }
 
-  def configureTransformation(c: Map[String, Any]) {
-    val t = transformation()
-    transformVia(() => t.configureWith(c))
-  }
+  def isExternal() = transformation().isInstanceOf[ExternalTransformation]
 
-  override def toString() = urlPath
+  def delayedInit(body: => Unit) {
+    body
+
+    for (p <- parameters)
+      registerParameter(p)
+  }
 }
 
 object View {

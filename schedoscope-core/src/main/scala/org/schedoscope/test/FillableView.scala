@@ -57,7 +57,6 @@ trait rows extends View {
 
   // overrides (to enable correct table/database names, otherwise $$anonFunc...) 
   override def namingBase = this.getClass.getSuperclass.getSimpleName()
-  override def getCanonicalClassname = this.getClass.getSuperclass.getCanonicalName
   moduleNameBuilder = () => this.getClass().getSuperclass.getPackage().getName()
 
   def set(row: (FieldLike[_], Any)*) {

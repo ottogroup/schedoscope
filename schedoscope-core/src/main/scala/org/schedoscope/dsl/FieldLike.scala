@@ -18,14 +18,13 @@ package org.schedoscope.dsl
 abstract class FieldLike[T: Manifest] extends Named {
   val t = manifest[T]
 
-  var structure: Structure = null
+  var deferredNamingBase = () => t.runtimeClass.getSimpleName
 
-  override def namingBase = {
-    if ((structure != null) && (structure.nameOf(this).isDefined))
-      structure.nameOf(this).get
-    else
-      t.runtimeClass.getSimpleName
+  def assignTo(s: Structure) {
+    deferredNamingBase = () => s.nameOf(this).getOrElse(t.runtimeClass.getSimpleName)
   }
+
+  override def namingBase = deferredNamingBase()
 
   def <=(v: T) = (this, v)
 }
@@ -43,11 +42,6 @@ case class Field[T: Manifest](orderWeight: Long, nameOverride: String) extends F
 }
 
 object Field {
-  implicit def s[T <: Structure: Manifest](fl: Field[T]) = {
-    val s = manifest[T].erasure.newInstance().asInstanceOf[T]
-    s.parentField = fl.asInstanceOf[FieldLike[Structure]]
-    s
-  }
   def v[T](f: Field[T], v: T) = f <= v
 }
 
@@ -58,7 +52,7 @@ case class Parameter[T: Manifest](orderWeight: Long) extends FieldLike[T] with V
     }
     val p = a.asInstanceOf[Parameter[T]]
 
-    (p.t == this.t) && (p.v == this.v) && (p.n == this.n)
+    (p.t == this.t) && (p.v == this.v)
   }
 
   override def hashCode(): Int = {
@@ -81,13 +75,11 @@ object Parameter {
     parameter
   }
 
-  def asParameter[T: Manifest](v: T): Parameter[T] = {
+  def p[T: Manifest](v: Parameter[T]): Parameter[T] = p(v.v.get)
+
+  def p[T: Manifest](v: T): Parameter[T] = {
     val f = Parameter[T]
     f.v = Some(v)
     f
   }
-
-  def p[T: Manifest](v: Parameter[T]) = asParameter[T](v.v.get)
-
-  def p[T: Manifest](v: T) = asParameter[T](v)
 }
