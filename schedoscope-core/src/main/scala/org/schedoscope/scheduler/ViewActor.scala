@@ -131,11 +131,26 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       log.info("SUCCESS")
 
       setVersion(view)
-      if (!view.isExternal())
-        touchSuccessFlag(view)
+      if (view.transformation().name == "filesystem") {
+        if (getDirectorySize > 0l) {
+          touchSuccessFlag(view)
+          logTransformationTimestamp(view)
+          toMaterialize
+        } else {
+          log.debug("filesystem transformation generated no data for"+view)
 
-      logTransformationTimestamp(view)
-      toMaterialize
+          listenersWaitingForMaterialize.foreach(s => s ! NoDataAvailable(view))
+          listenersWaitingForMaterialize.clear
+
+          toDefault(false, "nodata")
+        }
+
+      } else {
+        if (!view.isExternal())
+          touchSuccessFlag(view)
+        logTransformationTimestamp(view)
+        toMaterialize
+      }
     }
 
     case _: ActionFailure[_] => toRetrying(retries)
@@ -316,7 +331,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
 
       case _: FilesystemTransformation => {
-        if (lastTransformationTimestamp > 0l && getDirectorySize > 0) {
+        log.debug(s"FileTransformation: lastTransformationTimestamp ${lastTransformationTimestamp}, ")
+        if (lastTransformationTimestamp > 0l && getDirectorySize > 0l) {
           toMaterialize()
         } else {
           actionsManagerActor ! view
@@ -337,17 +353,20 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
 
   }
+  // Calculate size of view data
   def getDirectorySize(): Long = {
-    settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
+    val size=settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
       def run() = {
         val path = new Path(view.fullPath)
         val files = FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter() {
           def accept(p: Path): Boolean = !p.getName().startsWith("_")
+          
         })
-
-        files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getBlockSize())
+        
+        files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getLen())
       }
-    })
+    })   
+    size
   }
 
   def toRetrying(retries: Int): akka.actor.Cancellable = {
