@@ -353,8 +353,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
 
   }
+  // Calculate size of view data
   def getDirectorySize(): Long = {
-    log.debug("Computing size for : "+view.fullPath)
     val size=settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
       def run() = {
         val path = new Path(view.fullPath)
@@ -366,7 +366,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getLen())
       }
     })
-    log.debug("size: "+size)
+   
     size
   }
 
