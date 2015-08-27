@@ -365,8 +365,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         
         files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getLen())
       }
-    })
-   
+    })   
     size
   }
 
