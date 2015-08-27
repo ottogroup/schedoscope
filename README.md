@@ -61,11 +61,11 @@ The two major changes involve:
 
 Note that the change to `MonthlyParameterization` results in recomputation of views that implement it. 
 
-
 ###### 8/20/2015 - Schedoscope @ Strata
 
 We are happy to present Schedoscope as a system demo at Strata NYC on Wednesday, 30th September 2015.
 
+([more](https://github.com/ottogroup/schedoscope/wiki/News))
 
 ## Community / Forums
 
