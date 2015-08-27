@@ -187,6 +187,7 @@ trait MonthlyParameterization {
   val year: Parameter[String]
   val month: Parameter[String]
   import DateParameterizationUtils._
+  val monthId: Parameter[String] = p(s"${year.v.get}${month.v.get}")
 
   def prevMonth() = DateParameterizationUtils.prevMonth(year, month)
 
