@@ -137,7 +137,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
           logTransformationTimestamp(view)
           toMaterialize
         } else {
-          log.debug("filesystem transformation generated no data for"+view)
+          log.debug("filesystem transformation generated no data for" + view)
 
           listenersWaitingForMaterialize.foreach(s => s ! NoDataAvailable(view))
           listenersWaitingForMaterialize.clear
@@ -355,17 +355,17 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
   // Calculate size of view data
   def getDirectorySize(): Long = {
-    val size=settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
+    val size = settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
       def run() = {
         val path = new Path(view.fullPath)
         val files = FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter() {
           def accept(p: Path): Boolean = !p.getName().startsWith("_")
-          
+
         })
-        
+
         files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getLen())
       }
-    })   
+    })
     size
   }
 
