@@ -186,9 +186,6 @@ object DateParameterizationUtils {
 trait MonthlyParameterization {
   val year: Parameter[String]
   val month: Parameter[String]
-
-  import DateParameterizationUtils._
-
   val monthId: Parameter[String] = p(s"${year.v.get}${month.v.get}")
 
   def prevMonth() = DateParameterizationUtils.prevMonth(year, month)
@@ -205,10 +202,10 @@ trait MonthlyParameterization {
   def allMonths() = DateParameterizationUtils.allMonths()
 
   def lastMonths(c: Int) = {
-    val to = parametersToDay(year, month, p("1"))
+    val to = DateParameterizationUtils.parametersToDay(year, month, p("1"))
     val from = to
     from.add(Calendar.MONTH, c)
-    monthParameterRange(dayRange(from, to))
+    DateParameterizationUtils.monthParameterRange(DateParameterizationUtils.dayRange(from, to))
   }
 
   def allDaysOfMonth() = DateParameterizationUtils.allDaysOfMonth(year, month)
@@ -218,11 +215,8 @@ trait DailyParameterization {
   val year: Parameter[String]
   val month: Parameter[String]
   val day: Parameter[String]
-
-  import DateParameterizationUtils._
-
   val dateId: Parameter[String] = p(s"${year.v.get}${month.v.get}${day.v.get}")
-
+  
   def prevDay() = DateParameterizationUtils.prevDay(year, month, day)
 
   def prevMonth() = DateParameterizationUtils.prevMonth(year, month)
@@ -236,16 +230,16 @@ trait DailyParameterization {
   def allMonths() = DateParameterizationUtils.allMonths()
 
   def lastMonths(c: Int) = {
-    val to = parametersToDay(year, month, day)
+    val to = DateParameterizationUtils.parametersToDay(year, month, day)
     val from = to
     from.add(Calendar.MONTH, c)
-    dayParameterRange(dayRange(from, to))
+    DateParameterizationUtils.dayParameterRange(DateParameterizationUtils.dayRange(from, to))
   }
 
   def lastDays(c: Int) = {
-    val to = parametersToDay(year, month, day)
+    val to = DateParameterizationUtils.parametersToDay(year, month, day)
     val from = to
     from.add(Calendar.DATE, c)
-    dayParameterRange(dayRange(from, to))
+    DateParameterizationUtils.dayParameterRange(DateParameterizationUtils.dayRange(from, to))
   }
 }
