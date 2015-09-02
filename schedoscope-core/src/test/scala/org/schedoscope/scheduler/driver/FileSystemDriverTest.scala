@@ -26,7 +26,7 @@ import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.test.resources.LocalTestResources
-import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
 
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: FileSystemDriver = new LocalTestResources().fileSystemDriver
@@ -251,7 +251,7 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
 
     driver.driverRunCompleted(runHandle)
 
-    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+    driverRunCompletionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 
 }

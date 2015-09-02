@@ -20,7 +20,7 @@ import org.scalatest.Matchers
 import org.schedoscope.DriverTests
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.dsl.transformations.PigTransformation
-import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
 
 class PigDriverTest extends FlatSpec with Matchers {
   lazy val driver: PigDriver = new LocalTestResources().pigDriver
@@ -78,6 +78,6 @@ class PigDriverTest extends FlatSpec with Matchers {
 
     driver.driverRunCompleted(runHandle)
 
-    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+    driverRunCompletionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 }

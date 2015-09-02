@@ -45,7 +45,7 @@ object TestDriverRunCompletionHandlerCallCounter {
     calls.put(run, stateOfCompletion)
   }
 
-  def driverRunCompletitionHandlerCalled(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) = calls.get(run) == stateOfCompletion
+  def driverRunCompletionHandlerCalled(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) = calls.get(run) == stateOfCompletion
 }
 
 class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompletionHandler[T] {

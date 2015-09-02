@@ -8,7 +8,7 @@ import org.schedoscope.DriverSettings
 import com.typesafe.config.ConfigFactory
 import org.schedoscope.ShellTests
 import org.schedoscope.test.resources.LocalTestResources
-import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
 
 class ShellDriverTest extends FlatSpec with Matchers {
 
@@ -42,6 +42,6 @@ class ShellDriverTest extends FlatSpec with Matchers {
 
     driver.driverRunCompleted(runHandle)
 
-    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+    driverRunCompletionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 }

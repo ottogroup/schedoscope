@@ -23,7 +23,7 @@ import org.schedoscope.DriverTests
 import org.schedoscope.OozieTests
 import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.test.resources.OozieTestResources
-import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
 
 class OozieDriverTest extends FlatSpec with Matchers {
 
@@ -121,6 +121,6 @@ class OozieDriverTest extends FlatSpec with Matchers {
 
     driver.driverRunCompleted(runHandle)
 
-    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+    driverRunCompletionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 }
