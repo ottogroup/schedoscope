@@ -34,7 +34,7 @@ import org.schedoscope.Settings
 import org.schedoscope.dsl.transformations.OozieTransformation
 import com.typesafe.config.ConfigFactory
 
-class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
+class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val client: OozieClient) extends Driver[OozieTransformation] {
 
   override def transformationName = "oozie"
 
@@ -104,5 +104,5 @@ class OozieDriver(val client: OozieClient) extends Driver[OozieTransformation] {
 }
 
 object OozieDriver {
-  def apply(ds: DriverSettings) = new OozieDriver(new OozieClient(ds.url))
+  def apply(ds: DriverSettings) = new OozieDriver(ds.driverRunCompletionHandlers, new OozieClient(ds.url))
 }

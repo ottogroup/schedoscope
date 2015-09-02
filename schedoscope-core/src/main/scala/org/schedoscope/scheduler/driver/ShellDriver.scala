@@ -12,7 +12,7 @@ import java.lang.InterruptedException
 import java.io.File
 import java.io.FileWriter
 
-class ShellDriver(ds: DriverSettings) extends Driver[ShellTransformation] {
+class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extends Driver[ShellTransformation] {
   override def transformationName = "shell"
 
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
@@ -59,5 +59,5 @@ class ShellDriver(ds: DriverSettings) extends Driver[ShellTransformation] {
 
 }
 object ShellDriver {
-  def apply(ds: DriverSettings) = new ShellDriver(ds)
+  def apply(ds: DriverSettings) = new ShellDriver(ds.driverRunCompletionHandlers)
 }

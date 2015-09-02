@@ -7,10 +7,12 @@ import org.schedoscope.dsl.transformations.ShellTransformation
 import org.schedoscope.DriverSettings
 import com.typesafe.config.ConfigFactory
 import org.schedoscope.ShellTests
+import org.schedoscope.test.resources.LocalTestResources
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
 
 class ShellDriverTest extends FlatSpec with Matchers {
 
-  lazy val driver: ShellDriver = new ShellDriver(new DriverSettings(ConfigFactory.empty(), "shell"))
+  lazy val driver: ShellDriver = new LocalTestResources().shellDriver
 
   "ShellDriver" should "have transformation name shell" taggedAs (DriverTests, ShellTests) in {
     driver.transformationName shouldBe "shell"
@@ -31,5 +33,15 @@ class ShellDriverTest extends FlatSpec with Matchers {
     val driverRunState = driver.runAndWait(ShellTransformation("exit 1"))
 
     driverRunState shouldBe a[DriverRunFailed[_]]
+  }
+
+  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(ShellTransformation("#"))
+
+    while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
+
+    driver.driverRunCompleted(runHandle)
+
+    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 }

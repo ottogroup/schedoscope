@@ -48,7 +48,7 @@ import org.schedoscope.dsl.transformations.StoreFrom
 import org.schedoscope.dsl.transformations.MkDir
 import org.schedoscope.scheduler.driver.FileSystemDriver._
 
-class FileSystemDriver(val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
+class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
 
   override def transformationName = "filesystem"
 
@@ -252,7 +252,7 @@ object FileSystemDriver {
   def fileSystem(path: String, conf: Configuration) = FileSystem.get(uri(path), conf)
 
   def apply(ds: DriverSettings) = {
-    new FileSystemDriver(Settings().userGroupInformation, Settings().hadoopConf)
+    new FileSystemDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation, Settings().hadoopConf)
   }
 
   private val checksumCache = new HashMap[String, String]()

@@ -21,6 +21,7 @@ import org.scalatest.Matchers
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.test.resources.LocalTestResources
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
 
 class HiveDriverTest extends FlatSpec with Matchers {
   lazy val driver: HiveDriver = new LocalTestResources().hiveDriver
@@ -69,5 +70,15 @@ class HiveDriverTest extends FlatSpec with Matchers {
 
     runWasAsynchronous shouldBe true
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
+  }
+
+  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(HiveTransformation("SHOW TABLES"))
+
+    while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
+
+    driver.driverRunCompleted(runHandle)
+
+    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 }

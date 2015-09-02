@@ -23,6 +23,7 @@ import org.schedoscope.DriverTests
 import org.schedoscope.OozieTests
 import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.test.resources.OozieTestResources
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
 
 class OozieDriverTest extends FlatSpec with Matchers {
 
@@ -111,5 +112,15 @@ class OozieDriverTest extends FlatSpec with Matchers {
     }
 
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
+  }
+
+  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(workingOozieTransformation)
+
+    while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
+
+    driver.driverRunCompleted(runHandle)
+
+    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 }

@@ -27,7 +27,7 @@ import org.schedoscope.Settings
 import org.schedoscope.DriverSettings
 import java.security.PrivilegedAction
 
-class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTransformation] {
+class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[MapreduceTransformation] {
 
   val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))
 
@@ -94,5 +94,5 @@ class MapreduceDriver(val ugi: UserGroupInformation) extends Driver[MapreduceTra
 }
 
 object MapreduceDriver {
-  def apply(ds: DriverSettings) = new MapreduceDriver(Settings().userGroupInformation)
+  def apply(ds: DriverSettings) = new MapreduceDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation)
 }

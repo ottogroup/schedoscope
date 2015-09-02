@@ -52,7 +52,7 @@ import org.apache.pig.PigException
 
 import scala.collection.JavaConversions._
 
-class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation] {
+class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[PigTransformation] {
 
   override def transformationName = "pig"
 
@@ -99,9 +99,8 @@ class PigDriver(val ugi: UserGroupInformation) extends Driver[PigTransformation]
 }
 
 object PigDriver {
-  def apply(ds: DriverSettings) = {
-    val ugi = Settings().userGroupInformation
-    new PigDriver(ugi)
-  }
+  def apply(ds: DriverSettings) =
+    new PigDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation)
+
 }
 

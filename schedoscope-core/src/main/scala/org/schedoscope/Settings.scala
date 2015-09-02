@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.Duration
+import scala.collection.JavaConversions._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
@@ -205,5 +206,7 @@ class DriverSettings(val config: Config, val name: String) {
       libJars.map(lj => location + "/" + Paths.get(lj).getFileName.toString)
     }
   }
+  
+  lazy val driverRunCompletionHandlers = config.getStringList("driverRunCompletionHandlers").toList
 }
 

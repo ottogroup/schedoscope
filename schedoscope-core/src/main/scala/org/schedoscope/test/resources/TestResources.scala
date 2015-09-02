@@ -31,6 +31,28 @@ import org.schedoscope.scheduler.driver.FileSystemDriver
 import org.schedoscope.scheduler.driver.MorphlineDriver
 import org.apache.hadoop.conf.Configuration
 import org.schedoscope.scheduler.driver.MapreduceDriver
+import org.schedoscope.scheduler.driver.ShellDriver
+import org.schedoscope.dsl.Transformation
+import org.schedoscope.scheduler.driver.DriverRunCompletionHandler
+import org.schedoscope.scheduler.driver.DriverRunHandle
+import org.schedoscope.scheduler.driver.DriverRunState
+import java.util.concurrent.ConcurrentHashMap
+
+object TestDriverRunCompletionHandlerCallCounter {
+  val calls = new ConcurrentHashMap[DriverRunHandle[_], DriverRunState[_]]()
+
+  def countDriverRunCompletionHandlerCall(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) {
+    calls.put(run, stateOfCompletion)
+  }
+
+  def driverRunCompletitionHandlerCalled(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) = calls.get(run) == stateOfCompletion
+}
+
+class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompletionHandler[T] {
+  def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T]) {
+    TestDriverRunCompletionHandlerCallCounter.countDriverRunCompletionHandlerCall(run, stateOfCompletion)
+  }
+}
 
 abstract class TestResources {
   val hiveConf: HiveConf
@@ -61,21 +83,23 @@ abstract class TestResources {
 
   lazy val crate: SchemaManager = SchemaManager(metastoreClient, connection)
 
-  lazy val hiveDriver: HiveDriver = new HiveDriver(ugi, jdbcUrl, metastoreClient) {
+  lazy val hiveDriver: HiveDriver = new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, jdbcUrl, metastoreClient) {
     override def JDBC_CLASS = jdbcClass
   }
 
   val fileSystem: FileSystem
 
-  lazy val fileSystemDriver: FileSystemDriver = new FileSystemDriver(ugi, new Configuration(true))
+  lazy val fileSystemDriver: FileSystemDriver = new FileSystemDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true))
 
   lazy val oozieDriver: OozieDriver = null
 
-  lazy val pigDriver: PigDriver = new PigDriver(ugi)
+  lazy val pigDriver: PigDriver = new PigDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi)
 
-  lazy val mapreduceDriver: MapreduceDriver = new MapreduceDriver(ugi)
+  lazy val mapreduceDriver: MapreduceDriver = new MapreduceDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi)
 
-  lazy val morphlineDriver = new MorphlineDriver(ugi, new Configuration(true))
+  lazy val morphlineDriver = new MorphlineDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true))
+
+  lazy val shellDriver = new ShellDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"))
 
   val remoteTestDirectory: String
 

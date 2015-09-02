@@ -93,6 +93,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
 
         case success: DriverRunSucceeded[T] => {
           log.info(s"DRIVER ACTOR: Driver run for handle=${runHandle} succeeded.")
+          driver.driverRunCompleted(runHandle)
           s ! ActionSuccess(runHandle, success)
           toReceive()
           tick()
@@ -100,6 +101,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
 
         case failure: DriverRunFailed[T] => {
           log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
+          driver.driverRunCompleted(runHandle)
           s ! ActionFailure(runHandle, failure)
           toReceive()
           tick()
@@ -175,31 +177,31 @@ object DriverActor {
     driverName match {
       case "hive" => Props(
         classOf[DriverActor[HiveTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => HiveDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        actionsRouter, ds, (ds: DriverSettings) => HiveDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "mapreduce" => Props(
         classOf[DriverActor[MapreduceTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => MapreduceDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        actionsRouter, ds, (ds: DriverSettings) => MapreduceDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "pig" => Props(
         classOf[DriverActor[PigTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => PigDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        actionsRouter, ds, (ds: DriverSettings) => PigDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "filesystem" => Props(
         classOf[DriverActor[FilesystemTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => FileSystemDriver(d), 100 milliseconds).withDispatcher("akka.actor.driver-dispatcher")
+        actionsRouter, ds, (ds: DriverSettings) => FileSystemDriver(ds), 100 milliseconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => OozieDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        actionsRouter, ds, (ds: DriverSettings) => OozieDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "morphline" => Props(
         classOf[DriverActor[MorphlineTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => MorphlineDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        actionsRouter, ds, (ds: DriverSettings) => MorphlineDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "shell" => Props(
         classOf[DriverActor[ShellTransformation]],
-        actionsRouter, ds, (d: DriverSettings) => ShellDriver(d), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        actionsRouter, ds, (ds: DriverSettings) => ShellDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }

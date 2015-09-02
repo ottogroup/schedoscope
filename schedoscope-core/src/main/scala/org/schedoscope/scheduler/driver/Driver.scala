@@ -37,6 +37,14 @@ case class DriverRunOngoing[T <: Transformation](override val driver: Driver[T],
 case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T], comment: String) extends DriverRunState[T](driver)
 case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
 
+trait DriverRunCompletionHandler[T <: Transformation] {
+  def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T])
+}
+
+class DoNothingCompletionHandler[T <: Transformation] extends DriverRunCompletionHandler[T] {
+  def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T]) {}
+}
+
 trait Driver[T <: Transformation] {
   def transformationName: String
 
@@ -77,5 +85,21 @@ trait Driver[T <: Transformation] {
       })
 
     succ.filter(_.isInstanceOf[DriverRunFailed[_]]).isEmpty
+  }
+
+  def driverRunCompletionHandlerClassNames: List[String]
+
+  lazy val driverRunCompletionHandlers: List[DriverRunCompletionHandler[T]] = try {
+    driverRunCompletionHandlerClassNames.map { className => Class.forName(className).newInstance().asInstanceOf[DriverRunCompletionHandler[T]] }
+  } catch {
+    case t: Throwable => throw DriverException("Driver run completion handler could not be instantiated", t)
+  }
+
+  def driverRunCompleted(run: DriverRunHandle[T]) {
+    getDriverRunState(run) match {
+      case s: DriverRunSucceeded[T] => driverRunCompletionHandlers.foreach(_.driverRunCompleted(s, run))
+      case f: DriverRunFailed[T] => driverRunCompletionHandlers.foreach(_.driverRunCompleted(f, run))
+      case _ => throw DriverException("driverRunCompleted called with non-final driver run state")
+    }
   }
 }

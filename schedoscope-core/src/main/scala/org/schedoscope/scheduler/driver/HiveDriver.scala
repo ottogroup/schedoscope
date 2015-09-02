@@ -38,7 +38,7 @@ import org.schedoscope.dsl.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
 import HiveDriver.currentConnection
 
-class HiveDriver(val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
+class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
   override def transformationName = "hive"
 
@@ -177,7 +177,7 @@ object HiveDriver {
 
     val metastoreClient = new HiveMetaStoreClient(conf)
 
-    new HiveDriver(ugi, ds.url, metastoreClient)
+    new HiveDriver(ds.driverRunCompletionHandlers, ugi, ds.url, metastoreClient)
   }
 }
 

@@ -69,7 +69,7 @@ object Helper {
   implicit def AnyToConfigValue(x: Any) = ConfigValueFactory.fromAnyRef(x, "")
 }
 
-class MorphlineDriver(val ugi: UserGroupInformation, val hadoopConf: Configuration) extends Driver[MorphlineTransformation] {
+class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val hadoopConf: Configuration) extends Driver[MorphlineTransformation] {
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
   val context = new MorphlineContext.Builder().build()
   def transformationName: String = "morphline"
@@ -319,5 +319,5 @@ class MorphlineDriver(val ugi: UserGroupInformation, val hadoopConf: Configurati
 }
 
 object MorphlineDriver {
-  def apply(ds: DriverSettings) = new MorphlineDriver(Settings().userGroupInformation, Settings().hadoopConf)
+  def apply(ds: DriverSettings) = new MorphlineDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation, Settings().hadoopConf)
 }

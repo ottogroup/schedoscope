@@ -33,6 +33,7 @@ import java.nio.file.Paths
 import java.nio.charset.StandardCharsets
 import org.schedoscope.dsl.transformations.FailingMapper
 import org.schedoscope.dsl.View
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
 
 class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: MapreduceDriver = new LocalTestResources().mapreduceDriver
@@ -108,4 +109,13 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 
+  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(MapreduceTransformation(new DummyView(), identityJob))
+
+    while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
+
+    driver.driverRunCompleted(runHandle)
+
+    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+  }
 }

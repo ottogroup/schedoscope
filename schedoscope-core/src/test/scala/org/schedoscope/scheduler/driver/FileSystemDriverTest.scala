@@ -17,22 +17,19 @@ package org.schedoscope.scheduler.driver
 
 import org.scalatest.Matchers
 import org.scalatest.FlatSpec
-
 import org.schedoscope.dsl.transformations._
-
 import java.io.File
-
 import test.eci.datahub.Product
-
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
-
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.transformations.FilesystemTransformation
+import org.schedoscope.test.resources.LocalTestResources
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
 
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
-  lazy val driver: FileSystemDriver = new FileSystemDriver(UserGroupInformation.getLoginUser(), new Configuration())
+  lazy val driver: FileSystemDriver = new LocalTestResources().fileSystemDriver
 
   "FileSystemDriver" should "be have transformation name filesystem" taggedAs (DriverTests) in {
     driver.transformationName shouldBe "filesystem"
@@ -245,6 +242,16 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     runState shouldBe a[DriverRunFailed[_]]
 
     inputFile("subfolder") shouldBe 'exists
+  }
+
+  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(Touch(outputPath("aTest.file")))
+
+    while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[FilesystemTransformation]]) {}
+
+    driver.driverRunCompleted(runHandle)
+
+    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 
 }

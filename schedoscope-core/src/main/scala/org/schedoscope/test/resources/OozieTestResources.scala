@@ -33,7 +33,7 @@ class OozieTestResources extends TestResources {
 
   override lazy val remoteTestDirectory: String = mo.getFsTestCaseDir.toString
 
-  override lazy val oozieDriver: OozieDriver = new OozieDriver(mo.getClient)
+  override lazy val oozieDriver: OozieDriver = new OozieDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), mo.getClient)
 
   override lazy val fileSystem: FileSystem = mo.getFileSystem
 

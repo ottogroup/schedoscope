@@ -31,6 +31,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import java.security.PrivilegedAction
 import org.schedoscope.test.resources.LocalTestResources
 import test.eci.datahub.RedisMorphlineView
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletitionHandlerCalled
 
 class MorphlineDriverTest extends FlatSpec with Matchers {
   lazy val driver: MorphlineDriver = new LocalTestResources().morphlineDriver
@@ -83,5 +84,15 @@ class MorphlineDriverTest extends FlatSpec with Matchers {
 
     runWasAsynchronous shouldBe true
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
+  }
+
+  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(inputView.transformation().asInstanceOf[MorphlineTransformation])
+
+    while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
+
+    driver.driverRunCompleted(runHandle)
+
+    driverRunCompletitionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 }
