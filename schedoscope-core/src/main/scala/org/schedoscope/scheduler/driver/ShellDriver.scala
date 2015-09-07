@@ -26,7 +26,6 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
     })
  
   def doRun(t: ShellTransformation): DriverRunState[ShellTransformation] = {
-    log.error("test")
     val stdout = new StringBuilder
     try {
       val returnCode = if (t.scriptFile != "")
@@ -37,8 +36,7 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
         scala.compat.Platform.collectGarbage() // JVM Windows related bug workaround JDK-4715154
         file.deleteOnExit()
         Process(Seq(t.shell, file.getAbsolutePath), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _,log.error(_)))
-      }
-    // println(stdout.takeRight(100))
+      }  
       if (returnCode == 0)
         DriverRunSucceeded[ShellTransformation](this, "Shell script finished")
       else
