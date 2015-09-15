@@ -24,19 +24,19 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
     new DriverRunHandle(this, new LocalDateTime(), t, future {
       doRun(t)
     })
- 
+
   def doRun(t: ShellTransformation): DriverRunState[ShellTransformation] = {
     val stdout = new StringBuilder
     try {
       val returnCode = if (t.scriptFile != "")
-        Process(Seq(t.shell, t.scriptFile), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _,log.error(_)))
+        Process(Seq(t.shell, t.scriptFile), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _, log.error(_)))
       else {
         val file = File.createTempFile("_schedoscope", ".sh")
         using(new FileWriter(file))(writer => { writer.write(s"#!${t.shell}\n"); t.script.foreach(line => writer.write(line)) })
         scala.compat.Platform.collectGarbage() // JVM Windows related bug workaround JDK-4715154
         file.deleteOnExit()
-        Process(Seq(t.shell, file.getAbsolutePath), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _,log.error(_)))
-      }  
+        Process(Seq(t.shell, file.getAbsolutePath), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _, log.error(_)))
+      }
       if (returnCode == 0)
         DriverRunSucceeded[ShellTransformation](this, "Shell script finished")
       else
