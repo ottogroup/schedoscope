@@ -11,11 +11,14 @@ import scala.collection.JavaConversions.mapAsJavaMap
 import java.lang.InterruptedException
 import java.io.File
 import java.io.FileWriter
+import scala.sys.process._
+import org.slf4j.LoggerFactory
 
 class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extends Driver[ShellTransformation] {
   override def transformationName = "shell"
 
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
+  val log = LoggerFactory.getLogger(classOf[ShellDriver])
 
   def run(t: ShellTransformation): DriverRunHandle[ShellTransformation] =
     new DriverRunHandle(this, new LocalDateTime(), t, future {
@@ -23,25 +26,17 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
     })
 
   def doRun(t: ShellTransformation): DriverRunState[ShellTransformation] = {
+    val stdout = new StringBuilder
     try {
-
-      val pb = if (t.scriptFile != "")
-        new ProcessBuilder(t.shell, t.scriptFile)
+      val returnCode = if (t.scriptFile != "")
+        Process(Seq(t.shell, t.scriptFile), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _, log.error(_)))
       else {
         val file = File.createTempFile("_schedoscope", ".sh")
         using(new FileWriter(file))(writer => { writer.write(s"#!${t.shell}\n"); t.script.foreach(line => writer.write(line)) })
         scala.compat.Platform.collectGarbage() // JVM Windows related bug workaround JDK-4715154
         file.deleteOnExit()
-        new ProcessBuilder(t.shell, file.getCanonicalPath())
-
+        Process(Seq(t.shell, file.getAbsolutePath), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _, log.error(_)))
       }
-
-      val env = pb.environment()
-      env.putAll(t.env)
-
-      val process = pb.start()
-      val returnCode = process.waitFor()
-
       if (returnCode == 0)
         DriverRunSucceeded[ShellTransformation](this, "Shell script finished")
       else
