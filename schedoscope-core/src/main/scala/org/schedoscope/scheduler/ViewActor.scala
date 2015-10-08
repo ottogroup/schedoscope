@@ -37,6 +37,7 @@ import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.dsl.ExternalTransformation
 import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
+import org.schedoscope.dsl.NoOp
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
@@ -97,7 +98,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
-  def waiting(materializationMode: MaterializeViewMode.enum): Receive = LoggingReceive {
+  def waiting(materializationMode: MaterializeViewMode): Receive = LoggingReceive {
 
     case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
 
@@ -128,7 +129,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   // State: transforming, view actor in process of applying transformation
   // transitions: materialized,retrying
-  def transforming(retries: Int, materializationMode: MaterializeViewMode.enum): Receive = LoggingReceive({
+  def transforming(retries: Int, materializationMode: MaterializeViewMode): Receive = LoggingReceive({
 
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
@@ -165,7 +166,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   // State: retrying
   // transitions: failed, transforming
-  def retrying(retries: Int, materializationMode: MaterializeViewMode.enum): Receive = LoggingReceive({
+  def retrying(retries: Int, materializationMode: MaterializeViewMode): Receive = LoggingReceive({
 
     case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
 
@@ -223,7 +224,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case MaterializeView(mode) => sender ! Failed(view)
   })
 
-  def aDependencyAnswered(dependency: org.schedoscope.dsl.View, mode: MaterializeViewMode.enum) {
+  def aDependencyAnswered(dependency: org.schedoscope.dsl.View, mode: MaterializeViewMode) {
     dependenciesMaterializing.remove(dependency)
 
     if (!dependenciesMaterializing.isEmpty) {
@@ -262,7 +263,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     unbecomeBecome(receive)
   }
 
-  def toWaiting(mode: MaterializeViewMode.enum) {
+  def toWaiting(mode: MaterializeViewMode) {
     withErrors = false
     incomplete = false
     dependenciesFreshness = 0l
@@ -297,7 +298,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     dependenciesFreshness = 0l
   }
 
-  def toTransformingOrMaterialized(retries: Int, mode: MaterializeViewMode.enum) {
+  def toTransformingOrMaterialized(retries: Int, mode: MaterializeViewMode) {
     if (view.isMaterializeOnce && lastTransformationTimestamp > 0l) {
       log.debug("materializeOnce for " + view + " set and view already materialized. Not materializing again")
 
@@ -343,12 +344,20 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     }
   }
 
-  def toTransforming(retries: Int, mode: MaterializeViewMode.enum) {
-    actionsManagerActor ! view
+  def toTransforming(retries: Int, mode: MaterializeViewMode) {
+    if (mode != RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
+      actionsManagerActor ! view
+    else
+      log.info(s"VIEWACTOR CHECKSUM AND TIMESTAMP RESET ===> Ignoring transformation")
 
     logStateInfo("transforming")
 
     unbecomeBecome(transforming(retries, mode))
+
+    if (mode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS) {
+      self ! ActionSuccess[NoOp](null, null)
+      log.info(s"VIEWACTOR CHECKSUM AND TIMESTAMP RESET ===> Faking successful transformation action result")
+    }
   }
 
   // Calculate size of view data
@@ -367,7 +376,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     size
   }
 
-  def toRetrying(retries: Int, mode: MaterializeViewMode.enum): akka.actor.Cancellable = {
+  def toRetrying(retries: Int, mode: MaterializeViewMode): akka.actor.Cancellable = {
     logStateInfo("retrying")
 
     unbecomeBecome(retrying(retries, mode))

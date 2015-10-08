@@ -149,8 +149,7 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
 
     checkConfig { c =>
       if (!c.action.isDefined) failure("A command is required")
-      else if (c.action.get == MATERIALIZE && c.viewUrlPath.isDefined && Try(ViewUrlParser.parse(Settings().env, c.viewUrlPath.get)).isFailure) failure("Cannot parse view url path")
-      else if (c.action.get == MATERIALIZE && c.mode.isDefined && !MaterializeViewMode.values.map { _.toString }.contains(c.mode.get)) failure(s"mode ${c.mode.get} not supported; supported are: '${MaterializeViewMode.values}'")
+      else if (c.action.get == MATERIALIZE && c.mode.isDefined && !MaterializeViewMode.values.map { _.toString }.contains(c.mode.get)) failure(s"mode ${c.mode.get} not supported. Supported are: '${MaterializeViewMode.values.map(_.toString())}'")
       else success
     }
   }

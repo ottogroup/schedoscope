@@ -50,11 +50,11 @@ case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
 
 object MaterializeViewMode extends Enumeration { 
-  type enum = Value
-  val DEFAULT, RESET_TRANSFORMATION_CHECKSUMS, RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPES = Value
+  type MaterializeViewMode = Value
+  val DEFAULT, RESET_TRANSFORMATION_CHECKSUMS, RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS = Value
 }
 
-case class MaterializeView(mode: MaterializeViewMode.enum = MaterializeViewMode.DEFAULT) extends CommandRequest
+case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
 
 sealed class CommandResponse
