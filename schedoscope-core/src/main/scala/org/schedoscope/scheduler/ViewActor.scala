@@ -299,7 +299,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def toTransformingOrMaterialized(retries: Int, mode: MaterializeViewMode) {
-    if (view.isMaterializeOnce && lastTransformationTimestamp > 0l) {
+    if (view.isMaterializeOnce && lastTransformationTimestamp > 0l && mode != RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS) {
       log.debug("materializeOnce for " + view + " set and view already materialized. Not materializing again")
 
       toMaterialized()
