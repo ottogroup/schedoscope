@@ -37,9 +37,11 @@ import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.dsl.ExternalTransformation
 import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
+import org.schedoscope.dsl.NoOp
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
+  import MaterializeViewMode._
 
   val log = Logging(system, this)
 
@@ -71,43 +73,46 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // transitions: defaultForViewWithoutDependencies, defaultForViewWithDependencies
   def receive: Receive = LoggingReceive({
     case MaterializeView(mode) => {
-      if (MaterializeViewMode.resetTransformationChecksums.equals(mode)) {
+      if (RESET_TRANSFORMATION_CHECKSUMS == mode) {
         val before = versionChecksum
         setVersion(view)
         log.info(s"VIEWACTOR CHECKSUM RESET ===> before=${before} , after=${versionChecksum}")
       }
+
       if (view.dependencies.isEmpty) {
         listenersWaitingForMaterialize.add(sender)
-        toTransformOrMaterialize(0)
+        toTransformingOrMaterialized(0, mode)
       } else {
         toWaiting(mode)
       }
     }
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.isEmpty) {
-      if (view == viewWithNewData) toDefaultAndReload(false)
+      if (view == viewWithNewData)
+        toDefaultAndReload(false)
     } else {
-      if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
+      if (view.dependencies.contains(viewWithNewData))
+        toDefaultAndReload()
     }
   })
 
   // State: view actor waiting for dependencies to materialize
   // transitions: transforming, materialized, default
-  def waiting: Receive = LoggingReceive {
+  def waiting(materializationMode: MaterializeViewMode): Receive = LoggingReceive {
 
     case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
 
     case NoDataAvailable(dependency) => {
       log.debug("Nodata from " + dependency)
       incomplete = true
-      dependencyAnswered(dependency)
+      aDependencyAnswered(dependency, materializationMode)
     }
 
     case Failed(dependency) => {
       log.debug("Failed from " + dependency)
       incomplete = true
       withErrors = true
-      dependencyAnswered(dependency)
+      aDependencyAnswered(dependency, materializationMode)
     }
 
     case ViewMaterialized(dependency, dependencyIncomplete, dependencyTransformationTimestamp, dependencyWithErrors) => {
@@ -116,7 +121,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       incomplete |= dependencyIncomplete
       withErrors |= dependencyWithErrors
       dependenciesFreshness = max(dependenciesFreshness, dependencyTransformationTimestamp)
-      dependencyAnswered(dependency)
+      aDependencyAnswered(dependency, materializationMode)
     }
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! NewDataAvailable(viewWithNewData)
@@ -124,8 +129,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   // State: transforming, view actor in process of applying transformation
   // transitions: materialized,retrying
-  def transforming(retries: Int): Receive = LoggingReceive({
-    //case GetStatus() => sender ! ViewStatusResponse(if (0.equals(retries)) "transforming" else "retrying", view)
+  def transforming(retries: Int, materializationMode: MaterializeViewMode): Receive = LoggingReceive({
 
     case _: ActionSuccess[_] => {
       log.info("SUCCESS")
@@ -135,7 +139,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         if (getDirectorySize > 0l) {
           touchSuccessFlag(view)
           logTransformationTimestamp(view)
-          toMaterialize
+          toMaterialized()
         } else {
           log.debug("filesystem transformation generated no data for" + view)
 
@@ -146,14 +150,14 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         }
 
       } else {
-        if (!view.isExternal())
+        if (!view.isExternal)
           touchSuccessFlag(view)
         logTransformationTimestamp(view)
-        toMaterialize
+        toMaterialized()
       }
     }
 
-    case _: ActionFailure[_] => toRetrying(retries)
+    case _: ActionFailure[_] => toRetrying(retries, materializationMode)
 
     case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
 
@@ -162,12 +166,12 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   // State: retrying
   // transitions: failed, transforming
-  def retrying(retries: Int): Receive = LoggingReceive({
+  def retrying(retries: Int, materializationMode: MaterializeViewMode): Receive = LoggingReceive({
 
     case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
 
     case Retry() => if (retries <= settings.retries)
-      toTransformOrMaterialize(retries + 1)
+      toTransformingOrMaterialized(retries + 1, materializationMode)
     else {
       logStateInfo("failed")
       unbecomeBecome(failed)
@@ -182,9 +186,8 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // State: materialized, view has been computed and materialized
   // transitions: default,transforming
   def materialized: Receive = LoggingReceive({
-
     case MaterializeView(mode) => {
-      if (MaterializeViewMode.resetTransformationChecksums.equals(mode)) {
+      if (RESET_TRANSFORMATION_CHECKSUMS == mode) {
         val before = versionChecksum
         setVersion(view)
         log.info(s"VIEWACTOR CHECKSUM RESET ===> before=${before} , after=${versionChecksum}")
@@ -221,7 +224,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case MaterializeView(mode) => sender ! Failed(view)
   })
 
-  def dependencyAnswered(dependency: org.schedoscope.dsl.View) {
+  def aDependencyAnswered(dependency: org.schedoscope.dsl.View, mode: MaterializeViewMode) {
     dependenciesMaterializing.remove(dependency)
 
     if (!dependenciesMaterializing.isEmpty) {
@@ -237,9 +240,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         if (hasVersionMismatch(view))
           log.debug(s"Initiating transformation because of transformation checksum difference: ${view.transformation().versionDigest} != ${versionChecksum}")
 
-        toTransformOrMaterialize(0)
+        toTransformingOrMaterialized(0, mode)
       } else {
-        toMaterialize()
+        toMaterialized()
       }
     } else {
       listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
@@ -260,7 +263,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     unbecomeBecome(receive)
   }
 
-  def toWaiting(mode: String) {
+  def toWaiting(mode: MaterializeViewMode) {
     withErrors = false
     incomplete = false
     dependenciesFreshness = 0l
@@ -279,11 +282,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
     }
 
-    unbecomeBecome(waiting)
+    unbecomeBecome(waiting(mode))
 
   }
 
-  def toMaterialize() {
+  def toMaterialized() {
     logStateInfo("materialized")
 
     listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, lastTransformationTimestamp, withErrors))
@@ -295,21 +298,25 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     dependenciesFreshness = 0l
   }
 
-  def toTransformOrMaterialize(retries: Int) {
-    view.transformation() match {
+  def toTransformingOrMaterialized(retries: Int, mode: MaterializeViewMode) {
+    if (view.isMaterializeOnce && lastTransformationTimestamp > 0l && mode != RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS) {
+      log.debug("materializeOnce for " + view + " set and view already materialized. Not materializing again")
+
+      toMaterialized()
+    } else view.transformation() match {
       case NoOp() => {
         if (successFlagExists(view) && view.dependencies.isEmpty) {
           log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
           setVersion(view)
           getOrLogTransformationTimestamp(view)
 
-          toMaterialize()
+          toMaterialized()
         } else if (!view.dependencies.isEmpty) {
           log.debug("dependencies for " + view + ", and no transformation specified")
           setVersion(view)
           getOrLogTransformationTimestamp(view)
 
-          toMaterialize()
+          toMaterialized()
         } else {
           log.debug("no data and no dependencies for " + view)
 
@@ -322,37 +329,37 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
       case _: MorphlineTransformation => {
         setVersion(view)
-
-        actionsManagerActor ! view
-
-        logStateInfo("transforming")
-
-        unbecomeBecome(transforming(retries))
+        toTransforming(retries, mode)
       }
 
       case _: FilesystemTransformation => {
         log.debug(s"FileTransformation: lastTransformationTimestamp ${lastTransformationTimestamp}, ")
-        if (lastTransformationTimestamp > 0l && getDirectorySize > 0l) {
-          toMaterialize()
-        } else {
-          actionsManagerActor ! view
-
-          logStateInfo("transforming")
-
-          unbecomeBecome(transforming(retries))
-        }
+        if (lastTransformationTimestamp > 0l && getDirectorySize > 0l)
+          toMaterialized()
+        else
+          toTransforming(retries, mode)
       }
 
-      case _ => {
-        actionsManagerActor ! view
-
-        logStateInfo("transforming")
-
-        unbecomeBecome(transforming(retries))
-      }
+      case _ => toTransforming(retries, mode)
     }
-
   }
+
+  def toTransforming(retries: Int, mode: MaterializeViewMode) {
+    if (mode != RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
+      actionsManagerActor ! view
+    else
+      log.info(s"VIEWACTOR CHECKSUM AND TIMESTAMP RESET ===> Ignoring transformation")
+
+    logStateInfo("transforming")
+
+    unbecomeBecome(transforming(retries, mode))
+
+    if (mode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS) {
+      self ! ActionSuccess[NoOp](null, null)
+      log.info(s"VIEWACTOR CHECKSUM AND TIMESTAMP RESET ===> Faking successful transformation action result")
+    }
+  }
+
   // Calculate size of view data
   def getDirectorySize(): Long = {
     val size = settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
@@ -369,10 +376,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     size
   }
 
-  def toRetrying(retries: Int): akka.actor.Cancellable = {
+  def toRetrying(retries: Int, mode: MaterializeViewMode): akka.actor.Cancellable = {
     logStateInfo("retrying")
 
-    unbecomeBecome(retrying(retries))
+    unbecomeBecome(retrying(retries, mode))
 
     // exponential backoff
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
