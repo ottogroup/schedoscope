@@ -132,7 +132,7 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to be materialized by their status (e.g. 'failed')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter views to be materialized (e.g. 'my.database/.*/Partition1/.*'). "),
-      opt[String]('m', "mode") action { (x, c) => c.copy(mode = Some(x)) } optional () valueName ("<mode>") text ("materializatio mode. Supported modes are currently 'RESET_TRANSFORMATION_CHECKSUMS'"))
+      opt[String]('m', "mode") action { (x, c) => c.copy(mode = Some(x)) } optional () valueName ("<mode>") text ("materialization mode. Supported modes are currently 'RESET_TRANSFORMATION_CHECKSUMS, RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS'"))
 
     cmd("invalidate") action { (_, c) => c.copy(action = Some(INVALIDATE)) } text ("invalidate view(s)") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter views to be invalidated by their status (e.g. 'transforming')"),
@@ -148,12 +148,10 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
     cmd("shutdown") action { (_, c) => c.copy(action = Some(SHUTDOWN)) } text ("shutdown program")
 
     checkConfig { c =>
-      {
-        if (!c.action.isDefined) failure("A command is required")
-        else if (c.action.get.equals("materialize") && c.viewUrlPath.isDefined && Try(ViewUrlParser.parse(Settings().env, c.viewUrlPath.get)).isFailure) failure("Cannot parse view url path")
-        else if (c.action.get.equals("materialize") && c.mode.isDefined && c.mode.equals(MaterializeViewMode.resetTransformationChecksums)) failure(s"mode ${c.mode.get} not supported; supported are: '${MaterializeViewMode.resetTransformationChecksums}'")
-        else success
-      }
+      if (!c.action.isDefined) failure("A command is required")
+      else if (c.action.get == MATERIALIZE && c.viewUrlPath.isDefined && Try(ViewUrlParser.parse(Settings().env, c.viewUrlPath.get)).isFailure) failure("Cannot parse view url path")
+      else if (c.action.get == MATERIALIZE && c.mode.isDefined && !MaterializeViewMode.values.map { _.toString }.contains(c.mode.get)) failure(s"mode ${c.mode.get} not supported; supported are: '${MaterializeViewMode.values}'")
+      else success
     }
   }
 

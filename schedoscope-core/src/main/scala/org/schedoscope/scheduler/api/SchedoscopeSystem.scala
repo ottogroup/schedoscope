@@ -116,7 +116,12 @@ class SchedoscopeSystem extends SchedoscopeInterface {
 
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
-    submitCommandInternal(viewActors, MaterializeView(mode.getOrElse(MaterializeViewMode.default)), viewUrlPath, status, filter)
+    submitCommandInternal(viewActors, MaterializeView(
+      try {
+        MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
+      } catch {
+        case _: NoSuchElementException => MaterializeViewMode.DEFAULT
+      }), viewUrlPath, status, filter)
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
