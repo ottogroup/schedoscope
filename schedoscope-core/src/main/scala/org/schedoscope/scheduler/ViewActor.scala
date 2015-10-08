@@ -145,7 +145,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         }
 
       } else {
-        if (!view.isExternal())
+        if (!view.isExternal)
           touchSuccessFlag(view)
         logTransformationTimestamp(view)
         toMaterialize
@@ -296,56 +296,47 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   def toTransformOrMaterialize(retries: Int) {
     if (view.isMaterializeOnce && lastTransformationTimestamp > 0l) {
       log.debug("materializeOnce for " + view + " set and view already materialized. Not materializing again")
+      
       toMaterialize()
-    } else {
-      view.transformation() match {
-        case NoOp() => {
-          if (successFlagExists(view) && view.dependencies.isEmpty) {
-            log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
-            setVersion(view)
-            getOrLogTransformationTimestamp(view)
-
-            toMaterialize()
-          } else if (!view.dependencies.isEmpty) {
-            log.debug("dependencies for " + view + ", and no transformation specified")
-            setVersion(view)
-            getOrLogTransformationTimestamp(view)
-
-            toMaterialize()
-          } else {
-            log.debug("no data and no dependencies for " + view)
-
-            listenersWaitingForMaterialize.foreach(s => s ! NoDataAvailable(view))
-            listenersWaitingForMaterialize.clear
-
-            toDefault(false, "nodata")
-          }
-        }
-
-        case _: MorphlineTransformation => {
+    } else view.transformation() match {
+      case NoOp() => {
+        if (successFlagExists(view) && view.dependencies.isEmpty) {
+          log.debug("no dependencies for " + view + ", success flag exists, and no transformation specified")
           setVersion(view)
+          getOrLogTransformationTimestamp(view)
 
-          actionsManagerActor ! view
+          toMaterialize()
+        } else if (!view.dependencies.isEmpty) {
+          log.debug("dependencies for " + view + ", and no transformation specified")
+          setVersion(view)
+          getOrLogTransformationTimestamp(view)
 
-          logStateInfo("transforming")
+          toMaterialize()
+        } else {
+          log.debug("no data and no dependencies for " + view)
 
-          unbecomeBecome(transforming(retries))
+          listenersWaitingForMaterialize.foreach(s => s ! NoDataAvailable(view))
+          listenersWaitingForMaterialize.clear
+
+          toDefault(false, "nodata")
         }
+      }
 
-        case _: FilesystemTransformation => {
-          log.debug(s"FileTransformation: lastTransformationTimestamp ${lastTransformationTimestamp}, ")
-          if (lastTransformationTimestamp > 0l && getDirectorySize > 0l) {
-            toMaterialize()
-          } else {
-            actionsManagerActor ! view
+      case _: MorphlineTransformation => {
+        setVersion(view)
 
-            logStateInfo("transforming")
+        actionsManagerActor ! view
 
-            unbecomeBecome(transforming(retries))
-          }
-        }
+        logStateInfo("transforming")
 
-        case _ => {
+        unbecomeBecome(transforming(retries))
+      }
+
+      case _: FilesystemTransformation => {
+        log.debug(s"FileTransformation: lastTransformationTimestamp ${lastTransformationTimestamp}, ")
+        if (lastTransformationTimestamp > 0l && getDirectorySize > 0l) {
+          toMaterialize()
+        } else {
           actionsManagerActor ! view
 
           logStateInfo("transforming")
@@ -353,7 +344,16 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
           unbecomeBecome(transforming(retries))
         }
       }
+
+      case _ => {
+        actionsManagerActor ! view
+
+        logStateInfo("transforming")
+
+        unbecomeBecome(transforming(retries))
+      }
     }
+
   }
   // Calculate size of view data
   def getDirectorySize(): Long = {

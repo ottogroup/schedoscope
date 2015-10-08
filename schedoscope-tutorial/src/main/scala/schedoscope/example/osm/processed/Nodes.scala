@@ -59,4 +59,6 @@ case class Nodes(
   comment("View of nodes with tags and geohash")
 
   storedAs(Parquet())
+  
+  materializeOnce
 }

@@ -147,16 +147,14 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     transformVia(() => t.configureWith(Map((k, v))))
   }
 
-  def isExternal() = transformation().isInstanceOf[ExternalTransformation]
+  def isExternal = transformation().isInstanceOf[ExternalTransformation]
 
-  var materializeOnceSet = false
+  var isMaterializeOnce = false
 
   def materializeOnce {
-    materializeOnceSet = true
+    isMaterializeOnce = true
   }
   
-  def isMaterializeOnce = materializeOnceSet
-
   def delayedInit(body: => Unit) {
     body
 

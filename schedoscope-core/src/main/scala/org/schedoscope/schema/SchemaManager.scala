@@ -59,7 +59,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def setTransformationVersion(view: View) = {
-    if (view.isExternal()) {
+    if (view.isExternal) {
       setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
 
     } else if (view.isPartitioned()) {
@@ -70,7 +70,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   def setTransformationTimestamp(view: View, timestamp: Long) = {
-    if (view.isExternal()) {
+    if (view.isExternal) {
       setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
 
     } else if (view.isPartitioned()) {
@@ -189,7 +189,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     log.info(s"Reading partition names for view: ${tablePrototype.module}.${tablePrototype.n}")
 
-    if (!tablePrototype.isPartitioned || tablePrototype.isExternal()) {
+    if (!tablePrototype.isPartitioned || tablePrototype.isExternal) {
       log.info(s"View ${tablePrototype.module}.${tablePrototype.n} is not partitioned, returning metadata from table properties")
       return getExistingTransformationMetadata(tablePrototype, Map[String, Partition]())
     }
