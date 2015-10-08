@@ -33,4 +33,6 @@ trait ViewDsl extends StructureDsl {
     ps.isPrivacySensitive = true
     ps
   }
+  
+  def materializeOnce: Unit
 }
