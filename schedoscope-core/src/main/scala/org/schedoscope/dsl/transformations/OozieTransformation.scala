@@ -23,6 +23,13 @@ import org.schedoscope.Settings
 import org.schedoscope.dsl.Transformation
 import scala.collection.JavaConversions._
 
+/**
+ * specifies the execution of an oozie workflow
+ * @param bundle  bundle name
+ * @param workflow workflow name
+ * @param workflowAppPath path of the deployed workflow in hdfs
+ *
+ */
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String) extends Transformation {
   override def name = "oozie"
 

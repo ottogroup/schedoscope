@@ -29,6 +29,11 @@ import org.schedoscope.dsl.Version
 import org.schedoscope.dsl.View
 import scala.collection.JavaConversions._
 
+/**
+ * Executes a hive transformation using hiveserver2.
+ * Deals with UDFS by deploying jars and registering them as UDF
+ *
+ */
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 
   override def name = "hive"

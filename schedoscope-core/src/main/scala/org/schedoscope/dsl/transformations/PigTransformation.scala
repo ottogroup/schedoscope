@@ -35,6 +35,12 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema
 import parquet.pig.ParquetStorer
 import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege
 
+/**
+ * Pig Transformation
+ * @param latin Pig Script
+ * @param dirsToDelete List of directories to empty before execution
+ *
+ */
 case class PigTransformation(latin: String, dirsToDelete: List[String] = List()) extends Transformation {
 
   override def name = "pig"
