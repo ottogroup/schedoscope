@@ -27,6 +27,10 @@ import org.schedoscope.Settings
 import org.schedoscope.DriverSettings
 import java.security.PrivilegedAction
 
+/**
+ * Mapreduce Driver that executes mapreduce-transformations.
+ *
+ */
 class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[MapreduceTransformation] {
 
   val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))

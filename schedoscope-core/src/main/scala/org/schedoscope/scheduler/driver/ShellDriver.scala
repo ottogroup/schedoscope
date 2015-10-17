@@ -14,6 +14,11 @@ import java.io.FileWriter
 import scala.sys.process._
 import org.slf4j.LoggerFactory
 
+/**
+ * Executes a local shell script.
+ * @author hpzorn
+ *
+ */
 class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extends Driver[ShellTransformation] {
   override def transformationName = "shell"
 

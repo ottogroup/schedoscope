@@ -65,10 +65,24 @@ import org.apache.hadoop.conf.Configuration
 import org.schedoscope.dsl.ExaSolution
 import morphlineutils.morphline.command.ExasolWriterBuilder
 
+/**
+ * Small helper object that implicitly wraps stuff into TypesafeConfig Value instances.
+ * needed a lot for configuring morphlines
+ *
+ */
 object Helper {
   implicit def AnyToConfigValue(x: Any) = ConfigValueFactory.fromAnyRef(x, "")
 }
 
+/**
+ * Driver that executes morphlines. see http://kitesdk.org. The JSON-Specification will be
+ * parsed but the overall morphline is assembled programmatically. The first and last element
+ * of the Morphline is provided by schedoscope depending on the storage format of the views.
+ *
+ *
+ * @author hpzorn
+ *
+ */
 class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val hadoopConf: Configuration) extends Driver[MorphlineTransformation] {
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
   val context = new MorphlineContext.Builder().build()
@@ -87,7 +101,16 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
     new DriverRunHandle[MorphlineTransformation](this, new LocalDateTime(), t, f)
   }
 
-  def createInput(format: StorageFormat, sourceTable: String, cols: Seq[String], finalCommand: Command): Command = {
+  /**
+   * Creates a morphline command according to a schedoscope storage format
+   *
+   * @param format
+   * @param sourceTable
+   * @param cols
+   * @param finalCommand
+   * @return
+   */
+  private def createInput(format: StorageFormat, sourceTable: String, cols: Seq[String], finalCommand: Command): Command = {
     // stub to overcome checkNull()s when creating morphlines
     val root = new Command {
       override def getParent(): Command = null
@@ -128,7 +151,14 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
     }
   }
 
-  def createOutput(parent: Command, transformation: MorphlineTransformation): Command = {
+  /**
+   * Creates a morphline command for writing output according to schedoscope output format
+   *
+   * @param parent
+   * @param transformation
+   * @return
+   */
+  private def createOutput(parent: Command, transformation: MorphlineTransformation): Command = {
     val view = transformation.view.get
     val storageFormat = view.storageFormat.asInstanceOf[ExternalStorageFormat]
     val child = new DropRecordBuilder().build(null, null, null, context);
@@ -193,7 +223,14 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
     command
   }
 
-  def createSampler(inputConnector: CommandConnector, sample: Double) = {
+  /**
+   * Inserts a sampling command into the morphline.
+   *
+   * @param inputConnector
+   * @param sample
+   * @return
+   */
+  private def createSampler(inputConnector: CommandConnector, sample: Double) = {
     log.info("creating sampler with rate " + sample)
     val sampleConfig = ConfigFactory.empty().withValue("probability", sample)
     val sampleConnector = new CommandConnector(false, "sampleconnector")
@@ -204,7 +241,13 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
     sampleCommand
   }
 
-  def createMorphline(transformation: MorphlineTransformation): Command = {
+  /**
+   * Assembles a morphline as defined in the transformation specification
+   *
+   * @param transformation
+   * @return
+   */
+  private def createMorphline(transformation: MorphlineTransformation): Command = {
     val view = transformation.view.get
     val inputView = transformation.view.get.dependencies.head
 
@@ -264,7 +307,14 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
     }
   }
 
-  def runMorphline(command: Command, transformation: MorphlineTransformation): DriverRunState[MorphlineTransformation] = {
+  /**
+   * Calls the morphline with all files in the source view.
+   *
+   * @param command
+   * @param transformation
+   * @return
+   */
+  private def runMorphline(command: Command, transformation: MorphlineTransformation): DriverRunState[MorphlineTransformation] = {
     Notifications.notifyBeginTransaction(command)
     Notifications.notifyStartSession(command)
 

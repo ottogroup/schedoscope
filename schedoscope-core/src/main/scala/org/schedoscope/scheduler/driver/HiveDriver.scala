@@ -38,6 +38,9 @@ import org.schedoscope.dsl.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
 import HiveDriver.currentConnection
 
+/**
+ *
+ */
 class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
   override def transformationName = "hive"
@@ -46,12 +49,20 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
 
+  /**
+   * @param t
+   * @return
+   */
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {
       t.udfs.foreach(this.registerFunction(_))
       executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
     })
 
+  /**
+   * @param sql
+   * @return
+   */
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
     val queryStack = Stack[String]("")
 
@@ -87,6 +98,9 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
 
+  /**
+   * @param f
+   */
   def registerFunction(f: Function) {
     val existing = try {
       metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
@@ -102,6 +116,9 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     }
   }
 
+  /**
+   * @return
+   */
   private def connection = {
     if (currentConnection.get.isEmpty) {
       log.info("HIVE-DRIVER: Establishing connection to HiveServer")
@@ -156,6 +173,9 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
   def JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
 }
 
+/**
+ *
+ */
 object HiveDriver {
   val currentConnection = new ThreadLocal[Option[Connection]]() {
     override def initialValue() = None
