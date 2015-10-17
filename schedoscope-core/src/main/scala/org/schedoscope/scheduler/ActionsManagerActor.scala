@@ -39,6 +39,9 @@ import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
 
+/**
+ *
+ */
 class ActionsManagerActor() extends Actor {
   import context._
 
@@ -49,6 +52,7 @@ class ActionsManagerActor() extends Actor {
 
   val availableTransformations = settings.availableTransformations.keySet()
 
+  // create a queue for each driver that is not a filesystem driver
   val nonFilesystemQueues = availableTransformations.filter { _ != "filesystem" }.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
     (nonFilesystemQueuesSoFar, driverName) =>
       nonFilesystemQueuesSoFar + (driverName -> new collection.mutable.Queue[CommandWithSender]())
@@ -64,9 +68,18 @@ class ActionsManagerActor() extends Actor {
 
   val randomizer = Random
 
+  /**
+   * @param s
+   * @return
+   */
   def hash(s: String) = Math.max(0,
     s.hashCode().abs % filesystemConcurrency)
 
+  /**
+   * @param t
+   * @param s
+   * @return
+   */
   def queueNameForTransformationAction(t: Transformation, s: ActorRef) =
     if (t.name != "filesystem")
       t.name
@@ -76,6 +89,10 @@ class ActionsManagerActor() extends Actor {
       h
     }
 
+  /**
+   * @param transformationType
+   * @return
+   */
   def queueNameForTransformationType(transformationType: String) =
     if (transformationType != "filesystem") {
       transformationType
@@ -102,11 +119,14 @@ class ActionsManagerActor() extends Actor {
   private def actionQueueStatus() = {
     queues.map(q => (q._1, q._2.map(c => c.command).toList))
   }
-
+  /**
+   * How to handle Exceptions. Drivers will be restarted, all other exceptions
+   * escalated to supervisor
+   */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _: DriverException => Restart
-      case _: Throwable => Escalate
+      case _: Throwable       => Escalate
     }
 
   override def preStart {
@@ -119,9 +139,9 @@ class ActionsManagerActor() extends Actor {
 
     case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
-    case GetActions() => sender ! ActionStatusListResponse(driverStates.values.toList)
+    case GetActions()                 => sender ! ActionStatusListResponse(driverStates.values.toList)
 
-    case GetQueues() => sender ! QueueStatusListResponse(actionQueueStatus)
+    case GetQueues()                  => sender ! QueueStatusListResponse(actionQueueStatus)
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
@@ -152,11 +172,11 @@ class ActionsManagerActor() extends Actor {
       }
     }
 
-    case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
+    case viewAction: View                                         => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
 
     case filesystemTransformationAction: FilesystemTransformation => self ! CommandWithSender(filesystemTransformationAction, sender)
 
-    case deployAction: Deploy => self ! CommandWithSender(deployAction, sender)
+    case deployAction: Deploy                                     => self ! CommandWithSender(deployAction, sender)
   })
 }
 
