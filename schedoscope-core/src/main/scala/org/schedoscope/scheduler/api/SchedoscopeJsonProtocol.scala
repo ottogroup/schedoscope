@@ -20,7 +20,7 @@ import scala.concurrent.Future
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import org.schedoscope.dsl.Transformation
-import org.schedoscope.scheduler.ActionStatusResponse
+import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.driver.DriverRunFailed
 import org.schedoscope.scheduler.driver.DriverRunOngoing
 import org.schedoscope.scheduler.driver.DriverRunState
@@ -55,7 +55,7 @@ object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
           changed LocalDateTime fields (start, end, ...) to String
   implicit val localDateTimeFormat: JsonFormat[LocalDateTime] = LocalDateTimeSerDe
   implicit object LocalDateTimeSerDe extends RootJsonFormat[LocalDateTime] {
-    
+
     def read(value: JsValue) = try {
       value match {
         case s: JsString => formatter.parseDateTime(s.value).toLocalDateTime()
@@ -84,8 +84,8 @@ object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
         case s: DriverRunSucceeded[_] => { comment = getOrElse(s.comment, "no-comment"); status = "succeeded" }
-        case f: DriverRunFailed[_] => { comment = getOrElse(f.reason, "no-reason"); status = "failed" }
-        case o: DriverRunOngoing[_] => { drh = o.runHandle }
+        case f: DriverRunFailed[_]    => { comment = getOrElse(f.reason, "no-reason"); status = "failed" }
+        case o: DriverRunOngoing[_]   => { drh = o.runHandle }
       }
     }
 

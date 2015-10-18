@@ -19,35 +19,20 @@ import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
-import org.schedoscope.scheduler.ActionStatusListResponse
-import org.schedoscope.scheduler.Failed
-import org.schedoscope.scheduler.MaterializeView
-import org.schedoscope.scheduler.NoDataAvailable
-import org.schedoscope.scheduler.ViewStatusResponse
+import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.RootActor
 import org.schedoscope.scheduler.RootActor._
-import org.schedoscope.scheduler.ViewMaterialized
-import org.schedoscope.scheduler.ViewStatusListResponse
 import org.schedoscope.dsl.Named
 import org.schedoscope.dsl.View
 import akka.actor.ActorRef
 import akka.actor.PoisonPill
 import akka.actor.actorRef2Scala
 import akka.event.Logging
-import org.schedoscope.scheduler.Invalidate
-import org.schedoscope.scheduler.Deploy
 import org.schedoscope.scheduler.queryActors
 import org.schedoscope.scheduler.queryActor
 import akka.pattern.Patterns
-import org.schedoscope.scheduler.ViewStatusListResponse
-import org.schedoscope.scheduler.ActionStatusListResponse
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import org.schedoscope.dsl.Transformation
-import org.schedoscope.scheduler.GetActions
-import org.schedoscope.scheduler.GetViews
-import org.schedoscope.scheduler.QueueStatusListResponse
-import org.schedoscope.scheduler.GetQueues
-import org.schedoscope.scheduler.MaterializeViewMode
 import org.schedoscope.scheduler.api.SchedoscopeJsonProtocol.formatDate
 import akka.util.Timeout
 import akka.actor.Actor
@@ -74,7 +59,7 @@ class SchedoscopeSystem extends SchedoscopeInterface {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
     val c = command match {
       case s: String => s
-      case c: Any => Named.formatName(c.getClass.getSimpleName)
+      case c: Any    => Named.formatName(c.getClass.getSimpleName)
     }
     val a = if (args.size == 0) "_" else args.filter(_.isDefined).map(_.getOrElse("_")).mkString(":")
     if (start.isDefined) {

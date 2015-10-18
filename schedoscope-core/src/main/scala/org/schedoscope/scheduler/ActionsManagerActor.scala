@@ -28,7 +28,7 @@ import org.schedoscope.scheduler.driver.DriverException
 import org.schedoscope.dsl.Transformation
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
-
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy

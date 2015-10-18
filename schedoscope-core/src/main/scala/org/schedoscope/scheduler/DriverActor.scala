@@ -31,6 +31,7 @@ import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.driver.OozieDriver
 import org.schedoscope.scheduler.driver.ShellDriver
 import org.schedoscope.dsl.Transformation
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.messages
 
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.scheduler.driver.DriverRunFailed
@@ -125,6 +125,7 @@ case class GetActions() extends CommandRequest
 case class GetQueues() extends CommandRequest
 /**
  * Request to the ViewManagerActor to retrieve information of the currently instanciated views
+ * @constructor
  * @param views  A list of views to retrieve information from, may be empty
  * @param status filter the result by view status
  * @param filter filter the result by regular expression on the view name
@@ -172,6 +173,7 @@ case class DeployActionSuccess() extends CommandResponse
 case class SchemaActionSuccess() extends CommandResponse
 /**
  * Successful completion of a driver run
+ * @constructor
  * @param driverRunHandle RunHandle of the executing driver
  * @param driverRunState return state of the driver
  */

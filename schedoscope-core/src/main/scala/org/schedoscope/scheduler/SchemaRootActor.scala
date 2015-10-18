@@ -16,6 +16,7 @@
 package org.schedoscope.scheduler
 
 import org.schedoscope.SettingsImpl
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -46,11 +47,11 @@ class SchemaRootActor(settings: SettingsImpl) extends Actor {
   }
 
   def receive = {
-    case m: CheckOrCreateTables => schemaActor forward m
+    case m: CheckOrCreateTables        => schemaActor forward m
 
-    case a: AddPartitions => schemaActor forward a
+    case a: AddPartitions              => schemaActor forward a
 
-    case s: SetViewVersion => metadataLoggerActor forward s
+    case s: SetViewVersion             => metadataLoggerActor forward s
 
     case l: LogTransformationTimestamp => metadataLoggerActor forward l
   }

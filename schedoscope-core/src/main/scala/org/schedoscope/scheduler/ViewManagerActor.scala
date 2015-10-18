@@ -19,6 +19,7 @@ import scala.collection.mutable.HashMap
 import org.schedoscope.SettingsImpl
 import org.schedoscope.scheduler.RootActor.settings
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
