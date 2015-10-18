@@ -34,7 +34,8 @@ import test.eci.datahub.EdgeCasesView
 import test.eci.datahub.Product
 import test.eci.datahub.ProductBrand
 import test.eci.datahub.ViewWithDefaultParams
-
+import org.schedoscope.dsl.storageformats.TextFile
+import org.schedoscope.dsl.storageformats.Parquet
 class DslTest extends FlatSpec with Matchers {
 
   "A view" should "be instantiable without new" in {

@@ -38,16 +38,7 @@ import org.kitesdk.morphline.stdlib.SampleBuilder
 import org.slf4j.LoggerFactory
 import org.schedoscope.DriverSettings
 import org.schedoscope.Settings
-import org.schedoscope.dsl.Avro
-import org.schedoscope.dsl.ExternalAvro
-import org.schedoscope.dsl.ExternalStorageFormat
-import org.schedoscope.dsl.ExternalTextFile
-import org.schedoscope.dsl.JDBC
-import org.schedoscope.dsl.NullStorage
-import org.schedoscope.dsl.Parquet
-import org.schedoscope.dsl.Redis
-import org.schedoscope.dsl.StorageFormat
-import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import com.typesafe.config.ConfigFactory
 import com.typesafe.config.ConfigValueFactory
@@ -62,7 +53,6 @@ import morphlineutils.morphline.command.anonymization.AnonymizeBuilder
 import morphlineutils.morphline.command.sink.AvroWriterBuilder
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.conf.Configuration
-import org.schedoscope.dsl.ExaSolution
 import morphlineutils.morphline.command.ExasolWriterBuilder
 
 /**

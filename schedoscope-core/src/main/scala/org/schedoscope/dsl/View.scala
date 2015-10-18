@@ -28,6 +28,7 @@ import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import org.schedoscope.test.rows
+import org.schedoscope.dsl.storageformats._
 
 abstract class View extends Structure with ViewDsl with DelayedInit {
 
@@ -154,7 +155,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def materializeOnce {
     isMaterializeOnce = true
   }
-  
+
   def delayedInit(body: => Unit) {
     body
 

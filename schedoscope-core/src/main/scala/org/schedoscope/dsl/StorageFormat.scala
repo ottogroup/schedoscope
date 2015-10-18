@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.schedoscope.dsl.storageformats
+import org.schedoscope.dsl._
 
 abstract sealed class StorageFormat
 

@@ -23,7 +23,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.driver.PigDriver
 import org.schedoscope.schema.SchemaManager
-import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.test.Database
 import java.sql.Connection
 import org.schedoscope.scheduler.driver.OozieDriver
