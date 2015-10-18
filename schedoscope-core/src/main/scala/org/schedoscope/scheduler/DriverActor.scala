@@ -31,6 +31,7 @@ import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.driver.OozieDriver
 import org.schedoscope.scheduler.driver.ShellDriver
 import org.schedoscope.dsl.Transformation
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
@@ -48,6 +49,13 @@ import org.schedoscope.scheduler.driver.PigDriver
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.ShellTransformation
 
+/**
+ * A driver actor manages the executions of transformations using hive, oozie etc. The actual execution
+ * is done using a driver.
+ *
+ * @param <T>
+ * @constructor
+ */
 class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
   val log = Logging(system, this)
@@ -66,10 +74,17 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
       actionsManagerActor ! runningCommand.get
   }
 
+  /**
+   *
+   */
   def tick() {
     system.scheduler.scheduleOnce(pingDuration, self, "tick")
   }
 
+  /**
+   * Message handler for the default state.
+   * Transitions only to state running, keeps polling the action manager for new work
+   */
   def receive = LoggingReceive {
     case CommandWithSender(command, sender) => toRunning(CommandWithSender(command, sender))
 
@@ -79,14 +94,21 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
     }
   }
 
-  def running(runHandle: DriverRunHandle[T], s: ActorRef): Receive = LoggingReceive {
+  /**
+   * Message handle for the running state
+   * @param runHandle  reference to the running driver
+   * @param s reference to the viewActor that requested the transformation (for sending back the result)
+   */
+  def running(runHandle: DriverRunHandle[T], orininalSender: ActorRef): Receive = LoggingReceive {
     case KillAction() => {
       driver.killRun(runHandle)
       toReceive()
     }
-
+    // If getting a command while being busy, reschedule it by sending it to the actionsmanager
+    // Should this ever happen?
     case c: CommandWithSender => actionsManagerActor ! c
 
+    // check all 10 seconds the state of the current running driver
     case "tick" => try {
       driver.getDriverRunState(runHandle) match {
         case _: DriverRunOngoing[T] => tick()
@@ -94,7 +116,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
         case success: DriverRunSucceeded[T] => {
           log.info(s"DRIVER ACTOR: Driver run for handle=${runHandle} succeeded.")
           driver.driverRunCompleted(runHandle)
-          s ! ActionSuccess(runHandle, success)
+          orininalSender ! ActionSuccess(runHandle, success)
           toReceive()
           tick()
         }
@@ -102,7 +124,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
         case failure: DriverRunFailed[T] => {
           log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
           driver.driverRunCompleted(runHandle)
-          s ! ActionFailure(runHandle, failure)
+          orininalSender ! ActionFailure(runHandle, failure)
           toReceive()
           tick()
         }
@@ -120,6 +142,9 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
     }
   }
 
+  /**
+   *  State transition to idle state.
+   */
   def toReceive() {
     runningCommand = None
 
@@ -129,6 +154,13 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
     become(receive)
   }
 
+  /**
+   * State transition to running state.
+   * Includes special handling of "Deploy" commands, those are executed directly, no state transition despite name of function
+   * Otherwise run the transformation using the driver instance and switches to running state
+   *
+   * @param commandToRun
+   */
   def toRunning(commandToRun: CommandWithSender) {
     runningCommand = Some(commandToRun)
 

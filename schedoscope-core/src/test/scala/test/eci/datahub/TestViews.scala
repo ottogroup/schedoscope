@@ -16,10 +16,9 @@
 package test.eci.datahub
 
 import java.util.Date
-import org.schedoscope.dsl.Avro
+
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.Parquet
 import org.schedoscope.dsl.Structure
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.OozieTransformation
@@ -31,12 +30,9 @@ import org.schedoscope.dsl.views.Id
 import org.schedoscope.dsl.views.JobMetadata
 import org.schedoscope.dsl.views.PointOccurrence
 import org.schedoscope.dsl.transformations.MorphlineTransformation
-import org.schedoscope.dsl.ExternalTextFile
-import org.schedoscope.dsl.TextFile
-import org.schedoscope.dsl.Redis
 import org.schedoscope.Settings
 import org.apache.hadoop.security.UserGroupInformation
-import org.schedoscope.dsl.JDBC
+import org.schedoscope.dsl.storageformats._
 import scala.io.Source
 
 case class Brand(
@@ -97,8 +93,8 @@ case class ProductBrand(
       this,
       s"""
          SELECT 	${this.ecNr.v.get} AS ${this.ecShopCode.n},
-      				p.${product().id.n} AS ${this.productId.n}, 
-          			b.${brand().name.n} AS ${this.brandName.n}, 
+      				p.${product().id.n} AS ${this.productId.n},
+          			b.${brand().name.n} AS ${this.brandName.n},
           			p.${product().occurredAt.n} AS ${this.occurredAt.n}
           			${new Date} AS ${this.createdAt.n}
           			${"ProductBrand"} AS ${this.createdBy.n}
@@ -107,7 +103,7 @@ case class ProductBrand(
           ON		p.${product().brandId.n} = b.${brand().id.n}
           WHERE 	p.${product().year.n} = ${this.year.v.get}
           AND 		p.${product().month.n} = ${this.month.v.get}
-          AND 		p.${product().day.n} = ${this.day.v.get}           
+          AND 		p.${product().day.n} = ${this.day.v.get}
           """)))
 }
 
@@ -174,9 +170,9 @@ case class ClickOfEC0101(
 
   transformVia(
     () => HiveTransformation(
-      insertInto(this, s""" 
-            SELECT ${click().id.n}, ${click().url.n} 
-            FROM ${click().tableName} 
+      insertInto(this, s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
             WHERE ${click().ecShopCode.n} = '${click().ecShopCode.v.get}'""")))
 }
 
@@ -211,7 +207,7 @@ case class MorphlineView() extends View with Id {
   transformVia(() => MorphlineTransformation(s"""{ id :"bla"
       importCommands : ["org.kitesdk.**"]
 		  commands : [ {
-		  				if  { 
+		  				if  {
                                           conditions: [{ not: {equals {ec_shop_code : ["${field1.n}"]}}}]
     								      then : [{ dropRecord{} }]
     										}}]}""").forView(this))
@@ -264,15 +260,15 @@ case class BlaMorphlineView(x: Parameter[String]) extends View {
 
   transformVia(() => MorphlineTransformation(s"""{ id :"bla"
           importCommands : ["org.kitesdk.**"]
-		  commands : [ {extractAvroPaths{ flatten :true 
+		  commands : [ {extractAvroPaths{ flatten :true
                                          paths :{visit_id : "/visit_id"
 		  										 site : "/ec_shop_code"
 		  										 number_of_results : /number_of_results
 		  										 search_term : /search_term
-		  										} 
+		  										}
 		  								}} ,
                         {
-		  				if  { 
+		  				if  {
                                           conditions: [{ not: {equals {site : "${x.v.get}"}}}]
     								      then : [{ dropRecord{} }]
     										}}]}""").forView(this))
@@ -290,15 +286,15 @@ case class JDBCMorphlineView(x: Parameter[String]) extends View {
 
   transformVia(() => MorphlineTransformation(s"""{ id :"bla"
           importCommands : ["org.kitesdk.**"]
-		  commands : [ {extractAvroPaths{ flatten :true 
+		  commands : [ {extractAvroPaths{ flatten :true
                                          paths :{visit_id : "/visit_id"
 		  										 site : "/ec_shop_code"
 		  										 number_of_results : /number_of_results
 		  										 search_term : /search_term
-		  										} 
+		  										}
 		  								}} ,
                         {
-		  				if  { 
+		  				if  {
                                           conditions: [{ not: {equals {number_of_results : "0"}}}]
     								      then : [{ addValues { has_result : true} }]
     										}}]}""").forView(this))

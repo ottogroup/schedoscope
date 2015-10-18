@@ -19,7 +19,7 @@ import scala.concurrent.Future
 import scala.util.Try
 import com.bethecoder.ascii_table.ASCIITable
 import org.schedoscope.Settings
-import org.schedoscope.scheduler.MaterializeViewMode
+import org.schedoscope.scheduler.messages._
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.joda.time.format.DateTimeFormat
 
@@ -200,4 +200,3 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
   }
 
 }
-

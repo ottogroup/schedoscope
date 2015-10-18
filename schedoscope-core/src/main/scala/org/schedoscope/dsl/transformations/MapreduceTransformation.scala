@@ -27,6 +27,13 @@ import org.schedoscope.Settings
 import org.schedoscope.dsl.View
 import scala.collection.mutable.ListBuffer
 
+/**
+ *  Specifies a map-reduce transformation.
+ *  @param view reference to the view
+ *  @param createJob closure to create the job configuration
+ *  @param dirsToDelete List of directories to empty before execution
+ *
+ */
 case class MapreduceTransformation(v: View, createJob: (Map[String, Any]) => Job, dirsToDelete: List[String] = List()) extends Transformation {
 
   override def name = "mapreduce"

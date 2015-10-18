@@ -25,6 +25,7 @@ import akka.event.LoggingReceive
 import akka.routing.SmallestMailboxRoutingLogic
 import akka.routing.Router
 import akka.routing.RoundRobinRouter
+import org.schedoscope.scheduler.messages._
 
 class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   import context._

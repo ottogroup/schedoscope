@@ -19,6 +19,7 @@ import java.security.MessageDigest
 import scala.Array.canBuildFrom
 import org.schedoscope.scheduler.driver.FileSystemDriver
 import org.schedoscope.Settings
+import org.schedoscope.dsl.storageformats._
 
 object Version {
   def md5 = MessageDigest.getInstance("MD5")

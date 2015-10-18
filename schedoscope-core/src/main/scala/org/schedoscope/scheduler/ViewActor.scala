@@ -26,6 +26,7 @@ import org.schedoscope.dsl.NoOp
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.dsl.transformations.Touch
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props

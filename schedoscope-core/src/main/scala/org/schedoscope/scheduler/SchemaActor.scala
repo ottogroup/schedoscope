@@ -17,6 +17,7 @@ package org.schedoscope.scheduler
 
 import scala.collection.mutable.HashMap
 import org.schedoscope.schema.SchemaManager
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala

@@ -52,6 +52,9 @@ import org.apache.pig.PigException
 
 import scala.collection.JavaConversions._
 
+/**
+ *
+ */
 class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[PigTransformation] {
 
   override def transformationName = "pig"
@@ -78,7 +81,7 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
       def run(): DriverRunState[PigTransformation] = {
         val ps = new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "MAPREDUCE").toString), props)
         try {
-          // FIXME: we're doing parameter replacement by ourselves, because registerQuery doesn't support to specify parameters like 
+          // FIXME: we're doing parameter replacement by ourselves, because registerQuery doesn't support to specify parameters like
           // registerScript does (and attention: pig doesn't support variable names containing a dot).
           // another workaround would be: ps.registerScript(IOUtils.toInputStream(latin, "UTF-8") , conf.filter(!_._1.contains(".")).map(c => (c._1, c._2.toString)))
           ps.setJobName(view)
@@ -103,4 +106,3 @@ object PigDriver {
     new PigDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation)
 
 }
-

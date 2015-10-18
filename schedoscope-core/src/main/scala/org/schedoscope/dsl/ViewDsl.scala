@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package org.schedoscope.dsl
-
+import org.schedoscope.dsl.storageformats._
 trait ViewDsl extends StructureDsl {
 
   def dependsOn[V <: View: Manifest](dsf: () => Seq[V]): Unit
