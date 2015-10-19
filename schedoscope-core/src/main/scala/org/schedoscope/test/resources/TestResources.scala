@@ -58,6 +58,7 @@ abstract class TestResources {
   val hiveConf: HiveConf
 
   val hiveWarehouseDir: String
+  val hiveScratchDir: String
 
   lazy val connection: Connection = {
     val c = hiveConf
