@@ -142,7 +142,7 @@ trait rows extends View {
     val out = new OutputStreamWriter(fs.create(partitionFile), "UTF-8")
     out.write(ViewSerDe.serialize(this))
     out.close
-    println(partitionFile.toString())
+  
   }
 
   def withNullFields() {

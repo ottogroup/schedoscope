@@ -85,6 +85,7 @@ object ViewSerDe {
       }
       v.replaceAll("^\\[", "")
         .replaceAll("\\]$", "")
+           .replaceAll("\"", "")
         .split(delim)
         .map(el => deserializeField(t.typeArguments.head, el))
         .toList
@@ -93,7 +94,7 @@ object ViewSerDe {
       v.replaceAll("^\\{", "")
         .replaceAll("\\}$", "")
         .split(", ")
-        .map(el => el.split("="))
+        .map(el => el.split(":|="))
         .filter(a => a.size == 2)
         .map(a => (deserializeField(t.typeArguments(0), a(0)), deserializeField(t.typeArguments(1), a(1))))
         .toMap
