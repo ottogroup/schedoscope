@@ -16,7 +16,7 @@
 package schedoscope.example.osm.stage
 
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.dsl.transformations.CopyFrom
 
 case class Nodes() extends View {

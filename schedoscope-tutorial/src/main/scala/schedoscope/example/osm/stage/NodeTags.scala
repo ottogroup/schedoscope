@@ -17,7 +17,7 @@ package schedoscope.example.osm.stage
 
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.CopyFrom
-import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.storageformats.TextFile
 
 case class NodeTags() extends View {
 

@@ -18,9 +18,9 @@ package org.schedoscope.test
 import java.util.Date
 import scala.Array.canBuildFrom
 import org.schedoscope.dsl.Structure
-import org.schedoscope.dsl.TextFile
 import org.schedoscope.dsl.View
 import java.text.SimpleDateFormat
+import org.schedoscope.dsl.storageformats._
 
 object ViewSerDe {
 
@@ -41,12 +41,12 @@ object ViewSerDe {
 
   private def serializeCell(c: Any, inList: Boolean, format: TextFile): String = {
     c match {
-      case null => { "\\N" }
+      case null                     => { "\\N" }
       case s: Structure with values => { s.fields.map(f => serializeCell(s.fs(f.n), false, format)).mkString(if (inList) format.mapKeyTerminator else format.collectionItemTerminator) }
-      case l: List[_] => { l.map(e => serializeCell(e, true, format)).mkString(format.collectionItemTerminator) }
-      case m: Map[_, _] => { m.map(e => serializeCell(e._1, false, format) + format.mapKeyTerminator + serializeCell(e._2, false, format)).mkString(format.collectionItemTerminator) }
-      case d: Date => new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(d)
-      case _ => { c.toString }
+      case l: List[_]               => { l.map(e => serializeCell(e, true, format)).mkString(format.collectionItemTerminator) }
+      case m: Map[_, _]             => { m.map(e => serializeCell(e._1, false, format) + format.mapKeyTerminator + serializeCell(e._2, false, format)).mkString(format.collectionItemTerminator) }
+      case d: Date                  => new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(d)
+      case _                        => { c.toString }
     }
   }
 

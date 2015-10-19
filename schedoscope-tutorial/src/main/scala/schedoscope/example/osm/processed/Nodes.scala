@@ -23,7 +23,7 @@ import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
 import org.schedoscope.dsl.transformations.HiveTransformation.withFunctions
-import org.schedoscope.dsl.Parquet
+import org.schedoscope.dsl.storageformats.Parquet
 import schedoscope.example.osm.Globals._
 import brickhouse.udf.collect.CollectUDAF
 import schedoscope.example.osm.stage.NodeTags
@@ -59,6 +59,6 @@ case class Nodes(
   comment("View of nodes with tags and geohash")
 
   storedAs(Parquet())
-  
+
   materializeOnce
 }

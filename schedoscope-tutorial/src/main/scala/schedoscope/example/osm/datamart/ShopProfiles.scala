@@ -22,7 +22,7 @@ import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
 import schedoscope.example.osm.Globals._
-import org.schedoscope.dsl.Parquet
+import org.schedoscope.dsl.storageformats.Parquet
 import schedoscope.example.osm.datahub.Shops
 import schedoscope.example.osm.datahub.Trainstations
 import schedoscope.example.osm.datahub.Restaurants

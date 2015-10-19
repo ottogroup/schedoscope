@@ -16,7 +16,7 @@
 package schedoscope.example.osm.processed
 
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.dsl.transformations.MapreduceTransformation
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.output.LazyOutputFormat

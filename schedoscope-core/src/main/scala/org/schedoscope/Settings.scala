@@ -40,6 +40,14 @@ import akka.actor.ExtensionIdProvider
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 
+/**
+ * The Settings class stores all settings for Schedoscope. it is a singelton an accesible through
+ * the companion objects apply() method.
+ *
+ * Configuration is based on TypeSafe config. For an explanation of the different
+ * configuration settings, please refer to src/main/resources/reference.conf
+ *
+ */
 class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem
 
@@ -129,15 +137,30 @@ class SettingsImpl(val config: Config) extends Extension {
     ugi
   }
 
+  /**
+   * Returns driverspecific settings from the configuration
+   *
+   * @param d  driver to retrieve the settings for
+   * @return
+   */
   def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
     getDriverSettings(d.transformationName)
   }
 
+  /**
+   * Returns driverspecific settings from the configuration by transformation type
+   * @param t
+   * @return
+   */
   def getDriverSettings[T <: Transformation](t: T): DriverSettings = {
     val name = t.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("\\$", "")
     getDriverSettings(name)
   }
 
+  /**
+   * @param n
+   * @return
+   */
   def getDriverSettings(n: String): DriverSettings = {
     if (!driverSettings.contains(n)) {
       val confName = "schedoscope.transformations." + n
@@ -147,6 +170,13 @@ class SettingsImpl(val config: Config) extends Extension {
     driverSettings(n)
   }
 
+  /**
+   * retrieve the settings for one specific transformation or workflow
+   *
+   * @param typ   transformation type (e.g mapreduce)
+   * @param setting  setting name
+   * @return
+   */
   def getTransformationSetting(typ: String, setting: String) = {
     val confName = s"schedoscope.transformations.${typ}.transformation.${setting}"
     config.getString(confName)
@@ -206,7 +236,6 @@ class DriverSettings(val config: Config, val name: String) {
       libJars.map(lj => location + "/" + Paths.get(lj).getFileName.toString)
     }
   }
-  
+
   lazy val driverRunCompletionHandlers = config.getStringList("driverRunCompletionHandlers").toList
 }
-

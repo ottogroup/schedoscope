@@ -40,6 +40,9 @@ import org.slf4j.LoggerFactory
 import org.apache.tools.ant.taskdefs.Sleep
 import org.schedoscope.dsl.ExternalTransformation
 
+/**
+ *
+ */
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
