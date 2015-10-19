@@ -34,11 +34,12 @@ import org.apache.hadoop.hive.metastore.api.Partition
 import org.joda.time.DateTime
 import org.schedoscope.Settings
 import org.schedoscope.schema.ddl.HiveQl
-import org.schedoscope.dsl.Version
+import org.schedoscope.dsl.transformations.Version
 import org.schedoscope.dsl.View
 import org.slf4j.LoggerFactory
 import org.apache.tools.ant.taskdefs.Sleep
-import org.schedoscope.dsl.ExternalTransformation
+import org.schedoscope.dsl.transformations.ExternalTransformation
+import org.schedoscope.dsl.transformations.Version
 
 /**
  *

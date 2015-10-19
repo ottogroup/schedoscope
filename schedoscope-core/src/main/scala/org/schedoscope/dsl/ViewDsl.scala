@@ -15,6 +15,7 @@
  */
 package org.schedoscope.dsl
 import org.schedoscope.dsl.storageformats._
+import org.schedoscope.dsl.transformations.Transformation
 trait ViewDsl extends StructureDsl {
 
   def dependsOn[V <: View: Manifest](dsf: () => Seq[V]): Unit
@@ -33,6 +34,6 @@ trait ViewDsl extends StructureDsl {
     ps.isPrivacySensitive = true
     ps
   }
-  
+
   def materializeOnce: Unit
 }

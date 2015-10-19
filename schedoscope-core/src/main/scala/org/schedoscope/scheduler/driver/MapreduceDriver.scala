@@ -28,7 +28,7 @@ import org.schedoscope.DriverSettings
 import java.security.PrivilegedAction
 
 /**
- * Mapreduce Driver that executes mapreduce-transformations.
+ *  Driver that executes Mapreduce transformations.
  *
  */
 class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[MapreduceTransformation] {
@@ -37,8 +37,14 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
 
   def driver = this
 
+  /**
+   * Set transformation name to mapreduce
+   */
   override def transformationName = "mapreduce"
 
+  /**
+   * Start mapreduce job asynchronously and embed the job object as the run handle.
+   */
   def run(t: MapreduceTransformation): DriverRunHandle[MapreduceTransformation] = try {
     ugi.doAs(new PrivilegedAction[DriverRunHandle[MapreduceTransformation]]() {
       def run(): DriverRunHandle[MapreduceTransformation] = {
@@ -53,6 +59,9 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
     case e: Throwable => throw DriverException("Unexpected error occurred while submitting Mapreduce job", e)
   }
 
+  /**
+   * Return run state for the mapreduce job given by the run handle
+   */
   override def getDriverRunState(runHandle: DriverRunHandle[MapreduceTransformation]): DriverRunState[MapreduceTransformation] = try {
     val job = runHandle.stateHandle.asInstanceOf[Job]
     val jobId = job.getJobName
@@ -69,6 +78,9 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
     case e: Throwable => throw DriverException(s"Unexpected error occurred while checking run state of Mapreduce job", e)
   }
 
+  /**
+   * Run mapreduce job blockingly and return the result as a  run state.
+   */
   override def runAndWait(t: MapreduceTransformation): DriverRunState[MapreduceTransformation] = try {
     ugi.doAs(new PrivilegedAction[DriverRunState[MapreduceTransformation]]() {
       def run(): DriverRunState[MapreduceTransformation] = {
@@ -84,6 +96,9 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
     case e: Throwable => DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${t.job.getJobName} failed", e)
   }
 
+  /**
+   * Kill the mapreduce job behind the given run handle.
+   */
   override def killRun(runHandle: DriverRunHandle[MapreduceTransformation]) = try {
     ugi.doAs(new PrivilegedAction[Unit]() {
       def run(): Unit = {
@@ -97,6 +112,9 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
 
 }
 
+/**
+ * Factory for the mapreduce driver.
+ */
 object MapreduceDriver {
   def apply(ds: DriverSettings) = new MapreduceDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation)
 }

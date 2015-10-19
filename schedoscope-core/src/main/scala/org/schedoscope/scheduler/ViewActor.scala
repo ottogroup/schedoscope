@@ -22,7 +22,7 @@ import scala.concurrent.duration.Duration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.schedoscope.SettingsImpl
-import org.schedoscope.dsl.NoOp
+import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.dsl.transformations.Touch
@@ -35,10 +35,10 @@ import akka.event.Logging
 import akka.event.LoggingReceive
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.dsl.transformations.MorphlineTransformation
-import org.schedoscope.dsl.ExternalTransformation
+import org.schedoscope.dsl.transformations.ExternalTransformation
 import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
-import org.schedoscope.dsl.NoOp
+import org.schedoscope.dsl.transformations.NoOp
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
@@ -64,10 +64,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   override def preStart {
     logStateInfo("receive", false)
-  }
-
-  override def preRestart(reason: Throwable, message: Option[Any]) {
-    log.error("Encountered restart of view actor: ${reason} ${message}")
   }
 
   // State: default

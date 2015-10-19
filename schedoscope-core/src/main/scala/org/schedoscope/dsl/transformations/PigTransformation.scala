@@ -23,9 +23,7 @@ import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.ResourceUri
-import org.schedoscope.dsl.Version
 import org.schedoscope.Settings
-import org.schedoscope.dsl.Transformation
 import org.schedoscope.dsl.View
 import scala.collection.JavaConversions._
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
@@ -36,9 +34,10 @@ import parquet.pig.ParquetStorer
 import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege
 
 /**
- * Pig Transformation
- * @param latin Pig Script
- * @param dirsToDelete List of directories to empty before execution
+ * Pig Transformation - Compute a view from a shell script.
+ *
+ * @param latin Pig script to execute
+ * @param dirsToDelete List of directories to empty before Pig execution. Does not include the view's fullPath!
  *
  */
 case class PigTransformation(latin: String, dirsToDelete: List[String] = List()) extends Transformation {

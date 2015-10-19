@@ -34,15 +34,18 @@ import org.joda.time.LocalDateTime
 import org.schedoscope.DriverSettings
 import org.schedoscope.Settings
 import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.dsl.Transformation.replaceParameters
+import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
 import HiveDriver.currentConnection
 
 /**
- *
+ * Driver for executing Hive transformations
  */
 class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
 
+  /**
+   * Set transformation name to hive
+   */
   override def transformationName = "hive"
 
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
@@ -50,8 +53,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
 
   /**
-   * @param t
-   * @return
+   * Construct a future-based driver run handle
    */
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {
@@ -60,8 +62,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     })
 
   /**
-   * @param sql
-   * @return
+   * Actually perform the given query and return a run state after completion.
    */
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
     val queryStack = Stack[String]("")
@@ -98,9 +99,6 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
 
-  /**
-   * @param f
-   */
   def registerFunction(f: Function) {
     val existing = try {
       metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
@@ -117,7 +115,8 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
   }
 
   /**
-   * @return
+   * We need to handle connections and statements as ThreadLocals because the Hive JDBC driver
+   * binds sessions to threads :-(
    */
   private def connection = {
     if (currentConnection.get.isEmpty) {
@@ -146,6 +145,10 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     currentStatement.get.get
   }
 
+  /**
+   * We need to cleanup  connections and statements and their ThreadLocals because the Hive JDBC driver
+   * binds sessions to threads :-(
+   */
   private def cleanupResources() {
     try {
       if (currentStatement.get.isDefined) {
@@ -174,7 +177,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 }
 
 /**
- *
+ * Factory methods for Hive drivers
  */
 object HiveDriver {
   val currentConnection = new ThreadLocal[Option[Connection]]() {

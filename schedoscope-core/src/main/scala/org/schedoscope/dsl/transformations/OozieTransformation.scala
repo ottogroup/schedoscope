@@ -20,7 +20,6 @@ import java.io.InputStream
 import java.util.Properties
 import org.apache.commons.lang.StringUtils
 import org.schedoscope.Settings
-import org.schedoscope.dsl.Transformation
 import scala.collection.JavaConversions._
 
 /**

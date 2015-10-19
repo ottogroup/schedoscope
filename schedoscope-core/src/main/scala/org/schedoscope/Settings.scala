@@ -29,7 +29,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.schedoscope.scheduler.driver.FileSystemDriver.fileSystem
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.views.DateParameterizationUtils
 import com.typesafe.config.Config
 import akka.actor.ActorSystem
@@ -41,8 +41,8 @@ import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 
 /**
- * The Settings class stores all settings for Schedoscope. it is a singelton an accesible through
- * the companion objects apply() method.
+ * The Settings class stores all settings for Schedoscope. It is a singelton accesible through
+ * the companion object's apply() method.
  *
  * Configuration is based on TypeSafe config. For an explanation of the different
  * configuration settings, please refer to src/main/resources/reference.conf
@@ -138,19 +138,20 @@ class SettingsImpl(val config: Config) extends Extension {
   }
 
   /**
-   * Returns driverspecific settings from the configuration
+   * Returns driver-specific settings from the configuration
    *
    * @param d  driver to retrieve the settings for
-   * @return
+   * @return the driver settings
    */
   def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
     getDriverSettings(d.transformationName)
   }
 
   /**
-   * Returns driverspecific settings from the configuration by transformation type
-   * @param t
-   * @return
+   * Returns driver-specific settings from the configuration by transformation type
+   *
+   * @param t transformation type whose settings are of interest
+   * @return the driver settings
    */
   def getDriverSettings[T <: Transformation](t: T): DriverSettings = {
     val name = t.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("\\$", "")
@@ -158,27 +159,29 @@ class SettingsImpl(val config: Config) extends Extension {
   }
 
   /**
-   * @param n
-   * @return
+   * Returns driver-specific settings by transformation type name
+   *
+   * @param nt the name of the transformation type (e.g. mapreduce)
+   * @return the driver settings
    */
-  def getDriverSettings(n: String): DriverSettings = {
-    if (!driverSettings.contains(n)) {
-      val confName = "schedoscope.transformations." + n
-      driverSettings.put(n, new DriverSettings(config.getConfig(confName), n))
+  def getDriverSettings(nt: String): DriverSettings = {
+    if (!driverSettings.contains(nt)) {
+      val confName = "schedoscope.transformations." + nt
+      driverSettings.put(nt, new DriverSettings(config.getConfig(confName), nt))
     }
 
-    driverSettings(n)
+    driverSettings(nt)
   }
 
   /**
-   * retrieve the settings for one specific transformation or workflow
+   * Retrieve a setting  for a transformation type
    *
-   * @param typ   transformation type (e.g mapreduce)
-   * @param setting  setting name
-   * @return
+   * @param nt	the name of the transformation type (e.g. mapreduce)
+   * @param n	the name of the setting for nt
+   * @return the setting's value as a string
    */
-  def getTransformationSetting(typ: String, setting: String) = {
-    val confName = s"schedoscope.transformations.${typ}.transformation.${setting}"
+  def getTransformationSetting(bt: String, n: String) = {
+    val confName = s"schedoscope.transformations.${bt}.transformation.${n}"
     config.getString(confName)
   }
 

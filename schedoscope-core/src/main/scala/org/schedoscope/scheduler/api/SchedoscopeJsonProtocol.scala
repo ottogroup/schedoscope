@@ -19,7 +19,7 @@ import scala.concurrent.Future
 
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
-import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.driver.DriverRunFailed
 import org.schedoscope.scheduler.driver.DriverRunOngoing
@@ -84,8 +84,8 @@ object SchedoscopeJsonProtocol extends DefaultJsonProtocol {
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
         case s: DriverRunSucceeded[_] => { comment = getOrElse(s.comment, "no-comment"); status = "succeeded" }
-        case f: DriverRunFailed[_]    => { comment = getOrElse(f.reason, "no-reason"); status = "failed" }
-        case o: DriverRunOngoing[_]   => { drh = o.runHandle }
+        case f: DriverRunFailed[_] => { comment = getOrElse(f.reason, "no-reason"); status = "failed" }
+        case o: DriverRunOngoing[_] => { drh = o.runHandle }
       }
     }
 

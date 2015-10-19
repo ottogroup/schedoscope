@@ -15,16 +15,21 @@ import scala.sys.process._
 import org.slf4j.LoggerFactory
 
 /**
- * Executes a local shell script.
- * @author hpzorn
- *
+ * Driver for executing shell transformations.
  */
 class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extends Driver[ShellTransformation] {
+
+  /**
+   * Set transformation name to pig
+   */
   override def transformationName = "shell"
 
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
   val log = LoggerFactory.getLogger(classOf[ShellDriver])
 
+  /**
+   * Construct a future-based driver run handle
+   */
   def run(t: ShellTransformation): DriverRunHandle[ShellTransformation] =
     new DriverRunHandle(this, new LocalDateTime(), t, future {
       doRun(t)
@@ -58,6 +63,10 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
     try f(resource) finally resource.close()
 
 }
+
+/**
+ * Factory methods for shell transformations.
+ */
 object ShellDriver {
   def apply(ds: DriverSettings) = new ShellDriver(ds.driverRunCompletionHandlers)
 }

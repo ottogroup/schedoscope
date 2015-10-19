@@ -28,6 +28,9 @@ import org.schedoscope.Settings
 import akka.actor.ActorSelection
 import scala.concurrent.Await
 
+/**
+ * Supervisor and load balancer for schema and metadata logger actors
+ */
 class SchemaRootActor(settings: SettingsImpl) extends Actor {
   import context._
 
@@ -36,6 +39,9 @@ class SchemaRootActor(settings: SettingsImpl) extends Actor {
   var metadataLoggerActor: ActorRef = null
   var schemaActor: ActorRef = null
 
+  /**
+   * Supervisor strategy: Restart failing schema or metadata logger actors
+   */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _: Throwable => Restart
@@ -47,11 +53,11 @@ class SchemaRootActor(settings: SettingsImpl) extends Actor {
   }
 
   def receive = {
-    case m: CheckOrCreateTables        => schemaActor forward m
+    case m: CheckOrCreateTables => schemaActor forward m
 
-    case a: AddPartitions              => schemaActor forward a
+    case a: AddPartitions => schemaActor forward a
 
-    case s: SetViewVersion             => metadataLoggerActor forward s
+    case s: SetViewVersion => metadataLoggerActor forward s
 
     case l: LogTransformationTimestamp => metadataLoggerActor forward l
   }

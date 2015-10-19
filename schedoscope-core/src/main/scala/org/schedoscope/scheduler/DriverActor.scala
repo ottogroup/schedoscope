@@ -30,7 +30,7 @@ import org.schedoscope.scheduler.driver.FileSystemDriver
 import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.driver.OozieDriver
 import org.schedoscope.scheduler.driver.ShellDriver
-import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
@@ -50,11 +50,10 @@ import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.ShellTransformation
 
 /**
- * A driver actor manages the executions of transformations using hive, oozie etc. The actual execution
- * is done using a driver.
+ * A driver actor manages the executions of transformations using hive, oozie etc. The actual
+ * execution is done using a driver trait implementation. The driver actor code itself is transformation
+ * type agnostic
  *
- * @param <T>
- * @constructor
  */
 class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
@@ -64,18 +63,24 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
 
   var runningCommand: Option[CommandWithSender] = None
 
+  /**
+   * Start ticking upon start.
+   */
   override def preStart() {
     logStateInfo("idle", "DRIVER ACTOR: initialized actor")
     tick()
   }
 
+  /**
+   * If the driver actor is to be restarted by the actions manager actor, the currently running action is reenqueued so it does not get lost.
+   */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
       actionsManagerActor ! runningCommand.get
   }
 
   /**
-   *
+   * Provide continuous ticking in default state
    */
   def tick() {
     system.scheduler.scheduleOnce(pingDuration, self, "tick")
@@ -95,7 +100,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
   }
 
   /**
-   * Message handle for the running state
+   * Message handler for the running state
    * @param runHandle  reference to the running driver
    * @param s reference to the viewActor that requested the transformation (for sending back the result)
    */
@@ -143,7 +148,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
   }
 
   /**
-   *  State transition to idle state.
+   *  State transition to default state.
    */
   def toReceive() {
     runningCommand = None
@@ -156,8 +161,9 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
 
   /**
    * State transition to running state.
+   *
    * Includes special handling of "Deploy" commands, those are executed directly, no state transition despite name of function
-   * Otherwise run the transformation using the driver instance and switches to running state
+   * Otherwise run the transformation using the driver instance and switch to running state
    *
    * @param commandToRun
    */
@@ -202,6 +208,9 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
   }
 }
 
+/**
+ * Factory methods for driver actors.
+ */
 object DriverActor {
   def props(driverName: String, actionsRouter: ActorRef) = {
     val ds = Settings().getDriverSettings(driverName)

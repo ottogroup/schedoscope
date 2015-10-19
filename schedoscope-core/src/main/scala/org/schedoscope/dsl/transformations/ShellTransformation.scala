@@ -1,14 +1,14 @@
 package org.schedoscope.dsl.transformations
 
-import org.schedoscope.dsl.Transformation
-import org.schedoscope.dsl.ExternalTransformation
-
 /**
- * A shell transformation - can do anything
+ * A shell transformation - externally transform a view using a shell script.
+ *
  * @param script contents of the script to be executed
- * @param scriptFile script to execute
+ * @param scriptFile path to script to be executed
+ *
  * Either script or scriptFile needs to be specified
- * @param shell path to the interpreter executable, could also be /bin/env python
+ *
+ * @param shell path to the interpreter executable, defaults to /bin/bash
  *
  */
 case class ShellTransformation(script: String = "", scriptFile: String = "", shell: String = "/bin/bash", env: Map[String, String] = Map()) extends ExternalTransformation {

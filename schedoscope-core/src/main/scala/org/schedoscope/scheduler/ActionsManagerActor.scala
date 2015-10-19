@@ -25,7 +25,7 @@ import org.apache.hadoop.conf.Configuration
 
 import org.schedoscope.Settings
 import org.schedoscope.scheduler.driver.DriverException
-import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.scheduler.messages._
@@ -40,6 +40,8 @@ import akka.event.Logging
 import akka.event.LoggingReceive
 
 /**
+ * The actions manager actor queues transformation requests ("actions") it receives from view actors by
+ * transformation type. Idle driver actors poll the actions manager for new actions to perform.
  *
  */
 class ActionsManagerActor() extends Actor {
@@ -68,18 +70,9 @@ class ActionsManagerActor() extends Actor {
 
   val randomizer = Random
 
-  /**
-   * @param s
-   * @return
-   */
   def hash(s: String) = Math.max(0,
     s.hashCode().abs % filesystemConcurrency)
 
-  /**
-   * @param t
-   * @param s
-   * @return
-   */
   def queueNameForTransformationAction(t: Transformation, s: ActorRef) =
     if (t.name != "filesystem")
       t.name
@@ -89,10 +82,6 @@ class ActionsManagerActor() extends Actor {
       h
     }
 
-  /**
-   * @param transformationType
-   * @return
-   */
   def queueNameForTransformationType(transformationType: String) =
     if (transformationType != "filesystem") {
       transformationType
@@ -119,29 +108,36 @@ class ActionsManagerActor() extends Actor {
   private def actionQueueStatus() = {
     queues.map(q => (q._1, q._2.map(c => c.command).toList))
   }
+
   /**
-   * How to handle Exceptions. Drivers will be restarted, all other exceptions
-   * escalated to supervisor
+   * Supervision strategy. If a driver actor raises a DriverException, the driver actor will be restarted.
+   * If any other exception is raised, it is escalated.
    */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _: DriverException => Restart
-      case _: Throwable       => Escalate
+      case _: Throwable => Escalate
     }
 
+  /**
+   * Create driver actors as required by configured transformation types and their concurrency.
+   */
   override def preStart {
     for (transformation <- availableTransformations; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
       actorOf(DriverActor.props(transformation, self), s"${transformation}-${c + 1}")
     }
   }
 
+  /**
+   * Message handler
+   */
   def receive = LoggingReceive({
 
     case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
-    case GetActions()                 => sender ! ActionStatusListResponse(driverStates.values.toList)
+    case GetActions() => sender ! ActionStatusListResponse(driverStates.values.toList)
 
-    case GetQueues()                  => sender ! QueueStatusListResponse(actionQueueStatus)
+    case GetQueues() => sender ! QueueStatusListResponse(actionQueueStatus)
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
@@ -172,14 +168,17 @@ class ActionsManagerActor() extends Actor {
       }
     }
 
-    case viewAction: View                                         => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
+    case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
 
     case filesystemTransformationAction: FilesystemTransformation => self ! CommandWithSender(filesystemTransformationAction, sender)
 
-    case deployAction: Deploy                                     => self ! CommandWithSender(deployAction, sender)
+    case deployAction: Deploy => self ! CommandWithSender(deployAction, sender)
   })
 }
 
+/**
+ * Factory for the actions manager actor.
+ */
 object ActionsManagerActor {
   def props(conf: Configuration) = Props[ActionsManagerActor].withDispatcher("akka.actor.actions-manager-dispatcher")
 }

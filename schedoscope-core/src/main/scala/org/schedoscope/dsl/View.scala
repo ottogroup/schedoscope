@@ -29,6 +29,9 @@ import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import org.schedoscope.test.rows
 import org.schedoscope.dsl.storageformats._
+import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.dsl.transformations.NoOp
+import org.schedoscope.dsl.transformations.ExternalTransformation
 
 abstract class View extends Structure with ViewDsl with DelayedInit {
 

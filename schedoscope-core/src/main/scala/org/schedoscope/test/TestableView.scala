@@ -22,7 +22,7 @@ import org.apache.hadoop.fs.Path
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.Structure
-import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation

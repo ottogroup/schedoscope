@@ -27,6 +27,9 @@ import akka.routing.Router
 import akka.routing.RoundRobinRouter
 import org.schedoscope.scheduler.messages._
 
+/**
+ * The metadata logger actor writes view version checksums and timestamps to the metastore
+ */
 class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   import context._
   val log = Logging(system, MetadataLoggerActor.this)
@@ -34,11 +37,18 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
 
+  /**
+   * Before the actor gets restarted, reenqueue the running write command with the schema root actor
+   * so it does not get lost.
+   */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
       self forward runningCommand.get
   }
 
+  /**
+   * Message handler.
+   */
   def receive = LoggingReceive({
 
     case s: SetViewVersion => {
@@ -57,6 +67,9 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
   })
 }
 
+/**
+ * Factory for metadata logger actors.
+ */
 object MetadataLoggerActor {
   def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = (Props(classOf[MetadataLoggerActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal)).withDispatcher("akka.actor.metadata-logger-dispatcher")
 }

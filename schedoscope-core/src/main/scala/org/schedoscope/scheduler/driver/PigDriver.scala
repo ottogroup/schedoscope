@@ -37,7 +37,7 @@ import org.joda.time.LocalDateTime
 import org.schedoscope.DriverSettings
 import org.schedoscope.Settings
 import org.schedoscope.dsl.transformations.PigTransformation
-import org.schedoscope.dsl.Transformation.replaceParameters;
+import org.schedoscope.dsl.transformations.Transformation.replaceParameters;
 import org.schedoscope.scheduler.driver.HiveDriver.currentConnection;
 import org.slf4j.LoggerFactory
 
@@ -53,10 +53,13 @@ import org.apache.pig.PigException
 import scala.collection.JavaConversions._
 
 /**
- *
+ * Driver for Pig transformations.
  */
 class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[PigTransformation] {
 
+  /**
+   * Set transformation name to pig
+   */
   override def transformationName = "pig"
 
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
@@ -65,6 +68,9 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
 
   val driver = this // needed to access driver within ugi.doAs below
 
+  /**
+   * Construct a future-based driver run handle
+   */
   def run(t: PigTransformation): DriverRunHandle[PigTransformation] =
     new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, future {
       // FIXME: future work: register jars, custom functions
@@ -97,10 +103,12 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
         }
       }
     })
-
   }
 }
 
+/**
+ * Factory for Pig driver
+ */
 object PigDriver {
   def apply(ds: DriverSettings) =
     new PigDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation)

@@ -26,20 +26,38 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import org.schedoscope.dsl.ExternalTransformation
+import org.schedoscope.dsl.transformations.ExternalTransformation
 import scala.collection.mutable.HashSet
 import kamon.Kamon
+import akka.actor.OneForOneStrategy
+import akka.actor.SupervisorStrategy.Escalate
 
+/**
+ * The view manager actor is the factory and supervisor of view actors. Upon creation of view actors
+ * it is responsible for creating non-existing tables or partitions in the Hive metastore, for reading
+ * the last transformation timestamps and version checksums from the metastore for already materialized
+ * views.
+ *
+ * It does this by cooperating with the schema actor and metadata logger actor.
+ */
 class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
   val log = Logging(system, ViewManagerActor.this)
 
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
   val viewCreationCounter = Kamon.metrics.counter("viewsCreated")
-  override def preRestart(reason: Throwable, message: Option[Any]) {
-    // prevent termination of children during restart and cause their own restart
-  }
 
+  /**
+   * Supervisor strategy: Escalate any problems because view actor failures are not recoverable.
+   */
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = -1) {
+      case _: Throwable => Escalate
+    }
+
+  /**
+   * Message handler.
+   */
   def receive = LoggingReceive({
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
@@ -80,6 +98,14 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }.flatten.distinct
   }
 
+  /**
+   * Initialize view actors for a list of views. If a view actor has been produced for a view
+   * previously, that one is returned.
+   *
+   * @param vs 	the views to create actors for
+   * @param dependencies	create actors for the prerequisite views as well.
+   * @return the list of corresponding view actor refs
+   */
   def initializeViewActors(vs: List[View], dependencies: Boolean = false): List[ActorRef] = {
     log.info(s"Initializing ${vs.size} views")
 
@@ -135,6 +161,9 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   }
 }
 
+/**
+ * View manager factory methods
+ */
 object ViewManagerActor {
   def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 

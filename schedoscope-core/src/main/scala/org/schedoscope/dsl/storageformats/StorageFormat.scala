@@ -16,53 +16,74 @@
 package org.schedoscope.dsl.storageformats
 import org.schedoscope.dsl._
 
+/**
+ * Base class for all storage formats supported in views
+ */
 abstract sealed class StorageFormat
 
 /**
- * Stores data to a textfile
- * @param fieldTerminator separator for fields, default is tabulator
- * @param collectionItemTerminator separator char for items in collection, default is ,
- * @param mapKeyTerminator char for separating key and value, default is =
- * @param lineTerminator newline
+ * Store a view's data as a Hive textfile (default)
+ *
+ * @param fieldTerminator separator for fields, default is \001
+ * @param collectionItemTerminator separator for items in collections, default is \002
+ * @param mapKeyTerminator char for separating map keys and values, default is \003
+ * @param lineTerminator default is \n
  */
 case class TextFile(val fieldTerminator: String = null, collectionItemTerminator: String = null, mapKeyTerminator: String = null, lineTerminator: String = null) extends StorageFormat
 
 /**
- * Stores the output of this view as Parquet
+ * Store a view's data as Parquet
  *
  */
 case class Parquet() extends StorageFormat
 
 /**
- * Stores as Avro
- * @param schemaPath location of avro schema
+ * Store a view's data as Avro
+ *
+ * @param schemaPath storage location of Avro schema
  *
  */
 case class Avro(schemaPath: String) extends StorageFormat
 
 /**
- *  External storage does not exist within the hadoop warehouse but references external tables
- *  in a RDMBS or Redis instead
+ *  Base class for external storage formats. Views with external storage formats keep their data not within the Hive metastore
+ *  but in external pool such as in a RDBMS tables or Redis stores
  */
 abstract sealed class ExternalStorageFormat extends StorageFormat
+
 /**
- * ExternalTextFile has the same properties as Textfile but is stored in the local filesystem
- * instead of HDFS
+ * Store a view's data in an externalTextFile outside of HDFS in the local file system of the schedoscope process.
+ *
+ * @param fieldTerminator separator for fields, default is \001
+ * @param collectionItemTerminator separator for items in collections, default is \002
+ * @param mapKeyTerminator char for separating map keys and values, default is \003
+ * @param lineTerminator default is \n
  *
  */
 case class ExternalTextFile(val fieldTerminator: String = null, collectionItemTerminator: String = null, mapKeyTerminator: String = null, lineTerminator: String = null) extends ExternalStorageFormat
+
 /**
- * ExternalAvro has the same properties as Avro but is stored in the local filesystem
- * instead of HDFS
+ * Store a view's data in an Avro file outside of HDFS in the local file system of the schedoscope process.
+ *
+ * @param schemaPath storage location of Avro schema
+ *
  *
  */
 case class ExternalAvro(schemaPath: String) extends ExternalStorageFormat
+
 /**
- * Exasolution is currently an alias for JDBC
+ * Store a view's data in the ExaSol RDBMS via the Exasol JDBC driver
+ *
+ * @param jdbcUrl
+ * @param userName
+ * @param password
+ * @param jdbcDriver
+ *
  */
 case class ExaSolution(jdbcUrl: String, userName: String, password: String, merge: Boolean = false, mergeKeys: Seq[String] = List("id")) extends ExternalStorageFormat
+
 /**
- * JDBC tables store the view in an external jdbc database
+ * Currently, JDBC is just a synonym for ExaSolution. There is no generic JDBC external storage format yet.
  *
  * @param jdbcUrl
  * @param userName
@@ -71,8 +92,13 @@ case class ExaSolution(jdbcUrl: String, userName: String, password: String, merg
  *
  */
 case class JDBC(jdbcUrl: String, userName: String, password: String, jdbcDriver: String) extends ExternalStorageFormat
+
 /**
- * Writes to Redis
+ * Store a view's data in an external Redis cluster.
+ *
+ * @param host
+ * @param port
+ * @param password
  */
 case class Redis(host: String, port: Long = 9393, password: String = "", keys: Seq[String] = List("id"), cols: Seq[Named] = List()) extends ExternalStorageFormat
 

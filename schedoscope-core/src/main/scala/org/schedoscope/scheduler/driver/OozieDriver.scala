@@ -35,13 +35,17 @@ import org.schedoscope.dsl.transformations.OozieTransformation
 import com.typesafe.config.ConfigFactory
 
 /**
-
- *
+ * This driver performs Oozie transformations.
  */
 class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val client: OozieClient) extends Driver[OozieTransformation] {
-
+  /**
+   * Set transformation name to oozie
+   */
   override def transformationName = "oozie"
 
+  /**
+   * Start an Oozie workflow asynchronously and embed the Oozie job ID as the run handle.
+   */
   def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = try {
     val jobConf = createOozieJobConf(t)
     val oozieJobId = runOozieJob(jobConf)
@@ -50,6 +54,9 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
     case e: Throwable => throw DriverException("Unexpected error occurred while running Oozie job", e)
   }
 
+  /**
+   * Return the run state of an Oozie job given a run handle
+   */
   override def getDriverRunState(run: DriverRunHandle[OozieTransformation]) = {
     val jobId = run.stateHandle.toString
     try {
@@ -65,6 +72,9 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
     }
   }
 
+  /**
+   * Run an Oozie workflow synchronously.
+   */
   override def runAndWait(t: OozieTransformation): DriverRunState[OozieTransformation] = {
     val runHandle = run(t)
 
@@ -74,6 +84,9 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
     getDriverRunState(runHandle)
   }
 
+  /**
+   * Kill the run of an Oozie workflow
+   */
   override def killRun(run: DriverRunHandle[OozieTransformation]) = {
     val jobId = run.stateHandle.toString
     try {
@@ -107,6 +120,9 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
     }
 }
 
+/**
+ * Factory for Oozie drivers
+ */
 object OozieDriver {
   def apply(ds: DriverSettings) = new OozieDriver(ds.driverRunCompletionHandlers, new OozieClient(ds.url))
 }

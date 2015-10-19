@@ -69,9 +69,6 @@ object Helper {
  * parsed but the overall morphline is assembled programmatically. The first and last element
  * of the Morphline is provided by schedoscope depending on the storage format of the views.
  *
- *
- * @author hpzorn
- *
  */
 class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val hadoopConf: Configuration) extends Driver[MorphlineTransformation] {
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
