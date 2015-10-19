@@ -20,7 +20,7 @@ import scala.Array.canBuildFrom
 import org.schedoscope.dsl.Structure
 import org.schedoscope.dsl.View
 import java.text.SimpleDateFormat
-import org.schedoscope.dsl.storageformats._
+import org.schedoscope.dsl.storageformats.TextFile
 
 object ViewSerDe {
 
