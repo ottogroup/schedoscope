@@ -42,7 +42,7 @@ import org.schedoscope.dsl.transformations.ExternalTransformation
 import org.schedoscope.dsl.transformations.Version
 
 /**
- *
+ * Interface to the Hive metastore. Used by schema actor and metadata logger actor.
  */
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
