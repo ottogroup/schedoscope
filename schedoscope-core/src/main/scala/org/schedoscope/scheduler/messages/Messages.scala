@@ -223,12 +223,13 @@ case class ViewStatusResponse(val status: String, view: View, actor: ActorRef) e
 case class TransformationMetadata(metadata: Map[View, (String, Long)]) extends CommandResponse
 
 /**
- * notifies a depending view that one dependency has no data available
+ * A view actor notifying a depending view that it has no data available
  */
 case class NoDataAvailable(view: View) extends CommandResponse
 
 /**
- * notification to views about a recomputation of a depenency
+ * A view actor notifying a depending view that it has materialized
+ * 
  * @param view View that has been changed
  * @param incomplete true of not all transitive dependencies had data available
  * @param transformationTimeStamp timestamp of the oldest? transformation in that dependency tree
