@@ -41,7 +41,7 @@ import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 
 /**
- * The Settings class stores all settings for Schedoscope. It is a singelton accesible through
+ * The Settings class stores all settings for Schedoscope. It is a singelton accessible through
  * the companion object's apply() method.
  *
  * Configuration is based on TypeSafe config. For an explanation of the different
