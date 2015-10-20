@@ -70,9 +70,16 @@ case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], 
 trait DriverRunCompletionHandler[T <: Transformation] {
 
   /**
-   * User has to implement this method for gathering information about a run
-   * @param stateOfCompletion
-   * @param run
+   * This method has to be implemented for gathering information about a completed run run
+   * 
+   * As for exceptions: 
+   * 
+   * In case a failure within the completion handler should not cause the transformation to fail, the exception should be suppressed.
+   * 
+   * In case a failure within the completion handler should cause a restart of the driver actor and a redo of the transformation, 
+   * it should be raised as a DriverException.
+   * 
+   * Any other raised exception will cause the driver run to fail and the transformation subsequently to be retried by the view actor.
    */
   def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T])
 }
