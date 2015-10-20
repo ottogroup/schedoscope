@@ -48,6 +48,7 @@ import org.schedoscope.scheduler.driver.MapreduceDriver
 import org.schedoscope.scheduler.driver.PigDriver
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.ShellTransformation
+import org.schedoscope.scheduler.driver.DriverException
 
 /**
  * A driver actor manages the executions of transformations using hive, oozie etc. The actual
@@ -102,9 +103,9 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
   /**
    * Message handler for the running state
    * @param runHandle  reference to the running driver
-   * @param s reference to the viewActor that requested the transformation (for sending back the result)
+   * @param originalSender reference to the viewActor that requested the transformation (for sending back the result)
    */
-  def running(runHandle: DriverRunHandle[T], orininalSender: ActorRef): Receive = LoggingReceive {
+  def running(runHandle: DriverRunHandle[T], originalSender: ActorRef): Receive = LoggingReceive {
     case KillAction() => {
       driver.killRun(runHandle)
       toReceive()
@@ -120,16 +121,38 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
 
         case success: DriverRunSucceeded[T] => {
           log.info(s"DRIVER ACTOR: Driver run for handle=${runHandle} succeeded.")
-          driver.driverRunCompleted(runHandle)
-          orininalSender ! ActionSuccess(runHandle, success)
+
+          try {
+            driver.driverRunCompleted(runHandle)
+          } catch {
+            case d: DriverException => throw d
+
+            case t: Throwable => {
+              log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}")
+              originalSender ! ActionFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t))
+              toReceive()
+              tick()
+            }
+          }
+
+          originalSender ! ActionSuccess(runHandle, success)
           toReceive()
           tick()
         }
 
         case failure: DriverRunFailed[T] => {
           log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
-          driver.driverRunCompleted(runHandle)
-          orininalSender ! ActionFailure(runHandle, failure)
+
+          try {
+            driver.driverRunCompleted(runHandle)
+          } catch {
+            case d: DriverException => throw d
+
+            case t: Throwable => {
+            }
+          }
+
+          originalSender ! ActionFailure(runHandle, failure)
           toReceive()
           tick()
         }
