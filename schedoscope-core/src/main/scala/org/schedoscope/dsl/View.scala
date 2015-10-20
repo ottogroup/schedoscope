@@ -35,56 +35,50 @@ import org.schedoscope.dsl.transformations.ExternalTransformation
 
 abstract class View extends Structure with ViewDsl with DelayedInit {
 
-  var env = "dev"
-
-  override def n = super.n + {
-    val partitionings = parameters
-      .filter { p => isPartition(p) && isSuffixPartition(p) }
-      .map { p => p.v.get }
-
-    if (partitionings.isEmpty)
-      ""
-    else
-      "_" + partitionings.mkString("_").toLowerCase()
-  }
-
-  def nWithoutPartitioningSuffix = super.n
-
-  var moduleNameBuilder: () => String = () => this.getClass().getPackage().getName()
-  def module = Named.formatName(moduleNameBuilder()).replaceAll("[.]", "_")
-
-  def urlPathPrefix = s"${Named.formatName(moduleNameBuilder())}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}"
-  def urlPath = s"${urlPathPrefix}/${partitionValues.mkString("/")}"
+  def lowerCasePackageName = Named.camelToLowerUnderscore(getClass.getPackage.getName)
 
   override def toString() = urlPath
 
-  var dbNameBuilder: String => String = (env: String) => env.toLowerCase() + "_" + module
+  def nWithoutPartitioningSuffix = super.n
+
+  override def n =
+    if (!hasSuffixPartitions)
+      nWithoutPartitioningSuffix
+    else
+      nWithoutPartitioningSuffix + "_" + suffixPartitionParameters.map { p => p.v.get }.mkString("_").toLowerCase()
+
+  def urlPathPrefix = s"${lowerCasePackageName}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}"
+  def urlPath = s"${urlPathPrefix}/${partitionValues.mkString("/")}"
+
+  var env = "dev"
+
+  override var moduleNameBuilder = () => lowerCasePackageName.replaceAll("[.]", "_")
+  def module = moduleNameBuilder()
+
+  override var dbNameBuilder = (env: String) => env.toLowerCase() + "_" + moduleNameBuilder()
   def dbName = dbNameBuilder(env)
-  def tableName = dbName + "." + n
 
-  var moduleLocationPathBuilder: String => String = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + module.replaceFirst("app", "applications")).replaceAll("_", "/")
+  override var tableNameBuilder = (env: String) => dbNameBuilder(env) + "." + n
+  def tableName = tableNameBuilder(env)
 
-  var locationPathBuilder: String => String = (env: String) => moduleLocationPathBuilder(env) + (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") + "/" + n + (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
-  def locationPath = locationPathBuilder(env)
+  override var dbPathBuilder = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
+  def dbPath = dbPathBuilder(env)
 
-  var partitionPathBuilder: () => String = () => partitionSpec
-  def fullPath = locationPath + partitionPathBuilder()
+  override var tablePathBuilder = (env: String) => dbPathBuilder(env) + (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") + "/" + n + (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
+  def tablePath = tablePathBuilder(env)
 
-  var avroSchemaPathPrefixBuilder: String => String = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
+  override var partitionPathBuilder = () => partitionSpec
+  def partitionPath = partitionPathBuilder()
+
+  override var fullPathBuilder = (env: String) => tablePathBuilder(env) + partitionPathBuilder()
+  def fullPath = fullPathBuilder(env)
+
+  override var avroSchemaPathPrefixBuilder = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
-  private val suffixPartitions = new HashSet[Parameter[_]]()
-
-  def asTableSuffix[P <: Parameter[_]](p: P): P = {
-    suffixPartitions.add(p)
-    p
-  }
+  def isPartitioned() = !partitionParameters.isEmpty()
 
   def isPartition(p: Parameter[_]) = parameters.contains(p)
-
-  def isSuffixPartition(p: Parameter[_]) = suffixPartitions.contains(p)
-
-  def isPartitioned() = !partitionParameters.isEmpty()
 
   def registerParameter(p: Parameter[_]) {
     p.assignTo(this)
@@ -101,7 +95,22 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     .filter { p => isPartition(p) && !isSuffixPartition(p) }
 
   def partitionSpec = "/" + partitionParameters.map(p => s"${p.n}=${p.v.getOrElse("")}").mkString("/")
+
   def partitionValues = partitionParameters.map(p => p.v.getOrElse("").toString).toList
+
+  private val suffixPartitions = new HashSet[Parameter[_]]()
+
+  def asTableSuffix[P <: Parameter[_]](p: P): P = {
+    suffixPartitions.add(p)
+    p
+  }
+
+  def isSuffixPartition(p: Parameter[_]) = suffixPartitions.contains(p)
+
+  def hasSuffixPartitions = !suffixPartitions.isEmpty
+
+  def suffixPartitionParameters = parameters
+    .filter { p => isPartition(p) && isSuffixPartition(p) }
 
   private val deferredDependencies = ListBuffer[() => Seq[View]]()
 
@@ -121,6 +130,12 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     () => dsf().head
   }
 
+  var comment: Option[String] = None
+
+  def comment(aComment: String) {
+    comment = Some(aComment)
+  }
+
   var storageFormat: StorageFormat = TextFile()
   var additionalStoragePathPrefix: Option[String] = None
   var additionalStoragePathSuffix: Option[String] = None
@@ -131,17 +146,10 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     this.additionalStoragePathSuffix = if (additionalStoragePathSuffix != null) Some(additionalStoragePathSuffix) else None
   }
 
-  var comment: Option[String] = None
-
-  def comment(aComment: String) {
-    comment = Some(aComment)
-  }
-
   var transformation: () => Transformation = () => NoOp()
 
   def transformVia(ft: () => Transformation) {
-    for (p <- parameters)
-      registerParameter(p)
+    ensureRegisteredParameters
 
     transformation = ft
   }
@@ -159,11 +167,13 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     isMaterializeOnce = true
   }
 
-  def delayedInit(body: => Unit) {
-    body
-
+  def ensureRegisteredParameters =
     for (p <- parameters)
       registerParameter(p)
+
+  def delayedInit(body: => Unit) {
+    ensureRegisteredParameters
+    body
   }
 }
 

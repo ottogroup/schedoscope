@@ -50,7 +50,7 @@ case class Productfeed(
             "env_dir" -> env,
             "success_flag" -> "_SUCCESS",
             "app" -> "eci",
-            "output_folder" -> locationPath,
+            "output_folder" -> tablePath,
             "wtEcnr" -> ecShopCode.v.get,
             "day" -> day.v.get,
             "month" -> month.v.get,

@@ -16,6 +16,7 @@
 package org.schedoscope.dsl
 import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.Transformation
+
 trait ViewDsl extends StructureDsl {
 
   def dependsOn[V <: View: Manifest](dsf: () => Seq[V]): Unit
@@ -36,4 +37,20 @@ trait ViewDsl extends StructureDsl {
   }
 
   def materializeOnce: Unit
+
+  var moduleNameBuilder: () => String
+
+  var dbNameBuilder: String => String
+
+  var tableNameBuilder: String => String
+
+  var dbPathBuilder: String => String
+
+  var tablePathBuilder: String => String
+
+  var partitionPathBuilder: () => String
+
+  var fullPathBuilder: String => String
+
+  var avroSchemaPathPrefixBuilder: String => String
 }

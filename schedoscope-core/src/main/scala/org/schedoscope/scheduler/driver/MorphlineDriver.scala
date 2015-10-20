@@ -167,7 +167,7 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
       }
 
       case f: ExternalTextFile => {
-        val oConfig = ConfigFactory.empty().withValue("filename", view.locationPath).
+        val oConfig = ConfigFactory.empty().withValue("filename", view.tablePath).
           withValue("separator", f.fieldTerminator).
           withValue("fields", ConfigValueFactory.fromIterable(fields))
         new CSVWriterBuilder().build(oConfig, parent, child, context)
@@ -198,7 +198,7 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
 
       case f: ExternalAvro => {
         log.info("creating AvroFile")
-        val oConfig = commandConfig.withValue("filename", view.locationPath + "/000000")
+        val oConfig = commandConfig.withValue("filename", view.tablePath + "/000000")
         new AvroWriterBuilder().build(oConfig, parent, child, context)
       }
 

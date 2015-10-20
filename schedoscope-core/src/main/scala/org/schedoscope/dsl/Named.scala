@@ -18,11 +18,11 @@ package org.schedoscope.dsl
 trait Named {
   def namingBase: String
 
-  def n = Named.formatName(namingBase)
+  def n = Named.camelToLowerUnderscore(namingBase)
 }
 
 object Named {
-  def formatName(name: String) = {
+  def camelToLowerUnderscore(name: String) = {
     val formattedName = new StringBuffer()
     for (c <- name) {
       if (c >= 'A' && c <= 'Z')

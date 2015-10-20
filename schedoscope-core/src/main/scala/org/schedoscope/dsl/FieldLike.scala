@@ -18,15 +18,16 @@ package org.schedoscope.dsl
 abstract class FieldLike[T: Manifest] extends Named {
   val t = manifest[T]
 
-  var deferredNamingBase = () => t.runtimeClass.getSimpleName
+  var assignedStructure: Option[Structure] = None
 
   def assignTo(s: Structure) {
-    deferredNamingBase = () => s.nameOf(this).getOrElse(t.runtimeClass.getSimpleName)
+    assignedStructure = Some(s)
   }
 
-  override def namingBase = deferredNamingBase()
-
-  def <=(v: T) = (this, v)
+  override def namingBase = assignedStructure match {
+    case Some(s) => s.nameOf(this).getOrElse(t.runtimeClass.getSimpleName)
+    case None => t.runtimeClass.getSimpleName
+  }
 }
 
 trait PrivacySensitive {
@@ -42,7 +43,7 @@ case class Field[T: Manifest](orderWeight: Long, nameOverride: String) extends F
 }
 
 object Field {
-  def v[T](f: Field[T], v: T) = f <= v
+  def v[T](f: Field[T], v: T) = (f, v)
 }
 
 case class Parameter[T: Manifest](orderWeight: Long) extends FieldLike[T] with ValueCarrying[T] with PrivacySensitive {
@@ -50,6 +51,7 @@ case class Parameter[T: Manifest](orderWeight: Long) extends FieldLike[T] with V
     if (a.getClass != this.getClass()) {
       return false
     }
+
     val p = a.asInstanceOf[Parameter[T]]
 
     (p.t == this.t) && (p.v == this.v)

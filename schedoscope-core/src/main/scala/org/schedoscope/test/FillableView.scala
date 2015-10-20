@@ -18,15 +18,12 @@ package org.schedoscope.test
 import java.io.File
 import java.io.OutputStreamWriter
 import java.net.URI
-
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.seqAsJavaList
 import scala.collection.mutable.ListBuffer
-
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.ResourceUri
-
 import org.schedoscope.schema.ddl.HiveQl
 import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.View
@@ -34,6 +31,7 @@ import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestResources
+import org.schedoscope.dsl.Named
 
 trait FillableView extends View with rows {}
 
@@ -50,14 +48,16 @@ trait rows extends View {
 
   def rowIdPattern = "%04d"
 
-  // prefix location 
-  locationPathBuilder = (env: String) => resources().hiveWarehouseDir + ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
+  override def namingBase = this.getClass.getSuperclass.getSimpleName()
+
+  moduleNameBuilder = () => Named.camelToLowerUnderscore(getClass().getSuperclass.getPackage().getName()).replaceAll("[.]", "_")
+
+  tablePathBuilder = (env: String) => resources().hiveWarehouseDir + ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
+  
   // unify storage format
   storedAs(localTestResources.textStorage)
 
   // overrides (to enable correct table/database names, otherwise $$anonFunc...) 
-  override def namingBase = this.getClass.getSuperclass.getSimpleName()
-  moduleNameBuilder = () => this.getClass().getSuperclass.getPackage().getName()
 
   def set(row: (FieldLike[_], Any)*) {
     val m = row.map(f => f._1.n -> f._2).toMap[String, Any]

@@ -195,7 +195,7 @@ case class ClickOfEC0101ViaOozie(
 
 case class SimpleDependendView() extends View with Id {
   val field1 = fieldOf[String]
-  locationPathBuilder = s => "src/test/resources/input"
+  tablePathBuilder = s => "src/test/resources/input"
 
   storedAs(TextFile())
 
@@ -211,7 +211,7 @@ case class MorphlineView() extends View with Id {
                                           conditions: [{ not: {equals {ec_shop_code : ["${field1.n}"]}}}]
     								      then : [{ dropRecord{} }]
     										}}]}""").forView(this))
-  locationPathBuilder = s => "src/test/resources/morphline.csv"
+  tablePathBuilder = s => "src/test/resources/morphline.csv"
   storedAs(ExternalTextFile())
 }
 
@@ -224,14 +224,14 @@ case class CompilingMorphlineView() extends View with Id {
       importCommands : ["org.kitesdk.**"]
 		  commands : [ { extractAvroTree{} }
 		  				]}""").forView(this))
-  locationPathBuilder = s => "src/test/resources/compling_morphline.csv"
+  tablePathBuilder = s => "src/test/resources/compling_morphline.csv"
   storedAs(ExternalTextFile())
 }
 
 case class FailingMorphlineView() extends View with Id {
   dependsOn(() => SimpleDependendView())
   transformVia(() => MorphlineTransformation("invalid morphline code").forView(this))
-  locationPathBuilder = s => "src/test/resources/failing_morphline.csv"
+  tablePathBuilder = s => "src/test/resources/failing_morphline.csv"
   storedAs(ExternalTextFile())
 
 }
@@ -246,7 +246,7 @@ case class RedisMorphlineView() extends View with Id {
 
 case class HDFSInputView() extends View with Id {
   val field1 = fieldOf[String]
-  locationPathBuilder = s => "/tmp/test"
+  tablePathBuilder = s => "/tmp/test"
   storedAs(Parquet())
 
 }
@@ -272,7 +272,7 @@ case class BlaMorphlineView(x: Parameter[String]) extends View {
                                           conditions: [{ not: {equals {site : "${x.v.get}"}}}]
     								      then : [{ dropRecord{} }]
     										}}]}""").forView(this))
-  locationPathBuilder = s => "src/test/resources/bla_morphline.csv"
+  tablePathBuilder = s => "src/test/resources/bla_morphline.csv"
   storedAs(ExternalTextFile())
 }
 

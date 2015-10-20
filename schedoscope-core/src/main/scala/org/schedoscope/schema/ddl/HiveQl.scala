@@ -94,7 +94,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY \42${mapKeyTerminator
     case _ => "STORED AS TEXTFILE"
   }
 
-  def locationDdl(view: View): String = view.locationPath match {
+  def locationDdl(view: View): String = view.tablePath match {
     case "" => ""
     case l => if (!view.isExternal) s"LOCATION '${l}'" else ""
   }
