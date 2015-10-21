@@ -62,27 +62,62 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    */
   var env = "dev"
 
+  /**
+   * Pluggable builder function that returns the name of the module the view belongs to.
+   * The default implemementation returns the view's package in database-friendly lower-case underscore format, replacing all . with _.
+   */
   override var moduleNameBuilder = () => lowerCasePackageName.replaceAll("[.]", "_")
   def module = moduleNameBuilder()
 
+  /**
+   * Pluggable builder function that returns the database name for the view given an environment.
+   * The default implementation prepends the environment to the result of moduleNameBuilder with an underscore.
+   */
   override var dbNameBuilder = (env: String) => env.toLowerCase() + "_" + moduleNameBuilder()
   def dbName = dbNameBuilder(env)
 
+  /**
+   * Pluggable builder function that returns the table name for the view given an environment.
+   * The default implementation appends the view's name n to the result of dbNameBuilder.
+   */
   override var tableNameBuilder = (env: String) => dbNameBuilder(env) + "." + n
   def tableName = tableNameBuilder(env)
 
+  /**
+   * Pluggable builder function that returns the HDFS path representing the database of the view given an environment.
+   * The default implementation does this by building a path from the lower-case-underscore format of
+   * moduleNameBuilder, replacing _ with / and prepending hdp/dev/ for the default dev environment.
+   */
   override var dbPathBuilder = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
   def dbPath = dbPathBuilder(env)
 
+  /**
+   * Pluggable builder function that returns the HDFS path to the table the view belongs to.
+   * The default implementation does this by joining dbPathBuilder and n. The latter will
+   * be surrounded by additionalStoragePathPrefix and additionalStoragePathSuffix, if set.
+   */
   override var tablePathBuilder = (env: String) => dbPathBuilder(env) + (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") + "/" + n + (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
   def tablePath = tablePathBuilder(env)
 
+  /**
+   * Pluggable builder function that returns the relative partition path for the view. By default,
+   * this is the standard Hive /partitionColumn=value/... pattern.
+   */
   override var partitionPathBuilder = () => partitionSpec
   def partitionPath = partitionPathBuilder()
 
+  /**
+   * Pluggable builder function that returns the full HDFS path to the partition represented by the view.
+   * The default implementation concatenates the output of tablePathBuilder and partitionPathBuilder for
+   * this purpose.
+   */
   override var fullPathBuilder = (env: String) => tablePathBuilder(env) + partitionPathBuilder()
   def fullPath = fullPathBuilder(env)
 
+  /**
+   * Pluggable builder function returning a path prefix of where Avro schemas can be found in HDFS.
+   * By default, this is hdfs:///hdp/${env}/global/datadictionary/schema/avro
+   */
   override var avroSchemaPathPrefixBuilder = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
@@ -154,12 +189,20 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    */
   def dependencies = deferredDependencies.flatMap { _() }.distinct
 
+  /**
+   * Add dependencies to the given view. This is done with an anonymous function returning a sequence of views the
+   * current view depends on.
+   */
   def dependsOn[V <: View: Manifest](dsf: () => Seq[V]) {
     val df = () => dsf().map { View.register(this.env, _) }
 
     deferredDependencies += df
   }
 
+  /**
+   * Add a dependency to the given view. This is done with an anonymous function returning a view the
+   * current view depends on. This function is returned so that it can be assigned to variables for further reference.
+   */
   def dependsOn[V <: View: Manifest](df: () => V) = {
     val dsf = () => List(View.register(this.env, df()))
 
@@ -170,6 +213,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   var comment: Option[String] = None
 
+  /**
+   * Provide a comment describing the view's purpose.
+   */
   def comment(aComment: String) {
     comment = Some(aComment)
   }
@@ -178,6 +224,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   var additionalStoragePathPrefix: Option[String] = None
   var additionalStoragePathSuffix: Option[String] = None
 
+  /**
+   * Specifiy the storage format of the view, with TextFile being the default. One can optionally specify storage path prefixes and suffixes.
+   */
   def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) {
     storageFormat = f
     this.additionalStoragePathPrefix = if (additionalStoragePathPrefix != null) Some(additionalStoragePathPrefix) else None
@@ -186,6 +235,10 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   var transformation: () => Transformation = () => NoOp()
 
+  /**
+   * Set the transformation with which the view is created. Provide an anonymous function returning the transformation.
+   * NoOp is the default transformation if none is specified.
+   */
   def transformVia(ft: () => Transformation) {
     ensureRegisteredParameters
 
