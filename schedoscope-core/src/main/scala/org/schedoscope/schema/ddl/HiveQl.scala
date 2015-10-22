@@ -17,7 +17,6 @@
 package org.schedoscope.schema.ddl
 
 import org.schedoscope.dsl.Structure
-
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.storageformats._
 
@@ -48,7 +47,7 @@ object HiveQl {
 
   def commentDdl(view: View): String = view.comment match {
     case Some(c) => s"COMMENT '${c}'"
-    case None => ""
+    case None    => ""
   }
 
   def fieldsDdl(structure: Structure): String = structure
@@ -91,12 +90,12 @@ ${if (collectionItemTerminator != null) s"\tCOLLECTION ITEMS TERMINATED BY \42${
 ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY \42${mapKeyTerminator}\42" else ""}
 \tSTORED AS TEXTFILE"""
     case e: ExternalStorageFormat => "STORED BY 'org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler'"
-    case _ => "STORED AS TEXTFILE"
+    case _                        => "STORED AS TEXTFILE"
   }
 
   def locationDdl(view: View): String = view.tablePath match {
     case "" => ""
-    case l => if (!view.isExternal) s"LOCATION '${l}'" else ""
+    case l  => if (!view.isExternal) s"LOCATION '${l}'" else ""
   }
 
   def ddl(view: View): String = s"""

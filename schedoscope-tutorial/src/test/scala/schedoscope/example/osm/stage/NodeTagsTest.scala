@@ -26,13 +26,13 @@ class NodeTagsTest extends FlatSpec
     new NodeTags() with test {
       then()
       numRows shouldBe 10
-      row(v(node_id) shouldBe 122317,
+      row(v(nodeId) shouldBe 122317,
         v(key) shouldBe "TMC:cid_58:tabcd_1:Class",
         v(value) shouldBe "Point")
-      row(v(node_id) shouldBe 122317,
+      row(v(nodeId) shouldBe 122317,
         v(key) shouldBe "TMC:cid_58:tabcd_1:Direction",
         v(value) shouldBe "positive")
-      row(v(node_id) shouldBe 122317,
+      row(v(nodeId) shouldBe 122317,
         v(key) shouldBe "TMC:cid_58:tabcd_1:LCLversion",
         v(value) shouldBe "8.00")
     }

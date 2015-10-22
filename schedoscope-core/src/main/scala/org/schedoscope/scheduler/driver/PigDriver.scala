@@ -20,12 +20,10 @@ import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.SQLException
 import java.sql.Statement
-
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.Stack
-import scala.concurrent.future
-
+import scala.concurrent.Future
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
@@ -33,23 +31,17 @@ import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.thrift.protocol.TProtocolException
 import org.joda.time.LocalDateTime
-
 import org.schedoscope.DriverSettings
 import org.schedoscope.Settings
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters;
 import org.schedoscope.scheduler.driver.HiveDriver.currentConnection;
 import org.slf4j.LoggerFactory
-
 import HiveDriver.currentConnection
-
 import org.apache.pig.PigServer
 import org.apache.pig.ExecType
-
 import java.util.Properties
-
 import org.apache.pig.PigException
-
 import scala.collection.JavaConversions._
 
 /**
@@ -72,7 +64,7 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
    * Construct a future-based driver run handle
    */
   def run(t: PigTransformation): DriverRunHandle[PigTransformation] =
-    new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, future {
+    new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, Future {
       // FIXME: future work: register jars, custom functions
       executePigTransformation(t.latin, t.dirsToDelete, t.defaultLibraries, t.configuration.toMap, t.getView())
     })
@@ -98,7 +90,7 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
         } catch {
           // FIXME: do we need special handling for some exceptions here (similar to hive?)
           case e: PigException =>
-            e.printStackTrace(); DriverRunFailed(driver, s"PigException encountered while executing pig script ${actualLatin}; Stacktrace is: ${e.getStackTraceString}", e)
+            DriverRunFailed(driver, s"PigException encountered while executing pig script ${actualLatin}; Stacktrace is: ${e.getStackTrace}", e)
           case t: Throwable => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
         }
       }

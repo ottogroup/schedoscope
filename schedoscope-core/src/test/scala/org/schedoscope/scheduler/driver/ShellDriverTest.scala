@@ -1,4 +1,5 @@
 package org.schedoscope.scheduler.driver
+
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.schedoscope.DriverTests
@@ -26,7 +27,7 @@ class ShellDriverTest extends FlatSpec with Matchers {
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  ignore should "execute another shell tranformations synchronously" taggedAs (DriverTests, ShellTests) in {
+  it should "execute another shell tranformations synchronously" taggedAs (DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("echo error >/dev/stderr;zcat /usr/share/man/man1/*gz"))
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }

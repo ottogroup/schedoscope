@@ -39,10 +39,12 @@ import org.schedoscope.dsl.transformations.ExternalTransformation
 import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
 import org.schedoscope.dsl.transformations.NoOp
+import org.schedoscope.AskPattern
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
   import MaterializeViewMode._
+  import AskPattern._
 
   val log = Logging(system, this)
 
@@ -154,9 +156,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
     }
 
-    case _: ActionFailure[_] => toRetrying(retries, materializationMode)
+    case _: ActionFailure[_]               => toRetrying(retries, materializationMode)
 
-    case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView(mode)             => listenersWaitingForMaterialize.add(sender)
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
@@ -406,14 +408,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def hasVersionMismatch(view: View) = view.transformation().versionDigest() != versionChecksum
 
-  def getViewActor(view: View) = {
-    val viewActor = ViewManagerActor.actorForView(view)
-    if (!viewActor.isTerminated) {
-      viewActor
-    } else {
-      queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout)
+  def getViewActor(view: View) =
+    ViewManagerActor.actorForView(view).getOrElse {
+      queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef]
     }
-  }
 
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()

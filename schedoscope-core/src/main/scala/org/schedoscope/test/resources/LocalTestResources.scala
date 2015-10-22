@@ -21,9 +21,7 @@ import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.Properties
-
 import scala.Array.canBuildFrom
-
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
@@ -38,7 +36,6 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORECONNECTURLKEY
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREWAREHOUSE
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars.PLAN_SERIALIZATION
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL
-
 import net.lingala.zip4j.core.ZipFile
 
 class LocalTestResources extends TestResources {

@@ -31,7 +31,7 @@ import schedoscope.example.osm.mapreduce.GeohashMapper
 case class NodesWithGeohash() extends View {
   val id = fieldOf[Long]
   val version = fieldOf[Int]
-  val user_id = fieldOf[Int]
+  val userId = fieldOf[Int]
   val tstamp = fieldOf[String]
   val longitude = fieldOf[Double]
   val latitude = fieldOf[Double]

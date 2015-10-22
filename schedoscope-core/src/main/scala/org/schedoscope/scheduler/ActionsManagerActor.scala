@@ -20,9 +20,7 @@ import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration.DurationInt
 import scala.util.Random
-
 import org.apache.hadoop.conf.Configuration
-
 import org.schedoscope.Settings
 import org.schedoscope.scheduler.driver.DriverException
 import org.schedoscope.dsl.transformations.Transformation
@@ -116,7 +114,7 @@ class ActionsManagerActor() extends Actor {
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _: DriverException => Restart
-      case _: Throwable => Escalate
+      case _: Throwable       => Escalate
     }
 
   /**
@@ -135,9 +133,9 @@ class ActionsManagerActor() extends Actor {
 
     case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
-    case GetActions() => sender ! ActionStatusListResponse(driverStates.values.toList)
+    case GetActions()                 => sender ! ActionStatusListResponse(driverStates.values.toList)
 
-    case GetQueues() => sender ! QueueStatusListResponse(actionQueueStatus)
+    case GetQueues()                  => sender ! QueueStatusListResponse(actionQueueStatus)
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
@@ -168,11 +166,11 @@ class ActionsManagerActor() extends Actor {
       }
     }
 
-    case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
+    case viewAction: View                                         => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
 
     case filesystemTransformationAction: FilesystemTransformation => self ! CommandWithSender(filesystemTransformationAction, sender)
 
-    case deployAction: Deploy => self ! CommandWithSender(deployAction, sender)
+    case deployAction: Deploy                                     => self ! CommandWithSender(deployAction, sender)
   })
 }
 

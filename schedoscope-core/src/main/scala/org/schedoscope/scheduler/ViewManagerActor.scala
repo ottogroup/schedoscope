@@ -18,6 +18,7 @@ package org.schedoscope.scheduler
 import scala.collection.mutable.HashMap
 import org.schedoscope.SettingsImpl
 import org.schedoscope.scheduler.RootActor.settings
+import org.schedoscope.scheduler.RootActor.actorSelectionToRef
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
@@ -31,6 +32,7 @@ import scala.collection.mutable.HashSet
 import kamon.Kamon
 import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy.Escalate
+import org.schedoscope.AskPattern
 
 /**
  * The view manager actor is the factory and supervisor of view actors. Upon creation of view actors
@@ -42,6 +44,8 @@ import akka.actor.SupervisorStrategy.Escalate
  */
 class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
+  import AskPattern._
+
   val log = Logging(system, ViewManagerActor.this)
 
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
@@ -84,7 +88,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
       v =>
         if (visited.contains(v))
           List()
-        else if (ViewManagerActor.actorForView(v).isTerminated) {
+        else if (!ViewManagerActor.actorForView(v).isDefined) {
           visited += v
           (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
         } else if (dependencies) {
@@ -155,9 +159,9 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }
 
     if (dependencies)
-      allViews.map { case (view, _, _) => ViewManagerActor.actorForView(view) }.distinct
+      allViews.map { case (view, _, _) => ViewManagerActor.actorForView(view).get }.distinct
     else
-      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => ViewManagerActor.actorForView(view) }.distinct
+      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => ViewManagerActor.actorForView(view).get }.distinct
   }
 }
 
@@ -165,6 +169,8 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
  * View manager factory methods
  */
 object ViewManagerActor {
+  lazy val system = settings.system
+
   def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
@@ -172,5 +178,5 @@ object ViewManagerActor {
   def viewForActor(a: ActorRef) =
     View.viewsFromUrl(settings.env, a.path.name.replaceAll(":", "/"), settings.viewAugmentor).head
 
-  def actorForView(v: View) = RootActor.settings.system.actorFor(RootActor.viewManagerActor.path.child(actorNameForView(v)))
+  def actorForView(v: View) = actorSelectionToRef(system.actorSelection(RootActor.viewManagerActor.path.child(actorNameForView(v))))
 }

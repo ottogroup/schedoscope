@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.schedoscope.dsl
+
 import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.Transformation
 

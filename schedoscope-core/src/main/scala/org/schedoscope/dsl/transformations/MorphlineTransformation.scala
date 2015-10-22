@@ -31,11 +31,11 @@ import org.schedoscope.dsl.FieldLike
  *
  */
 case class MorphlineTransformation(definition: String = "",
-  imports: Seq[String] = List(),
-  sampling: Int = 100,
-  anonymize: Seq[Named] = List(),
-  fields: Seq[Named] = List(),
-  fieldMapping: Map[FieldLike[_], FieldLike[_]] = Map()) extends ExternalTransformation {
+                                   imports: Seq[String] = List(),
+                                   sampling: Int = 100,
+                                   anonymize: Seq[Named] = List(),
+                                   fields: Seq[Named] = List(),
+                                   fieldMapping: Map[FieldLike[_], FieldLike[_]] = Map()) extends ExternalTransformation {
   def name() = "morphline"
 
   override def versionDigest = Version.digest(resourceHashes :+ definition)

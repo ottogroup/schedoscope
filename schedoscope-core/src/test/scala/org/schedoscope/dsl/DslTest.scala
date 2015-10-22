@@ -37,6 +37,7 @@ import test.eci.datahub.ViewWithDefaultParams
 import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.dsl.storageformats.Parquet
 import org.schedoscope.dsl.transformations.NoOp
+
 class DslTest extends FlatSpec with Matchers {
 
   "A view" should "be instantiable without new" in {

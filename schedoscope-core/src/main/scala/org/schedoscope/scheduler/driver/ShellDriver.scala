@@ -1,12 +1,13 @@
 package org.schedoscope.scheduler.driver
 
+import scala.language.reflectiveCalls
 import org.schedoscope.dsl.transformations.ShellTransformation
 import org.schedoscope.DriverSettings
 import org.schedoscope.Settings
 import org.joda.time.LocalDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
-import scala.concurrent.future
+import scala.concurrent.Future
 import scala.collection.JavaConversions.mapAsJavaMap
 import java.lang.InterruptedException
 import java.io.File
@@ -31,7 +32,7 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
    * Construct a future-based driver run handle
    */
   def run(t: ShellTransformation): DriverRunHandle[ShellTransformation] =
-    new DriverRunHandle(this, new LocalDateTime(), t, future {
+    new DriverRunHandle(this, new LocalDateTime(), t, Future {
       doRun(t)
     })
 

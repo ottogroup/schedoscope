@@ -25,7 +25,6 @@ import akka.event.Logging
 import akka.event.LoggingReceive
 import akka.routing.SmallestMailboxRoutingLogic
 import akka.routing.Router
-import akka.routing.RoundRobinRouter
 
 /**
  * Schema actors are responsible for creating tables and partitions in the metastore.

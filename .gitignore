@@ -3,6 +3,8 @@
 .project
 .classpath
 .cache
+.cache-main
+.cache-tests
 target
 metastore_db
 derby.log

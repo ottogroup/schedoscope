@@ -15,6 +15,8 @@
  */
 package org.schedoscope.dsl
 
+import scala.language.existentials
+import scala.language.implicitConversions
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.JavaConversions.seqAsJavaList
@@ -352,7 +354,7 @@ object View {
       var passedValueForParameter: TypedAny = null
 
       for (parameterValue <- parameterValuesPassed; if passedValueForParameter == null) {
-        if (constructorParameterType.isAssignableFrom(parameterValue.t.erasure)) {
+        if (constructorParameterType.isAssignableFrom(parameterValue.t.runtimeClass)) {
           passedValueForParameter = parameterValue
         }
       }

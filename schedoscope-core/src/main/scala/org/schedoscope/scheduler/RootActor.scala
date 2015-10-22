@@ -26,7 +26,6 @@ import akka.actor.AllForOneStrategy
 import akka.actor.Props
 import akka.actor.SupervisorStrategy._
 import akka.event.Logging
-import akka.routing.RoundRobinRouter
 
 class RootActor(settings: SettingsImpl) extends Actor {
   import context._
@@ -66,18 +65,21 @@ object RootActor {
 
   lazy val settings = Settings()
 
-  def actorSelectionToRef(actorSelection: ActorSelection) =
-    Await.result(actorSelection.resolveOne(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout)
+  def actorSelectionToRef(actorSelection: ActorSelection): Option[ActorRef] = try {
+    Some(Await.result(actorSelection.resolveOne(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout))
+  } catch {
+    case _: Throwable => None
+  }
 
-  lazy val rootActor = actorSelectionToRef(settings.system.actorSelection(settings.system.actorOf(props(settings), "root").path))
+  lazy val rootActor = actorSelectionToRef(settings.system.actorSelection(settings.system.actorOf(props(settings), "root").path)).get
 
-  lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("views")))
+  lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("views"))).get
 
-  lazy val schemaRootActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("schema-root")))
+  lazy val schemaRootActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("schema-root"))).get
 
-  lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("schema")))
+  lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("schema"))).get
 
-  lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("metadata-logger")))
+  lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("metadata-logger"))).get
 
-  lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("actions")))
+  lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("actions"))).get
 }

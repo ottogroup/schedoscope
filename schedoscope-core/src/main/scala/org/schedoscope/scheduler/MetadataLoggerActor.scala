@@ -24,7 +24,6 @@ import akka.event.Logging
 import akka.event.LoggingReceive
 import akka.routing.SmallestMailboxRoutingLogic
 import akka.routing.Router
-import akka.routing.RoundRobinRouter
 import org.schedoscope.scheduler.messages._
 
 /**

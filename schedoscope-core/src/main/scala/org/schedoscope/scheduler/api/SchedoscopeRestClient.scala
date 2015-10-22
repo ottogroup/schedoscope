@@ -15,13 +15,13 @@
  */
 package org.schedoscope.scheduler.api
 
+import scala.language.postfixOps
+import scala.language.implicitConversions
 import scala.collection.immutable.Map
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
-
 import org.schedoscope.Settings
-
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.util.Timeout
@@ -46,14 +46,14 @@ class SchedoscopeRestClient extends SchedoscopeInterface {
 
   def get[T](path: String, query: Map[String, String]): Future[T] = {
     val pipeline = path match {
-      case u: String if u.startsWith("/views") => sendReceive ~> unmarshal[ViewStatusList]
-      case u: String if u.startsWith("/actions") => sendReceive ~> unmarshal[ActionStatusList]
-      case u: String if u.startsWith("/queues") => sendReceive ~> unmarshal[QueueStatusList]
+      case u: String if u.startsWith("/views")       => sendReceive ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/actions")     => sendReceive ~> unmarshal[ActionStatusList]
+      case u: String if u.startsWith("/queues")      => sendReceive ~> unmarshal[QueueStatusList]
       case u: String if u.startsWith("/materialize") => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
-      case u: String if u.startsWith("/invalidate") => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
-      case u: String if u.startsWith("/newdata") => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
-      case u: String if u.startsWith("/commands") => sendReceive ~> unmarshal[List[SchedoscopeCommandStatus]]
-      case _ => throw new RuntimeException("Unsupported query path: " + path)
+      case u: String if u.startsWith("/invalidate")  => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
+      case u: String if u.startsWith("/newdata")     => sendReceive ~> unmarshal[SchedoscopeCommandStatus]
+      case u: String if u.startsWith("/commands")    => sendReceive ~> unmarshal[List[SchedoscopeCommandStatus]]
+      case _                                         => throw new RuntimeException("Unsupported query path: " + path)
     }
     val uri = Uri.from("http", "", host, port, path) withQuery (query)
     println("Calling Schedoscope API URL: " + uri)

@@ -22,7 +22,6 @@ import org.schedoscope.scheduler.driver.DriverRunState
 import org.schedoscope.scheduler.driver.DriverRunSucceeded
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.View
-
 import akka.actor.ActorRef
 
 /**
@@ -229,7 +228,7 @@ case class NoDataAvailable(view: View) extends CommandResponse
 
 /**
  * A view actor notifying a depending view that it has materialized
- * 
+ *
  * @param view View that has been changed
  * @param incomplete true of not all transitive dependencies had data available
  * @param transformationTimeStamp timestamp of the oldest? transformation in that dependency tree

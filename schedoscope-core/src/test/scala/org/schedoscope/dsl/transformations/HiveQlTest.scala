@@ -16,7 +16,6 @@
 package org.schedoscope.dsl.transformations
 
 import java.util.Date
-
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers

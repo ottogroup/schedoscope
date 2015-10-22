@@ -15,6 +15,7 @@
  */
 package org.schedoscope.scheduler
 
+import scala.language.postfixOps
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 import org.schedoscope.DriverSettings

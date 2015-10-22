@@ -15,8 +15,9 @@
  */
 package org.schedoscope.scheduler.api
 
+import scala.language.postfixOps
+import scala.language.implicitConversions
 import scala.concurrent.duration.DurationInt
-import org.schedoscope.Settings
 import org.schedoscope.scheduler.RootActor.settings
 import org.schedoscope.scheduler.api.SchedoscopeJsonProtocol._
 import akka.actor.Actor
@@ -41,7 +42,7 @@ object SchedoscopeRestService {
   Kamon.start
   val schedoscope = new SchedoscopeSystem()
 
-  implicit val system = ActorSystem("schedoscope-rest-service")
+  implicit val system = settings.system
 
   case class Config(shell: Boolean = false)
 
@@ -55,18 +56,18 @@ object SchedoscopeRestService {
   def main(args: Array[String]) {
     val config = parser.parse(args, Config()) match {
       case Some(config) => config
-      case None => Config()
+      case None         => Config()
     }
     start(config)
   }
 
   def start(config: Config) {
 
-    val numActors = Settings().restApiConcurrency
-    val host = Settings().host
-    val port = Settings().port
+    val numActors = settings.restApiConcurrency
+    val host = settings.host
+    val port = settings.port
     val service = system.actorOf(new SmallestMailboxPool(numActors).props(Props(classOf[SchedoscopeRestServerActor], schedoscope)), "schedoscope-webservice-actor")
-    implicit val timeout = Timeout(Settings().webserviceTimeOut.length)
+    implicit val timeout = Timeout(settings.webserviceTimeout)
     IO(Http) ? Http.Bind(service, interface = host, port = port)
 
     if (config.shell) {

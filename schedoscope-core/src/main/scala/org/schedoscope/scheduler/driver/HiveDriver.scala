@@ -23,7 +23,7 @@ import java.sql.Statement
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.Stack
-import scala.concurrent.future
+import scala.concurrent.Future
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
@@ -56,7 +56,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
    * Construct a future-based driver run handle
    */
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
-    new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, future {
+    new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
       t.udfs.foreach(this.registerFunction(_))
       executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
     })

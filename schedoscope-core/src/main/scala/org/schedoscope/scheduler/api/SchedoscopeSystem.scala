@@ -15,6 +15,7 @@
  */
 package org.schedoscope.scheduler.api
 
+import scala.language.postfixOps
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 import org.joda.time.LocalDateTime
@@ -28,8 +29,7 @@ import akka.actor.ActorRef
 import akka.actor.PoisonPill
 import akka.actor.actorRef2Scala
 import akka.event.Logging
-import org.schedoscope.scheduler.queryActors
-import org.schedoscope.scheduler.queryActor
+import org.schedoscope.AskPattern._
 import akka.pattern.Patterns
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import org.schedoscope.dsl.transformations.Transformation
@@ -59,7 +59,7 @@ class SchedoscopeSystem extends SchedoscopeInterface {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
     val c = command match {
       case s: String => s
-      case c: Any => Named.camelToLowerUnderscore(c.getClass.getSimpleName)
+      case c: Any    => Named.camelToLowerUnderscore(c.getClass.getSimpleName)
     }
     val a = if (args.size == 0) "_" else args.filter(_.isDefined).map(_.getOrElse("_")).mkString(":")
     if (start.isDefined) {
