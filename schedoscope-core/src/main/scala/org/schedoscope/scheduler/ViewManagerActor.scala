@@ -47,7 +47,6 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
   val log = Logging(system, ViewManagerActor.this)
 
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
-  val actorsForViews = HashMap[View, ActorRef]()
 
   val viewCreationCounter = Kamon.metrics.counter("viewsCreated")
 
@@ -88,7 +87,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
       v =>
         if (visited.contains(v))
           List()
-        else if (!actorsForViews.isDefinedAt(v)) {
+        else if (child(ViewManagerActor.actorNameForView(v)).isEmpty) {
           visited += v
           (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
         } else if (dependencies) {
@@ -154,15 +153,14 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
           case (view, (version, timestamp)) => {
             val actorRef = actorOf(ViewActor.props(view, settings, self, actionsManagerActor, metadataLoggerActor, version, timestamp), ViewManagerActor.actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
-            actorsForViews.put(view, actorRef)
           }
         })
     }
 
     if (dependencies)
-      allViews.map { case (view, _, _) => actorsForViews.get(view).get }.distinct
+      allViews.map { case (view, _, _) => child(ViewManagerActor.actorNameForView(view)).get }.distinct
     else
-      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => actorsForViews.get(view).get }.distinct
+      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => child(ViewManagerActor.actorNameForView(view)).get }.distinct
   }
 }
 

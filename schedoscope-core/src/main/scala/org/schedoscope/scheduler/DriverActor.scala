@@ -142,7 +142,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
         }
 
         case failure: DriverRunFailed[T] => {
-          log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
+          log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}, trace ${if (failure.cause != null) failure.cause.getStackTrace else "no trace available"}")
 
           try {
             driver.driverRunCompleted(runHandle)
