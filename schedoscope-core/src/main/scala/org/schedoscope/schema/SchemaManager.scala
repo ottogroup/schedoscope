@@ -243,7 +243,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       val sd = table.getSd().deepCopy()
       sd.setLocation(v.fullPath)
 
-      (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues, v.dbName, v.n, now, now, sd, HashMap[String, String]()))
+      (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues(), v.dbName, v.n, now, now, sd, HashMap[String, String]()))
     }.toMap
   }
 }

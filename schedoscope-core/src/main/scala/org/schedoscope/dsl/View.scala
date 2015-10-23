@@ -57,7 +57,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
    * The URL path syntax identifying the present view.
    */
-  def urlPath = s"${urlPathPrefix}/${partitionValues.mkString("/")}"
+  def urlPath = s"${urlPathPrefix}/${partitionValues(false).mkString("/")}"
 
   /**
    * The view's environment.
@@ -162,7 +162,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
    * Returns a list of partition values in order the parameter weights. Such lists are necessary for communicating with the metastore.
    */
-  def partitionValues = partitionParameters.map(p => p.v.getOrElse("").toString).toList
+  def partitionValues(ignoreSuffixPartitions: Boolean = true) =
+    (if (ignoreSuffixPartitions)
+      partitionParameters
+    else
+      parameters).map(p => p.v.getOrElse("").toString).toList
 
   private val suffixPartitions = new HashSet[Parameter[_]]()
 

@@ -335,6 +335,19 @@ class DslTest extends FlatSpec with Matchers {
         dateString should be >= "20131202"
     }
   }
+  
+  it should "have the same urlPath as the one they were dynamically constructed with" in {
+    val views = View.viewsFromUrl("dev", "test.eci.datahub/Product/EC0106/2014/02/24/20140224")
+
+    views.length shouldBe 1
+
+    
+    val product = views.head.asInstanceOf[Product]
+    
+    val productParameters = product.partitionParameters
+    
+    product.urlPath shouldBe "test.eci.datahub/Product/EC0106/2014/02/24/20140224"
+  }
 
   it should "be queryable" in {
     val views = View.viewsInPackage("test.eci.datahub")
