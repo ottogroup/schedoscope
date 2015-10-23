@@ -160,9 +160,9 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     }
 
     if (dependencies)
-      allViews.map { case (view, _, _) => actorsForViews.get(view) }.distinct
+      allViews.map { case (view, _, _) => actorsForViews.get(view).get }.distinct
     else
-      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => actorsForViews.get(view) }.distinct
+      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => actorsForViews.get(view).get }.distinct
   }
 }
 
@@ -175,9 +175,6 @@ object ViewManagerActor {
   def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
-
-  def viewForActor(a: ActorRef) =
-    View.viewsFromUrl(RootActor.settings.env, a.path.name.replaceAll(":", "/"), RootActor.settings.viewAugmentor).head
 
   def actorForView(v: View) =
     system.actorSelection(RootActor.viewManagerActor.path.child(actorNameForView(v)))

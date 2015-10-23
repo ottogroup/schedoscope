@@ -281,7 +281,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         try {
           ViewManagerActor.actorForView(d) ! MaterializeView(mode)
         } catch {
-          case _: Throwable => queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef] ! MaterializeView(mode)
+          case t: Throwable => {
+            log.warning(s"Failed to sende materialize message to view actor for dependency. Exception: ${t.getStackTrace}. Asking view manager actor to create one.")
+            queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef] ! MaterializeView(mode)
+          }
         }
       }
     }

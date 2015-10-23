@@ -160,12 +160,12 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
       }
     } catch {
       case exception: DriverException => {
-        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}")
+        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}, trace ${exception.getStackTrace}")
         throw exception
       }
 
       case t: Throwable => {
-        log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in running state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}")
+        log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in running state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}, trace ${t.getStackTrace}")
         throw t
       }
     }
