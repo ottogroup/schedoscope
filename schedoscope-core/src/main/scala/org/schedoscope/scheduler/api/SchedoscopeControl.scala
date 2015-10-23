@@ -29,9 +29,9 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
     val sb = new StringBuilder()
     o match {
       case as: TransformationStatusList => {
-        if (as.actions.size > 0) {
+        if (as.transformations.size > 0) {
           val header = Array("TRANSFORMATION DRIVER", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
-          val running = as.actions.map(p => {
+          val running = as.transformations.map(p => {
             val (s, d, t): (String, String, String) =
               if (p.runStatus.isDefined) {
                 (p.runStatus.get.started, p.runStatus.get.description, p.runStatus.get.targetView)

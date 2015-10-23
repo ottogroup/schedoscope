@@ -30,7 +30,7 @@ import spray.json.JsonFormat
 case class SchedoscopeCommand(id: String, start: String, parts: List[Future[_]])
 case class SchedoscopeCommandStatus(id: String, start: String, end: Option[String], status: Map[String, Int])
 case class TransformationStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]])
-case class TransformationStatusList(overview: Map[String, Int], actions: List[TransformationStatus])
+case class TransformationStatusList(overview: Map[String, Int], transformations: List[TransformationStatus])
 case class ViewStatus(view: String, status: String, properties: Option[Map[String, String]], dependencies: Option[List[ViewStatus]])
 case class ViewStatusList(overview: Map[String, Int], views: List[ViewStatus])
 case class QueueStatusList(overview: Map[String, Int], queues: Map[String, List[RunStatus]])
