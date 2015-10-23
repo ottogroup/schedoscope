@@ -16,11 +16,9 @@
 package org.schedoscope.scheduler.driver
 
 import java.util.Properties
-
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.JavaConversions.propertiesAsScalaMap
 import scala.concurrent.duration.Duration
-
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.oozie.client.OozieClient
 import org.apache.oozie.client.WorkflowJob.Status.PREP
@@ -28,7 +26,6 @@ import org.apache.oozie.client.WorkflowJob.Status.RUNNING
 import org.apache.oozie.client.WorkflowJob.Status.SUCCEEDED
 import org.apache.oozie.client.WorkflowJob.Status.SUSPENDED
 import org.joda.time.LocalDateTime
-
 import org.schedoscope.DriverSettings
 import org.schedoscope.Settings
 import org.schedoscope.dsl.transformations.OozieTransformation
@@ -63,9 +60,9 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
       val state = getJobInfo(jobId).getStatus()
 
       state match {
-        case SUCCEEDED => DriverRunSucceeded[OozieTransformation](this, s"Oozie job ${jobId} succeeded")
+        case SUCCEEDED                  => DriverRunSucceeded[OozieTransformation](this, s"Oozie job ${jobId} succeeded")
         case SUSPENDED | RUNNING | PREP => DriverRunOngoing[OozieTransformation](this, run)
-        case _ => DriverRunFailed[OozieTransformation](this, s"Oozie job ${jobId} failed", DriverException(s"Failed Oozie job status ${state}"))
+        case _                          => DriverRunFailed[OozieTransformation](this, s"Oozie job ${jobId} failed", DriverException(s"Failed Oozie job status ${state}"))
       }
     } catch {
       case e: Throwable => throw DriverException(s"Unexpected error occurred while checking run state of Oozie job ${jobId}", e)

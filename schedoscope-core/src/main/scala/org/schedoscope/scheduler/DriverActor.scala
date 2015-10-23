@@ -15,6 +15,7 @@
  */
 package org.schedoscope.scheduler
 
+import scala.language.postfixOps
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 import org.schedoscope.DriverSettings
@@ -53,10 +54,10 @@ import org.schedoscope.scheduler.driver.DriverException
 /**
  * A driver actor manages the executions of transformations using hive, oozie etc. The actual
  * execution is done using a driver trait implementation. The driver actor code itself is transformation
- * type agnostic
+ * type agnostic. Driver actors poll the transformation tasks they execute from the transformation manager actor
  *
  */
-class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
+class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
   import context._
   val log = Logging(system, this)
 
@@ -73,11 +74,11 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
   }
 
   /**
-   * If the driver actor is to be restarted by the actions manager actor, the currently running action is reenqueued so it does not get lost.
+   * If the driver actor is being restarted by the transformation manager actor, the currently running action is reenqueued so it does not get lost.
    */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
-      actionsManagerActor ! runningCommand.get
+      transformationManagerActor ! runningCommand.get
   }
 
   /**
@@ -95,7 +96,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
     case CommandWithSender(command, sender) => toRunning(CommandWithSender(command, sender))
 
     case "tick" => {
-      actionsManagerActor ! PollCommand(driver.transformationName)
+      transformationManagerActor ! PollCommand(driver.transformationName)
       tick()
     }
   }
@@ -106,13 +107,13 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
    * @param originalSender reference to the viewActor that requested the transformation (for sending back the result)
    */
   def running(runHandle: DriverRunHandle[T], originalSender: ActorRef): Receive = LoggingReceive {
-    case KillAction() => {
+    case KillCommand() => {
       driver.killRun(runHandle)
       toReceive()
     }
     // If getting a command while being busy, reschedule it by sending it to the actionsmanager
     // Should this ever happen?
-    case c: CommandWithSender => actionsManagerActor ! c
+    case c: CommandWithSender => transformationManagerActor ! c
 
     // check all 10 seconds the state of the current running driver
     case "tick" => try {
@@ -129,19 +130,19 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
 
             case t: Throwable => {
               log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}")
-              originalSender ! ActionFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t))
+              originalSender ! TransformationFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t))
               toReceive()
               tick()
             }
           }
 
-          originalSender ! ActionSuccess(runHandle, success)
+          originalSender ! TransformationSuccess(runHandle, success)
           toReceive()
           tick()
         }
 
         case failure: DriverRunFailed[T] => {
-          log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}")
+          log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}, trace ${if (failure.cause != null) failure.cause.getStackTrace else "no trace available"}")
 
           try {
             driver.driverRunCompleted(runHandle)
@@ -152,19 +153,19 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
             }
           }
 
-          originalSender ! ActionFailure(runHandle, failure)
+          originalSender ! TransformationFailure(runHandle, failure)
           toReceive()
           tick()
         }
       }
     } catch {
       case exception: DriverException => {
-        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}")
+        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}, trace ${exception.getStackTrace}")
         throw exception
       }
 
       case t: Throwable => {
-        log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in running state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}")
+        log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in running state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}, trace ${t.getStackTrace}")
         throw t
       }
     }
@@ -194,12 +195,12 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
     runningCommand = Some(commandToRun)
 
     try {
-      if (commandToRun.command.isInstanceOf[Deploy]) {
+      if (commandToRun.command.isInstanceOf[DeployCommand]) {
 
         logStateInfo("deploy", s"DRIVER ACTOR: Running Deploy command")
 
         driver.deployAll(ds)
-        commandToRun.sender ! DeployActionSuccess()
+        commandToRun.sender ! DeployCommandSuccess()
 
         logStateInfo("idle", "DRIVER ACTOR: becoming idle")
 
@@ -226,7 +227,7 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
   }
 
   def logStateInfo(state: String, message: String, runHandle: DriverRunHandle[T] = null, runState: DriverRunState[T] = null) {
-    actionsManagerActor ! ActionStatusResponse(state, self, driver, runHandle, runState)
+    transformationManagerActor ! TransformationStatusResponse(state, self, driver, runHandle, runState)
     log.info(message)
   }
 }
@@ -235,37 +236,37 @@ class DriverActor[T <: Transformation](actionsManagerActor: ActorRef, ds: Driver
  * Factory methods for driver actors.
  */
 object DriverActor {
-  def props(driverName: String, actionsRouter: ActorRef) = {
+  def props(driverName: String, transformationManager: ActorRef) = {
     val ds = Settings().getDriverSettings(driverName)
 
     driverName match {
       case "hive" => Props(
         classOf[DriverActor[HiveTransformation]],
-        actionsRouter, ds, (ds: DriverSettings) => HiveDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        transformationManager, ds, (ds: DriverSettings) => HiveDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "mapreduce" => Props(
         classOf[DriverActor[MapreduceTransformation]],
-        actionsRouter, ds, (ds: DriverSettings) => MapreduceDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        transformationManager, ds, (ds: DriverSettings) => MapreduceDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "pig" => Props(
         classOf[DriverActor[PigTransformation]],
-        actionsRouter, ds, (ds: DriverSettings) => PigDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        transformationManager, ds, (ds: DriverSettings) => PigDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "filesystem" => Props(
         classOf[DriverActor[FilesystemTransformation]],
-        actionsRouter, ds, (ds: DriverSettings) => FileSystemDriver(ds), 100 milliseconds).withDispatcher("akka.actor.driver-dispatcher")
+        transformationManager, ds, (ds: DriverSettings) => FileSystemDriver(ds), 100 milliseconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
-        actionsRouter, ds, (ds: DriverSettings) => OozieDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        transformationManager, ds, (ds: DriverSettings) => OozieDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "morphline" => Props(
         classOf[DriverActor[MorphlineTransformation]],
-        actionsRouter, ds, (ds: DriverSettings) => MorphlineDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        transformationManager, ds, (ds: DriverSettings) => MorphlineDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case "shell" => Props(
         classOf[DriverActor[ShellTransformation]],
-        actionsRouter, ds, (ds: DriverSettings) => ShellDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        transformationManager, ds, (ds: DriverSettings) => ShellDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
       case _ => throw DriverException(s"Driver for ${driverName} not found")
     }

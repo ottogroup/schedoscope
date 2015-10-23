@@ -50,12 +50,12 @@ case class ShopsTest() extends FlatSpec
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "122317",
-        v(shop_name) shouldBe "Netto",
-        v(shop_type) shouldBe "supermarket",
+        v(shopName) shouldBe "Netto",
+        v(shopType) shouldBe "supermarket",
         v(area) shouldBe "t1y140d")
       row(v(id) shouldBe "274850441",
-        v(shop_name) shouldBe "Schanzenbaeckerei",
-        v(shop_type) shouldBe "bakery",
+        v(shopName) shouldBe "Schanzenbaeckerei",
+        v(shopType) shouldBe "bakery",
         v(area) shouldBe "t1y87ki")
     }
   }

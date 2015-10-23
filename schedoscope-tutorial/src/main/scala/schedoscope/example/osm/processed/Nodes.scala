@@ -33,13 +33,13 @@ import org.schedoscope.dsl.Parameter
 case class Nodes(
   year: Parameter[String],
   month: Parameter[String]) extends View
-  with MonthlyParameterization
-  with Id
-  with PointOccurrence
-  with JobMetadata {
+    with MonthlyParameterization
+    with Id
+    with PointOccurrence
+    with JobMetadata {
 
   val version = fieldOf[Int]
-  val user_id = fieldOf[Int]
+  val userId = fieldOf[Int]
   val longitude = fieldOf[Double]
   val latitude = fieldOf[Double]
   val geohash = fieldOf[String]

@@ -29,40 +29,40 @@ case class ShopProfilesTest() extends FlatSpec
 
   val shops = new Shops() with rows {
     set(v(id, "122546"),
-      v(shop_name, "Netto"),
-      v(shop_type, "supermarket"),
+      v(shopName, "Netto"),
+      v(shopType, "supermarket"),
       v(area, "t1y87ki"))
     set(v(id, "274850441"),
-      v(shop_name, "Schanzenbaeckerei"),
-      v(shop_type, "bakery"),
+      v(shopName, "Schanzenbaeckerei"),
+      v(shopType, "bakery"),
       v(area, "t1y87ki"))
     set(v(id, "279023080"),
-      v(shop_name, "Edeka Linow"),
-      v(shop_type, "supermarket"),
+      v(shopName, "Edeka Linow"),
+      v(shopType, "supermarket"),
       v(area, "t1y77d8"))
   }
 
   val restaurants = new Restaurants() with rows {
     set(v(id, "267622930"),
-      v(restaurant_name, "Cuore Mio"),
-      v(restaurant_type, "italian"),
+      v(restaurantName, "Cuore Mio"),
+      v(restaurantType, "italian"),
       v(area, "t1y06x1"))
     set(v(id, "288858596"),
-      v(restaurant_name, "Jam Jam"),
-      v(restaurant_type, "japanese"),
+      v(restaurantName, "Jam Jam"),
+      v(restaurantType, "japanese"),
       v(area, "t1y87ki"))
     set(v(id, "302281521"),
-      v(restaurant_name, "Walddoerfer Croque Cafe"),
-      v(restaurant_type, "burger"),
+      v(restaurantName, "Walddoerfer Croque Cafe"),
+      v(restaurantType, "burger"),
       v(area, "t1y17m9"))
   }
 
   val trainstations = new Trainstations() with rows {
     set(v(id, "122317"),
-      v(station_name, "Hagenbecks Tierpark"),
+      v(stationName, "Hagenbecks Tierpark"),
       v(area, "t1y140d"))
     set(v(id, "122317"),
-      v(station_name, "Boenningstedt"),
+      v(stationName, "Boenningstedt"),
       v(area, "t1y87ki"))
   }
 
@@ -72,12 +72,12 @@ case class ShopProfilesTest() extends FlatSpec
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "122546",
-        v(shop_name) shouldBe "Netto",
-        v(shop_type) shouldBe "supermarket",
+        v(shopName) shouldBe "Netto",
+        v(shopType) shouldBe "supermarket",
         v(area) shouldBe "t1y87ki",
-        v(cnt_competitors) shouldBe 1,
-        v(cnt_restaurants) shouldBe 1,
-        v(cnt_trainstations) shouldBe 1)
+        v(cntCompetitors) shouldBe 1,
+        v(cntRestaurants) shouldBe 1,
+        v(cntTrainstations) shouldBe 1)
     }
   }
 }

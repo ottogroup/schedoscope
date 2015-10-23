@@ -16,7 +16,6 @@
 package org.schedoscope.test
 
 import scala.collection.mutable.HashMap
-
 import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.Structure
 
@@ -44,7 +43,7 @@ trait values extends Structure {
 
   override def equals(o: Any) = o match {
     case that: values => this.fs.equals(that.fs)
-    case _ => false
+    case _            => false
   }
 
   override def toString = s"Structure(${fs.mkString(",")})"

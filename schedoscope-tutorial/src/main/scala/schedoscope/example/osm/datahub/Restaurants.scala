@@ -28,11 +28,11 @@ import schedoscope.example.osm.Globals._
 import org.schedoscope.dsl.storageformats.Parquet
 
 case class Restaurants() extends View
-  with Id
-  with JobMetadata {
+    with Id
+    with JobMetadata {
 
-  val restaurant_name = fieldOf[String]
-  val restaurant_type = fieldOf[String]
+  val restaurantName = fieldOf[String]
+  val restaurantType = fieldOf[String]
   val area = fieldOf[String]
 
   dependsOn { () =>

@@ -26,14 +26,17 @@ import akka.actor.AllForOneStrategy
 import akka.actor.Props
 import akka.actor.SupervisorStrategy._
 import akka.event.Logging
-import akka.routing.RoundRobinRouter
 
+/**
+ * Root actor of the schedoscope scheduler actor system.
+ * Merely a supervisor that shuts down schedoscope in case anything gets escalated.
+ */
 class RootActor(settings: SettingsImpl) extends Actor {
   import context._
 
   val log = Logging(system, this)
 
-  var actionsManagerActor: ActorRef = null
+  var transformationManagerActor: ActorRef = null
   var schemaRootActor: ActorRef = null
   var viewManagerActor: ActorRef = null
 
@@ -47,10 +50,11 @@ class RootActor(settings: SettingsImpl) extends Actor {
     }
 
   override def preStart {
-    actionsManagerActor = actorOf(ActionsManagerActor.props(settings.hadoopConf), "actions")
+    transformationManagerActor = actorOf(TransformationManagerActor.props(settings.hadoopConf), "transformations")
     schemaRootActor = actorOf(SchemaRootActor.props(settings), "schema-root")
     viewManagerActor = actorOf(
-      ViewManagerActor.props(settings, actionsManagerActor,
+      ViewManagerActor.props(settings,
+        transformationManagerActor,
         schemaRootActor,
         schemaRootActor), "views")
   }
@@ -61,23 +65,30 @@ class RootActor(settings: SettingsImpl) extends Actor {
   }
 }
 
+/**
+ * Helpful constants to access the various actors in the schedoscope actor systems. These implicitly create
+ * the actors upon first request.
+ */
 object RootActor {
   def props(settings: SettingsImpl) = Props(classOf[RootActor], settings).withDispatcher("akka.actor.root-actor-dispatcher")
 
   lazy val settings = Settings()
 
-  def actorSelectionToRef(actorSelection: ActorSelection) =
-    Await.result(actorSelection.resolveOne(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout)
+  def actorSelectionToRef(actorSelection: ActorSelection): Option[ActorRef] = try {
+    Some(Await.result(actorSelection.resolveOne(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout))
+  } catch {
+    case _: Throwable => None
+  }
 
-  lazy val rootActor = actorSelectionToRef(settings.system.actorSelection(settings.system.actorOf(props(settings), "root").path))
+  lazy val rootActor = actorSelectionToRef(settings.system.actorSelection(settings.system.actorOf(props(settings), "root").path)).get
 
-  lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("views")))
+  lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("views"))).get
 
-  lazy val schemaRootActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("schema-root")))
+  lazy val schemaRootActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("schema-root"))).get
 
-  lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("schema")))
+  lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("schema"))).get
 
-  lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("metadata-logger")))
+  lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("metadata-logger"))).get
 
-  lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("actions")))
+  lazy val transformationManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("transformations"))).get
 }

@@ -71,14 +71,14 @@ trait DriverRunCompletionHandler[T <: Transformation] {
 
   /**
    * This method has to be implemented for gathering information about a completed run run
-   * 
-   * As for exceptions: 
-   * 
+   *
+   * As for exceptions:
+   *
    * In case a failure within the completion handler should not cause the transformation to fail, the exception should be suppressed.
-   * 
-   * In case a failure within the completion handler should cause a restart of the driver actor and a redo of the transformation, 
+   *
+   * In case a failure within the completion handler should cause a restart of the driver actor and a redo of the transformation,
    * it should be raised as a DriverException.
-   * 
+   *
    * Any other raised exception will cause the driver run to fail and the transformation subsequently to be retried by the view actor.
    */
   def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T])
@@ -192,8 +192,8 @@ trait Driver[T <: Transformation] {
   def driverRunCompleted(run: DriverRunHandle[T]) {
     getDriverRunState(run) match {
       case s: DriverRunSucceeded[T] => driverRunCompletionHandlers.foreach(_.driverRunCompleted(s, run))
-      case f: DriverRunFailed[T] => driverRunCompletionHandlers.foreach(_.driverRunCompleted(f, run))
-      case _ => throw DriverException("driverRunCompleted called with non-final driver run state")
+      case f: DriverRunFailed[T]    => driverRunCompletionHandlers.foreach(_.driverRunCompleted(f, run))
+      case _                        => throw DriverException("driverRunCompleted called with non-final driver run state")
     }
   }
 }

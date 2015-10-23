@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.schedoscope.scheduler.driver
+
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
 import org.schedoscope.dsl.transformations.MapreduceTransformation
@@ -68,8 +69,8 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
     ugi.doAs(new PrivilegedAction[DriverRunState[MapreduceTransformation]]() {
       def run(): DriverRunState[MapreduceTransformation] = {
         job.getJobState match {
-          case SUCCEEDED => DriverRunSucceeded[MapreduceTransformation](driver, s"Mapreduce job ${jobId} succeeded")
-          case PREP | RUNNING => DriverRunOngoing[MapreduceTransformation](driver, runHandle)
+          case SUCCEEDED       => DriverRunSucceeded[MapreduceTransformation](driver, s"Mapreduce job ${jobId} succeeded")
+          case PREP | RUNNING  => DriverRunOngoing[MapreduceTransformation](driver, runHandle)
           case FAILED | KILLED => DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${jobId} failed", DriverException(s"Failed Mapreduce job status ${job.getJobState}"))
         }
       }

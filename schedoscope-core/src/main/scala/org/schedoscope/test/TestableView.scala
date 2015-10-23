@@ -16,9 +16,7 @@
 package org.schedoscope.test
 
 import scala.collection.mutable.ListBuffer
-
 import org.apache.hadoop.fs.Path
-
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.Structure
@@ -38,21 +36,21 @@ trait test extends TestableView {
 
   var driver: () => Driver[Transformation] = () => {
     this.transformation() match {
-      case t: HiveTransformation => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
-      case t: OozieTransformation => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
-      case t: PigTransformation => resources().pigDriver.asInstanceOf[Driver[Transformation]]
-      case t: MapreduceTransformation => resources().mapreduceDriver.asInstanceOf[Driver[Transformation]]
+      case t: HiveTransformation       => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
+      case t: OozieTransformation      => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
+      case t: PigTransformation        => resources().pigDriver.asInstanceOf[Driver[Transformation]]
+      case t: MapreduceTransformation  => resources().mapreduceDriver.asInstanceOf[Driver[Transformation]]
       case t: FilesystemTransformation => resources().fileSystemDriver.asInstanceOf[Driver[Transformation]]
     }
   }
 
   val deps = ListBuffer[View with rows]()
 
-  def then() {
-    then(sortedBy = null)
+  def `then`() {
+    `then`(sortedBy = null)
   }
 
-  def then(sortedBy: FieldLike[_]) {
+  def `then`(sortedBy: FieldLike[_]) {
     deploySchema()
 
     deps.map(d => {
@@ -61,8 +59,8 @@ trait test extends TestableView {
 
     val trans = this.transformation() match {
       case ot: OozieTransformation => deployWorkflow(ot)
-      case ht: HiveTransformation => deployFunctions(ht)
-      case t: Transformation => t
+      case ht: HiveTransformation  => deployFunctions(ht)
+      case t: Transformation       => t
     }
 
     val d = driver()

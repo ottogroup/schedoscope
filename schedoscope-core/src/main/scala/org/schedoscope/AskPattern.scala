@@ -16,23 +16,19 @@
 package org.schedoscope
 
 import java.util.concurrent.TimeUnit
-
-import scala.annotation.implicitNotFound
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
-
-import org.schedoscope.scheduler.RootActor
-
 import akka.actor.ActorRef
 import akka.pattern.Patterns
 import akka.util.Timeout
+import org.schedoscope.scheduler.RootActor
 
 /**
- * Package object that contains commonly codified ask patterns for actors.
+ * Contains commonly codified ask patterns for actors.
  */
-package object scheduler {
+object AskPattern {
   implicit val executionContext: ExecutionContext = RootActor.settings.system.dispatchers.lookup("akka.actor.future-call-dispatcher")
 
   /**

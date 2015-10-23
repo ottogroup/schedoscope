@@ -23,10 +23,10 @@ import akka.actor.OneForOneStrategy
 import akka.actor.Props
 import akka.actor.SupervisorStrategy.Restart
 import akka.event.Logging
-import akka.routing.RoundRobinRouter
 import org.schedoscope.Settings
 import akka.actor.ActorSelection
 import scala.concurrent.Await
+import akka.routing.RoundRobinPool
 
 /**
  * Supervisor and load balancer for schema and metadata logger actors
@@ -49,15 +49,15 @@ class SchemaRootActor(settings: SettingsImpl) extends Actor {
 
   override def preStart {
     metadataLoggerActor = actorOf(MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "metadata-logger")
-    schemaActor = actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withRouter(new RoundRobinRouter(settings.metastoreConcurrency)), "schema")
+    schemaActor = actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withRouter(new RoundRobinPool(settings.metastoreConcurrency)), "schema")
   }
 
   def receive = {
-    case m: CheckOrCreateTables => schemaActor forward m
+    case m: CheckOrCreateTables        => schemaActor forward m
 
-    case a: AddPartitions => schemaActor forward a
+    case a: AddPartitions              => schemaActor forward a
 
-    case s: SetViewVersion => metadataLoggerActor forward s
+    case s: SetViewVersion             => metadataLoggerActor forward s
 
     case l: LogTransformationTimestamp => metadataLoggerActor forward l
   }

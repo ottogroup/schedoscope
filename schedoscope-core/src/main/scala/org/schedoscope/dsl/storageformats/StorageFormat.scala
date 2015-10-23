@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package org.schedoscope.dsl.storageformats
+
 import org.schedoscope.dsl._
 
 /**
@@ -105,4 +106,4 @@ case class Redis(host: String, port: Long = 9393, password: String = "", keys: S
 /**
  *  Does not store anything, this table is just for side-effects
  */
-case class NullStorage extends ExternalStorageFormat
+case class NullStorage() extends ExternalStorageFormat

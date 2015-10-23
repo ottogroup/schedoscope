@@ -15,11 +15,12 @@
  */
 package org.schedoscope.scheduler.driver
 
+import scala.language.implicitConversions
 import java.net.URI
 import java.security.PrivilegedAction
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.seqAsJavaList
-import scala.concurrent.future
+import scala.concurrent.Future
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.joda.time.LocalDateTime
@@ -77,7 +78,7 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
   val log = LoggerFactory.getLogger(classOf[MorphlineDriver])
 
   override def run(t: MorphlineTransformation): DriverRunHandle[MorphlineTransformation] = {
-    val f = future {
+    val f = Future {
       try {
         runMorphline(createMorphline(t), t)
       } catch {
@@ -154,7 +155,7 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
     else view.fields.map(field => "/" + field.n)
     val command = storageFormat match {
       case f: ExaSolution => {
-        val schema = view.fields.foldLeft(ConfigFactory.empty())((config, field) => config.withValue((if (transformation.definition == "") "/" else "") + field.n, field.t.erasure.getSimpleName()))
+        val schema = view.fields.foldLeft(ConfigFactory.empty())((config, field) => config.withValue((if (transformation.definition == "") "/" else "") + field.n, field.t.runtimeClass.getSimpleName()))
         val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
           withValue("keys", ConfigValueFactory.fromIterable(f.mergeKeys)).
           withValue("merge", f.merge).
@@ -185,7 +186,7 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
 
       case f: JDBC => {
         log.info("creating JDBCWriter")
-        val schema = view.fields.foldLeft(ConfigFactory.empty())((config, field) => config.withValue(field.n, field.t.erasure.getSimpleName()))
+        val schema = view.fields.foldLeft(ConfigFactory.empty())((config, field) => config.withValue(field.n, field.t.runtimeClass.getSimpleName()))
         val oConfig = commandConfig.withValue("connectionURL", f.jdbcUrl).
           withValue("jdbcDriver", f.jdbcDriver).
           withValue("username", f.userName).

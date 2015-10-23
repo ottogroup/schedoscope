@@ -16,7 +16,6 @@
 package test.eci.datahub
 
 import java.util.Date
-
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.Structure
@@ -37,8 +36,8 @@ import scala.io.Source
 
 case class Brand(
   ecNr: Parameter[String]) extends View
-  with Id
-  with JobMetadata {
+    with Id
+    with JobMetadata {
 
   comment("In this example, brands are per shop but time invariant")
 
@@ -53,10 +52,10 @@ case class Product(
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
-  with Id
-  with PointOccurrence
-  with JobMetadata
-  with DailyParameterization {
+    with Id
+    with PointOccurrence
+    with JobMetadata
+    with DailyParameterization {
 
   comment("In this example, shops have different products each day")
 
@@ -72,9 +71,9 @@ case class ProductBrand(
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
-  with PointOccurrence
-  with JobMetadata
-  with DailyParameterization {
+    with PointOccurrence
+    with JobMetadata
+    with DailyParameterization {
 
   comment("ProductBrand joins brands with products")
 
@@ -128,7 +127,7 @@ case class AvroView(
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
-  with DailyParameterization {
+    with DailyParameterization {
 
   val aField = fieldOf[String]
   val anotherField = fieldOf[String]
@@ -139,11 +138,11 @@ case class AvroView(
 }
 
 case class ViewWithDefaultParams(
-  ecNr: Parameter[String],
-  year: Parameter[String],
-  month: Parameter[String],
-  day: Parameter[String],
-  defaultParameter: Int = 2) extends View {
+    ecNr: Parameter[String],
+    year: Parameter[String],
+    month: Parameter[String],
+    day: Parameter[String],
+    defaultParameter: Int = 2) extends View {
 }
 
 case class Click(
@@ -151,8 +150,8 @@ case class Click(
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
-  with Id
-  with DailyParameterization {
+    with Id
+    with DailyParameterization {
 
   val url = fieldOf[String]
 }
@@ -161,8 +160,8 @@ case class ClickOfEC0101(
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
-  with Id
-  with DailyParameterization {
+    with Id
+    with DailyParameterization {
 
   val url = fieldOf[String]
 
@@ -180,8 +179,8 @@ case class ClickOfEC0101ViaOozie(
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
-  with Id
-  with DailyParameterization {
+    with Id
+    with DailyParameterization {
 
   val url = fieldOf[String]
 

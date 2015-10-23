@@ -16,9 +16,7 @@
 package org.schedoscope.dsl.views
 
 import java.net.URLDecoder
-
 import scala.Array.canBuildFrom
-
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.View.TypedAny
@@ -57,16 +55,16 @@ object ViewUrlParser {
     .replaceAllLiterally("\\-", "-")
 
   def typeBasicParameter(parameter: String) = parameter match {
-    case NullValue() => List(null)
-    case BooleanValue(b, _, _) => List(t(p(b.toBoolean)))
-    case IntValue(d) => List(t(p(d.toInt)))
-    case LongValue(d) => List(t(p(d.toLong)))
-    case ByteValue(d) => List(t(p(d.toByte)))
-    case FloatValue(f) => List(t(p(f.toFloat)))
-    case DoubleValue(f) => List(t(p(f.toDouble)))
-    case MonthlyParameterizationValue(y, m) => List(t(p(y)), t(p(m)))
+    case NullValue()                         => List(null)
+    case BooleanValue(b, _, _)               => List(t(p(b.toBoolean)))
+    case IntValue(d)                         => List(t(p(d.toInt)))
+    case LongValue(d)                        => List(t(p(d.toLong)))
+    case ByteValue(d)                        => List(t(p(d.toByte)))
+    case FloatValue(f)                       => List(t(p(f.toFloat)))
+    case DoubleValue(f)                      => List(t(p(f.toDouble)))
+    case MonthlyParameterizationValue(y, m)  => List(t(p(y)), t(p(m)))
     case DailyParameterizationValue(y, m, d) => List(t(p(y)), t(p(m)), t(p(d)))
-    case aStringValue => List(t(p(unquote(aStringValue))))
+    case aStringValue                        => List(t(p(unquote(aStringValue))))
   }
 
   def typeMonthlyRangeParameter(earlierYear: String, earlierMonth: String, laterYear: String, laterMonth: String): List[List[TypedAny]] =

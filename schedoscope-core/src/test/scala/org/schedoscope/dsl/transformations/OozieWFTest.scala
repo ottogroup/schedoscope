@@ -19,16 +19,15 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.schedoscope.dsl.transformations.OozieTransformation.configurationFromResource;
-
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.View
 
 case class Productfeed(
-  ecShopCode: Parameter[String],
-  year: Parameter[String],
-  month: Parameter[String],
-  day: Parameter[String]) extends View {
+    ecShopCode: Parameter[String],
+    year: Parameter[String],
+    month: Parameter[String],
+    day: Parameter[String]) extends View {
 
   val artNumber = fieldOf[String]
   val artName = fieldOf[String]

@@ -27,10 +27,10 @@ import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.PigTransformation.scriptFromResource
 
 case class Trainstations() extends View
-  with Id
-  with JobMetadata {
+    with Id
+    with JobMetadata {
 
-  val station_name = fieldOf[String]
+  val stationName = fieldOf[String]
   val area = fieldOf[String]
 
   val nodes = dependsOn(() =>

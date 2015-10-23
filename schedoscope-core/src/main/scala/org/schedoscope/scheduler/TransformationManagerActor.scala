@@ -15,20 +15,25 @@
  */
 package org.schedoscope.scheduler
 
-import scala.annotation.migration
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
-import scala.concurrent.duration.DurationInt
 import scala.util.Random
 
 import org.apache.hadoop.conf.Configuration
-
 import org.schedoscope.Settings
-import org.schedoscope.scheduler.driver.DriverException
-import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
-import org.schedoscope.scheduler.messages._
+import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.scheduler.driver.DriverException
+import org.schedoscope.scheduler.messages.CommandWithSender
+import org.schedoscope.scheduler.messages.DeployCommand
+import org.schedoscope.scheduler.messages.GetTransformations
+import org.schedoscope.scheduler.messages.GetQueues
+import org.schedoscope.scheduler.messages.PollCommand
+import org.schedoscope.scheduler.messages.QueueStatusListResponse
+import org.schedoscope.scheduler.messages.TransformationStatusListResponse
+import org.schedoscope.scheduler.messages.TransformationStatusResponse
+
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -40,17 +45,17 @@ import akka.event.Logging
 import akka.event.LoggingReceive
 
 /**
- * The actions manager actor queues transformation requests ("actions") it receives from view actors by
- * transformation type. Idle driver actors poll the actions manager for new actions to perform.
+ * The transformation manager actor queues transformation requests it receives from view actors by
+ * transformation type. Idle driver actors poll the transformation manager for new transformations to perform.
  *
  */
-class ActionsManagerActor() extends Actor {
+class TransformationManagerActor() extends Actor {
   import context._
 
-  val log = Logging(system, ActionsManagerActor.this)
+  val log = Logging(system, TransformationManagerActor.this)
   val settings = Settings.get(system)
 
-  val driverStates = HashMap[String, ActionStatusResponse[_]]()
+  val driverStates = HashMap[String, TransformationStatusResponse[_]]()
 
   val availableTransformations = settings.availableTransformations.keySet()
 
@@ -73,7 +78,7 @@ class ActionsManagerActor() extends Actor {
   def hash(s: String) = Math.max(0,
     s.hashCode().abs % filesystemConcurrency)
 
-  def queueNameForTransformationAction(t: Transformation, s: ActorRef) =
+  def queueNameForTransformation(t: Transformation, s: ActorRef) =
     if (t.name != "filesystem")
       t.name
     else {
@@ -105,7 +110,7 @@ class ActionsManagerActor() extends Actor {
       }
     }
 
-  private def actionQueueStatus() = {
+  private def transformationQueueStatus() = {
     queues.map(q => (q._1, q._2.map(c => c.command).toList))
   }
 
@@ -116,7 +121,7 @@ class ActionsManagerActor() extends Actor {
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _: DriverException => Restart
-      case _: Throwable => Escalate
+      case _: Throwable       => Escalate
     }
 
   /**
@@ -133,11 +138,11 @@ class ActionsManagerActor() extends Actor {
    */
   def receive = LoggingReceive({
 
-    case asr: ActionStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
+    case asr: TransformationStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
-    case GetActions() => sender ! ActionStatusListResponse(driverStates.values.toList)
+    case GetTransformations()                 => sender ! TransformationStatusListResponse(driverStates.values.toList)
 
-    case GetQueues() => sender ! QueueStatusListResponse(actionQueueStatus)
+    case GetQueues()                          => sender ! QueueStatusListResponse(transformationQueueStatus)
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
@@ -149,36 +154,36 @@ class ActionsManagerActor() extends Actor {
 
         if (cmd.command.isInstanceOf[Transformation]) {
           val transformation = cmd.command.asInstanceOf[Transformation]
-          log.info(s"ACTIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
+          log.info(s"TRANSFORMATIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
         } else
-          log.info("ACTIONMANAGER DEQUEUE: Dequeued deploy action")
+          log.info("TRANSFORMATIONMANAGER DEQUEUE: Dequeued deploy action")
       }
     }
 
-    case actionCommand: CommandWithSender => {
-      if (actionCommand.command.isInstanceOf[Transformation]) {
-        val transformation = actionCommand.command.asInstanceOf[Transformation]
-        val queueName = queueNameForTransformationAction(transformation, actionCommand.sender)
+    case commandToExecute: CommandWithSender => {
+      if (commandToExecute.command.isInstanceOf[Transformation]) {
+        val transformation = commandToExecute.command.asInstanceOf[Transformation]
+        val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
 
-        queues.get(queueName).get.enqueue(actionCommand)
-        log.info(s"ACTIONMANAGER ENQUEUE: Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
+        queues.get(queueName).get.enqueue(commandToExecute)
+        log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
       } else {
-        queues.values.foreach { _.enqueue(actionCommand) }
-        log.info("ACTIONMANAGER ENQUEUE: Enqueued deploy action")
+        queues.values.foreach { _.enqueue(commandToExecute) }
+        log.info("TRANSFORMATIONMANAGER ENQUEUE: Enqueued deploy action")
       }
     }
 
-    case viewAction: View => self ! CommandWithSender(viewAction.transformation().forView(viewAction), sender)
+    case viewToTransform: View                              => self ! CommandWithSender(viewToTransform.transformation().forView(viewToTransform), sender)
 
-    case filesystemTransformationAction: FilesystemTransformation => self ! CommandWithSender(filesystemTransformationAction, sender)
+    case filesystemTransformation: FilesystemTransformation => self ! CommandWithSender(filesystemTransformation, sender)
 
-    case deployAction: Deploy => self ! CommandWithSender(deployAction, sender)
+    case deploy: DeployCommand                              => self ! CommandWithSender(deploy, sender)
   })
 }
 
 /**
  * Factory for the actions manager actor.
  */
-object ActionsManagerActor {
-  def props(conf: Configuration) = Props[ActionsManagerActor].withDispatcher("akka.actor.actions-manager-dispatcher")
+object TransformationManagerActor {
+  def props(conf: Configuration) = Props[TransformationManagerActor].withDispatcher("akka.actor.transformation-manager-dispatcher")
 }

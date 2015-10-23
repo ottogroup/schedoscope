@@ -18,7 +18,6 @@ package org.schedoscope.scheduler.driver
 import org.apache.hadoop.fs.Path
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-
 import org.schedoscope.DriverTests
 import org.schedoscope.OozieTests
 import org.schedoscope.dsl.transformations.OozieTransformation

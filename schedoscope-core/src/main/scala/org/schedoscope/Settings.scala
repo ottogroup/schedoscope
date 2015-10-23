@@ -21,6 +21,7 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration.Duration
 import scala.collection.JavaConversions._
 import org.apache.hadoop.conf.Configuration
@@ -76,8 +77,8 @@ class SettingsImpl(val config: Config) extends Extension {
     }
   }
 
-  lazy val webserviceTimeOut: Duration =
-    Duration(config.getDuration("schedoscope.webservice.timeout", TimeUnit.MILLISECONDS),
+  lazy val webserviceTimeout =
+    Duration.create(config.getDuration("schedoscope.webservice.timeout", TimeUnit.MILLISECONDS),
       TimeUnit.MILLISECONDS)
 
   lazy val host = config.getString("schedoscope.webservice.host")

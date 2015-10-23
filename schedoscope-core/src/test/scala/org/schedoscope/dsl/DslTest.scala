@@ -37,6 +37,7 @@ import test.eci.datahub.ViewWithDefaultParams
 import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.dsl.storageformats.Parquet
 import org.schedoscope.dsl.transformations.NoOp
+
 class DslTest extends FlatSpec with Matchers {
 
   "A view" should "be instantiable without new" in {
@@ -333,6 +334,19 @@ class DslTest extends FlatSpec with Matchers {
         dateString should be <= "20140224"
         dateString should be >= "20131202"
     }
+  }
+  
+  it should "have the same urlPath as the one they were dynamically constructed with" in {
+    val views = View.viewsFromUrl("dev", "test.eci.datahub/Product/EC0106/2014/02/24/20140224")
+
+    views.length shouldBe 1
+
+    
+    val product = views.head.asInstanceOf[Product]
+    
+    val productParameters = product.partitionParameters
+    
+    product.urlPath shouldBe "test.eci.datahub/Product/EC0106/2014/02/24/20140224"
   }
 
   it should "be queryable" in {

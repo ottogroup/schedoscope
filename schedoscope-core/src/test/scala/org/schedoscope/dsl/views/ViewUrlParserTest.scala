@@ -17,14 +17,12 @@ package org.schedoscope.dsl.views
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.View.t
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
 import org.schedoscope.dsl.views.ViewUrlParser.parse
 import org.schedoscope.dsl.views.ViewUrlParser.parseParameters
-
 import test.eci.datahub.Brand
 import test.eci.datahub.Product
 

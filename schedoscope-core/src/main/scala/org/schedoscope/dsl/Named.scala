@@ -19,7 +19,7 @@ package org.schedoscope.dsl
  * A trait for entities that have a name, e.g., views, fields, and parameters.
  */
 trait Named {
-  
+
   /**
    * The base name of the Named entity.
    */
@@ -35,7 +35,7 @@ trait Named {
  * Helpers for Named entities
  */
 object Named {
-  
+
   /**
    * converts camel case to lower_case / underscore format.
    */

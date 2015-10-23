@@ -40,7 +40,7 @@ abstract class FieldLike[T: Manifest] extends Named {
    */
   override def namingBase = assignedStructure match {
     case Some(s) => s.nameOf(this).getOrElse(t.runtimeClass.getSimpleName)
-    case None => t.runtimeClass.getSimpleName
+    case None    => t.runtimeClass.getSimpleName
   }
 }
 
