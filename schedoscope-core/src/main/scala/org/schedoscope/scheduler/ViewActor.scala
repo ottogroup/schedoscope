@@ -42,7 +42,7 @@ import org.apache.hadoop.fs.FileStatus
 import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.AskPattern
 
-class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
+class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
   import MaterializeViewMode._
   import AskPattern._
@@ -353,7 +353,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def toTransforming(retries: Int, mode: MaterializeViewMode) {
     if (mode != RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
-      actionsManagerActor ! view
+      transformationManagerActor ! view
     else
       log.info(s"VIEWACTOR CHECKSUM AND TIMESTAMP RESET ===> Ignoring transformation")
 
@@ -411,7 +411,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def touchSuccessFlag(view: View) {
-    actionsManagerActor ! Touch(view.fullPath + "/_SUCCESS")
+    transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
   }
 
   def hasVersionMismatch(view: View) = view.transformation().versionDigest() != versionChecksum
@@ -447,5 +447,5 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 }
 
 object ViewActor {
-  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
+  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
 }
