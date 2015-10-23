@@ -30,7 +30,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
     o match {
       case as: TransformationStatusList => {
         if (as.actions.size > 0) {
-          val header = Array("TRANSFORMER", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
+          val header = Array("TRANSFORMATION DRIVER", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
           val running = as.actions.map(p => {
             val (s, d, t): (String, String, String) =
               if (p.runStatus.isDefined) {
