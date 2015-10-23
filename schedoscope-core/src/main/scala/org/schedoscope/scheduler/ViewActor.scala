@@ -29,6 +29,7 @@ import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
+import akka.actor.ActorSelection
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
@@ -277,7 +278,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
         log.debug("sending materialize to dependency " + d)
 
-        getViewActor(d) ! MaterializeView(mode)
+        try {
+          ViewManagerActor.actorForView(d) ! MaterializeView(mode)
+        } catch {
+          case _: Throwable => queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef] ! MaterializeView(mode)
+        }
       }
     }
 
@@ -408,10 +413,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def hasVersionMismatch(view: View) = view.transformation().versionDigest() != versionChecksum
 
-  def getViewActor(view: View) =
-    ViewManagerActor.actorForView(view).getOrElse {
-      queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef]
-    }
 
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()
