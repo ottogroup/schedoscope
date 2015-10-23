@@ -28,7 +28,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
-      case as: ActionStatusList => {
+      case as: TransformationStatusList => {
         if (as.actions.size > 0) {
           val header = Array("ACTOR", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
           val running = as.actions.map(p => {
@@ -98,7 +98,7 @@ object SchedoscopeClientControl extends App {
 
 class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
   object Action extends Enumeration {
-    val VIEWS, ACTIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
+    val VIEWS, TRANSFORMATIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
   }
   import Action._
 
@@ -116,9 +116,9 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
       opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("include dependencies"),
       opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional () text ("show only overview, skip individual views"))
 
-    cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children (
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter action display (e.g. '.*hive-1.*'). "))
+    cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text ("list status of running transformations") children (
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter transformations by their status (e.g. 'queued, running, idle')"),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter transformation display (e.g. '.*hive-1.*'). "))
 
     cmd("queues") action { (_, c) => c.copy(action = Some(QUEUES)) } text ("list queued actions") children (
       opt[String]('t', "typ") action { (x, c) => c.copy(typ = Some(x)) } optional () valueName ("<type>") text ("filter queued actions by their type (e.g. 'oozie', 'filesystem', ...)"),
@@ -160,8 +160,8 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
         println("Starting " + config.action.get.toString + " ...")
         try {
           val res = config.action.get match {
-            case ACTIONS => {
-              schedoscope.actions(config.status, config.filter)
+            case TRANSFORMATIONS => {
+              schedoscope.transformations(config.status, config.filter)
             }
             case QUEUES => {
               schedoscope.queues(config.typ, config.filter)

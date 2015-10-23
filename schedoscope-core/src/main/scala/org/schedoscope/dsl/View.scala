@@ -53,7 +53,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       nWithoutPartitioningSuffix + "_" + suffixPartitionParameters.map { p => p.v.get }.mkString("_").toLowerCase()
 
   /**
-   * The package and view class prefix of the URL syntax representing the present view    
+   * The package and view class prefix of the URL syntax representing the present view
    */
   def urlPathPrefix = s"${lowerCasePackageName}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}"
 

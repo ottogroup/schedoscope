@@ -131,7 +131,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // transitions: materialized,retrying
   def transforming(retries: Int, materializationMode: MaterializeViewMode): Receive = LoggingReceive({
 
-    case _: ActionSuccess[_] => {
+    case _: TransformationSuccess[_] => {
       log.info("SUCCESS")
 
       setVersion(view)
@@ -157,7 +157,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
     }
 
-    case _: ActionFailure[_]               => toRetrying(retries, materializationMode)
+    case _: TransformationFailure[_]       => toRetrying(retries, materializationMode)
 
     case MaterializeView(mode)             => listenersWaitingForMaterialize.add(sender)
 
@@ -362,7 +362,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     unbecomeBecome(transforming(retries, mode))
 
     if (mode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS) {
-      self ! ActionSuccess[NoOp](null, null)
+      self ! TransformationSuccess[NoOp](null, null)
       log.info(s"VIEWACTOR CHECKSUM AND TIMESTAMP RESET ===> Faking successful transformation action result")
     }
   }
@@ -415,7 +415,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def hasVersionMismatch(view: View) = view.transformation().versionDigest() != versionChecksum
-
 
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()

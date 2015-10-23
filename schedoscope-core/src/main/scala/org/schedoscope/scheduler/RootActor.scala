@@ -27,12 +27,16 @@ import akka.actor.Props
 import akka.actor.SupervisorStrategy._
 import akka.event.Logging
 
+/**
+ * Root actor of the schedoscope scheduler actor system.
+ * Merely a supervisor that shuts down schedoscope in case anything gets escalated.
+ */
 class RootActor(settings: SettingsImpl) extends Actor {
   import context._
 
   val log = Logging(system, this)
 
-  var actionsManagerActor: ActorRef = null
+  var transformationManagerActor: ActorRef = null
   var schemaRootActor: ActorRef = null
   var viewManagerActor: ActorRef = null
 
@@ -46,10 +50,11 @@ class RootActor(settings: SettingsImpl) extends Actor {
     }
 
   override def preStart {
-    actionsManagerActor = actorOf(ActionsManagerActor.props(settings.hadoopConf), "actions")
+    transformationManagerActor = actorOf(TransformationManagerActor.props(settings.hadoopConf), "transformations")
     schemaRootActor = actorOf(SchemaRootActor.props(settings), "schema-root")
     viewManagerActor = actorOf(
-      ViewManagerActor.props(settings, actionsManagerActor,
+      ViewManagerActor.props(settings,
+        transformationManagerActor,
         schemaRootActor,
         schemaRootActor), "views")
   }
@@ -60,6 +65,10 @@ class RootActor(settings: SettingsImpl) extends Actor {
   }
 }
 
+/**
+ * Helpful constants to access the various actors in the schedoscope actor systems. These implicitly create
+ * the actors upon first request.
+ */
 object RootActor {
   def props(settings: SettingsImpl) = Props(classOf[RootActor], settings).withDispatcher("akka.actor.root-actor-dispatcher")
 
@@ -81,5 +90,5 @@ object RootActor {
 
   lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("metadata-logger"))).get
 
-  lazy val actionsManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("actions"))).get
+  lazy val transformationManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("transformations"))).get
 }

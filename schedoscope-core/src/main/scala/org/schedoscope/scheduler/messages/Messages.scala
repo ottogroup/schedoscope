@@ -37,7 +37,7 @@ case class Failed(view: View) extends Failure
 /**
  * Driver actor signaling a failure of a transfomation that requires a retry by the receiving view actor.
  */
-case class ActionFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunFailed[T]) extends Failure
+case class TransformationFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunFailed[T]) extends Failure
 
 /**
  * Superclass for commands sent to actors.
@@ -68,18 +68,18 @@ case class SetViewVersion(view: View) extends CommandRequest
 case class LogTransformationTimestamp(view: View, timestamp: Long) extends CommandRequest
 
 /**
- * Command to kill a running transformation / action. Actual outcome depends on the ability of the
+ * Command to kill a running transformation. Actual outcome depends on the ability of the
  * associated driver to be able to do that.
  */
-case class KillAction() extends CommandRequest
+case class KillCommand() extends CommandRequest
 
 /**
  * Command to driver actors to instruct their drivers to deploy their resources (e.g. UDFS) to the distributed file system
  */
-case class Deploy() extends CommandRequest
+case class DeployCommand() extends CommandRequest
 
 /**
- * Used by driver actors to poll the actions manager actor for a new piece of work to be executed.
+ * Used by driver actors to poll the transformation manager actor for a new piece of work to be executed.
  */
 case class PollCommand(typ: String) extends CommandRequest
 
@@ -91,19 +91,19 @@ case class PollCommand(typ: String) extends CommandRequest
 case class CommandWithSender(command: AnyRef, sender: ActorRef) extends CommandRequest
 
 /**
- * Request to the actions manager to generate a summary of currently running actions
+ * Request to the transformation manager to generate a summary of currently running actions
  */
-case class GetActions() extends CommandRequest
+case class GetTransformations() extends CommandRequest
 
 /**
- * Request to the actions manager to retrieve the contents and size of the  worker queues
+ * Request to the tranformation manager to retrieve the contents and size of the transformation queues
  */
 case class GetQueues() extends CommandRequest
 
 /**
- * Request to the actions manager to return the state of all driver actors
+ * Request to the transformation manager to return the state of all driver actors
  */
-case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
+case class GetTransformationStatusList(statusRequester: ActorRef, transformationQueueStatus: Map[String, List[String]], driverActors: Seq[ActorRef]) extends CommandRequest
 
 /**
  * Request to the view manager actor to retrieve information of the currently instantiated views
@@ -115,7 +115,7 @@ case class GetActionStatusList(statusRequester: ActorRef, actionQueueStatus: Map
 case class GetViews(views: Option[List[View]], status: Option[String], filter: Option[String], dependencies: Boolean = false)
 
 /**
- *  Request to the actions manager to return the state of all drivers
+ *  Request to the view manager to return the state of all views.
  */
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
 
@@ -157,9 +157,9 @@ case class Retry() extends CommandRequest
 sealed class CommandResponse
 
 /**
- * Driver actor notifying the actions manager actor of successful resource deployment.
+ * Driver actor notifying the transformation manager actor of successful resource deployment.
  */
-case class DeployActionSuccess() extends CommandResponse
+case class DeployCommandSuccess() extends CommandResponse
 
 /**
  * Schema actor or metadata logger notifying view manager actor or view actor of successful schema action.
@@ -167,26 +167,26 @@ case class DeployActionSuccess() extends CommandResponse
 case class SchemaActionSuccess() extends CommandResponse
 
 /**
- * Driver actor notifying view actor of successful transformation action.
+ * Driver actor notifying view actor of successful transformation.
  *
  * @param driverRunHandle RunHandle of the executing driver
  * @param driverRunState return state of the driver
  */
-case class ActionSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends CommandResponse
+case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends CommandResponse
 
 /**
- * Response message of action manager actor with state of queues
- * @param actionQueues List of queue states of type
+ * Response message of transformation manager actor with state of queues
+ * @param transformationQueues List of queue states of type
  */
-case class QueueStatusListResponse(val actionQueues: Map[String, List[AnyRef]]) extends CommandResponse
+case class QueueStatusListResponse(val transformationQueues: Map[String, List[AnyRef]]) extends CommandResponse
 
 /**
- * Response message of action manager actor with state of actions
+ * Response message of transformation manager actor with state of actions
  *
- * @param actionsStatusList List of entities of ActionStatusResponse
- * @see ActionStatusResponse
+ * @param actionsStatusList List of entities of TransformationStatusResponse
+ * @see TransformationStatusResponse
  */
-case class ActionStatusListResponse(val actionStatusList: List[ActionStatusResponse[_]]) extends CommandResponse
+case class TransformationStatusListResponse(val transformationStatusList: List[TransformationStatusResponse[_]]) extends CommandResponse
 
 /**
  * Response message of view manager actor with state of view actors
@@ -197,14 +197,14 @@ case class ActionStatusListResponse(val actionStatusList: List[ActionStatusRespo
 case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends CommandResponse
 
 /**
- * Driver actor responding to the action manager actor with the state of the running transformation
+ * Driver actor responding to the transformation manager actor with the state of the running transformation
  *
  * @param message Textual description of state
  * @param message Reference to the driver actor
  * @param driverRunHandle runHandle of a running transformation
  * @param driverRunState state of a running transformation
  */
-case class ActionStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
+case class TransformationStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
 
 /**
  * View actor responding to the view manager actor with the state of the view

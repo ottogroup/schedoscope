@@ -41,7 +41,7 @@ import kamon.Kamon
 class SchedoscopeSystem extends SchedoscopeInterface {
   val log = Logging(settings.system, classOf[RootActor])
 
-  actionsManagerActor ! Deploy()
+  transformationManagerActor ! DeployCommand()
 
   val runningCommands = collection.mutable.HashMap[String, SchedoscopeCommand]()
   val doneCommands = collection.mutable.HashMap[String, SchedoscopeCommandStatus]()
@@ -128,21 +128,21 @@ class SchedoscopeSystem extends SchedoscopeInterface {
     ViewStatusList(ov, if (overview.getOrElse(false)) List() else viewStatusList)
   }
 
-  def actions(status: Option[String], filter: Option[String]) = {
-    val result = queryActor[ActionStatusListResponse](actionsManagerActor, GetActions(), settings.statusListAggregationTimeout)
-    val actions = result.actionStatusList
+  def transformations(status: Option[String], filter: Option[String]) = {
+    val result = queryActor[TransformationStatusListResponse](transformationManagerActor, GetTransformations(), settings.statusListAggregationTimeout)
+    val actions = result.transformationStatusList
       .map(a => SchedoscopeJsonProtocol.parseActionStatus(a))
       .filter(a => !status.isDefined || status.get.equals(a.status))
       .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
     val overview = actions
       .groupBy(_.status)
       .map(el => (el._1, el._2.size))
-    ActionStatusList(overview, actions)
+    TransformationStatusList(overview, actions)
   }
 
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
-    val result = queryActor[QueueStatusListResponse](actionsManagerActor, GetQueues(), settings.statusListAggregationTimeout)
-    val queues = result.actionQueues
+    val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.statusListAggregationTimeout)
+    val queues = result.transformationQueues
       .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
       .map { case (t, queue) => (t, SchedoscopeJsonProtocol.parseQueueElements(queue)) }
       .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }

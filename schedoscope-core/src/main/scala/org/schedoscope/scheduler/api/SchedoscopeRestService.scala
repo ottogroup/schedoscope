@@ -100,7 +100,7 @@ class SchedoscopeRestServerActor(schedoscope: SchedoscopeInterface) extends Acto
       parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
         {
           path("actions") {
-            complete(schedoscope.actions(status, filter))
+            complete(schedoscope.transformations(status, filter))
           } ~
             path("queues") {
               complete(schedoscope.queues(typ, filter))
