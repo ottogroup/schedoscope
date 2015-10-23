@@ -30,7 +30,7 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
     o match {
       case as: TransformationStatusList => {
         if (as.actions.size > 0) {
-          val header = Array("ACTOR", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
+          val header = Array("TRANSFORMER", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
           val running = as.actions.map(p => {
             val (s, d, t): (String, String, String) =
               if (p.runStatus.isDefined) {
@@ -116,7 +116,7 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
       opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("include dependencies"),
       opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional () text ("show only overview, skip individual views"))
 
-    cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text ("list status of running transformations") children (
+    cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text ("show transformation status") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter transformations by their status (e.g. 'queued, running, idle')"),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter transformation display (e.g. '.*hive-1.*'). "))
 

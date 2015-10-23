@@ -99,7 +99,7 @@ class SchedoscopeRestServerActor(schedoscope: SchedoscopeInterface) extends Acto
     respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
       parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
         {
-          path("actions") {
+          path("transformations") {
             complete(schedoscope.transformations(status, filter))
           } ~
             path("queues") {
