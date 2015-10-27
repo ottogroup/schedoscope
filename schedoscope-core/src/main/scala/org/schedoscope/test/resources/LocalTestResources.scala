@@ -120,10 +120,11 @@ class LocalTestResources extends TestResources {
     if (hadoopLibDir.exists)
       FileUtils.deleteDirectory(hadoopLibDir)
     hadoopLibDir.mkdir
-
+    jarClassPathMembers.filter(_.contains("0.13.1")).foreach(url => println(url.toString()))
     val jarCopyOperations = jarClassPathMembers
       .filter { !_.contains("slf4j-log4j12") }
-      .filter { !_.contains("slf4j-simple") }
+      .filter { !_.contains("slf4j-simple") }      
+      .filter { !_.contains("0.13.1") }
       .foldLeft(List[(File, File)]()) {
         case (jarCopies, jarFile) =>
           ((new File(new URL(jarFile).toURI()),
