@@ -30,7 +30,12 @@
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
 			<version>0.1.8</version>
-			<scope>test</scope>
+			<exclusions> 
+			<exclusion>
+			<groupId> org.cloudera.logredactor</groupId>
+			<artifactId>logredactor</artifactId></exclusion>
+			</exclusions>
+			<scope>test</scope> 
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
@@ -257,10 +262,7 @@
 										<groupId>ch.hsr</groupId>
 										<artifactId>geohash</artifactId>
 									</inclusion>
-									<inclusion>
-										<groupId>org.apache.commons</groupId>
-										<artifactId>commons-lang3</artifactId>
-									</inclusion>
+									
 								</inclusions>
 							</assembly>
 						</configuration>
