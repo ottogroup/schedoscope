@@ -21,4 +21,7 @@ trait testStruct extends Structure with values {
   def filledBy(vals: Any) {
     set(vals.asInstanceOf[Array[(FieldLike[_], Any)]]: _*)
   }
+  def filledBy(v:Map[String,_]) {
+   v.map{case (a,b)=>setByName(a,b)}
+  }
 }

@@ -31,6 +31,11 @@ trait values extends Structure {
   def set(value: (FieldLike[_], Any)*) {
     value.foreach(el => fs.put(el._1.n, el._2))
     fields.filter(f => !fs.contains(f.n)).map(f => fs.put(f.n, FieldSequentialValue.get(f, 0, idPattern)))
+  } 
+  
+  def setByName(key:String,value:Any) {
+    fs.put(key,value)
+    fields.filter(f => !fs.contains(f.n)).map(f => fs.put(f.n, FieldSequentialValue.get(f, 0, idPattern)))
   }
   def get() = fs.toArray
 

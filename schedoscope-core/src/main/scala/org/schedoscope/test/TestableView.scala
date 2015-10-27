@@ -33,6 +33,14 @@ import org.schedoscope.dsl.transformations.FilesystemTransformation
 
 trait TestableView extends FillableView {}
 
+/**
+ * @author dev_hzorn
+ *
+ */
+/**
+ * @author dev_hzorn
+ *
+ */
 trait test extends TestableView {
   var rowIdx = 0
 
@@ -108,7 +116,8 @@ trait test extends TestableView {
         }
       }
     })
-    currObj.asInstanceOf[Array[(FieldLike[_], Any)]]
+        currObj.asInstanceOf[Array[(FieldLike[_], Any)]]
+
   }
 
   def withConfiguration(k: String, v: Any) {
