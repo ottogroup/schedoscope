@@ -195,7 +195,7 @@ case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) exte
  * Driver actor responding to the transformation manager actor with the state of the running transformation
  *
  * @param message Textual description of state
- * @param message Reference to the driver actor
+ * @param actor Reference to the driver actor
  * @param driverRunHandle runHandle of a running transformation
  * @param driverRunState state of a running transformation
  */
