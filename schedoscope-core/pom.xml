@@ -280,6 +280,8 @@
 	</dependencies>
 
 	<build>
+		<sourceDirectory>src/main/scala</sourceDirectory>
+		<testSourceDirectory>src/test/scala</testSourceDirectory>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -299,20 +301,6 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<!-- see http://davidb.github.com/scala-maven-plugin -->
-				<groupId>net.alchim31.maven</groupId>
-				<artifactId>scala-maven-plugin</artifactId>
-				<version>3.2.2</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>compile</goal>
-							<goal>testCompile</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
 				<artifactId>maven-source-plugin</artifactId>
 				<version>2.4</version>
 				<executions>
@@ -325,13 +313,16 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.3</version>
+				<!-- see http://davidb.github.com/scala-maven-plugin -->
+				<groupId>net.alchim31.maven</groupId>
+				<artifactId>scala-maven-plugin</artifactId>
+				<version>3.2.2</version>
 				<executions>
 					<execution>
-						<id>attach-javadocs</id>
 						<goals>
-							<goal>jar</goal>
+							<goal>compile</goal>
+							<goal>testCompile</goal>
+							<goal>doc-jar</goal>
 						</goals>
 					</execution>
 				</executions>

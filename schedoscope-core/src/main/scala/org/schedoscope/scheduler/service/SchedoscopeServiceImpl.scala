@@ -38,12 +38,15 @@ import akka.util.Timeout
 import akka.actor.ActorSystem
 import org.schedoscope.SettingsImpl
 import org.schedoscope.scheduler.actors.ViewManagerActor
+import scala.concurrent.Future
+
 
 class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
   val log = Logging(actorSystem, classOf[ViewManagerActor])
 
   transformationManagerActor ! DeployCommand()
 
+  case class SchedoscopeCommand(id: String, start: String, parts: List[Future[_]])
   val runningCommands = collection.mutable.HashMap[String, SchedoscopeCommand]()
   val doneCommands = collection.mutable.HashMap[String, SchedoscopeCommandStatus]()
 

@@ -126,8 +126,8 @@ object MaterializeViewMode extends Enumeration {
   type MaterializeViewMode = Value
 
   val DEFAULT, // no special mode
-  RESET_TRANSFORMATION_CHECKSUMS, // don't transform, just update the checksums
-  RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS // don't transform, update checksums and timestamps
+  RESET_TRANSFORMATION_CHECKSUMS, // do not consider version checksum changes when making transformation decisions
+  RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS // perform a transformation dry run, only update checksums and timestamps
   = Value
 }
 
@@ -140,11 +140,6 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
  * Instructs a view actor to assume that its data needs to be recomputed.
  */
 case class Invalidate() extends CommandRequest
-
-/**
- * Instructs a view actor that new data is available for a view. They need to decide whether to recompute themselvers
- */
-case class NewDataAvailable(view: View) extends CommandRequest
 
 /**
  * Instructs a view-actor to retry a transformation after a failure
@@ -200,7 +195,7 @@ case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) exte
  * Driver actor responding to the transformation manager actor with the state of the running transformation
  *
  * @param message Textual description of state
- * @param message Reference to the driver actor
+ * @param actor Reference to the driver actor
  * @param driverRunHandle runHandle of a running transformation
  * @param driverRunState state of a running transformation
  */

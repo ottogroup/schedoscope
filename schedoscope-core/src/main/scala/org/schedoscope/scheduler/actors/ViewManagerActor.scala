@@ -33,7 +33,7 @@ import org.schedoscope.AskPattern._
 
 /**
  * The view manager actor is the factory and import org.schedoscope.scheduler.actors.ViewActor
-supervisor of view actors. Upon creation of view actors
+ * supervisor of view actors. Upon creation of view actors
  * it is responsible for creating non-existing tables or partitions in the Hive metastore, for reading
  * the last transformation timestamps and version checksums from the metastore for already materialized
  * views.
@@ -71,8 +71,6 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
 
       sender ! ViewStatusListResponse(viewStates)
     }
-
-    case NewDataAvailable(view) => children.filter { _ != sender }.foreach { _ ! NewDataAvailable(view) }
 
     case v: View => {
       sender ! initializeViewActors(List(v), false).headOption.getOrElse(List())

@@ -117,7 +117,7 @@ trait ViewDsl extends StructureDsl {
 
   /**
    * Pluggable builder function returning a path prefix of where Avro schemas can be found in HDFS.
-   * By default, this is hdfs:///hdp/${env}/global/datadictionary/schema/avro
+   * By default, this is hdfs:///hdp/$\{env\}/global/datadictionary/schema/avro
    */
   var avroSchemaPathPrefixBuilder: String => String
 }

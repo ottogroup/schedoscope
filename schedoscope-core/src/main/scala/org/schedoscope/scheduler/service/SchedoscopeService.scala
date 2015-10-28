@@ -17,7 +17,6 @@ package org.schedoscope.scheduler.service
 
 import scala.concurrent.Future
 
-case class SchedoscopeCommand(id: String, start: String, parts: List[Future[_]])
 case class SchedoscopeCommandStatus(id: String, start: String, end: Option[String], status: Map[String, Int])
 case class TransformationStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]])
 case class TransformationStatusList(overview: Map[String, Int], transformations: List[TransformationStatus])
@@ -29,28 +28,64 @@ case class RunStatus(description: String, targetView: String, started: String, c
 /**
  * Interface defining the functionality of the Schedoscope service. The services allows one to inject
  * scheduling commands into the Schedoscope actor system and obtain scheduling states or results from it.
+ * 
  * As most scheduling commands are performed asynchronously, the interface uses a SchedoscopeCommand case
- * class for representing an issued command along with SchedoscopeCommandStatus to represent the state of the command.
+ * class for representing an issued command along with SchedoscopeCommandStatus to represent the state of
+ * the command.
  *
  * Analogously, the interface makes use of case classes for capturing view, transformation, and queue status.
  */
 trait SchedoscopeService {
 
+  /**
+   * Materialize view(s). The views that are being materialized are selected either by
+   * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
+   * 
+   * Additionally, a MaterializeViewMode can be passed.
+   */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SchedoscopeCommandStatus
 
+   /**
+   * Invalidate view(s). The views that are being invalidated are selected either by
+   * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
+   * 
+   * Additionally, it can also be specified whether children are to be invalidated as well.
+   */
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SchedoscopeCommandStatus
 
-  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SchedoscopeCommandStatus
-
+  /**
+   * Return the status of a given previously issued scheduling command.
+   */
   def commandStatus(commandId: String): SchedoscopeCommandStatus
 
+  /**
+   * Return the states of previously issued scheduling commands, optionally filtering them by command status or regexp.
+   */
   def commands(status: Option[String], filter: Option[String]): List[SchedoscopeCommandStatus]
 
+  /**
+   * Return view(s) and their state(s). The views for which states are being returned are selected either by
+   * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
+   * 
+   * Additionally, it can also be specified whether view states should recursively carry the states of their dependendencies.
+   * 
+   * Finally, there is the option to just return an overview count of views in states instead of returning the states themselves.
+   */
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]): ViewStatusList
 
+  /**
+   * Return the states of the transformation drivers. Transformation driver info can be filtered by transformation state or a regexp
+   * on the driver id.
+   */
   def transformations(status: Option[String], filter: Option[String]): TransformationStatusList
 
+  /**
+   * Returns the transformations waiting in queues. These can be filtered by transformation type or a regexp.
+   */
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList
 
+  /**
+   * Shut down Schedoscope.
+   */
   def shutdown(): Boolean
 }
