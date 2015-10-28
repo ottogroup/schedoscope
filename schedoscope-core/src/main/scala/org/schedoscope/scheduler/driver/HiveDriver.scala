@@ -32,7 +32,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.thrift.protocol.TProtocolException
 import org.joda.time.LocalDateTime
 import org.schedoscope.DriverSettings
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
@@ -47,8 +47,6 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
    * Set transformation name to hive
    */
   override def transformationName = "hive"
-
-  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
 
@@ -185,17 +183,17 @@ object HiveDriver {
   }
 
   def apply(ds: DriverSettings) = {
-    val ugi = Settings().userGroupInformation
+    val ugi = Schedoscope.settings.userGroupInformation
 
     val conf = new HiveConf()
     conf.set("hive.metastore.local", "false");
-    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Settings().metastoreUri.trim());
+    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Schedoscope.settings.metastoreUri.trim());
 
-    if (Settings().kerberosPrincipal.trim() != "") {
+    if (Schedoscope.settings.kerberosPrincipal.trim() != "") {
       conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
         true);
       conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
-        Settings().kerberosPrincipal);
+        Schedoscope.settings.kerberosPrincipal);
     }
 
     val metastoreClient = new HiveMetaStoreClient(conf)

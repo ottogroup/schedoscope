@@ -1,0 +1,88 @@
+/**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.schedoscope.scheduler.commandline
+
+import scala.concurrent.Future
+import org.schedoscope.scheduler.service.TransformationStatusList
+import org.schedoscope.scheduler.service.SchedoscopeCommandStatus
+import org.schedoscope.scheduler.service.ViewStatusList
+import org.schedoscope.scheduler.service.QueueStatusList
+import com.bethecoder.ascii_table.ASCIITable
+
+object SchedoscopeCliFormat { // FIXME: a more generic parsing would be cool...
+
+  def serialize(o: Any): String = {
+    val sb = new StringBuilder()
+    o match {
+      case as: TransformationStatusList => {
+        if (as.transformations.size > 0) {
+          val header = Array("TRANSFORMATION DRIVER", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
+          val running = as.transformations.map(p => {
+            val (s, d, t): (String, String, String) =
+              if (p.runStatus.isDefined) {
+                (p.runStatus.get.started, p.runStatus.get.description, p.runStatus.get.targetView)
+              } else {
+                ("", "", "")
+              }
+            Array(p.actor, p.status, s, d, t, p.properties.mkString(","))
+          }).toArray
+          sb.append(ASCIITable.getInstance.getTable(header, running))
+          sb.append(s"Total: ${running.size}\n")
+        }
+        sb.append("\n" + as.overview.map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
+      }
+
+      case qs: QueueStatusList => {
+        if (qs.queues.flatMap(q => q._2).size > 0) {
+          val header = Array("TYP", "DESC", "TARGET_VIEW", "PROPS")
+          val queued = qs.queues.flatMap(q => q._2.map(e => Array(q._1, e.description, e.targetView, e.properties.getOrElse("").toString))).toArray
+          sb.append(ASCIITable.getInstance.getTable(header, queued))
+          sb.append(s"Total: ${queued.size}")
+        }
+        sb.append("\n" + qs.overview.toSeq.sortBy(_._1).map(el => s"${el._1} : ${el._2}").mkString("\n") + "\n")
+      }
+
+      case vl: ViewStatusList => {
+        if (!vl.views.isEmpty) {
+          sb.append(s"Details:\n")
+          val header = Array("VIEW", "STATUS", "PROPS")
+          val data = vl.views.map(d => Array(d.view, d.status, d.properties.mkString(","))).toArray
+          sb.append(ASCIITable.getInstance.getTable(header, data))
+          sb.append(s"Total: ${data.size}\n")
+        }
+        sb.append("\n" + vl.overview.map(el => s"${el._1}: ${el._2}").mkString("\n") + "\n")
+      }
+
+      case sc: SchedoscopeCommandStatus => {
+        sb.append(s"id: ${sc.id}\n")
+        sb.append(s"start: ${sc.start}\n")
+        sb.append(s"end: ${sc.end.getOrElse("")}\n")
+        sb.append(s"status: ${sc.status}\n")
+      }
+
+      case f: Future[_] => {
+        sb.append(s"submitted; isCompleted: ${f.isCompleted}\n")
+      }
+
+      case s: Seq[_] => {
+        sb.append(s.map(el => serialize(el)).mkString("\n"))
+      }
+
+      case _ => sb.append(o)
+    }
+    sb.toString
+  }
+}

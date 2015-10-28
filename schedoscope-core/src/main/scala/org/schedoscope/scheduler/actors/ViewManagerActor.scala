@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.actors
 
 import scala.collection.mutable.HashMap
 import org.schedoscope.SettingsImpl
@@ -25,15 +25,15 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import org.schedoscope.dsl.transformations.ExternalTransformation
 import scala.collection.mutable.HashSet
-import kamon.Kamon
 import akka.actor.OneForOneStrategy
 import akka.actor.SupervisorStrategy.Escalate
-import org.schedoscope.AskPattern
+import org.schedoscope.Schedoscope
+import org.schedoscope.AskPattern._
 
 /**
- * The view manager actor is the factory and supervisor of view actors. Upon creation of view actors
+ * The view manager actor is the factory and import org.schedoscope.scheduler.actors.ViewActor
+supervisor of view actors. Upon creation of view actors
  * it is responsible for creating non-existing tables or partitions in the Hive metastore, for reading
  * the last transformation timestamps and version checksums from the metastore for already materialized
  * views.
@@ -42,13 +42,10 @@ import org.schedoscope.AskPattern
  */
 class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
-  import AskPattern._
 
   val log = Logging(system, ViewManagerActor.this)
 
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
-
-  val viewCreationCounter = Kamon.metrics.counter("viewsCreated")
 
   /**
    * Supervisor strategy: Escalate any problems because view actor failures are not recoverable.
@@ -168,13 +165,11 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
  * View manager factory methods
  */
 object ViewManagerActor {
-  lazy val system = RootActor.settings.system
-
   def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
 
   def actorForView(v: View) =
-    system.actorSelection(RootActor.viewManagerActor.path.child(actorNameForView(v)))
+    Schedoscope.actorSystem.actorSelection(Schedoscope.viewManagerActor.path.child(actorNameForView(v)))
 
 }

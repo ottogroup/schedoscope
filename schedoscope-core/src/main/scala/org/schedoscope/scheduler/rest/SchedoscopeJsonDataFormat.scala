@@ -1,0 +1,39 @@
+/**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.schedoscope.scheduler.rest
+
+import spray.json.DefaultJsonProtocol
+import spray.json.JsonFormat
+import org.schedoscope.scheduler.service.RunStatus
+import org.schedoscope.scheduler.service.TransformationStatus
+import org.schedoscope.scheduler.service.TransformationStatusList
+import org.schedoscope.scheduler.service.SchedoscopeCommandStatus
+import org.schedoscope.scheduler.service.ViewStatus
+import org.schedoscope.scheduler.service.ViewStatusList
+import org.schedoscope.scheduler.service.QueueStatusList
+
+/**
+ * JSON SerDe for Schedoscope REST web service calls.
+ */
+object SchedoscopeJsonDataFormat extends DefaultJsonProtocol {
+  implicit val runStatusFormat = jsonFormat5(RunStatus)
+  implicit val actionStatusFormat = jsonFormat5(TransformationStatus)
+  implicit val actionStatusListFormat = jsonFormat2(TransformationStatusList)
+  implicit val schedoscopeCommandStatusFormat = jsonFormat4(SchedoscopeCommandStatus)
+  implicit val viewStatusFormat: JsonFormat[ViewStatus] = lazyFormat(jsonFormat4(ViewStatus))
+  implicit val viewStatusListFormat = jsonFormat2(ViewStatusList)
+  implicit val queueStatusListFormat = jsonFormat2(QueueStatusList)
+}

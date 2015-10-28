@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler.api
+package org.schedoscope.scheduler.commandline
 
 import jline.ConsoleReader
 import jline.History
 import java.io.File
+import org.schedoscope.scheduler.service.SchedoscopeService
 
-object SchedoscopeShell {
-  def start(schedoscope: SchedoscopeInterface) {
-    val ctrl = new SchedoscopeControl(schedoscope)
+/**
+ * A REPL for executing cli commands against a Schedoscope service implementation
+ */
+class SchedoscopeCliRepl(val schedoscope: SchedoscopeService) {
+  def start() {
+    val ctrl = new SchedoscopeCliCommandRunner(schedoscope)
     val reader = new ConsoleReader()
     val history = new History()
     history.setHistoryFile(new File(System.getenv("HOME") + "/.schedoscope_history"))

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.actors
 
 import java.lang.Math.max
 import java.security.PrivilegedAction
@@ -29,18 +29,17 @@ import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.actor.ActorSelection
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
+import org.schedoscope.AskPattern
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.dsl.transformations.MorphlineTransformation
-import org.schedoscope.dsl.transformations.ExternalTransformation
 import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
 import org.schedoscope.dsl.transformations.NoOp
-import org.schedoscope.AskPattern
+import akka.actor.ActorSelection.toScala
 
 class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
