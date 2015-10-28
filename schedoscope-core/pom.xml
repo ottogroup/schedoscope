@@ -258,7 +258,7 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.8</version>
+			<version>0.1.9</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
