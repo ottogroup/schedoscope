@@ -17,7 +17,6 @@ package org.schedoscope.scheduler.api
 
 import org.apache.commons.daemon.Daemon
 import org.apache.commons.daemon.DaemonContext
-
 import org.schedoscope.scheduler.api.SchedoscopeRestService.Config
 
 trait ApplicationLifecycle {

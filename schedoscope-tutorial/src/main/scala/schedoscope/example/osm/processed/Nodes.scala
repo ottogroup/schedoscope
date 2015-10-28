@@ -23,7 +23,7 @@ import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
 import org.schedoscope.dsl.transformations.HiveTransformation.withFunctions
-import org.schedoscope.dsl.Parquet
+import org.schedoscope.dsl.storageformats.Parquet
 import schedoscope.example.osm.Globals._
 import brickhouse.udf.collect.CollectUDAF
 import schedoscope.example.osm.stage.NodeTags
@@ -33,13 +33,13 @@ import org.schedoscope.dsl.Parameter
 case class Nodes(
   year: Parameter[String],
   month: Parameter[String]) extends View
-  with MonthlyParameterization
-  with Id
-  with PointOccurrence
-  with JobMetadata {
+    with MonthlyParameterization
+    with Id
+    with PointOccurrence
+    with JobMetadata {
 
   val version = fieldOf[Int]
-  val user_id = fieldOf[Int]
+  val userId = fieldOf[Int]
   val longitude = fieldOf[Double]
   val latitude = fieldOf[Double]
   val geohash = fieldOf[String]
@@ -59,6 +59,6 @@ case class Nodes(
   comment("View of nodes with tags and geohash")
 
   storedAs(Parquet())
-  
+
   materializeOnce
 }

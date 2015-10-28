@@ -34,12 +34,16 @@ import org.apache.hadoop.hive.metastore.api.Partition
 import org.joda.time.DateTime
 import org.schedoscope.Settings
 import org.schedoscope.schema.ddl.HiveQl
-import org.schedoscope.dsl.Version
+import org.schedoscope.dsl.transformations.Version
 import org.schedoscope.dsl.View
 import org.slf4j.LoggerFactory
 import org.apache.tools.ant.taskdefs.Sleep
-import org.schedoscope.dsl.ExternalTransformation
+import org.schedoscope.dsl.transformations.ExternalTransformation
+import org.schedoscope.dsl.transformations.Version
 
+/**
+ * Interface to the Hive metastore. Used by schema actor and metadata logger actor.
+ */
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   val md5 = MessageDigest.getInstance("MD5")
   val existingSchemas = collection.mutable.Set[String]()
@@ -82,7 +86,6 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def dropAndCreateTableSchema(view: View): Unit = {
     val ddl = HiveQl.ddl(view)
-
     val stmt = connection.createStatement()
 
     try {
@@ -240,7 +243,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       val sd = table.getSd().deepCopy()
       sd.setLocation(v.fullPath)
 
-      (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues, v.dbName, v.n, now, now, sd, HashMap[String, String]()))
+      (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues(), v.dbName, v.n, now, now, sd, HashMap[String, String]()))
     }.toMap
   }
 }

@@ -22,26 +22,30 @@ import scala.concurrent.duration.Duration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.schedoscope.SettingsImpl
-import org.schedoscope.dsl.NoOp
+import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.dsl.transformations.Touch
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
+import akka.actor.ActorSelection
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.dsl.transformations.MorphlineTransformation
-import org.schedoscope.dsl.ExternalTransformation
+import org.schedoscope.dsl.transformations.ExternalTransformation
 import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
-import org.schedoscope.dsl.NoOp
+import org.schedoscope.dsl.transformations.NoOp
+import org.schedoscope.AskPattern
 
-class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
+class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
   import MaterializeViewMode._
+  import AskPattern._
 
   val log = Logging(system, this)
 
@@ -63,10 +67,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   override def preStart {
     logStateInfo("receive", false)
-  }
-
-  override def preRestart(reason: Throwable, message: Option[Any]) {
-    log.error("Encountered restart of view actor: ${reason} ${message}")
   }
 
   // State: default
@@ -131,7 +131,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   // transitions: materialized,retrying
   def transforming(retries: Int, materializationMode: MaterializeViewMode): Receive = LoggingReceive({
 
-    case _: ActionSuccess[_] => {
+    case _: TransformationSuccess[_] => {
       log.info("SUCCESS")
 
       setVersion(view)
@@ -157,9 +157,9 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       }
     }
 
-    case _: ActionFailure[_] => toRetrying(retries, materializationMode)
+    case _: TransformationFailure[_]       => toRetrying(retries, materializationMode)
 
-    case MaterializeView(mode) => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView(mode)             => listenersWaitingForMaterialize.add(sender)
 
     case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
@@ -278,7 +278,14 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
         log.debug("sending materialize to dependency " + d)
 
-        getViewActor(d) ! MaterializeView(mode)
+        try {
+          ViewManagerActor.actorForView(d) ! MaterializeView(mode)
+        } catch {
+          case t: Throwable => {
+            log.warning(s"Failed to sende materialize message to view actor for dependency. Exception: ${t.getStackTrace}. Asking view manager actor to create one.")
+            queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef] ! MaterializeView(mode)
+          }
+        }
       }
     }
 
@@ -346,7 +353,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 
   def toTransforming(retries: Int, mode: MaterializeViewMode) {
     if (mode != RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
-      actionsManagerActor ! view
+      transformationManagerActor ! view
     else
       log.info(s"VIEWACTOR CHECKSUM AND TIMESTAMP RESET ===> Ignoring transformation")
 
@@ -355,7 +362,7 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     unbecomeBecome(transforming(retries, mode))
 
     if (mode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS) {
-      self ! ActionSuccess[NoOp](null, null)
+      self ! TransformationSuccess[NoOp](null, null)
       log.info(s"VIEWACTOR CHECKSUM AND TIMESTAMP RESET ===> Faking successful transformation action result")
     }
   }
@@ -404,19 +411,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
   }
 
   def touchSuccessFlag(view: View) {
-    actionsManagerActor ! Touch(view.fullPath + "/_SUCCESS")
+    transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
   }
 
   def hasVersionMismatch(view: View) = view.transformation().versionDigest() != versionChecksum
-
-  def getViewActor(view: View) = {
-    val viewActor = ViewManagerActor.actorForView(view)
-    if (!viewActor.isTerminated) {
-      viewActor
-    } else {
-      queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout)
-    }
-  }
 
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()
@@ -449,5 +447,5 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 }
 
 object ViewActor {
-  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, actionsManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, actionsManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
+  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
 }

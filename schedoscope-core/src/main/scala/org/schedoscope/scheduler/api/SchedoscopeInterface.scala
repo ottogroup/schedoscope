@@ -29,7 +29,7 @@ trait SchedoscopeInterface {
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]): ViewStatusList
 
-  def actions(status: Option[String], filter: Option[String]): ActionStatusList
+  def transformations(status: Option[String], filter: Option[String]): TransformationStatusList
 
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList
 

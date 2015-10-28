@@ -53,10 +53,10 @@ case class TrainstationsTest() extends FlatSpec
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "122317",
-        v(station_name) shouldBe "Hagenbecks Tierpark",
+        v(stationName) shouldBe "Hagenbecks Tierpark",
         v(area) shouldBe "t1y140d")
       row(v(id) shouldBe "274850441",
-        v(station_name) shouldBe "Boenningstedt",
+        v(stationName) shouldBe "Boenningstedt",
         v(area) shouldBe "t1y87ki")
     }
   }

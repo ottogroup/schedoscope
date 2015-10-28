@@ -18,7 +18,7 @@ package org.schedoscope.test
 import org.schedoscope.dsl._
 
 trait testStruct extends Structure with values {
-  def filledBy(vals: Any) {
+  def filledBy(vals: Array[(FieldLike[_], Any)]) {
     set(vals.asInstanceOf[Array[(FieldLike[_], Any)]]: _*)
   }
   def filledBy(v:Map[String,Any]):Unit= {

@@ -17,7 +17,6 @@ package org.schedoscope.test
 
 import java.text.SimpleDateFormat
 import java.util.Date
-
 import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.Structure
 

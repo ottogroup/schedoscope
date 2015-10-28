@@ -16,22 +16,24 @@
 package org.schedoscope
 
 import java.util.concurrent.TimeUnit
-
-import scala.annotation.implicitNotFound
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
-
-import org.schedoscope.scheduler.RootActor
-
 import akka.actor.ActorRef
 import akka.pattern.Patterns
 import akka.util.Timeout
+import org.schedoscope.scheduler.RootActor
 
-package object scheduler {
+/**
+ * Contains commonly codified ask patterns for actors.
+ */
+object AskPattern {
   implicit val executionContext: ExecutionContext = RootActor.settings.system.dispatchers.lookup("akka.actor.future-call-dispatcher")
 
+  /**
+   * Query an actor for a response by sending a message and observing a timeout.
+   */
   def queryActor[T](actor: ActorRef, queryMessage: Any, timeoutDuration: FiniteDuration): T = {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
     val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
@@ -39,6 +41,9 @@ package object scheduler {
     Await.result(responseFuture, waitTimeOut.duration).asInstanceOf[T]
   }
 
+  /**
+   * Query an actor for responses by sending it multiple messages and observing a timeout.
+   */
   def queryActors[T](actor: ActorRef, queryMessages: List[Any], timeoutDuration: FiniteDuration): List[T] = {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
     val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
@@ -50,6 +55,9 @@ package object scheduler {
     Await.result(responsesFuture, waitTimeOut.duration * queryMessages.size).asInstanceOf[List[T]]
   }
 
+  /**
+   * Query multiple actors for responses by sending them a common message observing a timeout.
+   */
   def queryActors[T](actors: List[ActorRef], queryMessage: Any, timeoutDuration: FiniteDuration): List[T] = {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
     val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))

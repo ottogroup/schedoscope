@@ -19,7 +19,7 @@ import scala.concurrent.Future
 import scala.util.Try
 import com.bethecoder.ascii_table.ASCIITable
 import org.schedoscope.Settings
-import org.schedoscope.scheduler.MaterializeViewMode
+import org.schedoscope.scheduler.messages._
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.joda.time.format.DateTimeFormat
 
@@ -28,10 +28,10 @@ object CliFormat { // FIXME: a more generic parsing would be cool...
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
-      case as: ActionStatusList => {
-        if (as.actions.size > 0) {
-          val header = Array("ACTOR", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
-          val running = as.actions.map(p => {
+      case as: TransformationStatusList => {
+        if (as.transformations.size > 0) {
+          val header = Array("TRANSFORMATION DRIVER", "STATUS", "STARTED", "DESC", "TARGET_VIEW", "PROPS")
+          val running = as.transformations.map(p => {
             val (s, d, t): (String, String, String) =
               if (p.runStatus.isDefined) {
                 (p.runStatus.get.started, p.runStatus.get.description, p.runStatus.get.targetView)
@@ -98,7 +98,7 @@ object SchedoscopeClientControl extends App {
 
 class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
   object Action extends Enumeration {
-    val VIEWS, ACTIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
+    val VIEWS, TRANSFORMATIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
   }
   import Action._
 
@@ -116,9 +116,9 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
       opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("include dependencies"),
       opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional () text ("show only overview, skip individual views"))
 
-    cmd("actions") action { (_, c) => c.copy(action = Some(ACTIONS)) } text ("list status of action actors") children (
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter actions by their status (e.g. 'queued, running, idle')"),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter action display (e.g. '.*hive-1.*'). "))
+    cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text ("show transformation status") children (
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter transformations by their status (e.g. 'queued, running, idle')"),
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter transformation display (e.g. '.*hive-1.*'). "))
 
     cmd("queues") action { (_, c) => c.copy(action = Some(QUEUES)) } text ("list queued actions") children (
       opt[String]('t', "typ") action { (x, c) => c.copy(typ = Some(x)) } optional () valueName ("<type>") text ("filter queued actions by their type (e.g. 'oozie', 'filesystem', ...)"),
@@ -160,8 +160,8 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
         println("Starting " + config.action.get.toString + " ...")
         try {
           val res = config.action.get match {
-            case ACTIONS => {
-              schedoscope.actions(config.status, config.filter)
+            case TRANSFORMATIONS => {
+              schedoscope.transformations(config.status, config.filter)
             }
             case QUEUES => {
               schedoscope.queues(config.typ, config.filter)
@@ -200,4 +200,3 @@ class SchedoscopeControl(schedoscope: SchedoscopeInterface) {
   }
 
 }
-

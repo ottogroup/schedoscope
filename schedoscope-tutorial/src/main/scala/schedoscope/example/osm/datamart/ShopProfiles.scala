@@ -22,21 +22,21 @@ import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
 import schedoscope.example.osm.Globals._
-import org.schedoscope.dsl.Parquet
+import org.schedoscope.dsl.storageformats.Parquet
 import schedoscope.example.osm.datahub.Shops
 import schedoscope.example.osm.datahub.Trainstations
 import schedoscope.example.osm.datahub.Restaurants
 
 case class ShopProfiles() extends View
-  with Id
-  with JobMetadata {
+    with Id
+    with JobMetadata {
 
-  val shop_name = fieldOf[String]
-  val shop_type = fieldOf[String]
+  val shopName = fieldOf[String]
+  val shopType = fieldOf[String]
   val area = fieldOf[String]
-  val cnt_competitors = fieldOf[Int]
-  val cnt_restaurants = fieldOf[Int]
-  val cnt_trainstations = fieldOf[Int]
+  val cntCompetitors = fieldOf[Int]
+  val cntRestaurants = fieldOf[Int]
+  val cntTrainstations = fieldOf[Int]
 
   dependsOn { () => Shops() }
   dependsOn { () => Restaurants() }

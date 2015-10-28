@@ -54,8 +54,8 @@ case class RestaurantsTest() extends FlatSpec
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "267622930",
-        v(restaurant_name) shouldBe "Cuore Mio",
-        v(restaurant_type) shouldBe "italian",
+        v(restaurantName) shouldBe "Cuore Mio",
+        v(restaurantType) shouldBe "italian",
         v(area) shouldBe "t1y06x1")
     }
   }

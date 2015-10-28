@@ -16,12 +16,9 @@
 package org.schedoscope.dsl.views
 
 import java.util.Calendar
-
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
-
 import org.schedoscope.Settings
-
 import scala.collection.mutable.ListBuffer
 
 object DateParameterizationUtils {
@@ -66,7 +63,7 @@ object DateParameterizationUtils {
   def prevDay(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Option[(String, String, String)] = {
     prevDay(parametersToDay(year, month, day)) match {
       case Some(previousDay) => Some(dayToStrings(previousDay))
-      case None => None
+      case None              => None
     }
   }
 
@@ -149,7 +146,7 @@ object DateParameterizationUtils {
   def prevMonth(year: Parameter[String], month: Parameter[String]): Option[(String, String)] = {
     prevMonth(parametersToDay(year, month, p("01"))) match {
       case Some(previousDay) => Some((dayToStrings(previousDay)._1, dayToStrings(previousDay)._2))
-      case None => None
+      case None              => None
     }
   }
 
@@ -216,7 +213,7 @@ trait DailyParameterization {
   val month: Parameter[String]
   val day: Parameter[String]
   val dateId: Parameter[String] = p(s"${year.v.get}${month.v.get}${day.v.get}")
-  
+
   def prevDay() = DateParameterizationUtils.prevDay(year, month, day)
 
   def prevMonth() = DateParameterizationUtils.prevMonth(year, month)

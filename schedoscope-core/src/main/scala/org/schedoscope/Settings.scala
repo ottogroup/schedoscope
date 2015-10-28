@@ -21,6 +21,7 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
+import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration.Duration
 import scala.collection.JavaConversions._
 import org.apache.hadoop.conf.Configuration
@@ -29,7 +30,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.schedoscope.scheduler.driver.FileSystemDriver.fileSystem
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.views.DateParameterizationUtils
 import com.typesafe.config.Config
 import akka.actor.ActorSystem
@@ -40,6 +41,14 @@ import akka.actor.ExtensionIdProvider
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 
+/**
+ * The Settings class stores all settings for Schedoscope. It is a singelton accessible through
+ * the companion object's apply() method.
+ *
+ * Configuration is based on TypeSafe config. For an explanation of the different
+ * configuration settings, please refer to src/main/resources/reference.conf
+ *
+ */
 class SettingsImpl(val config: Config) extends Extension {
   val system = Settings.actorSystem
 
@@ -68,8 +77,8 @@ class SettingsImpl(val config: Config) extends Extension {
     }
   }
 
-  lazy val webserviceTimeOut: Duration =
-    Duration(config.getDuration("schedoscope.webservice.timeout", TimeUnit.MILLISECONDS),
+  lazy val webserviceTimeout =
+    Duration.create(config.getDuration("schedoscope.webservice.timeout", TimeUnit.MILLISECONDS),
       TimeUnit.MILLISECONDS)
 
   lazy val host = config.getString("schedoscope.webservice.host")
@@ -129,26 +138,51 @@ class SettingsImpl(val config: Config) extends Extension {
     ugi
   }
 
+  /**
+   * Returns driver-specific settings from the configuration
+   *
+   * @param d  driver to retrieve the settings for
+   * @return the driver settings
+   */
   def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
     getDriverSettings(d.transformationName)
   }
 
+  /**
+   * Returns driver-specific settings from the configuration by transformation type
+   *
+   * @param t transformation type whose settings are of interest
+   * @return the driver settings
+   */
   def getDriverSettings[T <: Transformation](t: T): DriverSettings = {
     val name = t.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("\\$", "")
     getDriverSettings(name)
   }
 
-  def getDriverSettings(n: String): DriverSettings = {
-    if (!driverSettings.contains(n)) {
-      val confName = "schedoscope.transformations." + n
-      driverSettings.put(n, new DriverSettings(config.getConfig(confName), n))
+  /**
+   * Returns driver-specific settings by transformation type name
+   *
+   * @param nt the name of the transformation type (e.g. mapreduce)
+   * @return the driver settings
+   */
+  def getDriverSettings(nt: String): DriverSettings = {
+    if (!driverSettings.contains(nt)) {
+      val confName = "schedoscope.transformations." + nt
+      driverSettings.put(nt, new DriverSettings(config.getConfig(confName), nt))
     }
 
-    driverSettings(n)
+    driverSettings(nt)
   }
 
-  def getTransformationSetting(typ: String, setting: String) = {
-    val confName = s"schedoscope.transformations.${typ}.transformation.${setting}"
+  /**
+   * Retrieve a setting  for a transformation type
+   *
+   * @param nt	the name of the transformation type (e.g. mapreduce)
+   * @param n	the name of the setting for nt
+   * @return the setting's value as a string
+   */
+  def getTransformationSetting(bt: String, n: String) = {
+    val confName = s"schedoscope.transformations.${bt}.transformation.${n}"
     config.getString(confName)
   }
 
@@ -206,7 +240,6 @@ class DriverSettings(val config: Config, val name: String) {
       libJars.map(lj => location + "/" + Paths.get(lj).getFileName.toString)
     }
   }
-  
+
   lazy val driverRunCompletionHandlers = config.getStringList("driverRunCompletionHandlers").toList
 }
-

@@ -22,15 +22,15 @@ import schedoscope.example.osm.processed.Nodes
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.views.DateParameterizationUtils.allMonths
 import schedoscope.example.osm.Globals._
-import org.schedoscope.dsl.Parquet
+import org.schedoscope.dsl.storageformats.Parquet
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.PigTransformation.scriptFromResource
 
 case class Trainstations() extends View
-  with Id
-  with JobMetadata {
+    with Id
+    with JobMetadata {
 
-  val station_name = fieldOf[String]
+  val stationName = fieldOf[String]
   val area = fieldOf[String]
 
   val nodes = dependsOn(() =>

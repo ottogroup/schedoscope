@@ -30,6 +30,9 @@ abstract class Structure extends StructureDsl with Named {
     f.assignTo(this)
   }
 
+  /**
+   * Return all fields in weight order.
+   */
   def fields = {
     val fieldsWithWeightsAndPosition = ListBuffer[(Long, Int, Field[_])]()
 

@@ -24,11 +24,13 @@ import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.hive.metastore.api.ResourceType
 import org.apache.hadoop.hive.metastore.api.ResourceUri
 import org.schedoscope.Settings
-import org.schedoscope.dsl.Transformation
-import org.schedoscope.dsl.Version
 import org.schedoscope.dsl.View
 import scala.collection.JavaConversions._
 
+/**
+ * Hive Transformation: compute views via HiveQL Hive Server 2.
+ *
+ */
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 
   override def name = "hive"

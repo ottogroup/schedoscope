@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.dsl
+package org.schedoscope.dsl.transformations
 
 import scala.collection.mutable.HashMap
-import org.schedoscope.Settings
-import org.schedoscope.scheduler.driver.FileSystemDriver
+import org.schedoscope.dsl.View
 
+/**
+ * Base class for transformation types
+ */
 abstract class Transformation {
   var view: Option[View] = None
 
@@ -47,8 +49,15 @@ abstract class Transformation {
   def name: String
 }
 
+/**
+ * Base class for external transformation types, i.e., transformations happening outside the HADOOP cluster.
+ */
 abstract class ExternalTransformation extends Transformation
 
+/**
+ * NoOp transformation type. Default transformation which does nothing but checking for
+ * the existence of a _SUCCESS flag in the view's fullPath for materialization.
+ */
 case class NoOp() extends Transformation {
   override def name = "noop"
 }

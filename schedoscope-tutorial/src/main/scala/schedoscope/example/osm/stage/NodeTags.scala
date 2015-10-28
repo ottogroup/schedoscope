@@ -17,12 +17,12 @@ package schedoscope.example.osm.stage
 
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.CopyFrom
-import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.storageformats.TextFile
 
 case class NodeTags() extends View {
 
   // Declare each column of the TSV-file
-  val node_id = fieldOf[Long]
+  val nodeId = fieldOf[Long]
   val key = fieldOf[String]
   val value = fieldOf[String]
 

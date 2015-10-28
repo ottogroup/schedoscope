@@ -29,19 +29,19 @@ class NodesTest extends FlatSpec
       row(v(id) shouldBe 122317,
         v(tstamp) shouldBe "2014-10-17T13:49:26Z",
         v(version) shouldBe 7,
-        v(user_id) shouldBe 50299,
+        v(userId) shouldBe 50299,
         v(longitude) shouldBe 10.0232716,
         v(latitude) shouldBe 53.5282633)
       row(v(id) shouldBe 122318,
         v(tstamp) shouldBe "2014-10-17T13:49:26Z",
         v(version) shouldBe 6,
-        v(user_id) shouldBe 50299,
+        v(userId) shouldBe 50299,
         v(longitude) shouldBe 10.0243161,
         v(latitude) shouldBe 53.5297589)
       row(v(id) shouldBe 122320,
         v(tstamp) shouldBe "2013-12-20T07:43:33Z",
         v(version) shouldBe 4,
-        v(user_id) shouldBe 51991,
+        v(userId) shouldBe 51991,
         v(longitude) shouldBe 10.0293114,
         v(latitude) shouldBe 53.5351834)
     }

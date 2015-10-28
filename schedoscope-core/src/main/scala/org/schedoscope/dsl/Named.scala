@@ -15,14 +15,31 @@
  */
 package org.schedoscope.dsl
 
+/**
+ * A trait for entities that have a name, e.g., views, fields, and parameters.
+ */
 trait Named {
+
+  /**
+   * The base name of the Named entity.
+   */
   def namingBase: String
 
-  def n = Named.formatName(namingBase)
+  /**
+   * The base name of the Named entity converted to a database-friendly format, i.e., using only lowercase / underscore.
+   */
+  def n = Named.camelToLowerUnderscore(namingBase)
 }
 
+/**
+ * Helpers for Named entities
+ */
 object Named {
-  def formatName(name: String) = {
+
+  /**
+   * converts camel case to lower_case / underscore format.
+   */
+  def camelToLowerUnderscore(name: String) = {
     val formattedName = new StringBuffer()
     for (c <- name) {
       if (c >= 'A' && c <= 'Z')

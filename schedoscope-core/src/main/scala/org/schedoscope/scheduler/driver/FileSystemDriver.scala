@@ -25,7 +25,7 @@ import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
-import scala.concurrent.future
+import scala.concurrent.Future
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileStatus
@@ -48,17 +48,26 @@ import org.schedoscope.dsl.transformations.StoreFrom
 import org.schedoscope.dsl.transformations.MkDir
 import org.schedoscope.scheduler.driver.FileSystemDriver._
 
+/**
+ * Driver for executing file system transformations
+ */
 class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
 
   override def transformationName = "filesystem"
 
   implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 
-  def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
-    new DriverRunHandle(this, new LocalDateTime(), t, future {
+  /**
+   * Construct a future-based driver run handle
+   */
+  override def run(t: FilesystemTransformation): DriverRunHandle[FilesystemTransformation] =
+    new DriverRunHandle(this, new LocalDateTime(), t, Future {
       doRun(t)
     })
 
+  /**
+   * Actually perform the Filesystem operation and reture the run state as the result
+   */
   def doRun(t: FilesystemTransformation): DriverRunState[FilesystemTransformation] =
     t match {
 
@@ -77,22 +86,28 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       })
 
       case CopyFrom(from, view, recursive) => doAs(() => copy(from, view.fullPath, recursive))
-      case StoreFrom(inputStream, view) => doAs(() => storeFromStream(inputStream, view.fullPath))
-      case Copy(from, to, recursive) => doAs(() => copy(from, to, recursive))
-      case Move(from, to) => doAs(() => move(from, to))
-      case Delete(path, recursive) => doAs(() => delete(path, recursive))
-      case MkDir(path) => doAs(() => mkdirs(path))
-      case Touch(path) => doAs(() => touch(path))
+      case StoreFrom(inputStream, view)    => doAs(() => storeFromStream(inputStream, view.fullPath))
+      case Copy(from, to, recursive)       => doAs(() => copy(from, to, recursive))
+      case Move(from, to)                  => doAs(() => move(from, to))
+      case Delete(path, recursive)         => doAs(() => delete(path, recursive))
+      case MkDir(path)                     => doAs(() => mkdirs(path))
+      case Touch(path)                     => doAs(() => touch(path))
 
-      case _ => throw DriverException("FileSystemDriver can only run file transformations.")
+      case _                               => throw DriverException("FileSystemDriver can only run file transformations.")
     }
 
+  /**
+   * Encapsulates a filesystem transformation run as a PrivilegedAction to operate in kerberized clusters
+   */
   def doAs(f: () => DriverRunState[FilesystemTransformation]): DriverRunState[FilesystemTransformation] = ugi.doAs(new PrivilegedAction[DriverRunState[FilesystemTransformation]]() {
     def run(): DriverRunState[FilesystemTransformation] = {
       f()
     }
   })
 
+  /**
+   * Writes all bytes from an given InputStream to a file in the view locationPath
+   */
   def storeFromStream(inputStream: InputStream, to: String): DriverRunState[FilesystemTransformation] = {
     def inputStreamToFile(inputStream: InputStream) = {
       val remainingPath = "stream.out"
@@ -117,10 +132,15 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Storing from InputStream to ${to} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while storing InputStream to ${to}", i)
-      case t: Throwable => throw DriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
+      case t: Throwable   => throw DriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
     }
   }
 
+  /**
+   *
+   * (Recursively) copy all files from one location into another. Both locations need to be valid
+   * URLs that a hadoop filesystem implementation can handle. Moreover, classpath URLs are supported.
+   */
   def copy(from: String, to: String, recursive: Boolean): DriverRunState[FilesystemTransformation] = {
     def classpathResourceToFile(classpathResourceUrl: String) = {
       val remainingPath = classpathResourceUrl.replace("classpath://", "")
@@ -131,7 +151,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
 
       tempFile.toURI().toString()
     }
-
+    // recursive descent for copying trees
     def inner(fromFS: FileSystem, toFS: FileSystem, files: Seq[FileStatus], to: Path): Unit = {
       toFS.mkdirs(to)
       if (recursive) {
@@ -146,6 +166,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
     }
 
     try {
+      // is the source a resource that resides in a JAR with classpath?
       val fromIncludingResources = if (from.startsWith("classpath://"))
         classpathResourceToFile(from)
       else
@@ -158,22 +179,28 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Copy from ${from} to ${to} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while copying ${from} to ${to}", i)
-      case t: Throwable => throw DriverException(s"Runtime exception caught while copying ${from} to ${to}", t)
+      case t: Throwable   => throw DriverException(s"Runtime exception caught while copying ${from} to ${to}", t)
     }
   }
 
-  def delete(from: String, recursive: Boolean): DriverRunState[FilesystemTransformation] =
+  /**
+   * Delete files (recursively)
+   */
+  def delete(path: String, recursive: Boolean): DriverRunState[FilesystemTransformation] =
     try {
-      val fromFS = fileSystem(from, conf)
-      val files = listFiles(from)
-      files.foreach(status => fromFS.delete(status.getPath(), recursive))
+      val targetFS = fileSystem(path, conf)
+      val files = listFiles(path)
+      files.foreach(status => targetFS.delete(status.getPath(), recursive))
 
-      DriverRunSucceeded(this, s"Deletion of ${from} succeeded")
+      DriverRunSucceeded(this, s"Deletion of ${path} succeeded")
     } catch {
-      case i: IOException => DriverRunFailed(this, s"Caught IO exception while deleting ${from}", i)
-      case t: Throwable => throw DriverException(s"Runtime exception while deleting ${from}", t)
+      case i: IOException => DriverRunFailed(this, s"Caught IO exception while deleting ${path}", i)
+      case t: Throwable   => throw DriverException(s"Runtime exception while deleting ${path}", t)
     }
 
+  /**
+   * Create a file
+   */
   def touch(path: String): DriverRunState[FilesystemTransformation] =
     try {
       val filesys = fileSystem(path, conf)
@@ -185,9 +212,12 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while touching ${path}", i)
-      case t: Throwable => throw DriverException(s"Runtime exception while touching ${path}", t)
+      case t: Throwable   => throw DriverException(s"Runtime exception while touching ${path}", t)
     }
 
+  /**
+   * Create a directory path
+   */
   def mkdirs(path: String): DriverRunState[FilesystemTransformation] =
     try {
       val filesys = fileSystem(path, conf)
@@ -197,9 +227,12 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while making dirs ${path}", i)
-      case t: Throwable => throw DriverException(s"Runtime exception while making dirs ${path}", t)
+      case t: Throwable   => throw DriverException(s"Runtime exception while making dirs ${path}", t)
     }
 
+  /**
+   * Moves files from one location to the other.
+   */
   def move(from: String, to: String): DriverRunState[FilesystemTransformation] =
     try {
       val fromFS = fileSystem(from, conf)
@@ -211,7 +244,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Moving from ${from} to ${to} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while  moving from ${from} to ${to}", i)
-      case t: Throwable => throw DriverException(s"Runtime exception while moving from ${from} to ${to}", t)
+      case t: Throwable   => throw DriverException(s"Runtime exception while moving from ${from} to ${to}", t)
     }
 
   def fileChecksums(paths: List[String], recursive: Boolean): List[String] = {
@@ -241,6 +274,9 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
   override def deployAll(driverSettings: DriverSettings) = true
 }
 
+/**
+ * Factory and helper methods for file system driver.
+ */
 object FileSystemDriver {
   private def uri(pathOrUri: String) =
     try {

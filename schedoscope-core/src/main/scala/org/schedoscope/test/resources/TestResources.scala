@@ -23,7 +23,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.driver.PigDriver
 import org.schedoscope.schema.SchemaManager
-import org.schedoscope.dsl.TextFile
+import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.test.Database
 import java.sql.Connection
 import org.schedoscope.scheduler.driver.OozieDriver
@@ -32,7 +32,7 @@ import org.schedoscope.scheduler.driver.MorphlineDriver
 import org.apache.hadoop.conf.Configuration
 import org.schedoscope.scheduler.driver.MapreduceDriver
 import org.schedoscope.scheduler.driver.ShellDriver
-import org.schedoscope.dsl.Transformation
+import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.driver.DriverRunCompletionHandler
 import org.schedoscope.scheduler.driver.DriverRunHandle
 import org.schedoscope.scheduler.driver.DriverRunState

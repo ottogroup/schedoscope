@@ -34,6 +34,9 @@ import test.eci.datahub.EdgeCasesView
 import test.eci.datahub.Product
 import test.eci.datahub.ProductBrand
 import test.eci.datahub.ViewWithDefaultParams
+import org.schedoscope.dsl.storageformats.TextFile
+import org.schedoscope.dsl.storageformats.Parquet
+import org.schedoscope.dsl.transformations.NoOp
 
 class DslTest extends FlatSpec with Matchers {
 
@@ -221,36 +224,40 @@ class DslTest extends FlatSpec with Matchers {
     val avro = AvroView(p("ec0106"), p("2014"), p("01"), p("01"))
     val edgeCases = EdgeCasesView()
 
-    ddl(productBrand).contains("CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_eci_datahub.product_brand_ec0106 (") shouldBe true
-    ddl(productBrand).contains("occurred_at STRING,") shouldBe true
-    ddl(productBrand).contains("ec_shop_code STRING,") shouldBe true
-    ddl(productBrand).contains("product_id STRING,") shouldBe true
-    ddl(productBrand).contains("brand_name STRING,") shouldBe true
-    ddl(productBrand).contains("created_at STRING,") shouldBe true
-    ddl(productBrand).contains("created_by STRING") shouldBe true
-    ddl(productBrand).contains(")") shouldBe true
-    ddl(productBrand).contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
-    ddl(productBrand).contains("PARTITIONED BY (year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
-    ddl(productBrand).contains("STORED AS PARQUET") shouldBe true
-    ddl(productBrand).contains("LOCATION '/hdp/dev/test/eci/datahub/product_brand_ec0106'") shouldBe true
+    val ddlStatement = ddl(productBrand)
+
+    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_eci_datahub.product_brand_ec0106 (") shouldBe true
+    ddlStatement.contains("occurred_at STRING,") shouldBe true
+    ddlStatement.contains("ec_shop_code STRING,") shouldBe true
+    ddlStatement.contains("product_id STRING,") shouldBe true
+    ddlStatement.contains("brand_name STRING,") shouldBe true
+    ddlStatement.contains("created_at STRING,") shouldBe true
+    ddlStatement.contains("created_by STRING") shouldBe true
+    ddlStatement.contains(")") shouldBe true
+    ddlStatement.contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
+    ddlStatement.contains("PARTITIONED BY (year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
+    ddlStatement.contains("STORED AS PARQUET") shouldBe true
+    ddlStatement.contains("LOCATION '/hdp/dev/test/eci/datahub/product_brand_ec0106'") shouldBe true
   }
 
   it should "be transformable into DDL for an env" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     productBrand.env = "prod"
 
-    ddl(productBrand).contains("CREATE EXTERNAL TABLE IF NOT EXISTS prod_test_eci_datahub.product_brand_ec0106 (") shouldBe true
-    ddl(productBrand).contains("occurred_at STRING,") shouldBe true
-    ddl(productBrand).contains("ec_shop_code STRING,") shouldBe true
-    ddl(productBrand).contains("product_id STRING,") shouldBe true
-    ddl(productBrand).contains("brand_name STRING,") shouldBe true
-    ddl(productBrand).contains("created_at STRING,") shouldBe true
-    ddl(productBrand).contains("created_by STRING") shouldBe true
-    ddl(productBrand).contains(")") shouldBe true
-    ddl(productBrand).contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
-    ddl(productBrand).contains("PARTITIONED BY (year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
-    ddl(productBrand).contains("STORED AS PARQUET") shouldBe true
-    ddl(productBrand).contains("LOCATION '/hdp/prod/test/eci/datahub/product_brand_ec0106'") shouldBe true
+    val ddlStatement = ddl(productBrand)
+
+    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS prod_test_eci_datahub.product_brand_ec0106 (") shouldBe true
+    ddlStatement.contains("occurred_at STRING,") shouldBe true
+    ddlStatement.contains("ec_shop_code STRING,") shouldBe true
+    ddlStatement.contains("product_id STRING,") shouldBe true
+    ddlStatement.contains("brand_name STRING,") shouldBe true
+    ddlStatement.contains("created_at STRING,") shouldBe true
+    ddlStatement.contains("created_by STRING") shouldBe true
+    ddlStatement.contains(")") shouldBe true
+    ddlStatement.contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
+    ddlStatement.contains("PARTITIONED BY (year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
+    ddlStatement.contains("STORED AS PARQUET") shouldBe true
+    ddlStatement.contains("LOCATION '/hdp/prod/test/eci/datahub/product_brand_ec0106'") shouldBe true
 
   }
 
@@ -327,6 +334,19 @@ class DslTest extends FlatSpec with Matchers {
         dateString should be <= "20140224"
         dateString should be >= "20131202"
     }
+  }
+  
+  it should "have the same urlPath as the one they were dynamically constructed with" in {
+    val views = View.viewsFromUrl("dev", "test.eci.datahub/Product/EC0106/2014/02/24/20140224")
+
+    views.length shouldBe 1
+
+    
+    val product = views.head.asInstanceOf[Product]
+    
+    val productParameters = product.partitionParameters
+    
+    product.urlPath shouldBe "test.eci.datahub/Product/EC0106/2014/02/24/20140224"
   }
 
   it should "be queryable" in {

@@ -17,12 +17,10 @@ package org.schedoscope.test
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-
 import org.schedoscope.DriverTests
 import org.schedoscope.OozieTests
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
-
 import test.eci.datahub.Click
 import test.eci.datahub.ClickOfEC0101ViaOozie
 
@@ -59,7 +57,7 @@ class OozieTestFrameworkTest extends FlatSpec with Matchers {
         ("nameNode" -> cluster().getNameNodeUri),
         ("input" -> s"${ec0101Clicks.fullPath}/*"),
         ("output" -> s"${this.fullPath}/"))
-      then()
+      `then`()
       numRows shouldBe 3
       row(v(id) shouldBe "event01",
         v(url) shouldBe "http://ec0101.com/url1")

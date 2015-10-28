@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.dsl
+package org.schedoscope.dsl.transformations
 
 import java.security.MessageDigest
 import scala.Array.canBuildFrom
 import org.schedoscope.scheduler.driver.FileSystemDriver
 import org.schedoscope.Settings
+import org.schedoscope.dsl.storageformats._
 
 object Version {
   def md5 = MessageDigest.getInstance("MD5")

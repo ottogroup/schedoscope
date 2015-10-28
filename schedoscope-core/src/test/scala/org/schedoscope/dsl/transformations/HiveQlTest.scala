@@ -16,14 +16,13 @@
 package org.schedoscope.dsl.transformations
 
 import java.util.Date
-
 import org.scalatest.BeforeAndAfter
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.Structure
-import org.schedoscope.dsl.Transformation.replaceParameters
+import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
 

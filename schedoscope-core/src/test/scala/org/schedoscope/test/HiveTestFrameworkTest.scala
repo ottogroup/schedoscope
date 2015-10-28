@@ -17,11 +17,9 @@ package org.schedoscope.test
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
-
 import test.eci.datahub.Click
 import test.eci.datahub.ClickOfEC0101
 
@@ -53,7 +51,7 @@ class HiveTestFrameworkTest extends FlatSpec with Matchers {
   "Hive test framework" should "execute hive transformations locally" taggedAs (DriverTests) in {
     new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
-      then()
+      `then`()
       numRows shouldBe 3
       row(v(id) shouldBe "event01",
         v(url) shouldBe "http://ec0101.com/url1")

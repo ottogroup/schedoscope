@@ -17,6 +17,7 @@ package org.schedoscope.scheduler
 
 import scala.collection.mutable.HashMap
 import org.schedoscope.schema.SchemaManager
+import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.actorRef2Scala
@@ -24,8 +25,10 @@ import akka.event.Logging
 import akka.event.LoggingReceive
 import akka.routing.SmallestMailboxRoutingLogic
 import akka.routing.Router
-import akka.routing.RoundRobinRouter
 
+/**
+ * Schema actors are responsible for creating tables and partitions in the metastore.
+ */
 class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   import context._
   val log = Logging(system, this)
@@ -33,11 +36,18 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
 
+  /**
+   * Before the actor gets restarted, reenqueue the running write command with the schema root actor
+   * so it does not get lost.
+   */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
       self forward runningCommand.get
   }
 
+  /**
+   * Message handler
+   */
   def receive = LoggingReceive({
     case c: CheckOrCreateTables => {
       runningCommand = Some(c)
@@ -80,6 +90,9 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
   })
 }
 
+/**
+ * Factory for schema actors
+ */
 object SchemaActor {
   def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = (Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal)).withDispatcher("akka.actor.schema-actor-dispatcher")
 }

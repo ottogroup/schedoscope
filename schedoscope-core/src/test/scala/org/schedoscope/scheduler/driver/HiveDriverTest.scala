@@ -17,7 +17,6 @@ package org.schedoscope.scheduler.driver
 
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
-
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.test.resources.LocalTestResources

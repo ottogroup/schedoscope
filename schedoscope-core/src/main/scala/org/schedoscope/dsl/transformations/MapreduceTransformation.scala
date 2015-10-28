@@ -17,8 +17,6 @@ package org.schedoscope.dsl.transformations
 
 import scala.collection.JavaConversions._
 import org.apache.hadoop.mapreduce.Job
-import org.schedoscope.dsl.Transformation
-import org.schedoscope.dsl.Version
 import org.schedoscope.Settings
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.mapreduce.MRJobConfig
@@ -27,6 +25,14 @@ import org.schedoscope.Settings
 import org.schedoscope.dsl.View
 import scala.collection.mutable.ListBuffer
 
+/**
+ *  Compute a view using a plain Map-Reduce job.
+ *
+ *  @param view reference to the view being computed
+ *  @param createJob closure to create the job configuration
+ *  @param dirsToDelete List of directories to empty before execution. Includes the view's fullPath
+ *
+ */
 case class MapreduceTransformation(v: View, createJob: (Map[String, Any]) => Job, dirsToDelete: List[String] = List()) extends Transformation {
 
   override def name = "mapreduce"

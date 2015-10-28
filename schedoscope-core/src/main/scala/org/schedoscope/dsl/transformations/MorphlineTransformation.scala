@@ -20,14 +20,22 @@ import org.kitesdk.morphline.stdlib.DropRecordBuilder
 import org.kitesdk.morphline.api.Command
 import org.schedoscope.dsl.Named
 import org.schedoscope.dsl.FieldLike
-import org.schedoscope.dsl.ExternalTransformation
 
+/**
+ * specifies a morphline transformation
+ * @param imports list of morphline command classes to import
+ * @param sampling sampling rate
+ * @param anonymize list of fields that will be hashed during export
+ * @param fields list of fields to export
+ * @param fieldMapping mapping of field names to e.g. SQL column names
+ *
+ */
 case class MorphlineTransformation(definition: String = "",
-  imports: Seq[String] = List(),
-  sampling: Int = 100,
-  anonymize: Seq[Named] = List(),
-  fields: Seq[Named] = List(),
-  fieldMapping: Map[FieldLike[_], FieldLike[_]] = Map()) extends ExternalTransformation {
+                                   imports: Seq[String] = List(),
+                                   sampling: Int = 100,
+                                   anonymize: Seq[Named] = List(),
+                                   fields: Seq[Named] = List(),
+                                   fieldMapping: Map[FieldLike[_], FieldLike[_]] = Map()) extends ExternalTransformation {
   def name() = "morphline"
 
   override def versionDigest = Version.digest(resourceHashes :+ definition)
