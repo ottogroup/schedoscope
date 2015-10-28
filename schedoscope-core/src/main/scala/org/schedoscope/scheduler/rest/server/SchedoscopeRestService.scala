@@ -66,9 +66,6 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
             path("invalidate" / Rest ?) { viewUrlPath =>
               complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
             } ~
-            path("newdata" / Rest ?) { viewUrlPath =>
-              complete(schedoscope.newdata(viewUrlPath, status, filter))
-            } ~
             path("command" / Rest) { commandId =>
               complete(schedoscope.commandStatus(commandId))
             }

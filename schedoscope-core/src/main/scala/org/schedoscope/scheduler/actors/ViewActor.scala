@@ -85,14 +85,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         toWaiting(mode)
       }
     }
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.isEmpty) {
-      if (view == viewWithNewData)
-        toDefaultAndReload(false)
-    } else {
-      if (view.dependencies.contains(viewWithNewData))
-        toDefaultAndReload()
-    }
   })
 
   // State: view actor waiting for dependencies to materialize
@@ -122,8 +114,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       dependenciesFreshness = max(dependenciesFreshness, dependencyTransformationTimestamp)
       aDependencyAnswered(dependency, materializationMode)
     }
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! NewDataAvailable(viewWithNewData)
   }
 
   // State: transforming, view actor in process of applying transformation
@@ -159,8 +149,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case _: TransformationFailure[_]       => toRetrying(retries, materializationMode)
 
     case MaterializeView(mode)             => listenersWaitingForMaterialize.add(sender)
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
 
   // State: retrying
@@ -178,8 +166,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       listenersWaitingForMaterialize.foreach(_ ! Failed(view))
       listenersWaitingForMaterialize.clear()
     }
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
 
   // State: materialized, view has been computed and materialized
@@ -202,19 +188,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       sender ! ViewStatusResponse("invalidated", view, self)
       toDefault(true, "invalidated")
     }
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData))
-      toDefaultAndReload()
-    else if (view.dependencies.isEmpty && view == viewWithNewData)
-      toDefaultAndReload(false)
   })
 
   // State: failed, view actor failed to materialize
   // transitions:  default, transforming
   def failed: Receive = LoggingReceive({
-    case NewDataAvailable(viewWithNewData) =>
-      if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
-      else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
     case Invalidate() => {
       sender ! ViewStatusResponse("invalidated", view, self)
       toDefault(true, "invalidated")
@@ -391,12 +369,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
   }
 
-  def toDefaultAndReload(withPropagation: Boolean = true) {
+  def toDefaultAndReload() {
     toDefault()
 
     self ! MaterializeView()
-    if (withPropagation)
-      viewManagerActor ! NewDataAvailable(view)
   }
 
   def successFlagExists(view: View): Boolean = {
