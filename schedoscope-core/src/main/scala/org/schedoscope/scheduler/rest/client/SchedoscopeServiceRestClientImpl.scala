@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler.api
+package org.schedoscope.scheduler.rest.client
 
 import scala.language.postfixOps
-import scala.language.implicitConversions
 import scala.collection.immutable.Map
 import scala.concurrent.Await
 import scala.concurrent.Future
@@ -29,15 +28,23 @@ import spray.client.pipelining.Get
 import spray.client.pipelining.WithTransformerConcatenation
 import spray.client.pipelining.sendReceive
 import spray.client.pipelining.unmarshal
+import spray.client.pipelining.sendReceive
 import spray.http.Uri
 import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
+import org.schedoscope.Schedoscope
+import org.schedoscope.scheduler.service.SchedoscopeService
+import org.schedoscope.scheduler.service.TransformationStatusList
+import org.schedoscope.scheduler.service.SchedoscopeCommandStatus
+import org.schedoscope.scheduler.service.ViewStatusList
+import org.schedoscope.scheduler.service.QueueStatusList
+import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat
 
-class SchedoscopeRestClient extends SchedoscopeInterface {
-
-  var host = Settings().host
-  var port = Settings().port
-
-  import SchedoscopeJsonProtocol._
+/**
+ * Implementation of the schedoscope service that maps the given scheduling commands
+ * to REST web service calls and parse the returned results.
+ */
+class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends SchedoscopeService {
+  import SchedoscopeJsonDataFormat._
 
   implicit val system = ActorSystem("schedoscope-rest-client")
   import system.dispatcher // execution context for futures below

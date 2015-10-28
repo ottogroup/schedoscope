@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.actors
 
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
-import org.schedoscope.Settings
 import org.schedoscope.SettingsImpl
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.actor.ActorSelection
 import akka.actor.AllForOneStrategy
 import akka.actor.Props
 import akka.actor.SupervisorStrategy._
@@ -50,7 +46,7 @@ class RootActor(settings: SettingsImpl) extends Actor {
     }
 
   override def preStart {
-    transformationManagerActor = actorOf(TransformationManagerActor.props(settings.hadoopConf), "transformations")
+    transformationManagerActor = actorOf(TransformationManagerActor.props(settings), "transformations")
     schemaRootActor = actorOf(SchemaRootActor.props(settings), "schema-root")
     viewManagerActor = actorOf(
       ViewManagerActor.props(settings,
@@ -71,24 +67,4 @@ class RootActor(settings: SettingsImpl) extends Actor {
  */
 object RootActor {
   def props(settings: SettingsImpl) = Props(classOf[RootActor], settings).withDispatcher("akka.actor.root-actor-dispatcher")
-
-  lazy val settings = Settings()
-
-  def actorSelectionToRef(actorSelection: ActorSelection): Option[ActorRef] = try {
-    Some(Await.result(actorSelection.resolveOne(settings.viewManagerResponseTimeout), settings.viewManagerResponseTimeout))
-  } catch {
-    case _: Throwable => None
-  }
-
-  lazy val rootActor = actorSelectionToRef(settings.system.actorSelection(settings.system.actorOf(props(settings), "root").path)).get
-
-  lazy val viewManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("views"))).get
-
-  lazy val schemaRootActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("schema-root"))).get
-
-  lazy val schemaActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("schema"))).get
-
-  lazy val metadataLoggerActor = actorSelectionToRef(settings.system.actorSelection(schemaRootActor.path.child("metadata-logger"))).get
-
-  lazy val transformationManagerActor = actorSelectionToRef(settings.system.actorSelection(rootActor.path.child("transformations"))).get
 }

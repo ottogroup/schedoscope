@@ -38,7 +38,7 @@ import org.kitesdk.morphline.stdlib.PipeBuilder
 import org.kitesdk.morphline.stdlib.SampleBuilder
 import org.slf4j.LoggerFactory
 import org.schedoscope.DriverSettings
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import com.typesafe.config.ConfigFactory
@@ -72,7 +72,6 @@ object Helper {
  *
  */
 class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val hadoopConf: Configuration) extends Driver[MorphlineTransformation] {
-  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
   val context = new MorphlineContext.Builder().build()
   def transformationName: String = "morphline"
   val log = LoggerFactory.getLogger(classOf[MorphlineDriver])
@@ -357,5 +356,5 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
 }
 
 object MorphlineDriver {
-  def apply(ds: DriverSettings) = new MorphlineDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation, Settings().hadoopConf)
+  def apply(ds: DriverSettings) = new MorphlineDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation, Schedoscope.settings.hadoopConf)
 }

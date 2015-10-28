@@ -35,7 +35,7 @@ import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
 import org.schedoscope.DriverSettings
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.transformations.Copy
 import org.schedoscope.dsl.transformations.CopyFrom
 import org.schedoscope.dsl.transformations.Delete
@@ -54,8 +54,6 @@ import org.schedoscope.scheduler.driver.FileSystemDriver._
 class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
 
   override def transformationName = "filesystem"
-
-  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 
   /**
    * Construct a future-based driver run handle
@@ -288,7 +286,7 @@ object FileSystemDriver {
   def fileSystem(path: String, conf: Configuration) = FileSystem.get(uri(path), conf)
 
   def apply(ds: DriverSettings) = {
-    new FileSystemDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation, Settings().hadoopConf)
+    new FileSystemDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation, Schedoscope.settings.hadoopConf)
   }
 
   private val checksumCache = new HashMap[String, String]()

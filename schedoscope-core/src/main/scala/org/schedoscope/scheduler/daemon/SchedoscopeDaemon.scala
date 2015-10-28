@@ -13,37 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler.api
+package org.schedoscope.scheduler.daemon
 
 import org.apache.commons.daemon.Daemon
 import org.apache.commons.daemon.DaemonContext
-import org.schedoscope.scheduler.api.SchedoscopeRestService.Config
+import org.schedoscope.scheduler.rest.server.SchedoscopeRestService
+import org.schedoscope.scheduler.rest.server.SchedoscopeRestService.Config
 
-trait ApplicationLifecycle {
-  def start(): Unit
-  def stop(): Unit
-}
-
-abstract class AbstractApplicationDaemon extends Daemon {
-  def application: ApplicationLifecycle
-
+class SchedoscopeDaemon() extends Daemon {
   def init(daemonContext: DaemonContext) {}
 
-  def start() = application.start()
+  def start() = SchedoscopeRestService.start(Config())
 
-  def stop() = application.stop()
+  def stop() {
+    if (SchedoscopeRestService.stop())
+      System.exit(0)
+    else
+      System.exit(1)
+  }
 
-  def destroy() = application.stop()
-}
-
-class ApplicationDaemon() extends AbstractApplicationDaemon {
-  def application = new SchedoscopeDaemon
+  def destroy() = stop()
 }
 
 object SchedoscopeDaemon extends App {
-  val application = createApplication()
-
-  def createApplication() = new ApplicationDaemon
+  val application = new SchedoscopeDaemon()
 
   private[this] var cleanupAlreadyRun: Boolean = false
 
@@ -62,17 +55,3 @@ object SchedoscopeDaemon extends App {
   application.start()
 }
 
-class SchedoscopeDaemon extends ApplicationLifecycle {
-
-  def init(context: String): Unit = {}
-  def init(context: DaemonContext) = {}
-
-  def start() = SchedoscopeRestService.start(Config())
-
-  def stop() {
-    if (SchedoscopeRestService.stop())
-      System.exit(0)
-    else
-      System.exit(1)
-  }
-}

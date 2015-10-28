@@ -13,21 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler.api
+package org.schedoscope.scheduler.rest.server
 
 import scala.language.postfixOps
-import scala.language.implicitConversions
-import scala.concurrent.duration.DurationInt
-import org.schedoscope.scheduler.RootActor.settings
-import org.schedoscope.scheduler.api.SchedoscopeJsonProtocol._
+import org.schedoscope.Schedoscope
+import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat._
 import akka.actor.Actor
-import akka.actor.ActorSystem
-import akka.actor.PoisonPill
 import akka.actor.Props
 import akka.io.IO
-import akka.pattern.ask
 import akka.routing.SmallestMailboxPool
 import akka.util.Timeout
+import akka.pattern.ask
 import spray.can.Http
 import spray.http.HttpHeaders.RawHeader
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
@@ -36,61 +32,14 @@ import spray.routing.Directive.pimpApply
 import spray.routing.HttpService
 import spray.routing.PathMatcher.PimpedPathMatcher
 import spray.routing.directives.ParamDefMagnet.apply
-import kamon.Kamon
+import org.schedoscope.scheduler.service.SchedoscopeService
+import org.schedoscope.scheduler.service.SchedoscopeServiceImpl
+import org.schedoscope.scheduler.commandline.SchedoscopeCliRepl
 
-object SchedoscopeRestService {
-  Kamon.start
-  val schedoscope = new SchedoscopeSystem()
-
-  implicit val system = settings.system
-
-  case class Config(shell: Boolean = false)
-
-  val parser = new scopt.OptionParser[Config]("schedoscope-rest-service") {
-    override def showUsageOnError = true
-    head("schedoscope-rest-service", "0.0.1")
-    help("help") text ("print usage")
-    opt[Unit]('s', "shell") action { (_, c) => c.copy(shell = true) } optional () text ("start an interactive shell with direct schedoscope access.")
-  }
-
-  def main(args: Array[String]) {
-    val config = parser.parse(args, Config()) match {
-      case Some(config) => config
-      case None         => Config()
-    }
-    start(config)
-  }
-
-  def start(config: Config) {
-
-    val numActors = settings.restApiConcurrency
-    val host = settings.host
-    val port = settings.port
-    val service = system.actorOf(new SmallestMailboxPool(numActors).props(Props(classOf[SchedoscopeRestServerActor], schedoscope)), "schedoscope-webservice-actor")
-    implicit val timeout = Timeout(settings.webserviceTimeout)
-    IO(Http) ? Http.Bind(service, interface = host, port = port)
-
-    if (config.shell) {
-      Thread.sleep(10000)
-      println("\n\n============= schedoscope initialization finished ============== \n\n")
-      SchedoscopeShell.start(schedoscope)
-    }
-  }
-
-  def stop(): Boolean = {
-    val schedoscopeTerminated = schedoscope.shutdown()
-
-    system.shutdown()
-    system.awaitTermination(5 seconds)
-    system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)
-    system.awaitTermination(5 seconds)
-    Kamon.shutdown
-    schedoscopeTerminated && system.isTerminated
-  }
-}
-
-class SchedoscopeRestServerActor(schedoscope: SchedoscopeInterface) extends Actor with HttpService {
-
+/**
+ * Spray actor providing the Schedoscope REST service
+ */
+class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor with HttpService {
   def actorRefFactory = context
 
   def receive = runRoute(route)
@@ -122,13 +71,59 @@ class SchedoscopeRestServerActor(schedoscope: SchedoscopeInterface) extends Acto
             } ~
             path("command" / Rest) { commandId =>
               complete(schedoscope.commandStatus(commandId))
-            } ~
-            path("graph" / Rest) { viewUrlPath =>
-              getFromFile(s"${settings.webResourcesDirectory}/graph.html")
             }
         }
       }
     }
+  }
+}
+
+/**
+ * Main object for launching the schedoscope rest service.
+ */
+object SchedoscopeRestService {
+  implicit val actorSystem = Schedoscope.actorSystem
+  val settings = Schedoscope.settings
+  val viewManagerActor = Schedoscope.viewManagerActor
+  val transactionManagerActor = Schedoscope.transformationManagerActor
+
+  val schedoscope = new SchedoscopeServiceImpl(actorSystem, settings, viewManagerActor, transactionManagerActor)
+
+  case class Config(shell: Boolean = false)
+
+  val parser = new scopt.OptionParser[Config]("schedoscope-rest-service") {
+    override def showUsageOnError = true
+    head("schedoscope-rest-service", "0.0.1")
+    help("help") text ("print usage")
+    opt[Unit]('s', "shell") action { (_, c) => c.copy(shell = true) } optional () text ("start an interactive shell with direct schedoscope access.")
+  }
+
+  def start(config: Config) {
+
+    val numActors = settings.restApiConcurrency
+    val host = settings.host
+    val port = settings.port
+    val service = actorSystem.actorOf(new SmallestMailboxPool(numActors).props(Props(classOf[SchedoscopeRestServiceActor], schedoscope)), "schedoscope-webservice-actor")
+    implicit val timeout = Timeout(settings.webserviceTimeout)
+    IO(Http) ? Http.Bind(service, interface = host, port = port)
+
+    if (config.shell) {
+      Thread.sleep(5000)
+      println("\n\n============= schedoscope initialization finished ============== \n\n")
+      new SchedoscopeCliRepl(schedoscope).start()
+    }
+  }
+
+  def stop(): Boolean = {
+    schedoscope.shutdown()
+  }
+
+  def main(args: Array[String]) {
+    val config = parser.parse(args, Config()) match {
+      case Some(config) => config
+      case None         => Config()
+    }
+    start(config)
   }
 }
 

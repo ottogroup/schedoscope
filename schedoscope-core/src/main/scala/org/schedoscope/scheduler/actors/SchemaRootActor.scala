@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.actors
 
 import org.schedoscope.SettingsImpl
 import org.schedoscope.scheduler.messages._
@@ -23,9 +23,6 @@ import akka.actor.OneForOneStrategy
 import akka.actor.Props
 import akka.actor.SupervisorStrategy.Restart
 import akka.event.Logging
-import org.schedoscope.Settings
-import akka.actor.ActorSelection
-import scala.concurrent.Await
 import akka.routing.RoundRobinPool
 
 /**

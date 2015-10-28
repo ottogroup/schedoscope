@@ -24,17 +24,14 @@ import org.apache.hadoop.mapreduce.JobStatus.State.KILLED
 import org.apache.hadoop.mapreduce.JobStatus.State.PREP
 import org.apache.hadoop.mapreduce.JobStatus.State.RUNNING
 import org.apache.hadoop.mapreduce.JobStatus.State.SUCCEEDED
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.DriverSettings
 import java.security.PrivilegedAction
 
 /**
  *  Driver that executes Mapreduce transformations.
- *
  */
-class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[MapreduceTransformation] {
-
-  val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))
+class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val fileSystemDriver: FileSystemDriver) extends Driver[MapreduceTransformation] {
 
   def driver = this
 
@@ -50,7 +47,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
     ugi.doAs(new PrivilegedAction[DriverRunHandle[MapreduceTransformation]]() {
       def run(): DriverRunHandle[MapreduceTransformation] = {
         t.configure();
-        t.directoriesToDelete.foreach(d => fsd.delete(d, true))
+        t.directoriesToDelete.foreach(d => fileSystemDriver.delete(d, true))
         t.job.submit()
         new DriverRunHandle[MapreduceTransformation](driver, new LocalDateTime(), t, t.job)
       }
@@ -87,7 +84,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
       def run(): DriverRunState[MapreduceTransformation] = {
         val started = new LocalDateTime()
         t.configure()
-        t.directoriesToDelete.foreach(d => fsd.delete(d, true))
+        t.directoriesToDelete.foreach(d => fileSystemDriver.delete(d, true))
         t.job.waitForCompletion(true)
         getDriverRunState(new DriverRunHandle[MapreduceTransformation](driver, started, t, t.job))
       }
@@ -117,5 +114,5 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
  * Factory for the mapreduce driver.
  */
 object MapreduceDriver {
-  def apply(ds: DriverSettings) = new MapreduceDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation)
+  def apply(ds: DriverSettings) = new MapreduceDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation, FileSystemDriver(Schedoscope.settings.getDriverSettings("filesystem")))
 }
