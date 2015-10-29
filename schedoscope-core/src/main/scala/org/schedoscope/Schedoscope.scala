@@ -38,7 +38,12 @@ object Schedoscope {
   /**
    * A reference to the Schedoscope root actor
    */
-  lazy val rootActor = actorSystem.actorOf(RootActor.props(settings), "root")
+  lazy val rootActor = { 
+    val actorRef = actorSystem.actorOf(RootActor.props(settings), "root")
+    //make sure root actor is in state running
+    AskPattern.actorSelectionToRef(actorSystem.actorSelection(actorRef.path))
+    actorRef
+  }
 
   /**
    * A reference to the Schedoscope view manager actor
