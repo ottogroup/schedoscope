@@ -18,7 +18,7 @@
 	</appender>
 
 	<logger name="org.schedoscope" level="INFO" />
-	<root level="ERROR">
+	<root level="INFO">
 		<appender-ref ref="FILE" />
 	</root>
 </configuration>
