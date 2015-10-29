@@ -28,7 +28,7 @@ import akka.routing.RoundRobinPool
 /**
  * Supervisor and forwarder for partition creator and metadata logger actors
  */
-class SchemaActor(settings: SchedoscopeSettings) extends Actor {
+class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
   import context._
 
   val log = Logging(system, this)
@@ -60,6 +60,6 @@ class SchemaActor(settings: SchedoscopeSettings) extends Actor {
   }
 }
 
-object SchemaActor {
-  def props(settings: SchedoscopeSettings) = Props(classOf[SchemaActor], settings).withDispatcher("akka.actor.schema-actor-dispatcher")
+object SchemaManagerActor {
+  def props(settings: SchedoscopeSettings) = (Props(classOf[SchemaManagerActor], settings)).withDispatcher("akka.actor.schema-manager-dispatcher")
 }

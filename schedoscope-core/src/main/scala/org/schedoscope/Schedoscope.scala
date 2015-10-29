@@ -48,17 +48,17 @@ object Schedoscope {
   /**
    * A reference to the Schedoscope schema actor
    */
-  lazy val schemaActor = actorSelectionToRef(actorSystem.actorSelection(rootActor.path.child("schema"))).get
+  lazy val schemaManagerActor = actorSelectionToRef(actorSystem.actorSelection(rootActor.path.child("schema"))).get
 
   /**
    * A reference to the Schedoscope partition creator actor
    */
-  lazy val partitionCreatorActor = actorSelectionToRef(actorSystem.actorSelection(schemaActor.path.child("partition-creator"))).get
+  lazy val partitionCreatorActor = actorSelectionToRef(actorSystem.actorSelection(schemaManagerActor.path.child("partition-creator"))).get
 
   /**
    * A reference to the Schedoscope metadata logger actor
    */
-  lazy val metadataLoggerActor = actorSelectionToRef(actorSystem.actorSelection(schemaActor.path.child("metadata-logger"))).get
+  lazy val metadataLoggerActor = actorSelectionToRef(actorSystem.actorSelection(schemaManagerActor.path.child("metadata-logger"))).get
 
   /**
    * A reference to the Schedoscope transformation manager logger actor

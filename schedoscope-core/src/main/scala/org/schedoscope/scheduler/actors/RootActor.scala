@@ -33,7 +33,7 @@ class RootActor(settings: SchedoscopeSettings) extends Actor {
   val log = Logging(system, this)
 
   var transformationManagerActor: ActorRef = null
-  var schemaActor: ActorRef = null
+  var schemaManagerActor: ActorRef = null
   var viewManagerActor: ActorRef = null
 
   override val supervisorStrategy =
@@ -46,12 +46,12 @@ class RootActor(settings: SchedoscopeSettings) extends Actor {
 
   override def preStart {
     transformationManagerActor = actorOf(TransformationManagerActor.props(settings), "transformations")
-    schemaActor = actorOf(SchemaActor.props(settings), "schema")
+    schemaManagerActor = actorOf(SchemaManagerActor.props(settings), "schema")
     viewManagerActor = actorOf(
       ViewManagerActor.props(settings,
         transformationManagerActor,
-        schemaActor,
-        schemaActor), "views")
+        schemaManagerActor,
+        schemaManagerActor), "views")
   }
 
   def receive = {
