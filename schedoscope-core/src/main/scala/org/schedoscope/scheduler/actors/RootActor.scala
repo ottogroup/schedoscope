@@ -39,7 +39,6 @@ class RootActor(settings: SchedoscopeSettings) extends Actor {
   override val supervisorStrategy =
     AllForOneStrategy() {
       case t: Throwable => {
-        t.printStackTrace()
         Escalate
       }
     }
