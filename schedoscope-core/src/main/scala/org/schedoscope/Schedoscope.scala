@@ -28,17 +28,17 @@ object Schedoscope {
   /**
    * The Schedoscope actor system
    */
-  lazy val actorSystem = ActorSystem("schedoscope")
+  val actorSystem = ActorSystem("schedoscope")
 
   /**
    * The Schedoscope settings.
    */
-  lazy val settings = Settings()
+  val settings = Settings()
 
   /**
    * A reference to the Schedoscope root actor
    */
-  lazy val rootActor = actorSystem.actorOf(RootActor.props(settings), "root")
+  val rootActor = actorSystem.actorOf(RootActor.props(settings), "root")
 
   /**
    * A reference to the Schedoscope view manager actor
