@@ -276,7 +276,6 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, lastTransformationTimestamp, withErrors))
     listenersWaitingForMaterialize.clear
 
-    throw new RuntimeException("Shut the fuck down")
     unbecomeBecome(materialized)
 
     oneDependencyReturnedData = false
