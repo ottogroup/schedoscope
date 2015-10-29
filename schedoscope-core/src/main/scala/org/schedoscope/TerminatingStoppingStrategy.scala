@@ -10,7 +10,10 @@ class TerminatingStoppingStrategy extends SupervisorStrategyConfigurator {
       case t: Throwable => {
         val log = LoggerFactory.getLogger(classOf[TerminatingStoppingStrategy])
         
-        log.error("Unknow exception got excalated up the supervisor hierarchy. Exception {}", t)
+        log.error("Terminating Schedoscope: unhandled exception got escalated up the supervisor hierarchy.", t)
+        
+        System.err.println("Terminating Schedoscope: unhandled exception got escalated up the supervisor hierarchy.")
+        t.printStackTrace()
         
         System.exit(1)
         Escalate
