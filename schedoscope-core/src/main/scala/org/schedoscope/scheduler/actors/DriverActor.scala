@@ -19,7 +19,7 @@ import scala.language.postfixOps
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 import org.schedoscope.DriverSettings
-import org.schedoscope.SettingsImpl
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.scheduler.driver.DriverException
 import org.schedoscope.scheduler.driver.DriverRunFailed
@@ -229,7 +229,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
  * Factory methods for driver actors.
  */
 object DriverActor {
-  def props(settings: SettingsImpl, driverName: String, transformationManager: ActorRef) = {
+  def props(settings: SchedoscopeSettings, driverName: String, transformationManager: ActorRef) = {
     val ds = settings.getDriverSettings(driverName)
 
     driverName match {

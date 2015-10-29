@@ -49,7 +49,7 @@ import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
  * configuration settings, please refer to src/main/resources/reference.conf
  *
  */
-class SettingsImpl(val config: Config) extends Extension {
+class SchedoscopeSettings(val config: Config) extends Extension {
 
   private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
 
@@ -280,13 +280,13 @@ class SettingsImpl(val config: Config) extends Extension {
 /**
  * Companion object for settings
  */
-object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {
+object Settings extends ExtensionId[SchedoscopeSettings] with ExtensionIdProvider {
   override def lookup = Settings
 
   override def createExtension(system: ExtendedActorSystem) =
-    new SettingsImpl(system.settings.config)
+    new SchedoscopeSettings(system.settings.config)
 
-  override def get(system: ActorSystem): SettingsImpl = super.get(system)
+  override def get(system: ActorSystem): SchedoscopeSettings = super.get(system)
 
   def apply() = {
     super.apply(Schedoscope.actorSystem)

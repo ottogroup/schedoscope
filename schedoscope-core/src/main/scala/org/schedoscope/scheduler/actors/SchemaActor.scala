@@ -15,81 +15,51 @@
  */
 package org.schedoscope.scheduler.actors
 
-import org.schedoscope.schema.SchemaManager
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
+import akka.actor.ActorRef
+import akka.actor.OneForOneStrategy
 import akka.actor.Props
-import akka.actor.actorRef2Scala
+import akka.actor.SupervisorStrategy.Restart
 import akka.event.Logging
-import akka.event.LoggingReceive
+import akka.routing.RoundRobinPool
 
 /**
- * Schema actors are responsible for creating tables and partitions in the metastore.
+ * Supervisor and forwarder for partition creator and metadata logger actors
  */
-class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
+class SchemaActor(settings: SchedoscopeSettings) extends Actor {
   import context._
+
   val log = Logging(system, this)
 
-  val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
-  var runningCommand: Option[Any] = None
+  var metadataLoggerActor: ActorRef = null
+  var partitionCreatorActor: ActorRef = null
 
   /**
-   * Before the actor gets restarted, reenqueue the running write command with the schema root actor
-   * so it does not get lost.
+   * Supervisor strategy: Restart failing schema or metadata logger actors
    */
-  override def preRestart(reason: Throwable, message: Option[Any]) {
-    if (runningCommand.isDefined)
-      self forward runningCommand.get
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = -1) {
+      case _: Throwable => Restart
+    }
+
+  override def preStart {
+    metadataLoggerActor = actorOf(MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "metadata-logger")
+    partitionCreatorActor = actorOf(PartitionCreatorActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withRouter(new RoundRobinPool(settings.metastoreConcurrency)), "partition-creator")
   }
 
-  /**
-   * Message handler
-   */
-  def receive = LoggingReceive({
-    case c: CheckOrCreateTables => {
-      runningCommand = Some(c)
+  def receive = {
+    case m: CheckOrCreateTables        => partitionCreatorActor forward m
 
-      c.views
-        .groupBy { v => (v.dbName, v.n) }
-        .map { case (_, views) => views.head }
-        .foreach {
-          tablePrototype =>
-            {
-              log.info(s"Checking or creating table for view ${tablePrototype.module}.${tablePrototype.n}")
+    case a: AddPartitions              => partitionCreatorActor forward a
 
-              if (!crate.schemaExists(tablePrototype)) {
-                log.info(s"Table for view ${tablePrototype.module}.${tablePrototype.n} does not yet exist, creating")
+    case s: SetViewVersion             => metadataLoggerActor forward s
 
-                crate.dropAndCreateTableSchema(tablePrototype)
-              }
-            }
-        }
-
-      sender ! SchemaActionSuccess()
-
-      runningCommand = None
-    }
-
-    case a: AddPartitions => {
-      runningCommand = Some(a)
-
-      val views = a.views
-      log.info(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
-
-      val metadata = crate.getTransformationMetadata(views)
-
-      log.info(s"Created / loaded ${views.size} partitions for table ${views.head.tableName}")
-
-      sender ! TransformationMetadata(metadata)
-
-      runningCommand = None
-    }
-  })
+    case l: LogTransformationTimestamp => metadataLoggerActor forward l
+  }
 }
 
-/**
- * Factory for schema actors
- */
 object SchemaActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = (Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal)).withDispatcher("akka.actor.schema-actor-dispatcher")
+  def props(settings: SchedoscopeSettings) = (Props(classOf[SchemaActor], settings)).withDispatcher("akka.actor.schema-actor-dispatcher")
 }
