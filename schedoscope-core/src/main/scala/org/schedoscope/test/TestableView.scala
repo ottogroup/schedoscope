@@ -31,12 +31,10 @@ import org.schedoscope.dsl.transformations.FilesystemTransformation
 
 trait TestableView extends FillableView {}
 
+
 /**
- * @author dev_hzorn
- *
- */
-/**
- * @author dev_hzorn
+ * This trait implements most of the schedoscope test DSL. it extends View
+ * with methods to generate test data, execute local hive and assertions
  *
  */
 trait test extends TestableView {
@@ -54,10 +52,17 @@ trait test extends TestableView {
 
   val deps = ListBuffer[View with rows]()
 
+  /**
+   *  execute the hive query in test on previously specified test fixtures
+   */
   def `then`() {
     `then`(sortedBy = null)
   }
 
+  /**
+   *  execute the hive query in test on previously specified test fixtures.
+   *  Sort the table by Field
+   */
   def `then`(sortedBy: FieldLike[_]) {
     deploySchema()
 
@@ -81,11 +86,19 @@ trait test extends TestableView {
     populate(sortedBy)
   }
 
+  /**
+   * adds dependencies for this view
+   * @param d
+   */
   def basedOn(d: View with rows*) {
     d.map(el => el.resources = () => resources())
     deps ++= d
   }
 
+  /**
+ 		* @param f
+ 		* @return
+ 		*/
   def v[T](f: FieldLike[T]): T = {
     if (rs(rowIdx).get(f.n).isEmpty)
       None.asInstanceOf[T]

@@ -31,10 +31,21 @@ import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.storageformats._
 
 
+/**
+ *  Helper for serialization/deserialization of hive data types 
+ * 
+ * @author dbenz
+ *
+ */
 object ViewSerDe {
 	val logger = LoggerFactory.getLogger("gna")
 
-			def serialize(v: View with rows): String = {
+	/**
+	 * escape data before writing it to hive.
+	 * @param v
+	 * @return
+	 */
+	def serialize(v: View with rows): String = {
 		v.storageFormat match {
 		case tf: TextFile => {
 			val fterm = if (tf.fieldTerminator == null) "\t" else tf.fieldTerminator.replaceAll("\\\\t", "\t")
@@ -51,6 +62,14 @@ object ViewSerDe {
 
 
 
+	/**
+	 *   Converts the string representation of a Field to a Value according to the type information
+	 *   provided by schedoscope
+	 * 
+	 * @param t
+	 * @param v
+	 * @return
+	 */
 	def deserializeField[T](t: Manifest[T], v: String): Any = {  	
 		if (v == null || "null".equals(v)) {
 			return v

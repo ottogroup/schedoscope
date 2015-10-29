@@ -33,8 +33,14 @@ import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestResources
 import org.schedoscope.dsl.Named
 
+/**
+ * A fillable View is a View with rows of data (a Table).
+ */
 trait FillableView extends View with rows {}
 
+/**
+ *
+ */
 trait rows extends View {
   env = "test"
 
@@ -59,29 +65,54 @@ trait rows extends View {
 
   // overrides (to enable correct table/database names, otherwise $$anonFunc...) 
 
+  /**
+   * inserts a row to this field. If columns are left out, they are either set to null or filled with random data.
+   * @param row List of tuples (FieldLike,Any) to specify column (fieldlike) and their value
+   */
   def set(row: (FieldLike[_], Any)*) {
     val m = row.map(f => f._1.n -> f._2).toMap[String, Any]
     rs.append(fields.map(f => { if (m.contains(f.n)) f.n -> m(f.n) else f.n -> nullOrRandom(f, rs.size) }).toMap[String, Any])
   }
 
+  /** returns the number of rows in this view
+   * @return
+   */
   def numRows(): Int = {
     rs.size
   }
 
+  /**
+   * generates a new rowId for the current row.
+   * @return
+   */
   def rowId(): String = {
     rowIdPattern.format(rs.size)
   }
 
+  /**
+   * Fills this view with data from hive, selects only column within s
+   * @param s FieldLike to specify the column to fill
+   */
   def populate(s: FieldLike[_]) {
     rs.clear()
     rs.appendAll(resources().database.selectForView(this, s))
   }
 
+  /**
+   * persists this view into local hive
+   * 
+   */
   def write() {
     deploySchema()
     writeData()
   }
 
+  /**
+   * deploys a local oozie workflow for oozie tests
+   * 
+   * @param wf
+   * @return
+   */
   def deployWorkflow(wf: OozieTransformation) = {
     val fs = resources().fileSystem
     val dest = new Path(resources().namenode + new URI(wf.workflowAppPath).getPath)
@@ -111,7 +142,13 @@ trait rows extends View {
     new OozieTransformation(wf.bundle, wf.workflow, dest.toString).configureWith(wf.configuration.toMap)
   }
 
-  def deployFunctions(ht: HiveTransformation) = {
+  /**
+   * modifies a hivetransformation so that it will find locally deployed UDFS
+   * 
+   * @param ht
+   * @return
+   */
+  def deployFunctions(ht: HiveTransformation)  = {
     ht.udfs.map(f => {
       val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
       val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
@@ -120,6 +157,9 @@ trait rows extends View {
     ht
   }
 
+  /**
+   * 
+   */
   def deploySchema() {
     val d = resources().crate
     if (!d.schemaExists(this)) {
@@ -127,6 +167,9 @@ trait rows extends View {
     }
   }
 
+  /**
+   * 
+   */
   def writeData() {
     val d = resources().crate
     val partitionFilePath = if (this.isPartitioned())
@@ -145,6 +188,9 @@ trait rows extends View {
   
   }
 
+  /**
+   * 
+   */
   def withNullFields() {
     allowNullFields = true
   }
