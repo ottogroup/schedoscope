@@ -45,13 +45,13 @@ case class TransformationFailure[T <: Transformation](driverRunHandle: DriverRun
 sealed class CommandRequest
 
 /**
- * Instructs the schema actor to verify or create all Partitions that are specified in any
+ * Instructs the partition creator actor to verify or create all Partitions that are specified in any
  * of the views in parameter 'views'
  */
 case class AddPartitions(views: List[View]) extends CommandRequest
 
 /**
- * Instructs the schema actor to verify or create all tables defined in the specified list of views
+ * Instructs the partition creator actor to verify or create all tables defined in the specified list of views
  */
 case class CheckOrCreateTables(views: List[View]) extends CommandRequest
 

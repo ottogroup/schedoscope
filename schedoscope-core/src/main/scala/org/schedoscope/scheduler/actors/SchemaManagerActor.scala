@@ -15,7 +15,7 @@
  */
 package org.schedoscope.scheduler.actors
 
-import org.schedoscope.SettingsImpl
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
@@ -26,15 +26,15 @@ import akka.event.Logging
 import akka.routing.RoundRobinPool
 
 /**
- * Supervisor and load balancer for schema and metadata logger actors
+ * Supervisor and forwarder for partition creator and metadata logger actors
  */
-class SchemaRootActor(settings: SettingsImpl) extends Actor {
+class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
   import context._
 
   val log = Logging(system, this)
 
   var metadataLoggerActor: ActorRef = null
-  var schemaActor: ActorRef = null
+  var partitionCreatorActor: ActorRef = null
 
   /**
    * Supervisor strategy: Restart failing schema or metadata logger actors
@@ -46,13 +46,13 @@ class SchemaRootActor(settings: SettingsImpl) extends Actor {
 
   override def preStart {
     metadataLoggerActor = actorOf(MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "metadata-logger")
-    schemaActor = actorOf(SchemaActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withRouter(new RoundRobinPool(settings.metastoreConcurrency)), "schema")
+    partitionCreatorActor = actorOf(PartitionCreatorActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withRouter(new RoundRobinPool(settings.metastoreConcurrency)), "partition-creator")
   }
 
   def receive = {
-    case m: CheckOrCreateTables        => schemaActor forward m
+    case m: CheckOrCreateTables        => partitionCreatorActor forward m
 
-    case a: AddPartitions              => schemaActor forward a
+    case a: AddPartitions              => partitionCreatorActor forward a
 
     case s: SetViewVersion             => metadataLoggerActor forward s
 
@@ -60,6 +60,6 @@ class SchemaRootActor(settings: SettingsImpl) extends Actor {
   }
 }
 
-object SchemaRootActor {
-  def props(settings: SettingsImpl) = Props(classOf[SchemaRootActor], settings).withDispatcher("akka.actor.schema-root-actor-dispatcher")
+object SchemaManagerActor {
+  def props(settings: SchedoscopeSettings) = (Props(classOf[SchemaManagerActor], settings)).withDispatcher("akka.actor.schema-manager-dispatcher")
 }

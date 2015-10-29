@@ -36,12 +36,12 @@ import org.schedoscope.AskPattern._
 import akka.pattern.Patterns
 import akka.util.Timeout
 import akka.actor.ActorSystem
-import org.schedoscope.SettingsImpl
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.scheduler.actors.ViewManagerActor
 import scala.concurrent.Future
 
 
-class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
+class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
   val log = Logging(actorSystem, classOf[ViewManagerActor])
 
   transformationManagerActor ! DeployCommand()

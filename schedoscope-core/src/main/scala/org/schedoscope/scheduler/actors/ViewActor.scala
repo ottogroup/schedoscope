@@ -21,7 +21,7 @@ import java.util.Date
 import scala.concurrent.duration.Duration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import org.schedoscope.SettingsImpl
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
@@ -41,7 +41,7 @@ import org.apache.hadoop.fs.FileStatus
 import org.schedoscope.dsl.transformations.NoOp
 import akka.actor.ActorSelection.toScala
 
-class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
+class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
   import MaterializeViewMode._
   import AskPattern._
@@ -422,5 +422,5 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 }
 
 object ViewActor {
-  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
+  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
 }

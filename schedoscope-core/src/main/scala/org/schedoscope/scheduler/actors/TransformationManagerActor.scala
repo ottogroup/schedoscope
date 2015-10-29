@@ -19,7 +19,7 @@ import scala.collection.mutable.HashMap
 import scala.util.Random
 import scala.collection.JavaConversions.asScalaSet
 import org.apache.hadoop.conf.Configuration
-import org.schedoscope.SettingsImpl
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.dsl.transformations.Transformation
@@ -47,7 +47,7 @@ import akka.event.LoggingReceive
  * transformation type. Idle driver actors poll the transformation manager for new transformations to perform.
  *
  */
-class TransformationManagerActor(settings: SettingsImpl) extends Actor {
+class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   import context._
 
   val log = Logging(system, TransformationManagerActor.this)
@@ -182,5 +182,5 @@ class TransformationManagerActor(settings: SettingsImpl) extends Actor {
  * Factory for the actions manager actor.
  */
 object TransformationManagerActor {
-  def props(settings: SettingsImpl) = Props(classOf[TransformationManagerActor], settings).withDispatcher("akka.actor.transformation-manager-dispatcher")
+  def props(settings: SchedoscopeSettings) = Props(classOf[TransformationManagerActor], settings).withDispatcher("akka.actor.transformation-manager-dispatcher")
 }

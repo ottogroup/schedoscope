@@ -16,7 +16,7 @@
 package org.schedoscope.scheduler.actors
 
 import scala.collection.mutable.HashMap
-import org.schedoscope.SettingsImpl
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
@@ -38,9 +38,9 @@ import org.schedoscope.AskPattern._
  * the last transformation timestamps and version checksums from the metastore for already materialized
  * views.
  *
- * It does this by cooperating with the schema actor and metadata logger actor.
+ * It does this by cooperating with the parition creator actor and metadata logger actor.
  */
-class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
+class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, partitionCreatorActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
 
   val log = Logging(system, ViewManagerActor.this)
@@ -129,7 +129,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     if (tablesToCreate.nonEmpty) {
       log.info(s"Submitting tables to check or create to schema actor")
       tablesToCreate.foreach {
-        queryActor[Any](schemaActor, _, settings.schemaTimeout)
+        queryActor[Any](partitionCreatorActor, _, settings.schemaTimeout)
       }
     }
 
@@ -139,7 +139,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
     if (partitionsToCreate.nonEmpty) {
       log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")
 
-      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaActor, partitionsToCreate, settings.schemaTimeout)
+      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](partitionCreatorActor, partitionsToCreate, settings.schemaTimeout)
 
       log.info(s"Partitions created, initializing actors")
 
@@ -163,7 +163,7 @@ class ViewManagerActor(settings: SettingsImpl, actionsManagerActor: ActorRef, sc
  * View manager factory methods
  */
 object ViewManagerActor {
-  def props(settings: SettingsImpl, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SettingsImpl, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
+  def props(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 
   def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
 

@@ -15,7 +15,7 @@
  */
 package org.schedoscope.scheduler.actors
 
-import org.schedoscope.SettingsImpl
+import org.schedoscope.SchedoscopeSettings
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.AllForOneStrategy
@@ -24,35 +24,33 @@ import akka.actor.SupervisorStrategy._
 import akka.event.Logging
 
 /**
- * Root actor of the schedoscope scheduler actor system.
- * Merely a supervisor that shuts down schedoscope in case anything gets escalated.
+ * Root actor of the Schedoscope scheduler actor system.
+ * Merely a supervisor that shuts down Schedoscope in case anything gets escalated.
  */
-class RootActor(settings: SettingsImpl) extends Actor {
+class RootActor(settings: SchedoscopeSettings) extends Actor {
   import context._
 
   val log = Logging(system, this)
 
   var transformationManagerActor: ActorRef = null
-  var schemaRootActor: ActorRef = null
+  var schemaManagerActor: ActorRef = null
   var viewManagerActor: ActorRef = null
 
   override val supervisorStrategy =
     AllForOneStrategy() {
       case t: Throwable => {
-        t.printStackTrace()
-        this.context.system.shutdown()
         Escalate
       }
     }
 
   override def preStart {
     transformationManagerActor = actorOf(TransformationManagerActor.props(settings), "transformations")
-    schemaRootActor = actorOf(SchemaRootActor.props(settings), "schema-root")
+    schemaManagerActor = actorOf(SchemaManagerActor.props(settings), "schema")
     viewManagerActor = actorOf(
       ViewManagerActor.props(settings,
         transformationManagerActor,
-        schemaRootActor,
-        schemaRootActor), "views")
+        schemaManagerActor,
+        schemaManagerActor), "views")
   }
 
   def receive = {
@@ -66,5 +64,5 @@ class RootActor(settings: SettingsImpl) extends Actor {
  * the actors upon first request.
  */
 object RootActor {
-  def props(settings: SettingsImpl) = Props(classOf[RootActor], settings).withDispatcher("akka.actor.root-actor-dispatcher")
+  def props(settings: SchedoscopeSettings) = Props(classOf[RootActor], settings).withDispatcher("akka.actor.root-actor-dispatcher")
 }
