@@ -88,8 +88,8 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
 }
 
 /**
- * Factory for schema actors
+ * Factory for partition creator actors
  */
 object PartitionCreatorActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = (Props(classOf[PartitionCreatorActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal)).withDispatcher("akka.actor.partition-creator-dispatcher")
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[PartitionCreatorActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withDispatcher("akka.actor.partition-creator-dispatcher")
 }

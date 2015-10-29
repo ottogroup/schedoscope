@@ -61,5 +61,5 @@ class SchemaActor(settings: SchedoscopeSettings) extends Actor {
 }
 
 object SchemaActor {
-  def props(settings: SchedoscopeSettings) = (Props(classOf[SchemaActor], settings)).withDispatcher("akka.actor.schema-actor-dispatcher")
+  def props(settings: SchedoscopeSettings) = Props(classOf[SchemaActor], settings).withDispatcher("akka.actor.schema-actor-dispatcher")
 }
