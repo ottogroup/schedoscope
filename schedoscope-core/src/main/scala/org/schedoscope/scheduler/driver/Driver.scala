@@ -27,6 +27,7 @@ import org.schedoscope.dsl.transformations.Transformation
 import net.lingala.zip4j.core.ZipFile
 import org.schedoscope.Settings
 import org.apache.commons.io.FileUtils
+import org.schedoscope.Schedoscope
 
 /**
  *  Base class of exceptions that will be escalated to the driver actor  to cause a driver actor restart
@@ -112,6 +113,8 @@ class DoNothingCompletionHandler[T <: Transformation] extends DriverRunCompletio
  *
  */
 trait Driver[T <: Transformation] {
+
+  implicit val executionContext = Schedoscope.actorSystem.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 
   /**
    * @return the name of the transformation. This is a string identifier of the transformation type

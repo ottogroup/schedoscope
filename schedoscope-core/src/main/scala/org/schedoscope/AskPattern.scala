@@ -21,15 +21,15 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
 import akka.actor.ActorRef
+import akka.actor.ActorSelection
 import akka.pattern.Patterns
 import akka.util.Timeout
-import org.schedoscope.scheduler.RootActor
 
 /**
  * Contains commonly codified ask patterns for actors.
  */
 object AskPattern {
-  implicit val executionContext: ExecutionContext = RootActor.settings.system.dispatchers.lookup("akka.actor.future-call-dispatcher")
+  implicit val executionContext: ExecutionContext = Schedoscope.actorSystem.dispatchers.lookup("akka.actor.future-call-dispatcher")
 
   /**
    * Query an actor for a response by sending a message and observing a timeout.
@@ -66,5 +66,16 @@ object AskPattern {
     val responsesFuture = Future.sequence(responseFutures)
 
     Await.result(responsesFuture, waitTimeOut.duration * actors.size).asInstanceOf[List[T]]
+  }
+
+  /**
+   * Transform an actor selection to an actor ref via an ask pattern.
+   */
+  def actorSelectionToRef(actorSelection: ActorSelection, timeoutDuration: FiniteDuration = Schedoscope.settings.viewManagerResponseTimeout): Option[ActorRef] = try {
+    val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
+    val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
+    Some(Await.result(actorSelection.resolveOne(askTimeOut.duration), waitTimeOut.duration))
+  } catch {
+    case _: Throwable => None
   }
 }

@@ -3,7 +3,7 @@ package org.schedoscope.scheduler.driver
 import scala.language.reflectiveCalls
 import org.schedoscope.dsl.transformations.ShellTransformation
 import org.schedoscope.DriverSettings
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.joda.time.LocalDateTime
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
@@ -25,7 +25,6 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
    */
   override def transformationName = "shell"
 
-  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
   val log = LoggerFactory.getLogger(classOf[ShellDriver])
 
   /**

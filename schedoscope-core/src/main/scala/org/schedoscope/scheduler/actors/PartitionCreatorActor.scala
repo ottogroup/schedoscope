@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.actors
 
-import scala.collection.mutable.HashMap
 import org.schedoscope.schema.SchemaManager
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
@@ -23,13 +22,11 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import akka.routing.SmallestMailboxRoutingLogic
-import akka.routing.Router
 
 /**
- * Schema actors are responsible for creating tables and partitions in the metastore.
+ * Parition creator actors are responsible for creating tables and partitions in the metastore.
  */
-class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
+class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
   import context._
   val log = Logging(system, this)
 
@@ -91,8 +88,8 @@ class SchemaActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal
 }
 
 /**
- * Factory for schema actors
+ * Factory for partition creator actors
  */
-object SchemaActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = (Props(classOf[SchemaActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal)).withDispatcher("akka.actor.schema-actor-dispatcher")
+object PartitionCreatorActor {
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[PartitionCreatorActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withDispatcher("akka.actor.partition-creator-dispatcher")
 }

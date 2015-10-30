@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.actors
 
-import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
 import scala.util.Random
-
+import scala.collection.JavaConversions.asScalaSet
 import org.apache.hadoop.conf.Configuration
-import org.schedoscope.Settings
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.dsl.transformations.Transformation
@@ -33,7 +32,6 @@ import org.schedoscope.scheduler.messages.PollCommand
 import org.schedoscope.scheduler.messages.QueueStatusListResponse
 import org.schedoscope.scheduler.messages.TransformationStatusListResponse
 import org.schedoscope.scheduler.messages.TransformationStatusResponse
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.OneForOneStrategy
@@ -49,11 +47,10 @@ import akka.event.LoggingReceive
  * transformation type. Idle driver actors poll the transformation manager for new transformations to perform.
  *
  */
-class TransformationManagerActor() extends Actor {
+class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   import context._
 
   val log = Logging(system, TransformationManagerActor.this)
-  val settings = Settings.get(system)
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
 
@@ -129,7 +126,7 @@ class TransformationManagerActor() extends Actor {
    */
   override def preStart {
     for (transformation <- availableTransformations; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
-      actorOf(DriverActor.props(transformation, self), s"${transformation}-${c + 1}")
+      actorOf(DriverActor.props(settings, transformation, self), s"${transformation}-${c + 1}")
     }
   }
 
@@ -185,5 +182,5 @@ class TransformationManagerActor() extends Actor {
  * Factory for the actions manager actor.
  */
 object TransformationManagerActor {
-  def props(conf: Configuration) = Props[TransformationManagerActor].withDispatcher("akka.actor.transformation-manager-dispatcher")
+  def props(settings: SchedoscopeSettings) = Props(classOf[TransformationManagerActor], settings).withDispatcher("akka.actor.transformation-manager-dispatcher")
 }

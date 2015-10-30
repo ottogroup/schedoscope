@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.actors
 
 import java.lang.Math.max
 import java.security.PrivilegedAction
@@ -21,7 +21,7 @@ import java.util.Date
 import scala.concurrent.duration.Duration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
-import org.schedoscope.SettingsImpl
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.FilesystemTransformation
@@ -29,20 +29,19 @@ import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.actor.ActorSelection
 import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
+import org.schedoscope.AskPattern
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.dsl.transformations.MorphlineTransformation
-import org.schedoscope.dsl.transformations.ExternalTransformation
 import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
 import org.schedoscope.dsl.transformations.NoOp
-import org.schedoscope.AskPattern
+import akka.actor.ActorSelection.toScala
 
-class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
+class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
   import MaterializeViewMode._
   import AskPattern._
@@ -86,14 +85,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
         toWaiting(mode)
       }
     }
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.isEmpty) {
-      if (view == viewWithNewData)
-        toDefaultAndReload(false)
-    } else {
-      if (view.dependencies.contains(viewWithNewData))
-        toDefaultAndReload()
-    }
   })
 
   // State: view actor waiting for dependencies to materialize
@@ -123,8 +114,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       dependenciesFreshness = max(dependenciesFreshness, dependencyTransformationTimestamp)
       aDependencyAnswered(dependency, materializationMode)
     }
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData)) self ! NewDataAvailable(viewWithNewData)
   }
 
   // State: transforming, view actor in process of applying transformation
@@ -160,8 +149,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     case _: TransformationFailure[_]       => toRetrying(retries, materializationMode)
 
     case MaterializeView(mode)             => listenersWaitingForMaterialize.add(sender)
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
 
   // State: retrying
@@ -179,8 +166,6 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       listenersWaitingForMaterialize.foreach(_ ! Failed(view))
       listenersWaitingForMaterialize.clear()
     }
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData) || (view.dependencies.isEmpty && viewWithNewData == view)) self ! NewDataAvailable(viewWithNewData)
   })
 
   // State: materialized, view has been computed and materialized
@@ -203,19 +188,11 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
       sender ! ViewStatusResponse("invalidated", view, self)
       toDefault(true, "invalidated")
     }
-
-    case NewDataAvailable(viewWithNewData) => if (view.dependencies.contains(viewWithNewData))
-      toDefaultAndReload()
-    else if (view.dependencies.isEmpty && view == viewWithNewData)
-      toDefaultAndReload(false)
   })
 
   // State: failed, view actor failed to materialize
   // transitions:  default, transforming
   def failed: Receive = LoggingReceive({
-    case NewDataAvailable(viewWithNewData) =>
-      if (view.dependencies.contains(viewWithNewData)) toDefaultAndReload()
-      else if (view.dependencies.isEmpty && view == viewWithNewData) toDefaultAndReload(false)
     case Invalidate() => {
       sender ! ViewStatusResponse("invalidated", view, self)
       toDefault(true, "invalidated")
@@ -392,12 +369,10 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
   }
 
-  def toDefaultAndReload(withPropagation: Boolean = true) {
+  def toDefaultAndReload() {
     toDefault()
 
     self ! MaterializeView()
-    if (withPropagation)
-      viewManagerActor ! NewDataAvailable(view)
   }
 
   def successFlagExists(view: View): Boolean = {
@@ -447,5 +422,5 @@ class ViewActor(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, 
 }
 
 object ViewActor {
-  def props(view: View, settings: SettingsImpl, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
+  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
 }

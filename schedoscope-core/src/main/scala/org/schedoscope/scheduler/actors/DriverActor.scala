@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler
+package org.schedoscope.scheduler.actors
 
 import scala.language.postfixOps
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.duration.FiniteDuration
 import org.schedoscope.DriverSettings
-import org.schedoscope.Settings
+import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.scheduler.driver.DriverException
 import org.schedoscope.scheduler.driver.DriverRunFailed
@@ -31,7 +31,7 @@ import org.schedoscope.scheduler.driver.FileSystemDriver
 import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.driver.OozieDriver
 import org.schedoscope.scheduler.driver.ShellDriver
-import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.messages._
 import akka.actor.Actor
 import akka.actor.ActorRef
@@ -39,16 +39,9 @@ import akka.actor.Props
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import akka.event.LoggingReceive
-import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.dsl.transformations.FilesystemTransformation
-import org.schedoscope.dsl.transformations.OozieTransformation
-import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.scheduler.driver.MorphlineDriver
-import org.schedoscope.dsl.transformations.MapreduceTransformation
 import org.schedoscope.scheduler.driver.MapreduceDriver
 import org.schedoscope.scheduler.driver.PigDriver
-import org.schedoscope.dsl.transformations.PigTransformation
-import org.schedoscope.dsl.transformations.ShellTransformation
 import org.schedoscope.scheduler.driver.DriverException
 
 /**
@@ -236,8 +229,8 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
  * Factory methods for driver actors.
  */
 object DriverActor {
-  def props(driverName: String, transformationManager: ActorRef) = {
-    val ds = Settings().getDriverSettings(driverName)
+  def props(settings: SchedoscopeSettings, driverName: String, transformationManager: ActorRef) = {
+    val ds = settings.getDriverSettings(driverName)
 
     driverName match {
       case "hive" => Props(

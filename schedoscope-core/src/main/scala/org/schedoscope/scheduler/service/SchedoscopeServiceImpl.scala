@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.scheduler.api
+package org.schedoscope.scheduler.service
 
 import scala.language.postfixOps
 import scala.concurrent.Await
@@ -21,28 +21,32 @@ import scala.concurrent.duration.DurationInt
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.RootActor
-import org.schedoscope.scheduler.RootActor._
+import org.schedoscope.scheduler.driver.DriverRunState
+import org.schedoscope.scheduler.driver.DriverRunFailed
+import org.schedoscope.scheduler.driver.DriverRunOngoing
+import org.schedoscope.scheduler.driver.DriverRunSucceeded
+import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.scheduler.actors.ViewManagerActor
 import org.schedoscope.dsl.Named
 import org.schedoscope.dsl.View
 import akka.actor.ActorRef
-import akka.actor.PoisonPill
 import akka.actor.actorRef2Scala
 import akka.event.Logging
 import org.schedoscope.AskPattern._
 import akka.pattern.Patterns
-import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
-import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.scheduler.api.SchedoscopeJsonProtocol.formatDate
 import akka.util.Timeout
-import akka.actor.Actor
-import kamon.Kamon
+import akka.actor.ActorSystem
+import org.schedoscope.SchedoscopeSettings
+import org.schedoscope.scheduler.actors.ViewManagerActor
+import scala.concurrent.Future
 
-class SchedoscopeSystem extends SchedoscopeInterface {
-  val log = Logging(settings.system, classOf[RootActor])
+
+class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
+  val log = Logging(actorSystem, classOf[ViewManagerActor])
 
   transformationManagerActor ! DeployCommand()
 
+  case class SchedoscopeCommand(id: String, start: String, parts: List[Future[_]])
   val runningCommands = collection.mutable.HashMap[String, SchedoscopeCommand]()
   val doneCommands = collection.mutable.HashMap[String, SchedoscopeCommandStatus]()
 
@@ -99,6 +103,50 @@ class SchedoscopeSystem extends SchedoscopeInterface {
     None
   }
 
+  private def formatDate(d: LocalDateTime): String = {
+    if (d != null) DateTimeFormat.shortDateTime().print(d) else ""
+  }
+
+  private def parseActionStatus(a: TransformationStatusResponse[_]): TransformationStatus = {
+    val actor = getOrElse(a.actor.path.toStringWithoutAddress, "unknown")
+    val typ = if (a.driver != null) getOrElse(a.driver.transformationName, "unknown") else "unknown"
+    var drh = a.driverRunHandle
+    var status = if (a.message != null) a.message else "none"
+    var comment = ""
+
+    if (a.driverRunStatus != null) {
+      a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
+        case s: DriverRunSucceeded[_] => { comment = getOrElse(s.comment, "no-comment"); status = "succeeded" }
+        case f: DriverRunFailed[_]    => { comment = getOrElse(f.reason, "no-reason"); status = "failed" }
+        case o: DriverRunOngoing[_]   => { drh = o.runHandle }
+      }
+    }
+
+    if (drh != null) {
+      val desc = drh.transformation.asInstanceOf[Transformation].description
+      val view = drh.transformation.asInstanceOf[Transformation].getView()
+      val started = drh.started
+      val runStatus = RunStatus(getOrElse(desc, "no-desc"), getOrElse(view, "no-view"), getOrElse(formatDate(started), ""), comment, None)
+      TransformationStatus(actor, typ, status, Some(runStatus), None)
+    } else {
+      TransformationStatus(actor, typ, status, None, None)
+    }
+  }
+
+  private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = {
+    q.map(o =>
+      if (o.isInstanceOf[Transformation]) {
+        val trans = o.asInstanceOf[Transformation]
+        RunStatus(trans.description, trans.getView(), "", "", None)
+      } else {
+        RunStatus(o.toString, "", "", "", None)
+      })
+  }
+
+  private def getOrElse[T](o: T, d: T) = {
+    if (o != null) o else d;
+  }
+
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
     submitCommandInternal(viewActors, MaterializeView(
@@ -131,7 +179,7 @@ class SchedoscopeSystem extends SchedoscopeInterface {
   def transformations(status: Option[String], filter: Option[String]) = {
     val result = queryActor[TransformationStatusListResponse](transformationManagerActor, GetTransformations(), settings.statusListAggregationTimeout)
     val actions = result.transformationStatusList
-      .map(a => SchedoscopeJsonProtocol.parseActionStatus(a))
+      .map(a => parseActionStatus(a))
       .filter(a => !status.isDefined || status.get.equals(a.status))
       .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
     val overview = actions
@@ -144,7 +192,7 @@ class SchedoscopeSystem extends SchedoscopeInterface {
     val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.statusListAggregationTimeout)
     val queues = result.transformationQueues
       .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
-      .map { case (t, queue) => (t, SchedoscopeJsonProtocol.parseQueueElements(queue)) }
+      .map { case (t, queue) => (t, parseQueueElements(queue)) }
       .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
     val overview = queues
       .map(el => (el._1, el._2.size))
@@ -196,12 +244,8 @@ class SchedoscopeSystem extends SchedoscopeInterface {
   }
 
   def shutdown(): Boolean = {
-    settings.system.shutdown()
-    settings.system.awaitTermination(5 seconds)
-    settings.system.actorSelection("/user/*").tell(PoisonPill, Actor.noSender)
-    settings.system.awaitTermination(5 seconds)
-    settings.system.isTerminated
-
+    actorSystem.shutdown()
+    actorSystem.awaitTermination(5 seconds)
+    actorSystem.isTerminated
   }
-
 }

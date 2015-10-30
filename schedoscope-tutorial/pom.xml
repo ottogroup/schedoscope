@@ -10,16 +10,6 @@
 	<dependencies>
 		
 		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-core</artifactId>
-			<version>1.1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.1.2</version>
-		</dependency>
-		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
 			<version>0.3.0-SNAPSHOT</version>
@@ -83,6 +73,10 @@
 					<artifactId>jackson-mapper-asl</artifactId>
 					<groupId>org.codehaus.jackson</groupId>
 				</exclusion>
+								<exclusion>
+					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -102,6 +96,12 @@
 			<artifactId>minioozie</artifactId>
 			<version>0.1.8</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 
@@ -292,7 +292,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<mainClass>org.schedoscope.scheduler.api.SchedoscopeRestService</mainClass>
+					<mainClass>org.schedoscope.scheduler.rest.server.SchedoscopeRestService</mainClass>
 					<arguments>
 						<argument>--shell</argument>
 					</arguments>

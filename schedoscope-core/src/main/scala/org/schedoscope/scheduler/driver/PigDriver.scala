@@ -32,7 +32,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.thrift.protocol.TProtocolException
 import org.joda.time.LocalDateTime
 import org.schedoscope.DriverSettings
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters;
 import org.schedoscope.scheduler.driver.HiveDriver.currentConnection;
@@ -53,8 +53,6 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
    * Set transformation name to pig
    */
   override def transformationName = "pig"
-
-  implicit val executionContext = Settings().system.dispatchers.lookup("akka.actor.future-driver-dispatcher")
 
   val log = LoggerFactory.getLogger(classOf[PigDriver])
 
@@ -103,6 +101,6 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
  */
 object PigDriver {
   def apply(ds: DriverSettings) =
-    new PigDriver(ds.driverRunCompletionHandlers, Settings().userGroupInformation)
+    new PigDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation)
 
 }
