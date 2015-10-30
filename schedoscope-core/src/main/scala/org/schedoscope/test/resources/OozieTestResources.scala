@@ -28,6 +28,8 @@ class OozieTestResources extends TestResources {
   override lazy val hiveConf: HiveConf = mo.getHiveServer2Conf
 
   override lazy val hiveWarehouseDir: String = mo.getFsTestCaseDir.toString
+  
+  override lazy val hiveScratchDir: String = mo.getScratchDir().toString()
 
   override lazy val jdbcUrl = mo.getHiveServer2JdbcURL
 

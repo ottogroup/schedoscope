@@ -59,4 +59,5 @@ abstract class Structure extends StructureDsl with Named {
       .filter { _.invoke(this) eq f }
       .map { _.getName() }
       .headOption
+
 }

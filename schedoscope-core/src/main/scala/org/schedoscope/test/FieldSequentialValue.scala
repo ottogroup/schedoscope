@@ -20,7 +20,11 @@ import java.util.Date
 import org.schedoscope.dsl.FieldLike
 import org.schedoscope.dsl.Structure
 
+/**
+ * FieldSequentialValue creates random data for missing values
+ */
 object FieldSequentialValue {
+
   def get(f: FieldLike[_], i: Int, p: String): Any = {
     if (f.t == manifest[Int])
       i

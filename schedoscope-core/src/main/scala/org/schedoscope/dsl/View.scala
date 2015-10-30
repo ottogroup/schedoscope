@@ -307,16 +307,6 @@ object View {
   }
 
   /**
-   * A case class for keeping any object with its manifest.
-   */
-  case class TypedAny(v: Any, t: Manifest[_])
-
-  /**
-   * Implicit function making a typed any out of any object.
-   */
-  implicit def t[V: Manifest](v: V) = TypedAny(v, manifest[V])
-
-  /**
    * Return all views from a given package.
    */
   def viewsInPackage(packageName: String): Seq[Class[View]] = {

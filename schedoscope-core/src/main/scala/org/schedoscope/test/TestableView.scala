@@ -31,6 +31,11 @@ import org.schedoscope.dsl.transformations.FilesystemTransformation
 
 trait TestableView extends FillableView {}
 
+/**
+ * This trait implements most of the schedoscope test DSL. it extends View
+ * with methods to generate test data, execute local hive and assertions
+ *
+ */
 trait test extends TestableView {
   var rowIdx = 0
 
@@ -46,10 +51,17 @@ trait test extends TestableView {
 
   val deps = ListBuffer[View with rows]()
 
+  /**
+   * Execute the hive query in test on previously specified test fixtures
+   */
   def `then`() {
     `then`(sortedBy = null)
   }
 
+  /**
+   * Execute the hive query in test on previously specified test fixtures.
+   * Sort the table by Field
+   */
   def `then`(sortedBy: FieldLike[_]) {
     deploySchema()
 
@@ -73,11 +85,20 @@ trait test extends TestableView {
     populate(sortedBy)
   }
 
+  /**
+   * Adds dependencies for this view
+   */
   def basedOn(d: View with rows*) {
     d.map(el => el.resources = () => resources())
     deps ++= d
   }
 
+  /**
+   * Get the value of a file in the current row
+   *
+   * @param f FieldLike to select the field (by name)
+   *
+   */
   def v[T](f: FieldLike[T]): T = {
     if (rs(rowIdx).get(f.n).isEmpty)
       None.asInstanceOf[T]
@@ -85,11 +106,21 @@ trait test extends TestableView {
       rs(rowIdx).get(f.n).get.asInstanceOf[T]
   }
 
+  /**
+   * Gett multiple values from a multi-valued field
+   *
+   */
   def vs(f: FieldLike[_]): Array[(FieldLike[_], Any)] = {
     rs(rowIdx).get(f.n).get.asInstanceOf[Array[(FieldLike[_], Any)]]
   }
 
-  def path(f: Any*): Array[(FieldLike[_], Any)] = {
+  /**
+   * Retrieves a Structure from a list of structures. Only one use case is
+   * implemented: if a view has a fieldOf[List[Structure]], an element
+   * of this list can be selected like this path(ListOfStructs, 1)
+   *
+   */
+  def path(f: Any*): Map[String, Any] = {
     var currObj: Any = v(f.head.asInstanceOf[FieldLike[_]])
     f.tail.foreach(p => {
       p match {
@@ -106,13 +137,21 @@ trait test extends TestableView {
         }
       }
     })
-    currObj.asInstanceOf[Array[(FieldLike[_], Any)]]
+    currObj.asInstanceOf[Map[String, Any]]
+
   }
 
+  /**
+   * Configures the associated transformation with the given property (as
+   * key value pair)
+   */
   def withConfiguration(k: String, v: Any) {
     configureTransformation(k, v)
   }
-
+  /**
+   * Configures the associated transformation with the given property (as
+   * multiple key value pairs)
+   */
   def withConfiguration(c: (String, Any)*) {
     c.foreach(e => this.configureTransformation(e._1, e._2))
   }
@@ -131,15 +170,25 @@ trait test extends TestableView {
     })
   }
 
+  /**
+   * Just increments the row index, new values that are injected by set
+   * will be added to the next row
+   */
   def row(fields: Unit*) {
     rowIdx = rowIdx + 1
   }
 
+  /* (non-Javadoc)
+   * @see org.schedoscope.test.rows#rowId()
+  */
   override def rowId(): String = {
     rowIdPattern.format(rowIdx)
   }
 }
 
+/**
+ * A test environment that is executed in a local minicluster
+ */
 trait clustertest extends test {
   val otr = OozieTestResources()
   resources = () => otr

@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.test
+package org.schedoscope.dsl
 
-import org.schedoscope.dsl._
+import scala.language.existentials
+import scala.language.implicitConversions
+ 
+/**
+ * A case class for keeping any object with its manifest.
+ */
+case class TypedAny(v: Any, t: Manifest[_])
 
 /**
- * A testStruct is a Structure that can hold values. Such structs can be tested.
- *
+ * Implicit function making a typed any out of any object.
  */
-trait testStruct extends Structure with values {
-
+object TypedAny {
+  
   /**
-   * Set the fields in the teststruct to the values contained in values
+   * Convert any object into a typed any.
    */
-  def filledBy(values: Map[String, Any]): Unit = {
-    values.foreach { a => setByName(a._1, a._2) }
-  }
+  implicit def typedAny[V: Manifest](v: V) = TypedAny(v, manifest[V])
+
 }

@@ -33,6 +33,9 @@ import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestResources
 import org.schedoscope.dsl.Named
 
+/**
+ * A fillable View is a View with rows of data (a Table).
+ */
 trait FillableView extends View with rows {}
 
 trait rows extends View {
@@ -59,29 +62,53 @@ trait rows extends View {
 
   // overrides (to enable correct table/database names, otherwise $$anonFunc...) 
 
+  /**
+   * Inserts a row to this field. If columns are left out, they are either set to null or filled with random data.
+   *
+   * @param row List of tuples (FieldLike,Any) to specify column (fieldlike) and their value
+   */
   def set(row: (FieldLike[_], Any)*) {
     val m = row.map(f => f._1.n -> f._2).toMap[String, Any]
     rs.append(fields.map(f => { if (m.contains(f.n)) f.n -> m(f.n) else f.n -> nullOrRandom(f, rs.size) }).toMap[String, Any])
   }
 
+  /**
+   * Returns the number of rows in this view
+   */
   def numRows(): Int = {
     rs.size
   }
 
+  /**
+   * Generates a new rowId for the current row.
+   */
   def rowId(): String = {
     rowIdPattern.format(rs.size)
   }
 
+  /**
+   * Fills this view with data from hive, selects only column within s
+   *
+   * @param s FieldLike to specify the column to fill
+   */
   def populate(s: FieldLike[_]) {
     rs.clear()
     rs.appendAll(resources().database.selectForView(this, s))
   }
 
+  /**
+   * Persists this view into local hive
+   *
+   */
   def write() {
     deploySchema()
     writeData()
   }
 
+  /**
+   * Deploys a local oozie workflow for oozie tests
+   *
+   */
   def deployWorkflow(wf: OozieTransformation) = {
     val fs = resources().fileSystem
     val dest = new Path(resources().namenode + new URI(wf.workflowAppPath).getPath)
@@ -111,6 +138,10 @@ trait rows extends View {
     new OozieTransformation(wf.bundle, wf.workflow, dest.toString).configureWith(wf.configuration.toMap)
   }
 
+  /**
+   * Modifies a hivetransformation so that it will find locally deployed UDFS
+   *
+   */
   def deployFunctions(ht: HiveTransformation) = {
     ht.udfs.map(f => {
       val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
@@ -142,6 +173,7 @@ trait rows extends View {
     val out = new OutputStreamWriter(fs.create(partitionFile), "UTF-8")
     out.write(ViewSerDe.serialize(this))
     out.close
+
   }
 
   def withNullFields() {

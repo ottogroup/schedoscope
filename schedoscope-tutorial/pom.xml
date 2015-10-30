@@ -8,12 +8,7 @@
 	<description>An example Schedoscope project using Open Street Map data</description>
 
 	<dependencies>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-nop</artifactId>
-			<version>1.7.5</version>
-			<scope>test</scope>
-		</dependency>
+
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
@@ -78,6 +73,10 @@
 					<artifactId>jackson-mapper-asl</artifactId>
 					<groupId>org.codehaus.jackson</groupId>
 				</exclusion>
+				<exclusion>
+					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -95,8 +94,14 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.7</version>
+			<version>0.1.8</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 
@@ -162,7 +167,7 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<!-- see http://davidb.github.com/scala-maven-plugin -->
+
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
 				<version>3.2.2</version>
@@ -268,10 +273,7 @@
 										<groupId>ch.hsr</groupId>
 										<artifactId>geohash</artifactId>
 									</inclusion>
-									<inclusion>
-										<groupId>org.apache.commons</groupId>
-										<artifactId>commons-lang3</artifactId>
-									</inclusion>
+
 								</inclusions>
 							</assembly>
 						</configuration>

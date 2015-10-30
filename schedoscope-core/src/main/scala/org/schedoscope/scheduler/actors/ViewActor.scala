@@ -146,9 +146,9 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
       }
     }
 
-    case _: TransformationFailure[_]       => toRetrying(retries, materializationMode)
+    case _: TransformationFailure[_] => toRetrying(retries, materializationMode)
 
-    case MaterializeView(mode)             => listenersWaitingForMaterialize.add(sender)
+    case MaterializeView(mode)       => listenersWaitingForMaterialize.add(sender)
   })
 
   // State: retrying

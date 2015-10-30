@@ -21,22 +21,50 @@ import org.schedoscope.dsl.Structure
 
 trait FillableStructure extends Structure with values {}
 
+/**
+ * Extends a structure in so that it actually can hold values. Values are stored in a
+ * HashMap.
+ *
+ */
 trait values extends Structure {
 
   def idPattern = "%02d"
 
   override def namingBase = this.getClass.getSuperclass.getSimpleName()
+
   val fs = HashMap[String, Any]()
+
+  /**
+   * Sets values in a structure by specified by fieldlike
+   */
   def set(value: (FieldLike[_], Any)*) {
     value.foreach(el => fs.put(el._1.n, el._2))
     fields.filter(f => !fs.contains(f.n)).map(f => fs.put(f.n, FieldSequentialValue.get(f, 0, idPattern)))
   }
+
+  /**
+   * Sets values in a structure by specified by name
+   */
+  def setByName(key: String, value: Any) {
+    fs.put(key, value)
+    fields.filter(f => !fs.contains(f.n)).map(f => fs.put(f.n, FieldSequentialValue.get(f, 0, idPattern)))
+  }
+
+  /**
+   * Returns the structure as an array of Tuples (fielname, value)
+   */
   def get() = fs.toArray
 
+  /**
+   * Returns a specific field of this structure
+   */
   def get[T](f: FieldLike[T]): T = {
     fs.get(f.n).get.asInstanceOf[T]
   }
 
+  /**
+   * Returns a specific field of this structure by name
+   */
   def get(s: String): String = {
     fs.get(s).get.toString
   }

@@ -58,6 +58,7 @@ abstract class TestResources {
   val hiveConf: HiveConf
 
   val hiveWarehouseDir: String
+  val hiveScratchDir: String
 
   lazy val connection: Connection = {
     val c = hiveConf
@@ -105,5 +106,5 @@ abstract class TestResources {
 
   val namenode: String
 
-  lazy val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "&", mapKeyTerminator = "=")
+  lazy val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "\u0002", mapKeyTerminator = "\u0003")
 }

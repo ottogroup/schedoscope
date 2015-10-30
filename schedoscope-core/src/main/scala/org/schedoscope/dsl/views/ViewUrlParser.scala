@@ -19,8 +19,8 @@ import java.net.URLDecoder
 import scala.Array.canBuildFrom
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.View.TypedAny
-import org.schedoscope.dsl.View.t
+import org.schedoscope.dsl.TypedAny
+import org.schedoscope.dsl.TypedAny.typedAny
 import org.schedoscope.dsl.views.DateParameterizationUtils.earliestDay;
 import org.schedoscope.dsl.views.DateParameterizationUtils.thisAndPrevDays;
 import org.schedoscope.dsl.views.DateParameterizationUtils.thisAndPrevMonths;
@@ -56,15 +56,15 @@ object ViewUrlParser {
 
   def typeBasicParameter(parameter: String) = parameter match {
     case NullValue()                         => List(null)
-    case BooleanValue(b, _, _)               => List(t(p(b.toBoolean)))
-    case IntValue(d)                         => List(t(p(d.toInt)))
-    case LongValue(d)                        => List(t(p(d.toLong)))
-    case ByteValue(d)                        => List(t(p(d.toByte)))
-    case FloatValue(f)                       => List(t(p(f.toFloat)))
-    case DoubleValue(f)                      => List(t(p(f.toDouble)))
-    case MonthlyParameterizationValue(y, m)  => List(t(p(y)), t(p(m)))
-    case DailyParameterizationValue(y, m, d) => List(t(p(y)), t(p(m)), t(p(d)))
-    case aStringValue                        => List(t(p(unquote(aStringValue))))
+    case BooleanValue(b, _, _)               => List(typedAny(p(b.toBoolean)))
+    case IntValue(d)                         => List(typedAny(p(d.toInt)))
+    case LongValue(d)                        => List(typedAny(p(d.toLong)))
+    case ByteValue(d)                        => List(typedAny(p(d.toByte)))
+    case FloatValue(f)                       => List(typedAny(p(f.toFloat)))
+    case DoubleValue(f)                      => List(typedAny(p(f.toDouble)))
+    case MonthlyParameterizationValue(y, m)  => List(typedAny(p(y)), typedAny(p(m)))
+    case DailyParameterizationValue(y, m, d) => List(typedAny(p(y)), typedAny(p(m)), typedAny(p(d)))
+    case aStringValue                        => List(typedAny(p(unquote(aStringValue))))
   }
 
   def typeMonthlyRangeParameter(earlierYear: String, earlierMonth: String, laterYear: String, laterMonth: String): List[List[TypedAny]] =
@@ -73,7 +73,7 @@ object ViewUrlParser {
     else
       thisAndPrevMonths(p(laterYear), p(laterMonth))
         .takeWhile { case (year, month) => s"${earlierYear}${earlierMonth}" <= s"${year}${month}" }
-        .map { case (year, month) => List(t(p(year)), t(p(month))) }
+        .map { case (year, month) => List(typedAny(p(year)), typedAny(p(month))) }
         .toList
 
   def typeDailyRangeParameter(earlierYear: String, earlierMonth: String, earlierDay: String, laterYear: String, laterMonth: String, laterDay: String): List[List[TypedAny]] =
@@ -82,7 +82,7 @@ object ViewUrlParser {
     else
       thisAndPrevDays(p(laterYear), p(laterMonth), p(laterDay))
         .takeWhile { case (year, month, day) => s"${earlierYear}${earlierMonth}${earlierDay}" <= s"${year}${month}${day}" }
-        .map { case (year, month, day) => List(t(p(year)), t(p(month)), t(p(day))) }
+        .map { case (year, month, day) => List(typedAny(p(year)), typedAny(p(month)), typedAny(p(day))) }
         .toList
 
   def typeEnumerationParameter(enumerationType: String, enumerationValues: String): List[List[TypedAny]] = {

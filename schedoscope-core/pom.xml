@@ -22,7 +22,7 @@
 			<id>cloudera</id>
 			<properties>
 				<hadoop.version>2.6.0-cdh5.4.2.1</hadoop.version>
-				<hive.version>0.13.1-cdh5.4.2.1</hive.version>
+				<hive.version>1.1.0-cdh5.4.2.1</hive.version>
 				<oozie.version>4.0.0-cdh5.4.2.1</oozie.version>
 				<pig.version>0.12.0-cdh5.4.2.1</pig.version>
 			</properties>
@@ -110,6 +110,26 @@
 			<groupId>ascii-table</groupId>
 			<artifactId>ascii-table</artifactId>
 			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json4s</groupId>
+			<artifactId>json4s-jackson_${scala.version}</artifactId>
+			<version>3.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json4s</groupId>
+			<artifactId>json4s-native_${scala.version}</artifactId>
+			<version>3.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.6.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.derby</groupId>
+			<artifactId>derby</artifactId>
+			<version>10.11.1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
@@ -207,6 +227,10 @@
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 				<exclusion>
+					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
+				<exclusion>
 					<artifactId>slf4j-api</artifactId>
 					<groupId>org.slf4j</groupId>
 				</exclusion>
@@ -220,6 +244,10 @@
 				<exclusion>
 					<artifactId>slf4j-log4j12</artifactId>
 					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
 				</exclusion>
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
@@ -240,7 +268,7 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.7</version>
+			<version>0.1.9</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
@@ -248,8 +276,8 @@
 					<groupId>com.sun.jersey</groupId>
 				</exclusion>
 				<exclusion>
-					<artifactId>slf4j-api</artifactId>
-					<groupId>org.slf4j</groupId>
+					<groupId>org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
