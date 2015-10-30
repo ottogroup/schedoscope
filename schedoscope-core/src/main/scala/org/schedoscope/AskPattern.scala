@@ -24,7 +24,6 @@ import akka.actor.ActorRef
 import akka.actor.ActorSelection
 import akka.pattern.Patterns
 import akka.util.Timeout
-import org.schedoscope.scheduler.actors.RootActor
 
 /**
  * Contains commonly codified ask patterns for actors.

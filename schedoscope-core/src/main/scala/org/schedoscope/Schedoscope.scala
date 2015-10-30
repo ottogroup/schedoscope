@@ -16,7 +16,9 @@
 package org.schedoscope
 
 import org.schedoscope.AskPattern.actorSelectionToRef
-import org.schedoscope.scheduler.actors.RootActor
+import org.schedoscope.scheduler.actors.ViewManagerActor
+import org.schedoscope.scheduler.actors.TransformationManagerActor
+import org.schedoscope.scheduler.actors.SchemaManagerActor
 import akka.actor.ActorSystem
 
 /**
@@ -36,37 +38,21 @@ object Schedoscope {
   lazy val settings = Settings()
 
   /**
-   * A reference to the Schedoscope root actor
+   * A reference to the Schedoscope transformation manager logger actor
    */
-  lazy val rootActor = { 
-    val actorRef = actorSystem.actorOf(RootActor.props(settings), "root")
-    //make sure root actor is in state running
-    AskPattern.actorSelectionToRef(actorSystem.actorSelection(actorRef.path))
-    actorRef
-  }
+  lazy val transformationManagerActor = actorSystem.actorOf(TransformationManagerActor.props(settings), "transformations")
+
+  /**
+   * A reference to the Schedoscope schema manager actor
+   */
+  lazy val schemaManagerActor = actorSystem.actorOf(SchemaManagerActor.props(settings), "schema")
 
   /**
    * A reference to the Schedoscope view manager actor
    */
-  lazy val viewManagerActor = actorSelectionToRef(actorSystem.actorSelection(rootActor.path.child("views"))).get
-
-  /**
-   * A reference to the Schedoscope schema actor
-   */
-  lazy val schemaManagerActor = actorSelectionToRef(actorSystem.actorSelection(rootActor.path.child("schema"))).get
-
-  /**
-   * A reference to the Schedoscope partition creator actor
-   */
-  lazy val partitionCreatorActor = actorSelectionToRef(actorSystem.actorSelection(schemaManagerActor.path.child("partition-creator"))).get
-
-  /**
-   * A reference to the Schedoscope metadata logger actor
-   */
-  lazy val metadataLoggerActor = actorSelectionToRef(actorSystem.actorSelection(schemaManagerActor.path.child("metadata-logger"))).get
-
-  /**
-   * A reference to the Schedoscope transformation manager logger actor
-   */
-  lazy val transformationManagerActor = actorSelectionToRef(actorSystem.actorSelection(rootActor.path.child("transformations"))).get
+  lazy val viewManagerActor = actorSystem.actorOf(
+    ViewManagerActor.props(settings,
+      transformationManagerActor,
+      schemaManagerActor,
+      schemaManagerActor), "views")
 }
