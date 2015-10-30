@@ -37,6 +37,8 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREWAREHOUSE
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars.PLAN_SERIALIZATION
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL
 import net.lingala.zip4j.core.ZipFile
+import java.nio.file.attribute.PosixFilePermission
+import java.util.EnumSet
 
 class LocalTestResources extends TestResources {
   setupLocalHadoop()
@@ -53,7 +55,17 @@ class LocalTestResources extends TestResources {
 
     new Path("file:///", d).toString()
   }
-
+   override lazy val hiveScratchDir: String = {
+    val dir = Paths.get("target/hive-scratch").toAbsolutePath()
+    if (Files.exists(dir)) {
+      FileUtils.deleteDirectory(dir.toFile())
+    }
+    val d = Files.createDirectory(dir).toString.replaceAll("\\\\", "/")
+    val perms = EnumSet.allOf(classOf[PosixFilePermission])
+    
+    Files.setPosixFilePermissions(dir,perms)		
+    new Path("file:///", d).toString()
+  }
   override lazy val hiveConf: HiveConf = {
     // we don't directly instantiate a new HiveConf(), because then hive-site.xml
     // would be loaded from classpath too early (we must make sure to write 
@@ -65,17 +77,17 @@ class LocalTestResources extends TestResources {
     conf.put(HIVEAUXJARS.toString, compiledClassesPath())
     conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
     conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
+    conf.put("hive.exec.scratchdir",hiveScratchDir)
     //conf.put(PLAN_SERIALIZATION.toString(), "javaXML")
     //conf.put(HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL.toString(), "60000")
     val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
     Files.write(Paths.get(hiveSiteXmlPath), ("<configuration>\n" + props + "\n</configuration>").getBytes());
-
     new HiveConf()
   }
 
-  override val jdbcClass = "org.apache.hadoop.hive.jdbc.HiveDriver"
+  override val jdbcClass = "org.apache.hive.jdbc.HiveDriver"
 
-  override val jdbcUrl = "jdbc:hive://"
+  override val jdbcUrl = "jdbc:hive2://"
 
   override lazy val remoteTestDirectory: String = new Path("file:///", Paths.get("target").toAbsolutePath().toString).toString
 
@@ -103,15 +115,16 @@ class LocalTestResources extends TestResources {
       new ZipFile(launcherJars.head.replaceAll("file:", "")).extractAll(hadoopHome.toString)
       FileUtil.chmod(hadoopHome.toString, "777", true)
     }
-
+    
     val hadoopLibDir = new File(hadoopHome.toString() + File.separator + "lib")
     if (hadoopLibDir.exists)
       FileUtils.deleteDirectory(hadoopLibDir)
     hadoopLibDir.mkdir
-
+    jarClassPathMembers.filter(_.contains("0.13.1")).foreach(url => println(url.toString()))
     val jarCopyOperations = jarClassPathMembers
       .filter { !_.contains("slf4j-log4j12") }
-      .filter { !_.contains("slf4j-simple") }
+      .filter { !_.contains("slf4j-simple") }      
+      .filter { !_.contains("0.13.1") }
       .foldLeft(List[(File, File)]()) {
         case (jarCopies, jarFile) =>
           ((new File(new URL(jarFile).toURI()),

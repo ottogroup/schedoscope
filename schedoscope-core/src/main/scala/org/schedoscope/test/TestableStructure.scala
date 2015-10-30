@@ -17,8 +17,17 @@ package org.schedoscope.test
 
 import org.schedoscope.dsl._
 
+/**
+ * a testStruct is a Structure that can hold values. Such structs can be tested.
+ * 
+ */
 trait testStruct extends Structure with values {
-  def filledBy(vals: Any) {
-    set(vals.asInstanceOf[Array[(FieldLike[_], Any)]]: _*)
+
+  /**
+   * Set the fields in the teststruct to the values contained in values
+   * @param v
+   */
+  def filledBy(values:Map[String,Any]):Unit= {
+   values.foreach{ a=>setByName(a._1,a._2)}
   }
 }
