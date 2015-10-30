@@ -30,88 +30,76 @@ import org.schedoscope.dsl.FieldLike
 
 import org.schedoscope.dsl.storageformats._
 
-
 /**
- *  Helper for serialization/deserialization of hive data types 
- * 
- * @author dbenz
- *
+ * Helper for serialization/deserialization of hive data types
+ * *
  */
 object ViewSerDe {
-	val logger = LoggerFactory.getLogger("gna")
+  val logger = LoggerFactory.getLogger("gna")
 
-	/**
-	 * escape data before writing it to hive.
-	 * @param v
-	 * @return
-	 */
-	def serialize(v: View with rows): String = {
-		v.storageFormat match {
-		case tf: TextFile => {
-			val fterm = if (tf.fieldTerminator == null) "\t" else tf.fieldTerminator.replaceAll("\\\\t", "\t")
-					val lterm = if (tf.lineTerminator == null) "\n" else tf.lineTerminator.replaceAll("\\\\n", "\n")
-					v.rs.map(row =>
-					v.fields.map(cell => {
-						serializeCell(row(cell.n), false, tf)
-					}).mkString(fterm))
-					.mkString(lterm)
-		}
-		case _ => throw new RuntimeException("Can only serialize views stored as textfile")
-		}
-	}
+  /**
+   * Escape data before writing it to hive.
+   * @param v
+   * @return
+   */
+  def serialize(v: View with rows): String = {
+    v.storageFormat match {
+      case tf: TextFile => {
+        val fterm = if (tf.fieldTerminator == null) "\t" else tf.fieldTerminator.replaceAll("\\\\t", "\t")
+        val lterm = if (tf.lineTerminator == null) "\n" else tf.lineTerminator.replaceAll("\\\\n", "\n")
+        v.rs.map(row =>
+          v.fields.map(cell => {
+            serializeCell(row(cell.n), false, tf)
+          }).mkString(fterm))
+          .mkString(lterm)
+      }
+      case _ => throw new RuntimeException("Can only serialize views stored as textfile")
+    }
+  }
 
-
-
-	/**
-	 *   Converts the string representation of a Field to a Value according to the type information
-	 *   provided by schedoscope
-	 * 
-	 * @param t
-	 * @param v
-	 * @return
-	 */
-	def deserializeField[T](t: Manifest[T], v: String): Any = {  	
-		if (v == null || "null".equals(v)) {
-			return v
-		}
-		if (t == manifest[Int])
-			v.asInstanceOf[String].toInt
-		else if (t == manifest[Long])
-			v.asInstanceOf[String].toLong
-		else if (t == manifest[Byte])
-			v.asInstanceOf[String].toByte
-		else if (t == manifest[Boolean])
-			v.asInstanceOf[String].toBoolean
-		else if (t == manifest[Double])
-			v.asInstanceOf[String].toDouble
-		else if (t == manifest[Float])
-			v.asInstanceOf[String].toFloat
-		else if (t == manifest[String])
-			v.asInstanceOf[String]
-		else if (t == manifest[Date])
-			v.asInstanceOf[String] // TODO: parse date?
-		else if (classOf[Structure].isAssignableFrom(t.runtimeClass)) {
-			// Structures are given like [FieldValue1,FieldValue2,...]
-						// Maps are given las json
-				implicit val format = DefaultFormats
-				val parsed = parse(v.toString())
-			   parsed.extract[Map[String,_]  ]
-			} else if (t.runtimeClass == classOf[List[_]]) {
-				// Lists are given like [el1, el2, ...]
-				implicit val format = DefaultFormats
-				val parsed = parse(v.toString())
-				parsed.extract[List[_]]
-			} else if (t.runtimeClass == classOf[Map[_, _]]) {
-				// Maps are given las json
-				implicit val format = DefaultFormats
-				val parsed = parse(v.toString())
-			   parsed.extract[Map[String,_]]
-			} else throw new RuntimeException("Could not deserialize field of type " + t + " with value " + v)
-	}
-	
-	
-	
-
+  /**
+   * Converts the string representation of a Field to a Value according to the type information
+   * provided by schedoscope
+   *
+   */
+  def deserializeField[T](t: Manifest[T], v: String): Any = {
+    if (v == null || "null".equals(v)) {
+      return v
+    }
+    if (t == manifest[Int])
+      v.asInstanceOf[String].toInt
+    else if (t == manifest[Long])
+      v.asInstanceOf[String].toLong
+    else if (t == manifest[Byte])
+      v.asInstanceOf[String].toByte
+    else if (t == manifest[Boolean])
+      v.asInstanceOf[String].toBoolean
+    else if (t == manifest[Double])
+      v.asInstanceOf[String].toDouble
+    else if (t == manifest[Float])
+      v.asInstanceOf[String].toFloat
+    else if (t == manifest[String])
+      v.asInstanceOf[String]
+    else if (t == manifest[Date])
+      v.asInstanceOf[String] // TODO: parse date?
+    else if (classOf[Structure].isAssignableFrom(t.runtimeClass)) {
+      // Structures are given like [FieldValue1,FieldValue2,...]
+      // Maps are given las json
+      implicit val format = DefaultFormats
+      val parsed = parse(v.toString())
+      parsed.extract[Map[String, _]]
+    } else if (t.runtimeClass == classOf[List[_]]) {
+      // Lists are given like [el1, el2, ...]
+      implicit val format = DefaultFormats
+      val parsed = parse(v.toString())
+      parsed.extract[List[_]]
+    } else if (t.runtimeClass == classOf[Map[_, _]]) {
+      // Maps are given las json
+      implicit val format = DefaultFormats
+      val parsed = parse(v.toString())
+      parsed.extract[Map[String, _]]
+    } else throw new RuntimeException("Could not deserialize field of type " + t + " with value " + v)
+  }
 
   private def serializeCell(c: Any, inList: Boolean, format: TextFile): String = {
     c match {
@@ -123,6 +111,5 @@ object ViewSerDe {
       case _                        => { c.toString }
     }
   }
-
 
 }

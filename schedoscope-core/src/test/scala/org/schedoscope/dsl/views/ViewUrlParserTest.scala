@@ -19,7 +19,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.View.t
+import org.schedoscope.dsl.TypedAny.typedAny
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
 import org.schedoscope.dsl.views.ViewUrlParser.parse
 import org.schedoscope.dsl.views.ViewUrlParser.parseParameters
@@ -60,7 +60,7 @@ class ViewUrlParserTest extends FlatSpec with Matchers {
     val List(ParsedView(env, clazz, arguments)) = parse("dev", "/test.eci.datahub/Product/EC0106/2014/01/12/")
     env shouldBe "dev"
     clazz shouldBe classOf[Product]
-    arguments should be(List(t(p("EC0106")), t(p("2014")), t(p("01")), t(p("12"))))
+    arguments should be(List(typedAny(p("EC0106")), typedAny(p("2014")), typedAny(p("01")), typedAny(p("12"))))
   }
 
   it should "parse multiple views" in {
@@ -68,10 +68,10 @@ class ViewUrlParserTest extends FlatSpec with Matchers {
     parsedViews.size shouldBe 2
     parsedViews(0).env shouldBe "dev"
     parsedViews(0).viewClass shouldBe classOf[Product]
-    parsedViews(0).parameters should be(List(t(p("EC0106")), t(p("2014")), t(p("01")), t(p("12"))))
+    parsedViews(0).parameters should be(List(typedAny(p("EC0106")), typedAny(p("2014")), typedAny(p("01")), typedAny(p("12"))))
     parsedViews(1).env shouldBe "dev"
     parsedViews(1).viewClass shouldBe classOf[Brand]
-    parsedViews(1).parameters should be(List(t(p("EC0106")), t(p("2014")), t(p("01")), t(p("12"))))
+    parsedViews(1).parameters should be(List(typedAny(p("EC0106")), typedAny(p("2014")), typedAny(p("01")), typedAny(p("12"))))
   }
 
   it should "fail when called with not enough arguments" in {
@@ -221,17 +221,17 @@ class ViewUrlParserTest extends FlatSpec with Matchers {
   it should "support non-string enumerations" in {
     val List(List(enumerationValue1), List(enumerationValue2), List(enumerationValue3)) = parseParameters(List("ei(1,2,3)"))
 
-    enumerationValue1 shouldBe t(p(1))
-    enumerationValue2 shouldBe t(p(2))
-    enumerationValue3 shouldBe t(p(3))
+    enumerationValue1 shouldBe typedAny(p(1))
+    enumerationValue2 shouldBe typedAny(p(2))
+    enumerationValue3 shouldBe typedAny(p(3))
   }
 
   it should "support string enumerations" in {
     val List(List(enumerationValue1), List(enumerationValue2), List(enumerationValue3)) = parseParameters(List("e(1,2,3)"))
 
-    enumerationValue1 shouldBe t(p("1"))
-    enumerationValue2 shouldBe t(p("2"))
-    enumerationValue3 shouldBe t(p("3"))
+    enumerationValue1 shouldBe typedAny(p("1"))
+    enumerationValue2 shouldBe typedAny(p("2"))
+    enumerationValue3 shouldBe typedAny(p("3"))
   }
 
   it should "support range enumerations" in {
@@ -261,8 +261,8 @@ class ViewUrlParserTest extends FlatSpec with Matchers {
         dateString should be >= "20131202"
         anotherDateString should be <= "201402"
         anotherDateString should be >= "201312"
-        ecShopCode shouldBe t(p("EC0106"))
-        number should (equal(t(p(9))) or equal(t(p(10))))
+        ecShopCode shouldBe typedAny(p("EC0106"))
+        number should (equal(typedAny(p(9))) or equal(typedAny(p(10))))
       }
     }
   }

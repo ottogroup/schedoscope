@@ -13,7 +13,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
- 
+
 	<profiles>
 		<profile>
 			<activation>
@@ -62,14 +62,9 @@
 			<id>otto-bintray</id>
 			<url>https://dl.bintray.com/ottogroup/maven</url>
 		</repository>
-	</repositories> 
+	</repositories>
 
 	<dependencies>
-			<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-annotations</artifactId>
-			<version>2.6.2</version>
-		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-nop</artifactId>
@@ -115,6 +110,21 @@
 			<groupId>ascii-table</groupId>
 			<artifactId>ascii-table</artifactId>
 			<version>1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json4s</groupId>
+			<artifactId>json4s-jackson_${scala.version}</artifactId>
+			<version>3.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.json4s</groupId>
+			<artifactId>json4s-native_${scala.version}</artifactId>
+			<version>3.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.6.2</version>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
@@ -230,10 +240,10 @@
 					<artifactId>slf4j-log4j12</artifactId>
 					<groupId>org.slf4j</groupId>
 				</exclusion>
-		    	<exclusion>
-			      <groupId> org.cloudera.logredactor</groupId>
-		          <artifactId>logredactor</artifactId>
-		        </exclusion>
+				<exclusion>
+					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
 					<groupId>org.slf4j</groupId>
@@ -261,19 +271,10 @@
 					<groupId>com.sun.jersey</groupId>
 				</exclusion>
 				<exclusion>
-					<groupId> org.cloudera.logredactor</groupId>
-				    <artifactId>logredactor</artifactId></exclusion>				
-				</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.json4s</groupId>
-			<artifactId>json4s-jackson_${scala.version}</artifactId>
-			<version>3.3.0</version>
-		</dependency>
-		<dependency>
-  				<groupId>org.json4s</groupId>
-  			<artifactId>json4s-native_${scala.version}</artifactId>
- 			 <version>3.3.0</version>
+					<groupId>org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>hadoop-launcher</groupId>
@@ -300,6 +301,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+	
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
 		<testSourceDirectory>src/test/scala</testSourceDirectory>

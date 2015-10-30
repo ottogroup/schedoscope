@@ -59,52 +59,5 @@ abstract class Structure extends StructureDsl with Named {
       .filter { _.invoke(this) eq f }
       .map { _.getName() }
       .headOption
-      
-       
-
-}
-object Structure {
-   case class TypedAny(v: Any, t: Manifest[_])
-     implicit def t[V: Manifest](v: V) = TypedAny(v, manifest[V])
-  def newStructure[V <: Structure: Manifest](structureClass: Class[V], parameterValues: TypedAny*): V = {
-    val viewCompanionObjectClass = Class.forName(structureClass.getName() + "$")
-    viewCompanionObjectClass.getConstructors().foreach( con=> println(con.toGenericString()))
-    val viewCompanionConstructor = viewCompanionObjectClass.getDeclaredConstructor()
-    viewCompanionConstructor.setAccessible(true)
-    val viewCompanionObject = viewCompanionConstructor.newInstance()
-
-    val applyMethods = viewCompanionObjectClass.getDeclaredMethods()
-      .filter { _.getName() == "apply" }
-
-    val viewConstructor = applyMethods
-      .filter { apply =>
-        val parameterTypes = apply.getGenericParameterTypes().distinct
-        !((parameterTypes.length == 1) && (parameterTypes.head == classOf[Object]))
-      }
-      .head
-
-    val parametersToPass = ListBuffer[Any]()
-    val parameterValuesPassed = ListBuffer[TypedAny]()
-    parameterValuesPassed ++= parameterValues
-
-
-    for (constructorParameterType <- viewConstructor.getParameterTypes()) {
-      var passedValueForParameter: TypedAny = null
-
-      for (parameterValue <- parameterValuesPassed; if passedValueForParameter == null) {
-        if (constructorParameterType.isAssignableFrom(parameterValue.t.erasure)) {
-          passedValueForParameter = parameterValue
-        }
-      }
-
-      if (passedValueForParameter != null) {
-        parameterValuesPassed -= passedValueForParameter
-      }
-
-      parametersToPass += passedValueForParameter.v
-    }
-
-   viewConstructor.invoke(viewCompanionObject).asInstanceOf[V]
-  }
 
 }

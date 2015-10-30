@@ -52,15 +52,15 @@ trait test extends TestableView {
   val deps = ListBuffer[View with rows]()
 
   /**
-   *  execute the hive query in test on previously specified test fixtures
+   * Execute the hive query in test on previously specified test fixtures
    */
   def `then`() {
     `then`(sortedBy = null)
   }
 
   /**
-   *  execute the hive query in test on previously specified test fixtures.
-   *  Sort the table by Field
+   * Execute the hive query in test on previously specified test fixtures.
+   * Sort the table by Field
    */
   def `then`(sortedBy: FieldLike[_]) {
     deploySchema()
@@ -86,8 +86,7 @@ trait test extends TestableView {
   }
 
   /**
-   * adds dependencies for this view
-   * @param d
+   * Adds dependencies for this view
    */
   def basedOn(d: View with rows*) {
     d.map(el => el.resources = () => resources())
@@ -95,9 +94,10 @@ trait test extends TestableView {
   }
 
   /**
-   *  get the value of a file in the current row
+   * Get the value of a file in the current row
+   *
    * @param f FieldLike to select the field (by name)
-   * @return
+   *
    */
   def v[T](f: FieldLike[T]): T = {
     if (rs(rowIdx).get(f.n).isEmpty)
@@ -107,10 +107,8 @@ trait test extends TestableView {
   }
 
   /**
-   * get multiple values from a multi-valued field
+   * Gett multiple values from a multi-valued field
    *
-   * @param f
-   * @return
    */
   def vs(f: FieldLike[_]): Array[(FieldLike[_], Any)] = {
     rs(rowIdx).get(f.n).get.asInstanceOf[Array[(FieldLike[_], Any)]]
@@ -121,8 +119,6 @@ trait test extends TestableView {
    * implemented: if a view has a fieldOf[List[Structure]], an element
    * of this list can be selected like this path(ListOfStructs, 1)
    *
-   * @param f
-   * @return
    */
   def path(f: Any*): Map[String, Any] = {
     var currObj: Any = v(f.head.asInstanceOf[FieldLike[_]])
@@ -147,18 +143,14 @@ trait test extends TestableView {
 
   /**
    * Configures the associated transformation with the given property (as
-   *  key value pair)
-   * @param k
-   * @param v
+   * key value pair)
    */
   def withConfiguration(k: String, v: Any) {
     configureTransformation(k, v)
   }
   /**
    * Configures the associated transformation with the given property (as
-   *  multiple key value pairs)
-   * @param k
-   * @param v
+   * multiple key value pairs)
    */
   def withConfiguration(c: (String, Any)*) {
     c.foreach(e => this.configureTransformation(e._1, e._2))
@@ -179,9 +171,8 @@ trait test extends TestableView {
   }
 
   /**
-   *  just increments the row index, new values that are injected by set
-   *  wil be added to the next row
-   * @param fields is ignored (and should be removed) TODO
+   * Just increments the row index, new values that are injected by set
+   * will be added to the next row
    */
   def row(fields: Unit*) {
     rowIdx = rowIdx + 1
@@ -196,8 +187,7 @@ trait test extends TestableView {
 }
 
 /**
- * a test environment that is executed in a lookal minicluster
- *
+ * A test environment that is executed in a local minicluster
  */
 trait clustertest extends test {
   val otr = OozieTestResources()

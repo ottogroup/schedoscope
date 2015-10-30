@@ -19,7 +19,7 @@ import java.util.Date
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.View.t
+import org.schedoscope.dsl.TypedAny.typedAny
 import org.schedoscope.schema.ddl.HiveQl.ddl
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.views.DailyParameterization

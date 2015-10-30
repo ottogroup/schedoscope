@@ -55,15 +55,15 @@ class LocalTestResources extends TestResources {
 
     new Path("file:///", d).toString()
   }
-   override lazy val hiveScratchDir: String = {
+  override lazy val hiveScratchDir: String = {
     val dir = Paths.get("target/hive-scratch").toAbsolutePath()
     if (Files.exists(dir)) {
       FileUtils.deleteDirectory(dir.toFile())
     }
     val d = Files.createDirectory(dir).toString.replaceAll("\\\\", "/")
     val perms = EnumSet.allOf(classOf[PosixFilePermission])
-    
-    Files.setPosixFilePermissions(dir,perms)		
+
+    Files.setPosixFilePermissions(dir, perms)
     new Path("file:///", d).toString()
   }
   override lazy val hiveConf: HiveConf = {
@@ -77,7 +77,7 @@ class LocalTestResources extends TestResources {
     conf.put(HIVEAUXJARS.toString, compiledClassesPath())
     conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
     conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
-    conf.put("hive.exec.scratchdir",hiveScratchDir)
+    conf.put("hive.exec.scratchdir", hiveScratchDir)
     //conf.put(PLAN_SERIALIZATION.toString(), "javaXML")
     //conf.put(HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL.toString(), "60000")
     val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
@@ -115,15 +115,15 @@ class LocalTestResources extends TestResources {
       new ZipFile(launcherJars.head.replaceAll("file:", "")).extractAll(hadoopHome.toString)
       FileUtil.chmod(hadoopHome.toString, "777", true)
     }
-    
+
     val hadoopLibDir = new File(hadoopHome.toString() + File.separator + "lib")
     if (hadoopLibDir.exists)
       FileUtils.deleteDirectory(hadoopLibDir)
     hadoopLibDir.mkdir
-    jarClassPathMembers.filter(_.contains("0.13.1")).foreach(url => println(url.toString()))
+    
     val jarCopyOperations = jarClassPathMembers
       .filter { !_.contains("slf4j-log4j12") }
-      .filter { !_.contains("slf4j-simple") }      
+      .filter { !_.contains("slf4j-simple") }
       .filter { !_.contains("0.13.1") }
       .foldLeft(List[(File, File)]()) {
         case (jarCopies, jarFile) =>

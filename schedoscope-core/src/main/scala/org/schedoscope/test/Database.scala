@@ -26,18 +26,8 @@ import scala.collection.mutable.HashMap
 import org.schedoscope.dsl.FieldLike
 import java.sql.DriverManager
 
-/**
- * 
- *
- */
-class Database(conn: Connection, url: String) { 
- 
-  /**
-   * @param v
-   * @param q
-   * @param o
-   * @return
-   */
+class Database(conn: Connection, url: String) {
+
   def selectForViewByQuery(v: View, q: String, o: FieldLike[_]): List[Map[String, Any]] = {
     val res = ListBuffer[Map[String, Any]]()
     val rs = conn.createStatement().executeQuery(q)
@@ -55,11 +45,6 @@ class Database(conn: Connection, url: String) {
       res.toList
   }
 
-  /**
-   * @param v
-   * @param o
-   * @return
-   */
   def selectForView(v: View, o: FieldLike[_]): List[Map[String, Any]] = {
     selectForViewByQuery(v, HiveQl.selectAll(v), o)
   }

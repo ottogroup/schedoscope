@@ -28,7 +28,7 @@ case class RunStatus(description: String, targetView: String, started: String, c
 /**
  * Interface defining the functionality of the Schedoscope service. The services allows one to inject
  * scheduling commands into the Schedoscope actor system and obtain scheduling states or results from it.
- * 
+ *
  * As most scheduling commands are performed asynchronously, the interface uses a SchedoscopeCommand case
  * class for representing an issued command along with SchedoscopeCommandStatus to represent the state of
  * the command.
@@ -40,15 +40,15 @@ trait SchedoscopeService {
   /**
    * Materialize view(s). The views that are being materialized are selected either by
    * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
-   * 
+   *
    * Additionally, a MaterializeViewMode can be passed.
    */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SchedoscopeCommandStatus
 
-   /**
+  /**
    * Invalidate view(s). The views that are being invalidated are selected either by
    * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
-   * 
+   *
    * Additionally, it can also be specified whether children are to be invalidated as well.
    */
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SchedoscopeCommandStatus
@@ -66,9 +66,9 @@ trait SchedoscopeService {
   /**
    * Return view(s) and their state(s). The views for which states are being returned are selected either by
    * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
-   * 
+   *
    * Additionally, it can also be specified whether view states should recursively carry the states of their dependendencies.
-   * 
+   *
    * Finally, there is the option to just return an overview count of views in states instead of returning the states themselves.
    */
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]): ViewStatusList

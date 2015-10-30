@@ -31,39 +31,32 @@ trait values extends Structure {
   def idPattern = "%02d"
 
   override def namingBase = this.getClass.getSuperclass.getSimpleName()
-   
+
   val fs = HashMap[String, Any]()
-  
-  /** sets values in a structure by specified by fieldlike
-   * @param value
+
+  /**
+   * Sets values in a structure by specified by fieldlike
    */
   def set(value: (FieldLike[_], Any)*) {
     value.foreach(el => fs.put(el._1.n, el._2))
     fields.filter(f => !fs.contains(f.n)).map(f => fs.put(f.n, FieldSequentialValue.get(f, 0, idPattern)))
-  } 
-  
+  }
+
   /**
-   * sets values in a structure by specified by name
-   * @param key
-   * @param value
+   * Sets values in a structure by specified by name
    */
-  def setByName(key:String,value:Any) {
-    fs.put(key,value)
+  def setByName(key: String, value: Any) {
+    fs.put(key, value)
     fields.filter(f => !fs.contains(f.n)).map(f => fs.put(f.n, FieldSequentialValue.get(f, 0, idPattern)))
   }
-  
+
   /**
-   * returns the structure as an array of Tuples (fielname, value)
-   * 
-   * @return
+   * Returns the structure as an array of Tuples (fielname, value)
    */
   def get() = fs.toArray
 
   /**
    * Returns a specific field of this structure
-   * 
-   * @param f
-   * @return
    */
   def get[T](f: FieldLike[T]): T = {
     fs.get(f.n).get.asInstanceOf[T]
@@ -71,8 +64,6 @@ trait values extends Structure {
 
   /**
    * Returns a specific field of this structure by name
-   * @param s
-   * @return
    */
   def get(s: String): String = {
     fs.get(s).get.toString
