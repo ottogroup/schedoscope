@@ -8,7 +8,7 @@
 	<description>An example Schedoscope project using Open Street Map data</description>
 
 	<dependencies>
-		
+
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
@@ -73,7 +73,7 @@
 					<artifactId>jackson-mapper-asl</artifactId>
 					<groupId>org.codehaus.jackson</groupId>
 				</exclusion>
-								<exclusion>
+				<exclusion>
 					<groupId> org.cloudera.logredactor</groupId>
 					<artifactId>logredactor</artifactId>
 				</exclusion>
@@ -167,7 +167,7 @@
 				</configuration>
 			</plugin>
 			<plugin>
-			
+
 				<groupId>net.alchim31.maven</groupId>
 				<artifactId>scala-maven-plugin</artifactId>
 				<version>3.2.2</version>
@@ -197,7 +197,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin> 
+			</plugin>
 			<plugin>
 				<groupId>org.scalatest</groupId>
 				<artifactId>scalatest-maven-plugin</artifactId>
@@ -273,7 +273,7 @@
 										<groupId>ch.hsr</groupId>
 										<artifactId>geohash</artifactId>
 									</inclusion>
-									
+
 								</inclusions>
 							</assembly>
 						</configuration>
