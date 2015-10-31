@@ -106,5 +106,5 @@ abstract class TestResources {
 
   val namenode: String
 
-  lazy val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "\u0002", mapKeyTerminator = "\u0003")
+  lazy val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "\\002", mapKeyTerminator = "\\003")
 }
