@@ -87,7 +87,7 @@ object HiveQl {
 ${if (fieldTerminator != null) s"""\tFIELDS TERMINATED BY "${fieldTerminator}"""" else ""}
 ${if (lineTerminator != null) s"""\tLINES TERMINATED BY "${lineTerminator}"""" else ""}
 ${if (collectionItemTerminator != null) s"""\tCOLLECTION ITEMS TERMINATED BY "${collectionItemTerminator}""""" else ""}
-${if (mapKeyTerminator != null) s"""\tMAP KEYS TERMINATED BY '${mapKeyTerminator}"""" else ""}
+${if (mapKeyTerminator != null) s"""\tMAP KEYS TERMINATED BY "${mapKeyTerminator}"""" else ""}
 \tSTORED AS TEXTFILE"""
     case e: ExternalStorageFormat => "STORED BY 'org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler'"
     case _                        => "STORED AS TEXTFILE"
