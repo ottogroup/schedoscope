@@ -84,10 +84,10 @@ object HiveQl {
 \t\tOUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'"""
 
     case TextFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) => s"""${if ((fieldTerminator != null) || (collectionItemTerminator != null) || (mapKeyTerminator != null) || (lineTerminator != null)) "ROW FORMAT DELIMITED" else ""}
-${if (fieldTerminator != null) s"\tFIELDS TERMINATED BY '${fieldTerminator}'" else ""}
-${if (lineTerminator != null) s"\tLINES TERMINATED BY '${lineTerminator}'" else ""}
-${if (collectionItemTerminator != null) s"\tCOLLECTION ITEMS TERMINATED BY '${collectionItemTerminator}'" else ""}
-${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'" else ""}
+${if (fieldTerminator != null) s"""\tFIELDS TERMINATED BY "${fieldTerminator}"""" else ""}
+${if (lineTerminator != null) s"""\tLINES TERMINATED BY "${lineTerminator}"""" else ""}
+${if (collectionItemTerminator != null) s"""\tCOLLECTION ITEMS TERMINATED BY "${collectionItemTerminator}""""" else ""}
+${if (mapKeyTerminator != null) s"""\tMAP KEYS TERMINATED BY '${mapKeyTerminator}"""" else ""}
 \tSTORED AS TEXTFILE"""
     case e: ExternalStorageFormat => "STORED BY 'org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler'"
     case _                        => "STORED AS TEXTFILE"
