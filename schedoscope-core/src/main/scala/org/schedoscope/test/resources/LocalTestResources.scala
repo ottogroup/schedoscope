@@ -55,17 +55,25 @@ class LocalTestResources extends TestResources {
 
     new Path("file:///", d).toString()
   }
+  
   override lazy val hiveScratchDir: String = {
     val dir = Paths.get("target/hive-scratch").toAbsolutePath()
+    
     if (Files.exists(dir)) {
       FileUtils.deleteDirectory(dir.toFile())
     }
-    val d = Files.createDirectory(dir).toString.replaceAll("\\\\", "/")
-    val perms = EnumSet.allOf(classOf[PosixFilePermission])
+    
+    val dirUrl = "file:///" + dir.toString.replaceAll("\\\\", "/")
 
-    Files.setPosixFilePermissions(dir, perms)
-    new Path("file:///", d).toString()
+    val f = new File(dirUrl)
+    f.mkdir()
+    f.setExecutable(true, false)
+    f.setWritable(true, false)
+    f.setReadable(true, false)
+
+    new Path(dirUrl).toString()
   }
+  
   override lazy val hiveConf: HiveConf = {
     // we don't directly instantiate a new HiveConf(), because then hive-site.xml
     // would be loaded from classpath too early (we must make sure to write 
@@ -120,7 +128,7 @@ class LocalTestResources extends TestResources {
     if (hadoopLibDir.exists)
       FileUtils.deleteDirectory(hadoopLibDir)
     hadoopLibDir.mkdir
-    
+
     val jarCopyOperations = jarClassPathMembers
       .filter { !_.contains("slf4j-log4j12") }
       .filter { !_.contains("slf4j-simple") }
