@@ -23,6 +23,10 @@ Follow the Open Street Map tutorial to install, compile, and run Schedoscope in 
 
 - [Open Street Map Tutorial](https://github.com/ottogroup/schedoscope/wiki/Open%20Street%20Map%20Tutorial)
 
+Take a look at the View DSL Primer to get more information about the capabilities of the Schedoscope DSL:
+
+- [Schedoscope View DSL Primer](https://github.com/ottogroup/schedoscope/wiki/Schedoscope%20View%20DSL%20Primer)
+
 More documentation can be found here:
 * [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
 
