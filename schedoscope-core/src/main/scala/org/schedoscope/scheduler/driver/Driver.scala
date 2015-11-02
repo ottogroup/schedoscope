@@ -25,7 +25,6 @@ import org.joda.time.LocalDateTime
 import org.schedoscope.DriverSettings
 import org.schedoscope.dsl.transformations.Transformation
 import net.lingala.zip4j.core.ZipFile
-import org.schedoscope.Settings
 import org.apache.commons.io.FileUtils
 import org.schedoscope.Schedoscope
 
@@ -99,17 +98,17 @@ class DoNothingCompletionHandler[T <: Transformation] extends DriverRunCompletio
  *
  * Generally, there are two classes of implementations of this trait depending on the API
  * supporting a transformation. For blocking APIs, driver run states are implemented using futures.
- * For non-blocking APIs, driver run states can encapsulated whatever handler mechanism is supported
+ * For non-blocking APIs, driver run states can encapsulate whatever handler mechanism is supported
  * by the API.
  *
  * The present trait provides default implementations for blocking APIs. To support one, the methods
  * transformationName, run, and driverRunCompletionHandlerClassNames need to be overridden
- * (see for example @see HiveDriver). Run needs to return an appropriate Future producing a DriverRunState or
- * throwing an exception.
+ * (for example @see HiveDriver). Run needs to return an appropriate DriverRunHandle with a 
+ * future as its stateHandle which produces a DriverRunState or throws an exception.
  *
  * For non-blocking APIs, one needs to override transformationName, killRun, getDriverRunState, run,
  * runAndWait, driverRunCompletionHandlerClassNames for the appropriate handle type of the API. As
- * an example @see OozieDriver)
+ * an example @see OozieDriver.
  *
  */
 trait Driver[T <: Transformation] {
@@ -125,7 +124,7 @@ trait Driver[T <: Transformation] {
   /**
    * A driver can override this to have a fixed timeout
    */
-  def runTimeOut: Duration = Settings().getDriverSettings(transformationName).timeout
+  def runTimeOut: Duration = Schedoscope.settings.getDriverSettings(transformationName).timeout
 
   /**
    * Kill the given driver run, default: do nothing
