@@ -43,11 +43,13 @@ Should any of those assumptions not hold in your context, you should probably lo
 
 Schedoscope was conceived at the Business Intelligence department of [Otto Group](http://ottogroup.com/en/die-otto-group.php)
 
-## Core Team
-* [Utz Westermann](https://github.com/utzwestermann): Maintainer, DSL concept and implementation 
-* [Hans-Peter Zorn](https://github.com/hpzorn): Scheduling architecture and implementation, Morphline support
-* [Dominik Benz](https://github.com/dominikbenz): Test framework, deployment system, transformations, command shell
-* [Annika Leveringhaus](https://github.com/aleveringhaus): Tutorial
+## Contributions
+
+The following people have contributed to the various parts of Schedoscope so far: 
+
+[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Dominik Benz](https://github.com/dominikbenz), [Annika Leveringhaus](https://github.com/aleveringhaus)
+
+We would love to get contributions from you as well. We haven't got a formalized submission process yet. If you have an idea for a contribution or even coded one already, get in touch with Utz or just send us your pull request. We will work it out from there.
 
 Please help making Schedoscope better!
 
