@@ -73,7 +73,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     }
 
     case v: View => {
-      sender ! initializeViewActors(List(v), false).headOption.getOrElse(List())
+      sender ! initializeViewActors(List(v), false).headOption.get
     }
   })
 
