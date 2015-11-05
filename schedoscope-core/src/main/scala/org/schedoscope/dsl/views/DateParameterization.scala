@@ -20,9 +20,10 @@ import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.Settings
 import scala.collection.mutable.ListBuffer
+import org.schedoscope.Schedoscope
 
 object DateParameterizationUtils {
-  def earliestDay = Settings().earliestDay
+  def earliestDay = Schedoscope.settings.earliestDay
 
   def parametersToDay(year: Parameter[String], month: Parameter[String], day: Parameter[String]) = {
     val date = Calendar.getInstance()
@@ -48,7 +49,7 @@ object DateParameterizationUtils {
     (year, month, day)
   }
 
-  def today = dayToParameters(Settings().latestDay)
+  def today = dayToParameters(Schedoscope.settings.latestDay)
 
   def prevDay(thisDay: Calendar): Option[Calendar] = {
     if (thisDay.after(earliestDay)) {
