@@ -55,6 +55,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 11/09/2015 - Release 0.3.1
+
+We have released Version 0.3.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+Fields can now be given comments as well: `val id = fieldOf[String]("An ID.")` 
+
 ###### 11/06/2015 - Release 0.3.0
 
 We have released Version 0.3.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
