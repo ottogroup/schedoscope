@@ -29,13 +29,13 @@ import org.apache.hadoop.fs.Path
 import schedoscope.example.osm.mapreduce.GeohashMapper
 
 case class NodesWithGeohash() extends View {
-  val id = fieldOf[Long]
-  val version = fieldOf[Int]
-  val userId = fieldOf[Int]
-  val tstamp = fieldOf[String]
-  val longitude = fieldOf[Double]
-  val latitude = fieldOf[Double]
-  val geohash = fieldOf[String]
+  val id = fieldOf[Long]("The node ID")
+  val version = fieldOf[Int]("OSM version - ignored")
+  val userId = fieldOf[Int]("OSM user ID - ignored")
+  val tstamp = fieldOf[String]("Timestamp of node creation")
+  val longitude = fieldOf[Double]("Longitude of the node")
+  val latitude = fieldOf[Double]("Latitude of the node")
+  val geohash = fieldOf[String]("A geoencoded area string")
 
   val stageNodes = dependsOn { () => schedoscope.example.osm.stage.Nodes() }
 

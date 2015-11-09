@@ -220,15 +220,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     () => dsf().head
   }
 
-  var comment: Option[String] = None
-
-  /**
-   * Provide a comment describing the view's purpose.
-   */
-  def comment(aComment: String) {
-    comment = Some(aComment)
-  }
-
   var storageFormat: StorageFormat = TextFile()
   var additionalStoragePathPrefix: Option[String] = None
   var additionalStoragePathSuffix: Option[String] = None

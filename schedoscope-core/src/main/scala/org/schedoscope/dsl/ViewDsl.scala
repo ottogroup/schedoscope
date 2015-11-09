@@ -42,11 +42,6 @@ trait ViewDsl extends StructureDsl {
   def transformVia(ft: () => Transformation): Unit
 
   /**
-   * Provide a comment describing the view's purpose.
-   */
-  def comment(aComment: String): Unit
-
-  /**
    * Specifiy the storage format of the view, with TextFile being the default. One can optionally specify storage path prefixes and suffixes.
    */
   def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null): Unit
@@ -59,7 +54,7 @@ trait ViewDsl extends StructureDsl {
   /**
    * Specify that a field or parameter is privacy sensity, which causes its hashing when exported via morphline transformations.
    */
-  def privacySensitive[P <: PrivacySensitive](ps: P): P = {
+  def privacySensitive[P <: FieldLike[_]](ps: P): P = {
     ps.isPrivacySensitive = true
     ps
   }

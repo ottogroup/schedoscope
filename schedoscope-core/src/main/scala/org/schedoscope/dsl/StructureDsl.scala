@@ -19,30 +19,38 @@ package org.schedoscope.dsl
  * A trait summarizing the DSL constructs available for the definition of structures and
  * - implicitly - views.
  */
-trait StructureDsl {
+trait StructureDsl extends Named with Commentable {
   protected def registerField(f: Field[_]): Unit
 
   /**
-   * Define a field with a given order weigth and name override.
+   * Define a field with default order weight, no comment, and no name override
    */
-  def fieldOf[T: Manifest](orderWeight: Int, nameOverride: String) = {
-    val f = Field[T](orderWeight, nameOverride)
+  def fieldOf[T: Manifest]: Field[T] = fieldOf[T](100, null, null)
+
+  /**
+   * Define a field with a specific order weight, no comment, and no name override
+   */
+  def fieldOf[T: Manifest](orderWeight: Int): Field[T] = fieldOf[T](orderWeight, null, null)
+
+  /**
+   * Define a field with default order weight, a comment, and no name override
+   */
+  def fieldOf[T: Manifest](comment: String): Field[T] = fieldOf[T](100, comment, null)
+
+  /**
+   * Define a field with default order weight, a comment, and a name override
+   */
+  def fieldOf[T: Manifest](comment: String, overrideName: String): Field[T] = fieldOf[T](100, comment, overrideName)
+
+  /**
+   * Define a field with a given order weight, comment, and name override.
+   */
+  def fieldOf[T: Manifest](orderWeight: Int = 100, comment: String = null, overrideName: String = null) = {
+    val f = Field[T](orderWeight, if (overrideName != null) Some(overrideName) else None)
+
+    f.comment = if (comment != null) Some(comment) else None
+
     registerField(f)
     f
   }
-
-  /**
-   * Define a field of a given type with a given order weight.
-   */
-  def fieldOf[T: Manifest](orderWeight: Int): Field[T] = fieldOf[T](orderWeight, null)
-
-  /**
-   * Define a field  of a given type with a name override but default ordering
-   */
-  def fieldOf[T: Manifest](nameOverride: String): Field[T] = fieldOf[T](100, nameOverride)
-
-  /**
-   * Define a field of a given type with default ordering weight and naming.
-   */
-  def fieldOf[T: Manifest]: Field[T] = fieldOf[T](100, null)
 }

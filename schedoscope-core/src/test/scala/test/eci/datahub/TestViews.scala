@@ -41,8 +41,8 @@ case class Brand(
 
   comment("In this example, brands are per shop but time invariant")
 
-  val ecShopCode = fieldOf[String]
-  val name = fieldOf[String]
+  val ecShopCode = fieldOf[String](99, "Shop code, but field pushed to the right by weight.")
+  val name = fieldOf[String]("The brand's name, but field name overriden", "brand_name")
 
   asTableSuffix(ecNr)
 }

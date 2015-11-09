@@ -22,12 +22,12 @@ import org.schedoscope.dsl.transformations.CopyFrom
 case class Nodes() extends View {
 
   // Declare each column of the TSV-file
-  val id = fieldOf[Long]
-  val version = fieldOf[Int]
-  val userId = fieldOf[Int]
-  val tstamp = fieldOf[String]
-  val longitude = fieldOf[Double]
-  val latitude = fieldOf[Double]
+  val id = fieldOf[Long]("The ID of the node")
+  val version = fieldOf[Int]("OSM version - ignored")
+  val userId = fieldOf[Int]("OSM version - ignored")
+  val tstamp = fieldOf[String]("Timestamp of node creation")
+  val longitude = fieldOf[Double]("Longitude of the node")
+  val latitude = fieldOf[Double]("Latitude of the node")
 
   transformVia(() => CopyFrom("classpath://osm-data/nodes.txt", this))
 

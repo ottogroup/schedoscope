@@ -20,7 +20,7 @@ import scala.collection.mutable.ListBuffer
 import java.util.concurrent.ConcurrentHashMap
 import java.lang.reflect.Method
 
-abstract class Structure extends StructureDsl with Named {
+abstract class Structure extends StructureDsl {
   override def namingBase = this.getClass().getSimpleName()
 
   private val fieldOrder = ListBuffer[Field[_]]()

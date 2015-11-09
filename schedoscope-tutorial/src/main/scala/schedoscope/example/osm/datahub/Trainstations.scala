@@ -30,8 +30,8 @@ case class Trainstations() extends View
     with Id
     with JobMetadata {
 
-  val stationName = fieldOf[String]
-  val area = fieldOf[String]
+  val stationName = fieldOf[String]("The name of the trainstation")
+  val area = fieldOf[String]("A geoencoded area string")
 
   val nodes = dependsOn(() =>
     for ((year, month) <- allMonths())

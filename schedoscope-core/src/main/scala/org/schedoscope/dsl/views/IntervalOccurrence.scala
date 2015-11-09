@@ -17,7 +17,10 @@ package org.schedoscope.dsl.views
 
 import org.schedoscope.dsl.ViewDsl
 
+/**
+ * A standard trait for views with interval semantics.
+ */
 trait IntervalOccurrence extends ViewDsl {
-  val occurredFrom = fieldOf[String](1000)
-  val occurredUntil = fieldOf[String](999)
+  val occurredFrom = fieldOf[String](1000, "Start of the interval of the occurrence in question")
+  val occurredUntil = fieldOf[String](999, "End of the interval of the occurrence in question")
 }

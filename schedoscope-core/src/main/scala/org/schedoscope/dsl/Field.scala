@@ -13,13 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.dsl.views
-
-import org.schedoscope.dsl.ViewDsl
+package org.schedoscope.dsl
 
 /**
- * A standard trait for views with point occurrence semantics.
+ * A field-like capturing view fields. Fields have an orderWeight determining their ordering and can override the
+ * namingBase inherited from FieldLike.
  */
-trait PointOccurrence extends ViewDsl {
-  val occurredAt = fieldOf[String](1000, "Timestamp of the occurrence in question.")
+case class Field[T: Manifest](orderWeight: Long, nameOverride: Option[String]) extends FieldLike[T] with Commentable {
+  override def namingBase = nameOverride.getOrElse(super.namingBase)
+}
+
+/**
+ * Helpers for fields-
+ */
+object Field {
+
+  /**
+   * Used to assign fields values in the test framework.
+   */
+  def v[T](f: Field[T], v: T) = (f, v)
 }

@@ -38,12 +38,12 @@ case class Nodes(
     with PointOccurrence
     with JobMetadata {
 
-  val version = fieldOf[Int]
-  val userId = fieldOf[Int]
-  val longitude = fieldOf[Double]
-  val latitude = fieldOf[Double]
-  val geohash = fieldOf[String]
-  val tags = fieldOf[Map[String, String]]
+  val version = fieldOf[Int]("OSM version - ignored")
+  val userId = fieldOf[Int]("OSM user ID - ignored")
+  val longitude = fieldOf[Double]("Longitude of the node")
+  val latitude = fieldOf[Double]("Latitude of the node")
+  val geohash = fieldOf[String]("A geoencoded area string")
+  val tags = fieldOf[Map[String, String]]("A map of tags")
 
   dependsOn(() => NodesWithGeohash())
   dependsOn(() => NodeTags())

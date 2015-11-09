@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.dsl.views
-
-import org.schedoscope.dsl.ViewDsl
+package org.schedoscope.dsl
 
 /**
- * A standard trait for views with point occurrence semantics.
+ * Something that can carry optional comments.
  */
-trait PointOccurrence extends ViewDsl {
-  val occurredAt = fieldOf[String](1000, "Timestamp of the occurrence in question.")
+trait Commentable {
+  /**
+   * An optional comment about the named entity.
+   */
+  var comment: Option[String] = None
+
+  /**
+   * Provide a comment describing the named entity's purpose.
+   */
+  def comment(aComment: String) {
+    comment = Some(aComment)
+  }
 }
