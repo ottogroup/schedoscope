@@ -17,6 +17,9 @@ package org.schedoscope.dsl.views
 
 import org.schedoscope.dsl.ViewDsl
 
+/**
+ * A trait defining a standard ID field, with maximum weigth so that the ID is the first field of the view.
+ */
 trait Id extends ViewDsl {
-  val id = fieldOf[String](Int.MaxValue)
+  val id = fieldOf[String](Int.MaxValue, "The ID of the entity represented by the view")
 }

@@ -31,9 +31,9 @@ case class Shops() extends View
     with Id
     with JobMetadata {
 
-  val shopName = fieldOf[String]
-  val shopType = fieldOf[String]
-  val area = fieldOf[String]
+  val shopName = fieldOf[String]("The name of the shop")
+  val shopType = fieldOf[String]("The type of shop as given by OSM")
+  val area = fieldOf[String]("A geoencoded area string")
 
   dependsOn { () =>
     for ((year, month) <- allMonths())

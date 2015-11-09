@@ -214,9 +214,31 @@ class DslTest extends FlatSpec with Matchers {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
     productBrand.fields.map { _.n } should contain inOrder ("occurred_at", "product_id", "brand_name", "created_at", "created_by")
-    productBrand.brand().fields.map { _.n } should contain inOrder ("id", "name", "created_at", "created_by")
+    productBrand.brand().fields.map { _.n } should contain inOrder ("id", "brand_name", "ec_shop_code", "created_at", "created_by")
     productBrand.product().fields.map { _.n } should contain inOrder ("id", "occurred_at", "name", "brand_id", "created_at", "created_by")
+  }
 
+  it should "be able to have comments" in {
+    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+
+    productBrand.brand().ecShopCode.comment shouldBe Some("Shop code, but field pushed to the right by weight.")
+    productBrand.brand().name.comment shouldBe Some("The brand's name, but field name overriden")
+
+    productBrand.ecShopCode.comment shouldBe None
+  }
+
+  it should "be able to override weights" in {
+    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+
+    productBrand.brand().ecShopCode.orderWeight shouldBe 99
+    productBrand.brand().name.orderWeight shouldBe 100
+  }
+
+  it should "be able to override names" in {
+    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+
+    productBrand.brand().ecShopCode.n shouldBe "ec_shop_code"
+    productBrand.brand().name.n shouldBe "brand_name"
   }
 
   "A view" should "be transformable into DDL" in {

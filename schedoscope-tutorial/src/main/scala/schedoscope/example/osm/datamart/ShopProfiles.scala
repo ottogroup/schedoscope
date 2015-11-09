@@ -31,12 +31,12 @@ case class ShopProfiles() extends View
     with Id
     with JobMetadata {
 
-  val shopName = fieldOf[String]
-  val shopType = fieldOf[String]
-  val area = fieldOf[String]
-  val cntCompetitors = fieldOf[Int]
-  val cntRestaurants = fieldOf[Int]
-  val cntTrainstations = fieldOf[Int]
+  val shopName = fieldOf[String]("The name of the profiled shop")
+  val shopType = fieldOf[String]("The type of shop, as given by OSM")
+  val area = fieldOf[String]("A geoencoded area string")
+  val cntCompetitors = fieldOf[Int]("The number of competitors in the area (shops of the same type)")
+  val cntRestaurants = fieldOf[Int]("The number of restaurants in the area")
+  val cntTrainstations = fieldOf[Int]("The number of trainstations in the area")
 
   dependsOn { () => Shops() }
   dependsOn { () => Restaurants() }

@@ -18,7 +18,10 @@ package org.schedoscope.dsl.views
 import java.util.Date
 import org.schedoscope.dsl.ViewDsl
 
+/**
+ * A standard trait for basic job metadata for views.
+ */
 trait JobMetadata extends ViewDsl {
-  val createdAt = fieldOf[Date](1)
-  val createdBy = fieldOf[String](0)
+  val createdAt = fieldOf[Date](1, "Timestamp of the job run that created the record")
+  val createdBy = fieldOf[String](0, "Identifier of the job run creating the record")
 }

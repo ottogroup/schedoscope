@@ -22,9 +22,9 @@ import org.schedoscope.dsl.storageformats.TextFile
 case class NodeTags() extends View {
 
   // Declare each column of the TSV-file
-  val nodeId = fieldOf[Long]
-  val key = fieldOf[String]
-  val value = fieldOf[String]
+  val nodeId = fieldOf[Long]("The ID of the node the tag refers to")
+  val key = fieldOf[String]("The key of the tag")
+  val value = fieldOf[String]("The value of the tag")
 
   transformVia(() => CopyFrom("classpath://osm-data/node_tags.txt", this))
 
