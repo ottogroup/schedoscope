@@ -55,7 +55,7 @@ Please help making Schedoscope better!
 
 ## News
 
-###### 11/10/2015 - Release 0.3.1
+###### 11/10/2015 - Release 0.3.2
 
 We have released Version 0.3.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
 
