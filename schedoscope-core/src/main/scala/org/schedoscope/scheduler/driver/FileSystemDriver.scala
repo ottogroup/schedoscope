@@ -47,6 +47,9 @@ import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.dsl.transformations.StoreFrom
 import org.schedoscope.dsl.transformations.MkDir
 import org.schedoscope.scheduler.driver.FileSystemDriver._
+import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
+import org.apache.hadoop.fs.FSDataOutputStream
 
 /**
  * Driver for executing file system transformations
@@ -199,19 +202,24 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
   /**
    * Create a file
    */
-  def touch(path: String): DriverRunState[FilesystemTransformation] =
+  def touch(path: String): DriverRunState[FilesystemTransformation] = {
+    var out: FSDataOutputStream  = null
     try {
       val filesys = fileSystem(path, conf)
 
       val toCreate = new Path(path)
 
-      filesys.create(new Path(path))
-
+      out = filesys.create(new Path(path))
+      
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while touching ${path}", i)
       case t: Throwable   => throw DriverException(s"Runtime exception while touching ${path}", t)
+    } finally {
+      if (out != null)
+        out.close
     }
+  }
 
   /**
    * Create a directory path
@@ -283,8 +291,9 @@ object FileSystemDriver {
       case _: Throwable => new File(pathOrUri).toURI()
     }
 
-  def fileSystem(path: String, conf: Configuration) = FileSystem.get(uri(path), conf)
 
+  def fileSystem(path: String, conf: Configuration) = FileSystem.get(uri(path), conf)
+    
   def apply(ds: DriverSettings) = {
     new FileSystemDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation, Schedoscope.settings.hadoopConf)
   }
