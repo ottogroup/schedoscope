@@ -8,7 +8,6 @@
 	<description>An example Schedoscope project using Open Street Map data</description>
 
 	<dependencies>
-
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
@@ -94,11 +93,15 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.8</version>
+			<version>0.1.9</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
-					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>jersey-server</artifactId>
+					<groupId>com.sun.jersey</groupId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.cloudera.logredactor</groupId>
 					<artifactId>logredactor</artifactId>
 				</exclusion>
 			</exclusions>
