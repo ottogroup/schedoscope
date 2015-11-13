@@ -6,8 +6,6 @@
 		</encoder>
 	</appender>
 
-	<logger name="com.ottogroup" level="WARN" />
-
 	<logger name="org.schedoscope" level="WARN" />
 
 	<root level="OFF">
