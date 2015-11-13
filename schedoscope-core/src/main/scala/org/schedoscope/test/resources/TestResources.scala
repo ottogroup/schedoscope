@@ -54,7 +54,7 @@ class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompl
   }
 }
 
-abstract class TestResources {
+abstract class TestResources {  
   val hiveConf: HiveConf
 
   val hiveWarehouseDir: String

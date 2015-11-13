@@ -1,0 +1,14 @@
+<configuration>
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>[%-4level] [%date{ISO8601}] [%thread %X{sourceThread}]
+				[%X{akkaSource}] [%logger{36}] - %msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="org.schedoscope" level="WARN" />
+
+	<root level="OFF">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>

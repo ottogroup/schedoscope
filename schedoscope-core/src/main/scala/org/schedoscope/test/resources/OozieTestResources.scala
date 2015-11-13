@@ -19,6 +19,10 @@ import minioozie.MiniOozie
 import org.schedoscope.scheduler.driver.OozieDriver
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.fs.FileSystem
+import java.util.logging.LogManager
+import java.util.logging.Logger
+import java.util.logging.Level
+import org.slf4j.bridge.SLF4JBridgeHandler
 
 class OozieTestResources extends TestResources {
   val mo = new MiniOozie()
@@ -28,7 +32,7 @@ class OozieTestResources extends TestResources {
   override lazy val hiveConf: HiveConf = mo.getHiveServer2Conf
 
   override lazy val hiveWarehouseDir: String = mo.getFsTestCaseDir.toString
-  
+
   override lazy val hiveScratchDir: String = mo.getScratchDir().toString()
 
   override lazy val jdbcUrl = mo.getHiveServer2JdbcURL
@@ -43,6 +47,12 @@ class OozieTestResources extends TestResources {
 }
 
 object OozieTestResources {
+  
+  LogManager.getLogManager().reset()
+  SLF4JBridgeHandler.removeHandlersForRootLogger()
+  SLF4JBridgeHandler.install()
+  Logger.getLogger("global").setLevel(Level.FINEST)
+
   lazy val oozieTestResources = new OozieTestResources()
 
   def apply() = oozieTestResources

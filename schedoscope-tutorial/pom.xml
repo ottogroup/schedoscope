@@ -3,16 +3,15 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-tutorial</artifactId>
-	<version>0.3.3-SNAPSHOT</version>
+	<version>0.3.4-SNAPSHOT</version>
 	<name>Schedoscope Tutorial</name>
 	<description>An example Schedoscope project using Open Street Map data</description>
 
 	<dependencies>
-
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
-			<version>0.3.3-SNAPSHOT</version>
+			<version>0.3.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>schedoscope</groupId>
@@ -94,11 +93,15 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.8</version>
+			<version>0.1.9</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>
-					<groupId> org.cloudera.logredactor</groupId>
+					<artifactId>jersey-server</artifactId>
+					<groupId>com.sun.jersey</groupId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.cloudera.logredactor</groupId>
 					<artifactId>logredactor</artifactId>
 				</exclusion>
 			</exclusions>

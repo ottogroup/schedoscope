@@ -28,14 +28,7 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.FileUtil
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEAUXJARS
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars.LOCALMODEAUTO
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars.LOCALMODEMAXBYTES
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars.LOCALMODEMAXINPUTFILES
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORECONNECTURLKEY
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTOREWAREHOUSE
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars.PLAN_SERIALIZATION
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars._
 import net.lingala.zip4j.core.ZipFile
 import java.nio.file.attribute.PosixFilePermission
 import java.util.EnumSet
@@ -85,7 +78,8 @@ class LocalTestResources extends TestResources {
     conf.put(HIVEAUXJARS.toString, compiledClassesPath())
     conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
     conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
-    conf.put("hive.exec.scratchdir", hiveScratchDir)
+    conf.put(SCRATCHDIR.toString, hiveScratchDir)
+    conf.put(SUBMITLOCALTASKVIACHILD.toString, "false")
     //conf.put(PLAN_SERIALIZATION.toString(), "javaXML")
     //conf.put(HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL.toString(), "60000")
     val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
