@@ -220,6 +220,18 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     () => dsf().head
   }
 
+  /**
+   * The rank of the view. Views without dependencies are of Rank 0, all others are one rank higher than the
+   * of biggest rank of their dependencies
+   */
+  lazy val rank: Int = {
+    val ds = dependencies
+    if (ds.isEmpty)
+      0
+    else
+      ds.map { _.rank }.max + 1
+  }
+
   var storageFormat: StorageFormat = TextFile()
   var additionalStoragePathPrefix: Option[String] = None
   var additionalStoragePathSuffix: Option[String] = None

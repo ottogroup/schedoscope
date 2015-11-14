@@ -138,6 +138,11 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   lazy val viewAugmentor = Class.forName(parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
 
   /**
+   * The configured number of Akka dispatchers used for view actors
+   */
+  lazy val numberOfViewsDispatchers = config.getInt("akka.actor.number-of-views-dispatchers")
+  
+  /**
    * The subconfigurations of the configured transformation types.
    */
   lazy val availableTransformations = config.getObject("schedoscope.transformations")
