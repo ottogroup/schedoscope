@@ -22,31 +22,59 @@ import org.schedoscope.dsl.View
  * Base class for transformation types
  */
 abstract class Transformation {
+  /**
+   * View to transformation belongs to
+   */
   var view: Option[View] = None
 
+  def getView() = if (view.isDefined) view.get.urlPath else "no-view"
+
+  /**
+   * Name of the transformation type.
+   */
+  def name: String
+
+  /**
+   * Configuration properties of transformation. Semantics depend on the transformation type. Usually stuff like query placeholders.
+   */
+  val configuration = HashMap[String, Any]()
+
+  /**
+   * Fluent interface to attach a configuration to a transformation.
+   */
   def configureWith(c: Map[String, Any]) = {
     configuration ++= c
     this
   }
 
-  val configuration = HashMap[String, Any]()
+  /**
+   * List of file resource paths that influence the transformation version checksum of the transformation type.
+   */
+  def fileResourcesToChecksum = List[String]()
 
-  def versionDigest() = Version.digest(resourceHashes)
+  /**
+   * Other checksum influencing strings.
+   */
+  def stringsToChecksum = List[String]()
 
-  def resources() = List[String]()
+  /**
+   * Transformation version checksum. Per default an MD5 hash of the file resource hashes.
+   */
+  def versionChecksum = Version.digest((Version.resourceHashes(fileResourcesToChecksum) ++ stringsToChecksum): _*)
 
-  def resourceHashes = Version.resourceHashes(resources())
-
+  /**
+   * Attach a transformation to a view.
+   */
   def forView(v: View) = {
     view = Some(v)
     this
   }
 
+  /**
+   * A textual format for outputting a transformation
+   */
   var description = this.toString
 
-  def getView() = if (view.isDefined) view.get.urlPath else "no-view"
-
-  def name: String
 }
 
 /**

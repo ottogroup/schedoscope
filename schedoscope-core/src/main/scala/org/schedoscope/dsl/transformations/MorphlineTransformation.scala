@@ -36,12 +36,7 @@ case class MorphlineTransformation(definition: String = "",
                                    anonymize: Seq[Named] = List(),
                                    fields: Seq[Named] = List(),
                                    fieldMapping: Map[FieldLike[_], FieldLike[_]] = Map()) extends ExternalTransformation {
-  def name() = "morphline"
+  override def name = "morphline"
 
-  override def versionDigest = Version.digest(resourceHashes :+ definition)
-
-  override def resources() = {
-    List()
-  }
-
+  override def stringsToChecksum = List(definition)
 }

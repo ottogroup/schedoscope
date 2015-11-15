@@ -64,12 +64,12 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def setTransformationVersion(view: View) = {
     if (view.isExternal) {
-      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionChecksum)
 
     } else if (view.isPartitioned()) {
-      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionChecksum)
     } else {
-      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionDigest)
+      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionChecksum)
     }
   }
 
@@ -145,7 +145,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
-      partitions.map(p => (partitionToView(tablePrototype, p) -> (Version.default, 0.toLong))).toMap
+      partitions.map(p => (partitionToView(tablePrototype, p) -> (Version.defaultDigest, 0.toLong))).toMap
     }
   } catch {
     case are: AlreadyExistsException => throw are
@@ -173,15 +173,15 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     if (tablePrototype.isExternal) {
       val dbMetadata = metastoreClient.getDatabase(tablePrototype.dbName).getParameters
       Map((tablePrototype,
-        (dbMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.default),
+        (dbMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.defaultDigest),
           dbMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
     } else if (tablePrototype.isPartitioned) {
       val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
-      existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.default), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)) }.toMap
+      existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.defaultDigest), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)) }.toMap
     } else {
       val tableMetadata = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getParameters
       Map((tablePrototype,
-        (tableMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.default),
+        (tableMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.defaultDigest),
           tableMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
     }
 

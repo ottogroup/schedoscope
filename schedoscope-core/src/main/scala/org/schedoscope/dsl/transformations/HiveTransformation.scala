@@ -35,11 +35,10 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
 
   override def name = "hive"
 
-  override def versionDigest = Version.digest(resourceHashes :+ sql)
-
-  override def resources() = {
+  override def fileResourcesToChecksum =
     udfs.flatMap(udf => udf.getResourceUris.map(uri => uri.getUri))
-  }
+    
+  override def stringsToChecksum = List(sql)
 
   description = "[..]" + StringUtils.abbreviate(sql.replaceAll("\n", "").replaceAll("\t", "").replaceAll(".*SELECT", "SELECT").replaceAll("\\s+", " "), 60)
 }

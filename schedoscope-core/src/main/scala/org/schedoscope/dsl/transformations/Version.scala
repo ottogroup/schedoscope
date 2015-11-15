@@ -18,33 +18,36 @@ package org.schedoscope.dsl.transformations
 import java.security.MessageDigest
 import scala.Array.canBuildFrom
 import org.schedoscope.scheduler.driver.FileSystemDriver
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.storageformats._
+import scala.collection.mutable.HashMap
 
 object Version {
   def md5 = MessageDigest.getInstance("MD5")
 
-  val fsd = FileSystemDriver(Settings().getDriverSettings("filesystem"))
+  val fsd = FileSystemDriver(Schedoscope.settings.getDriverSettings("filesystem"))
 
-  val default = "0"
+  val resourceHashCache = new HashMap[List[String], List[String]]()
+  
+  def resourceHashes(resources: List[String]): List[String] = synchronized {
+    resourceHashCache.getOrElseUpdate(resources, fsd.fileChecksums(resources, true))
+  }
 
-  def digest(s: String): String = digest(List(s))
+  val defaultDigest = "0"
 
-  def resourceHashes(resources: List[String]): List[String] =
-    fsd.fileChecksums(resources, true)
-
-  def digest(strings: List[String]): String = if (strings.isEmpty)
-    default
-  else
-    md5.digest(strings.sorted.mkString.toCharArray().map(_.toByte)).map("%02X" format _).mkString
+  def digest(stringsToDigest: String*): String =
+    if (stringsToDigest.isEmpty)
+      defaultDigest
+    else
+      md5.digest(stringsToDigest.sorted.mkString.toCharArray().map(_.toByte)).map("%02X" format _).mkString
 
   object SchemaVersion {
-    def checksumProperty() = "schema.checksum"
+    val checksumProperty = "schema.checksum"
   }
 
   object TransformationVersion {
-    def checksumProperty() = "transformation.checksum"
-    def timestampProperty() = "transformation.timestamp"
+    val checksumProperty = "transformation.checksum"
+    val timestampProperty = "transformation.timestamp"
   }
 }
 
