@@ -24,7 +24,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import com.openpojo.reflection.impl.PojoClassFactory
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.View._
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
@@ -67,6 +67,13 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    */
   var env = "dev"
 
+  /**
+   * Pluggable builder for the Akka view dispatcher number to use for this view. The number
+   * must range from 0 to Schedoscope.settings.numberOfViewsDispatchers
+   */
+  var viewDispatcherNumberBuilder = () => rank % Schedoscope.settings.numberOfViewsDispatchers
+  def viewDispatcherNumber = viewDispatcherNumberBuilder()
+  
   /**
    * Pluggable builder function that returns the name of the module the view belongs to.
    * The default implemementation returns the view's package in database-friendly lower-case underscore format, replacing all . with _.

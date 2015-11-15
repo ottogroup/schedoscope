@@ -425,7 +425,5 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 }
 
 object ViewActor {
-  def dispatcherForView(v: View, numberOfViewsDispatchers: Int) = s"akka.actor.views-dispatcher-${v.rank % numberOfViewsDispatchers}"
-
-  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l, viewDispatcher: String = null): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher(dispatcherForView(view, settings.numberOfViewsDispatchers))
+  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l, viewDispatcher: String = null): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher(s"akka.actor.views-dispatcher-${view.viewDispatcherNumber}")
 }
