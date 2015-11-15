@@ -48,7 +48,7 @@ abstract class Transformation {
   }
 
   /**
-   * List of file resource paths that influence the transformation version checksum of the transformation type.
+   * List of file resource paths that influence the transformation checksum of the transformation type.
    */
   def fileResourcesToChecksum = List[String]()
 
@@ -58,9 +58,9 @@ abstract class Transformation {
   def stringsToChecksum = List[String]()
 
   /**
-   * Transformation version checksum. Per default an MD5 hash of the file resource hashes.
+   * Transformation checksum. Per default an MD5 hash of the file resource hashes.
    */
-  def versionChecksum = Version.digest((Version.resourceHashes(fileResourcesToChecksum) ++ stringsToChecksum): _*)
+  lazy val checksum = Checksum.digest((Checksum.resourceHashes(fileResourcesToChecksum) ++ stringsToChecksum): _*)
 
   /**
    * Attach a transformation to a view.

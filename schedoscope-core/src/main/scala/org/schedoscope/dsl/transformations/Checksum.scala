@@ -22,13 +22,13 @@ import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.storageformats._
 import scala.collection.mutable.HashMap
 
-object Version {
+object Checksum {
   def md5 = MessageDigest.getInstance("MD5")
 
   val fsd = FileSystemDriver(Schedoscope.settings.getDriverSettings("filesystem"))
 
   val resourceHashCache = new HashMap[List[String], List[String]]()
-  
+
   def resourceHashes(resources: List[String]): List[String] = synchronized {
     resourceHashCache.getOrElseUpdate(resources, fsd.fileChecksums(resources, true))
   }
@@ -41,11 +41,11 @@ object Version {
     else
       md5.digest(stringsToDigest.sorted.mkString.toCharArray().map(_.toByte)).map("%02X" format _).mkString
 
-  object SchemaVersion {
+  object SchemaChecksum {
     val checksumProperty = "schema.checksum"
   }
 
-  object TransformationVersion {
+  object TransformationChecksum {
     val checksumProperty = "transformation.checksum"
     val timestampProperty = "transformation.timestamp"
   }

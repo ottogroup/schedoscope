@@ -216,7 +216,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
           log.debug(s"Initiating transformation because of timestamp difference: ${lastTransformationTimestamp} <= ${dependenciesFreshness}")
 
         if (hasVersionMismatch(view))
-          log.debug(s"Initiating transformation because of transformation checksum difference: ${view.transformation().versionChecksum} != ${versionChecksum}")
+          log.debug(s"Initiating transformation because of transformation checksum difference: ${view.transformation().checksum} != ${versionChecksum}")
 
         toTransformingOrMaterialized(0, mode)
       } else {
@@ -392,7 +392,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
   }
 
-  def hasVersionMismatch(view: View) = view.transformation().versionChecksum != versionChecksum
+  def hasVersionMismatch(view: View) = view.transformation().checksum != versionChecksum
 
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()
@@ -408,7 +408,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   }
 
   def setVersion(view: View) {
-    versionChecksum = view.transformation().versionChecksum
+    versionChecksum = view.transformation().checksum
     metadataLoggerActor ! SetViewVersion(view)
   }
 

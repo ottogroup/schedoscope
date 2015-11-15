@@ -34,12 +34,12 @@ import org.apache.hadoop.hive.metastore.api.Partition
 import org.joda.time.DateTime
 import org.schedoscope.Settings
 import org.schedoscope.schema.ddl.HiveQl
-import org.schedoscope.dsl.transformations.Version
+import org.schedoscope.dsl.transformations.Checksum
 import org.schedoscope.dsl.View
 import org.slf4j.LoggerFactory
 import org.apache.tools.ant.taskdefs.Sleep
 import org.schedoscope.dsl.transformations.ExternalTransformation
-import org.schedoscope.dsl.transformations.Version
+import org.schedoscope.dsl.transformations.Checksum
 
 /**
  * Interface to the Hive metastore. Used by partition creator actor and metadata logger actor.
@@ -64,23 +64,23 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   def setTransformationVersion(view: View) = {
     if (view.isExternal) {
-      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionChecksum)
+      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
 
     } else if (view.isPartitioned()) {
-      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.checksumProperty, view.transformation().versionChecksum)
+      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
     } else {
-      setTableProperty(view.dbName, view.n, Version.TransformationVersion.checksumProperty, view.transformation().versionChecksum)
+      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
     }
   }
 
   def setTransformationTimestamp(view: View, timestamp: Long) = {
     if (view.isExternal) {
-      setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
+      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
 
     } else if (view.isPartitioned()) {
-      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Version.TransformationVersion.timestampProperty, timestamp.toString)
+      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
     } else {
-      setTableProperty(view.dbName, view.n, Version.TransformationVersion.timestampProperty, timestamp.toString)
+      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
     }
   }
 
@@ -106,11 +106,11 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     stmt.close()
 
-    setTableProperty(view.dbName, view.n, Version.SchemaVersion.checksumProperty, Version.digest(ddl))
+    setTableProperty(view.dbName, view.n, Checksum.SchemaChecksum.checksumProperty, Checksum.digest(ddl))
   }
 
   def schemaExists(view: View): Boolean = {
-    val d = Version.digest(HiveQl.ddl(view))
+    val d = Checksum.digest(HiveQl.ddl(view))
 
     log.info(s"Checking whether table exists: view ${view.dbName}.${view.n} -- Checksum: ${d}")
 
@@ -126,10 +126,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       val table = metastoreClient.getTable(view.dbName, view.n)
 
       val props = table.getParameters()
-      if (!props.containsKey(Version.SchemaVersion.checksumProperty)) {
+      if (!props.containsKey(Checksum.SchemaChecksum.checksumProperty)) {
         log.info(s"Table for view exists ${view.dbName}.${view.n} but no checksum property defined")
         false
-      } else if (d == props.get(Version.SchemaVersion.checksumProperty).toString()) {
+      } else if (d == props.get(Checksum.SchemaChecksum.checksumProperty).toString()) {
         log.info(s"Table for view exists ${view.dbName}.${view.n} and checksum ${d} matches")
         existingSchemas += d
         true
@@ -145,7 +145,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
-      partitions.map(p => (partitionToView(tablePrototype, p) -> (Version.defaultDigest, 0.toLong))).toMap
+      partitions.map(p => (partitionToView(tablePrototype, p) -> (Checksum.defaultDigest, 0.toLong))).toMap
     }
   } catch {
     case are: AlreadyExistsException => throw are
@@ -173,16 +173,16 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     if (tablePrototype.isExternal) {
       val dbMetadata = metastoreClient.getDatabase(tablePrototype.dbName).getParameters
       Map((tablePrototype,
-        (dbMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.defaultDigest),
-          dbMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
+        (dbMetadata.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest),
+          dbMetadata.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)))
     } else if (tablePrototype.isPartitioned) {
       val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
-      existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Version.TransformationVersion.checksumProperty, Version.defaultDigest), p.getParameters.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)) }.toMap
+      existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest), p.getParameters.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)) }.toMap
     } else {
       val tableMetadata = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getParameters
       Map((tablePrototype,
-        (tableMetadata.getOrElse(Version.TransformationVersion.checksumProperty, Version.defaultDigest),
-          tableMetadata.getOrElse(Version.TransformationVersion.timestampProperty, "0").toLong)))
+        (tableMetadata.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest),
+          tableMetadata.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)))
     }
 
   }
