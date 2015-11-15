@@ -247,30 +247,18 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       case t: Throwable   => throw DriverException(s"Runtime exception while moving from ${from} to ${to}", t)
     }
 
-  def fileChecksums(paths: List[String], recursive: Boolean): List[String] =
-    paths.flatMap(path => {
-      if (fileSystem(path).isFile(new Path(path)))
-        List(fileChecksum(path))
+  def fileChecksums(paths: List[String], recursive: Boolean): List[String] = {
+    paths.flatMap(p => {
+      val fs = fileSystem(p)
+      val path = new Path(p)
+      if (fs.isFile(path))
+        List(FileSystemDriver.fileChecksum(fs, path, p))
       else if (recursive)
-        fileChecksums(listFiles(path + "/*").map(f => f.getPath.toString()).toList, recursive)
+        fileChecksums(listFiles(p + "/*").map(f => f.getPath.toString()).toList, recursive)
       else
         List()
     }).sorted
-
-  def fileChecksum(path: String) =
-    if (path == null)
-      "null-checksum"
-    else if (path.endsWith(".jar"))
-      path
-    else try {
-      val cs = fileSystem(path).getFileChecksum(new Path(path)).toString()
-      if (cs == null)
-        path
-      else
-        cs
-    } catch {
-      case _: Throwable => path
-    }
+  }
 
   def listFiles(path: String): Array[FileStatus] = {
     val files = fileSystem(path).globStatus(new Path(path))
@@ -307,4 +295,25 @@ object FileSystemDriver {
   def fileSystem(path: String, hadoopConfiguration: Configuration) = FileSystem.get(uri(path), hadoopConfiguration)
 
   def defaultFileSystem(hadoopConfiguration: Configuration) = FileSystem.get(hadoopConfiguration)
+
+  private val checksumCache = new HashMap[String, String]()
+
+  private def calcChecksum(fs: FileSystem, path: Path) =
+    if (path == null)
+      "null-checksum"
+    else if (path.toString.endsWith(".jar"))
+      path.toString
+    else try {
+      val cs = fs.getFileChecksum(path).toString()
+      if (cs == null)
+        path.toString()
+      else
+        cs
+    } catch {
+      case _: Throwable => path.toString()
+    }
+
+  def fileChecksum(fs: FileSystem, path: Path, pathString: String) = synchronized {
+    checksumCache.getOrElseUpdate(pathString, calcChecksum(fs, path))
+  }
 }
