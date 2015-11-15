@@ -19,7 +19,6 @@ import java.lang.Math.max
 import java.security.PrivilegedAction
 import java.util.Date
 import scala.concurrent.duration.Duration
-import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.transformations.NoOp
@@ -40,6 +39,8 @@ import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
 import org.schedoscope.dsl.transformations.NoOp
 import akka.actor.ActorSelection.toScala
+import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
+import java.net.URI
 
 class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
@@ -349,7 +350,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     val size = settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
       def run() = {
         val path = new Path(view.fullPath)
-        val files = FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter() {
+        val files = hdfs.listStatus(path, new PathFilter() {
           def accept(p: Path): Boolean = !p.getName().startsWith("_")
 
         })
@@ -375,12 +376,14 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     self ! MaterializeView()
   }
 
+  val hdfs = defaultFileSystem(settings.hadoopConf)
+  
   def successFlagExists(view: View): Boolean = {
     settings.userGroupInformation.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
         val pathWithSuccessFlag = new Path(view.fullPath + "/_SUCCESS")
 
-        FileSystem.get(settings.hadoopConf).exists(pathWithSuccessFlag)
+        hdfs.exists(pathWithSuccessFlag)
       }
     })
   }

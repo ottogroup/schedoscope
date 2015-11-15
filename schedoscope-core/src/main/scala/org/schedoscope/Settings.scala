@@ -28,7 +28,6 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.hadoop.yarn.conf.YarnConfiguration
-import org.schedoscope.scheduler.driver.FileSystemDriver.fileSystem
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.views.DateParameterizationUtils
@@ -39,6 +38,7 @@ import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
 import org.schedoscope.scheduler.driver.Driver
+import org.schedoscope.scheduler.driver.FileSystemDriver.fileSystem
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 
 /**
@@ -141,7 +141,7 @@ class SchedoscopeSettings(val config: Config) extends Extension {
    * The configured number of Akka dispatchers used for view actors
    */
   lazy val numberOfViewsDispatchers = config.getInt("akka.actor.number-of-views-dispatchers")
-  
+
   /**
    * The subconfigurations of the configured transformation types.
    */
@@ -150,7 +150,17 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   /**
    * A suitable hadoop config to use
    */
-  lazy val hadoopConf = new Configuration(true)
+  lazy val hadoopConf = {
+    val conf = new Configuration(true)
+    if (conf.get("fs.defaultFS") == null)
+      conf.set("fs.defaultFS", config.getString("schedoscope.hadoop.nameNode"))
+    conf
+  }
+
+  /**
+   * The configured HDFS namenode. The Hadoop default takes precendence.
+   */
+  lazy val nameNode = hadoopConf.get("fs.defaultFS")
 
   /**
    * Configuration trigger whether versioning transformation is enabled.
@@ -158,7 +168,7 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   lazy val transformationVersioning = config.getBoolean("schedoscope.versioning.transformations")
 
   /**
-   * Return the resource manager or job tracker equivalent
+   * Return the resource manager or job tracker equivalent. The Hadoop configuration takes precendence.
    */
   lazy val jobTrackerOrResourceManager = {
     val yarnConf = new YarnConfiguration(hadoopConf)
@@ -167,14 +177,6 @@ class SchedoscopeSettings(val config: Config) extends Extension {
     else
       yarnConf.get("yarn.resourcemanager.address")
   }
-
-  /**
-   * The configured HDFS namenode. The Hadoop default takes precendence.
-   */
-  lazy val nameNode = if (hadoopConf.get("fs.defaultFS") == null)
-    config.getString("schedoscope.hadoop.nameNode")
-  else
-    hadoopConf.get("fs.defaultFS")
 
   /**
    * The configured timeout for filesystem operations.
@@ -224,7 +226,7 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   /**
    * A user group information object ready to use for kerberized interactions.
    */
-  lazy val userGroupInformation = {
+  def userGroupInformation = {
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()
     ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
@@ -305,7 +307,7 @@ class DriverSettings(val config: Config, val name: String) {
   /**
    * Location where to put transformation-driver related resources into HDFS upon Schedoscope start.
    */
-  lazy val location = Settings().nameNode + config.getString("location") + Settings().env + "/"
+  lazy val location = Schedoscope.settings.nameNode + config.getString("location") + Settings().env + "/"
 
   /**
    * Comma-separated list of additional jars to put in HDFS location upon Schedoscope start.
@@ -342,7 +344,7 @@ class DriverSettings(val config: Config, val name: String) {
       .filter(!_.trim.equals(""))
       .map(p => { if (!p.endsWith("/")) s"file://${p.trim}/*" else s"file://${p.trim}*" })
       .flatMap(dir => {
-        fileSystem(dir, Settings().hadoopConf).globStatus(new Path(dir))
+        fileSystem(dir, Schedoscope.settings.hadoopConf).globStatus(new Path(dir))
           .map(stat => stat.getPath.toString)
       })
 
