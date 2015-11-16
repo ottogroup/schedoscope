@@ -17,20 +17,53 @@ package org.schedoscope.dsl.transformations
 
 import java.security.MessageDigest
 import scala.Array.canBuildFrom
-import org.schedoscope.scheduler.driver.FileSystemDriver
+import org.schedoscope.scheduler.driver.FileSystemDriver._
+import org.apache.hadoop.fs.FileStatus
+import org.apache.hadoop.fs.FileSystem
+import org.apache.hadoop.fs.Path
 import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.storageformats._
 import scala.collection.mutable.HashMap
 
 object Checksum {
-  def md5 = MessageDigest.getInstance("MD5")
+  private def md5 = MessageDigest.getInstance("MD5")
 
-  val fsd = FileSystemDriver(Schedoscope.settings.getDriverSettings("filesystem"))
+  private def listFiles(path: String): Array[FileStatus] = {
+    val files = fileSystem(path, Schedoscope.settings.hadoopConf).globStatus(new Path(path))
+    if (files != null)
+      files
+    else Array()
+  }
+
+  private def fileChecksum(path: String) =
+    if (path == null)
+      "null-checksum"
+    else if (path.endsWith(".jar"))
+      path
+    else try {
+      val cs = fileSystem(path, Schedoscope.settings.hadoopConf).getFileChecksum(new Path(path))
+      if (cs == null)
+        path
+      else
+        cs.toString()
+    } catch {
+      case _: Throwable => path
+    }
+
+  def fileChecksums(paths: List[String], recursive: Boolean): List[String] =
+    paths.flatMap(path => {
+      if (fileSystem(path, Schedoscope.settings.hadoopConf).isFile(new Path(path)))
+        List(fileChecksum(path))
+      else if (recursive)
+        fileChecksums(listFiles(path + "/*").map(f => f.getPath.toString()).toList, recursive)
+      else
+        List()
+    }).sorted
 
   val resourceHashCache = new HashMap[List[String], List[String]]()
 
   def resourceHashes(resources: List[String]): List[String] = synchronized {
-    resourceHashCache.getOrElseUpdate(resources, fsd.fileChecksums(resources, true))
+    resourceHashCache.getOrElseUpdate(resources, fileChecksums(resources, true))
   }
 
   val defaultDigest = "0"

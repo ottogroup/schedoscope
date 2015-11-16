@@ -247,31 +247,6 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       case t: Throwable   => throw DriverException(s"Runtime exception while moving from ${from} to ${to}", t)
     }
 
-  def fileChecksums(paths: List[String], recursive: Boolean): List[String] =
-    paths.flatMap(path => {
-      if (fileSystem(path).isFile(new Path(path)))
-        List(fileChecksum(path))
-      else if (recursive)
-        fileChecksums(listFiles(path + "/*").map(f => f.getPath.toString()).toList, recursive)
-      else
-        List()
-    }).sorted
-
-  def fileChecksum(path: String) =
-    if (path == null)
-      "null-checksum"
-    else if (path.endsWith(".jar"))
-      path
-    else try {
-      val cs = fileSystem(path).getFileChecksum(new Path(path))
-      if (cs == null)
-        path
-      else
-        cs.toString()
-    } catch {
-      case _: Throwable => path
-    }
-
   def listFiles(path: String): Array[FileStatus] = {
     val files = fileSystem(path).globStatus(new Path(path))
     if (files != null)
