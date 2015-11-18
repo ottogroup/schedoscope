@@ -419,7 +419,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
       if (currentDependencies.size != knownDependencies.size) {
 
         currentDependencies.diff(knownDependencies).foreach { d =>
-          log.info(s"New day: asking view manager actor to prepare all view actor for dependency ${d}")
+          log.info(s"Asking view manager actor to prepare view actor for new dependency ${d}")
 
           queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
         }
