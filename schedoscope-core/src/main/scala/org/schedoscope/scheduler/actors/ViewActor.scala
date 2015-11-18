@@ -53,7 +53,6 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
   val listenersWaitingForMaterialize = collection.mutable.HashSet[ActorRef]()
   val dependenciesMaterializing = collection.mutable.HashSet[View]()
-  var knownLatestDay = settings.latestDay
   var knownDependencies = view.dependencies.toSet
 
   var oneDependencyReturnedData = false
@@ -255,9 +254,9 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
     logStateInfo("waiting")
 
-    maintainDependencyActors
+    val dependencies = prepareCurrentDependencies
 
-    view.dependencies.foreach { d =>
+    dependencies.foreach { d =>
       {
         dependenciesMaterializing.add(d)
 
@@ -268,7 +267,6 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     }
 
     unbecomeBecome(waiting(mode))
-
   }
 
   def toMaterialized() {
@@ -412,23 +410,24 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     metadataLoggerActor ! SetViewVersion(view)
   }
 
-  def maintainDependencyActors {
-    if (settings.latestDay != knownLatestDay) {
+  def prepareCurrentDependencies = {
+    val currentDependencies = view.dependencies.toSet
+    
+    if (currentDependencies.size != knownDependencies.size) {
+      
+      log.info(s"Encountered new dependencies for view ${view}")
+      
+      currentDependencies.diff(knownDependencies).foreach { d =>
+        
+        log.info(s"Asking view manager actor to prepare view actor for new dependency ${d}")
 
-      val currentDependencies = view.dependencies.toSet
-      if (currentDependencies.size != knownDependencies.size) {
-
-        currentDependencies.diff(knownDependencies).foreach { d =>
-          log.info(s"Asking view manager actor to prepare view actor for new dependency ${d}")
-
-          queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
-        }
-
-        knownDependencies = currentDependencies
+        queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
       }
 
-      knownLatestDay = settings.latestDay
+      knownDependencies = currentDependencies
     }
+    
+    currentDependencies
   }
 
   def unbecomeBecome(behaviour: Actor.Receive) {
