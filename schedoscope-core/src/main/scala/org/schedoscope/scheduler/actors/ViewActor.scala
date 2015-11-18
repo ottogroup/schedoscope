@@ -41,6 +41,7 @@ import org.schedoscope.dsl.transformations.NoOp
 import akka.actor.ActorSelection.toScala
 import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
 import java.net.URI
+import scala.reflect.internal.util.HashSet
 
 class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
@@ -51,6 +52,9 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
   val listenersWaitingForMaterialize = collection.mutable.HashSet[ActorRef]()
   val dependenciesMaterializing = collection.mutable.HashSet[View]()
+  val knownDependencies = collection.mutable.HashSet[View]()
+  var knownLatestDay = settings.latestDay
+
   var oneDependencyReturnedData = false
 
   // state variables
@@ -67,6 +71,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
   override def preStart {
     logStateInfo("receive", false)
+    knownDependencies ++= view.dependencies
   }
 
   // State: default
@@ -250,20 +255,15 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
     logStateInfo("waiting")
 
+    maintainDependencyActors
+
     view.dependencies.foreach { d =>
       {
         dependenciesMaterializing.add(d)
 
         log.debug("sending materialize to dependency " + d)
 
-        try {
-          ViewManagerActor.actorForView(d) ! MaterializeView(mode)
-        } catch {
-          case t: Throwable => {
-            log.warning(s"Failed to sende materialize message to view actor for dependency. Exception: ${t.getStackTrace}. Asking view manager actor to create one.")
-            queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef] ! MaterializeView(mode)
-          }
-        }
+        ViewManagerActor.actorForView(d) ! MaterializeView(mode)
       }
     }
 
@@ -377,7 +377,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   }
 
   val hdfs = defaultFileSystem(settings.hadoopConf)
-  
+
   def successFlagExists(view: View): Boolean = {
     settings.userGroupInformation.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
@@ -412,7 +412,26 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     metadataLoggerActor ! SetViewVersion(view)
   }
 
-  private def unbecomeBecome(behaviour: Actor.Receive) {
+  def maintainDependencyActors {
+    if (settings.latestDay != knownLatestDay) {
+      val newDependencies = view.dependencies.toSet.diff(knownDependencies)
+
+      if (!newDependencies.isEmpty) {
+        newDependencies.foreach { d =>
+          {
+            log.info(s"Encountered new dependency: ${d}. Asking ViewManagerActor to create a ViewActor for it.")
+            queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
+          }
+        }
+
+        knownDependencies ++= newDependencies
+      }
+      
+      knownLatestDay = settings.latestDay
+    }
+  }
+
+  def unbecomeBecome(behaviour: Actor.Receive) {
     unbecome()
     become(behaviour)
   }

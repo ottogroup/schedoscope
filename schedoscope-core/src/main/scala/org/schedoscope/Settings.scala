@@ -70,7 +70,7 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   /**
    * The configured latest, i.e., current day for DateParamterization logic
    */
-  lazy val latestDay = {
+  def latestDay = {
     val conf = config.getString("schedoscope.scheduler.latestDay")
     if (conf == "now") {
       val now = Calendar.getInstance()
