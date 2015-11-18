@@ -53,8 +53,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
   val listenersWaitingForMaterialize = collection.mutable.HashSet[ActorRef]()
   val dependenciesMaterializing = collection.mutable.HashSet[View]()
-  val knownDependencies = collection.mutable.HashSet[View]()
-  var knownLatestDay = DateParameterizationUtils.dayToStrings(settings.latestDay)
+  var knownLatestDay = settings.latestDay
   
   var oneDependencyReturnedData = false
 
@@ -71,7 +70,6 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   var withErrors = false
 
   override def preStart {
-    knownDependencies ++= view.dependencies
     logStateInfo("receive", false)
   }
 
@@ -414,21 +412,12 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   }
 
   def maintainDependencyActors {
-    if (DateParameterizationUtils.dayToStrings(settings.latestDay) != knownLatestDay) {
-      val newDependencies = view.dependencies.toSet.diff(knownDependencies)
-
-      if (!newDependencies.isEmpty) {
-        newDependencies.foreach { d =>
-          {
-            log.info(s"Encountered new dependency: ${d}. Asking ViewManagerActor to create a ViewActor for it.")
-            queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
-          }
-        }
-
-        knownDependencies ++= newDependencies
-      }
+    if (settings.latestDay != knownLatestDay) {
+      log.info(s"New day: asking view manager actor to prepare all dependent view actors for view ${view}")
       
-      knownLatestDay = DateParameterizationUtils.dayToStrings(settings.latestDay)
+      queryActor(viewManagerActor, view, settings.viewManagerResponseTimeout)
+      
+      knownLatestDay = settings.latestDay
     }
   }
 
