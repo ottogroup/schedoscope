@@ -42,6 +42,7 @@ import akka.actor.ActorSelection.toScala
 import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
 import java.net.URI
 import scala.reflect.internal.util.HashSet
+import org.schedoscope.dsl.views.DateParameterizationUtils
 
 class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
@@ -53,8 +54,8 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   val listenersWaitingForMaterialize = collection.mutable.HashSet[ActorRef]()
   val dependenciesMaterializing = collection.mutable.HashSet[View]()
   val knownDependencies = collection.mutable.HashSet[View]()
-  var knownLatestDay = settings.latestDay
-
+  var knownLatestDay = DateParameterizationUtils.dayToStrings(settings.latestDay)
+  
   var oneDependencyReturnedData = false
 
   // state variables
@@ -70,8 +71,8 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   var withErrors = false
 
   override def preStart {
-    logStateInfo("receive", false)
     knownDependencies ++= view.dependencies
+    logStateInfo("receive", false)
   }
 
   // State: default
@@ -413,7 +414,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   }
 
   def maintainDependencyActors {
-    if (settings.latestDay != knownLatestDay) {
+    if (DateParameterizationUtils.dayToStrings(settings.latestDay) != knownLatestDay) {
       val newDependencies = view.dependencies.toSet.diff(knownDependencies)
 
       if (!newDependencies.isEmpty) {
@@ -427,7 +428,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
         knownDependencies ++= newDependencies
       }
       
-      knownLatestDay = settings.latestDay
+      knownLatestDay = DateParameterizationUtils.dayToStrings(settings.latestDay)
     }
   }
 
