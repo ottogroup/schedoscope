@@ -68,15 +68,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   var env = "dev"
 
   /**
-   * Pluggable builder for the Akka view dispatcher number to use for this view. The number
-   * must range from 0 to Schedoscope.settings.numberOfViewsDispatchers
-   */
-  var viewDispatcherNumberBuilder = () =>
-    Math.max(urlPath.hashCode().abs % Schedoscope.settings.numberOfViewsDispatchers, 0)
-
-  def viewDispatcherNumber = viewDispatcherNumberBuilder()
-
-  /**
    * Pluggable builder function that returns the name of the module the view belongs to.
    * The default implemementation returns the view's package in database-friendly lower-case underscore format, replacing all . with _.
    */

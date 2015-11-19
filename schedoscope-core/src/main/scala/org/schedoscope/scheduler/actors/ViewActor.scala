@@ -443,5 +443,5 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 }
 
 object ViewActor {
-  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l, viewDispatcher: String = null): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher(s"akka.actor.views-dispatcher-${view.viewDispatcherNumber}")
+  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l, viewDispatcher: String = null): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher(s"akka.actor.views-dispatcher")
 }
