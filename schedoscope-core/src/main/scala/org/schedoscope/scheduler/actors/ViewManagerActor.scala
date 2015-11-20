@@ -77,25 +77,6 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     }
   })
 
-  def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] = {
-    views.map {
-      v =>
-        if (visited.contains(v))
-          List()
-        else if (child(ViewManagerActor.actorNameForView(v)).isEmpty) {
-          visited += v
-          (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
-        } else if (dependencies) {
-          visited += v
-          (v, false, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
-        } else {
-          visited += v
-          List((v, false, depth))
-        }
-
-    }.flatten.distinct
-  }
-
   /**
    * Initialize view actors for a list of views. If a view actor has been produced for a view
    * previously, that one is returned.
@@ -157,6 +138,24 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     else
       allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => child(ViewManagerActor.actorNameForView(view)).get }.distinct
   }
+
+  def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
+    views.map {
+      v =>
+        if (visited.contains(v))
+          List()
+        else if (child(ViewManagerActor.actorNameForView(v)).isEmpty) {
+          visited += v
+          (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
+        } else if (dependencies) {
+          visited += v
+          (v, false, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
+        } else {
+          visited += v
+          List((v, false, depth))
+        }
+
+    }.flatten.distinct
 }
 
 /**

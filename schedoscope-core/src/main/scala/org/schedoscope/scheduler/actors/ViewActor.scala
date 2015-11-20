@@ -130,7 +130,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
       setVersion(view)
       if (view.transformation().name == "filesystem") {
-        if (getDirectorySize > 0l) {
+        if (viewDirectorySize > 0l) {
           touchSuccessFlag(view)
           logTransformationTimestamp(view)
           toMaterialized()
@@ -166,7 +166,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
       toTransformingOrMaterialized(retries + 1, materializationMode)
     else {
       logStateInfo("failed")
-      unbecomeBecome(failed)
+      become(failed)
 
       listenersWaitingForMaterialize.foreach(_ ! Failed(view))
       listenersWaitingForMaterialize.clear()
@@ -242,7 +242,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
     logStateInfo(state)
 
-    unbecomeBecome(receive)
+    become(receive)
   }
 
   def toWaiting(mode: MaterializeViewMode) {
@@ -266,7 +266,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
       }
     }
 
-    unbecomeBecome(waiting(mode))
+    become(waiting(mode))
   }
 
   def toMaterialized() {
@@ -275,7 +275,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, lastTransformationTimestamp, withErrors))
     listenersWaitingForMaterialize.clear
 
-    unbecomeBecome(materialized)
+    become(materialized)
 
     oneDependencyReturnedData = false
     dependenciesFreshness = 0l
@@ -317,7 +317,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
       case _: FilesystemTransformation => {
         log.debug(s"FileTransformation: lastTransformationTimestamp ${lastTransformationTimestamp}, ")
-        if (lastTransformationTimestamp > 0l && getDirectorySize > 0l)
+        if (lastTransformationTimestamp > 0l && viewDirectorySize > 0l)
           toMaterialized()
         else
           toTransforming(retries, mode)
@@ -335,7 +335,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
     logStateInfo("transforming")
 
-    unbecomeBecome(transforming(retries, mode))
+    become(transforming(retries, mode))
 
     if (mode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS) {
       self ! TransformationSuccess[NoOp](null, null)
@@ -343,26 +343,10 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     }
   }
 
-  // Calculate size of view data
-  def getDirectorySize(): Long = {
-    val size = settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
-      def run() = {
-        val path = new Path(view.fullPath)
-        val files = hdfs.listStatus(path, new PathFilter() {
-          def accept(p: Path): Boolean = !p.getName().startsWith("_")
-
-        })
-
-        files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getLen())
-      }
-    })
-    size
-  }
-
   def toRetrying(retries: Int, mode: MaterializeViewMode): akka.actor.Cancellable = {
     logStateInfo("retrying")
 
-    unbecomeBecome(retrying(retries, mode))
+    become(retrying(retries, mode))
 
     // exponential backoff
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
@@ -376,7 +360,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
   val hdfs = defaultFileSystem(settings.hadoopConf)
 
-  def successFlagExists(view: View): Boolean = {
+  def successFlagExists(view: View): Boolean =
     settings.userGroupInformation.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
         val pathWithSuccessFlag = new Path(view.fullPath + "/_SUCCESS")
@@ -384,6 +368,21 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
         hdfs.exists(pathWithSuccessFlag)
       }
     })
+
+  // Calculate size of view data
+  def viewDirectorySize = {
+    val size = settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
+      def run() = {
+        val path = new Path(view.fullPath)
+        val files = hdfs.listStatus(path, new PathFilter() {
+          def accept(p: Path): Boolean = !p.getName().startsWith("_")
+
+        })
+
+        files.foldLeft(0l) { (size, status) => size + status.getLen() }
+      }
+    })
+    size
   }
 
   def touchSuccessFlag(view: View) {
@@ -412,13 +411,13 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
   def prepareCurrentDependencies = {
     val currentDependencies = view.dependencies.toSet
-    
+
     if (currentDependencies.size != knownDependencies.size) {
-      
+
       log.info(s"Encountered new dependencies for view ${view}")
-      
+
       currentDependencies.diff(knownDependencies).foreach { d =>
-        
+
         log.info(s"Asking view manager actor to prepare view actor for new dependency ${d}")
 
         queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
@@ -426,13 +425,8 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
       knownDependencies = currentDependencies
     }
-    
-    currentDependencies
-  }
 
-  def unbecomeBecome(behaviour: Actor.Receive) {
-    unbecome()
-    become(behaviour)
+    currentDependencies
   }
 
   def logStateInfo(stateName: String, toViewManager: Boolean = true) {

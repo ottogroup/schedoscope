@@ -172,7 +172,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
 
     logStateInfo("idle", "DRIVER ACTOR: becoming idle")
 
-    unbecome()
     become(receive)
   }
 
@@ -203,7 +202,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
 
         logStateInfo("running", s"DRIVER ACTOR: Running command ${commandToRun}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
 
-        unbecome()
         become(running(runHandle, commandToRun.sender))
       }
     } catch {
