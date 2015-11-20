@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
 
 class TerminatingStoppingStrategy extends SupervisorStrategyConfigurator {
   override def create = AllForOneStrategy() {
-    case t: Throwable => {
+    case t => {
       LoggerFactory
         .getLogger(classOf[TerminatingStoppingStrategy])
         .error("Terminating Schedoscope: unhandled exception got escalated up the supervisor hierarchy.", t)

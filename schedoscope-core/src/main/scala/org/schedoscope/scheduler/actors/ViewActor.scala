@@ -234,15 +234,24 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     }
   }
 
-  def toDefault(invalidate: Boolean = false, state: String = "receive") {
-    lastTransformationTimestamp = if (invalidate) -1l else 0l
-    dependenciesFreshness = 0l
-    withErrors = false
-    incomplete = false
+  def prepareCurrentDependencies = {
+    val currentDependencies = view.dependencies.toSet
 
-    logStateInfo(state)
+    if (currentDependencies.size != knownDependencies.size) {
 
-    become(receive)
+      log.info(s"Encountered new dependencies for view ${view}")
+
+      currentDependencies.diff(knownDependencies).foreach { d =>
+
+        log.info(s"Asking view manager actor to prepare view actor for new dependency ${d}")
+
+        queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef]
+      }
+
+      knownDependencies = currentDependencies
+    }
+
+    currentDependencies
   }
 
   def toWaiting(mode: MaterializeViewMode) {
@@ -267,6 +276,17 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     }
 
     become(waiting(mode))
+  }
+
+  def toDefault(invalidate: Boolean = false, state: String = "receive") {
+    lastTransformationTimestamp = if (invalidate) -1l else 0l
+    dependenciesFreshness = 0l
+    withErrors = false
+    incomplete = false
+
+    logStateInfo(state)
+
+    become(receive)
   }
 
   def toMaterialized() {
@@ -407,26 +427,6 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   def setVersion(view: View) {
     versionChecksum = view.transformation().checksum
     metadataLoggerActor ! SetViewVersion(view)
-  }
-
-  def prepareCurrentDependencies = {
-    val currentDependencies = view.dependencies.toSet
-
-    if (currentDependencies.size != knownDependencies.size) {
-
-      log.info(s"Encountered new dependencies for view ${view}")
-
-      currentDependencies.diff(knownDependencies).foreach { d =>
-
-        log.info(s"Asking view manager actor to prepare view actor for new dependency ${d}")
-
-        queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef]
-      }
-
-      knownDependencies = currentDependencies
-    }
-
-    currentDependencies
   }
 
   def logStateInfo(stateName: String, toViewManager: Boolean = true) {
