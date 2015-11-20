@@ -52,7 +52,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
    */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
-      case _: Throwable => Escalate
+      case _ => Escalate
     }
 
   /**

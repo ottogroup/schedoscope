@@ -420,7 +420,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
         log.info(s"Asking view manager actor to prepare view actor for new dependency ${d}")
 
-        queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout)
+        queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef]
       }
 
       knownDependencies = currentDependencies
