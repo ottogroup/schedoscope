@@ -41,6 +41,7 @@ import org.schedoscope.scheduler.actors.ViewManagerActor
 import scala.concurrent.Future
 
 class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
+  
   val log = Logging(actorSystem, classOf[ViewManagerActor])
 
   transformationManagerActor ! DeployCommand()

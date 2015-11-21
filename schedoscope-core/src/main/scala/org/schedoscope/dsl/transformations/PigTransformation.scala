@@ -44,7 +44,7 @@ case class PigTransformation(latin: String, dirsToDelete: List[String] = List())
 
   override def name = "pig"
 
-  override def versionDigest = Version.digest(latin)
+  override def stringsToChecksum = List(latin)
 
   description = "[..]" + StringUtils.abbreviate(latin.replaceAll("\n", "").replaceAll("\t", "").replaceAll("\\s+", " "), 60)
 

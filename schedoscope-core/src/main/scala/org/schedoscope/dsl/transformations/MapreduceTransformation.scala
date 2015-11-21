@@ -21,7 +21,7 @@ import org.schedoscope.Settings
 import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.mapreduce.MRJobConfig
 import java.net.URI
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.View
 import scala.collection.mutable.ListBuffer
 
@@ -41,19 +41,18 @@ case class MapreduceTransformation(v: View, createJob: (Map[String, Any]) => Job
 
   val directoriesToDelete = dirsToDelete ++ List(v.fullPath)
 
-  // resource hash based on MR job jar (in HDFS)
-  override def versionDigest = Version.digest(Version.resourceHashes(resources()))
-
   description = StringUtils.abbreviate(v.urlPath, 100)
 
-  override def resources() = {
+  override def fileResourcesToChecksum = {
     val jarName = try {
       job.getConfiguration().get(MRJobConfig.JAR).split("/").last
     } catch {
       case _: Throwable => null
     }
 
-    Settings().getDriverSettings("mapreduce").libJarsHdfs
+    Schedoscope.settings
+      .getDriverSettings("mapreduce")
+      .libJarsHdfs
       .filter(lj => jarName == null || lj.contains(jarName))
   }
 
@@ -61,7 +60,7 @@ case class MapreduceTransformation(v: View, createJob: (Map[String, Any]) => Job
     // if job jar hasn't been registered, add all mapreduce libjars
     // to distributed cache
     if (job.getConfiguration().get(MRJobConfig.JAR) == null) {
-      resources().foreach(r => {
+      fileResourcesToChecksum.foreach(r => {
         try {
           job.addCacheFile(new URI(r))
         } catch {

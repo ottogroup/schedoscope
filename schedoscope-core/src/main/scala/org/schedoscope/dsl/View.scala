@@ -24,7 +24,7 @@ import scala.collection.mutable.HashMap
 import scala.collection.mutable.HashSet
 import scala.collection.mutable.ListBuffer
 import com.openpojo.reflection.impl.PojoClassFactory
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.View._
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
@@ -218,6 +218,18 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     dependsOn(dsf)
 
     () => dsf().head
+  }
+
+  /**
+   * The rank of the view. Views without dependencies are of Rank 0, all others are one rank higher than the
+   * of biggest rank of their dependencies
+   */
+  lazy val rank: Int = {
+    val ds = dependencies
+    if (ds.isEmpty)
+      0
+    else
+      ds.map { _.rank }.max + 1
   }
 
   var storageFormat: StorageFormat = TextFile()

@@ -32,9 +32,7 @@ import scala.collection.JavaConversions._
 case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String) extends Transformation {
   override def name = "oozie"
 
-  override def resources() = {
-    List(workflowAppPath)
-  }
+  override def fileResourcesToChecksum = List(workflowAppPath)
 
   description = StringUtils.abbreviate(s"${bundle}/${workflow}", 100)
 }

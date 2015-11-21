@@ -73,14 +73,14 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
     t match {
 
       case IfExists(path, op) => doAs(() => {
-        if (fileSystem(path, conf).exists(new Path(path)))
+        if (fileSystem(path).exists(new Path(path)))
           doRun(op)
         else
           DriverRunSucceeded(this, s"Path ${path} does not yet exist.")
       })
 
       case IfNotExists(path, op) => doAs(() => {
-        if (!fileSystem(path, conf).exists(new Path(path)))
+        if (!fileSystem(path).exists(new Path(path)))
           doRun(op)
         else
           DriverRunSucceeded(this, s"Path ${path} already exists.")
@@ -123,8 +123,8 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
     try {
       val streamInFile = inputStreamToFile(inputStream)
 
-      val fromFS = fileSystem(streamInFile, conf)
-      val toFS = fileSystem(to, conf)
+      val fromFS = fileSystem(streamInFile)
+      val toFS = fileSystem(to)
 
       toFS.mkdirs(new Path(to))
 
@@ -173,8 +173,8 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       else
         from
 
-      val fromFS = fileSystem(fromIncludingResources, conf)
-      val toFS = fileSystem(to, conf)
+      val fromFS = fileSystem(fromIncludingResources)
+      val toFS = fileSystem(to)
       inner(fromFS, toFS, listFiles(fromIncludingResources), new Path(to))
 
       DriverRunSucceeded(this, s"Copy from ${from} to ${to} succeeded")
@@ -189,7 +189,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
    */
   def delete(path: String, recursive: Boolean): DriverRunState[FilesystemTransformation] =
     try {
-      val targetFS = fileSystem(path, conf)
+      val targetFS = fileSystem(path)
       val files = listFiles(path)
       files.foreach(status => targetFS.delete(status.getPath(), recursive))
 
@@ -202,31 +202,25 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
   /**
    * Create a file
    */
-  def touch(path: String): DriverRunState[FilesystemTransformation] = {
-    var out: FSDataOutputStream  = null
+  def touch(path: String): DriverRunState[FilesystemTransformation] =
     try {
-      val filesys = fileSystem(path, conf)
-
+      val filesys = fileSystem(path)
       val toCreate = new Path(path)
 
-      out = filesys.create(new Path(path))
-      
+      filesys.create(toCreate).close()
+
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while touching ${path}", i)
       case t: Throwable   => throw DriverException(s"Runtime exception while touching ${path}", t)
-    } finally {
-      if (out != null)
-        out.close
     }
-  }
 
   /**
    * Create a directory path
    */
   def mkdirs(path: String): DriverRunState[FilesystemTransformation] =
     try {
-      val filesys = fileSystem(path, conf)
+      val filesys = fileSystem(path)
 
       filesys.mkdirs(new Path(path))
 
@@ -241,8 +235,8 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
    */
   def move(from: String, to: String): DriverRunState[FilesystemTransformation] =
     try {
-      val fromFS = fileSystem(from, conf)
-      val toFS = fileSystem(to, conf)
+      val fromFS = fileSystem(from)
+      val toFS = fileSystem(to)
       val files = listFiles(from)
 
       FileUtil.copy(fromFS, FileUtil.stat2Paths(files), toFS, new Path(to), true, true, conf)
@@ -253,29 +247,16 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       case t: Throwable   => throw DriverException(s"Runtime exception while moving from ${from} to ${to}", t)
     }
 
-  def fileChecksums(paths: List[String], recursive: Boolean): List[String] = {
-    paths.flatMap(p => {
-      val fs = fileSystem(p, conf)
-      val path = new Path(p)
-      if (fs.isFile(path))
-        List(FileSystemDriver.fileChecksum(fs, path, p))
-      else if (recursive)
-        fileChecksums(listFiles(p + "/*").map(f => f.getPath.toString()).toList, recursive)
-      else
-        List()
-    }).sorted
-  }
-
   def listFiles(path: String): Array[FileStatus] = {
-    val files = fileSystem(path, conf).globStatus(new Path(path))
+    val files = fileSystem(path).globStatus(new Path(path))
     if (files != null)
       files
     else Array()
   }
 
-  def localFilesystem: FileSystem = FileSystem.getLocal(conf)
+  def localFilesystem: FileSystem = FileSystemDriver.localFilesystem(conf)
 
-  def filesystem = FileSystem.get(conf)
+  def fileSystem(path: String) = FileSystemDriver.fileSystem(path, conf)
 
   override def deployAll(driverSettings: DriverSettings) = true
 }
@@ -284,6 +265,11 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
  * Factory and helper methods for file system driver.
  */
 object FileSystemDriver {
+
+  def apply(ds: DriverSettings) = {
+    new FileSystemDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation, Schedoscope.settings.hadoopConf)
+  }
+
   private def uri(pathOrUri: String) =
     try {
       new URI(pathOrUri)
@@ -291,31 +277,9 @@ object FileSystemDriver {
       case _: Throwable => new File(pathOrUri).toURI()
     }
 
+  def localFilesystem(hadoopConfiguration: Configuration): FileSystem = FileSystem.getLocal(hadoopConfiguration)
 
-  def fileSystem(path: String, conf: Configuration) = FileSystem.get(uri(path), conf)
-    
-  def apply(ds: DriverSettings) = {
-    new FileSystemDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation, Schedoscope.settings.hadoopConf)
-  }
+  def fileSystem(path: String, hadoopConfiguration: Configuration) = FileSystem.get(uri(path), hadoopConfiguration)
 
-  private val checksumCache = new HashMap[String, String]()
-
-  private def calcChecksum(fs: FileSystem, path: Path) =
-    if (path == null)
-      "null-checksum"
-    else if (path.toString.endsWith(".jar"))
-      path.toString
-    else try {
-      val cs = fs.getFileChecksum(path).toString()
-      if (cs == null)
-        path.toString()
-      else
-        cs
-    } catch {
-      case _: Throwable => path.toString()
-    }
-
-  def fileChecksum(fs: FileSystem, path: Path, pathString: String) = synchronized {
-    checksumCache.getOrElseUpdate(pathString, calcChecksum(fs, path))
-  }
+  def defaultFileSystem(hadoopConfiguration: Configuration) = FileSystem.get(hadoopConfiguration)
 }

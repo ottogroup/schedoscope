@@ -19,7 +19,6 @@ import java.lang.Math.max
 import java.security.PrivilegedAction
 import java.util.Date
 import scala.concurrent.duration.Duration
-import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.Path
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.transformations.NoOp
@@ -40,6 +39,10 @@ import org.apache.hadoop.fs.PathFilter
 import org.apache.hadoop.fs.FileStatus
 import org.schedoscope.dsl.transformations.NoOp
 import akka.actor.ActorSelection.toScala
+import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
+import java.net.URI
+import scala.reflect.internal.util.HashSet
+import org.schedoscope.dsl.views.DateParameterizationUtils
 
 class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
   import context._
@@ -50,6 +53,8 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
   val listenersWaitingForMaterialize = collection.mutable.HashSet[ActorRef]()
   val dependenciesMaterializing = collection.mutable.HashSet[View]()
+  var knownDependencies = view.dependencies.toSet
+
   var oneDependencyReturnedData = false
 
   // state variables
@@ -125,7 +130,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
       setVersion(view)
       if (view.transformation().name == "filesystem") {
-        if (getDirectorySize > 0l) {
+        if (viewDirectorySize > 0l) {
           touchSuccessFlag(view)
           logTransformationTimestamp(view)
           toMaterialized()
@@ -161,7 +166,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
       toTransformingOrMaterialized(retries + 1, materializationMode)
     else {
       logStateInfo("failed")
-      unbecomeBecome(failed)
+      become(failed)
 
       listenersWaitingForMaterialize.foreach(_ ! Failed(view))
       listenersWaitingForMaterialize.clear()
@@ -215,7 +220,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
           log.debug(s"Initiating transformation because of timestamp difference: ${lastTransformationTimestamp} <= ${dependenciesFreshness}")
 
         if (hasVersionMismatch(view))
-          log.debug(s"Initiating transformation because of transformation checksum difference: ${view.transformation().versionDigest} != ${versionChecksum}")
+          log.debug(s"Initiating transformation because of transformation checksum difference: ${view.transformation().checksum} != ${versionChecksum}")
 
         toTransformingOrMaterialized(0, mode)
       } else {
@@ -229,15 +234,24 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     }
   }
 
-  def toDefault(invalidate: Boolean = false, state: String = "receive") {
-    lastTransformationTimestamp = if (invalidate) -1l else 0l
-    dependenciesFreshness = 0l
-    withErrors = false
-    incomplete = false
+  def prepareCurrentDependencies = {
+    val currentDependencies = view.dependencies.toSet
 
-    logStateInfo(state)
+    if (currentDependencies.size != knownDependencies.size) {
 
-    unbecomeBecome(receive)
+      log.info(s"Encountered new dependencies for view ${view}")
+
+      currentDependencies.diff(knownDependencies).foreach { d =>
+
+        log.info(s"Asking view manager actor to prepare view actor for new dependency ${d}")
+
+        queryActor[ActorRef](viewManagerActor, d, settings.viewManagerResponseTimeout)
+      }
+
+      knownDependencies = currentDependencies
+    }
+
+    currentDependencies
   }
 
   def toWaiting(mode: MaterializeViewMode) {
@@ -249,25 +263,30 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
     logStateInfo("waiting")
 
-    view.dependencies.foreach { d =>
+    val dependencies = prepareCurrentDependencies
+
+    dependencies.foreach { d =>
       {
         dependenciesMaterializing.add(d)
 
         log.debug("sending materialize to dependency " + d)
 
-        try {
-          ViewManagerActor.actorForView(d) ! MaterializeView(mode)
-        } catch {
-          case t: Throwable => {
-            log.warning(s"Failed to sende materialize message to view actor for dependency. Exception: ${t.getStackTrace}. Asking view manager actor to create one.")
-            queryActor(viewManagerActor, d, settings.viewManagerResponseTimeout).asInstanceOf[ActorRef] ! MaterializeView(mode)
-          }
-        }
+        ViewManagerActor.actorForView(d) ! MaterializeView(mode)
       }
     }
 
-    unbecomeBecome(waiting(mode))
+    become(waiting(mode))
+  }
 
+  def toDefault(invalidate: Boolean = false, state: String = "receive") {
+    lastTransformationTimestamp = if (invalidate) -1l else 0l
+    dependenciesFreshness = 0l
+    withErrors = false
+    incomplete = false
+
+    logStateInfo(state)
+
+    become(receive)
   }
 
   def toMaterialized() {
@@ -276,7 +295,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     listenersWaitingForMaterialize.foreach(s => s ! ViewMaterialized(view, incomplete, lastTransformationTimestamp, withErrors))
     listenersWaitingForMaterialize.clear
 
-    unbecomeBecome(materialized)
+    become(materialized)
 
     oneDependencyReturnedData = false
     dependenciesFreshness = 0l
@@ -318,7 +337,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
       case _: FilesystemTransformation => {
         log.debug(s"FileTransformation: lastTransformationTimestamp ${lastTransformationTimestamp}, ")
-        if (lastTransformationTimestamp > 0l && getDirectorySize > 0l)
+        if (lastTransformationTimestamp > 0l && viewDirectorySize > 0l)
           toMaterialized()
         else
           toTransforming(retries, mode)
@@ -336,7 +355,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
     logStateInfo("transforming")
 
-    unbecomeBecome(transforming(retries, mode))
+    become(transforming(retries, mode))
 
     if (mode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS) {
       self ! TransformationSuccess[NoOp](null, null)
@@ -344,26 +363,10 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     }
   }
 
-  // Calculate size of view data
-  def getDirectorySize(): Long = {
-    val size = settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
-      def run() = {
-        val path = new Path(view.fullPath)
-        val files = FileSystem.get(settings.hadoopConf).listStatus(path, new PathFilter() {
-          def accept(p: Path): Boolean = !p.getName().startsWith("_")
-
-        })
-
-        files.foldLeft(0l)((size: Long, status: FileStatus) => size + status.getLen())
-      }
-    })
-    size
-  }
-
   def toRetrying(retries: Int, mode: MaterializeViewMode): akka.actor.Cancellable = {
     logStateInfo("retrying")
 
-    unbecomeBecome(retrying(retries, mode))
+    become(retrying(retries, mode))
 
     // exponential backoff
     system.scheduler.scheduleOnce(Duration.create(Math.pow(2, retries).toLong, "seconds"))(self ! Retry())
@@ -375,21 +378,38 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     self ! MaterializeView()
   }
 
-  def successFlagExists(view: View): Boolean = {
+  val hdfs = defaultFileSystem(settings.hadoopConf)
+
+  def successFlagExists(view: View): Boolean =
     settings.userGroupInformation.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
         val pathWithSuccessFlag = new Path(view.fullPath + "/_SUCCESS")
 
-        FileSystem.get(settings.hadoopConf).exists(pathWithSuccessFlag)
+        hdfs.exists(pathWithSuccessFlag)
       }
     })
+
+  // Calculate size of view data
+  def viewDirectorySize = {
+    val size = settings.userGroupInformation.doAs(new PrivilegedAction[Long]() {
+      def run() = {
+        val path = new Path(view.fullPath)
+        val files = hdfs.listStatus(path, new PathFilter() {
+          def accept(p: Path): Boolean = !p.getName().startsWith("_")
+
+        })
+
+        files.foldLeft(0l) { (size, status) => size + status.getLen() }
+      }
+    })
+    size
   }
 
   def touchSuccessFlag(view: View) {
     transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
   }
 
-  def hasVersionMismatch(view: View) = view.transformation().versionDigest() != versionChecksum
+  def hasVersionMismatch(view: View) = view.transformation().checksum != versionChecksum
 
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()
@@ -405,13 +425,8 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
   }
 
   def setVersion(view: View) {
-    versionChecksum = view.transformation().versionDigest()
+    versionChecksum = view.transformation().checksum
     metadataLoggerActor ! SetViewVersion(view)
-  }
-
-  private def unbecomeBecome(behaviour: Actor.Receive) {
-    unbecome()
-    become(behaviour)
   }
 
   def logStateInfo(stateName: String, toViewManager: Boolean = true) {
@@ -422,5 +437,5 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 }
 
 object ViewActor {
-  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher("akka.actor.views-dispatcher")
+  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l, viewDispatcher: String = null): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher(s"akka.actor.views-dispatcher")
 }

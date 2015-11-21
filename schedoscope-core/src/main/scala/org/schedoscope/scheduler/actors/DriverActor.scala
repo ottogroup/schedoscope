@@ -43,6 +43,7 @@ import org.schedoscope.scheduler.driver.MorphlineDriver
 import org.schedoscope.scheduler.driver.MapreduceDriver
 import org.schedoscope.scheduler.driver.PigDriver
 import org.schedoscope.scheduler.driver.DriverException
+import org.apache.commons.lang.exception.ExceptionUtils
 
 /**
  * A driver actor manages the executions of transformations using hive, oozie etc. The actual
@@ -122,7 +123,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
             case d: DriverException => throw d
 
             case t: Throwable => {
-              log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}")
+              log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}, trace ${ExceptionUtils.getStackTrace(t)}")
               originalSender ! TransformationFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t))
               toReceive()
               tick()
@@ -135,7 +136,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
         }
 
         case failure: DriverRunFailed[T] => {
-          log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}, trace ${if (failure.cause != null) failure.cause.getStackTrace else "no trace available"}")
+          log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed. ${failure.reason}, cause ${failure.cause}, trace ${if (failure.cause != null) ExceptionUtils.getStackTrace(failure.cause) else "no trace available"}")
 
           try {
             driver.driverRunCompleted(runHandle)
@@ -153,12 +154,12 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
       }
     } catch {
       case exception: DriverException => {
-        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}, trace ${exception.getStackTrace}")
+        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}, trace ${ExceptionUtils.getStackTrace(exception)}")
         throw exception
       }
 
       case t: Throwable => {
-        log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in running state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}, trace ${t.getStackTrace}")
+        log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in running state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}, trace ${ExceptionUtils.getStackTrace(t)}")
         throw t
       }
     }
@@ -172,7 +173,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
 
     logStateInfo("idle", "DRIVER ACTOR: becoming idle")
 
-    unbecome()
     become(receive)
   }
 
@@ -203,7 +203,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
 
         logStateInfo("running", s"DRIVER ACTOR: Running command ${commandToRun}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
 
-        unbecome()
         become(running(runHandle, commandToRun.sender))
       }
     } catch {
