@@ -55,6 +55,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 11/21/2015 - Release 0.3.4
+
+We have released Version 0.3.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This release fixes a bug in Schedoscope which led to not correctly instantiating ViewActors for newly appearing dependencies such as date changes. Moreover, checksum versioning code has been cleaned up. Note that checksumming is not backwards compatible; you might want to execute your next materializations with the -m RESET_TRANSFORMATION_CHECKSUMS option.
+
 ###### 11/13/2015 - Release 0.3.3
 
 We have released Version 0.3.3 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
