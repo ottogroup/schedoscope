@@ -66,7 +66,7 @@ case class PigTransformation(latin: String, dirsToDelete: List[String] = List())
 
 object PigTransformation {
 
-  def scriptFrom(inputStream: InputStream): String = io.Source.fromInputStream(inputStream, "UTF-8").mkString
+  def scriptFrom(inputStream: InputStream): String = scala.io.Source.fromInputStream(inputStream, "UTF-8").mkString
 
   def scriptFromResource(resourcePath: String): String = scriptFrom(getClass().getClassLoader().getResourceAsStream(resourcePath))
 

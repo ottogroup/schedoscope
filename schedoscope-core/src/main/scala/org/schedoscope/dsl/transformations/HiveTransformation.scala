@@ -125,8 +125,8 @@ object HiveTransformation {
       .append("\n")
       .append(selectStatement).toString()
   }
-
-  def queryFrom(inputStream: InputStream): String = io.Source.fromInputStream(inputStream, "UTF-8").mkString
+ 
+  def queryFrom(inputStream: InputStream): String = scala.io.Source.fromInputStream(inputStream, "UTF-8").mkString
 
   def queryFromResource(resourcePath: String): String = queryFrom(getClass().getClassLoader().getResourceAsStream(resourcePath))
 
