@@ -21,10 +21,10 @@
 			</activation>
 			<id>cloudera</id>
 			<properties>
-				<hadoop.version>2.6.0-cdh5.4.2.1</hadoop.version>
-				<hive.version>1.1.0-cdh5.4.2.1</hive.version>
-				<oozie.version>4.0.0-cdh5.4.2.1</oozie.version>
-				<pig.version>0.12.0-cdh5.4.2.1</pig.version>
+				<hadoop.version>2.6.0-cdh5.5.0</hadoop.version>
+				<hive.version>1.1.0-cdh5.5.0</hive.version>
+				<oozie.version>4.1.0-cdh5.5.0</oozie.version>
+				<pig.version>0.12.0-cdh5.5.0</pig.version>
 			</properties>
 		</profile>
 		<profile>
@@ -261,23 +261,23 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>parquet-pig-bundle</artifactId>
-			<version>1.5.0-cdh5.3.1</version>
+			<version>1.5.0-cdh5.5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>morphline-utils</groupId>
 			<artifactId>morphline-utils</artifactId>
-			<version>0.1.8</version>
+			<version>0.1.10</version>
 		</dependency>
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.9</version>
-			<scope>provided</scope>
+			<version>0.1.10</version>
+			<scope>provided</scope>		
 			<exclusions>
 				<exclusion>
 					<artifactId>jersey-server</artifactId>
 					<groupId>com.sun.jersey</groupId>
-				</exclusion>
+	 			</exclusion>
 				<exclusion>
 					<groupId>org.cloudera.logredactor</groupId>
 					<artifactId>logredactor</artifactId>
@@ -285,16 +285,49 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>hadoop-launcher</groupId>
-			<artifactId>hadoop-launcher</artifactId>
-			<version>0.1.0</version>
-			<scope>provided</scope>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-minicluster</artifactId>
+			<version>${hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
-			<artifactId>jersey-server</artifactId>
-			<groupId>com.sun.jersey</groupId>
-			<version>1.9</version>
-			<scope>provided</scope>
+			<groupId>org.apache.hive.hcatalog</groupId>
+			<artifactId>hive-hcatalog-server-extensions</artifactId>
+			<version>${hive.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>jms</artifactId>
+					<groupId>javax.jms</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
+				</exclusions>
+		</dependency> 
+		<dependency>
+			<groupId>org.apache.hive.hcatalog</groupId>
+			<artifactId>hive-webhcat-java-client</artifactId>
+			<version>${hive.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.scalatest</groupId>
@@ -309,7 +342,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
 		<testSourceDirectory>src/test/scala</testSourceDirectory>
