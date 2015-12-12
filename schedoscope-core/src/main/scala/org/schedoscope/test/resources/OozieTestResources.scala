@@ -47,7 +47,7 @@ class OozieTestResources extends TestResources {
 }
 
 object OozieTestResources {
-  
+
   LogManager.getLogManager().reset()
   SLF4JBridgeHandler.removeHandlersForRootLogger()
   SLF4JBridgeHandler.install()

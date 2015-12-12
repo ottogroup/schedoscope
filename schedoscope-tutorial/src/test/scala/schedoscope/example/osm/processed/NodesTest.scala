@@ -24,7 +24,7 @@ import schedoscope.example.osm.stage.NodeTags
 import org.schedoscope.dsl.Parameter.p
 
 case class NodesTest() extends FlatSpec
-  with Matchers {
+    with Matchers {
 
   val nodes = new NodesWithGeohash() with rows {
     set(v(id, 122317L),

@@ -24,7 +24,7 @@ case class Parameter[T: Manifest](orderWeight: Long) extends FieldLike[T] {
    * The value assigned to a parameter.
    */
   var v: Option[T] = None
-  
+
   override def equals(a: Any): Boolean = {
     if (a.getClass != this.getClass()) {
       return false

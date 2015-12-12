@@ -37,7 +37,7 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
 
   override def fileResourcesToChecksum =
     udfs.flatMap(udf => udf.getResourceUris.map(uri => uri.getUri))
-    
+
   override def stringsToChecksum = List(sql)
 
   description = "[..]" + StringUtils.abbreviate(sql.replaceAll("\n", "").replaceAll("\t", "").replaceAll(".*SELECT", "SELECT").replaceAll("\\s+", " "), 60)
@@ -125,7 +125,7 @@ object HiveTransformation {
       .append("\n")
       .append(selectStatement).toString()
   }
- 
+
   def queryFrom(inputStream: InputStream): String = scala.io.Source.fromInputStream(inputStream, "UTF-8").mkString
 
   def queryFromResource(resourcePath: String): String = queryFrom(getClass().getClassLoader().getResourceAsStream(resourcePath))

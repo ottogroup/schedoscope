@@ -103,7 +103,7 @@ class DoNothingCompletionHandler[T <: Transformation] extends DriverRunCompletio
  *
  * The present trait provides default implementations for blocking APIs. To support one, the methods
  * transformationName, run, and driverRunCompletionHandlerClassNames need to be overridden
- * (for example @see HiveDriver). Run needs to return an appropriate DriverRunHandle with a 
+ * (for example @see HiveDriver). Run needs to return an appropriate DriverRunHandle with a
  * future as its stateHandle which produces a DriverRunState or throws an exception.
  *
  * For non-blocking APIs, one needs to override transformationName, killRun, getDriverRunState, run,

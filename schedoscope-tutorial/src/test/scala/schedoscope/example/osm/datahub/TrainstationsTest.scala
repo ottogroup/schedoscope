@@ -24,7 +24,7 @@ import org.schedoscope.dsl.Field._
 import org.schedoscope.test.test
 
 case class TrainstationsTest() extends FlatSpec
-  with Matchers {
+    with Matchers {
 
   val nodesInput = new Nodes(p("2014"), p("09")) with rows {
     set(v(id, "122317"),

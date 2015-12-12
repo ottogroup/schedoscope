@@ -40,7 +40,6 @@ import java.util.logging.Logger
 import java.util.logging.Level
 import org.slf4j.bridge.SLF4JBridgeHandler
 
-
 /**
  * Spray actor providing the Schedoscope REST service
  */
@@ -89,11 +88,11 @@ object SchedoscopeRestService {
   val viewManagerActor = Schedoscope.viewManagerActor
   val transactionManagerActor = Schedoscope.transformationManagerActor
 
-    LogManager.getLogManager().reset()
+  LogManager.getLogManager().reset()
   SLF4JBridgeHandler.removeHandlersForRootLogger()
   SLF4JBridgeHandler.install()
   Logger.getLogger("global").setLevel(Level.FINEST)
-  
+
   val schedoscope = new SchedoscopeServiceImpl(actorSystem, settings, viewManagerActor, transactionManagerActor)
 
   case class Config(shell: Boolean = false)
