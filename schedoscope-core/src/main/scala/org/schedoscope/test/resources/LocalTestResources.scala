@@ -48,14 +48,14 @@ class LocalTestResources extends TestResources {
 
     new Path("file:///", d).toString()
   }
-  
+
   override lazy val hiveScratchDir: String = {
     val dir = Paths.get("target/hive-scratch").toAbsolutePath()
-    
+
     if (Files.exists(dir)) {
       FileUtils.deleteDirectory(dir.toFile())
     }
-    
+
     val dirUrl = "file:///" + dir.toString.replaceAll("\\\\", "/")
 
     val f = new File(dirUrl)
@@ -66,7 +66,7 @@ class LocalTestResources extends TestResources {
 
     new Path(dirUrl).toString()
   }
-  
+
   override lazy val hiveConf: HiveConf = {
     // we don't directly instantiate a new HiveConf(), because then hive-site.xml
     // would be loaded from classpath too early (we must make sure to write 

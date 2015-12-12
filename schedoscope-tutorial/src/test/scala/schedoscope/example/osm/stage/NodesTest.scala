@@ -20,7 +20,7 @@ import org.scalatest.Matchers
 import org.schedoscope.test.test
 
 class NodesTest extends FlatSpec
-  with Matchers {
+    with Matchers {
 
   "stage.Nodes" should "load correctly from classpath" in {
     new Nodes() with test {

@@ -25,7 +25,7 @@ import schedoscope.example.osm.datahub.Restaurants
 import schedoscope.example.osm.datahub.Shops
 
 case class ShopProfilesTest() extends FlatSpec
-  with Matchers {
+    with Matchers {
 
   val shops = new Shops() with rows {
     set(v(id, "122546"),

@@ -24,30 +24,28 @@ import test.eci.datahub.Click
 import test.eci.datahub.ClickOfEC0101
 import org.schedoscope.dsl.Structure
 import org.schedoscope.dsl.FieldLike
-  case class Contingency() extends Structure {
-	  val o11 = fieldOf[Long]
-	  val o12 = fieldOf[Long]
-      val o21 = fieldOf[Long]
-      val o22 = fieldOf[Long]
-  }
-  case class Nested() extends Structure {
-	  val value = fieldOf[Long]
-	  val nested = fieldOf[Contingency]
-  }
+case class Contingency() extends Structure {
+  val o11 = fieldOf[Long]
+  val o12 = fieldOf[Long]
+  val o21 = fieldOf[Long]
+  val o22 = fieldOf[Long]
+}
+case class Nested() extends Structure {
+  val value = fieldOf[Long]
+  val nested = fieldOf[Contingency]
+}
 class ViewSerdeTest extends FlatSpec with Matchers {
 
-  
   "view Serde" should "deserialize structures" taggedAs (DriverTests) in {
-	  val c = new Contingency()
-	  val json = """{"value":1, "nested":{"o11":1,"o12":0,"o21":0,"o22":11}}"""
-	  val res=ViewSerDe.deserializeField(manifest[Nested], json)
-      assert(res==Map("value" -> 1, "nested" -> Map("o11"->1,"o12"->0,"o21"->0,"o22"->11)))
-	
-	
+    val c = new Contingency()
+    val json = """{"value":1, "nested":{"o11":1,"o12":0,"o21":0,"o22":11}}"""
+    val res = ViewSerDe.deserializeField(manifest[Nested], json)
+    assert(res == Map("value" -> 1, "nested" -> Map("o11" -> 1, "o12" -> 0, "o21" -> 0, "o22" -> 11)))
+
   }
-  "view Serde" should "deserialize Lists" taggedAs (DriverTests) in {	 
-	  assert(ViewSerDe.deserializeField(manifest[List[Long]], "[]")==List())
-	  assert(ViewSerDe.deserializeField(manifest[List[Long]], "[1,2,3]")==List(1,2,3))
-	
+  "view Serde" should "deserialize Lists" taggedAs (DriverTests) in {
+    assert(ViewSerDe.deserializeField(manifest[List[Long]], "[]") == List())
+    assert(ViewSerDe.deserializeField(manifest[List[Long]], "[1,2,3]") == List(1, 2, 3))
+
   }
 }

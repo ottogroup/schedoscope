@@ -17,7 +17,7 @@ package org.schedoscope.dsl
 
 import scala.language.existentials
 import scala.language.implicitConversions
- 
+
 /**
  * A case class for keeping any object with its manifest.
  */
@@ -27,7 +27,7 @@ case class TypedAny(v: Any, t: Manifest[_])
  * Implicit function making a typed any out of any object.
  */
 object TypedAny {
-  
+
   /**
    * Convert any object into a typed any.
    */

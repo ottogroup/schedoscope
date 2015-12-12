@@ -30,7 +30,7 @@ abstract class FieldLike[T: Manifest] extends Named {
    * Is the field privacy-sensitive?
    */
   var isPrivacySensitive = false
-  
+
   /**
    * The structure or view a field's assigned to.
    */
