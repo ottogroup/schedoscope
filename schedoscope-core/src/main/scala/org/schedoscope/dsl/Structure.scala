@@ -17,8 +17,6 @@ package org.schedoscope.dsl
 
 import scala.Array.canBuildFrom
 import scala.collection.mutable.ListBuffer
-import java.util.concurrent.ConcurrentHashMap
-import java.lang.reflect.Method
 
 abstract class Structure extends StructureDsl {
   override def namingBase = this.getClass().getSimpleName()
@@ -49,15 +47,25 @@ abstract class Structure extends StructureDsl {
   lazy val fieldLikeGetters =
     this.getClass
       .getMethods()
-      .filter { _.getParameterTypes().length == 0 }
-      .filter { !_.getName().contains("$") }
+      .filter {
+        _.getParameterTypes().length == 0
+      }
+      .filter {
+        !_.getName().contains("$")
+      }
       .filter { m => classOf[FieldLike[_]].isAssignableFrom(m.getReturnType()) }
 
   def nameOf[F <: FieldLike[_]](f: F) =
     fieldLikeGetters
-      .filter { _.getReturnType().isAssignableFrom(f.getClass()) }
-      .filter { _.invoke(this) eq f }
-      .map { _.getName() }
+      .filter {
+        _.getReturnType().isAssignableFrom(f.getClass())
+      }
+      .filter {
+        _.invoke(this) eq f
+      }
+      .map {
+        _.getName()
+      }
       .headOption
 
 }

@@ -16,22 +16,18 @@
 package org.schedoscope.test.resources
 
 import java.io.File
-import java.net.URL
-import java.net.URLClassLoader
-import java.nio.file.Files
-import java.nio.file.Paths
+import java.net.{ URL, URLClassLoader }
+import java.nio.file.{ Files, Paths }
 import java.util.Properties
-import scala.Array.canBuildFrom
+
+import net.lingala.zip4j.core.ZipFile
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.FileUtil
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{ FileSystem, FileUtil, Path }
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars._
-import net.lingala.zip4j.core.ZipFile
-import java.nio.file.attribute.PosixFilePermission
-import java.util.EnumSet
+
+import scala.Array.canBuildFrom
 
 class LocalTestResources extends TestResources {
   setupLocalHadoop()
@@ -98,8 +94,12 @@ class LocalTestResources extends TestResources {
   override val namenode = "file:///"
 
   def compiledClassesPath() = {
-    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct
-    val nonJarClassPathMembers = classPathMembers.filter { !_.endsWith(".jar") }.toList
+    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map {
+      _.toString()
+    }.distinct
+    val nonJarClassPathMembers = classPathMembers.filter {
+      !_.endsWith(".jar")
+    }.toList
     nonJarClassPathMembers.map(_.replaceAll("file:", "")).mkString(",")
   }
 
@@ -107,9 +107,15 @@ class LocalTestResources extends TestResources {
     if (System.getenv("HADOOP_HOME") == null) {
       throw new RuntimeException("HADOOP_HOME must be set!")
     }
-    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map { _.toString() }.distinct
-    val jarClassPathMembers = classPathMembers.filter { _.endsWith(".jar") }.toList
-    val launcherJars = jarClassPathMembers.filter { _.contains("hadoop-launcher") }
+    val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map {
+      _.toString()
+    }.distinct
+    val jarClassPathMembers = classPathMembers.filter {
+      _.endsWith(".jar")
+    }.toList
+    val launcherJars = jarClassPathMembers.filter {
+      _.contains("hadoop-launcher")
+    }
     val hadoopHome = new File(System.getenv("HADOOP_HOME"))
 
     if (launcherJars.size == 1 && !hadoopHome.exists) {
@@ -124,15 +130,25 @@ class LocalTestResources extends TestResources {
     hadoopLibDir.mkdir
 
     val jarCopyOperations = jarClassPathMembers
-      .filter { !_.contains("slf4j-log4j12") }
-      .filter { !_.contains("slf4j-simple") }
-      .filter { !_.contains("0.13.1") }
+      .filter {
+        !_.contains("slf4j-log4j12")
+      }
+      .filter {
+        !_.contains("slf4j-simple")
+      }
+      .filter {
+        !_.contains("0.13.1")
+      }
       .foldLeft(List[(File, File)]()) {
         case (jarCopies, jarFile) =>
           ((new File(new URL(jarFile).toURI()),
             new File(new Path(System.getenv("HADOOP_HOME"), "lib" + File.separator + new Path(jarFile).getName).toString)) :: jarCopies)
       }
 
-    jarCopyOperations.foreach { case (source, target) => { FileUtils.copyFile(source, target) } }
+    jarCopyOperations.foreach {
+      case (source, target) => {
+        FileUtils.copyFile(source, target)
+      }
+    }
   }
 }

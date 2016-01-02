@@ -15,15 +15,8 @@
  */
 package org.schedoscope.scheduler.rest
 
-import spray.json.DefaultJsonProtocol
-import spray.json.JsonFormat
-import org.schedoscope.scheduler.service.RunStatus
-import org.schedoscope.scheduler.service.TransformationStatus
-import org.schedoscope.scheduler.service.TransformationStatusList
-import org.schedoscope.scheduler.service.SchedoscopeCommandStatus
-import org.schedoscope.scheduler.service.ViewStatus
-import org.schedoscope.scheduler.service.ViewStatusList
-import org.schedoscope.scheduler.service.QueueStatusList
+import org.schedoscope.scheduler.service.{ QueueStatusList, RunStatus, SchedoscopeCommandStatus, TransformationStatus, TransformationStatusList, ViewStatus, ViewStatusList }
+import spray.json.{ DefaultJsonProtocol, JsonFormat }
 
 /**
  * JSON SerDe for Schedoscope REST web service calls.

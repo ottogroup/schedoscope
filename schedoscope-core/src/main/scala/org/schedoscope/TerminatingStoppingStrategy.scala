@@ -15,9 +15,8 @@
  */
 package org.schedoscope
 
-import akka.actor.SupervisorStrategyConfigurator
-import akka.actor.AllForOneStrategy
 import akka.actor.SupervisorStrategy.Escalate
+import akka.actor.{ AllForOneStrategy, SupervisorStrategyConfigurator }
 import org.slf4j.LoggerFactory
 
 class TerminatingStoppingStrategy extends SupervisorStrategyConfigurator {

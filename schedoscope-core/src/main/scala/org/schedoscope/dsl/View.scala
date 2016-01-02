@@ -15,25 +15,17 @@
  */
 package org.schedoscope.dsl
 
-import scala.language.existentials
-import scala.language.implicitConversions
+import com.openpojo.reflection.impl.PojoClassFactory
+import org.schedoscope.dsl.storageformats._
+import org.schedoscope.dsl.transformations.{ ExternalTransformation, NoOp, Transformation }
+import org.schedoscope.dsl.views.ViewUrlParser
+import org.schedoscope.dsl.views.ViewUrlParser.{ ParsedView, ParsedViewAugmentor }
+import org.schedoscope.test.rows
+
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
-import scala.collection.JavaConversions.seqAsJavaList
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.HashSet
-import scala.collection.mutable.ListBuffer
-import com.openpojo.reflection.impl.PojoClassFactory
-import org.schedoscope.Schedoscope
-import org.schedoscope.dsl.View._
-import org.schedoscope.dsl.views.ViewUrlParser
-import org.schedoscope.dsl.views.ViewUrlParser.ParsedView
-import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
-import org.schedoscope.test.rows
-import org.schedoscope.dsl.storageformats._
-import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.dsl.transformations.NoOp
-import org.schedoscope.dsl.transformations.ExternalTransformation
+import scala.collection.mutable.{ HashMap, HashSet, ListBuffer }
+import scala.language.{ existentials, implicitConversions }
 
 /**
  * Base class for all view definitions. Provides all features of structures and view DSLs.
@@ -72,6 +64,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    * The default implemementation returns the view's package in database-friendly lower-case underscore format, replacing all . with _.
    */
   override var moduleNameBuilder = () => lowerCasePackageName.replaceAll("[.]", "_")
+
   def module = moduleNameBuilder()
 
   /**
@@ -79,6 +72,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    * The default implementation prepends the environment to the result of moduleNameBuilder with an underscore.
    */
   override var dbNameBuilder = (env: String) => env.toLowerCase() + "_" + moduleNameBuilder()
+
   def dbName = dbNameBuilder(env)
 
   /**
@@ -86,6 +80,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    * The default implementation appends the view's name n to the result of dbNameBuilder.
    */
   override var tableNameBuilder = (env: String) => dbNameBuilder(env) + "." + n
+
   def tableName = tableNameBuilder(env)
 
   /**
@@ -94,6 +89,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    * moduleNameBuilder, replacing _ with / and prepending hdp/dev/ for the default dev environment.
    */
   override var dbPathBuilder = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
+
   def dbPath = dbPathBuilder(env)
 
   /**
@@ -102,6 +98,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    * be surrounded by additionalStoragePathPrefix and additionalStoragePathSuffix, if set.
    */
   override var tablePathBuilder = (env: String) => dbPathBuilder(env) + (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") + "/" + n + (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
+
   def tablePath = tablePathBuilder(env)
 
   /**
@@ -109,6 +106,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    * this is the standard Hive /partitionColumn=value/... pattern.
    */
   override var partitionPathBuilder = () => partitionSpec
+
   def partitionPath = partitionPathBuilder()
 
   /**
@@ -117,6 +115,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    * this purpose.
    */
   override var fullPathBuilder = (env: String) => tablePathBuilder(env) + partitionPathBuilder()
+
   def fullPath = fullPathBuilder(env)
 
   /**
@@ -124,12 +123,13 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
    * By default, this is hdfs:///hdp/$\{env\}/global/datadictionary/schema/avro
    */
   override var avroSchemaPathPrefixBuilder = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
+
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
   /**
    * Returns true if the present view is partitionend.
    */
-  def isPartitioned() = !partitionParameters.isEmpty()
+  def isPartitioned() = partitionParameters.nonEmpty
 
   /**
    * Returns true if the passed parameter is a paritioning parameter of the view.
@@ -147,12 +147,14 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     .filter { m => classOf[Parameter[_]].isAssignableFrom(m.getReturnType()) }
     .map { m => m.invoke(this).asInstanceOf[Parameter[_]] }
     .filter { m => m != null }
-    .sortWith { _.orderWeight < _.orderWeight }
+    .sortWith {
+      _.orderWeight < _.orderWeight
+    }
     .toSeq
 
   /**
-   *  Returns all parameters that are not suffix parameters (i.e., real partitioning parameters) of the present view
-   *  in ascending order of their weight.
+   * Returns all parameters that are not suffix parameters (i.e., real partitioning parameters) of the present view
+   * in ascending order of their weight.
    */
   def partitionParameters = parameters
     .filter { p => isPartition(p) && !isSuffixPartition(p) }
@@ -196,14 +198,18 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
    * Return all dependencies of the view in the order they have been declared.
    */
-  def dependencies = deferredDependencies.flatMap { _() }.distinct
+  def dependencies = deferredDependencies.flatMap {
+    _()
+  }.distinct
 
   /**
    * Add dependencies to the given view. This is done with an anonymous function returning a sequence of views the
    * current view depends on.
    */
   def dependsOn[V <: View: Manifest](dsf: () => Seq[V]) {
-    val df = () => dsf().map { View.register(this.env, _) }
+    val df = () => dsf().map {
+      View.register(this.env, _)
+    }
 
     deferredDependencies += df
   }
@@ -229,7 +235,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     if (ds.isEmpty)
       0
     else
-      ds.map { _.rank }.max + 1
+      ds.map {
+        _.rank
+      }.max + 1
   }
 
   var storageFormat: StorageFormat = TextFile()
@@ -313,7 +321,15 @@ object View {
    * Return all views from a given package.
    */
   def viewsInPackage(packageName: String): Seq[Class[View]] = {
-    PojoClassFactory.getPojoClassesRecursively(packageName, null).filter { _.extendz(classOf[View]) }.filter { !_.extendz(classOf[rows]) }.filter { !_.isAbstract() }.map { _.getClazz() }.toSeq.asInstanceOf[Seq[Class[View]]]
+    PojoClassFactory.getPojoClassesRecursively(packageName, null).filter {
+      _.extendz(classOf[View])
+    }.filter {
+      !_.extendz(classOf[rows])
+    }.filter {
+      !_.isAbstract()
+    }.map {
+      _.getClazz()
+    }.toSeq.asInstanceOf[Seq[Class[View]]]
   }
 
   /**
@@ -333,7 +349,9 @@ object View {
     val viewCompanionObject = viewCompanionConstructor.newInstance()
 
     val applyMethods = viewCompanionObjectClass.getDeclaredMethods()
-      .filter { _.getName() == "apply" }
+      .filter {
+        _.getName() == "apply"
+      }
 
     val viewConstructor = applyMethods
       .filter { apply =>
@@ -376,8 +394,12 @@ object View {
     try {
       ViewUrlParser
         .parse(env, viewUrlPath)
-        .map { parsedViewAugmentor.augment(_) }
-        .filter { _ != null }
+        .map {
+          parsedViewAugmentor.augment(_)
+        }
+        .filter {
+          _ != null
+        }
         .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
     } catch {
       case t: Throwable => throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")

@@ -15,8 +15,7 @@
  */
 package schedoscope.example.osm.stage
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.test.test
 
 class NodeTagsTest extends FlatSpec

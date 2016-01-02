@@ -15,30 +15,26 @@
  */
 package org.schedoscope.scheduler.rest.server
 
-import scala.language.postfixOps
-import org.schedoscope.Schedoscope
-import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat._
-import akka.actor.Actor
-import akka.actor.Props
+import java.util.logging.{ Level, LogManager, Logger }
+
+import akka.actor.{ Actor, Props }
 import akka.io.IO
+import akka.pattern.ask
 import akka.routing.SmallestMailboxPool
 import akka.util.Timeout
-import akka.pattern.ask
+import org.schedoscope.Schedoscope
+import org.schedoscope.scheduler.commandline.SchedoscopeCliRepl
+import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat._
+import org.schedoscope.scheduler.service.{ SchedoscopeService, SchedoscopeServiceImpl }
+import org.slf4j.bridge.SLF4JBridgeHandler
 import spray.can.Http
 import spray.http.HttpHeaders.RawHeader
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
 import spray.routing.Directive.pimpApply
 import spray.routing.HttpService
-import spray.routing.PathMatcher.PimpedPathMatcher
-import spray.routing.directives.ParamDefMagnet.apply
-import org.schedoscope.scheduler.service.SchedoscopeService
-import org.schedoscope.scheduler.service.SchedoscopeServiceImpl
-import org.schedoscope.scheduler.commandline.SchedoscopeCliRepl
-import java.util.logging.LogManager
-import java.util.logging.Logger
-import java.util.logging.Level
-import org.slf4j.bridge.SLF4JBridgeHandler
+
+import scala.language.postfixOps
 
 /**
  * Spray actor providing the Schedoscope REST service
@@ -50,7 +46,7 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
 
   val route = get {
     respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-      parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
+      parameters("status" ?, "filter" ?, "dependencies".as[Boolean] ?, "typ" ?, "mode" ?, "overview".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview) =>
         {
           path("transformations") {
             complete(schedoscope.transformations(status, filter))
@@ -99,6 +95,7 @@ object SchedoscopeRestService {
 
   val parser = new scopt.OptionParser[Config]("schedoscope-rest-service") {
     override def showUsageOnError = true
+
     head("schedoscope-rest-service", "0.0.1")
     help("help") text ("print usage")
     opt[Unit]('s', "shell") action { (_, c) => c.copy(shell = true) } optional () text ("start an interactive shell with direct schedoscope access.")

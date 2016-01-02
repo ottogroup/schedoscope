@@ -16,27 +16,15 @@
 package org.schedoscope.dsl
 
 import java.util.Date
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.TypedAny.typedAny
+import org.schedoscope.dsl.storageformats.{ Parquet, TextFile }
+import org.schedoscope.dsl.transformations.{ HiveTransformation, NoOp }
+import org.schedoscope.dsl.views.{ DailyParameterization, JobMetadata, PointOccurrence }
 import org.schedoscope.schema.ddl.HiveQl.ddl
-import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.dsl.views.DailyParameterization
-import org.schedoscope.dsl.views.JobMetadata
-import org.schedoscope.dsl.views.PointOccurrence
-import test.eci.datahub.AvroView
-import test.eci.datahub.Brand
-import test.eci.datahub.Click
-import test.eci.datahub.ClickOfEC0101
-import test.eci.datahub.ClickOfEC0101ViaOozie
-import test.eci.datahub.EdgeCasesView
-import test.eci.datahub.Product
-import test.eci.datahub.ProductBrand
-import test.eci.datahub.ViewWithDefaultParams
-import org.schedoscope.dsl.storageformats.TextFile
-import org.schedoscope.dsl.storageformats.Parquet
-import org.schedoscope.dsl.transformations.NoOp
+import test.eci.datahub.{ AvroView, Brand, Click, ClickOfEC0101, ClickOfEC0101ViaOozie, EdgeCasesView, Product, ProductBrand, ViewWithDefaultParams }
 
 class DslTest extends FlatSpec with Matchers {
 
@@ -223,9 +211,15 @@ class DslTest extends FlatSpec with Matchers {
   "A view's fields" should "come in the right order" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrand.fields.map { _.n } should contain inOrder ("occurred_at", "product_id", "brand_name", "created_at", "created_by")
-    productBrand.brand().fields.map { _.n } should contain inOrder ("id", "brand_name", "ec_shop_code", "created_at", "created_by")
-    productBrand.product().fields.map { _.n } should contain inOrder ("id", "occurred_at", "name", "brand_id", "created_at", "created_by")
+    productBrand.fields.map {
+      _.n
+    } should contain inOrder ("occurred_at", "product_id", "brand_name", "created_at", "created_by")
+    productBrand.brand().fields.map {
+      _.n
+    } should contain inOrder ("id", "brand_name", "ec_shop_code", "created_at", "created_by")
+    productBrand.product().fields.map {
+      _.n
+    } should contain inOrder ("id", "occurred_at", "name", "brand_id", "created_at", "created_by")
   }
 
   it should "be able to have comments" in {

@@ -16,10 +16,8 @@
 package org.schedoscope.scheduler.driver
 
 import org.apache.hadoop.fs.Path
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import org.schedoscope.DriverTests
-import org.schedoscope.OozieTests
+import org.scalatest.{ FlatSpec, Matchers }
+import org.schedoscope.{ DriverTests, OozieTests }
 import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.test.resources.OozieTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
@@ -29,6 +27,7 @@ class OozieDriverTest extends FlatSpec with Matchers {
   lazy val resources: OozieTestResources = OozieTestResources()
 
   def cluster = resources.mo
+
   def driver = resources.oozieDriver
 
   def deployWorkflow(wf: OozieTransformation) = {

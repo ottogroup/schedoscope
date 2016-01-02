@@ -16,16 +16,18 @@
 package org.schedoscope.scheduler.driver
 
 import java.io.File
+
 import org.apache.commons.io.FileUtils
-import org.scalatest.AbstractSuite
 import org.scalatest.Suite
 
-trait TestFolder extends Suite { self: Suite =>
+trait TestFolder extends Suite {
+  self: Suite =>
   var testFolder: File = _
   var inputFolder: File = _
   var outputFolder: File = _
 
   def in = inputFolder.getAbsolutePath()
+
   def out = outputFolder.getAbsolutePath()
 
   private def deleteFile(file: File) {
@@ -45,9 +47,11 @@ trait TestFolder extends Suite { self: Suite =>
   }
 
   def outputFile(path: String) = new File(outputPath(path))
+
   def inputFile(path: String) = new File(inputPath(path))
 
   def inputPath(path: String) = s"${in}${File.separator}${path}"
+
   def outputPath(path: String) = s"${out}${File.separator}${path}"
 
   abstract override def withFixture(test: NoArgTest) = {

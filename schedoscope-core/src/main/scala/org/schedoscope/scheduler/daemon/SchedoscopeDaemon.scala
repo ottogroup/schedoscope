@@ -15,8 +15,7 @@
  */
 package org.schedoscope.scheduler.daemon
 
-import org.apache.commons.daemon.Daemon
-import org.apache.commons.daemon.DaemonContext
+import org.apache.commons.daemon.{ Daemon, DaemonContext }
 import org.schedoscope.scheduler.rest.server.SchedoscopeRestService
 import org.schedoscope.scheduler.rest.server.SchedoscopeRestService.Config
 

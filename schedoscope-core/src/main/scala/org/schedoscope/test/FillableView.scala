@@ -15,23 +15,18 @@
  */
 package org.schedoscope.test
 
-import java.io.File
-import java.io.OutputStreamWriter
+import java.io.{ File, OutputStreamWriter }
 import java.net.URI
+
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.hive.metastore.api.{ ResourceType, ResourceUri }
+import org.schedoscope.dsl.{ FieldLike, Named, View }
+import org.schedoscope.dsl.transformations.{ HiveTransformation, OozieTransformation }
+import org.schedoscope.test.resources.{ LocalTestResources, TestResources }
+
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.seqAsJavaList
 import scala.collection.mutable.ListBuffer
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.hive.metastore.api.ResourceType
-import org.apache.hadoop.hive.metastore.api.ResourceUri
-import org.schedoscope.schema.ddl.HiveQl
-import org.schedoscope.dsl.FieldLike
-import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.OozieTransformation
-import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.test.resources.LocalTestResources
-import org.schedoscope.test.resources.TestResources
-import org.schedoscope.dsl.Named
 
 /**
  * A fillable View is a View with rows of data (a Table).
@@ -69,7 +64,9 @@ trait rows extends View {
    */
   def set(row: (FieldLike[_], Any)*) {
     val m = row.map(f => f._1.n -> f._2).toMap[String, Any]
-    rs.append(fields.map(f => { if (m.contains(f.n)) f.n -> m(f.n) else f.n -> nullOrRandom(f, rs.size) }).toMap[String, Any])
+    rs.append(fields.map(f => {
+      if (m.contains(f.n)) f.n -> m(f.n) else f.n -> nullOrRandom(f, rs.size)
+    }).toMap[String, Any])
   }
 
   /**

@@ -15,8 +15,9 @@
  */
 package org.schedoscope.dsl.transformations
 
-import scala.collection.mutable.HashMap
 import org.schedoscope.dsl.View
+
+import scala.collection.mutable.HashMap
 
 /**
  * Base class for transformation types

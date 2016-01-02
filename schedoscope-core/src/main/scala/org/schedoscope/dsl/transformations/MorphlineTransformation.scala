@@ -15,11 +15,7 @@
  */
 package org.schedoscope.dsl.transformations
 
-import org.schedoscope.dsl._
-import org.kitesdk.morphline.stdlib.DropRecordBuilder
-import org.kitesdk.morphline.api.Command
-import org.schedoscope.dsl.Named
-import org.schedoscope.dsl.FieldLike
+import org.schedoscope.dsl.{ FieldLike, Named }
 
 /**
  * specifies a morphline transformation

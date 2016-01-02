@@ -15,32 +15,18 @@
  */
 package org.schedoscope.scheduler.actors
 
-import scala.collection.mutable.HashMap
-import scala.util.Random
-import scala.collection.JavaConversions.asScalaSet
-import org.apache.hadoop.conf.Configuration
+import akka.actor.SupervisorStrategy.{ Escalate, Restart }
+import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props, actorRef2Scala }
+import akka.event.{ Logging, LoggingReceive }
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.FilesystemTransformation
-import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.dsl.transformations.{ FilesystemTransformation, Transformation }
 import org.schedoscope.scheduler.driver.DriverException
-import org.schedoscope.scheduler.messages.CommandWithSender
-import org.schedoscope.scheduler.messages.DeployCommand
-import org.schedoscope.scheduler.messages.GetTransformations
-import org.schedoscope.scheduler.messages.GetQueues
-import org.schedoscope.scheduler.messages.PollCommand
-import org.schedoscope.scheduler.messages.QueueStatusListResponse
-import org.schedoscope.scheduler.messages.TransformationStatusListResponse
-import org.schedoscope.scheduler.messages.TransformationStatusResponse
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.OneForOneStrategy
-import akka.actor.Props
-import akka.actor.SupervisorStrategy.Escalate
-import akka.actor.SupervisorStrategy.Restart
-import akka.actor.actorRef2Scala
-import akka.event.Logging
-import akka.event.LoggingReceive
+import org.schedoscope.scheduler.messages.{ CommandWithSender, DeployCommand, GetQueues, GetTransformations, PollCommand, QueueStatusListResponse, TransformationStatusListResponse, TransformationStatusResponse }
+
+import scala.collection.JavaConversions.asScalaSet
+import scala.collection.mutable.HashMap
+import scala.util.Random
 
 /**
  * The transformation manager actor queues transformation requests it receives from view actors by
@@ -48,6 +34,7 @@ import akka.event.LoggingReceive
  *
  */
 class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
+
   import context._
 
   val log = Logging(system, TransformationManagerActor.this)
@@ -57,7 +44,9 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   val availableTransformations = settings.availableTransformations.keySet()
 
   // create a queue for each driver that is not a filesystem driver
-  val nonFilesystemQueues = availableTransformations.filter { _ != "filesystem" }.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
+  val nonFilesystemQueues = availableTransformations.filter {
+    _ != "filesystem"
+  }.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
     (nonFilesystemQueuesSoFar, driverName) =>
       nonFilesystemQueuesSoFar + (driverName -> new collection.mutable.Queue[CommandWithSender]())
   }
@@ -165,7 +154,9 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
         queues.get(queueName).get.enqueue(commandToExecute)
         log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
       } else {
-        queues.values.foreach { _.enqueue(commandToExecute) }
+        queues.values.foreach {
+          _.enqueue(commandToExecute)
+        }
         log.info("TRANSFORMATIONMANAGER ENQUEUE: Enqueued deploy action")
       }
     }

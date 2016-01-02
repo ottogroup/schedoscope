@@ -6,7 +6,7 @@ package org.schedoscope.dsl.transformations
  * @param script contents of the script to be executed
  * @param scriptFile path to script to be executed
  *
- * Either script or scriptFile needs to be specified
+ *                   Either script or scriptFile needs to be specified
  *
  * @param shell path to the interpreter executable, defaults to /bin/bash
  *

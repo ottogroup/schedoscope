@@ -15,39 +15,33 @@
  */
 package org.schedoscope.scheduler.rest.client
 
-import scala.language.postfixOps
-import scala.collection.immutable.Map
-import scala.concurrent.Await
-import scala.concurrent.Future
-import scala.concurrent.duration.DurationInt
-import org.schedoscope.Settings
 import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.util.Timeout
-import spray.client.pipelining.Get
-import spray.client.pipelining.WithTransformerConcatenation
-import spray.client.pipelining.sendReceive
-import spray.client.pipelining.unmarshal
-import spray.client.pipelining.sendReceive
+import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat
+import org.schedoscope.scheduler.service.{ QueueStatusList, SchedoscopeCommandStatus, SchedoscopeService, TransformationStatusList, ViewStatusList }
+import spray.client.pipelining.{ Get, WithTransformerConcatenation, sendReceive, unmarshal }
 import spray.http.Uri
 import spray.httpx.SprayJsonSupport.sprayJsonUnmarshaller
-import org.schedoscope.Schedoscope
-import org.schedoscope.scheduler.service.SchedoscopeService
-import org.schedoscope.scheduler.service.TransformationStatusList
-import org.schedoscope.scheduler.service.SchedoscopeCommandStatus
-import org.schedoscope.scheduler.service.ViewStatusList
-import org.schedoscope.scheduler.service.QueueStatusList
-import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat
+
+import scala.collection.immutable.Map
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
 
 /**
  * Implementation of the schedoscope service that maps the given scheduling commands
  * to REST web service calls and parse the returned results.
  */
 class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends SchedoscopeService {
+
   import SchedoscopeJsonDataFormat._
 
   implicit val system = ActorSystem("schedoscope-rest-client")
-  import system.dispatcher // execution context for futures below
+
+  import system.dispatcher
+
+  // execution context for futures below
   implicit val timeout = Timeout(10.days)
   val log = Logging(system, getClass)
 
@@ -90,7 +84,9 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
     Await.result(get[SchedoscopeCommandStatus](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
 
-  def commandStatus(commandId: String): SchedoscopeCommandStatus = { null } // TODO
+  def commandStatus(commandId: String): SchedoscopeCommandStatus = {
+    null
+  } // TODO
 
   def commands(status: Option[String], filter: Option[String]): List[SchedoscopeCommandStatus] = {
     Await.result(get[List[SchedoscopeCommandStatus]](s"/commands", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)

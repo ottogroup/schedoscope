@@ -15,10 +15,8 @@
  */
 package org.schedoscope.dsl.views
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.dsl.Parameter.p
-import java.util.Calendar
 
 class DailyParameterizationTest extends FlatSpec with Matchers {
   "prevDay" should "compute the previous date" in {

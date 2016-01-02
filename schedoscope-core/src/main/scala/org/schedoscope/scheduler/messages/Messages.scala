@@ -15,17 +15,13 @@
  */
 package org.schedoscope.scheduler.messages
 
-import org.schedoscope.scheduler.driver.Driver
-import org.schedoscope.scheduler.driver.DriverRunFailed
-import org.schedoscope.scheduler.driver.DriverRunHandle
-import org.schedoscope.scheduler.driver.DriverRunState
-import org.schedoscope.scheduler.driver.DriverRunSucceeded
-import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.dsl.View
 import akka.actor.ActorRef
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.scheduler.driver.{ Driver, DriverRunFailed, DriverRunHandle, DriverRunState, DriverRunSucceeded }
 
 /**
- *  Superclass for failure messages.
+ * Superclass for failure messages.
  */
 sealed class Failure
 
@@ -115,12 +111,12 @@ case class GetTransformationStatusList(statusRequester: ActorRef, transformation
 case class GetViews(views: Option[List[View]], status: Option[String], filter: Option[String], dependencies: Boolean = false)
 
 /**
- *  Request to the view manager to return the state of all views.
+ * Request to the view manager to return the state of all views.
  */
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
 
 /**
- *  Flags for the MaterializeView command
+ * Flags for the MaterializeView command
  */
 object MaterializeViewMode extends Enumeration {
   type MaterializeViewMode = Value
@@ -147,7 +143,7 @@ case class Invalidate() extends CommandRequest
 case class Retry() extends CommandRequest
 
 /**
- *  Base class for responses to commands.
+ * Base class for responses to commands.
  */
 sealed class CommandResponse
 

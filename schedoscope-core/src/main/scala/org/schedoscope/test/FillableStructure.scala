@@ -15,9 +15,9 @@
  */
 package org.schedoscope.test
 
+import org.schedoscope.dsl.{ FieldLike, Structure }
+
 import scala.collection.mutable.HashMap
-import org.schedoscope.dsl.FieldLike
-import org.schedoscope.dsl.Structure
 
 trait FillableStructure extends Structure with values {}
 

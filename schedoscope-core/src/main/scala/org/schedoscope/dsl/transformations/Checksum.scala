@@ -16,13 +16,12 @@
 package org.schedoscope.dsl.transformations
 
 import java.security.MessageDigest
-import scala.Array.canBuildFrom
-import org.schedoscope.scheduler.driver.FileSystemDriver._
-import org.apache.hadoop.fs.FileStatus
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.Path
+
+import org.apache.hadoop.fs.{ FileStatus, Path }
 import org.schedoscope.Schedoscope
-import org.schedoscope.dsl.storageformats._
+import org.schedoscope.scheduler.driver.FileSystemDriver._
+
+import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap
 
 object Checksum {
@@ -82,5 +81,6 @@ object Checksum {
     val checksumProperty = "transformation.checksum"
     val timestampProperty = "transformation.timestamp"
   }
+
 }
 

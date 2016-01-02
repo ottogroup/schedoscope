@@ -15,8 +15,9 @@
  */
 package org.schedoscope.dsl.transformations
 
-import org.schedoscope.dsl.View
 import java.io.InputStream
+
+import org.schedoscope.dsl.View
 
 /**
  * FileSystem transformations: compute views by copying or moving files
@@ -49,6 +50,7 @@ case class Copy(val fromPattern: String, val toPath: String, val recursive: Bool
  *
  */
 case class Move(val fromPattern: String, val toPath: String) extends FilesystemTransformation
+
 /**
  *
  * Delete files satisfying fromPattern

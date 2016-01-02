@@ -15,20 +15,14 @@
  */
 package schedoscope.example.osm.processed
 
-import org.schedoscope.dsl.View
-import org.schedoscope.dsl.views.Id
-import org.schedoscope.dsl.views.PointOccurrence
-import org.schedoscope.dsl.views.JobMetadata
-import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
-import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
-import org.schedoscope.dsl.transformations.HiveTransformation.withFunctions
-import org.schedoscope.dsl.storageformats.Parquet
-import schedoscope.example.osm.Globals._
 import brickhouse.udf.collect.CollectUDAF
+import org.schedoscope.dsl.{ Parameter, View }
+import org.schedoscope.dsl.storageformats.Parquet
+import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.transformations.HiveTransformation.{ insertInto, queryFromResource, withFunctions }
+import org.schedoscope.dsl.views.{ Id, JobMetadata, MonthlyParameterization, PointOccurrence }
+import schedoscope.example.osm.Globals._
 import schedoscope.example.osm.stage.NodeTags
-import org.schedoscope.dsl.views.MonthlyParameterization
-import org.schedoscope.dsl.Parameter
 
 case class Nodes(
   year: Parameter[String],

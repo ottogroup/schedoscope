@@ -15,46 +15,34 @@
  */
 package org.schedoscope.scheduler.driver
 
-import scala.language.implicitConversions
 import java.net.URI
 import java.security.PrivilegedAction
+
+import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
+import morphlineutils.morphline.{ CommandConnector, MorphlineClasspathUtil }
+import morphlineutils.morphline.command.{ CSVWriterBuilder, ExasolWriterBuilder, JDBCWriterBuilder, REDISWriterBuilder }
+import morphlineutils.morphline.command.anonymization.{ AnonymizeAvroBuilder, AnonymizeBuilder }
+import morphlineutils.morphline.command.sink.AvroWriterBuilder
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{ FileSystem, Path }
+import org.apache.hadoop.security.UserGroupInformation
+import org.joda.time.LocalDateTime
+import org.kitesdk.morphline.api.{ Command, MorphlineContext, Record }
+import org.kitesdk.morphline.avro.{ ExtractAvroTreeBuilder, ReadAvroContainerBuilder }
+import org.kitesdk.morphline.base.{ Fields, Notifications }
+import org.kitesdk.morphline.hadoop.parquet.avro.ReadAvroParquetFileBuilder
+import org.kitesdk.morphline.stdio.ReadCSVBuilder
+import org.kitesdk.morphline.stdlib.{ DropRecordBuilder, PipeBuilder, SampleBuilder }
+import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.dsl.storageformats._
+import org.schedoscope.dsl.transformations.MorphlineTransformation
+import org.schedoscope.scheduler.driver.Helper._
+import org.slf4j.LoggerFactory
+
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.seqAsJavaList
 import scala.concurrent.Future
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.Path
-import org.joda.time.LocalDateTime
-import org.kitesdk.morphline.api.Command
-import org.kitesdk.morphline.api.MorphlineContext
-import org.kitesdk.morphline.api.Record
-import org.kitesdk.morphline.avro.ExtractAvroTreeBuilder
-import org.kitesdk.morphline.avro.ReadAvroContainerBuilder
-import org.kitesdk.morphline.base.Fields
-import org.kitesdk.morphline.base.Notifications
-import org.kitesdk.morphline.hadoop.parquet.avro.ReadAvroParquetFileBuilder
-import org.kitesdk.morphline.stdio.ReadCSVBuilder
-import org.kitesdk.morphline.stdlib.DropRecordBuilder
-import org.kitesdk.morphline.stdlib.PipeBuilder
-import org.kitesdk.morphline.stdlib.SampleBuilder
-import org.slf4j.LoggerFactory
-import org.schedoscope.DriverSettings
-import org.schedoscope.Schedoscope
-import org.schedoscope.dsl.storageformats._
-import org.schedoscope.dsl.transformations.MorphlineTransformation
-import com.typesafe.config.ConfigFactory
-import com.typesafe.config.ConfigValueFactory
-import Helper._
-import morphlineutils.morphline.CommandConnector
-import morphlineutils.morphline.MorphlineClasspathUtil
-import morphlineutils.morphline.command.CSVWriterBuilder
-import morphlineutils.morphline.command.JDBCWriterBuilder
-import morphlineutils.morphline.command.REDISWriterBuilder
-import morphlineutils.morphline.command.anonymization.AnonymizeAvroBuilder
-import morphlineutils.morphline.command.anonymization.AnonymizeBuilder
-import morphlineutils.morphline.command.sink.AvroWriterBuilder
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.hadoop.conf.Configuration
-import morphlineutils.morphline.command.ExasolWriterBuilder
+import scala.language.implicitConversions
 
 /**
  * Small helper object that implicitly wraps stuff into TypesafeConfig Value instances.
@@ -73,7 +61,9 @@ object Helper {
  */
 class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val hadoopConf: Configuration) extends Driver[MorphlineTransformation] {
   val context = new MorphlineContext.Builder().build()
+
   def transformationName: String = "morphline"
+
   val log = LoggerFactory.getLogger(classOf[MorphlineDriver])
 
   override def run(t: MorphlineTransformation): DriverRunHandle[MorphlineTransformation] = {
@@ -262,7 +252,8 @@ class MorphlineDriver(val driverRunCompletionHandlerClassNames: List[String], va
       inputView.storageFormat match {
         case _: TextFile => inputCommand
 
-        case _ => { // if the user did not specify a morphline, at least extract all avro paths so they can be anonymized
+        case _ => {
+          // if the user did not specify a morphline, at least extract all avro paths so they can be anonymized
           log.info("Empty morphline, inserting extractAvro")
           val extractAvroTreeCommand = new ExtractAvroTreeBuilder().build(ConfigFactory.empty(), inputConnector, outputConnector, context)
           inputConnector.setChild(extractAvroTreeCommand)

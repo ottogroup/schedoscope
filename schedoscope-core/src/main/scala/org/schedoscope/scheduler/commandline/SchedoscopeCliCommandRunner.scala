@@ -23,15 +23,18 @@ import org.schedoscope.scheduler.service.SchedoscopeService
  * and renders the result.
  */
 class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
+
   object Action extends Enumeration {
     val VIEWS, TRANSFORMATIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
   }
+
   import Action._
 
   case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None, mode: Option[String] = None, overview: Option[Boolean] = None)
 
   val parser = new scopt.OptionParser[Config]("schedoscope-control") {
     override def showUsageOnError = true
+
     head("schedoscope-control", "0.0.1")
     help("help") text ("print usage")
 
@@ -70,7 +73,9 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
 
     checkConfig { c =>
       if (!c.action.isDefined) failure("A command is required")
-      else if (c.action.get == MATERIALIZE && c.mode.isDefined && !MaterializeViewMode.values.map { _.toString }.contains(c.mode.get)) failure(s"mode ${c.mode.get} not supported. Supported are: '${MaterializeViewMode.values.map(_.toString())}'")
+      else if (c.action.get == MATERIALIZE && c.mode.isDefined && !MaterializeViewMode.values.map {
+        _.toString
+      }.contains(c.mode.get)) failure(s"mode ${c.mode.get} not supported. Supported are: '${MaterializeViewMode.values.map(_.toString())}'")
       else success
     }
   }

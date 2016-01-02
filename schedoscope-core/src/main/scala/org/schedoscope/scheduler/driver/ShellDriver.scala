@@ -1,19 +1,15 @@
 package org.schedoscope.scheduler.driver
 
-import scala.language.reflectiveCalls
-import org.schedoscope.dsl.transformations.ShellTransformation
-import org.schedoscope.DriverSettings
-import org.schedoscope.Schedoscope
+import java.io.{ File, FileWriter }
+
 import org.joda.time.LocalDateTime
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.Duration
-import scala.concurrent.Future
-import scala.collection.JavaConversions.mapAsJavaMap
-import java.lang.InterruptedException
-import java.io.File
-import java.io.FileWriter
-import scala.sys.process._
+import org.schedoscope.DriverSettings
+import org.schedoscope.dsl.transformations.ShellTransformation
 import org.slf4j.LoggerFactory
+
+import scala.concurrent.Future
+import scala.language.reflectiveCalls
+import scala.sys.process._
 
 /**
  * Driver for executing shell transformations.
@@ -42,7 +38,10 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
         Process(Seq(t.shell, t.scriptFile), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _, log.error(_)))
       else {
         val file = File.createTempFile("_schedoscope", ".sh")
-        using(new FileWriter(file))(writer => { writer.write(s"#!${t.shell}\n"); t.script.foreach(line => writer.write(line)) })
+        using(new FileWriter(file))(writer => {
+          writer.write(s"#!${t.shell}\n");
+          t.script.foreach(line => writer.write(line))
+        })
         scala.compat.Platform.collectGarbage() // JVM Windows related bug workaround JDK-4715154
         file.deleteOnExit()
         Process(Seq(t.shell, file.getAbsolutePath), None, t.env.toSeq: _*).!(ProcessLogger(stdout append _, log.error(_)))

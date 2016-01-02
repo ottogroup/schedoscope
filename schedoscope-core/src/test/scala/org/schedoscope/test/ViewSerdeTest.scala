@@ -15,25 +15,22 @@
  */
 package org.schedoscope.test
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.DriverTests
-import org.schedoscope.dsl.Field.v
-import org.schedoscope.dsl.Parameter.p
-import test.eci.datahub.Click
-import test.eci.datahub.ClickOfEC0101
 import org.schedoscope.dsl.Structure
-import org.schedoscope.dsl.FieldLike
+
 case class Contingency() extends Structure {
   val o11 = fieldOf[Long]
   val o12 = fieldOf[Long]
   val o21 = fieldOf[Long]
   val o22 = fieldOf[Long]
 }
+
 case class Nested() extends Structure {
   val value = fieldOf[Long]
   val nested = fieldOf[Contingency]
 }
+
 class ViewSerdeTest extends FlatSpec with Matchers {
 
   "view Serde" should "deserialize structures" taggedAs (DriverTests) in {

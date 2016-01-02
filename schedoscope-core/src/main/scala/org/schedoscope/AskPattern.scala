@@ -16,14 +16,13 @@
 package org.schedoscope
 
 import java.util.concurrent.TimeUnit
-import scala.concurrent.Await
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
-import scala.concurrent.duration.FiniteDuration
-import akka.actor.ActorRef
-import akka.actor.ActorSelection
+
+import akka.actor.{ ActorRef, ActorSelection }
 import akka.pattern.Patterns
 import akka.util.Timeout
+
+import scala.concurrent.{ Await, ExecutionContext, Future }
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * Contains commonly codified ask patterns for actors.

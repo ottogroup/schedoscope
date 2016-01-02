@@ -16,15 +16,11 @@
 package org.schedoscope.test
 
 import java.sql.Connection
-import scala.collection.mutable.ListBuffer
-import org.schedoscope.dsl.View
-import org.schedoscope.dsl.Field
+
+import org.schedoscope.dsl.{ FieldLike, View }
 import org.schedoscope.schema.ddl.HiveQl
-import java.util.Date
-import scala.collection.generic.MutableMapFactory
-import scala.collection.mutable.HashMap
-import org.schedoscope.dsl.FieldLike
-import java.sql.DriverManager
+
+import scala.collection.mutable.{ HashMap, ListBuffer }
 
 class Database(conn: Connection, url: String) {
 

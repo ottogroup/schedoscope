@@ -17,8 +17,8 @@ package org.schedoscope.test
 
 import java.text.SimpleDateFormat
 import java.util.Date
-import org.schedoscope.dsl.FieldLike
-import org.schedoscope.dsl.Structure
+
+import org.schedoscope.dsl.{ FieldLike, Structure }
 
 /**
  * FieldSequentialValue creates random data for missing values

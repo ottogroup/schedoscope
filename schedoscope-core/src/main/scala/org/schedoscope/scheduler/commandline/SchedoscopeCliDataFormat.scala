@@ -15,14 +15,13 @@
  */
 package org.schedoscope.scheduler.commandline
 
-import scala.concurrent.Future
-import org.schedoscope.scheduler.service.TransformationStatusList
-import org.schedoscope.scheduler.service.SchedoscopeCommandStatus
-import org.schedoscope.scheduler.service.ViewStatusList
-import org.schedoscope.scheduler.service.QueueStatusList
 import com.bethecoder.ascii_table.ASCIITable
+import org.schedoscope.scheduler.service.{ QueueStatusList, SchedoscopeCommandStatus, TransformationStatusList, ViewStatusList }
 
-object SchedoscopeCliFormat { // FIXME: a more generic parsing would be cool...
+import scala.concurrent.Future
+
+object SchedoscopeCliFormat {
+  // FIXME: a more generic parsing would be cool...
 
   def serialize(o: Any): String = {
     val sb = new StringBuilder()

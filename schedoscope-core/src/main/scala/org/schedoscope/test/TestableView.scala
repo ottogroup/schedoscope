@@ -15,19 +15,13 @@
  */
 package org.schedoscope.test
 
-import scala.collection.mutable.ListBuffer
 import org.apache.hadoop.fs.Path
+import org.schedoscope.dsl.{ FieldLike, Structure, View }
+import org.schedoscope.dsl.transformations.{ FilesystemTransformation, HiveTransformation, MapreduceTransformation, OozieTransformation, PigTransformation, Transformation }
 import org.schedoscope.scheduler.driver.Driver
-import org.schedoscope.dsl.FieldLike
-import org.schedoscope.dsl.Structure
-import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.OozieTransformation
-import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.test.resources.OozieTestResources
-import org.schedoscope.dsl.transformations.MapreduceTransformation
-import org.schedoscope.dsl.transformations.FilesystemTransformation
+
+import scala.collection.mutable.ListBuffer
 
 trait TestableView extends FillableView {}
 
@@ -148,6 +142,7 @@ trait test extends TestableView {
   def withConfiguration(k: String, v: Any) {
     configureTransformation(k, v)
   }
+
   /**
    * Configures the associated transformation with the given property (as
    * multiple key value pairs)
@@ -192,5 +187,6 @@ trait test extends TestableView {
 trait clustertest extends test {
   val otr = OozieTestResources()
   resources = () => otr
+
   def cluster = () => otr.mo
 }

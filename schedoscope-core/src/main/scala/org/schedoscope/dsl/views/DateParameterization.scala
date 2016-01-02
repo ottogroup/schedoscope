@@ -16,11 +16,12 @@
 package org.schedoscope.dsl.views
 
 import java.util.Calendar
+
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.Settings
+
 import scala.collection.mutable.ListBuffer
-import org.schedoscope.Schedoscope
 
 object DateParameterizationUtils {
   /**
@@ -133,16 +134,22 @@ object DateParameterizationUtils {
    * Convert a sequence of Calendars into string date triples (year, month, day).
    */
   def dayParameterRange(range: Seq[Calendar]): Seq[(String, String, String)] =
-    range.map { dayToStrings(_) }
+    range.map {
+      dayToStrings(_)
+    }
 
   /**
    * Convert a sequence of Calendars into string month tuples (year, month).
    */
   def monthParameterRange(range: Seq[Calendar]): Seq[(String, String)] =
-    range.map { dayToStrings(_) }.map { case (year, month, day) => (year, month) }.distinct
+    range.map {
+      dayToStrings(_)
+    }.map { case (year, month, day) => (year, month) }.distinct
 
   def dayRangeAsParams(year: Parameter[String], month: Parameter[String], day: Parameter[String]): Seq[(String, String, String)] =
-    prevDaysFrom(parametersToDay(year, month, day)).map { dayToStrings(_) }
+    prevDaysFrom(parametersToDay(year, month, day)).map {
+      dayToStrings(_)
+    }
 
   /**
    * Return this date (given as string parameters) and all earlier dates bounded by the earliest day as a sequence of string date triples (year, month, day)

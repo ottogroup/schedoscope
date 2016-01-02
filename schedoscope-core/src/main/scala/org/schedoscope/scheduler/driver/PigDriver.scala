@@ -16,33 +16,17 @@
 package org.schedoscope.scheduler.driver
 
 import java.security.PrivilegedAction
-import java.sql.Connection
-import java.sql.DriverManager
-import java.sql.SQLException
-import java.sql.Statement
-import scala.Array.canBuildFrom
-import scala.collection.JavaConversions.asScalaBuffer
-import scala.collection.mutable.Stack
-import scala.concurrent.Future
-import org.apache.commons.lang.StringUtils
-import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
-import org.apache.hadoop.hive.metastore.api.Function
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.thrift.protocol.TProtocolException
-import org.joda.time.LocalDateTime
-import org.schedoscope.DriverSettings
-import org.schedoscope.Schedoscope
-import org.schedoscope.dsl.transformations.PigTransformation
-import org.schedoscope.dsl.transformations.Transformation.replaceParameters;
-import org.schedoscope.scheduler.driver.HiveDriver.currentConnection;
-import org.slf4j.LoggerFactory
-import HiveDriver.currentConnection
-import org.apache.pig.PigServer
-import org.apache.pig.ExecType
 import java.util.Properties
-import org.apache.pig.PigException
-import scala.collection.JavaConversions._
+
+import org.apache.hadoop.security.UserGroupInformation
+import org.apache.pig.{ ExecType, PigException, PigServer }
+import org.joda.time.LocalDateTime
+import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.dsl.transformations.PigTransformation
+import org.schedoscope.dsl.transformations.Transformation.replaceParameters
+import org.slf4j.LoggerFactory
+
+import scala.concurrent.Future
 
 /**
  * Driver for Pig transformations.

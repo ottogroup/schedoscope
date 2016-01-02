@@ -47,8 +47,8 @@ case class Parquet() extends StorageFormat
 case class Avro(schemaPath: String) extends StorageFormat
 
 /**
- *  Base class for external storage formats. Views with external storage formats keep their data not within the Hive metastore
- *  but in external pool such as in a RDBMS tables or Redis stores
+ * Base class for external storage formats. Views with external storage formats keep their data not within the Hive metastore
+ * but in external pool such as in a RDBMS tables or Redis stores
  */
 abstract sealed class ExternalStorageFormat extends StorageFormat
 
@@ -104,6 +104,6 @@ case class JDBC(jdbcUrl: String, userName: String, password: String, jdbcDriver:
 case class Redis(host: String, port: Long = 9393, password: String = "", keys: Seq[String] = List("id"), cols: Seq[Named] = List()) extends ExternalStorageFormat
 
 /**
- *  Does not store anything, this table is just for side-effects
+ * Does not store anything, this table is just for side-effects
  */
 case class NullStorage() extends ExternalStorageFormat

@@ -15,35 +15,16 @@
  */
 package org.schedoscope.scheduler.actors
 
-import scala.language.postfixOps
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.duration.FiniteDuration
-import org.schedoscope.DriverSettings
-import org.schedoscope.SchedoscopeSettings
-import org.schedoscope.scheduler.driver.Driver
-import org.schedoscope.scheduler.driver.DriverException
-import org.schedoscope.scheduler.driver.DriverRunFailed
-import org.schedoscope.scheduler.driver.DriverRunHandle
-import org.schedoscope.scheduler.driver.DriverRunOngoing
-import org.schedoscope.scheduler.driver.DriverRunState
-import org.schedoscope.scheduler.driver.DriverRunSucceeded
-import org.schedoscope.scheduler.driver.FileSystemDriver
-import org.schedoscope.scheduler.driver.HiveDriver
-import org.schedoscope.scheduler.driver.OozieDriver
-import org.schedoscope.scheduler.driver.ShellDriver
-import org.schedoscope.dsl.transformations._
-import org.schedoscope.scheduler.messages._
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.actorRef2Scala
-import akka.event.Logging
-import akka.event.LoggingReceive
-import org.schedoscope.scheduler.driver.MorphlineDriver
-import org.schedoscope.scheduler.driver.MapreduceDriver
-import org.schedoscope.scheduler.driver.PigDriver
-import org.schedoscope.scheduler.driver.DriverException
+import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
+import akka.event.{ Logging, LoggingReceive }
 import org.apache.commons.lang.exception.ExceptionUtils
+import org.schedoscope.{ DriverSettings, SchedoscopeSettings }
+import org.schedoscope.dsl.transformations._
+import org.schedoscope.scheduler.driver.{ Driver, DriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FileSystemDriver, HiveDriver, MapreduceDriver, MorphlineDriver, OozieDriver, PigDriver, ShellDriver }
+import org.schedoscope.scheduler.messages._
+
+import scala.concurrent.duration.{ DurationInt, FiniteDuration }
+import scala.language.postfixOps
 
 /**
  * A driver actor manages the executions of transformations using hive, oozie etc. The actual
@@ -52,7 +33,9 @@ import org.apache.commons.lang.exception.ExceptionUtils
  *
  */
 class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
+
   import context._
+
   val log = Logging(system, this)
 
   lazy val driver = driverConstructor(ds)
@@ -166,7 +149,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
   }
 
   /**
-   *  State transition to default state.
+   * State transition to default state.
    */
   def toReceive() {
     runningCommand = None

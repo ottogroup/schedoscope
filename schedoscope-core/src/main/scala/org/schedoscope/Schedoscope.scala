@@ -15,11 +15,8 @@
  */
 package org.schedoscope
 
-import org.schedoscope.AskPattern.actorSelectionToRef
-import org.schedoscope.scheduler.actors.ViewManagerActor
-import org.schedoscope.scheduler.actors.TransformationManagerActor
-import org.schedoscope.scheduler.actors.SchemaManagerActor
 import akka.actor.ActorSystem
+import org.schedoscope.scheduler.actors.{ SchemaManagerActor, TransformationManagerActor, ViewManagerActor }
 
 /**
  * The Schedoscope object provides accessors for the various components of the schedoscope system.

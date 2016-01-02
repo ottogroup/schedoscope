@@ -15,11 +15,12 @@
  */
 package schedoscope.example.osm
 
-import org.schedoscope.dsl.View
 import java.text.SimpleDateFormat
 import java.util.Date
-import org.schedoscope.dsl.views.MonthlyParameterization
+
 import org.schedoscope.Settings
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.views.MonthlyParameterization
 
 object Globals {
   def defaultHiveQlParameters(v: View) = {
