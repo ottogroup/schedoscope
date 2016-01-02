@@ -16,6 +16,7 @@
 package org.schedoscope.dsl.views
 
 import java.util.Date
+
 import org.schedoscope.dsl.ViewDsl
 
 /**

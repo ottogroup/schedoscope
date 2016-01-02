@@ -19,11 +19,9 @@ import java.net.URLClassLoader
 import java.nio.file.Paths
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
-import scala.Array.canBuildFrom
-import scala.collection.mutable.HashMap
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.duration.Duration
-import scala.collection.JavaConversions._
+
+import akka.actor.{ ActorSystem, ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider }
+import com.typesafe.config.Config
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
@@ -31,15 +29,14 @@ import org.apache.hadoop.yarn.conf.YarnConfiguration
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.views.DateParameterizationUtils
-import com.typesafe.config.Config
-import akka.actor.ActorSystem
-import akka.actor.ExtendedActorSystem
-import akka.actor.Extension
-import akka.actor.ExtensionId
-import akka.actor.ExtensionIdProvider
+import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.scheduler.driver.FileSystemDriver.fileSystem
-import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
+
+import scala.Array.canBuildFrom
+import scala.collection.JavaConversions._
+import scala.collection.mutable.HashMap
+import scala.concurrent.duration.Duration
 
 /**
  * The Settings class keeps all settings for Schedoscope. It is a singelton accessible through
@@ -337,7 +334,9 @@ class DriverSettings(val config: Config, val name: String) {
       .split(",")
       .toList
       .filter(!_.trim.equals(""))
-      .map(p => { if (!p.endsWith("/")) s"file://${p.trim}/*" else s"file://${p.trim}*" })
+      .map(p => {
+        if (!p.endsWith("/")) s"file://${p.trim}/*" else s"file://${p.trim}*"
+      })
       .flatMap(dir => {
         fileSystem(dir, Schedoscope.settings.hadoopConf).globStatus(new Path(dir))
           .map(stat => stat.getPath.toString)

@@ -15,23 +15,12 @@
  */
 package org.schedoscope.scheduler.driver
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.test.resources.LocalTestResources
-import org.schedoscope.dsl.transformations.MorphlineTransformation
-import test.eci.datahub.MorphlineView
-import org.schedoscope.dsl.transformations.MorphlineTransformation
-import test.eci.datahub._
-import test.eci.datahub.CompilingMorphlineView
-import org.schedoscope.dsl.View
-import org.schedoscope.dsl.Parameter
-import org.apache.hadoop.security.UserGroupInformation
-import java.security.PrivilegedAction
-import org.schedoscope.test.resources.LocalTestResources
-import test.eci.datahub.RedisMorphlineView
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
+import test.eci.datahub.{ CompilingMorphlineView, MorphlineView, RedisMorphlineView, _ }
 
 class MorphlineDriverTest extends FlatSpec with Matchers {
   lazy val driver: MorphlineDriver = new LocalTestResources().morphlineDriver

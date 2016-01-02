@@ -15,8 +15,7 @@
  */
 package org.schedoscope.dsl
 
-import scala.language.existentials
-import scala.language.implicitConversions
+import scala.language.{ existentials, implicitConversions }
 
 /**
  * A case class for keeping any object with its manifest.

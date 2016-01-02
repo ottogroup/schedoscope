@@ -16,8 +16,7 @@
 
 package org.schedoscope.schema.ddl
 
-import org.schedoscope.dsl.Structure
-import org.schedoscope.dsl.View
+import org.schedoscope.dsl.{ Structure, View }
 import org.schedoscope.dsl.storageformats._
 
 object HiveQl {
@@ -98,7 +97,8 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
     case l  => if (!view.isExternal) s"LOCATION '${l}'" else ""
   }
 
-  def ddl(view: View): String = s"""
+  def ddl(view: View): String =
+    s"""
 \tCREATE EXTERNAL TABLE IF NOT EXISTS ${view.tableName} ${if (view.storageFormat.getClass() != classOf[Avro]) "(\n\t\t" + fieldsDdl(view) + "\n\t)" else ""}
 \t${commentDdl(view)}
 \t${partitionDdl(view)}

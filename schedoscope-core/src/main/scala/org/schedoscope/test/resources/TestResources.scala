@@ -15,28 +15,19 @@
  */
 package org.schedoscope.test.resources
 
-import java.sql.DriverManager
+import java.sql.{ Connection, DriverManager }
+import java.util.concurrent.ConcurrentHashMap
+
+import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
-import org.schedoscope.scheduler.driver.HiveDriver
-import org.schedoscope.scheduler.driver.PigDriver
-import org.schedoscope.schema.SchemaManager
 import org.schedoscope.dsl.storageformats.TextFile
-import org.schedoscope.test.Database
-import java.sql.Connection
-import org.schedoscope.scheduler.driver.OozieDriver
-import org.schedoscope.scheduler.driver.FileSystemDriver
-import org.schedoscope.scheduler.driver.MorphlineDriver
-import org.apache.hadoop.conf.Configuration
-import org.schedoscope.scheduler.driver.MapreduceDriver
-import org.schedoscope.scheduler.driver.ShellDriver
 import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.scheduler.driver.DriverRunCompletionHandler
-import org.schedoscope.scheduler.driver.DriverRunHandle
-import org.schedoscope.scheduler.driver.DriverRunState
-import java.util.concurrent.ConcurrentHashMap
+import org.schedoscope.scheduler.driver.{ DriverRunCompletionHandler, DriverRunHandle, DriverRunState, FileSystemDriver, HiveDriver, MapreduceDriver, MorphlineDriver, OozieDriver, PigDriver, ShellDriver }
+import org.schedoscope.schema.SchemaManager
+import org.schedoscope.test.Database
 
 object TestDriverRunCompletionHandlerCallCounter {
   val calls = new ConcurrentHashMap[DriverRunHandle[_], DriverRunState[_]]()

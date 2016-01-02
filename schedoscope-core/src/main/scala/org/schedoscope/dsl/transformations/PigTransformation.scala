@@ -15,23 +15,14 @@
  */
 package org.schedoscope.dsl.transformations
 
-import java.io.FileInputStream
-import java.io.InputStream
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.ListBuffer
+import java.io.{ FileInputStream, InputStream }
+
 import org.apache.commons.lang.StringUtils
-import org.apache.hadoop.hive.metastore.api.Function
-import org.apache.hadoop.hive.metastore.api.ResourceType
-import org.apache.hadoop.hive.metastore.api.ResourceUri
-import org.schedoscope.Settings
-import org.schedoscope.dsl.View
-import scala.collection.JavaConversions._
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
-import org.apache.hadoop.hive.ql.udf.UDFLength
-import org.apache.hive.hcatalog.pig.HCatLoader
-import org.apache.hive.hcatalog.data.schema.HCatSchema
-import parquet.pig.ParquetStorer
 import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege
+import org.apache.hadoop.hive.ql.udf.UDFLength
+import org.apache.hive.hcatalog.data.schema.HCatSchema
+import org.apache.hive.hcatalog.pig.HCatLoader
+import parquet.pig.ParquetStorer
 
 /**
  * Pig Transformation - Compute a view from a shell script.

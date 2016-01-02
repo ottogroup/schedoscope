@@ -15,13 +15,11 @@
  */
 package schedoscope.example.osm.datahub
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import schedoscope.example.osm.processed.Nodes
-import org.schedoscope.test.rows
-import org.schedoscope.dsl.Parameter.p
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.dsl.Field._
-import org.schedoscope.test.test
+import org.schedoscope.dsl.Parameter.p
+import org.schedoscope.test.{ rows, test }
+import schedoscope.example.osm.processed.Nodes
 
 case class ShopsTest() extends FlatSpec
     with Matchers {

@@ -15,17 +15,14 @@
  */
 package schedoscope.example.osm.processed
 
+import org.apache.hadoop.fs.Path
+import org.apache.hadoop.io.{ NullWritable, Text }
+import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
+import org.apache.hadoop.mapreduce.lib.output.{ FileOutputFormat, LazyOutputFormat, TextOutputFormat }
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.dsl.transformations.MapreduceTransformation
-import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.lib.output.LazyOutputFormat
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
-import org.apache.hadoop.io.Text
-import org.apache.hadoop.io.NullWritable
-import org.apache.hadoop.fs.Path
 import schedoscope.example.osm.mapreduce.GeohashMapper
 
 case class NodesWithGeohash() extends View {

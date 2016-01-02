@@ -16,25 +16,24 @@
 package org.schedoscope.scheduler.driver
 
 import java.nio.file.Files
-import scala.Array.canBuildFrom
-import scala.concurrent.Await
-import scala.concurrent.Future
-import scala.concurrent.duration.Duration
-import scala.util.Random
-import org.joda.time.LocalDateTime
-import org.schedoscope.DriverSettings
-import org.schedoscope.dsl.transformations.Transformation
+
 import net.lingala.zip4j.core.ZipFile
 import org.apache.commons.io.FileUtils
-import org.schedoscope.Schedoscope
+import org.joda.time.LocalDateTime
+import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.dsl.transformations.Transformation
+
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration.Duration
+import scala.util.Random
 
 /**
- *  Base class of exceptions that will be escalated to the driver actor  to cause a driver actor restart
+ * Base class of exceptions that will be escalated to the driver actor  to cause a driver actor restart
  */
 case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
 /**
- *  Handle for the transformation executed by a driver, called a driver run.
+ * Handle for the transformation executed by a driver, called a driver run.
  */
 class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, val stateHandle: Any)
 
@@ -45,20 +44,20 @@ class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: L
 sealed abstract class DriverRunState[T <: Transformation](val driver: Driver[T])
 
 /**
- *  Driver run state: transformation is still running
+ * Driver run state: transformation is still running
  */
 case class DriverRunOngoing[T <: Transformation](override val driver: Driver[T], val runHandle: DriverRunHandle[T]) extends DriverRunState[T](driver)
 
 /**
- *  Driver run state: transformation has finished succesfully. The driver actor embedding the driver having sucessfully
- *  executed the transformation will return a success message to the view actor initiating the transformation.
+ * Driver run state: transformation has finished succesfully. The driver actor embedding the driver having sucessfully
+ * executed the transformation will return a success message to the view actor initiating the transformation.
  */
 case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T], comment: String) extends DriverRunState[T](driver)
 
 /**
- *  Driver run state: transformation has terminated with an error. The driver actor embedding the driver having failed
- *  at executing the transformation will return a failure message to the view actor initiating the transformation. That view
- *  actor will subsequently retry the transformation.
+ * Driver run state: transformation has terminated with an error. The driver actor embedding the driver having failed
+ * at executing the transformation will return a failure message to the view actor initiating the transformation. That view
+ * actor will subsequently retry the transformation.
  *
  */
 case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
@@ -117,7 +116,7 @@ trait Driver[T <: Transformation] {
 
   /**
    * @return the name of the transformation. This is a string identifier of the transformation type
-   * used within configurations.
+   *         used within configurations.
    */
   def transformationName: String
 

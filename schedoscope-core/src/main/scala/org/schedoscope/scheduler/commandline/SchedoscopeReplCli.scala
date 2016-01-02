@@ -15,9 +15,9 @@
  */
 package org.schedoscope.scheduler.commandline
 
-import jline.ConsoleReader
-import jline.History
 import java.io.File
+
+import jline.{ ConsoleReader, History }
 import org.schedoscope.scheduler.service.SchedoscopeService
 
 /**

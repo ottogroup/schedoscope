@@ -16,16 +16,12 @@
 package schedoscope.example.osm.datamart
 
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.views.Id
-import org.schedoscope.dsl.views.JobMetadata
-import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
-import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
-import schedoscope.example.osm.Globals._
 import org.schedoscope.dsl.storageformats.Parquet
-import schedoscope.example.osm.datahub.Shops
-import schedoscope.example.osm.datahub.Trainstations
-import schedoscope.example.osm.datahub.Restaurants
+import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.transformations.HiveTransformation.{ insertInto, queryFromResource }
+import org.schedoscope.dsl.views.{ Id, JobMetadata }
+import schedoscope.example.osm.Globals._
+import schedoscope.example.osm.datahub.{ Restaurants, Shops, Trainstations }
 
 case class ShopProfiles() extends View
     with Id

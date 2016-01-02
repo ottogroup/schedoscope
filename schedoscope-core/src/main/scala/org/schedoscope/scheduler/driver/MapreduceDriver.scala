@@ -15,21 +15,17 @@
  */
 package org.schedoscope.scheduler.driver
 
-import org.apache.hadoop.security.UserGroupInformation
-import org.joda.time.LocalDateTime
-import org.schedoscope.dsl.transformations.MapreduceTransformation
-import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.mapreduce.JobStatus.State.FAILED
-import org.apache.hadoop.mapreduce.JobStatus.State.KILLED
-import org.apache.hadoop.mapreduce.JobStatus.State.PREP
-import org.apache.hadoop.mapreduce.JobStatus.State.RUNNING
-import org.apache.hadoop.mapreduce.JobStatus.State.SUCCEEDED
-import org.schedoscope.Schedoscope
-import org.schedoscope.DriverSettings
 import java.security.PrivilegedAction
 
+import org.apache.hadoop.mapreduce.Job
+import org.apache.hadoop.mapreduce.JobStatus.State.{ FAILED, KILLED, PREP, RUNNING, SUCCEEDED }
+import org.apache.hadoop.security.UserGroupInformation
+import org.joda.time.LocalDateTime
+import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.dsl.transformations.MapreduceTransformation
+
 /**
- *  Driver that executes Mapreduce transformations.
+ * Driver that executes Mapreduce transformations.
  */
 class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val fileSystemDriver: FileSystemDriver) extends Driver[MapreduceTransformation] {
 

@@ -18,36 +18,24 @@ package org.schedoscope.scheduler.actors
 import java.lang.Math.max
 import java.security.PrivilegedAction
 import java.util.Date
-import scala.concurrent.duration.Duration
-import org.apache.hadoop.fs.Path
-import org.schedoscope.SchedoscopeSettings
-import org.schedoscope.dsl.transformations.NoOp
-import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.FilesystemTransformation
-import org.schedoscope.dsl.transformations.Touch
-import org.schedoscope.scheduler.messages._
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.actorRef2Scala
-import akka.event.Logging
-import akka.event.LoggingReceive
-import org.schedoscope.AskPattern
-import org.schedoscope.dsl.transformations.MorphlineTransformation
-import org.schedoscope.dsl.transformations.MorphlineTransformation
-import org.apache.hadoop.fs.PathFilter
-import org.apache.hadoop.fs.FileStatus
-import org.schedoscope.dsl.transformations.NoOp
+
 import akka.actor.ActorSelection.toScala
+import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
+import akka.event.{ Logging, LoggingReceive }
+import org.apache.hadoop.fs.{ Path, PathFilter }
+import org.schedoscope.{ AskPattern, SchedoscopeSettings }
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.{ FilesystemTransformation, MorphlineTransformation, NoOp, Touch }
 import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
-import java.net.URI
-import scala.reflect.internal.util.HashSet
-import org.schedoscope.dsl.views.DateParameterizationUtils
+import org.schedoscope.scheduler.messages._
+
+import scala.concurrent.duration.Duration
 
 class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
-  import context._
-  import MaterializeViewMode._
+
   import AskPattern._
+  import MaterializeViewMode._
+  import context._
 
   val log = Logging(system, this)
 
@@ -227,7 +215,9 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
         toMaterialized()
       }
     } else {
-      listenersWaitingForMaterialize.foreach(s => { log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view) })
+      listenersWaitingForMaterialize.foreach(s => {
+        log.debug(s"sending NoDataAvailable to ${s}"); s ! NoDataAvailable(view)
+      })
       listenersWaitingForMaterialize.clear
 
       toDefault(false, "nodata")

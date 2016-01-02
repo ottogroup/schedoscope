@@ -15,21 +15,15 @@
  */
 package org.schedoscope.scheduler.actors
 
-import scala.collection.mutable.HashMap
-import org.schedoscope.SchedoscopeSettings
+import akka.actor.SupervisorStrategy.Escalate
+import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props, actorRef2Scala }
+import akka.event.{ Logging, LoggingReceive }
+import org.schedoscope.AskPattern._
+import org.schedoscope.{ Schedoscope, SchedoscopeSettings }
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages._
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.Props
-import akka.actor.actorRef2Scala
-import akka.event.Logging
-import akka.event.LoggingReceive
-import scala.collection.mutable.HashSet
-import akka.actor.OneForOneStrategy
-import akka.actor.SupervisorStrategy.Escalate
-import org.schedoscope.Schedoscope
-import org.schedoscope.AskPattern._
+
+import scala.collection.mutable.{ HashMap, HashSet }
 
 /**
  * The view manager actor is the factory and import org.schedoscope.scheduler.actors.ViewActor
@@ -41,6 +35,7 @@ import org.schedoscope.AskPattern._
  * It does this by cooperating with the parition creator actor and metadata logger actor.
  */
 class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, partitionCreatorActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
+
   import context._
 
   val log = Logging(system, ViewManagerActor.this)
@@ -100,12 +95,16 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     val viewsPerTableName = actorsToCreate
       .map { case (view, _, _) => view }
       .distinct
-      .groupBy { _.tableName }
+      .groupBy {
+        _.tableName
+      }
       .values
       .toList
 
     val tablesToCreate = viewsPerTableName
-      .map { CheckOrCreateTables(_) }
+      .map {
+        CheckOrCreateTables(_)
+      }
 
     if (tablesToCreate.nonEmpty) {
       log.info(s"Submitting tables to check or create to schema actor")
@@ -115,7 +114,9 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     }
 
     val partitionsToCreate = viewsPerTableName
-      .map { AddPartitions(_) }
+      .map {
+        AddPartitions(_)
+      }
 
     if (partitionsToCreate.nonEmpty) {
       log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")

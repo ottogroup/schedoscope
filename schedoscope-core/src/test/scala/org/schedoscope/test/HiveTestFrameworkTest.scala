@@ -15,13 +15,11 @@
  */
 package org.schedoscope.test
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
-import test.eci.datahub.Click
-import test.eci.datahub.ClickOfEC0101
+import test.eci.datahub.{ Click, ClickOfEC0101 }
 
 class HiveTestFrameworkTest extends FlatSpec with Matchers {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {

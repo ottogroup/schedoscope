@@ -15,20 +15,18 @@
  */
 package org.schedoscope.scheduler.actors
 
-import org.schedoscope.SchedoscopeSettings
-import org.schedoscope.scheduler.messages._
-import akka.actor.Actor
-import akka.actor.ActorRef
-import akka.actor.OneForOneStrategy
-import akka.actor.Props
+import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props }
 import akka.actor.SupervisorStrategy.Restart
 import akka.event.Logging
 import akka.routing.RoundRobinPool
+import org.schedoscope.SchedoscopeSettings
+import org.schedoscope.scheduler.messages._
 
 /**
  * Supervisor and forwarder for partition creator and metadata logger actors
  */
 class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
+
   import context._
 
   val log = Logging(system, this)

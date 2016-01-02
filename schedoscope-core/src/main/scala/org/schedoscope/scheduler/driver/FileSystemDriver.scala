@@ -15,41 +15,20 @@
  */
 package org.schedoscope.scheduler.driver
 
-import java.io.File
-import java.io.IOException
-import java.io.InputStream
+import java.io.{ File, IOException, InputStream }
 import java.net.URI
 import java.nio.file.Files
 import java.security.PrivilegedAction
-import scala.Array.canBuildFrom
-import scala.collection.mutable.HashMap
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration.Duration
-import scala.concurrent.Future
+
 import org.apache.commons.io.FileUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.FileStatus
-import org.apache.hadoop.fs.FileSystem
-import org.apache.hadoop.fs.FileUtil
-import org.apache.hadoop.fs.Path
+import org.apache.hadoop.fs.{ FileStatus, FileSystem, FileUtil, Path }
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
-import org.schedoscope.DriverSettings
-import org.schedoscope.Schedoscope
-import org.schedoscope.dsl.transformations.Copy
-import org.schedoscope.dsl.transformations.CopyFrom
-import org.schedoscope.dsl.transformations.Delete
-import org.schedoscope.dsl.transformations.FilesystemTransformation
-import org.schedoscope.dsl.transformations.IfExists
-import org.schedoscope.dsl.transformations.IfNotExists
-import org.schedoscope.dsl.transformations.Move
-import org.schedoscope.dsl.transformations.Touch
-import org.schedoscope.dsl.transformations.StoreFrom
-import org.schedoscope.dsl.transformations.MkDir
-import org.schedoscope.scheduler.driver.FileSystemDriver._
-import java.net.URL
-import java.util.concurrent.ConcurrentHashMap
-import org.apache.hadoop.fs.FSDataOutputStream
+import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.dsl.transformations.{ Copy, CopyFrom, Delete, FilesystemTransformation, IfExists, IfNotExists, MkDir, Move, StoreFrom, Touch }
+
+import scala.concurrent.Future
 
 /**
  * Driver for executing file system transformations

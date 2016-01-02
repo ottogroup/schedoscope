@@ -16,18 +16,18 @@
 package org.schedoscope.dsl.views
 
 import java.net.URLDecoder
-import scala.Array.canBuildFrom
+
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.View
-import org.schedoscope.dsl.TypedAny
 import org.schedoscope.dsl.TypedAny.typedAny
-import org.schedoscope.dsl.views.DateParameterizationUtils.earliestDay;
-import org.schedoscope.dsl.views.DateParameterizationUtils.thisAndPrevDays;
-import org.schedoscope.dsl.views.DateParameterizationUtils.thisAndPrevMonths;
+import org.schedoscope.dsl.{ TypedAny, View }
+import org.schedoscope.dsl.views.DateParameterizationUtils.{ thisAndPrevDays, thisAndPrevMonths }
+
+import scala.Array.canBuildFrom;
 
 class NoAugmentation extends ViewUrlParser.ParsedViewAugmentor
 
 object ViewUrlParser {
+
   case class ParsedView(env: String, viewClass: Class[View], parameters: List[TypedAny])
 
   trait ParsedViewAugmentor {
@@ -87,7 +87,9 @@ object ViewUrlParser {
 
   def typeEnumerationParameter(enumerationType: String, enumerationValues: String): List[List[TypedAny]] = {
     val basicType = enumerationType.tail
-    val values = enumerationValues.replaceAllLiterally("\\,", "§pleasedontquotemebaby§").split(",").map { _.replaceAllLiterally("§pleasedontquotemebaby§", "\\,") }.toList
+    val values = enumerationValues.replaceAllLiterally("\\,", "§pleasedontquotemebaby§").split(",").map {
+      _.replaceAllLiterally("§pleasedontquotemebaby§", "\\,")
+    }.toList
 
     values.flatMap {
       value =>
@@ -141,7 +143,9 @@ object ViewUrlParser {
     else
       normalizedPathFront
 
-    val urlPathChunks = normalizedPath.split("/").map { URLDecoder.decode(_, "UTF-8") }.toList
+    val urlPathChunks = normalizedPath.split("/").map {
+      URLDecoder.decode(_, "UTF-8")
+    }.toList
     if (urlPathChunks.size < 2)
       throw new IllegalArgumentException("View URL paths needs at least a package and a view class name.")
 
@@ -154,7 +158,8 @@ object ViewUrlParser {
 
   } catch {
 
-    case e: Throwable => throw new IllegalArgumentException(s"""        
+    case e: Throwable => throw new IllegalArgumentException(
+      s"""
 Error while parsing view URL path: ${viewUrlPath}!
 
 Path format: /{package}/{view}(/{view parameter value})*
@@ -184,7 +189,7 @@ Ranges on view parameter values:
 
 Quoting:
   Use backslashes to escape the syntax given above. The following characters need quotation: \,(-)
-      
+
 Reason for exception:  
 """, e)
   }

@@ -1,16 +1,13 @@
 package org.schedoscope.scheduler.driver
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import org.schedoscope.DriverTests
-import org.schedoscope.test.resources.LocalTestResources
+import java.io.File
+
+import org.scalatest.{ FlatSpec, Matchers }
+import org.schedoscope.{ DriverTests, ShellTests }
 import org.schedoscope.dsl.transformations.ShellTransformation
-import org.schedoscope.DriverSettings
-import com.typesafe.config.ConfigFactory
-import org.schedoscope.ShellTests
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
-import java.io.File
+
 import scala.io.Source
 
 class ShellDriverTest extends FlatSpec with Matchers {

@@ -15,17 +15,15 @@
  */
 package org.schedoscope.dsl.transformations
 
-import java.io.FileInputStream
-import java.io.InputStream
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.ListBuffer
+import java.io.{ FileInputStream, InputStream }
+
 import org.apache.commons.lang.StringUtils
-import org.apache.hadoop.hive.metastore.api.Function
-import org.apache.hadoop.hive.metastore.api.ResourceType
-import org.apache.hadoop.hive.metastore.api.ResourceUri
+import org.apache.hadoop.hive.metastore.api.{ Function, ResourceType, ResourceUri }
 import org.schedoscope.Settings
 import org.schedoscope.dsl.View
+
 import scala.collection.JavaConversions._
+import scala.collection.mutable.{ HashMap, ListBuffer }
 
 /**
  * Hive Transformation: compute views via HiveQL Hive Server 2.
@@ -95,7 +93,9 @@ object HiveTransformation {
 
     if (partition && view.partitionParameters.nonEmpty) {
       queryPrelude.append("\nPARTITION (")
-      queryPrelude.append(view.partitionParameters.tail.foldLeft({ val first = view.partitionParameters.head; first.n + " = '" + first.v.get + "'" }) { (current, parameter) => current + ", " + parameter.n + " = '" + parameter.v.get + "'" })
+      queryPrelude.append(view.partitionParameters.tail.foldLeft({
+        val first = view.partitionParameters.head; first.n + " = '" + first.v.get + "'"
+      }) { (current, parameter) => current + ", " + parameter.n + " = '" + parameter.v.get + "'" })
       queryPrelude.append(")")
     }
 

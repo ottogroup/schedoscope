@@ -15,13 +15,12 @@
  */
 package org.schedoscope.test.resources
 
+import java.util.logging.{ Level, LogManager, Logger }
+
 import minioozie.MiniOozie
-import org.schedoscope.scheduler.driver.OozieDriver
-import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.fs.FileSystem
-import java.util.logging.LogManager
-import java.util.logging.Logger
-import java.util.logging.Level
+import org.apache.hadoop.hive.conf.HiveConf
+import org.schedoscope.scheduler.driver.OozieDriver
 import org.slf4j.bridge.SLF4JBridgeHandler
 
 class OozieTestResources extends TestResources {

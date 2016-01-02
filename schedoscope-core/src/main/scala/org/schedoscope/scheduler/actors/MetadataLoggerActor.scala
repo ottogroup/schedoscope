@@ -15,19 +15,18 @@
  */
 package org.schedoscope.scheduler.actors
 
-import org.schedoscope.schema.SchemaManager
-import akka.actor.Actor
-import akka.actor.Props
-import akka.actor.actorRef2Scala
-import akka.event.Logging
-import akka.event.LoggingReceive
+import akka.actor.{ Actor, Props, actorRef2Scala }
+import akka.event.{ Logging, LoggingReceive }
 import org.schedoscope.scheduler.messages._
+import org.schedoscope.schema.SchemaManager
 
 /**
  * The metadata logger actor writes view version checksums and timestamps to the metastore
  */
 class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
+
   import context._
+
   val log = Logging(system, MetadataLoggerActor.this)
 
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)

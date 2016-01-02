@@ -15,30 +15,23 @@
  */
 package org.schedoscope.scheduler.service
 
-import scala.language.postfixOps
-import scala.concurrent.Await
-import scala.concurrent.duration.DurationInt
-import org.joda.time.LocalDateTime
-import org.joda.time.format.DateTimeFormat
-import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.driver.DriverRunState
-import org.schedoscope.scheduler.driver.DriverRunFailed
-import org.schedoscope.scheduler.driver.DriverRunOngoing
-import org.schedoscope.scheduler.driver.DriverRunSucceeded
-import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.scheduler.actors.ViewManagerActor
-import org.schedoscope.dsl.Named
-import org.schedoscope.dsl.View
-import akka.actor.ActorRef
-import akka.actor.actorRef2Scala
+import akka.actor.{ ActorRef, ActorSystem, actorRef2Scala }
 import akka.event.Logging
-import org.schedoscope.AskPattern._
 import akka.pattern.Patterns
 import akka.util.Timeout
-import akka.actor.ActorSystem
+import org.joda.time.LocalDateTime
+import org.joda.time.format.DateTimeFormat
+import org.schedoscope.AskPattern._
 import org.schedoscope.SchedoscopeSettings
+import org.schedoscope.dsl.{ Named, View }
+import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.actors.ViewManagerActor
-import scala.concurrent.Future
+import org.schedoscope.scheduler.driver.{ DriverRunFailed, DriverRunOngoing, DriverRunState, DriverRunSucceeded }
+import org.schedoscope.scheduler.messages._
+
+import scala.concurrent.{ Await, Future }
+import scala.concurrent.duration.DurationInt
+import scala.language.postfixOps
 
 class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
 
@@ -47,6 +40,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   transformationManagerActor ! DeployCommand()
 
   case class SchedoscopeCommand(id: String, start: String, parts: List[Future[_]])
+
   val runningCommands = collection.mutable.HashMap[String, SchedoscopeCommand]()
   val doneCommands = collection.mutable.HashMap[String, SchedoscopeCommandStatus]()
 
@@ -116,9 +110,15 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
-        case s: DriverRunSucceeded[_] => { comment = getOrElse(s.comment, "no-comment"); status = "succeeded" }
-        case f: DriverRunFailed[_]    => { comment = getOrElse(f.reason, "no-reason"); status = "failed" }
-        case o: DriverRunOngoing[_]   => { drh = o.runHandle }
+        case s: DriverRunSucceeded[_] => {
+          comment = getOrElse(s.comment, "no-comment"); status = "succeeded"
+        }
+        case f: DriverRunFailed[_] => {
+          comment = getOrElse(f.reason, "no-reason"); status = "failed"
+        }
+        case o: DriverRunOngoing[_] => {
+          drh = o.runHandle
+        }
       }
     }
 

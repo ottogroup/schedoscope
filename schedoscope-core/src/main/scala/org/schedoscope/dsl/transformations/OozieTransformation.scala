@@ -15,11 +15,12 @@
  */
 package org.schedoscope.dsl.transformations
 
-import java.io.FileInputStream
-import java.io.InputStream
+import java.io.{ FileInputStream, InputStream }
 import java.util.Properties
+
 import org.apache.commons.lang.StringUtils
 import org.schedoscope.Settings
+
 import scala.collection.JavaConversions._
 
 /**

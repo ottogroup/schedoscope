@@ -15,31 +15,21 @@
  */
 package org.schedoscope.schema
 
-import java.security.MessageDigest
-import java.security.PrivilegedAction
-import java.sql.Connection
-import java.sql.DriverManager
-import scala.collection.JavaConversions.asScalaBuffer
-import scala.collection.JavaConversions.mapAsScalaMap
-import scala.collection.JavaConversions.mutableMapAsJavaMap
-import scala.collection.JavaConversions.seqAsJavaList
-import scala.collection.mutable.HashMap
-import scala.collection.mutable.HashSet
+import java.security.{ MessageDigest, PrivilegedAction }
+import java.sql.{ Connection, DriverManager }
+
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
-import org.apache.hadoop.hive.metastore.IMetaStoreClient
-import org.apache.hadoop.hive.metastore.api.AlreadyExistsException
-import org.apache.hadoop.hive.metastore.api.NoSuchObjectException
-import org.apache.hadoop.hive.metastore.api.Partition
+import org.apache.hadoop.hive.metastore.{ HiveMetaStoreClient, IMetaStoreClient }
+import org.apache.hadoop.hive.metastore.api.{ AlreadyExistsException, Partition }
 import org.joda.time.DateTime
 import org.schedoscope.Settings
-import org.schedoscope.schema.ddl.HiveQl
-import org.schedoscope.dsl.transformations.Checksum
 import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.{ Checksum, ExternalTransformation }
+import org.schedoscope.schema.ddl.HiveQl
 import org.slf4j.LoggerFactory
-import org.apache.tools.ant.taskdefs.Sleep
-import org.schedoscope.dsl.transformations.ExternalTransformation
-import org.schedoscope.dsl.transformations.Checksum
+
+import scala.collection.JavaConversions.{ asScalaBuffer, mapAsScalaMap, mutableMapAsJavaMap, seqAsJavaList }
+import scala.collection.mutable.HashMap
 
 /**
  * Interface to the Hive metastore. Used by partition creator actor and metadata logger actor.

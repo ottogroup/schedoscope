@@ -16,23 +16,18 @@
 
 package org.schedoscope.scheduler.driver
 
-import org.scalatest.FlatSpec
-import org.scalatest.Matchers
-import org.schedoscope.DriverTests
-import org.schedoscope.test.resources.LocalTestResources
-import org.schedoscope.dsl.transformations.MapreduceTransformation
+import java.nio.charset.StandardCharsets
+import java.nio.file.{ Files, Paths }
+
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
-import java.nio.file.Files
-import org.schedoscope.dsl.transformations.FailingMapper
-import org.schedoscope.dsl.transformations.FailingMapper
-import org.schedoscope.test.resources.LocalTestResources
-import org.apache.hadoop.fs.Path
-import java.nio.file.Paths
-import java.nio.charset.StandardCharsets
-import org.schedoscope.dsl.transformations.FailingMapper
+import org.scalatest.{ FlatSpec, Matchers }
+import org.schedoscope.DriverTests
 import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.{ FailingMapper, MapreduceTransformation }
+import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
 
 class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {

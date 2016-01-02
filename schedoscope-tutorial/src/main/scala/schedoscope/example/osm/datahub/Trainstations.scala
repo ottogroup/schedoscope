@@ -15,16 +15,15 @@
  */
 package schedoscope.example.osm.datahub
 
-import org.schedoscope.dsl.View
-import org.schedoscope.dsl.views.Id
-import org.schedoscope.dsl.views.JobMetadata
-import schedoscope.example.osm.processed.Nodes
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.views.DateParameterizationUtils.allMonths
-import schedoscope.example.osm.Globals._
+import org.schedoscope.dsl.View
 import org.schedoscope.dsl.storageformats.Parquet
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.PigTransformation.scriptFromResource
+import org.schedoscope.dsl.views.DateParameterizationUtils.allMonths
+import org.schedoscope.dsl.views.{ Id, JobMetadata }
+import schedoscope.example.osm.Globals._
+import schedoscope.example.osm.processed.Nodes
 
 case class Trainstations() extends View
     with Id
