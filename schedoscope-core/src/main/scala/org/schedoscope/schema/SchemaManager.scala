@@ -16,20 +16,34 @@
 package org.schedoscope.schema
 
 import java.security.{ MessageDigest, PrivilegedAction }
-import java.sql.{ Connection, DriverManager }
-
+import java.sql.{ Connection, DriverManager, SQLException }
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.{ HiveMetaStoreClient, IMetaStoreClient }
 import org.apache.hadoop.hive.metastore.api.{ AlreadyExistsException, Partition }
 import org.joda.time.DateTime
-import org.schedoscope.Settings
+import org.schedoscope.Schedoscope.settings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{ Checksum, ExternalTransformation }
 import org.schedoscope.schema.ddl.HiveQl
 import org.slf4j.LoggerFactory
-
 import scala.collection.JavaConversions.{ asScalaBuffer, mapAsScalaMap, mutableMapAsJavaMap, seqAsJavaList }
 import scala.collection.mutable.HashMap
+import org.apache.thrift.protocol.TProtocolException
+import org.apache.thrift.TException
+
+/**
+ * Exception class for wrapping retryable exceptions raised by the schema manager.
+ * The schema-related actors (SchemaManager/PartitionCreator/MetadataLogger) will
+ * restart when facing these exceptions.
+ */
+case class RetryableSchemaManagerException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+
+/**
+ * Exception class for wrapping fatal exceptions raised by the schema manager with no prospect of a successful retry.
+ * The schema-related actors (SchemaManager/PartitionCreator/MetadataLogger) will
+ * restart when facing these exceptions.
+ */
+case class FatalSchemaManagerException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
 /**
  * Interface to the Hive metastore. Used by partition creator actor and metadata logger actor.
@@ -52,7 +66,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     metastoreClient.alter_partition(dbName, tableName, partition)
   }
 
-  def setTransformationVersion(view: View) = {
+  def setTransformationVersion(view: View) = try {
     if (view.isExternal) {
       setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
 
@@ -61,9 +75,19 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     } else {
       setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
     }
+  } catch {
+    case te: TException => {      
+      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation version in Metastore.", te)   
+      throw RetryableSchemaManagerException(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation version in Metastore.", te)
+    }
+    
+    case t: Throwable => {
+      log.error(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation version in Metastore.", t)   
+      throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation version in Metastore.", t)
+    }
   }
 
-  def setTransformationTimestamp(view: View, timestamp: Long) = {
+  def setTransformationTimestamp(view: View, timestamp: Long) = try {
     if (view.isExternal) {
       setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
 
@@ -72,23 +96,30 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     } else {
       setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
     }
+  } catch {
+    case te: TException => {      
+      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation timestamp in Metastore.", te)   
+      throw RetryableSchemaManagerException(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation timestamp in Metastore.", te)
+    }
+    
+    case t: Throwable => {
+      log.error(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation timestamp in Metastore.", t)   
+      throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation timestamp in Metastore.", t)
+    }
   }
 
-  def dropAndCreateTableSchema(view: View): Unit = {
+  /**
+   * Execute create database and table for view, dropping the table should it exist already.
+   *
+   * It throws a SchemaManagerException in case of any problem, encapsulating the original exception.
+   */
+  def dropAndCreateTableSchema(view: View): Unit = try {
     val ddl = HiveQl.ddl(view)
     val stmt = connection.createStatement()
 
-    try {
-      stmt.execute(s"CREATE DATABASE IF NOT EXISTS ${view.dbName}")
-    } catch {
-      case _: Throwable =>
-    }
+    stmt.execute(s"CREATE DATABASE IF NOT EXISTS ${view.dbName}")
 
-    try {
-      stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
-    } catch {
-      case _: Throwable =>
-    }
+    stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
 
     log.info(s"Creating table:\n${ddl}")
 
@@ -97,9 +128,20 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     stmt.close()
 
     setTableProperty(view.dbName, view.n, Checksum.SchemaChecksum.checksumProperty, Checksum.digest(ddl))
+  } catch {
+    case t: Throwable => {
+      log.error(s"Schema Manager failed to create table ${view.dbName}.${view.n}.")
+
+      throw RetryableSchemaManagerException(s"Schema manager failed to create table ${view.dbName}.${view.n}", t)
+    }
   }
 
-  def schemaExists(view: View): Boolean = {
+  /**
+   * Checks whether a database and table exists for the given view, as well as whether is has the correct form.
+   *
+   * Throws a SchemaManagerException in case of any problem, encapsulating the original exception.
+   */
+  def schemaExists(view: View): Boolean = try {
     val d = Checksum.digest(HiveQl.ddl(view))
 
     log.info(s"Checking whether table exists: view ${view.dbName}.${view.n} -- Checksum: ${d}")
@@ -127,6 +169,11 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
         log.info(s"Table for view exists ${view.dbName}.${view.n} but checksum ${d} does not match")
         false
       }
+    }
+  } catch {
+    case t: Throwable => {
+      log.error(s"Schema Manager failed to check whether schema for view ${view.dbName}.${view.n} exists")
+      throw RetryableSchemaManagerException(s"Schema Manager failed to check whether schema for view ${view.dbName}.${view.n} exists", t)
     }
   }
 
@@ -177,7 +224,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   }
 
-  def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = {
+  def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = try {
     val tablePrototype = views.head
 
     log.info(s"Reading partition names for view: ${tablePrototype.module}.${tablePrototype.n}")
@@ -196,7 +243,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     log.info(s"Retrieving existing transformation metadata for view ${tablePrototype.module}.${tablePrototype.n} from partitions.")
 
-    val existingMetadata = existingPartitions.grouped(Settings().metastoreReadBatchSize)
+    val existingMetadata = existingPartitions.grouped(settings.metastoreReadBatchSize)
       .map { ep =>
         {
           log.info(s"Reading ${ep.size} partition metadata for view ${tablePrototype.module}.${tablePrototype.n}")
@@ -204,20 +251,31 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
         }
       }.reduceOption(_ ++ _).getOrElse(Map())
 
-    val createdMetadata = nonExistingPartitions.grouped(Settings().metastoreWriteBatchSize)
+    val createdMetadata = nonExistingPartitions.grouped(settings.metastoreWriteBatchSize)
       .map(nep => {
         log.info(s"Creating ${nep.size} partitions for view ${tablePrototype.module}.${tablePrototype.n}")
         createNonExistingPartitions(tablePrototype, nep.values.toList)
       }).reduceOption(_ ++ _).getOrElse(Map())
 
     existingMetadata ++ createdMetadata
+    
+  } catch {
+    case te: TException => {      
+      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while retrieving transformation metadata from Metastore.", te)   
+      throw RetryableSchemaManagerException(s"Schema Manager facing Thrift protocol exception while retrieving transformation metadata from Metastore.", te)
+    }
+    
+    case t: Throwable => {
+      log.error(s"Schema Manager facing unrecoverable exception while retrieving transformation metadata from Metastore.", t)   
+      throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable exception while retrieving transformation metadata from Metastore.", t)
+    }
   }
 
   def partitionToView(tablePrototype: View, p: Partition) = {
     val viewUrl = s"${tablePrototype.urlPathPrefix}/${p.getValues.mkString("/")}"
-    View.viewsFromUrl(Settings().env,
+    View.viewsFromUrl(settings.env,
       viewUrl,
-      Settings().viewAugmentor).head
+      settings.viewAugmentor).head
   }
 
   def viewsToPartitions(views: List[View]): Map[String, Partition] = {
@@ -242,7 +300,7 @@ object SchemaManager {
   def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
     Class.forName("org.apache.hive.jdbc.HiveDriver")
     val connection =
-      Settings().userGroupInformation.doAs(new PrivilegedAction[Connection]() {
+      settings.userGroupInformation.doAs(new PrivilegedAction[Connection]() {
         def run(): Connection = {
           DriverManager.getConnection(jdbcUrl)
         }

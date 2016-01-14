@@ -28,7 +28,8 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 /**
- * Base class of exceptions that will be escalated to the driver actor  to cause a driver actor restart
+ * Base class of retryable exceptions that will be escalated to the driver actor to cause a driver actor restart.
+ * Other exceptions will be escalated and cause the actor system to terminate
  */
 case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 

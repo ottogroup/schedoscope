@@ -29,7 +29,7 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
 
   val log = Logging(system, this)
 
-  val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  val schemaManager = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
 
   /**
@@ -45,7 +45,9 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
    * Message handler
    */
   def receive = LoggingReceive({
+    
     case c: CheckOrCreateTables => {
+      
       runningCommand = Some(c)
 
       c.views
@@ -56,10 +58,10 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
             {
               log.info(s"Checking or creating table for view ${tablePrototype.module}.${tablePrototype.n}")
 
-              if (!crate.schemaExists(tablePrototype)) {
+              if (!schemaManager.schemaExists(tablePrototype)) {
                 log.info(s"Table for view ${tablePrototype.module}.${tablePrototype.n} does not yet exist, creating")
 
-                crate.dropAndCreateTableSchema(tablePrototype)
+                schemaManager.dropAndCreateTableSchema(tablePrototype)
               }
             }
         }
@@ -67,21 +69,24 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
       sender ! SchemaActionSuccess()
 
       runningCommand = None
+      
     }
 
     case a: AddPartitions => {
+      
       runningCommand = Some(a)
 
       val views = a.views
       log.info(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
 
-      val metadata = crate.getTransformationMetadata(views)
+      val metadata = schemaManager.getTransformationMetadata(views)
 
       log.info(s"Created / loaded ${views.size} partitions for table ${views.head.tableName}")
 
       sender ! TransformationMetadata(metadata)
 
       runningCommand = None
+      
     }
   })
 }

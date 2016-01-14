@@ -22,9 +22,9 @@ import org.schedoscope.{ DriverSettings, SchedoscopeSettings }
 import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.driver.{ Driver, DriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FileSystemDriver, HiveDriver, MapreduceDriver, MorphlineDriver, OozieDriver, PigDriver, ShellDriver }
 import org.schedoscope.scheduler.messages._
-
 import scala.concurrent.duration.{ DurationInt, FiniteDuration }
 import scala.language.postfixOps
+import org.schedoscope.scheduler.driver.DriverException
 
 /**
  * A driver actor manages the executions of transformations using hive, oozie etc. The actual
@@ -38,7 +38,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
 
   val log = Logging(system, this)
 
-  lazy val driver = driverConstructor(ds)
+  var driver: Driver[T] = _
 
   var runningCommand: Option[CommandWithSender] = None
 
@@ -46,7 +46,14 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
    * Start ticking upon start.
    */
   override def preStart() {
+    try {
+      driver = driverConstructor(ds)
+    } catch {
+      case t: Throwable => throw DriverException("Driver actor could not initialize driver because driver constructor throws exception. Restarting driver actor...", t)
+    }
+
     logStateInfo("idle", "DRIVER ACTOR: initialized actor")
+
     tick()
   }
 
@@ -98,6 +105,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
         case _: DriverRunOngoing[T] => tick()
 
         case success: DriverRunSucceeded[T] => {
+          
           log.info(s"DRIVER ACTOR: Driver run for handle=${runHandle} succeeded.")
 
           try {
@@ -191,11 +199,13 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
     } catch {
       case exception: DriverException => {
         log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in receive state, rethrowing: ${exception.message}, cause ${exception.cause}")
+        
         throw exception
       }
 
       case t: Throwable => {
         log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in receive state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}")
+        
         throw t
       }
     }
