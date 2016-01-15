@@ -20,11 +20,11 @@ import akka.event.{ Logging, LoggingReceive }
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.schedoscope.{ DriverSettings, SchedoscopeSettings }
 import org.schedoscope.dsl.transformations._
-import org.schedoscope.scheduler.driver.{ Driver, DriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FileSystemDriver, HiveDriver, MapreduceDriver, MorphlineDriver, OozieDriver, PigDriver, ShellDriver }
+import org.schedoscope.scheduler.driver.{ Driver, RetryableDriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FileSystemDriver, HiveDriver, MapreduceDriver, MorphlineDriver, OozieDriver, PigDriver, ShellDriver }
 import org.schedoscope.scheduler.messages._
 import scala.concurrent.duration.{ DurationInt, FiniteDuration }
 import scala.language.postfixOps
-import org.schedoscope.scheduler.driver.DriverException
+import org.schedoscope.scheduler.driver.RetryableDriverException
 
 /**
  * A driver actor manages the executions of transformations using hive, oozie etc. The actual
@@ -49,7 +49,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
     try {
       driver = driverConstructor(ds)
     } catch {
-      case t: Throwable => throw DriverException("Driver actor could not initialize driver because driver constructor throws exception. Restarting driver actor...", t)
+      case t: Throwable => throw RetryableDriverException("Driver actor could not initialize driver because driver constructor throws exception. Restarting driver actor...", t)
     }
 
     logStateInfo("idle", "DRIVER ACTOR: initialized actor")
@@ -105,13 +105,13 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
         case _: DriverRunOngoing[T] => tick()
 
         case success: DriverRunSucceeded[T] => {
-          
+
           log.info(s"DRIVER ACTOR: Driver run for handle=${runHandle} succeeded.")
 
           try {
             driver.driverRunCompleted(runHandle)
           } catch {
-            case d: DriverException => throw d
+            case d: RetryableDriverException => throw d
 
             case t: Throwable => {
               log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}, trace ${ExceptionUtils.getStackTrace(t)}")
@@ -132,7 +132,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
           try {
             driver.driverRunCompleted(runHandle)
           } catch {
-            case d: DriverException => throw d
+            case d: RetryableDriverException => throw d
 
             case t: Throwable => {
             }
@@ -144,7 +144,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
         }
       }
     } catch {
-      case exception: DriverException => {
+      case exception: RetryableDriverException => {
         log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in running state, rethrowing: ${exception.message}, cause ${exception.cause}, trace ${ExceptionUtils.getStackTrace(exception)}")
         throw exception
       }
@@ -197,15 +197,15 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
         become(running(runHandle, commandToRun.sender))
       }
     } catch {
-      case exception: DriverException => {
+      case exception: RetryableDriverException => {
         log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in receive state, rethrowing: ${exception.message}, cause ${exception.cause}")
-        
+
         throw exception
       }
 
       case t: Throwable => {
         log.error(s"DRIVER ACTOR: Unexpected exception caught by driver actor in receive state, rethrowing: ${t.getMessage()}, cause ${t.getCause()}")
-        
+
         throw t
       }
     }
@@ -253,7 +253,7 @@ object DriverActor {
         classOf[DriverActor[ShellTransformation]],
         transformationManager, ds, (ds: DriverSettings) => ShellDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
-      case _ => throw DriverException(s"Driver for ${driverName} not found")
+      case _ => throw RetryableDriverException(s"Driver for ${driverName} not found")
     }
   }
 }

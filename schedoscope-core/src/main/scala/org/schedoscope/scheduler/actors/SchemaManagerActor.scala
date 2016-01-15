@@ -41,7 +41,7 @@ class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _: RetryableSchemaManagerException => Restart
-      case _  => Escalate
+      case _                                  => Escalate
     }
 
   override def preStart {

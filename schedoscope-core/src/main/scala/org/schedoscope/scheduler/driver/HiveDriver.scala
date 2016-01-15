@@ -23,7 +23,7 @@ import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
-import org.apache.thrift.protocol.TProtocolException
+import org.apache.thrift.TException
 import org.joda.time.LocalDateTime
 import org.schedoscope.{ DriverSettings, Schedoscope }
 import org.schedoscope.dsl.transformations.HiveTransformation
@@ -78,17 +78,21 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
         statement.execute(q.trim())
       } catch {
         case e: SQLException => {
-          if (e.getCause() != null && e.getCause().isInstanceOf[TProtocolException]) {
+          if (e.getCause() != null && e.getCause().isInstanceOf[TException]) {
             cleanupResources
-            throw DriverException(s"Runtime exception while executing Hive query ${q}", e.getCause())
+            throw RetryableDriverException(s"Hive Server encountered thrift protocol exception while executing Hive query ${q}", e.getCause())
           } else
             return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
+        }
 
+        case te: TException => {
+          cleanupResources
+          throw RetryableDriverException(s"Hive driver encountered thrift protocol exception while executing Hive query ${q}", te)
         }
 
         case t: Throwable => {
           cleanupResources
-          throw DriverException(s"Runtime exception while executing Hive query ${q}", t)
+          return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${q}. Failing run.", t)
         }
       })
 
@@ -99,7 +103,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     val existing = try {
       metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
     } catch {
-      case t: Throwable => throw DriverException(s"Runtime exception while executing registering function ${f}", t)
+      case t: Throwable => throw RetryableDriverException(s"Runtime exception while executing registering function ${f}", t)
     }
 
     if (existing == null || existing.isEmpty()) {

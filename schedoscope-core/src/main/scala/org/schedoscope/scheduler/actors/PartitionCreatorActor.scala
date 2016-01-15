@@ -45,9 +45,9 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
    * Message handler
    */
   def receive = LoggingReceive({
-    
+
     case c: CheckOrCreateTables => {
-      
+
       runningCommand = Some(c)
 
       c.views
@@ -69,11 +69,11 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
       sender ! SchemaActionSuccess()
 
       runningCommand = None
-      
+
     }
 
     case a: AddPartitions => {
-      
+
       runningCommand = Some(a)
 
       val views = a.views
@@ -86,7 +86,7 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
       sender ! TransformationMetadata(metadata)
 
       runningCommand = None
-      
+
     }
   })
 }

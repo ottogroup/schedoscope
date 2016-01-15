@@ -50,7 +50,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
     })
   } catch {
     // when something goes wrong during submitting, we throw a driver exception -> retry
-    case e: Throwable => throw DriverException("Unexpected error occurred while submitting Mapreduce job", e)
+    case e: Throwable => throw RetryableDriverException("Unexpected error occurred while submitting Mapreduce job", e)
   }
 
   /**
@@ -64,12 +64,12 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
         job.getJobState match {
           case SUCCEEDED       => DriverRunSucceeded[MapreduceTransformation](driver, s"Mapreduce job ${jobId} succeeded")
           case PREP | RUNNING  => DriverRunOngoing[MapreduceTransformation](driver, runHandle)
-          case FAILED | KILLED => DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${jobId} failed", DriverException(s"Failed Mapreduce job status ${job.getJobState}"))
+          case FAILED | KILLED => DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${jobId} failed", RetryableDriverException(s"Failed Mapreduce job status ${job.getJobState}"))
         }
       }
     })
   } catch {
-    case e: Throwable => throw DriverException(s"Unexpected error occurred while checking run state of Mapreduce job", e)
+    case e: Throwable => throw RetryableDriverException(s"Unexpected error occurred while checking run state of Mapreduce job", e)
   }
 
   /**
@@ -101,7 +101,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
       }
     })
   } catch {
-    case e: Throwable => throw DriverException(s"Unexpected error occurred while killing Mapreduce job", e)
+    case e: Throwable => throw RetryableDriverException(s"Unexpected error occurred while killing Mapreduce job", e)
   }
 
 }
