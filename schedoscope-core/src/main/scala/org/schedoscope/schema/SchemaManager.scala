@@ -49,69 +49,101 @@ case class FatalSchemaManagerException(message: String = null, cause: Throwable 
  * Interface to the Hive metastore. Used by partition creator actor and metadata logger actor.
  */
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
-  val md5 = MessageDigest.getInstance("MD5")
-  val existingSchemas = collection.mutable.Set[String]()
+  private val md5 = MessageDigest.getInstance("MD5")
+  private val existingSchemas = collection.mutable.Set[String]()
 
-  val log = LoggerFactory.getLogger(classOf[SchemaManager])
+  private val log = LoggerFactory.getLogger(classOf[SchemaManager])
 
-  def setTableProperty(dbName: String, tableName: String, key: String, value: String): Unit = {
+  private def setTableProperty(dbName: String, tableName: String, key: String, value: String): Unit = {
     val table = metastoreClient.getTable(dbName, tableName)
     table.putToParameters(key, value)
     metastoreClient.alter_table(dbName, tableName, table)
   }
 
-  def setPartitionProperty(dbName: String, tableName: String, part: String, key: String, value: String): Unit = {
+  private def setPartitionProperty(dbName: String, tableName: String, part: String, key: String, value: String): Unit = {
     val partition = metastoreClient.getPartition(dbName, tableName, part)
     partition.putToParameters(key, value)
     metastoreClient.alter_partition(dbName, tableName, partition)
   }
 
-  def setTransformationVersion(view: View) = try {
-    if (view.isExternal) {
-      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
-
-    } else if (view.isPartitioned()) {
-      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
+  private def createNonExistingPartitions(tablePrototype: View, partitions: List[Partition], retry: Int = 3): Map[View, (String, Long)] = try {
+    if (partitions.isEmpty || !tablePrototype.isPartitioned() || tablePrototype.transformation().isInstanceOf[ExternalTransformation]) {
+      Map()
     } else {
-      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
+      metastoreClient.add_partitions(partitions, false, false)
+      partitions.map(p => (partitionToView(tablePrototype, p) -> (Checksum.defaultDigest, 0.toLong))).toMap
     }
   } catch {
-    case te: TException => {      
-      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation version in Metastore.", te)   
-      throw RetryableSchemaManagerException(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation version in Metastore.", te)
-    }
-    
-    case t: Throwable => {
-      log.error(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation version in Metastore.", t)   
-      throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation version in Metastore.", t)
+    case are: AlreadyExistsException => throw are
+
+    case t: Throwable => if (retry > 0) {
+      log.info(s"Caught exception ${t}, retrying")
+      Thread.sleep(5000)
+      createNonExistingPartitions(tablePrototype, partitions, retry - 1)
+    } else {
+      throw t
     }
   }
 
-  def setTransformationTimestamp(view: View, timestamp: Long) = try {
-    if (view.isExternal) {
-      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
-
-    } else if (view.isPartitioned()) {
-      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
+  private def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
+    if (tablePrototype.isExternal) {
+      val dbMetadata = metastoreClient.getDatabase(tablePrototype.dbName).getParameters
+      Map((tablePrototype,
+        (dbMetadata.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest),
+          dbMetadata.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)))
+    } else if (tablePrototype.isPartitioned) {
+      val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
+      existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest), p.getParameters.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)) }.toMap
     } else {
-      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
+      val tableMetadata = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getParameters
+      Map((tablePrototype,
+        (tableMetadata.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest),
+          tableMetadata.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)))
     }
-  } catch {
-    case te: TException => {      
-      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation timestamp in Metastore.", te)   
-      throw RetryableSchemaManagerException(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation timestamp in Metastore.", te)
+
+  }
+
+  private def partitionToView(tablePrototype: View, p: Partition) = {
+    val viewUrl = s"${tablePrototype.urlPathPrefix}/${p.getValues.mkString("/")}"
+    View.viewsFromUrl(settings.env,
+      viewUrl,
+      settings.viewAugmentor).head
+  }
+
+  private def viewsToPartitions(views: List[View]): Map[String, Partition] = {
+    if (views.size == 0) {
+      return Map()
     }
-    
-    case t: Throwable => {
-      log.error(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation timestamp in Metastore.", t)   
-      throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation timestamp in Metastore.", t)
+
+    val tablePrototype = views.head
+    val table = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n)
+
+    views.map { v =>
+      val now = new DateTime().getMillis.toInt
+      val sd = table.getSd().deepCopy()
+      sd.setLocation(v.fullPath)
+
+      (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues(), v.dbName, v.n, now, now, sd, HashMap[String, String]()))
+    }.toMap
+  }
+
+  /**
+   * Create a partition for a view in the metastore (if it does not exist already) and return it.
+   */
+  def createPartition(view: View): Partition = {
+    val partition = viewsToPartitions(List(view)).values.head
+    try {
+      createNonExistingPartitions(view, List(partition))
+    } catch {
+      case _: Throwable => // Accept exceptions
     }
+    partition
   }
 
   /**
    * Execute create database and table for view, dropping the table should it exist already.
    *
-   * It throws a SchemaManagerException in case of any problem, encapsulating the original exception.
+   * It throws a RetryableSchemaManagerException in case of any problem, encapsulating the original exception.
    */
   def dropAndCreateTableSchema(view: View): Unit = try {
     val ddl = HiveQl.ddl(view)
@@ -139,7 +171,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   /**
    * Checks whether a database and table exists for the given view, as well as whether is has the correct form.
    *
-   * Throws a SchemaManagerException in case of any problem, encapsulating the original exception.
+   * Throws a RetryableSchemaManagerException in case of any problem, encapsulating the original exception.
    */
   def schemaExists(view: View): Boolean = try {
     val d = Checksum.digest(HiveQl.ddl(view))
@@ -177,53 +209,72 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     }
   }
 
-  def createNonExistingPartitions(tablePrototype: View, partitions: List[Partition], retry: Int = 3): Map[View, (String, Long)] = try {
-    if (partitions.isEmpty || !tablePrototype.isPartitioned() || tablePrototype.transformation().isInstanceOf[ExternalTransformation]) {
-      Map()
+  /**
+   * Store the transformation version checksum for the given view with the corresponding table partition in
+   * the metastore.
+   *
+   * Throws a RetryableSchemaManagerException in case of a protiocol / connection problem with the metastore; a
+   * FatalSchemaManagerException in case of any other issue.
+   *
+   */
+  def setTransformationVersion(view: View) = try {
+    if (view.isExternal) {
+      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
+
+    } else if (view.isPartitioned()) {
+      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
     } else {
-      metastoreClient.add_partitions(partitions, false, false)
-      partitions.map(p => (partitionToView(tablePrototype, p) -> (Checksum.defaultDigest, 0.toLong))).toMap
+      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
     }
   } catch {
-    case are: AlreadyExistsException => throw are
+    case te: TException => {
+      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation version in Metastore.", te)
+      throw RetryableSchemaManagerException(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation version in Metastore.", te)
+    }
 
-    case t: Throwable => if (retry > 0) {
-      log.info(s"Caught exception ${t}, retrying")
-      Thread.sleep(5000)
-      createNonExistingPartitions(tablePrototype, partitions, retry - 1)
+    case t: Throwable => {
+      log.error(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation version in Metastore.", t)
+      throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation version in Metastore.", t)
+    }
+  }
+
+  /**
+   * Store the given transformation timestamp for the given view with the corresponding table partition in
+   * the metastore.
+   *
+   * Throws a RetryableSchemaManagerException in case of a protiocol / connection problem with the metastore; a
+   * FatalSchemaManagerException in case of any other issue.
+   *
+   */
+  def setTransformationTimestamp(view: View, timestamp: Long) = try {
+    if (view.isExternal) {
+      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
+
+    } else if (view.isPartitioned()) {
+      setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
     } else {
-      throw t
+      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
+    }
+  } catch {
+    case te: TException => {
+      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation timestamp in Metastore.", te)
+      throw RetryableSchemaManagerException(s"Schema Manager facing potentially recoverable Thrift protocol exception while setting transformation timestamp in Metastore.", te)
+    }
+
+    case t: Throwable => {
+      log.error(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation timestamp in Metastore.", t)
+      throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable Thrift protocol exception while setting transformation timestamp in Metastore.", t)
     }
   }
 
-  def createPartition(view: View): Partition = {
-    val partition = viewsToPartitions(List(view)).values.head
-    try {
-      createNonExistingPartitions(view, List(partition))
-    } catch {
-      case _: Throwable => // Accept exceptions
-    }
-    partition
-  }
-
-  def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
-    if (tablePrototype.isExternal) {
-      val dbMetadata = metastoreClient.getDatabase(tablePrototype.dbName).getParameters
-      Map((tablePrototype,
-        (dbMetadata.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest),
-          dbMetadata.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)))
-    } else if (tablePrototype.isPartitioned) {
-      val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
-      existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest), p.getParameters.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)) }.toMap
-    } else {
-      val tableMetadata = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n).getParameters
-      Map((tablePrototype,
-        (tableMetadata.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest),
-          tableMetadata.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)))
-    }
-
-  }
-
+  /**
+   * Retrieve transformation metadata for the given views relating to a single (!) table from the metastore. Grouped by view a tuple with
+   * the transformation version checksum and timestamp of last transformation is returned.
+   *
+   * Throws a RetryableSchemaManagerException in case of a protocol / connection problem with the metastore; a
+   * FatalSchemaManagerException in case of any other issue.
+   *
+   */
   def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = try {
     val tablePrototype = views.head
 
@@ -237,6 +288,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     val existingPartitionNames = metastoreClient.listPartitionNames(tablePrototype.dbName, tablePrototype.n, -1).map("/" + _).toSet
 
     val existingPartitions = viewsToPartitions(views.filter(v => existingPartitionNames.contains(v.partitionSpec)))
+
     val nonExistingPartitions = viewsToPartitions(views.filter(v => !existingPartitionNames.contains(v.partitionSpec)))
 
     log.info(s"Table for view ${tablePrototype.module}.${tablePrototype.n} requires partitions: ${existingPartitions.size} existing / ${nonExistingPartitions.size} not yet existing")
@@ -258,46 +310,23 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       }).reduceOption(_ ++ _).getOrElse(Map())
 
     existingMetadata ++ createdMetadata
-    
+
   } catch {
-    case te: TException => {      
-      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while retrieving transformation metadata from Metastore.", te)   
+    case te: TException => {
+      log.error(s"Schema Manager facing potentially recoverable Thrift protocol exception while retrieving transformation metadata from Metastore.", te)
       throw RetryableSchemaManagerException(s"Schema Manager facing Thrift protocol exception while retrieving transformation metadata from Metastore.", te)
     }
-    
+
     case t: Throwable => {
-      log.error(s"Schema Manager facing unrecoverable exception while retrieving transformation metadata from Metastore.", t)   
+      log.error(s"Schema Manager facing unrecoverable exception while retrieving transformation metadata from Metastore.", t)
       throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable exception while retrieving transformation metadata from Metastore.", t)
     }
   }
 
-  def partitionToView(tablePrototype: View, p: Partition) = {
-    val viewUrl = s"${tablePrototype.urlPathPrefix}/${p.getValues.mkString("/")}"
-    View.viewsFromUrl(settings.env,
-      viewUrl,
-      settings.viewAugmentor).head
-  }
-
-  def viewsToPartitions(views: List[View]): Map[String, Partition] = {
-    if (views.size == 0) {
-      return Map()
-    }
-
-    val tablePrototype = views.head
-    val table = metastoreClient.getTable(tablePrototype.dbName, tablePrototype.n)
-
-    views.map { v =>
-      val now = new DateTime().getMillis.toInt
-      val sd = table.getSd().deepCopy()
-      sd.setLocation(v.fullPath)
-
-      (v.partitionSpec.replaceFirst("/", "") -> new Partition(v.partitionValues(), v.dbName, v.n, now, now, sd, HashMap[String, String]()))
-    }.toMap
-  }
 }
 
 object SchemaManager {
-  def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
+  def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String): SchemaManager = try {
     Class.forName("org.apache.hive.jdbc.HiveDriver")
     val connection =
       settings.userGroupInformation.doAs(new PrivilegedAction[Connection]() {
@@ -317,10 +346,19 @@ object SchemaManager {
         serverKerberosPrincipal)
     }
     val metastoreClient = new HiveMetaStoreClient(conf)
-    new SchemaManager(metastoreClient, connection)
+
+    SchemaManager(metastoreClient, connection)
+  } catch {
+    case te: TException => {
+      throw RetryableSchemaManagerException(s"Schema Manager initialization facing Thrift protocol exception.", te)
+    }
+
+    case t: Throwable => {
+      throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable exception while initializing.", t)
+    }
   }
 
-  def apply(metastoreClient: IMetaStoreClient, connection: Connection) = {
+  def apply(metastoreClient: IMetaStoreClient, connection: Connection) =
     new SchemaManager(metastoreClient, connection)
-  }
+
 }

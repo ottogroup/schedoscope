@@ -15,8 +15,9 @@
  */
 package org.schedoscope.scheduler.driver
 
-import java.security.PrivilegedAction
 import java.sql.{ Connection, DriverManager, SQLException, Statement }
+import java.net.ConnectException
+import java.security.PrivilegedAction
 
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
@@ -48,6 +49,14 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
 
+  def isConnectionProblem(t: Throwable): Boolean = {
+    val result = t.isInstanceOf[TException] || t.isInstanceOf[ConnectException]
+
+    if (!result && t.getCause() != null) {
+      isConnectionProblem(t.getCause())
+    } else result
+  }
+
   /**
    * Construct a future-based driver run handle
    */
@@ -77,22 +86,12 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
       q => try {
         statement.execute(q.trim())
       } catch {
-        case e: SQLException => {
-          if (e.getCause() != null && e.getCause().isInstanceOf[TException]) {
-            cleanupResources
-            throw RetryableDriverException(s"Hive Server encountered thrift protocol exception while executing Hive query ${q}", e.getCause())
-          } else
-            return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
-        }
-
-        case te: TException => {
-          cleanupResources
-          throw RetryableDriverException(s"Hive driver encountered thrift protocol exception while executing Hive query ${q}", te)
-        }
-
         case t: Throwable => {
           cleanupResources
-          return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${q}. Failing run.", t)
+          if (isConnectionProblem(t))
+            throw RetryableDriverException(s"Hive driver encountered connection problem while executing hive query ${q}", t)
+          else
+            return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${q}. Failing run.", t)
         }
       })
 
