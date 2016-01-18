@@ -73,7 +73,7 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
           // FIXME: do we need special handling for some exceptions here (similar to hive?)
           case e: PigException =>
             DriverRunFailed(driver, s"PigException encountered while executing pig script ${actualLatin}; Stacktrace is: ${e.getStackTrace}", e)
-          case t: Throwable => throw DriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
+          case t: Throwable => throw RetryableDriverException(s"Runtime exception while executing pig script ${actualLatin}", t)
         }
       }
     })

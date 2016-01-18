@@ -73,7 +73,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       case MkDir(path)                     => doAs(() => mkdirs(path))
       case Touch(path)                     => doAs(() => touch(path))
 
-      case _                               => throw DriverException("FileSystemDriver can only run file transformations.")
+      case _                               => DriverRunFailed(this, "File system driver can only handle file transformations.", new UnsupportedOperationException("File system driver can only handle file transformations."))
     }
 
   /**
@@ -112,7 +112,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Storing from InputStream to ${to} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while storing InputStream to ${to}", i)
-      case t: Throwable   => throw DriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
+      case t: Throwable   => throw RetryableDriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
     }
   }
 
@@ -159,7 +159,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Copy from ${from} to ${to} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while copying ${from} to ${to}", i)
-      case t: Throwable   => throw DriverException(s"Runtime exception caught while copying ${from} to ${to}", t)
+      case t: Throwable   => throw RetryableDriverException(s"Runtime exception caught while copying ${from} to ${to}", t)
     }
   }
 
@@ -175,7 +175,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Deletion of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while deleting ${path}", i)
-      case t: Throwable   => throw DriverException(s"Runtime exception while deleting ${path}", t)
+      case t: Throwable   => throw RetryableDriverException(s"Runtime exception while deleting ${path}", t)
     }
 
   /**
@@ -191,7 +191,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while touching ${path}", i)
-      case t: Throwable   => throw DriverException(s"Runtime exception while touching ${path}", t)
+      case t: Throwable   => throw RetryableDriverException(s"Runtime exception while touching ${path}", t)
     }
 
   /**
@@ -206,7 +206,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Touching of ${path} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while making dirs ${path}", i)
-      case t: Throwable   => throw DriverException(s"Runtime exception while making dirs ${path}", t)
+      case t: Throwable   => throw RetryableDriverException(s"Runtime exception while making dirs ${path}", t)
     }
 
   /**
@@ -223,7 +223,7 @@ class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       DriverRunSucceeded(this, s"Moving from ${from} to ${to} succeeded")
     } catch {
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while  moving from ${from} to ${to}", i)
-      case t: Throwable   => throw DriverException(s"Runtime exception while moving from ${from} to ${to}", t)
+      case t: Throwable   => throw RetryableDriverException(s"Runtime exception while moving from ${from} to ${to}", t)
     }
 
   def listFiles(path: String): Array[FileStatus] = {

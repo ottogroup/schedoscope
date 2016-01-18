@@ -15,15 +15,16 @@
  */
 package org.schedoscope.scheduler.driver
 
-import java.security.PrivilegedAction
 import java.sql.{ Connection, DriverManager, SQLException, Statement }
+import java.net.ConnectException
+import java.security.PrivilegedAction
 
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
-import org.apache.thrift.protocol.TProtocolException
+import org.apache.thrift.TException
 import org.joda.time.LocalDateTime
 import org.schedoscope.{ DriverSettings, Schedoscope }
 import org.schedoscope.dsl.transformations.HiveTransformation
@@ -47,6 +48,14 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
   override def transformationName = "hive"
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
+
+  def isConnectionProblem(t: Throwable): Boolean = {
+    val result = t.isInstanceOf[TException] || t.isInstanceOf[ConnectException]
+
+    if (!result && t.getCause() != null) {
+      isConnectionProblem(t.getCause())
+    } else result
+  }
 
   /**
    * Construct a future-based driver run handle
@@ -77,18 +86,12 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
       q => try {
         statement.execute(q.trim())
       } catch {
-        case e: SQLException => {
-          if (e.getCause() != null && e.getCause().isInstanceOf[TProtocolException]) {
-            cleanupResources
-            throw DriverException(s"Runtime exception while executing Hive query ${q}", e.getCause())
-          } else
-            return DriverRunFailed[HiveTransformation](this, s"SQL exception while executing Hive query ${q}", e)
-
-        }
-
         case t: Throwable => {
           cleanupResources
-          throw DriverException(s"Runtime exception while executing Hive query ${q}", t)
+          if (isConnectionProblem(t))
+            throw RetryableDriverException(s"Hive driver encountered connection problem while executing hive query ${q}", t)
+          else
+            return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${q}. Failing run.", t)
         }
       })
 
@@ -99,7 +102,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     val existing = try {
       metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
     } catch {
-      case t: Throwable => throw DriverException(s"Runtime exception while executing registering function ${f}", t)
+      case t: Throwable => throw RetryableDriverException(s"Runtime exception while executing registering function ${f}", t)
     }
 
     if (existing == null || existing.isEmpty()) {

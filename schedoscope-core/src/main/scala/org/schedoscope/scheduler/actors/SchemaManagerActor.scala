@@ -16,11 +16,13 @@
 package org.schedoscope.scheduler.actors
 
 import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props }
-import akka.actor.SupervisorStrategy.Restart
+import akka.actor.SupervisorStrategy.{ Restart, Escalate }
 import akka.event.Logging
 import akka.routing.RoundRobinPool
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.scheduler.messages._
+import org.schedoscope.schema.RetryableSchemaManagerException
+import akka.actor.ActorInitializationException
 
 /**
  * Supervisor and forwarder for partition creator and metadata logger actors
@@ -35,11 +37,13 @@ class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
   var partitionCreatorActor: ActorRef = null
 
   /**
-   * Supervisor strategy: Restart failing schema or metadata logger actors
+   * Supervisor strategy: Restart schema or metadata logger actors failing with SchemaManagerExceptions
    */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
-      case _ => Restart
+      case _: RetryableSchemaManagerException => Restart
+      case _: ActorInitializationException    => Restart
+      case _                                  => Escalate
     }
 
   override def preStart {

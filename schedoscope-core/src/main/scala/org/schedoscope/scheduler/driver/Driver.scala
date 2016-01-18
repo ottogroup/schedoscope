@@ -28,9 +28,10 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 /**
- * Base class of exceptions that will be escalated to the driver actor  to cause a driver actor restart
+ * Exceptions occurring in a driver that merit a retry. These will be escalated to the driver actor
+ * to cause a driver actor restart.
  */
-case class DriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+case class RetryableDriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
 /**
  * Handle for the transformation executed by a driver, called a driver run.
@@ -194,7 +195,7 @@ trait Driver[T <: Transformation] {
     getDriverRunState(run) match {
       case s: DriverRunSucceeded[T] => driverRunCompletionHandlers.foreach(_.driverRunCompleted(s, run))
       case f: DriverRunFailed[T]    => driverRunCompletionHandlers.foreach(_.driverRunCompleted(f, run))
-      case _                        => throw DriverException("driverRunCompleted called with non-final driver run state")
+      case _                        => throw RetryableDriverException("driverRunCompleted called with non-final driver run state")
     }
   }
 }

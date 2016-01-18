@@ -21,12 +21,12 @@ import akka.event.{ Logging, LoggingReceive }
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{ FilesystemTransformation, Transformation }
-import org.schedoscope.scheduler.driver.DriverException
+import org.schedoscope.scheduler.driver.RetryableDriverException
 import org.schedoscope.scheduler.messages.{ CommandWithSender, DeployCommand, GetQueues, GetTransformations, PollCommand, QueueStatusListResponse, TransformationStatusListResponse, TransformationStatusResponse }
-
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
 import scala.util.Random
+import akka.actor.ActorInitializationException
 
 /**
  * The transformation manager actor queues transformation requests it receives from view actors by
@@ -38,6 +38,17 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   import context._
 
   val log = Logging(system, TransformationManagerActor.this)
+
+  /**
+   * Supervision strategy. If a driver actor raises a DriverException, the driver actor will be restarted.
+   * If any other exception is raised, it is escalated.
+   */
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = -1) {
+      case _: RetryableDriverException     => Restart
+      case _: ActorInitializationException => Restart
+      case _                               => Escalate
+    }
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
 
@@ -96,19 +107,9 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
       }
     }
 
-  private def transformationQueueStatus() = {
+  def transformationQueueStatus() = {
     queues.map(q => (q._1, q._2.map(c => c.command).toList))
   }
-
-  /**
-   * Supervision strategy. If a driver actor raises a DriverException, the driver actor will be restarted.
-   * If any other exception is raised, it is escalated.
-   */
-  override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = -1) {
-      case _: DriverException => Restart
-      case _                  => Escalate
-    }
 
   /**
    * Create driver actors as required by configured transformation types and their concurrency.
