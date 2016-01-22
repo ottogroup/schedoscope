@@ -55,6 +55,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 01/22/2016 - Release 0.3.5
+
+We have released Version 0.3.5 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This release migrates Schedoscope's Hadoop dependencies to CDH-5.5.1. Furthermore, the test framework has been ported to Hive 1.1.0. Finally, Schedoscope's resilience against Metastore failures has been improved. It is able to reconnect and resume work when the Metastore has become unavailable in more error cases.
+
 ###### 11/21/2015 - Release 0.3.4
 
 We have released Version 0.3.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
