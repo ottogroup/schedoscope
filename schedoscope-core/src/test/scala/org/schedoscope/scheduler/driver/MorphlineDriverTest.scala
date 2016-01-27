@@ -20,15 +20,14 @@ import org.schedoscope.DriverTests
 import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
-import test.eci.datahub.{ CompilingMorphlineView, MorphlineView, RedisMorphlineView, _ }
+import test.eci.datahub.{ CompilingMorphlineView, MorphlineView, _ }
 
 class MorphlineDriverTest extends FlatSpec with Matchers {
   lazy val driver: MorphlineDriver = new LocalTestResources().morphlineDriver
   lazy val inputView = MorphlineView()
   lazy val failingView = FailingMorphlineView()
   lazy val compileView = CompilingMorphlineView()
-  lazy val redisView = RedisMorphlineView()
-
+ 
   "MorphlineDriver" should "have transformation name morphline" taggedAs (DriverTests) in {
     driver.transformationName shouldBe "morphline"
   }
