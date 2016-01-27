@@ -235,13 +235,7 @@ case class FailingMorphlineView() extends View with Id {
 
 }
 
-case class RedisMorphlineView() extends View with Id {
-  val field1 = fieldOf[String]
-  dependsOn(() => SimpleDependendView())
-  transformVia(() => MorphlineTransformation().forView(this))
-  storedAs(Redis(host = "localhost", port = 6379))
 
-}
 
 case class HDFSInputView() extends View with Id {
   val field1 = fieldOf[String]
@@ -250,53 +244,3 @@ case class HDFSInputView() extends View with Id {
 
 }
 
-case class BlaMorphlineView(x: Parameter[String]) extends View {
-  val visit_id = fieldOf[String]
-  val site = fieldOf[String]
-  val search_term = fieldOf[String]
-  val number_of_results = fieldOf[String]
-  dependsOn(() => HDFSInputView())
-
-  transformVia(() => MorphlineTransformation(s"""{ id :"bla"
-          importCommands : ["org.kitesdk.**"]
-		  commands : [ {extractAvroPaths{ flatten :true
-                                         paths :{visit_id : "/visit_id"
-		  										 site : "/ec_shop_code"
-		  										 number_of_results : /number_of_results
-		  										 search_term : /search_term
-		  										}
-		  								}} ,
-                        {
-		  				if  {
-                                          conditions: [{ not: {equals {site : "${x.v.get}"}}}]
-    								      then : [{ dropRecord{} }]
-    										}}]}""").forView(this))
-  tablePathBuilder = s => "src/test/resources/bla_morphline.csv"
-  storedAs(ExternalTextFile())
-}
-
-case class JDBCMorphlineView(x: Parameter[String]) extends View {
-  val visit_id = fieldOf[String]
-  val site = fieldOf[String]
-  val search_term = fieldOf[String]
-  val number_of_results = fieldOf[Integer]
-  val has_result = fieldOf[Boolean]
-  dependsOn(() => HDFSInputView())
-
-  transformVia(() => MorphlineTransformation(s"""{ id :"bla"
-          importCommands : ["org.kitesdk.**"]
-		  commands : [ {extractAvroPaths{ flatten :true
-                                         paths :{visit_id : "/visit_id"
-		  										 site : "/ec_shop_code"
-		  										 number_of_results : /number_of_results
-		  										 search_term : /search_term
-		  										}
-		  								}} ,
-                        {
-		  				if  {
-                                          conditions: [{ not: {equals {number_of_results : "0"}}}]
-    								      then : [{ addValues { has_result : true} }]
-    										}}]}""").forView(this))
-
-  storedAs(JDBC(jdbcUrl = "jdbc:exa:127.0.0.1:8563;schema=test", userName = "test", password = "test", jdbcDriver = "com.exasol.jdbc.EXADriver"))
-}
