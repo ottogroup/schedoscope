@@ -9,6 +9,7 @@
 	    <description>A wrapper building all modules of the Schedoscope project</description>
         <modules>
                 <module>schedoscope-core</module>
+                <module>schedoscope-export</module>
                 <module>schedoscope-tutorial</module>
         </modules>
 </project>
