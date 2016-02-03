@@ -28,6 +28,10 @@ public class JdbcOutputWritable implements Writable, DBWritable {
 	private static final String INTEGER = "int";
 	private static final String LONG = "long";
 
+	public JdbcOutputWritable() {
+
+	};
+
 	public JdbcOutputWritable(String[] line, String[] types,
 			Map<String, String> preparedStatementTypeMapping) {
 		this.line = line;

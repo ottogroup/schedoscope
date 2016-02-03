@@ -4,6 +4,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
+
 public interface Schema {
 
 	public static final String JDBC_DRIVER_CLASS = "jdbc.driver.class";
@@ -45,5 +47,7 @@ public interface Schema {
 	public int getCommitSize();
 
 	public String getFilter();
+	
+	public Configuration getConf();
 
 }

@@ -1,0 +1,169 @@
+package org.schedoscope.export.outputschema;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.hadoop.conf.Configuration;
+
+public class DerbySchema implements Schema {
+
+	private Configuration conf;
+
+	public DerbySchema(Configuration conf) {
+
+		this.conf = conf;
+
+	}
+
+	private String buildCreateTableStatement(String table,
+			String[] columnNames, String[] columnTypes) {
+
+		StringBuilder createTableStatement = new StringBuilder();
+
+		createTableStatement.append("CREATE TABLE ");
+		createTableStatement.append(table);
+		createTableStatement.append(" \n");
+		createTableStatement.append("(");
+		createTableStatement.append("\n");
+
+		for (int i = 0; i < columnNames.length; i++) {
+			createTableStatement.append(columnNames[i]);
+			createTableStatement.append(" ");
+			createTableStatement.append(columnTypes[i]);
+			if (i != columnNames.length - 1) {
+				createTableStatement.append(",");
+			}
+			createTableStatement.append("\n");
+		}
+
+		createTableStatement = createTableStatement.append(")");
+
+		return createTableStatement.toString();
+	}
+
+	@Override
+	public void setOutput(String driver, String connectionString,
+			String username, String password, String outputTable,
+			String inputFilter, int outputNumberOfPartitions,
+			int outputCommitSize, String[] columnNames, String[] columnTypes) {
+
+		conf.set(Schema.JDBC_DRIVER_CLASS, driver);
+		conf.set(Schema.JDBC_CONNECTION_STRING, connectionString);
+		if (username != null) {
+			conf.set(Schema.JDBC_USERNAME, username);
+		}
+		if (password != null) {
+			conf.set(Schema.JDBC_PASSWORD, password);
+		}
+		if (inputFilter != null && !inputFilter.isEmpty()) {
+			conf.set(Schema.JDBC_INPUT_FILTER, inputFilter);
+		}
+
+		conf.set(Schema.JDBC_OUTPUT_TABLE, outputTable);
+		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES, columnNames);
+		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, columnTypes);
+		conf.setInt(Schema.JDBC_NUMBER_OF_PARTITIONS, outputNumberOfPartitions);
+		conf.setInt(Schema.JDBC_COMMIT_SIZE, outputCommitSize);
+
+		conf.set(
+				Schema.JDBC_CREATE_TABLE_QUERY,
+				buildCreateTableStatement(outputTable, columnNames, columnTypes));
+	}
+
+	@Override
+	public String getTable() {
+		return conf.get(Schema.JDBC_OUTPUT_TABLE);
+	}
+
+	@Override
+	public String[] getColumnNames() {
+		return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES);
+	}
+
+	@Override
+	public String[] getColumnTypes() {
+		return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES);
+	}
+
+	@Override
+	public Connection getConnection() throws ClassNotFoundException,
+			SQLException {
+		Class.forName(conf.get(Schema.JDBC_DRIVER_CLASS));
+
+		if (conf.get(Schema.JDBC_USERNAME) == null
+				|| conf.get(Schema.JDBC_PASSWORD) == null) {
+			return DriverManager.getConnection(conf
+					.get(Schema.JDBC_CONNECTION_STRING));
+		} else {
+			return DriverManager.getConnection(
+					conf.get(Schema.JDBC_CONNECTION_STRING),
+					conf.get(Schema.JDBC_USERNAME),
+					conf.get(Schema.JDBC_PASSWORD));
+		}
+
+	}
+
+	@Override
+	public String getCreateTableQuery() {
+		return conf.get(Schema.JDBC_CREATE_TABLE_QUERY);
+	}
+
+	@Override
+	public int getNumberOfPartitions() {
+		return conf.getInt(Schema.JDBC_NUMBER_OF_PARTITIONS, 1);
+	}
+
+	@Override
+	public int getCommitSize() {
+		return conf.getInt(Schema.JDBC_COMMIT_SIZE, 1);
+	}
+
+	@Override
+	public String getFilter() {
+		return conf.get(Schema.JDBC_INPUT_FILTER);
+	}
+
+	public Configuration getConf() {
+		return conf;
+	}
+
+	@Override
+	public Map<String, String> getColumnNameMapping() {
+		Map<String, String> columnNames = new HashMap<String, String>();
+		columnNames.put("year", "data_year");
+		columnNames.put("month", "data_month");
+		columnNames.put("day", "data_day");
+		return columnNames;
+	}
+
+	@Override
+	public Map<String, String> getColumnTypeMapping() {
+		Map<String, String> dataTypes = new HashMap<String, String>();
+		dataTypes.put("string", "varchar(100)");
+		dataTypes.put("boolean", "boolean");
+		dataTypes.put("int", "int");
+		dataTypes.put("long", "bigint");
+		dataTypes.put("bigint", "bigint");
+		dataTypes.put("double", "double");
+		dataTypes.put("float", "float");
+		dataTypes.put("tinyint", "int");
+		return dataTypes;
+	}
+
+	@Override
+	public Map<String, String> getPreparedStatementTypeMapping() {
+		Map<String, String> dataTypes = new HashMap<String, String>();
+		dataTypes.put("varchar(100)", "string");
+		dataTypes.put("boolean", "boolean");
+		dataTypes.put("int", "int");
+		dataTypes.put("bigint", "long");
+		dataTypes.put("double", "double");
+		dataTypes.put("float", "float");
+		dataTypes.put("tinyint", "int");
+		return dataTypes;
+	}
+
+}

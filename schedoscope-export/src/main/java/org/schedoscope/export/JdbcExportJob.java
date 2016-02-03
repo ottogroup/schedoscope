@@ -82,9 +82,10 @@ public class JdbcExportJob extends Configured implements Tool {
 		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatInputSchema(
 				hcatInputSchema, outputSchema.getColumnTypeMapping());
 
-		JdbcOutputFormat.setOutput(job, dbDriver, dbConnectionString, dbUser,
-				dbPassword, outputTable, inputFilter, outputNumberOfPartitions,
-				outputCommitSize, columnNames, columnTypes);
+		JdbcOutputFormat.setOutput(job.getConfiguration(), dbDriver,
+				dbConnectionString, dbUser, dbPassword, outputTable,
+				inputFilter, outputNumberOfPartitions, outputCommitSize,
+				columnNames, columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(JdbcOutputFormat.class);
@@ -97,9 +98,9 @@ public class JdbcExportJob extends Configured implements Tool {
 		boolean success = job.waitForCompletion(true);
 
 		if (success) {
-			JdbcOutputFormat.finalizeOutput(job);
+			JdbcOutputFormat.finalizeOutput(job.getConfiguration());
 		} else {
-			JdbcOutputFormat.rollback(job);
+			JdbcOutputFormat.rollback(job.getConfiguration());
 		}
 
 		return (success ? 0 : 1);

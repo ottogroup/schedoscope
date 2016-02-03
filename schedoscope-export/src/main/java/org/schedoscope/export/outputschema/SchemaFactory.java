@@ -7,6 +7,8 @@ public class SchemaFactory {
 	public static Schema getSchema(String driver, Configuration conf) {
 		if (driver.contains("exasol")) {
 			return new ExasolSchema(conf);
+		} else if (driver.contains("derby")) {
+			return new DerbySchema(conf);
 		} else {
 			return null;
 		}
@@ -17,6 +19,8 @@ public class SchemaFactory {
 		String driver = conf.get(Schema.JDBC_DRIVER_CLASS);
 		if (driver.contains("exasol")) {
 			return new ExasolSchema(conf);
+		} else if (driver.contains("derby")) {
+			return new DerbySchema(conf);
 		} else {
 			return null;
 		}

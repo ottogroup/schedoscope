@@ -69,16 +69,27 @@
 			<version>20140107</version>
 		</dependency>
 		<dependency>
+			<groupId>com.exasol.jdbc</groupId>
+			<artifactId>exajdbc</artifactId>
+			<version>5.0.0</version>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.derby</groupId>
 			<artifactId>derby</artifactId>
 			<version>10.11.1.1</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.exasol.jdbc</groupId>
-			<artifactId>exajdbc</artifactId>
-			<version>5.0.0</version>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
 		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.14</version>
+		</dependency>
+
 	</dependencies>
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>

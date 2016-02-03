@@ -9,7 +9,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -137,21 +137,20 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends
 		}
 	}
 
-	public static void setOutput(Job job, String driver,
+	public static void setOutput(Configuration conf, String driver,
 			String connectionString, String username, String password,
 			String outputTable, String inputFilter,
 			int outputNumberOfPartitions, int outputCommitSize,
 			String[] columnNames, String[] columnsTypes) throws IOException {
-		Schema outputSchema = SchemaFactory.getSchema(driver,
-				job.getConfiguration());
+		Schema outputSchema = SchemaFactory.getSchema(driver, conf);
 		outputSchema.setOutput(driver, connectionString, username, password,
 				outputTable, inputFilter, outputNumberOfPartitions,
 				outputCommitSize, columnNames, columnsTypes);
 
 	}
 
-	public static void finalizeOutput(Job job) throws IOException {
-		Schema outputSchema = SchemaFactory.getSchema(job.getConfiguration());
+	public static void finalizeOutput(Configuration conf) throws IOException {
+		Schema outputSchema = SchemaFactory.getSchema(conf);
 		String outputTable = outputSchema.getTable();
 		String tmpOutputTable = TMPDB + outputSchema.getTable();
 		String createTableStatement = outputSchema.getCreateTableQuery();
@@ -175,11 +174,19 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends
 
 		} catch (Exception ex) {
 			throw new IOException(ex.getMessage());
+		} finally {
+			try {
+				outputSchema.getConnection().commit();
+				outputSchema.getConnection().close();
+			} catch (ClassNotFoundException e) {
+			} catch (SQLException e) {
+			}
+
 		}
 	}
 
-	public static void rollback(Job job) throws IOException {
-		Schema outputSchema = SchemaFactory.getSchema(job.getConfiguration());
+	public static void rollback(Configuration conf) throws IOException {
+		Schema outputSchema = SchemaFactory.getSchema(conf);
 		String tmpOutputTable = TMPDB + outputSchema.getTable();
 		int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
 
@@ -190,6 +197,14 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends
 
 		} catch (Exception ex) {
 			throw new IOException(ex.getMessage());
+		} finally {
+			try {
+				outputSchema.getConnection().commit();
+				outputSchema.getConnection().close();
+			} catch (ClassNotFoundException e) {
+			} catch (SQLException e) {
+			}
+
 		}
 	}
 

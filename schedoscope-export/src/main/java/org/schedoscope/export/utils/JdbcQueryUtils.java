@@ -23,7 +23,6 @@ public class JdbcQueryUtils {
 			StringBuilder dropTableQuery = new StringBuilder();
 			dropTableQuery.append("DROP TABLE ");
 			dropTableQuery.append(table);
-			dropTableQuery.append(";");
 
 			LOG.info("Drop Table: ");
 			LOG.info(dropTableQuery);
@@ -57,7 +56,6 @@ public class JdbcQueryUtils {
 				dropTableQuery.append(table);
 				dropTableQuery.append("_");
 				dropTableQuery.append(i);
-				dropTableQuery.append(";");
 
 				LOG.info("Drop Table: ");
 				LOG.info(dropTableQuery);
@@ -92,7 +90,7 @@ public class JdbcQueryUtils {
 			deleteRowsQuery.append(table);
 			deleteRowsQuery.append(" WHERE USED_FILTER='");
 			deleteRowsQuery.append(filter);
-			deleteRowsQuery.append("';");
+			deleteRowsQuery.append("'");
 
 			LOG.info("Delete rows: ");
 			LOG.info(deleteRowsQuery);
@@ -200,7 +198,7 @@ public class JdbcQueryUtils {
 				insertQuery.append(",");
 			}
 		}
-		insertQuery.append(");");
+		insertQuery.append(")");
 
 		LOG.info("Insert into: ");
 		LOG.info(insertQuery.toString());
