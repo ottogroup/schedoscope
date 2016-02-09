@@ -1,5 +1,7 @@
 package org.schedoscope.export;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -19,6 +21,8 @@ import org.schedoscope.export.outputschema.SchemaUtils;
 
 public class JdbcExportJob extends Configured implements Tool {
 
+	private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
+
 	private boolean isSecured;
 	private String metastoreuris;
 	private String principal;
@@ -35,6 +39,7 @@ public class JdbcExportJob extends Configured implements Tool {
 	private String jobName;
 
 	public int run(String[] args) throws Exception {
+
 		Configuration conf = getConf();
 
 		args = new GenericOptionsParser(conf, args).getRemainingArgs();
@@ -113,6 +118,11 @@ public class JdbcExportJob extends Configured implements Tool {
 	}
 
 	private void parseArguments(String[] args) {
+
+		for (String arg : args) {
+			LOG.info("arg: " + arg);
+		}
+
 		isSecured = Boolean.parseBoolean(args[0]);
 		if (isSecured && args.length == 13) {
 
