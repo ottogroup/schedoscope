@@ -30,6 +30,10 @@
 			<id>cloudera</id>
 			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
 		</repository>
+		<repository>
+			<id>conjars.org</id>
+			<url>http://conjars.org/repo</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -71,7 +75,7 @@
 		<dependency>
 			<groupId>com.exasol.jdbc</groupId>
 			<artifactId>exajdbc</artifactId>
-			<version>5.0.0</version>
+			<version>5.0.13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.derby</groupId>
@@ -147,6 +151,28 @@
 							<descriptorRefs>
 								<descriptorRef>jar-with-dependencies</descriptorRef>
 							</descriptorRefs>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-install-plugin</artifactId>
+				<version>2.4</version>
+				<inherited>false</inherited>
+				<executions>
+					<execution>
+						<id>install-exajdb-driver</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>install-file</goal>
+						</goals>
+						<configuration>
+							<groupId>com.exasol.jdbc</groupId>
+							<artifactId>exajdbc</artifactId>
+							<version>5.0.13</version>
+							<packaging>jar</packaging>
+							<file>${basedir}/lib/exajdbc-5.0.13.jar</file>
+							<pomFile>${basedir}/lib/exajdbc-5.0.13.pom</pomFile>
 						</configuration>
 					</execution>
 				</executions>
