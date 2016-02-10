@@ -4,26 +4,27 @@ import org.apache.hadoop.conf.Configuration;
 
 public class SchemaFactory {
 
-	public static Schema getSchema(String driver, Configuration conf) {
-		if (driver.contains("exasol")) {
+	public static Schema getSchema(String dbConnectionString, Configuration conf) {
+		String dialect = getDialect(dbConnectionString);
+		if (dialect.equals("exa")) {
 			return new ExasolSchema(conf);
-		} else if (driver.contains("derby")) {
+		} else if (dialect.equals("derby")) {
 			return new DerbySchema(conf);
 		} else {
-			return null;
+			throw new IllegalArgumentException(dbConnectionString + " not a valid jdbc connection string");
 		}
-
 	}
 
 	public static Schema getSchema(Configuration conf) {
-		String driver = conf.get(Schema.JDBC_DRIVER_CLASS);
-		if (driver.contains("exasol")) {
-			return new ExasolSchema(conf);
-		} else if (driver.contains("derby")) {
-			return new DerbySchema(conf);
-		} else {
-			return null;
-		}
+		String dbConnectionString = conf.get(Schema.JDBC_CONNECTION_STRING);
+		return getSchema(dbConnectionString, conf);
+	}
 
+	private static String getDialect(String dbConnectionString) {
+		String[] parts = dbConnectionString.split(":");
+		if (parts.length >= 2 && !parts[1].equals("")) {
+			return parts[1];
+		}
+		throw new IllegalArgumentException(dbConnectionString + " not a valid jdbc connection string");
 	}
 }

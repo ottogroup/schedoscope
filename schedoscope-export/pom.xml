@@ -21,6 +21,7 @@
 			<properties>
 				<hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
 				<hive.version>1.1.0-cdh5.5.1</hive.version>
+				<mrunit.version>1.1.0</mrunit.version>
 			</properties>
 		</profile>
 	</profiles>
@@ -91,6 +92,14 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.mrunit</groupId>
+			<artifactId>mrunit</artifactId>
+			<version>${mrunit.version}</version>
+			<classifier>hadoop2</classifier>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

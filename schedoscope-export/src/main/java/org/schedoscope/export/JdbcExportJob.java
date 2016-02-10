@@ -77,7 +77,7 @@ public class JdbcExportJob extends Configured implements Tool {
 					inputFilter);
 		}
 
-		Schema outputSchema = SchemaFactory.getSchema(dbDriver,
+		Schema outputSchema = SchemaFactory.getSchema(dbConnectionString,
 				job.getConfiguration());
 		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job
 				.getConfiguration());
@@ -87,7 +87,7 @@ public class JdbcExportJob extends Configured implements Tool {
 		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatInputSchema(
 				hcatInputSchema, outputSchema.getColumnTypeMapping());
 
-		JdbcOutputFormat.setOutput(job.getConfiguration(), dbDriver,
+		JdbcOutputFormat.setOutput(job.getConfiguration(),
 				dbConnectionString, dbUser, dbPassword, outputTable,
 				inputFilter, outputNumberOfPartitions, outputCommitSize,
 				columnNames, columnTypes);

@@ -137,13 +137,13 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends
 		}
 	}
 
-	public static void setOutput(Configuration conf, String driver,
+	public static void setOutput(Configuration conf,
 			String connectionString, String username, String password,
 			String outputTable, String inputFilter,
 			int outputNumberOfPartitions, int outputCommitSize,
 			String[] columnNames, String[] columnsTypes) throws IOException {
-		Schema outputSchema = SchemaFactory.getSchema(driver, conf);
-		outputSchema.setOutput(driver, connectionString, username, password,
+		Schema outputSchema = SchemaFactory.getSchema(connectionString, conf);
+		outputSchema.setOutput(connectionString, username, password,
 				outputTable, inputFilter, outputNumberOfPartitions,
 				outputCommitSize, columnNames, columnsTypes);
 

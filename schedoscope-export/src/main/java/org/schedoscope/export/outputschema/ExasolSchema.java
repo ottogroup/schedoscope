@@ -8,14 +8,12 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 
-public class ExasolSchema implements Schema {
+public class ExasolSchema extends AbstractSchema implements Schema {
 
-	private Configuration conf;
+	protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver ";
 
 	public ExasolSchema(Configuration conf) {
-
 		this.conf = conf;
-
 	}
 
 	private String buildCreateTableStatement(String table, String[] columnNames,
@@ -45,12 +43,12 @@ public class ExasolSchema implements Schema {
 	}
 
 	@Override
-	public void setOutput(String driver, String connectionString,
+	public void setOutput(String connectionString,
 			String username, String password, String outputTable,
 			String inputFilter, int outputNumberOfPartitions,
 			int outputCommitSize, String[] columnNames, String[] columnTypes) {
 
-		conf.set(Schema.JDBC_DRIVER_CLASS, driver);
+		conf.set(Schema.JDBC_DRIVER_CLASS, JDBC_DRIVER_NAME);
 		conf.set(Schema.JDBC_CONNECTION_STRING, connectionString);
 		conf.set(Schema.JDBC_USERNAME, username);
 		conf.set(Schema.JDBC_PASSWORD, password);
@@ -70,21 +68,6 @@ public class ExasolSchema implements Schema {
 	}
 
 	@Override
-	public String getTable() {
-		return conf.get(Schema.JDBC_OUTPUT_TABLE);
-	}
-
-	@Override
-	public String[] getColumnNames() {
-		return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES);
-	}
-
-	@Override
-	public String[] getColumnTypes() {
-		return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES);
-	}
-
-	@Override
 	public Connection getConnection() throws ClassNotFoundException,
 			SQLException {
 		Class.forName(conf.get(Schema.JDBC_DRIVER_CLASS));
@@ -93,30 +76,6 @@ public class ExasolSchema implements Schema {
 				conf.get(Schema.JDBC_CONNECTION_STRING),
 				conf.get(Schema.JDBC_USERNAME), conf.get(Schema.JDBC_PASSWORD));
 
-	}
-
-	@Override
-	public String getCreateTableQuery() {
-		return conf.get(Schema.JDBC_CREATE_TABLE_QUERY);
-	}
-
-	@Override
-	public int getNumberOfPartitions() {
-		return conf.getInt(Schema.JDBC_NUMBER_OF_PARTITIONS, 1);
-	}
-
-	@Override
-	public int getCommitSize() {
-		return conf.getInt(Schema.JDBC_COMMIT_SIZE, 1);
-	}
-
-	@Override
-	public String getFilter() {
-		return conf.get(Schema.JDBC_INPUT_FILTER);
-	}
-
-	public Configuration getConf() {
-		return conf;
 	}
 
 	@Override

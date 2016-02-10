@@ -20,7 +20,7 @@ public interface Schema {
 	public static final String JDBC_OUTPUT_COLUMN_NAMES = "jdbc.output.column.names";
 	public static final String JDBC_OUTPUT_COLUMN_TYPES = "jdbc.output.column.types";
 
-	public void setOutput(String driver, String connectionString,
+	public void setOutput(String connectionString,
 			String username, String password, String outputTable,
 			String inputFilter, int outputNumberOfPartitions,
 			int outputCommitSize, String[] columnNames, String[] columnsTypes);

@@ -54,7 +54,7 @@ public class JdbcExportJobTest {
 	public void testDatabaseExportWithMultipleWriters() throws IOException,
 			SQLException, InterruptedException, ClassNotFoundException {
 
-		JdbcOutputFormat.setOutput(conf, DRIVER, CONNECTIONSTRING, null, null,
+		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
 				OUTPUTTABLE, null, 2, COMMITSIZE, COLUMNNAMES, COLUMNTYPES);
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		Connection connection = outputSchema.getConnection();
@@ -121,7 +121,7 @@ public class JdbcExportJobTest {
 	@Test
 	public void testDatabaseExportWithSingleWriter() throws IOException,
 			SQLException, InterruptedException, ClassNotFoundException {
-		JdbcOutputFormat.setOutput(conf, DRIVER, CONNECTIONSTRING, null, null,
+		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
 				OUTPUTTABLE, null, 1, COMMITSIZE, COLUMNNAMES, COLUMNTYPES);
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		Connection connection = outputSchema.getConnection();
@@ -176,7 +176,7 @@ public class JdbcExportJobTest {
 	public void testDatabaseTemporaryExportWithSingleWriter()
 			throws IOException, SQLException, InterruptedException,
 			ClassNotFoundException {
-		JdbcOutputFormat.setOutput(conf, DRIVER, CONNECTIONSTRING, null, null,
+		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
 				OUTPUTTABLE, null, 1, COMMITSIZE, COLUMNNAMES, COLUMNTYPES);
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		Connection connection = outputSchema.getConnection();
