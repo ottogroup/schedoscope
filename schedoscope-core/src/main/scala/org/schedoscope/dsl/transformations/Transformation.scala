@@ -79,11 +79,6 @@ abstract class Transformation {
 }
 
 /**
- * Base class for external transformation types, i.e., transformations happening outside the HADOOP cluster.
- */
-abstract class ExternalTransformation extends Transformation
-
-/**
  * NoOp transformation type. Default transformation which does nothing but checking for
  * the existence of a _SUCCESS flag in the view's fullPath for materialization.
  */
@@ -92,12 +87,12 @@ case class NoOp() extends Transformation {
 }
 
 object Transformation {
-  def replaceParameters(query: String, parameters: Map[String, Any]): String = {
+  def replaceParameters(transformationSyntax: String, parameters: Map[String, Any]): String = {
     if (parameters.isEmpty)
-      query
+      transformationSyntax
     else {
       val (key, value) = parameters.head
-      val replacedStatement = query.replaceAll(java.util.regex.Pattern.quote("${" + key + "}"), value.toString().replaceAll("\\$", "|"))
+      val replacedStatement = transformationSyntax.replaceAll(java.util.regex.Pattern.quote("${" + key + "}"), value.toString().replaceAll("\\$", "|"))
       replaceParameters(replacedStatement, parameters.tail)
     }
   }

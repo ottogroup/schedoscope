@@ -18,18 +18,17 @@ package org.schedoscope.scheduler.actors
 import java.lang.Math.max
 import java.security.PrivilegedAction
 import java.util.Date
-
 import akka.actor.ActorSelection.toScala
 import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
 import akka.event.{ Logging, LoggingReceive }
 import org.apache.hadoop.fs.{ Path, PathFilter }
 import org.schedoscope.{ AskPattern, SchedoscopeSettings }
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{ FilesystemTransformation, MorphlineTransformation, NoOp, Touch }
+import org.schedoscope.dsl.transformations.{ FilesystemTransformation, NoOp, Touch }
 import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
-
 import scala.concurrent.duration.Duration
+import org.schedoscope.dsl.transformations.FilesystemTransformation
 
 class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
 
@@ -117,7 +116,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
       log.info("SUCCESS")
 
       setVersion(view)
-      if (view.transformation().name == "filesystem") {
+      if (view.transformation().isInstanceOf[FilesystemTransformation]) {
         if (viewDirectorySize > 0l) {
           touchSuccessFlag(view)
           logTransformationTimestamp(view)
@@ -130,10 +129,8 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
           toDefault(false, "nodata")
         }
-
       } else {
-        if (!view.isExternal)
-          touchSuccessFlag(view)
+        touchSuccessFlag(view)
         logTransformationTimestamp(view)
         toMaterialized()
       }
@@ -318,11 +315,6 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 
           toDefault(false, "nodata")
         }
-      }
-
-      case _: MorphlineTransformation => {
-        setVersion(view)
-        toTransforming(retries, mode)
       }
 
       case _: FilesystemTransformation => {

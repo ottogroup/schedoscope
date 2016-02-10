@@ -28,7 +28,6 @@ import org.schedoscope.dsl.views.DailyParameterization
 import org.schedoscope.dsl.views.Id
 import org.schedoscope.dsl.views.JobMetadata
 import org.schedoscope.dsl.views.PointOccurrence
-import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.Settings
 import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.dsl.storageformats._
@@ -199,42 +198,6 @@ case class SimpleDependendView() extends View with Id {
   storedAs(TextFile())
 
 }
-
-case class MorphlineView() extends View with Id {
-  val field1 = fieldOf[String]
-  dependsOn(() => SimpleDependendView())
-  transformVia(() => MorphlineTransformation(s"""{ id :"bla"
-      importCommands : ["org.kitesdk.**"]
-		  commands : [ {
-		  				if  {
-                                          conditions: [{ not: {equals {ec_shop_code : ["${field1.n}"]}}}]
-    								      then : [{ dropRecord{} }]
-    										}}]}""").forView(this))
-  tablePathBuilder = s => "src/test/resources/morphline.csv"
-  storedAs(ExternalTextFile())
-}
-
-case class CompilingMorphlineView() extends View with Id {
-  val visit_id = fieldOf[String]
-  val site = fieldOf[String]
-  dependsOn(() => SimpleDependendView())
-
-  transformVia(() => MorphlineTransformation(s"""{ id :"bla"
-      importCommands : ["org.kitesdk.**"]
-		  commands : [ { extractAvroTree{} }
-		  				]}""").forView(this))
-  tablePathBuilder = s => "src/test/resources/compling_morphline.csv"
-  storedAs(ExternalTextFile())
-}
-
-case class FailingMorphlineView() extends View with Id {
-  dependsOn(() => SimpleDependendView())
-  transformVia(() => MorphlineTransformation("invalid morphline code").forView(this))
-  tablePathBuilder = s => "src/test/resources/failing_morphline.csv"
-  storedAs(ExternalTextFile())
-
-}
-
 
 
 case class HDFSInputView() extends View with Id {

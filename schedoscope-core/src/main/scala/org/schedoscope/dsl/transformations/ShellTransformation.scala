@@ -6,24 +6,12 @@ package org.schedoscope.dsl.transformations
  * @param script contents of the script to be executed
  * @param scriptFile path to script to be executed
  *
- *                   Either script or scriptFile needs to be specified
+ * Either script or scriptFile needs to be specified
  *
  * @param shell path to the interpreter executable, defaults to /bin/bash
+ * @param env a map with environment variables to set
  *
  */
-case class ShellTransformation(script: String = "", scriptFile: String = "", shell: String = "/bin/bash", env: Map[String, String] = Map()) extends ExternalTransformation {
+case class ShellTransformation(script: String = "", scriptFile: String = "", shell: String = "/bin/bash", env: Map[String, String] = Map()) extends Transformation {
   override def name = "shell"
-}
-
-object ShellTransformation {
-
-  def environment(settings: Map[String, String] = Map()) = {
-    val settingsStatements = new StringBuffer()
-
-    for ((key, value) <- settings)
-      settingsStatements.append(s"SET ${key}=${value};\n")
-
-    settingsStatements.toString()
-  }
-
 }
