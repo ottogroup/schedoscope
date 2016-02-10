@@ -25,16 +25,19 @@ class ShellDriverTest extends FlatSpec with Matchers {
 
   it should "execute another shell tranformations synchronously" taggedAs (DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("echo error >/dev/stderr;zcat /usr/share/man/man1/*gz"))
+    
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
   it should "pass environment to the shell" taggedAs (DriverTests, ShellTests) in {
     val file = File.createTempFile("_schedoscope", ".sh")
     file.deleteOnExit()
+    
     val driverRunState = driver.runAndWait(
       ShellTransformation("echo $testvar" + s">${file.getAbsolutePath()}")
         .configureWith(Map("testvar" -> "foobar"))
         .asInstanceOf[ShellTransformation])
+    
     Source.fromFile(file).getLines.next shouldBe "foobar"
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }

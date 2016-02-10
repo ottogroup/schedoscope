@@ -29,8 +29,9 @@ import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
 import scala.concurrent.duration.Duration
 import org.schedoscope.dsl.transformations.FilesystemTransformation
+import org.apache.hadoop.fs.FileSystem
 
-class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String = null, var lastTransformationTimestamp: Long = 0l) extends Actor {
+class ViewActor(view: View, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, var versionChecksum: String, var lastTransformationTimestamp: Long) extends Actor {
 
   import AskPattern._
   import MaterializeViewMode._
@@ -360,8 +361,6 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     self ! MaterializeView()
   }
 
-  val hdfs = defaultFileSystem(settings.hadoopConf)
-
   def successFlagExists(view: View): Boolean =
     settings.userGroupInformation.doAs(new PrivilegedAction[Boolean]() {
       def run() = {
@@ -391,8 +390,6 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
   }
 
-  def hasVersionMismatch(view: View) = view.transformation().checksum != versionChecksum
-
   def logTransformationTimestamp(view: View) = {
     lastTransformationTimestamp = new Date().getTime()
     metadataLoggerActor ! LogTransformationTimestamp(view, lastTransformationTimestamp)
@@ -406,9 +403,13 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
     else ts
   }
 
+  def hasVersionMismatch(view: View) = view.transformation().checksum != versionChecksum
+
   def setVersion(view: View) {
-    versionChecksum = view.transformation().checksum
-    metadataLoggerActor ! SetViewVersion(view)
+    if (hasVersionMismatch(view)) {
+      versionChecksum = view.transformation().checksum
+      metadataLoggerActor ! SetViewVersion(view)
+    }
   }
 
   def logStateInfo(stateName: String, toViewManager: Boolean = true) {
@@ -419,5 +420,7 @@ class ViewActor(view: View, settings: SchedoscopeSettings, viewManagerActor: Act
 }
 
 object ViewActor {
-  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String = null, lastTransformationTimestamp: Long = 0l, viewDispatcher: String = null): Props = Props(classOf[ViewActor], view, settings, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher(s"akka.actor.views-dispatcher")
+  def props(view: View, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String, lastTransformationTimestamp: Long): Props = Props(classOf[ViewActor], view, settings, hdfs, viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp).withDispatcher(s"akka.actor.views-dispatcher")
+  
+  def props(view: View, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef, versionChecksum: String, lastTransformationTimestamp: Long): Props = props(view, settings, defaultFileSystem(settings.hadoopConf), viewManagerActor, transformationManagerActor, metadataLoggerActor, versionChecksum, lastTransformationTimestamp)
 }
