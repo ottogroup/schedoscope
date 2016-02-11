@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2016 Otto (GmbH & Co KG)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,14 @@ public class JdbcQueryUtils {
 		}
 	}
 
+	/**
+	 * Deletes existing rows from a given table, conditions are
+	 * passed in as well
+	 *
+	 * @param table The table from which to delete rows.
+	 * @param filter The filter condition.
+	 * @param connection The JDBC connection object.
+	 */
 	public static void deleteExisitingRows(String table, String filter,
 			Connection connection) {
 

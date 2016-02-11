@@ -51,6 +51,15 @@ public class JdbcQueryUtilsTest {
 	}
 
 	@Test
+	public void testDeleteExistingRows() throws SQLException {
+
+		JdbcQueryUtils.deleteExisitingRows("kk_table", "year = 2014 and month = 08", conn);
+
+		verify(stmt).executeUpdate("DELETE FROM kk_table WHERE USED_FILTER='year = 2014 and month = 08'");
+		verify(stmt).close();
+	}
+
+	@Test
 	public void testMergeOutput() throws SQLException {
 
 		ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
