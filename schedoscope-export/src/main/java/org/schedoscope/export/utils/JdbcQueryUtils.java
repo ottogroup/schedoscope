@@ -25,8 +25,8 @@ import org.apache.commons.logging.LogFactory;
 /**
  * A utility class to generate and execute various
  * database related statements to drop, create tables
- * and insert data into them. Uses JDBC connection and
- * statements.
+ * and insert data into them. Uses JDBC {@link java.sql.Connection Connection}
+ * and {@link java.sql.Statement Statement}.
  *
  * @author Otto
  *

@@ -1,3 +1,18 @@
+/**
+ * Copyright 2016 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.export.outputschema;
 
 import java.sql.Connection;
@@ -20,34 +35,119 @@ public interface Schema {
 	public static final String JDBC_OUTPUT_COLUMN_NAMES = "jdbc.output.column.names";
 	public static final String JDBC_OUTPUT_COLUMN_TYPES = "jdbc.output.column.types";
 
+	/**
+	 * Initializes a {@link Schema} with the given
+	 * parameter.
+	 *
+	 * @param connectionString The JDBC connection string.
+	 * @param username The database user name.
+	 * @param password The database password.
+	 * @param outputTable The table name.
+	 * @param inputFilter The input filter (optional).
+	 * @param outputNumberOfPartitions The number of partitions.
+	 * @param outputCommitSize The commit size.
+	 * @param columnNames The column names.
+	 * @param columnsTypes The column types.
+	 */
 	public void setOutput(String connectionString,
 			String username, String password, String outputTable,
 			String inputFilter, int outputNumberOfPartitions,
 			int outputCommitSize, String[] columnNames, String[] columnsTypes);
 
+	/**
+	 * Returns the table name.
+	 *
+	 * @return The name of the table.
+	 */
 	public String getTable();
 
+	/**
+	 * Returns the names of all columns that are used
+	 * to build the SQL statements.
+	 *
+	 * @return The column names.
+	 */
 	public String[] getColumnNames();
 
+	/**
+	 * Returns the types of all columns that are used
+	 * to build the SQL statement.
+	 *
+	 * @return The column types.
+	 */
 	public String[] getColumnTypes();
 
+	/**
+	 * Returns the name mapping. The name mapping is used
+	 * to use different column names if required.
+	 *
+	 * @return The name mapping
+	 */
 	public Map<String, String> getColumnNameMapping();
 
+	/**
+	 * Returns the type mapping for the column data
+	 * types. This map contains a mapping between
+	 * data types of different database dialects.
+	 * @return
+	 */
 	public Map<String, String> getColumnTypeMapping();
 
+	/**
+	 * Returns the type mapping for the prepared
+	 * statement. This map contains a mapping between
+	 * data types of different database dialects.
+	 *
+	 * @return The type map.
+	 */
 	public Map<String, String> getPreparedStatementTypeMapping();
 
+	/**
+	 * Returns the underlying JDBC connection object.
+	 *
+	 * @return The JDBC connection.
+	 * @throws ClassNotFoundException
+	 * @throws SQLException
+	 */
 	public Connection getConnection() throws ClassNotFoundException,
 			SQLException;
 
+	/**
+	 * Returns the create table statement.
+	 *
+	 * @return Create table statement.
+	 */
 	public String getCreateTableQuery();
 
+	/**
+	 * Returns the number of partitons, defines
+	 * how many JDBC database writer are running
+	 * in parallel.
+	 *
+	 * @return Number of partitions.
+	 */
 	public int getNumberOfPartitions();
 
+	/**
+	 * Returns the commit size, that is the
+	 * number of records to insert within a
+	 * single transaction.
+	 *
+	 * @return The commit size.
+	 */
 	public int getCommitSize();
 
+	/**
+	 * Returns the currently used filter.
+	 *
+	 * @return The filter used.
+	 */
 	public String getFilter();
-	
-	public Configuration getConf();
 
+	/**
+	 * Returns the Hadoop configuration object.
+	 *
+	 * @return The configuration object.
+	 */
+	public Configuration getConf();
 }
