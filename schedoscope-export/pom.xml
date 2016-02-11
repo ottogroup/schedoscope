@@ -83,6 +83,11 @@
 			<version>5.0.13</version>
 		</dependency>
 		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.14</version>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.derby</groupId>
 			<artifactId>derby</artifactId>
 			<version>10.11.1.1</version>
@@ -95,19 +100,13 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.mrunit</groupId>
-			<artifactId>mrunit</artifactId>
-			<version>${mrunit.version}</version>
-			<classifier>hadoop2</classifier>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>1.10.19</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.14</version>
-		</dependency>
-
 	</dependencies>
+
 	<build>
 		<sourceDirectory>src/main/java</sourceDirectory>
 		<testSourceDirectory>src/test/java</testSourceDirectory>
