@@ -91,15 +91,6 @@ public class DerbySchema extends AbstractSchema implements Schema {
 	}
 
 	@Override
-	public Map<String, String> getColumnNameMapping() {
-		Map<String, String> columnNames = new HashMap<String, String>();
-		columnNames.put("year", "data_year");
-		columnNames.put("month", "data_month");
-		columnNames.put("day", "data_day");
-		return columnNames;
-	}
-
-	@Override
 	public Map<String, String> getColumnTypeMapping() {
 		Map<String, String> dataTypes = new HashMap<String, String>();
 		dataTypes.put("string", "varchar(100)");

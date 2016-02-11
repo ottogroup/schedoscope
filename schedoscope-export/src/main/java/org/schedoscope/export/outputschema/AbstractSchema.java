@@ -1,11 +1,14 @@
 package org.schedoscope.export.outputschema;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 
 abstract public class AbstractSchema implements Schema {
-	
+
 	protected Configuration conf;
-	
+
 	@Override
 	public String getTable() {
 		return conf.get(Schema.JDBC_OUTPUT_TABLE);
@@ -15,7 +18,7 @@ abstract public class AbstractSchema implements Schema {
 	public String[] getColumnNames() {
 		return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES);
 	}
-	
+
 	@Override
 	public String[] getColumnTypes() {
 		return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES);
@@ -40,9 +43,18 @@ abstract public class AbstractSchema implements Schema {
 	public String getFilter() {
 		return conf.get(Schema.JDBC_INPUT_FILTER);
 	}
-	
+
 	@Override
 	public Configuration getConf() {
 		return conf;
+	}
+
+	@Override
+	public Map<String, String> getColumnNameMapping() {
+		Map<String, String> columnNames = new HashMap<String, String>();
+		columnNames.put("year", "data_year");
+		columnNames.put("month", "data_month");
+		columnNames.put("day", "data_day");
+		return columnNames;
 	}
 }
