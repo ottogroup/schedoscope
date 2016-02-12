@@ -14,19 +14,23 @@ case class TouchSuccessFlag(view: View) extends ViewSchedulingStateTransitionAct
 
 case class ReportNoDataAvailable(
   view: View,
-  dependendents: Set[View]) extends ViewSchedulingStateTransitionAction(view)
+  listeners: Set[ViewSchedulingStateListener]) extends ViewSchedulingStateTransitionAction(view)
 
 case class ReportFailed(
   view: View,
-  dependendents: Set[View]) extends ViewSchedulingStateTransitionAction(view)
+  listeners: Set[ViewSchedulingStateListener]) extends ViewSchedulingStateTransitionAction(view)
+
+case class ReportInvalidated(
+  view: View,
+  listeners: Set[ViewSchedulingStateListener]) extends ViewSchedulingStateTransitionAction(view)
 
 case class ReportMaterialized(
   view: View,
-  dependendents: Set[View],
+  listeners: Set[ViewSchedulingStateListener],
   transformationTimestamp: Long,
   incomplete: Boolean,
   withErrors: Boolean) extends ViewSchedulingStateTransitionAction(view)
 
 case class DemandMaterialization(
   view: View,
-  dependencies: Set[View]) extends ViewSchedulingStateTransitionAction(view)
+  listeners: Set[ViewSchedulingStateListener]) extends ViewSchedulingStateTransitionAction(view)
