@@ -25,7 +25,7 @@ import org.apache.hadoop.conf.Configuration;
 
 public class ExasolSchema extends AbstractSchema implements Schema {
 
-	protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver ";
+	protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver";
 
 	public ExasolSchema(Configuration conf) {
 		this.conf = conf;
