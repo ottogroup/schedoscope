@@ -41,7 +41,7 @@ case class Waiting(
   lastTransformationChecksum: String,
   lastTransformationTimestamp: Long,
   dependenciesMaterializing: Set[View],
-  listenersWaitingForMaterialize: Set[ViewSchedulingStateListener] = Set(),
+  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
   materializationMode: MaterializeViewMode = DEFAULT,
   oneDependencyReturnedData: Boolean = false,
   incomplete: Boolean = false,
@@ -53,7 +53,7 @@ case class Waiting(
 case class Transforming(
   view: View,
   lastTransformationChecksum: String,
-  listenersWaitingForMaterialize: Set[ViewSchedulingStateListener] = Set(),
+  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
   materializationMode: MaterializeViewMode = DEFAULT,
   retry: Int = 0) extends ViewSchedulingState(view)
 
@@ -77,5 +77,5 @@ case class Retrying(
   view: View,
   lastTransformationChecksum: String,
   materializationMode: MaterializeViewMode = DEFAULT,
-  listenersWaitingForMaterialize: Set[ViewSchedulingStateListener] = Set(),
+  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
   nextRetry: Int) extends ViewSchedulingState(view)

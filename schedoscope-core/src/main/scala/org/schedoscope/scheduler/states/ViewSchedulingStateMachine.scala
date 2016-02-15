@@ -6,21 +6,12 @@ import java.util.Date
 import scala.language.implicitConversions
 
 /**
- * Representation of state transition results from view scheduling state machines.
+ * The result of applying a view scheduling state machine function. Contains the current state (which may be unchanged)
+ * and a set of actions that need to be applied because of the result.
  */
-sealed abstract class ViewSchedulingStateTransition
-
-/**
- * A view has transitioned to a new scheduling state. There is a set of necessary state transition actions associated with the transition.
- */
-case class NewState(
-  newState: ViewSchedulingState,
-  actions: Set[ViewSchedulingStateTransitionAction]) extends ViewSchedulingStateTransition
-
-/**
- * A view's state hasn't changed.
- */
-case class NoStateChange() extends ViewSchedulingStateTransition
+case class ResultingViewSchedulingState(
+  currentState: ViewSchedulingState,
+  actions: Set[ViewSchedulingAction])
 
 /**
  * Trait capturing the common interface of view scheduling state machines. The interface can be implemented differently
@@ -34,7 +25,7 @@ trait ViewSchedulingStateMachine {
    *
    * The outcome is influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
    */
-  def materialize(currentState: ViewSchedulingState, issuer: ViewSchedulingStateListener, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ViewSchedulingStateTransition
+  def materialize(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 }
 
 object ViewSchedulingStateMachine {
@@ -44,6 +35,5 @@ object ViewSchedulingStateMachine {
    */
   implicit def schedulingStateMachineForView(view: View) = view.transformation() match {
     case NoOp() => new NoOpViewSchedulingStateMachine
-    case _      => throw new RuntimeException("Unschedulable Transformation Type")
   }
 }
