@@ -25,6 +25,8 @@ public class SchemaFactoryTest {
 
 	private static final String EXASOL_CONNECT_STRING = "jdbc:exa:10.15.101.11..13:8563;schema=XXXX";
 	private static final String DERBY_CONNECT_STRING = "jdbc:derby:memory:TestingDB";
+	private static final String MYSQL_CONNECT_STRING = "jdbc:mysql://remotehost/nonexistent";
+
 	Configuration conf = new Configuration();
 
 	@Test
@@ -35,7 +37,7 @@ public class SchemaFactoryTest {
 	}
 
 	@Test
-	public void testGetDerbxSchemaByString() {
+	public void testGetDerbySchemaByString() {
 		Schema schema = SchemaFactory.getSchema(DERBY_CONNECT_STRING, conf);
 		assertThat(schema, instanceOf(DerbySchema.class));
 	}
@@ -51,6 +53,19 @@ public class SchemaFactoryTest {
 	public void testGetExasolSchemaByString() {
 		Schema schema = SchemaFactory.getSchema(EXASOL_CONNECT_STRING, conf);
 		assertThat(schema, instanceOf(ExasolSchema.class));
+	}
+
+	@Test
+	public void testGetMySQLSchemaByConf() {
+		conf.set(Schema.JDBC_CONNECTION_STRING, MYSQL_CONNECT_STRING);
+		Schema schema = SchemaFactory.getSchema(conf);
+		assertThat(schema, instanceOf(MySQLSchema.class));
+	}
+
+	@Test
+	public void testGetMySQLSchemaByString() {
+		Schema schema = SchemaFactory.getSchema(MYSQL_CONNECT_STRING, conf);
+		assertThat(schema, instanceOf(MySQLSchema.class));
 	}
 
 	@Test(expected=IllegalArgumentException.class)

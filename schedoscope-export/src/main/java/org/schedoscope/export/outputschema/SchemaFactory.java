@@ -40,6 +40,8 @@ public class SchemaFactory {
 			return new ExasolSchema(conf);
 		} else if (dialect.equals("derby")) {
 			return new DerbySchema(conf);
+		} else if (dialect.equals("mysql")) {
+			return new MySQLSchema(conf);
 		} else {
 			throw new IllegalArgumentException(dbConnectionString + " not a valid jdbc connection string");
 		}

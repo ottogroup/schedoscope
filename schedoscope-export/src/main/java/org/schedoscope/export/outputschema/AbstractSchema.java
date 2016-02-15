@@ -15,6 +15,9 @@
  */
 package org.schedoscope.export.outputschema;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,6 +33,10 @@ import org.apache.hadoop.conf.Configuration;
 abstract public class AbstractSchema implements Schema {
 
 	protected Configuration conf;
+
+	public AbstractSchema(Configuration conf) {
+		this.conf = conf;
+	}
 
 	@Override
 	public String getTable() {
@@ -79,4 +86,68 @@ abstract public class AbstractSchema implements Schema {
 		columnNames.put("day", "data_day");
 		return columnNames;
 	}
+
+	protected String buildCreateTableStatement(String table,
+			String[] columnNames, String[] columnTypes) {
+
+		StringBuilder createTableStatement = new StringBuilder();
+
+		createTableStatement.append("CREATE TABLE ");
+		createTableStatement.append(table);
+		createTableStatement.append(" \n");
+		createTableStatement.append("(");
+		createTableStatement.append("\n");
+
+		for (int i = 0; i < columnNames.length; i++) {
+			createTableStatement.append(columnNames[i]);
+			createTableStatement.append(" ");
+			createTableStatement.append(columnTypes[i]);
+			if (i != columnNames.length - 1) {
+				createTableStatement.append(",");
+			}
+			createTableStatement.append("\n");
+		}
+
+		createTableStatement = createTableStatement.append(")");
+
+		return createTableStatement.toString();
+	}
+
+	@Override
+	public void setOutput(String connectionString, String username, String password, String outputTable,
+			String inputFilter, int outputNumberOfPartitions, int outputCommitSize, String[] columnNames,
+			String[] columnTypes) {
+
+		conf.set(Schema.JDBC_CONNECTION_STRING, connectionString);
+		if (username != null) {
+			conf.set(Schema.JDBC_USERNAME, username);
+		}
+
+		if (password != null) {
+			conf.set(Schema.JDBC_PASSWORD, password);
+		}
+
+		if (inputFilter != null && !inputFilter.isEmpty()) {
+			conf.set(Schema.JDBC_INPUT_FILTER, inputFilter);
+		}
+
+		conf.set(Schema.JDBC_OUTPUT_TABLE, outputTable);
+		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES, columnNames);
+		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, columnTypes);
+		conf.setInt(Schema.JDBC_NUMBER_OF_PARTITIONS, outputNumberOfPartitions);
+		conf.setInt(Schema.JDBC_COMMIT_SIZE, outputCommitSize);
+
+		conf.set(Schema.JDBC_CREATE_TABLE_QUERY, buildCreateTableStatement(outputTable, columnNames, columnTypes));
+	}
+
+	@Override
+	public Connection getConnection() throws ClassNotFoundException, SQLException {
+		Class.forName(conf.get(Schema.JDBC_DRIVER_CLASS));
+
+		return DriverManager.getConnection(
+				conf.get(Schema.JDBC_CONNECTION_STRING),
+				conf.get(Schema.JDBC_USERNAME),
+				conf.get(Schema.JDBC_PASSWORD));
+	}
+
 }

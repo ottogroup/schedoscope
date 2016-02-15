@@ -82,4 +82,9 @@ public class ExasolSchemaTest {
 				containsString("pass"),
 				containsString("int")));
 	}
+
+//	@Test
+//	public void testGetConnection() throws SQLException, ClassNotFoundException {
+//		assertNotNull(schema.getConnection());
+//	}
 }
