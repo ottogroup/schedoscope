@@ -167,8 +167,8 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends
 						.dropTemporaryOutputTable(outputTable, connection);
 			}
 			JdbcQueryUtils.createTable(createTableStatement, connection);
-			JdbcQueryUtils.mergeOutput(outputTable, outputNumberOfPartitions,
-					connection);
+			JdbcQueryUtils.mergeOutput(outputTable, TMPDB,
+					outputNumberOfPartitions, connection);
 			JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable,
 					outputNumberOfPartitions, connection);
 

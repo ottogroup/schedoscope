@@ -121,7 +121,7 @@ public class JdbcQueryUtils {
 	 * @param numberOfPartitions The number of temporary tables to merge.
 	 * @param connection The JDBC connection object.
 	 */
-	public static void mergeOutput(String table, int numberOfPartitions,
+	public static void mergeOutput(String table, String tablePrefix, int numberOfPartitions,
 			Connection connection) {
 
 		StringBuilder mergeOutputQuery = new StringBuilder();
@@ -130,7 +130,8 @@ public class JdbcQueryUtils {
 
 		for (int i = 0; i < numberOfPartitions; i++) {
 			mergeOutputQuery.append("\n");
-			mergeOutputQuery.append("SELECT * FROM tmp_");
+			mergeOutputQuery.append("SELECT * FROM ");
+			mergeOutputQuery.append(tablePrefix);
 			mergeOutputQuery.append(table);
 			mergeOutputQuery.append("_");
 			mergeOutputQuery.append(i);

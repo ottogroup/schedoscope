@@ -78,7 +78,7 @@ public class JdbcQueryUtilsTest {
 	public void testMergeOutput() throws SQLException {
 
 		ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
-		JdbcQueryUtils.mergeOutput("her_table", 2, conn);
+		JdbcQueryUtils.mergeOutput("her_table", "tmp_", 2, conn);
 
 		verify(stmt).executeUpdate(argumentCaptor.capture());
 		String sqlStmt = argumentCaptor.getValue();

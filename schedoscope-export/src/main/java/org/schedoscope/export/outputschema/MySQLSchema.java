@@ -14,7 +14,7 @@ public class MySQLSchema extends AbstractSchema implements Schema {
 	private static final Map<String, String> columnTypeMapping = Collections.unmodifiableMap(
 			new HashMap<String, String>() {
 				{
-					put("string", "varchar(65000)");
+					put("string", "text");
 					put("boolean", "boolean");
 					put("int", "int");
 					put("long", "bigint");
@@ -29,7 +29,7 @@ public class MySQLSchema extends AbstractSchema implements Schema {
 	private static final Map<String, String> preparedStatementTypeMapping = Collections.unmodifiableMap(
 			new HashMap<String, String>() {
 				{
-					put("varchar(65000)", "string");
+					put("text", "string");
 					put("boolean", "boolean");
 					put("int", "int");
 					put("bigint", "long");
