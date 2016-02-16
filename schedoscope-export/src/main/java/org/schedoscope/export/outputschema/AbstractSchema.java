@@ -87,6 +87,10 @@ abstract public class AbstractSchema implements Schema {
 		return columnNames;
 	}
 
+	protected String getCreateTableSuffix() {
+		return "";
+	};
+
 	protected String buildCreateTableStatement(String table,
 			String[] columnNames, String[] columnTypes) {
 
@@ -109,6 +113,7 @@ abstract public class AbstractSchema implements Schema {
 		}
 
 		createTableStatement = createTableStatement.append(")");
+		createTableStatement = createTableStatement.append(getCreateTableSuffix());
 
 		return createTableStatement.toString();
 	}
@@ -149,5 +154,4 @@ abstract public class AbstractSchema implements Schema {
 				conf.get(Schema.JDBC_USERNAME),
 				conf.get(Schema.JDBC_PASSWORD));
 	}
-
 }
