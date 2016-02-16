@@ -42,6 +42,8 @@ public class SchemaFactory {
 			return new DerbySchema(conf);
 		} else if (dialect.equals("mysql")) {
 			return new MySQLSchema(conf);
+		} else if (dialect.equals("postgresql")) {
+			return new PostgreSQLSchema(conf);
 		} else {
 			throw new IllegalArgumentException(dbConnectionString + " not a valid jdbc connection string");
 		}
