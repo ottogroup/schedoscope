@@ -1,11 +1,11 @@
 package org.schedoscope.scheduler.states
 
 import org.scalatest.{ FlatSpec, Matchers }
+import PartyInterestedInViewSchedulingStateChange._
+import ViewSchedulingStateMachine._
 import test.eci.datahub.Brand
 import org.schedoscope.dsl.Parameter.p
 import test.eci.datahub.ProductBrand
-import PartyInterestedInViewSchedulingStateChange._
-import ViewSchedulingStateMachine._
 
 class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 

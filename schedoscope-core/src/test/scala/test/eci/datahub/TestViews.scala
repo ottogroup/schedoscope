@@ -105,6 +105,23 @@ case class ProductBrand(
           """)))
 }
 
+case class ProductBrandsNoOpMirror(
+    year: Parameter[String],
+    month: Parameter[String],
+    day: Parameter[String]) extends View {
+
+  dependsOn(() => ProductBrand(p("EC0101"), year, month, day))
+  dependsOn(() => ProductBrand(p("EC0102"), year, month, day))
+}
+
+case class ProductBrandsNoOpMirrorDependent(
+    year: Parameter[String],
+    month: Parameter[String],
+    day: Parameter[String]) extends View {
+
+  dependsOn(() => ProductBrandsNoOpMirror(year, month, day))
+}
+
 case class NestedStructure() extends Structure {
   val aField = fieldOf[Boolean]
 }
@@ -198,7 +215,6 @@ case class SimpleDependendView() extends View with Id {
   storedAs(TextFile())
 
 }
-
 
 case class HDFSInputView() extends View with Id {
   val field1 = fieldOf[String]

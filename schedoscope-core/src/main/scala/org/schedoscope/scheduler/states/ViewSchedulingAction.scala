@@ -25,6 +25,11 @@ case class WriteTransformationCheckum(view: View) extends ViewSchedulingAction(v
 case class TouchSuccessFlag(view: View) extends ViewSchedulingAction(view)
 
 /**
+ * A view should materialize.  
+ */
+case class Materialize(view: View, requester: PartyInterestedInViewSchedulingStateChange) extends ViewSchedulingAction(view)
+
+/**
  * All parties interested in the view scheduling state should be notified that no data is available for the view.
  */
 case class ReportNoDataAvailable(
