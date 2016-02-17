@@ -4,6 +4,7 @@ import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.dsl.View
 import java.util.Date
 import scala.language.implicitConversions
+import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
 /**
  * The result of applying a view scheduling state machine function. Contains the current state (which may be unchanged)
@@ -25,7 +26,7 @@ trait ViewSchedulingStateMachine {
    *
    * The outcome is influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
    */
-  def materialize(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  def materialize(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange, successFlagExists: => Boolean, materializationMode: MaterializeViewMode = DEFAULT, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 }
 
 object ViewSchedulingStateMachine {
@@ -34,6 +35,11 @@ object ViewSchedulingStateMachine {
    * Implicit factory of the view scheduling state machine appropriate for a view's transformation type.
    */
   implicit def schedulingStateMachineForView(view: View) = view.transformation() match {
-    case NoOp() => new NoOpViewSchedulingStateMachine
+    case NoOp() => {
+      if (view.dependencies.isEmpty)
+        new NoOpLeafViewSchedulingStateMachine
+      else
+        new NoOpIntermediateViewSchedulingStateMachine
+    }
   }
 }

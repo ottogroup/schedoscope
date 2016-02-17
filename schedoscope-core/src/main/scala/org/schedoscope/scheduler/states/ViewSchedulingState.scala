@@ -29,9 +29,7 @@ case class ReadFromSchemaManager(
 /**
  * View has transformed but has no data.
  */
-case class NoData(
-  view: View,
-  lastTransformationChecksum: String) extends ViewSchedulingState(view)
+case class NoData(view: View) extends ViewSchedulingState(view)
 
 /**
  * View is waiting for its dependencies to transform.
