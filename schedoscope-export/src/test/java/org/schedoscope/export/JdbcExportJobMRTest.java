@@ -25,6 +25,7 @@ public class JdbcExportJobMRTest extends HiveUnitBaseTest {
 	ReduceDriver<Text, NullWritable, JdbcOutputWritable, NullWritable> reduceDriver;
 	MapReduceDriver<WritableComparable<?>, HCatRecord, Text, NullWritable, JdbcOutputWritable, NullWritable> mapReduceDriver;
 
+	@SuppressWarnings("deprecation")
 	@Before
 	public void setUp() throws IOException {
 		super.setUp();
@@ -33,7 +34,7 @@ public class JdbcExportJobMRTest extends HiveUnitBaseTest {
 		mapDriver.setConfiguration(conf);
 
 		JdbcExportReducer reducer = new JdbcExportReducer();
-		reduceDriver = new ReduceDriver(reducer);
+		reduceDriver = ReduceDriver.newReduceDriver(reducer);
 		reduceDriver.setConfiguration(conf);
 
 		mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
