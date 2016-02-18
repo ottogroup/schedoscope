@@ -69,7 +69,7 @@ public class JdbcExportJobMRTest extends HiveUnitBaseTest {
 			mapReduceDriver.withInput(NullWritable.get(), record);
 		}
 		List<Pair<JdbcOutputWritable, NullWritable>> out = mapReduceDriver.run();
-		// assertEquals(10, out.size());
+		assertEquals(10, out.size());
 
 	}
 

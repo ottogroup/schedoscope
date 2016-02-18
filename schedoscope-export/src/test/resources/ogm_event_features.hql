@@ -7,8 +7,10 @@ PARTITIONED BY (
   `year` string, 
   `month` string, 
   `month_id` string)
-ROW FORMAT SERDE 
-  'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe' 
+ROW FORMAT DELIMITED 
+FIELDS TERMINATED BY '\t' 
+COLLECTION ITEMS TERMINATED BY ',' 
+MAP KEYS TERMINATED BY ':' 
 STORED AS INPUTFORMAT 
   'org.apache.hadoop.mapred.TextInputFormat' 
 OUTPUTFORMAT 
