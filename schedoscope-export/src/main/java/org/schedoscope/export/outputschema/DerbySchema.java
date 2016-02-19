@@ -21,6 +21,10 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 
+/**
+ * Contains the derby specific mapping of the column types.
+ *
+ */
 public class DerbySchema extends AbstractSchema implements Schema {
 
 	protected static final String JDBC_DRIVER_NAME = "org.apache.derby.jdbc.EmbeddedDriver";

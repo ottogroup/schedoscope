@@ -74,7 +74,7 @@ public abstract class HiveUnitBaseTest {
 		// set up column type mapping
 		HCatInputFormat.setInput(conf, DEFAUlT_HIVE_DB, tableName);
 		hcatInputSchema = HCatInputFormat.getTableSchema(conf);
-		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES,SchemaUtils.getColumnTypesFromHcatInputSchema(hcatInputSchema, schema.getColumnTypeMapping()));
+		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES,SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, schema));
 
 		// set up hcatalog record reader
 		ReadEntity.Builder builder = new ReadEntity.Builder();

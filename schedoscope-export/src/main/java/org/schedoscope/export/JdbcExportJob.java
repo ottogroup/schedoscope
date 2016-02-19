@@ -82,10 +82,10 @@ public class JdbcExportJob extends Configured implements Tool {
 		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job
 				.getConfiguration());
 
-		String[] columnNames = SchemaUtils.getColumnNamesFromHcatInputSchema(
-				hcatInputSchema, outputSchema.getColumnNameMapping());
-		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatInputSchema(
-				hcatInputSchema, outputSchema.getColumnTypeMapping());
+		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(
+				hcatInputSchema, outputSchema);
+		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(
+				hcatInputSchema, outputSchema);
 
 		JdbcOutputFormat.setOutput(job.getConfiguration(),
 				dbConnectionString, dbUser, dbPassword, outputTable,

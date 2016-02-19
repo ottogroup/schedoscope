@@ -21,6 +21,10 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 
+/**
+ * Contains the exasol specific mapping of the column types.
+ *
+ */
 public class ExasolSchema extends AbstractSchema implements Schema {
 
 	protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver";

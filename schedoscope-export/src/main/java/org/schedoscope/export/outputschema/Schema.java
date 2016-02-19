@@ -21,6 +21,14 @@ import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 
+/**
+ * A schema is a collection of functions and properties
+ * to write data into a particular database technology, e.g. mysql,
+ * postgresql, etc. It hold information about database connection
+ * settings and creates the SQL statements, provides the JDBC connection.
+ * @author richter
+ *
+ */
 public interface Schema {
 
 	public static final String JDBC_DRIVER_CLASS = "jdbc.driver.class";
