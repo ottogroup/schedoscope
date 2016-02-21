@@ -27,7 +27,7 @@ public class JdbcExportJobMRTest extends HiveUnitBaseTest {
 
 	@SuppressWarnings("deprecation")
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() throws Exception {
 		super.setUp();
 		JdbcExportMapper mapper = new JdbcExportMapper();
 		mapDriver = MapDriver.newMapDriver(mapper);
@@ -46,7 +46,7 @@ public class JdbcExportJobMRTest extends HiveUnitBaseTest {
 	}
 
 	@Test
-	public void testJdbcMapper() throws IOException {
+	public void testJdbcMapper() throws Exception {
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {

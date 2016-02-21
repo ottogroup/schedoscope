@@ -3,7 +3,6 @@ package org.schedoscope.export;
 import static org.junit.Assert.assertNotEquals;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +42,7 @@ public abstract class HiveUnitBaseTest {
 
 
 	@Before
-	public void setUp()  throws IOException {
+	public void setUp()  throws Exception {
 		testSuite = new HiveTestSuite();
 		testSuite.createTestCluster();
 		conf = testSuite.getFS().getConf();
@@ -55,7 +54,7 @@ public abstract class HiveUnitBaseTest {
 	}
 
 
-	public void setUpHiveServer(String dataFile, String hiveScript, String tableName) throws IOException {
+	public void setUpHiveServer(String dataFile, String hiveScript, String tableName) throws Exception {
 
 		// load data into hive table
 		File inputRawData = new File(dataFile);
