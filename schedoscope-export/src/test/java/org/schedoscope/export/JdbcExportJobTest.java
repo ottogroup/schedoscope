@@ -70,7 +70,7 @@ public class JdbcExportJobTest {
 			SQLException, InterruptedException, ClassNotFoundException {
 
 		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
-				OUTPUTTABLE, null, 2, COMMITSIZE, null, COLUMNNAMES, COLUMNTYPES);
+				OUTPUTTABLE, null, 2, COMMITSIZE, null, null, COLUMNNAMES, COLUMNTYPES);
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		Connection connection = outputSchema.getConnection();
 		TaskAttemptContext ctx1 = new TaskAttemptContextImpl(conf,
@@ -137,7 +137,7 @@ public class JdbcExportJobTest {
 	public void testDatabaseExportWithSingleWriter() throws IOException,
 			SQLException, InterruptedException, ClassNotFoundException {
 		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
-				OUTPUTTABLE, null, 1, COMMITSIZE, null, COLUMNNAMES, COLUMNTYPES);
+				OUTPUTTABLE, null, 1, COMMITSIZE, null, null, COLUMNNAMES, COLUMNTYPES);
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		Connection connection = outputSchema.getConnection();
 		TaskAttemptContext ctx = new TaskAttemptContextImpl(conf,
@@ -192,7 +192,7 @@ public class JdbcExportJobTest {
 			throws IOException, SQLException, InterruptedException,
 			ClassNotFoundException {
 		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
-				OUTPUTTABLE, null, 1, COMMITSIZE, null, COLUMNNAMES, COLUMNTYPES);
+				OUTPUTTABLE, null, 1, COMMITSIZE, null, null, COLUMNNAMES, COLUMNTYPES);
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		Connection connection = outputSchema.getConnection();
 		TaskAttemptContext ctx = new TaskAttemptContextImpl(conf,

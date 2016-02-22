@@ -70,7 +70,7 @@ public class SchemaUtils {
 
 		for (int i = 0; i < inputSchema.getFieldNames().size(); i++) {
 
-			String type = columnTypeMapping.get("string");
+			String type = schema.getColumnTypeMappingComplexType();
 
 			if (!inputSchema.get(i).isComplex()) {
 

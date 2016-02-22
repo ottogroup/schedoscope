@@ -39,7 +39,7 @@ public class ExasolSchemaTest {
 	@Before
 	public void setUp() {
 		schema = new ExasolSchema(conf);
-		schema.setOutput("jdbc:exa:10.15.101.11..13:8563;schema=USR_TESTER_EXASOL", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, COLUMN_NAMES, COLUMN_TYPES);
+		schema.setOutput("jdbc:exa:10.15.101.11..13:8563;schema=USR_TESTER_EXASOL", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, null, COLUMN_NAMES, COLUMN_TYPES);
 	}
 
 	@Test

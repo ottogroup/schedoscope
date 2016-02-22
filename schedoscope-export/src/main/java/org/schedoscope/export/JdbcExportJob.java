@@ -41,7 +41,6 @@ public class JdbcExportJob extends Configured implements Tool {
 	private boolean isSecured;
 	private String metastoreuris;
 	private String principal;
-	private String storageEngine;
 	private String dbConnectionString;
 	private String dbUser;
 	private String dbPassword;
@@ -49,6 +48,8 @@ public class JdbcExportJob extends Configured implements Tool {
 	private String inputTable;
 	private String outputTable;
 	private String inputFilter;
+	private String storageEngine;
+	private String complexTypeSupport;
 	private int outputNumberOfPartitions;
 	private int outputCommitSize;
 	private String jobName;
@@ -105,7 +106,7 @@ public class JdbcExportJob extends Configured implements Tool {
 		JdbcOutputFormat.setOutput(job.getConfiguration(),
 				dbConnectionString, dbUser, dbPassword, outputTable,
 				inputFilter, outputNumberOfPartitions, outputCommitSize,
-				storageEngine, columnNames, columnTypes);
+				storageEngine, complexTypeSupport, columnNames, columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(JdbcOutputFormat.class);
