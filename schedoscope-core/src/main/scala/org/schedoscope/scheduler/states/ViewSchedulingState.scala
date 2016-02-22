@@ -6,36 +6,36 @@ import org.schedoscope.scheduler.messages.MaterializeViewMode._
 /**
  * Captures the various possible scheduling states views may be in.
  */
-sealed abstract class ViewSchedulingState(view: View)
+sealed abstract class ViewSchedulingState(val view: View)
 
 /**
  * View just has been freshly created by view manager and has never been materialized before.
  */
-case class CreatedByViewManager(view: View) extends ViewSchedulingState(view)
+case class CreatedByViewManager(override val view: View) extends ViewSchedulingState(view)
 
 /**
  * View has been explicitly invalidated and need recomputation
  */
-case class Invalidated(view: View) extends ViewSchedulingState(view)
+case class Invalidated(override val view: View) extends ViewSchedulingState(view)
 
 /**
  * View has been instantiated by view manager and filled with its prior scheduling state from the schema manager.
  */
 case class ReadFromSchemaManager(
-  view: View,
+  override val view: View,
   lastTransformationChecksum: String,
   lastTransformationTimestamp: Long) extends ViewSchedulingState(view)
 
 /**
  * View has transformed but has no data.
  */
-case class NoData(view: View) extends ViewSchedulingState(view)
+case class NoData(override val view: View) extends ViewSchedulingState(view)
 
 /**
  * View is waiting for its dependencies to transform.
  */
 case class Waiting(
-  view: View,
+  override val view: View,
   lastTransformationChecksum: String,
   lastTransformationTimestamp: Long,
   dependenciesMaterializing: Set[View],
@@ -49,7 +49,7 @@ case class Waiting(
  * View is transforming.
  */
 case class Transforming(
-  view: View,
+  override val view: View,
   lastTransformationChecksum: String,
   listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
   materializationMode: MaterializeViewMode = DEFAULT,
@@ -59,20 +59,22 @@ case class Transforming(
  * View has materialized.
  */
 case class Materialized(
-  view: View,
+  override val view: View,
   lastTransformationChecksum: String,
-  lastTransformationTimestamp: Long) extends ViewSchedulingState(view)
+  lastTransformationTimestamp: Long,
+  withErrors: Boolean,
+  incomplete: Boolean) extends ViewSchedulingState(view)
 
 /**
  * View materialization has failed.
  */
-case class Failed(view: View) extends ViewSchedulingState(view)
+case class Failed(override val view: View) extends ViewSchedulingState(view)
 
 /**
  * View materialization has failed but this is being retried.
  */
 case class Retrying(
-  view: View,
+  override val view: View,
   lastTransformationChecksum: String,
   materializationMode: MaterializeViewMode = DEFAULT,
   listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),

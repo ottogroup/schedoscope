@@ -18,11 +18,21 @@ class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
     case CreatedByViewManager(view) => {
       if (successFlagExists)
         ResultingViewSchedulingState(
-          Materialized(view, view.transformation().checksum, currentTime),
+          Materialized(
+            view,
+            view.transformation().checksum,
+            currentTime,
+            false,
+            false),
           Set(
             WriteTransformationTimestamp(view, currentTime),
             WriteTransformationCheckum(view),
-            ReportMaterialized(view, Set(listener), currentTime, false, false)))
+            ReportMaterialized(
+              view,
+              Set(listener),
+              currentTime,
+              false,
+              false)))
       else
         ResultingViewSchedulingState(
           NoData(view),
@@ -31,19 +41,45 @@ class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
 
     case ReadFromSchemaManager(view, checksum, lastTransformationTimestamp) => {
       ResultingViewSchedulingState(
-        Materialized(view, checksum, lastTransformationTimestamp),
+        Materialized(
+          view,
+          checksum,
+          lastTransformationTimestamp,
+          false,
+          false),
         Set(
-          ReportMaterialized(view, Set(listener), lastTransformationTimestamp, false, false)))
+          ReportMaterialized(
+            view,
+            Set(listener),
+            lastTransformationTimestamp,
+            false,
+            false))
+          ++ {
+            if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
+              Set(WriteTransformationCheckum(view))
+            else
+              Set()
+          })
     }
 
     case Invalidated(view) => {
       if (successFlagExists)
         ResultingViewSchedulingState(
-          Materialized(view, view.transformation().checksum, currentTime),
+          Materialized(
+            view,
+            view.transformation().checksum,
+            currentTime,
+            false,
+            false),
           Set(
             WriteTransformationTimestamp(view, currentTime),
             WriteTransformationCheckum(view),
-            ReportMaterialized(view, Set(listener), currentTime, false, false)))
+            ReportMaterialized(
+              view,
+              Set(listener),
+              currentTime,
+              false,
+              false)))
       else
         ResultingViewSchedulingState(
           NoData(view),
@@ -53,22 +89,56 @@ class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
     case NoData(view) => {
       if (successFlagExists)
         ResultingViewSchedulingState(
-          Materialized(view, view.transformation().checksum, currentTime),
+          Materialized(
+            view,
+            view.transformation().checksum,
+            currentTime,
+            false,
+            false),
           Set(
             WriteTransformationTimestamp(view, currentTime),
             WriteTransformationCheckum(view),
-            ReportMaterialized(view, Set(listener), currentTime, false, false)))
+            ReportMaterialized(
+              view,
+              Set(listener),
+              currentTime,
+              false,
+              false)))
       else
         ResultingViewSchedulingState(
           NoData(view),
           Set(ReportNoDataAvailable(view, Set(listener))))
     }
 
-    case Materialized(view, checksum, lastTransformationTimestamp) => {
+    case Materialized(view, checksum, lastTransformationTimestamp, _, _) => {
       ResultingViewSchedulingState(
-        Materialized(view, checksum, lastTransformationTimestamp),
+        Materialized(
+          view,
+          checksum,
+          lastTransformationTimestamp,
+          false,
+          false),
         Set(
-          ReportMaterialized(view, Set(listener), lastTransformationTimestamp, false, false)))
+          ReportMaterialized(
+            view,
+            Set(listener),
+            lastTransformationTimestamp,
+            false,
+            false))
+          ++ {
+            if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
+              Set(WriteTransformationCheckum(view))
+            else
+              Set()
+          })
     }
   }
+
+  def invalidate(
+    currentState: ViewSchedulingState,
+    issuer: PartyInterestedInViewSchedulingStateChange) =
+    ResultingViewSchedulingState(
+      Invalidated(currentState.view),
+      Set(
+        ReportInvalidated(currentState.view, Set(issuer))))
 }

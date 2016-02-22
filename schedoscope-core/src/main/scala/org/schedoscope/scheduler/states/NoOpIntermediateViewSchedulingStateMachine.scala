@@ -24,7 +24,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           false,
           false,
           0l),
-        view.dependencies.map { Materialize(_, view) }.toSet)
+        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
     }
 
     case ReadFromSchemaManager(view, lastTransformationChecksum, lastTransformationTimestamp) => {
@@ -38,7 +38,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           false,
           false,
           0l),
-        view.dependencies.map { Materialize(_, view) }.toSet)
+        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
     }
 
     case NoData(view) => {
@@ -52,21 +52,21 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           false,
           false,
           0l),
-        view.dependencies.map { Materialize(_, view) }.toSet)
+        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
     }
 
     case Invalidated(view) => {
-      if (successFlagExists)
-        ResultingViewSchedulingState(
-          Materialized(view, view.transformation().checksum, currentTime),
-          Set(
-            WriteTransformationTimestamp(view, currentTime),
-            WriteTransformationCheckum(view),
-            ReportMaterialized(view, Set(listener), currentTime, false, false)))
-      else
-        ResultingViewSchedulingState(
-          NoData(view),
-          Set(ReportNoDataAvailable(view, Set(listener))))
+      ResultingViewSchedulingState(
+        Waiting(view,
+          view.transformation().checksum,
+          0,
+          view.dependencies.toSet,
+          Set(listener),
+          materializationMode,
+          false,
+          false,
+          0l),
+        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
     }
 
     case Waiting(
@@ -92,7 +92,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           dependenciesFreshness), Set())
     }
 
-    case Materialized(view, lastTransformationChecksum, lastTransformationTimestamp) => {
+    case Materialized(view, lastTransformationChecksum, lastTransformationTimestamp, _, _) => {
       ResultingViewSchedulingState(
         Waiting(view,
           lastTransformationChecksum,
@@ -103,7 +103,16 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           false,
           false,
           0l),
-        view.dependencies.map { Materialize(_, view) }.toSet)
+        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
     }
   }
+
+  def invalidate(
+    currentState: ViewSchedulingState,
+    issuer: PartyInterestedInViewSchedulingStateChange) =
+    ResultingViewSchedulingState(
+      Invalidated(currentState.view),
+      Set(
+        ReportInvalidated(currentState.view, Set(issuer))))
+
 }

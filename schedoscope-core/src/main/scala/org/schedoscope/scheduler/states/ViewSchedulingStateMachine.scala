@@ -27,9 +27,18 @@ trait ViewSchedulingStateMachine {
    * The outcome is influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
    */
   def materialize(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange, successFlagExists: => Boolean, materializationMode: MaterializeViewMode = DEFAULT, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+
+  /**
+   * Given the view's current view scheduling state apply an invalidate command. This issuer of the command is passed along as an interested listener in the outcome.
+   */
+  def invalidate(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange): ResultingViewSchedulingState
 }
 
 object ViewSchedulingStateMachine {
+
+  val noOpLeafViewSchedulingStateMachine = new NoOpLeafViewSchedulingStateMachine
+
+  val noOpIntermediateViewSchedulingStateMachine = new NoOpIntermediateViewSchedulingStateMachine
 
   /**
    * Implicit factory of the view scheduling state machine appropriate for a view's transformation type.
@@ -37,9 +46,9 @@ object ViewSchedulingStateMachine {
   implicit def schedulingStateMachineForView(view: View) = view.transformation() match {
     case NoOp() => {
       if (view.dependencies.isEmpty)
-        new NoOpLeafViewSchedulingStateMachine
+        noOpLeafViewSchedulingStateMachine
       else
-        new NoOpIntermediateViewSchedulingStateMachine
+        noOpIntermediateViewSchedulingStateMachine
     }
   }
 }

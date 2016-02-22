@@ -1,6 +1,7 @@
 package org.schedoscope.scheduler.states
 
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
 /**
  * Abstract class to capture the various actions to be performed upon a reaching a view schedulings state result.
@@ -27,7 +28,7 @@ case class TouchSuccessFlag(view: View) extends ViewSchedulingAction(view)
 /**
  * A view should materialize.  
  */
-case class Materialize(view: View, requester: PartyInterestedInViewSchedulingStateChange) extends ViewSchedulingAction(view)
+case class Materialize(view: View, requester: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode) extends ViewSchedulingAction(view)
 
 /**
  * All parties interested in the view scheduling state should be notified that no data is available for the view.
