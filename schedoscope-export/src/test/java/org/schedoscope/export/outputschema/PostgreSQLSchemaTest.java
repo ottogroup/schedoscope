@@ -1,3 +1,18 @@
+/**
+ * Copyright 2016 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.export.outputschema;
 
 import static org.hamcrest.CoreMatchers.allOf;
@@ -24,7 +39,7 @@ public class PostgreSQLSchemaTest {
 	@Before
 	public void setUp() {
 		schema  = new PostgreSQLSchema(conf);
-		schema.setOutput("jdbc:postgresql://localhost:5432/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, COLUMN_NAMES, COLUMN_TYPES);
+		schema.setOutput("jdbc:postgresql://localhost:5432/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, null, COLUMN_NAMES, COLUMN_TYPES);
 
 	}
 
@@ -57,6 +72,19 @@ public class PostgreSQLSchemaTest {
 	public void testGetFilter() {
 		assertEquals(null, schema.getFilter());
 	}
+
+	@Test
+	public void testGetColumnTypeMappingComplexType() {
+		assertEquals("text", schema.getColumnTypeMappingComplexType());
+	}
+
+	@Test
+	public void testGetColumnTypeMappingComplexTypeComplex() {
+		schema  = new PostgreSQLSchema(conf);
+		schema.setOutput("jdbc:postgresql://localhost:5432/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, "true", COLUMN_NAMES, COLUMN_TYPES);
+		assertEquals("json", schema.getColumnTypeMappingComplexType());
+	}
+
 
 	@Test
 	public void testBuildCreateTableStatememt() {

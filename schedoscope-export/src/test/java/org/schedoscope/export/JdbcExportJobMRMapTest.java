@@ -1,6 +1,22 @@
+/**
+ * Copyright 2016 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.export;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -15,11 +31,13 @@ import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.hive.hcatalog.data.HCatRecord;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.outputformat.JdbcOutputWritable;
 
-public class JdbcExportJobMRTest extends HiveUnitBaseTest {
+public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
 
 	MapDriver<WritableComparable<?>, HCatRecord, Text, NullWritable> mapDriver;
 	ReduceDriver<Text, NullWritable, JdbcOutputWritable, NullWritable> reduceDriver;
@@ -46,19 +64,24 @@ public class JdbcExportJobMRTest extends HiveUnitBaseTest {
 	}
 
 	@Test
-	public void testJdbcMapper() throws Exception {
+	public void testJdbcMapper() throws IOException, JSONException {
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
-		HCatRecord record = it.next();
+			HCatRecord record = it.next();
 			mapDriver.withInput(NullWritable.get(), record);
 		}
 		List<Pair<Text, NullWritable>> out = mapDriver.run();
 		assertEquals(10, out.size());
 
-		String result = out.get(0).toString().split("\t")[3];
-		System.err.println(out.get(0));
-		assertEquals("app.eci.datahub.OgmEventFeatures", result);
+		for (Pair<Text, NullWritable> p : out) {
+			String jsonData = p.getFirst().toString().split("\t")[1];
+			JSONObject json = new JSONObject(jsonData);
+			assertNotEquals(0, json.length());
+
+			String fixed = p.getFirst().toString().split("\t")[3];
+			assertEquals("app.eci.datahub.OgmEventFeatures", fixed);
+		}
 	}
 
 	@Test
@@ -66,7 +89,7 @@ public class JdbcExportJobMRTest extends HiveUnitBaseTest {
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
-		HCatRecord record = it.next();
+			HCatRecord record = it.next();
 			mapReduceDriver.withInput(NullWritable.get(), record);
 		}
 		List<Pair<JdbcOutputWritable, NullWritable>> out = mapReduceDriver.run();

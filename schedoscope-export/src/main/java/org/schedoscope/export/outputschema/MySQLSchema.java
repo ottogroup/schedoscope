@@ -29,6 +29,8 @@ public class MySQLSchema extends AbstractSchema implements Schema {
 
 	protected static final String JDBC_DRIVER_NAME = "com.mysql.jdbc.Driver";
 
+	protected static final String JDBC_MYSQL_DEFAULT_STORAGE_ENGINE = "InnoDB";
+
 	@SuppressWarnings("serial")
 	private static final Map<String, String> columnTypeMapping = Collections.unmodifiableMap(
 			new HashMap<String, String>() {
@@ -76,6 +78,6 @@ public class MySQLSchema extends AbstractSchema implements Schema {
 
 	@Override
 	protected String getCreateTableSuffix() {
-		return new String(" ENGINE=InnoDB DEFAULT CHARSET=utf8");
+		return new String(" ENGINE=" + conf.get(JDBC_MYSQL_STORAGE_ENGINE, JDBC_MYSQL_DEFAULT_STORAGE_ENGINE) + " DEFAULT CHARSET=utf8");
 	}
 }

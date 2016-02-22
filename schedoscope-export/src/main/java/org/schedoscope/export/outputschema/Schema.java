@@ -42,6 +42,8 @@ public interface Schema {
 	public static final String JDBC_COMMIT_SIZE = "jdbc.commit.size";
 	public static final String JDBC_OUTPUT_COLUMN_NAMES = "jdbc.output.column.names";
 	public static final String JDBC_OUTPUT_COLUMN_TYPES = "jdbc.output.column.types";
+	public static final String JDBC_MYSQL_STORAGE_ENGINE = "jdbc.mysql.storage.engine";
+	public static final String JDBC_POSTGRESQL_JSON_SUPPORT = "jdbc.postgresql.json.support";
 
 	/**
 	 * Initializes a {@link Schema} with the given
@@ -60,7 +62,8 @@ public interface Schema {
 	public void setOutput(String connectionString,
 			String username, String password, String outputTable,
 			String inputFilter, int outputNumberOfPartitions,
-			int outputCommitSize, String[] columnNames, String[] columnsTypes);
+			int outputCommitSize, String storageEngine, String complexTypeSupport,
+			String[] columnNames, String[] columnsTypes);
 
 	/**
 	 * Returns the table name.
@@ -97,9 +100,20 @@ public interface Schema {
 	 * Returns the type mapping for the column data
 	 * types. This map contains a mapping between
 	 * data types of different database dialects.
-	 * @return
+	 *
+	 * @return A map containing the type mappings
 	 */
 	public Map<String, String> getColumnTypeMapping();
+
+	/**
+	 * Returns the type to be used for a complex data
+	 * type, e.g. array, map, etc...
+	 * Please note this is only relevant for postgresql
+	 * as it supports json natively.
+	 *
+	 * @return A string to be used storing complex types.
+	 */
+	public String getColumnTypeMappingComplexType();
 
 	/**
 	 * Returns the type mapping for the prepared

@@ -1,3 +1,18 @@
+/**
+ * Copyright 2016 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.export;
 
 import org.apache.commons.logging.Log;
@@ -26,7 +41,6 @@ public class JdbcExportJob extends Configured implements Tool {
 	private boolean isSecured;
 	private String metastoreuris;
 	private String principal;
-	private String dbDriver;
 	private String dbConnectionString;
 	private String dbUser;
 	private String dbPassword;
@@ -34,6 +48,8 @@ public class JdbcExportJob extends Configured implements Tool {
 	private String inputTable;
 	private String outputTable;
 	private String inputFilter;
+	private String storageEngine;
+	private String complexTypeSupport;
 	private int outputNumberOfPartitions;
 	private int outputCommitSize;
 	private String jobName;
@@ -90,7 +106,7 @@ public class JdbcExportJob extends Configured implements Tool {
 		JdbcOutputFormat.setOutput(job.getConfiguration(),
 				dbConnectionString, dbUser, dbPassword, outputTable,
 				inputFilter, outputNumberOfPartitions, outputCommitSize,
-				columnNames, columnTypes);
+				storageEngine, complexTypeSupport, columnNames, columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(JdbcOutputFormat.class);
@@ -128,7 +144,7 @@ public class JdbcExportJob extends Configured implements Tool {
 
 			metastoreuris = args[1];
 			principal = args[2];
-			dbDriver = args[3];
+			storageEngine = args[3];
 			dbConnectionString = args[4];
 			dbUser = args[5];
 			dbPassword = args[6];
@@ -144,7 +160,7 @@ public class JdbcExportJob extends Configured implements Tool {
 
 			metastoreuris = args[1];
 			principal = args[2];
-			dbDriver = args[3];
+			storageEngine = args[3];
 			dbConnectionString = args[4];
 			dbUser = args[5];
 			dbPassword = args[6];
@@ -158,7 +174,7 @@ public class JdbcExportJob extends Configured implements Tool {
 		} else if (!isSecured && args.length == 12) {
 
 			metastoreuris = args[1];
-			dbDriver = args[2];
+			storageEngine = args[2];
 			dbConnectionString = args[3];
 			dbUser = args[4];
 			dbPassword = args[5];
@@ -173,7 +189,7 @@ public class JdbcExportJob extends Configured implements Tool {
 		} else if (!isSecured && args.length == 11) {
 
 			metastoreuris = args[1];
-			dbDriver = args[2];
+			storageEngine = args[2];
 			dbConnectionString = args[3];
 			dbUser = args[4];
 			dbPassword = args[5];
