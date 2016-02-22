@@ -21,7 +21,10 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+
 
 /**
  * This class provides a couple of functions
@@ -31,6 +34,8 @@ import org.apache.hadoop.conf.Configuration;
  *
  */
 abstract public class AbstractSchema implements Schema {
+
+	private static final Log LOG = LogFactory.getLog(AbstractSchema.class);
 
 	protected Configuration conf;
 
@@ -120,8 +125,8 @@ abstract public class AbstractSchema implements Schema {
 
 	@Override
 	public void setOutput(String connectionString, String username, String password, String outputTable,
-			String inputFilter, int outputNumberOfPartitions, int outputCommitSize, String[] columnNames,
-			String[] columnTypes) {
+			String inputFilter, int outputNumberOfPartitions, int outputCommitSize, String storageEngine,
+			String[] columnNames, String[] columnTypes) {
 
 		conf.set(Schema.JDBC_CONNECTION_STRING, connectionString);
 		if (username != null) {
@@ -137,6 +142,17 @@ abstract public class AbstractSchema implements Schema {
 		}
 
 		conf.set(Schema.JDBC_OUTPUT_TABLE, outputTable);
+
+		if (storageEngine != null) {
+
+			if (storageEngine.equals("MyISAM") || storageEngine.equals("InnoDB")) {
+				conf.set(Schema.JDBC_MYSQL_STORAGE_ENGINE, storageEngine);
+			} else {
+				LOG.warn("invalid storage engine: " + storageEngine + " - default to InnoDB");
+				conf.set(Schema.JDBC_MYSQL_STORAGE_ENGINE, MySQLSchema.JDBC_MYSQL_DEFAULT_STORAGE_ENGINE);
+			}
+		}
+
 		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES, columnNames);
 		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, columnTypes);
 		conf.setInt(Schema.JDBC_NUMBER_OF_PARTITIONS, outputNumberOfPartitions);

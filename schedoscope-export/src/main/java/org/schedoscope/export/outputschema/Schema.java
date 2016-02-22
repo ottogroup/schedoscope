@@ -42,6 +42,7 @@ public interface Schema {
 	public static final String JDBC_COMMIT_SIZE = "jdbc.commit.size";
 	public static final String JDBC_OUTPUT_COLUMN_NAMES = "jdbc.output.column.names";
 	public static final String JDBC_OUTPUT_COLUMN_TYPES = "jdbc.output.column.types";
+	public static final String JDBC_MYSQL_STORAGE_ENGINE = "jdbc.mysql.storage.engine";
 
 	/**
 	 * Initializes a {@link Schema} with the given
@@ -60,7 +61,7 @@ public interface Schema {
 	public void setOutput(String connectionString,
 			String username, String password, String outputTable,
 			String inputFilter, int outputNumberOfPartitions,
-			int outputCommitSize, String[] columnNames, String[] columnsTypes);
+			int outputCommitSize, String storageEngine, String[] columnNames, String[] columnsTypes);
 
 	/**
 	 * Returns the table name.
