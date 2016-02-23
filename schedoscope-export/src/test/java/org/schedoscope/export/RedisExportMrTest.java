@@ -44,18 +44,21 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
 	public void testNothing() throws Exception {
 
+		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, "visitor_id");
+		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, "uri_path_hashed_count");
+
 		Job job = Job.getInstance(conf);
 
 		Class klass = Class.forName(RedisHashWritable.class.getName());
 
-		job.setMapperClass(JdbcExportMapper.class);
+		job.setMapperClass(RedisExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);
-		job.setNumReduceTasks(2);
+		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(NullWritable.class);
+		job.setMapOutputValueClass(klass);
 		job.setOutputKeyClass(klass);
 		job.setOutputValueClass(NullWritable.class);
 

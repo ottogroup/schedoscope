@@ -66,7 +66,7 @@ public class RedisHashWritable implements RedisWritable, Writable {
 
 		MapWritable mr = new MapWritable();
 		for (Entry<String, String> e : svalue.entrySet()) {
-			mr.put(new Text(e.getValue()), new Text(e.getKey()));
+			mr.put(new Text(e.getKey()), new Text(String.valueOf(e.getValue())));
 		}
 		return mr;
 	}
