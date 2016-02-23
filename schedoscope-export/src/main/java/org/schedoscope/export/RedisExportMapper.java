@@ -5,15 +5,15 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
-import org.schedoscope.export.outputformat.RedisWritable;
 
-public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord, RedisWritable, NullWritable> {
+public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, NullWritable> {
 
 	private static final String REDIS_EXPORT_KEY_NAME = "redis.export.key.name";
 

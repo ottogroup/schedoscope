@@ -45,6 +45,9 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 	public void testNothing() throws Exception {
 
 		Job job = Job.getInstance(conf);
+
+		Class klass = Class.forName(RedisHashWritable.class.getName());
+
 		job.setMapperClass(JdbcExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);
 		job.setNumReduceTasks(2);
@@ -53,7 +56,7 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(NullWritable.class);
-		job.setOutputKeyClass(RedisHashWritable.class);
+		job.setOutputKeyClass(klass);
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
