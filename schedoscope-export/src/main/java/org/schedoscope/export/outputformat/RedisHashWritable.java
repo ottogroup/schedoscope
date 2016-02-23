@@ -28,7 +28,7 @@ public class RedisHashWritable implements RedisWritable, Writable {
 
 	public RedisHashWritable(String skey, Map<String, String> svalue) {
 
-		this.key = new Text(skey);
+		this.key = new Text(String.valueOf(skey));
 		this.value = toMapWritable(svalue);
 	}
 

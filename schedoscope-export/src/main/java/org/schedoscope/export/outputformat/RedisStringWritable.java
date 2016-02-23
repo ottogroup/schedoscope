@@ -16,9 +16,19 @@ public class RedisStringWritable implements RedisWritable, Writable {
 
 	private Text value;
 
+	public RedisStringWritable() {
+		key = new Text();
+		value = new Text();
+	}
+
 	public RedisStringWritable(String key, String value) {
-		this.key = new Text(key);
-		this.value = new Text(value);
+		this.key = new Text(String.valueOf(key));
+		this.value = new Text(String.valueOf(value));
+	}
+
+	public RedisStringWritable(Text key, Text value) {
+		this.key = key;
+		this.value = value;
 	}
 
 	@Override

@@ -8,9 +8,9 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.schedoscope.export.outputformat.RedisWritable;
 
 public class RedisExportReducer extends Reducer<Text, RedisWritable, RedisWritable, NullWritable> {
+
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
-
 		super.setup(context);
 	}
 

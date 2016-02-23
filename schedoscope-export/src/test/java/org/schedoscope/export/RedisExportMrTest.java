@@ -12,8 +12,8 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
-import org.schedoscope.export.outputformat.RedisHashWritable;
 import org.schedoscope.export.outputformat.RedisOutputFormat;
+import org.schedoscope.export.utils.RedisMRUtils;
 
 import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
 import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
@@ -42,14 +42,17 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 
 	@Test
 	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
-	public void testNothing() throws Exception {
+	public void testRedisStringExport() throws Exception {
 
-		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, "visitor_id");
-		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, "uri_path_hashed_count");
+		final String KEY = "visitor_id";
+		final String VALUE = "created_at";
+
+		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
 
 		Job job = Job.getInstance(conf);
 
-		Class klass = Class.forName(RedisHashWritable.class.getName());
+		Class<?> klass  = RedisMRUtils.getRedisWritableKlass(hcatInputSchema, VALUE);
 
 		job.setMapperClass(RedisExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);
@@ -60,6 +63,34 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(klass);
 		job.setOutputKeyClass(klass);
+		job.setOutputValueClass(NullWritable.class);
+
+		assertTrue(job.waitForCompletion(true));
+	}
+
+	@Test
+	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
+	public void testRedisMapExport() throws Exception {
+
+		final String KEY = "visitor_id";
+		final String VALUE = "uri_path_hashed_count";
+
+		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
+
+		Job job = Job.getInstance(conf);
+
+		Class<?> OutputKlass  = RedisMRUtils.getRedisWritableKlass(hcatInputSchema, VALUE);
+
+		job.setMapperClass(RedisExportMapper.class);
+		job.setReducerClass(RedisExportReducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(RedisOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(OutputKlass);
+		job.setOutputKeyClass(OutputKlass);
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));

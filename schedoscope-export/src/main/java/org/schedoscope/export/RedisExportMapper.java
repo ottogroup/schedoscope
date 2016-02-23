@@ -2,19 +2,16 @@ package org.schedoscope.export;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hive.hcatalog.data.HCatRecord;
-import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
-import org.schedoscope.export.outputformat.RedisHashWritable;
-import org.schedoscope.export.outputformat.RedisStringWritable;
 import org.schedoscope.export.outputformat.RedisWritable;
+import org.schedoscope.export.utils.RedisMRUtils;
 
 public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisWritable> {
 
@@ -28,6 +25,8 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 	private Class<?> RWKlass;
 
+	private Class<?> RVKlass;
+
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
 
@@ -35,40 +34,25 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		conf = context.getConfiguration();
 		schema = HCatInputFormat.getTableSchema(conf);
 
-		HCatFieldSchema keyType = schema.get(conf.get(REDIS_EXPORT_KEY_NAME));
-		HCatFieldSchema.Category category = keyType.getCategory();
+		RedisMRUtils.checkKeyType(schema, conf.get(REDIS_EXPORT_KEY_NAME));
+		RedisMRUtils.checkValueType(schema, conf.get(REDIS_EXPORT_VALUE_NAME));
 
-		if (category != HCatFieldSchema.Category.PRIMITIVE) {
-			throw new IllegalArgumentException("key must be primitive type");
-		}
+		RWKlass = RedisMRUtils.getRedisWritableKlass(schema, conf.get(REDIS_EXPORT_VALUE_NAME));
+		RVKlass = RedisMRUtils.getRedisValueKlass(schema, conf.get(REDIS_EXPORT_VALUE_NAME));
 
-		HCatFieldSchema valueType = schema.get(conf.get(REDIS_EXPORT_VALUE_NAME));
-		HCatFieldSchema.Category valueCat = valueType.getCategory();
-
-		if ((valueCat != HCatFieldSchema.Category.PRIMITIVE) && (valueCat != HCatFieldSchema.Category.MAP) && (valueCat != HCatFieldSchema.Category.ARRAY)) {
-			throw new IllegalArgumentException("value must be one of primitive, list or map type");
-		}
-
-		switch (valueCat) {
-		case PRIMITIVE: RWKlass = RedisStringWritable.class;
-		break;
-		case MAP: RWKlass = RedisHashWritable.class;
-		}
 	}
 
 	@Override
 	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException  {
 
 		Text redisKey = new Text(value.getString(conf.get(REDIS_EXPORT_KEY_NAME), schema));
-		Map<?,?> valueMap = value.getMap(conf.get(REDIS_EXPORT_VALUE_NAME), schema);
 
 		RedisWritable redisValue = null;
 		try {
-			Constructor<?> ctor = RWKlass.getConstructor(String.class, Map.class);
-			redisValue = (RedisWritable) ctor.newInstance(redisKey.toString(), valueMap);
+			Constructor<?> ctor = RWKlass.getConstructor(String.class, RVKlass);
+			redisValue = (RedisWritable) ctor.newInstance(redisKey.toString(), RVKlass.cast(value.get(conf.get(REDIS_EXPORT_VALUE_NAME), schema)));
 
 		} catch (Exception e) {
-
 		}
 		context.write(redisKey, redisValue);
 	}
