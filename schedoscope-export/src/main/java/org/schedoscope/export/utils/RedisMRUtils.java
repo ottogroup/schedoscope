@@ -1,12 +1,16 @@
 package org.schedoscope.export.utils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.schedoscope.export.outputformat.RedisHashWritable;
+import org.schedoscope.export.outputformat.RedisListWritable;
 import org.schedoscope.export.outputformat.RedisStringWritable;
+
+
 
 public class RedisMRUtils {
 
@@ -46,6 +50,7 @@ public class RedisMRUtils {
 			RVKlass = Map.class;
 			break;
 		case ARRAY:
+			RVKlass = List.class;
 			break;
 		case STRUCT:
 			break;
@@ -68,6 +73,7 @@ public class RedisMRUtils {
 			RWKlass = RedisHashWritable.class;
 			break;
 		case ARRAY:
+			RWKlass = RedisListWritable.class;
 			break;
 		case STRUCT:
 			break;

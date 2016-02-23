@@ -61,9 +61,11 @@ public class RedisListWritable implements RedisWritable, Writable {
 
 	ArrayWritable toArrayWritable(List<String> value) {
 
-		String[] v = new String[value.size()];
-		value.toArray(v);
-		ArrayWritable aw = new ArrayWritable(v);
+		Text[] ar = new Text[value.size()];
+		for (int i = 0; i < value.size(); i++) {
+			ar[i] = new Text(value.get(i));
+		}
+		ArrayWritable aw = new ArrayWritable(Text.class, ar);
 		return aw;
 	}
 

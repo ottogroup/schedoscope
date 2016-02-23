@@ -35,14 +35,15 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		setUpHiveServer("src/test/resources/ogm_event_features_data.txt",
-				"src/test/resources/ogm_event_features.hql",
-				"ogm_event_features");
 	}
 
 	@Test
 	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
 	public void testRedisStringExport() throws Exception {
+
+		setUpHiveServer("src/test/resources/ogm_event_features_data.txt",
+				"src/test/resources/ogm_event_features.hql",
+				"ogm_event_features");
 
 		final String KEY = "visitor_id";
 		final String VALUE = "created_at";
@@ -72,8 +73,44 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
 	public void testRedisMapExport() throws Exception {
 
+		setUpHiveServer("src/test/resources/ogm_event_features_data.txt",
+				"src/test/resources/ogm_event_features.hql",
+				"ogm_event_features");
+
 		final String KEY = "visitor_id";
 		final String VALUE = "uri_path_hashed_count";
+
+		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
+
+		Job job = Job.getInstance(conf);
+
+		Class<?> OutputKlass  = RedisMRUtils.getRedisWritableKlass(hcatInputSchema, VALUE);
+
+		job.setMapperClass(RedisExportMapper.class);
+		job.setReducerClass(RedisExportReducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(RedisOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(OutputKlass);
+		job.setOutputKeyClass(OutputKlass);
+		job.setOutputValueClass(NullWritable.class);
+
+		assertTrue(job.waitForCompletion(true));
+	}
+
+	@Test
+	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
+	public void testRedisListExport() throws Exception {
+
+		setUpHiveServer("src/test/resources/webtrends_event_data.txt",
+				"src/test/resources/webtrends_event.hql",
+				"webtrends_event");
+
+		final String KEY = "id";
+		final String VALUE = "type";
 
 		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
