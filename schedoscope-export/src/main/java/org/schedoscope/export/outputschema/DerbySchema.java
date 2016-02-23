@@ -33,7 +33,7 @@ public class DerbySchema extends AbstractSchema implements Schema {
 	private static final Map<String, String> columnTypeMapping = Collections.unmodifiableMap(
 			new HashMap<String, String>() {
 				{
-					put("string", "varchar(100)");
+					put("string", "varchar(32000)");
 					put("boolean", "boolean");
 					put("int", "int");
 					put("long", "bigint");
@@ -48,7 +48,7 @@ public class DerbySchema extends AbstractSchema implements Schema {
 	private static final Map<String, String> preparedStatementTypeMapping = Collections.unmodifiableMap(
 			new HashMap<String, String>() {
 				{
-					put("varchar(100)", "string");
+					put("varchar(32000)", "string");
 					put("boolean", "boolean");
 					put("int", "int");
 					put("bigint", "long");

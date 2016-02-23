@@ -45,7 +45,7 @@ public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
 
 	@SuppressWarnings("deprecation")
 	@Before
-	public void setUp() throws IOException {
+	public void setUp() throws Exception {
 		super.setUp();
 		JdbcExportMapper mapper = new JdbcExportMapper();
 		mapDriver = MapDriver.newMapDriver(mapper);
