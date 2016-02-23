@@ -2,6 +2,7 @@ package org.schedoscope.scheduler.states
 
 import java.util.Date
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
+import org.schedoscope.dsl.View
 
 /**
  * This class implements a ViewSchedulingStateMachine for views with NoOp transformations.
@@ -141,4 +142,6 @@ class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
       Invalidated(currentState.view),
       Set(
         ReportInvalidated(currentState.view, Set(issuer))))
+
+  def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
 }

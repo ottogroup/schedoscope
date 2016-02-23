@@ -43,6 +43,7 @@ case class Waiting(
   materializationMode: MaterializeViewMode = DEFAULT,
   oneDependencyReturnedData: Boolean = false,
   incomplete: Boolean = false,
+  withErrors: Boolean = false,
   dependenciesFreshness: Long = 0l) extends ViewSchedulingState(view)
 
 /**
@@ -53,6 +54,8 @@ case class Transforming(
   lastTransformationChecksum: String,
   listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
   materializationMode: MaterializeViewMode = DEFAULT,
+  withErrors: Boolean,
+  incomplete: Boolean,
   retry: Int = 0) extends ViewSchedulingState(view)
 
 /**

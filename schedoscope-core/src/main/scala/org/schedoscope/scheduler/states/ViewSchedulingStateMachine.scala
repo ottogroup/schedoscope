@@ -32,6 +32,13 @@ trait ViewSchedulingStateMachine {
    * Given the view's current view scheduling state apply an invalidate command. This issuer of the command is passed along as an interested listener in the outcome.
    */
   def invalidate(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange): ResultingViewSchedulingState
+
+  /**
+   * Apply a NoData report of a dependency to the current scheduling state of a waiting view. 
+   * 
+   * The outcome may be influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
+   */
+  def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 }
 
 object ViewSchedulingStateMachine {
