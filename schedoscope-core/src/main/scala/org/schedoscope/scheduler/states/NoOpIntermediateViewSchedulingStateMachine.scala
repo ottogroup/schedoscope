@@ -123,7 +123,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       Set(
         ReportInvalidated(currentState.view, Set(issuer))))
 
-  private def leaveWaitingState(currentState: Waiting, setIncomplete: Boolean, successFlagExists: => Boolean, currentTime: Long) = currentState match {
+  private def leaveWaitingState(currentState: Waiting, setIncomplete: Boolean, setError: Boolean, successFlagExists: => Boolean, currentTime: Long) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -144,7 +144,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
               view.transformation().checksum,
               currentTime,
               incomplete | setIncomplete,
-              withErrors),
+              withErrors | setError),
             {
               if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS || lastTransformationChecksum != view.transformation().checksum)
                 Set(WriteTransformationCheckum(view))
@@ -158,7 +158,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
                   listenersWaitingForMaterialize,
                   currentTime,
                   incomplete | setIncomplete,
-                  withErrors)))
+                  withErrors | setError)))
         } else
           ResultingViewSchedulingState(
             Materialized(
@@ -166,14 +166,14 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
               lastTransformationChecksum,
               lastTransformationTimestamp,
               incomplete | setIncomplete,
-              withErrors),
+              withErrors | setError),
             Set(
               ReportMaterialized(
                 view,
                 listenersWaitingForMaterialize,
                 lastTransformationTimestamp,
                 incomplete | setIncomplete,
-                withErrors))
+                withErrors | setError))
               ++ {
                 if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
                   Set(WriteTransformationCheckum(view))
@@ -201,7 +201,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       withErrors,
       dependenciesFreshness) => {
       if (dependenciesMaterializing == Set(reportingDependency))
-        leaveWaitingState(currentState, true, successFlagExists, currentTime)
+        leaveWaitingState(currentState, true, false, successFlagExists, currentTime)
       else
         ResultingViewSchedulingState(
           Waiting(
@@ -214,6 +214,36 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
             oneDependencyReturnedData,
             true,
             withErrors,
+            dependenciesFreshness), Set())
+    }
+  }
+  
+  def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
+    case Waiting(
+      view,
+      lastTransformationChecksum,
+      lastTransformationTimestamp,
+      dependenciesMaterializing,
+      listenersWaitingForMaterialize,
+      materializationMode,
+      oneDependencyReturnedData,
+      incomplete,
+      withErrors,
+      dependenciesFreshness) => {
+      if (dependenciesMaterializing == Set(reportingDependency))
+        leaveWaitingState(currentState, true, true, successFlagExists, currentTime)
+      else
+        ResultingViewSchedulingState(
+          Waiting(
+            view,
+            lastTransformationChecksum,
+            lastTransformationTimestamp,
+            dependenciesMaterializing - reportingDependency,
+            listenersWaitingForMaterialize,
+            materializationMode,
+            oneDependencyReturnedData,
+            true,
+            true,
             dependenciesFreshness), Set())
     }
   }

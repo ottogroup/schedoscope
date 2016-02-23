@@ -144,4 +144,6 @@ class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
         ReportInvalidated(currentState.view, Set(issuer))))
 
   def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
+
+  def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
 }
