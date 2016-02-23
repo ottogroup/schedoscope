@@ -44,7 +44,7 @@ public abstract class HiveUnitBaseTest {
 	private static final String DATA_FILE_PATH = "DATA_FILE_PATH";
 
 	private HiveTestSuite testSuite;
-	private HCatSchema hcatInputSchema;
+
 
 	// use those two instances to set up
 	// the unit test, the conf is needed
@@ -54,10 +54,11 @@ public abstract class HiveUnitBaseTest {
 	// input data, please see example.
 	protected HCatReader hcatRecordReader;
 	protected Configuration conf;
+	protected HCatSchema hcatInputSchema;
 
 
 	@Before
-	public void setUp()  throws Exception {
+	public void setUp() throws Exception {
 		testSuite = new HiveTestSuite();
 		testSuite.createTestCluster();
 		conf = testSuite.getFS().getConf();

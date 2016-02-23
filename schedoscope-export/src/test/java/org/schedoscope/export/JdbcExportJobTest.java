@@ -53,7 +53,7 @@ public class JdbcExportJobTest {
 	private static final int COMMITSIZE = 10;
 	private static final String[] COLUMNNAMES = new String[] { "id", "val" };
 	private static final String[] COLUMNTYPES = new String[] { "int",
-			"varchar(100)" };
+			"varchar(32000)" };
 
 	private Configuration conf = new Configuration();
 
