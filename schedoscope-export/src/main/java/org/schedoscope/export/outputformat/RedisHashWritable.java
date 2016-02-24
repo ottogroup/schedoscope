@@ -39,6 +39,11 @@ public class RedisHashWritable implements RedisWritable, Writable {
 	}
 
 	@Override
+	public void write(Jedis jedis) {
+		jedis.hmset(key.toString(), fromMapWritable(value));
+	}
+
+	@Override
 	public void write(Pipeline jedis) {
 		jedis.hmset(key.toString(), fromMapWritable(value));
 	}

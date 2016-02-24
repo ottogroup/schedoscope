@@ -35,6 +35,13 @@ public class RedisListWritable implements RedisWritable, Writable {
 	}
 
 	@Override
+	public void write(Jedis jedis) {
+		for (String v : fromArrayWritable(value)) {
+			jedis.lpush(key.toString(), v);
+		}
+	}
+
+	@Override
 	public void write(Pipeline jedis) {
 		for (String v : fromArrayWritable(value)) {
 			jedis.lpush(key.toString(), v);

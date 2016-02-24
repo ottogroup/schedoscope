@@ -19,7 +19,9 @@ import redis.clients.jedis.Pipeline;
 
 public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<K, V> {
 
-	private static final String REDIS_CONNECT_STRING = "redis.export.server.host";
+	public static final String REDIS_CONNECT_STRING = "redis.export.server.host";
+	public static final String REDIS_PIPELINE_MODE = "redis.export.pipeline.mode";
+
 	private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
 
 	Jedis jedis;
@@ -43,15 +45,40 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 		Configuration conf = context.getConfiguration();
 
-		Pipeline jedis = new Jedis(conf.get(REDIS_CONNECT_STRING, "localhost")).pipelined();
-		return new RedisRecordWriter(jedis);
+		Jedis jedis = new Jedis(conf.get(REDIS_CONNECT_STRING, "localhost"));
+
+		if (conf.getBoolean(REDIS_PIPELINE_MODE, false)) {
+			Pipeline pipelinedJedis = jedis.pipelined();
+			return new PipelinedRedisRecordWriter(pipelinedJedis);
+		} else {
+			return new RedisRecordWriter(jedis);
+		}
 	}
 
 	public class RedisRecordWriter extends RecordWriter<K, V> {
 
+		private Jedis jedis;
+
+		public RedisRecordWriter(Jedis jedis) {
+			this.jedis = jedis;
+		}
+
+		@Override
+		public void write(K key, V value) {
+			key.write(jedis);
+		}
+
+		@Override
+		public void close(TaskAttemptContext context) throws IOException {
+			jedis.close();
+		}
+	}
+
+	public class PipelinedRedisRecordWriter extends RecordWriter<K, V> {
+
 		private Pipeline jedis;
 
-		public RedisRecordWriter(Pipeline jedis) {
+		public PipelinedRedisRecordWriter(Pipeline jedis) {
 			this.jedis = jedis;
 		}
 
