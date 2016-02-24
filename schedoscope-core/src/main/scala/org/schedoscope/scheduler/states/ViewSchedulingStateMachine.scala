@@ -46,6 +46,13 @@ trait ViewSchedulingStateMachine {
    * The outcome may be influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
    */
   def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  
+  /**
+   * Apply a Materialized report of a dependency to the current scheduling state of a waiting view. 
+   * 
+   * The outcome may be influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
+   */
+  def materialized(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 }
 
 object ViewSchedulingStateMachine {

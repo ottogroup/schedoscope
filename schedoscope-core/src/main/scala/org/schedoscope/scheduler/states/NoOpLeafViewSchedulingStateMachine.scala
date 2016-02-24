@@ -146,4 +146,7 @@ class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
   def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
 
   def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
+
+  def materialized(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
+
 }
