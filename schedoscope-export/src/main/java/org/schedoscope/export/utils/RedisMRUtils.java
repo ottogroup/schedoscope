@@ -47,9 +47,18 @@ public class RedisMRUtils {
 		if ((valueCat != HCatFieldSchema.Category.PRIMITIVE) && (valueCat != HCatFieldSchema.Category.MAP) && (valueCat != HCatFieldSchema.Category.ARRAY)) {
 			throw new IllegalArgumentException("value must be one of primitive, list or map type");
 		}
-		/**
-		 * @TODO check if subtypes are primitive
-		 */
+
+		if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
+			if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+				throw new IllegalArgumentException("map value type must be a primitive type");
+			}
+		}
+
+		if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
+			if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+				throw new IllegalArgumentException("array element type must be a primitive type");
+			}
+		}
 	}
 
 	public static Class<?> getRedisValueKlass(HCatSchema schema, String fieldName) throws IOException {
