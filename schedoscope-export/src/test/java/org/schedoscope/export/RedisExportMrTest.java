@@ -63,6 +63,7 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "visitor_id";
 		final String VALUE = "created_at";
 
+		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_PREFIX, "string_export");
 		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
 		conf.setBoolean(RedisOutputFormat.REDIS_PIPELINE_MODE, true);
@@ -96,6 +97,7 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "visitor_id";
 		final String VALUE = "uri_path_hashed_count";
 
+		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_PREFIX, "map_export");
 		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
 
@@ -128,6 +130,7 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "id";
 		final String VALUE = "type";
 
+		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_PREFIX, "list_export");
 		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
 

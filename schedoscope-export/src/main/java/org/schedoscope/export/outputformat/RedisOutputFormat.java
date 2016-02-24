@@ -39,8 +39,6 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 	private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
 
-	Jedis jedis;
-
 	@Override
 	public void checkOutputSpecs(JobContext context) throws IOException {
 

@@ -34,6 +34,8 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 	public static final String REDIS_EXPORT_VALUE_NAME = "redis.export.value.name";
 
+	public static final String REDIS_EXPORT_KEY_PREFIX = "redis.export.key.prefix";
+
 	private Configuration conf;
 
 	private HCatSchema schema;
@@ -41,6 +43,8 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 	private Class<?> RWKlass;
 
 	private Class<?> RVKlass;
+
+	private String keyPrefix;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -55,13 +59,19 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		RWKlass = RedisMRUtils.getRedisWritableKlass(schema, conf.get(REDIS_EXPORT_VALUE_NAME));
 		RVKlass = RedisMRUtils.getRedisValueKlass(schema, conf.get(REDIS_EXPORT_VALUE_NAME));
 
+
+		String prefix = conf.get(REDIS_EXPORT_KEY_PREFIX, "");
+		StringBuilder builderKey = new StringBuilder();
+		if (!prefix.isEmpty()) {
+			builderKey.append(prefix).append("_");
+		}
+		keyPrefix = builderKey.toString();
 	}
 
 	@Override
 	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException  {
 
-		Text redisKey = new Text(value.getString(conf.get(REDIS_EXPORT_KEY_NAME), schema));
-
+		Text redisKey = new Text(keyPrefix + value.getString(conf.get(REDIS_EXPORT_KEY_NAME), schema));
 		RedisWritable redisValue = null;
 		try {
 			Constructor<?> ctor = RWKlass.getConstructor(String.class, RVKlass);
