@@ -5,6 +5,8 @@ import org.schedoscope.dsl.View
 import java.util.Date
 import scala.language.implicitConversions
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
+import org.schedoscope.Settings
+import org.schedoscope.Schedoscope
 
 /**
  * The result of applying a view scheduling state machine function. Contains the current state (which may be unchanged)
@@ -34,32 +36,44 @@ trait ViewSchedulingStateMachine {
   def invalidate(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange): ResultingViewSchedulingState
 
   /**
-   * Apply a NoData report of a dependency to the current scheduling state of a waiting view. 
-   * 
+   * Apply a NoData report of a dependency to the current scheduling state of a waiting view.
+   *
    * The outcome may be influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
    */
   def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 
   /**
-   * Apply a Failed report of a dependency to the current scheduling state of a waiting view. 
-   * 
+   * Apply a Failed report of a dependency to the current scheduling state of a waiting view.
+   *
    * The outcome may be influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
    */
   def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
-  
+
   /**
-   * Apply a Materialized report of a dependency to the current scheduling state of a waiting view. 
-   * 
+   * Apply a Materialized report of a dependency to the current scheduling state of a waiting view.
+   *
    * The outcome may be influenced by whether a _SUCCESS flag exists in the view's fullPath and the current time.
    */
-  def materialized(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+
+  /**
+   * Transition a view in Transforming state given a succcessful transformation.
+   */
+  def transformationSucceeded(currentState: Transforming, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+
+  /**
+   * Transition a view in Transforming state given a failed transformation.
+   */
+  def transformationFailed(currentState: Transforming, maxRetries: Int = Schedoscope.settings.retries, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 }
 
 object ViewSchedulingStateMachine {
-
+  
   val noOpLeafViewSchedulingStateMachine = new NoOpLeafViewSchedulingStateMachine
 
   val noOpIntermediateViewSchedulingStateMachine = new NoOpIntermediateViewSchedulingStateMachine
+
+  val intermediateViewSchedulingStateMachine = new IntermediateViewSchedulingStateMachine
 
   /**
    * Implicit factory of the view scheduling state machine appropriate for a view's transformation type.
@@ -71,5 +85,7 @@ object ViewSchedulingStateMachine {
       else
         noOpIntermediateViewSchedulingStateMachine
     }
+
+    case _ => intermediateViewSchedulingStateMachine
   }
 }

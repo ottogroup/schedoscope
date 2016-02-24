@@ -26,7 +26,7 @@ case class WriteTransformationCheckum(view: View) extends ViewSchedulingAction(v
 case class TouchSuccessFlag(view: View) extends ViewSchedulingAction(view)
 
 /**
- * A view should materialize.  
+ * A view should materialize.
  */
 case class Materialize(view: View, requester: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode) extends ViewSchedulingAction(view)
 
@@ -48,6 +48,13 @@ case class ReportFailed(
  * All parties interested in the view scheduling state should be notified that the view has been invalidated.
  */
 case class ReportInvalidated(
+  view: View,
+  listeners: Set[PartyInterestedInViewSchedulingStateChange]) extends ViewSchedulingAction(view)
+
+/**
+ * All parties interested in the view scheduling state should be notified that the view has not been invalidated.
+ */
+case class ReportNotInvalidated(
   view: View,
   listeners: Set[PartyInterestedInViewSchedulingStateChange]) extends ViewSchedulingAction(view)
 

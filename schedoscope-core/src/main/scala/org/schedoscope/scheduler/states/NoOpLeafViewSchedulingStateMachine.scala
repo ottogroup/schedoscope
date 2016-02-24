@@ -3,6 +3,7 @@ package org.schedoscope.scheduler.states
 import java.util.Date
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.dsl.View
+import org.schedoscope.Schedoscope
 
 /**
  * This class implements a ViewSchedulingStateMachine for views with NoOp transformations.
@@ -147,6 +148,10 @@ class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
 
   def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
 
-  def materialized(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
+  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
+
+  def transformationSucceeded(currentState: Transforming, currentTime: Long = new Date().getTime) = ???
+ 
+  def transformationFailed(currentState: Transforming, maxRetries: Int = Schedoscope.settings.retries, currentTime: Long = new Date().getTime) = ???
 
 }

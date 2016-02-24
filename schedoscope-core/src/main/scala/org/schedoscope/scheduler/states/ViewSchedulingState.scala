@@ -81,4 +81,6 @@ case class Retrying(
   lastTransformationChecksum: String,
   materializationMode: MaterializeViewMode = DEFAULT,
   listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
+  withErrors: Boolean,
+  incomplete: Boolean,
   nextRetry: Int) extends ViewSchedulingState(view)
