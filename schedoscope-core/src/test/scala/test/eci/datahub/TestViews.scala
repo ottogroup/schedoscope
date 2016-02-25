@@ -220,6 +220,5 @@ case class HDFSInputView() extends View with Id {
   val field1 = fieldOf[String]
   tablePathBuilder = s => "/tmp/test"
   storedAs(Parquet())
-
 }
 

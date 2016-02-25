@@ -83,8 +83,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       listenersWaitingForMaterialize,
       materializationMode,
       oneDependencyReturnedData,
-      incomplete,
       withErrors,
+      incomplete,
       dependenciesFreshness) => {
       ResultingViewSchedulingState(
         Waiting(
@@ -95,8 +95,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           listenersWaitingForMaterialize + listener,
           materializationMode,
           oneDependencyReturnedData,
-          incomplete,
           withErrors,
+          incomplete,
           dependenciesFreshness), Set())
     }
 
@@ -138,8 +138,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       listenersWaitingForMaterialize,
       materializationMode,
       oneDependencyReturnedData,
-      incomplete,
       withErrors,
+      incomplete,
       dependenciesFreshness) => {
 
       if (oneDependencyReturnedData && successFlagExists) {
@@ -149,8 +149,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
               view,
               view.transformation().checksum,
               currentTime,
-              incomplete | setIncomplete,
-              withErrors | setError),
+              withErrors | setError,
+              incomplete | setIncomplete),
             {
               if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS || lastTransformationChecksum != view.transformation().checksum)
                 Set(WriteTransformationCheckum(view))
@@ -163,23 +163,23 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
                   view,
                   listenersWaitingForMaterialize,
                   currentTime,
-                  incomplete | setIncomplete,
-                  withErrors | setError)))
+                  withErrors | setError,
+                  incomplete | setIncomplete)))
         } else
           ResultingViewSchedulingState(
             Materialized(
               view,
               lastTransformationChecksum,
               lastTransformationTimestamp,
-              incomplete | setIncomplete,
-              withErrors | setError),
+              withErrors | setError,
+              incomplete | setIncomplete),
             Set(
               ReportMaterialized(
                 view,
                 listenersWaitingForMaterialize,
                 lastTransformationTimestamp,
-                incomplete | setIncomplete,
-                withErrors | setError))
+                withErrors | setError,
+                incomplete | setIncomplete))
               ++ {
                 if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
                   Set(WriteTransformationCheckum(view))
@@ -203,8 +203,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       listenersWaitingForMaterialize,
       materializationMode,
       oneDependencyReturnedData,
-      incomplete,
       withErrors,
+      incomplete,
       dependenciesFreshness) => {
       if (dependenciesMaterializing == Set(reportingDependency))
         leaveWaitingState(currentState, true, false, successFlagExists, currentTime)
@@ -218,8 +218,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
             listenersWaitingForMaterialize,
             materializationMode,
             oneDependencyReturnedData,
-            true,
             withErrors,
+            true,
             dependenciesFreshness), Set())
     }
   }
@@ -233,8 +233,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       listenersWaitingForMaterialize,
       materializationMode,
       oneDependencyReturnedData,
-      incomplete,
       withErrors,
+      incomplete,
       dependenciesFreshness) => {
       if (dependenciesMaterializing == Set(reportingDependency))
         leaveWaitingState(currentState, true, true, successFlagExists, currentTime)
@@ -263,8 +263,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       listenersWaitingForMaterialize,
       materializationMode,
       oneDependencyReturnedData,
-      incomplete,
       withErrors,
+      incomplete,
       dependenciesFreshness) => {
 
       val updatedWaitingState = Waiting(
@@ -275,8 +275,9 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
         listenersWaitingForMaterialize,
         materializationMode,
         true,
-        incomplete,
         withErrors,
+        incomplete,
+
         Math.max(dependenciesFreshness, transformationTimestamp))
 
       if (dependenciesMaterializing == Set(reportingDependency))

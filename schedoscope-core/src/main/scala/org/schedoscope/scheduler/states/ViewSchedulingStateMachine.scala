@@ -73,7 +73,7 @@ object ViewSchedulingStateMachine {
 
   val noOpIntermediateViewSchedulingStateMachine = new NoOpIntermediateViewSchedulingStateMachine
 
-  val intermediateViewSchedulingStateMachine = new IntermediateViewSchedulingStateMachine
+  val baseViewSchedulingStateMachine = new BaseViewSchedulingStateMachine
 
   /**
    * Implicit factory of the view scheduling state machine appropriate for a view's transformation type.
@@ -86,6 +86,6 @@ object ViewSchedulingStateMachine {
         noOpIntermediateViewSchedulingStateMachine
     }
 
-    case _ => intermediateViewSchedulingStateMachine
+    case _ => baseViewSchedulingStateMachine
   }
 }

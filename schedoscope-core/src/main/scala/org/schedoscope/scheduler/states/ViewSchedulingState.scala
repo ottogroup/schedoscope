@@ -39,11 +39,11 @@ case class Waiting(
   lastTransformationChecksum: String,
   lastTransformationTimestamp: Long,
   dependenciesMaterializing: Set[View],
-  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
-  materializationMode: MaterializeViewMode = DEFAULT,
+  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange],
+  materializationMode: MaterializeViewMode,
   oneDependencyReturnedData: Boolean = false,
-  incomplete: Boolean = false,
   withErrors: Boolean = false,
+  incomplete: Boolean = false,
   dependenciesFreshness: Long = 0l) extends ViewSchedulingState(view)
 
 /**
@@ -52,8 +52,8 @@ case class Waiting(
 case class Transforming(
   override val view: View,
   lastTransformationChecksum: String,
-  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
-  materializationMode: MaterializeViewMode = DEFAULT,
+  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange],
+  materializationMode: MaterializeViewMode ,
   withErrors: Boolean,
   incomplete: Boolean,
   retry: Int = 0) extends ViewSchedulingState(view)
@@ -79,8 +79,8 @@ case class Failed(override val view: View) extends ViewSchedulingState(view)
 case class Retrying(
   override val view: View,
   lastTransformationChecksum: String,
-  materializationMode: MaterializeViewMode = DEFAULT,
-  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange] = Set(),
+  materializationMode: MaterializeViewMode,
+  listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange],
   withErrors: Boolean,
   incomplete: Boolean,
   nextRetry: Int) extends ViewSchedulingState(view)

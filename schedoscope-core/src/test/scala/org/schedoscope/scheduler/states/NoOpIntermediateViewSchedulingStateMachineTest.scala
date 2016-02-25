@@ -477,7 +477,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     }
   }
 
-  "A NoOp intermediate view in Materialitzed state with existing _SUCCESS flag" should "transition to Waiting upon materialize" in new NoOpIntermediateView {
+  "A NoOp intermediate view in Materialized state with existing _SUCCESS flag" should "transition to Waiting upon materialize" in new NoOpIntermediateView {
     val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, false, false)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
@@ -605,7 +605,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
           10,
           waitingForDependencies, dependViews,
           DEFAULT,
-          false, true, false, 0l
+          false, false, true, 0l
           ), _) => {
         waitingForDependencies shouldEqual Set(secondDependency)
         dependViews shouldEqual Set(DependentView(dependentView))
@@ -664,8 +664,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
           view,
           viewTransformationChecksum,
           20,
-          true,
-          false),
+          false,
+          true),
         _) => {
         view shouldBe viewUnderTest
       }
@@ -687,8 +687,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
             viewUnderTest,
             Set(dependentView),
             20,
-            true,
-            false))
+            false,
+            true))
       }
 
       case _ => fail()
@@ -723,8 +723,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
             viewUnderTest,
             Set(dependentView),
             20,
-            true,
-            false))
+            false,
+            true))
       }
 
       case _ => fail()
@@ -743,8 +743,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
           view,
           viewTransformationChecksum,
           30,
-          true,
-          false),
+          false,
+          true),
         _) => {
         view shouldBe viewUnderTest
       }
@@ -766,7 +766,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
             viewUnderTest,
             Set(dependentView),
             30,
-            true, false))
+            false, true))
       }
 
       case _ => fail()
@@ -817,8 +817,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
           view,
           viewTransformationChecksum,
           30,
-          true,
-          false),
+          false,
+          true),
         _) => {
         view shouldBe viewUnderTest
       }
@@ -840,7 +840,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
             viewUnderTest,
             Set(dependentView),
             30,
-            true, false))
+            false, true))
       }
 
       case _ => fail()
@@ -1119,7 +1119,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, false, false, false, 0)
 
-    viewUnderTest.materialized(startState, firstDependency, 15, false, 20) match {
+    viewUnderTest.noDataAvailable(startState, firstDependency, false, 20) match {
       case ResultingViewSchedulingState(
         NoData(view),
         s) => {

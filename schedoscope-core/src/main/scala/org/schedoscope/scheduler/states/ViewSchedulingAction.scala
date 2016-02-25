@@ -31,6 +31,11 @@ case class TouchSuccessFlag(view: View) extends ViewSchedulingAction(view)
 case class Materialize(view: View, requester: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode) extends ViewSchedulingAction(view)
 
 /**
+ * A view should transform.
+ */
+case class Transform(view: View) extends ViewSchedulingAction(view)
+
+/**
  * All parties interested in the view scheduling state should be notified that no data is available for the view.
  */
 case class ReportNoDataAvailable(
@@ -65,5 +70,5 @@ case class ReportMaterialized(
   view: View,
   listeners: Set[PartyInterestedInViewSchedulingStateChange],
   transformationTimestamp: Long,
-  incomplete: Boolean,
-  withErrors: Boolean) extends ViewSchedulingAction(view)
+  withErrors: Boolean,
+  incomplete: Boolean) extends ViewSchedulingAction(view)
