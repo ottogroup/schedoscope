@@ -16,30 +16,29 @@
 package org.schedoscope.export;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
-import org.schedoscope.export.outputformat.RedisWritable;
+import org.schedoscope.export.outputformat.RedisHashWritable;
 import org.schedoscope.export.utils.RedisMRUtils;
 
-public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisWritable> {
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisHashWritable> {
 
 	private Configuration conf;
 
 	private HCatSchema schema;
 
-	private Class<?> RWKlass;
-
-	private Class<?> RVKlass;
-
 	private String keyPrefix;
+
+	private ObjectMapper jsonMapper;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -48,26 +47,29 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		conf = context.getConfiguration();
 		schema = HCatInputFormat.getTableSchema(conf);
 
+		jsonMapper = new ObjectMapper();
+
 		RedisMRUtils.checkKeyType(schema, conf.get(RedisMRUtils.REDIS_EXPORT_KEY_NAME));
-		RedisMRUtils.checkValueType(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
-
-		RWKlass = RedisMRUtils.getRedisWritableKlass(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
-		RVKlass = RedisMRUtils.getRedisValueKlass(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
-
 		keyPrefix = RedisMRUtils.getExportKeyPrefix(conf);
 	}
 
 	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException  {
+	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException {
 
 		Text redisKey = new Text(keyPrefix + value.getString(conf.get(RedisMRUtils.REDIS_EXPORT_KEY_NAME), schema));
-		RedisWritable redisValue = null;
-		try {
-			Constructor<?> ctor = RWKlass.getConstructor(String.class, RVKlass);
-			redisValue = (RedisWritable) ctor.newInstance(redisKey.toString(), RVKlass.cast(value.get(conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME), schema)));
 
-		} catch (Exception e) {
+		MapWritable redisValue = new MapWritable();
+
+		for (String f : schema.getFieldNames()) {
+
+			Object obj = value.get(f, schema);
+			String jsonString = obj.toString();
+
+			if (schema.get(f).isComplex()) {
+				jsonString = jsonMapper.writeValueAsString(obj);
+			}
+			redisValue.put(new Text(f), new Text(jsonString));
 		}
-		context.write(redisKey, redisValue);
+		context.write(redisKey, new RedisHashWritable(redisKey, redisValue));
 	}
 }

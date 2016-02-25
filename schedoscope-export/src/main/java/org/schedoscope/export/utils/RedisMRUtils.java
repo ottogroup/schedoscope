@@ -19,15 +19,20 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.schedoscope.export.outputformat.RedisHashWritable;
 import org.schedoscope.export.outputformat.RedisListWritable;
 import org.schedoscope.export.outputformat.RedisStringWritable;
 
-
-
 public class RedisMRUtils {
+
+	public static final String REDIS_EXPORT_KEY_NAME = "redis.export.key.name";
+
+	public static final String REDIS_EXPORT_VALUE_NAME = "redis.export.value.name";
+
+	public static final String REDIS_EXPORT_KEY_PREFIX = "redis.export.key.prefix";
 
 	public static void checkKeyType(HCatSchema schema, String fieldName) throws IOException {
 
@@ -105,5 +110,15 @@ public class RedisMRUtils {
 			break;
 		}
 		return RWKlass;
+	}
+
+	public static String getExportKeyPrefix(Configuration conf) {
+
+		String prefix = conf.get(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "");
+		StringBuilder keyPrefixBuilder = new StringBuilder();
+		if (!prefix.isEmpty()) {
+			keyPrefixBuilder.append(prefix).append("_");
+		}
+		return keyPrefixBuilder.toString();
 	}
 }

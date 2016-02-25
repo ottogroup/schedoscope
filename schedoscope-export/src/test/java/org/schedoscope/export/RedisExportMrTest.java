@@ -15,6 +15,7 @@
  */
 package org.schedoscope.export;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
@@ -41,10 +42,12 @@ import org.schedoscope.export.utils.RedisMRUtils;
 @PrepareForTest(RedisMRJedisFactory.class)
 public class RedisExportMrTest extends HiveUnitBaseTest {
 
+	JedisAdapter jedisAdapter;
+
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		JedisAdapter jedisAdapter = new JedisAdapter();
+		jedisAdapter = new JedisAdapter();
 		PowerMockito.mockStatic(RedisMRJedisFactory.class);
 		when(RedisMRJedisFactory.getJedisClient(any(Configuration.class))).thenReturn(jedisAdapter);
 	}
@@ -59,9 +62,9 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "visitor_id";
 		final String VALUE = "created_at";
 
-		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_PREFIX, "string_export");
-		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
-		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
+		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "string_export");
+		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisMRUtils.REDIS_EXPORT_VALUE_NAME, VALUE);
 		// conf.setBoolean(RedisOutputFormat.REDIS_PIPELINE_MODE, true);
 
 		Job job = Job.getInstance(conf);
@@ -80,6 +83,9 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
+
+		assertEquals("2016-02-09T12:21:24.581+01:00", jedisAdapter.get("string_export_0000434c-aa04-449d-b6d5-319da5d94064"));
+		assertEquals("2016-02-09T12:21:24.581+01:00", jedisAdapter.get("string_export_00017475-db44-495f-a357-97cd277e9d5b"));
 	}
 
 	@Test
@@ -92,9 +98,9 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "visitor_id";
 		final String VALUE = "uri_path_hashed_count";
 
-		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_PREFIX, "map_export");
-		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
-		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
+		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "map_export");
+		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisMRUtils.REDIS_EXPORT_VALUE_NAME, VALUE);
 
 		Job job = Job.getInstance(conf);
 
@@ -112,6 +118,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
+		assertEquals("3", jedisAdapter.hget("map_export_00017475-db44-495f-a357-97cd277e9d5b", "a55"));
+		assertEquals("2", jedisAdapter.hget("map_export_0000e5da-0c7f-43d4-ba63-c7cd74eca7f6", "a621"));
 	}
 
 	@Test
@@ -124,9 +132,9 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "id";
 		final String VALUE = "type";
 
-		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_PREFIX, "list_export");
-		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
-		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
+		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "list_export");
+		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisMRUtils.REDIS_EXPORT_VALUE_NAME, VALUE);
 
 		Job job = Job.getInstance(conf);
 
@@ -144,5 +152,6 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
+		assertEquals("search_result_display", jedisAdapter.lpop("list_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000036"));
 	}
 }
