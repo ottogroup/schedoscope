@@ -113,6 +113,7 @@
 			<groupId>org.rarefiedredis.redis</groupId>
 			<artifactId>redis-java</artifactId>
 			<version>0.0.17</version>
+			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
