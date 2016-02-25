@@ -15,45 +15,41 @@
  */
 package org.schedoscope.export;
 
-import static com.lordofthejars.nosqlunit.redis.EmbeddedRedis.EmbeddedRedisRuleBuilder.newEmbeddedRedisRule;
-import static com.lordofthejars.nosqlunit.redis.RedisRule.RedisRuleBuilder.newRedisRule;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.when;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
+import org.rarefiedredis.redis.adapter.jedis.JedisAdapter;
 import org.schedoscope.export.outputformat.RedisOutputFormat;
+import org.schedoscope.export.utils.RedisMRJedisFactory;
 import org.schedoscope.export.utils.RedisMRUtils;
 
-import com.lordofthejars.nosqlunit.annotation.UsingDataSet;
-import com.lordofthejars.nosqlunit.core.LoadStrategyEnum;
-import com.lordofthejars.nosqlunit.redis.EmbeddedRedis;
-import com.lordofthejars.nosqlunit.redis.RedisRule;
-
+@RunWith(PowerMockRunner.class)
+@PowerMockIgnore({"javax.*", "org.apache.*", "com.*", "org.mortbay.*", "org.xml.*", "org.w3c.*"})
+@PrepareForTest(RedisMRJedisFactory.class)
 public class RedisExportMrTest extends HiveUnitBaseTest {
-
-	@ClassRule
-	public static EmbeddedRedis embeddedRedis = newEmbeddedRedisRule().build();
-
-	@Rule
-	public RedisRule redisRule = newRedisRule().defaultEmbeddedRedis();
-
-	// @Inject
-	// Jedis jedis;
-
 
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
+		JedisAdapter jedisAdapter = new JedisAdapter();
+		PowerMockito.mockStatic(RedisMRJedisFactory.class);
+		when(RedisMRJedisFactory.getJedisClient(any(Configuration.class))).thenReturn(jedisAdapter);
 	}
 
 	@Test
-	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
 	public void testRedisStringExport() throws Exception {
 
 		setUpHiveServer("src/test/resources/ogm_event_features_data.txt",
@@ -66,7 +62,7 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_PREFIX, "string_export");
 		conf.set(RedisExportMapper.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisExportMapper.REDIS_EXPORT_VALUE_NAME, VALUE);
-		conf.setBoolean(RedisOutputFormat.REDIS_PIPELINE_MODE, true);
+		// conf.setBoolean(RedisOutputFormat.REDIS_PIPELINE_MODE, true);
 
 		Job job = Job.getInstance(conf);
 
@@ -87,7 +83,6 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 	}
 
 	@Test
-	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
 	public void testRedisMapExport() throws Exception {
 
 		setUpHiveServer("src/test/resources/ogm_event_features_data.txt",
@@ -120,7 +115,6 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 	}
 
 	@Test
-	@UsingDataSet(loadStrategy=LoadStrategyEnum.DELETE_ALL)
 	public void testRedisListExport() throws Exception {
 
 		setUpHiveServer("src/test/resources/webtrends_event_data.txt",

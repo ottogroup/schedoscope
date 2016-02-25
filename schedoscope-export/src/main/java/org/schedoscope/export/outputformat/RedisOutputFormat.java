@@ -28,6 +28,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 import org.schedoscope.export.JdbcExportMapper;
+import org.schedoscope.export.utils.RedisMRJedisFactory;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
@@ -42,10 +43,9 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 	@Override
 	public void checkOutputSpecs(JobContext context) throws IOException {
 
-		Jedis jedis = new Jedis(context.getConfiguration().get(REDIS_CONNECT_STRING, "localhost"));
+/*		Jedis jedis = RedisMRJedisFactory.getJedisClient(context.getConfiguration());
 		LOG.info("set up redis: " + jedis.ping());
-		jedis.close();
-
+		jedis.close();*/
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 		Configuration conf = context.getConfiguration();
 
-		Jedis jedis = new Jedis(conf.get(REDIS_CONNECT_STRING, "localhost"));
+		Jedis jedis = RedisMRJedisFactory.getJedisClient(conf);
 
 		if (conf.getBoolean(REDIS_PIPELINE_MODE, false)) {
 			Pipeline pipelinedJedis = jedis.pipelined();

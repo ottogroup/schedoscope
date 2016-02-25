@@ -109,15 +109,20 @@
 			<version>10.11.1.1</version>
 			<scope>test</scope>
 		</dependency>
+<!-- 		<dependency> -->
+<!-- 			<groupId>com.lordofthejars</groupId> -->
+<!-- 			<artifactId>nosqlunit-redis</artifactId> -->
+<!-- 			<version>0.8.1</version> -->
+<!-- 		</dependency> -->
 		<dependency>
-			<groupId>com.lordofthejars</groupId>
-			<artifactId>nosqlunit-redis</artifactId>
-			<version>0.8.1</version>
+			<groupId>org.rarefiedredis.redis</groupId>
+			<artifactId>redis-java</artifactId>
+			<version>0.0.17</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
