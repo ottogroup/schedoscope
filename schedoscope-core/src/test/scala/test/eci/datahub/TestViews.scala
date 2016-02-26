@@ -105,6 +105,47 @@ case class ProductBrand(
           """)))
 }
 
+case class ProductBrandMaterializeOnce(
+  ecNr: Parameter[String],
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+    with PointOccurrence
+    with JobMetadata
+    with DailyParameterization {
+
+  comment("ProductBrand joins brands with products")
+
+  val ecShopCode = fieldOf[String]
+  val productId = fieldOf[String]
+  val brandName = privacySensitive(fieldOf[String])
+
+  val brand = dependsOn(() => Brand(ecNr))
+  val product = dependsOn(() => Product(ecNr, year, month, day))
+
+  asTableSuffix(privacySensitive(ecNr))
+  storedAs(Parquet())
+  materializeOnce
+
+  transformVia(() =>
+    HiveTransformation(insertInto(
+      this,
+      s"""
+         SELECT 	${this.ecNr.v.get} AS ${this.ecShopCode.n},
+      				p.${product().id.n} AS ${this.productId.n},
+          			b.${brand().name.n} AS ${this.brandName.n},
+          			p.${product().occurredAt.n} AS ${this.occurredAt.n}
+          			${new Date} AS ${this.createdAt.n}
+          			${"ProductBrand"} AS ${this.createdBy.n}
+          FROM 		${product().n} p
+          JOIN 		${brand().n} b
+          ON		p.${product().brandId.n} = b.${brand().id.n}
+          WHERE 	p.${product().year.n} = ${this.year.v.get}
+          AND 		p.${product().month.n} = ${this.month.v.get}
+          AND 		p.${product().day.n} = ${this.day.v.get}
+          """)))
+}
+
 case class ProductBrandsNoOpMirror(
     year: Parameter[String],
     month: Parameter[String],

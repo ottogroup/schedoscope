@@ -5,7 +5,7 @@ import PartyInterestedInViewSchedulingStateChange._
 import ViewSchedulingStateMachine._
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.dsl.Parameter.p
-import test.eci.datahub.ProductBrand
+import test.eci.datahub.ProductBrandMaterializeOnce
 import test.eci.datahub.ProductBrandsNoOpMirror
 
 class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
@@ -16,8 +16,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     val viewUnderTest = dependentView.dependencies(0)
     val firstDependency = viewUnderTest.dependencies(0)
     val secondDependency = viewUnderTest.dependencies(1)
-    val materializeOnceView = anotherDependentView.dependencies(0)
-    materializeOnceView.materializeOnce
+    val materializeOnceView = ProductBrandMaterializeOnce(p("EC0101"), p("2014"), p("01"), p("02"))
     val viewTransformationChecksum = viewUnderTest.transformation().checksum
   }
 
@@ -28,10 +27,10 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       case ResultingViewSchedulingState(
         Waiting(
           viewUnderTest, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, listenersWaitingForMaterialize,
+          dependenciesMaterializing, interestedParties,
           DEFAULT, false, false, false, 0), _) => {
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
-        listenersWaitingForMaterialize should contain(DependentView(dependentView))
+        interestedParties should contain(DependentView(dependentView))
       }
       case _ => fail()
     }
@@ -96,10 +95,10 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       case ResultingViewSchedulingState(
         Waiting(
           viewUnderTest, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, listenersWaitingForMaterialize,
+          dependenciesMaterializing, interestedParties,
           DEFAULT, false, false, false, 0), _) => {
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
-        listenersWaitingForMaterialize should contain(DependentView(dependentView))
+        interestedParties should contain(DependentView(dependentView))
       }
       case _ => fail()
     }
@@ -164,10 +163,10 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       case ResultingViewSchedulingState(
         Waiting(
           viewUnderTest, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, listenersWaitingForMaterialize,
+          dependenciesMaterializing, interestedParties,
           DEFAULT, false, false, false, 0), _) => {
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
-        listenersWaitingForMaterialize should contain(DependentView(dependentView))
+        interestedParties should contain(DependentView(dependentView))
       }
       case _ => fail()
     }
@@ -204,10 +203,10 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       case ResultingViewSchedulingState(
         Waiting(
           viewUnderTest, viewTransformationChecksum, 10,
-          dependenciesMaterializing, listenersWaitingForMaterialize,
+          dependenciesMaterializing, interestedParties,
           DEFAULT, false, false, false, 0), _) => {
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
-        listenersWaitingForMaterialize should contain(DependentView(dependentView))
+        interestedParties should contain(DependentView(dependentView))
       }
       case _ => fail()
     }
@@ -310,10 +309,10 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       case ResultingViewSchedulingState(
         Waiting(
           viewUnderTest, viewTransformationChecksum, 10,
-          dependenciesMaterializing, listenersWaitingForMaterialize,
+          dependenciesMaterializing, interestedParties,
           DEFAULT, false, false, false, 0), _) => {
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
-        listenersWaitingForMaterialize should contain(DependentView(dependentView))
+        interestedParties should contain(DependentView(dependentView))
       }
       case _ => fail()
     }
@@ -419,11 +418,11 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       case ResultingViewSchedulingState(
         Waiting(
           viewUnderTest, viewTransformationChecksum, 10,
-          dependenciesMaterializing, listenersWaitingForMaterialize,
+          dependenciesMaterializing, interestedParties,
           DEFAULT, false, false, false, 0), s) => {
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
-        listenersWaitingForMaterialize should contain(DependentView(dependentView))
-        listenersWaitingForMaterialize should contain(DependentView(anotherDependentView))
+        interestedParties should contain(DependentView(dependentView))
+        interestedParties should contain(DependentView(anotherDependentView))
         s shouldBe 'empty
       }
       case _ => fail()
@@ -525,14 +524,14 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
         Transforming(
           view,
           lastTransformationChecksum,
-          listenersWaitingForMaterialize,
+          interestedParties,
           DEFAULT,
           false,
           false,
           0
           ),
         s) => {
-        listenersWaitingForMaterialize shouldEqual Set(DependentView(dependentView))
+        interestedParties shouldEqual Set(DependentView(dependentView))
         view shouldBe viewUnderTest
         s shouldEqual Set(Transform(viewUnderTest))
       }
@@ -552,14 +551,14 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
         Transforming(
           view,
           lastTransformationChecksum,
-          listenersWaitingForMaterialize,
+          interestedParties,
           DEFAULT,
           false,
           false,
           0
           ),
         s) => {
-        listenersWaitingForMaterialize shouldEqual Set(DependentView(dependentView))
+        interestedParties shouldEqual Set(DependentView(dependentView))
         view shouldBe viewUnderTest
         s shouldEqual Set(Transform(viewUnderTest))
       }
@@ -629,7 +628,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       case _ => fail()
     }
   }
-  
+
   it should "skip Transforming and write transformation timestamp when in mode RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS even if at least one dependency has answered with materialized and it is older" in new IntermediateView {
     val startState = Waiting(
       viewUnderTest, viewTransformationChecksum, 10,
@@ -685,6 +684,193 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) => {
         s should contain(WriteTransformationCheckum(viewUnderTest))
+      }
+
+      case _ => fail()
+    }
+  }
+
+  "An intermediate view in Transforming state" should "transition to Materialized when getting a transformation succeeded notification" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, false, false, 0)
+
+    viewUnderTest.transformationSucceeded(startState, 20) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          viewTransformationChecksum,
+          20,
+          false,
+          false), s) => {
+        view shouldBe viewUnderTest
+        s should contain(
+          ReportMaterialized(
+            viewUnderTest,
+            Set(dependentView),
+            20,
+            false,
+            false))
+      }
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation timestamp" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, false, false, 0)
+
+    viewUnderTest.transformationSucceeded(startState, 20) match {
+      case ResultingViewSchedulingState(_, s) => {
+        s should contain(
+          WriteTransformationTimestamp(viewUnderTest, 20))
+      }
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation checksum if it changed" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, "outdated checksum",
+      Set(dependentView),
+      DEFAULT, false, false, 0)
+
+    viewUnderTest.transformationSucceeded(startState, 20) match {
+      case ResultingViewSchedulingState(_, s) => {
+        s should contain(
+          WriteTransformationCheckum(viewUnderTest))
+      }
+
+      case _ => fail()
+    }
+  }
+
+  it should "not write a new transformation checksum if it changed" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, false, false, 0)
+
+    viewUnderTest.transformationSucceeded(startState, 20) match {
+      case ResultingViewSchedulingState(_, s) => {
+        s should not(contain(
+          WriteTransformationCheckum(viewUnderTest)))
+      }
+
+      case _ => fail()
+    }
+  }
+
+  it should "propagate error & completeness information upon materialization" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, true, true, 0)
+
+    viewUnderTest.transformationSucceeded(startState, 20) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          viewTransformationChecksum,
+          20,
+          true,
+          true), s) => {
+        view shouldBe viewUnderTest
+        s should contain(
+          ReportMaterialized(
+            viewUnderTest,
+            Set(dependentView),
+            20,
+            true,
+            true))
+      }
+
+      case _ => fail()
+    }
+  }
+
+  it should "enter Retrying upon failure if retries have not been exhausted" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, false, false, 1)
+
+    viewUnderTest.transformationFailed(startState, 2, 20) match {
+      case ResultingViewSchedulingState(
+        Retrying(
+          view, viewTransformationChecksum,
+          interestedParties,
+          DEFAULT, false, false, 2), s) => {
+        view shouldBe viewUnderTest
+        interestedParties shouldEqual Set(DependentView(dependentView))
+        s shouldBe 'empty
+      }
+
+      case _ => fail()
+    }
+  }
+
+  it should "enter and report Failed upon failure if retries have been exhausted" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, false, false, 2)
+
+    viewUnderTest.transformationFailed(startState, 2, 20) match {
+      case ResultingViewSchedulingState(
+        Failed(view),
+        s) => {
+        view shouldBe viewUnderTest
+        s shouldEqual Set(ReportFailed(viewUnderTest, Set(DependentView(dependentView))))
+      }
+
+      case _ => fail()
+    }
+  }
+
+  "An intermediate view in Retrying state" should "transition to Transforming upon materialize" in new IntermediateView {
+    val startState = Retrying(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, false, false, 2)
+
+    viewUnderTest.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Transforming(
+          view, viewTransformationChecksum,
+          interestedParties,
+          DEFAULT, false, false, 2),
+        s) => {
+        view shouldBe viewUnderTest
+        interestedParties shouldEqual Set(DependentView(dependentView))
+        s shouldBe 'empty
+      }
+
+      case _ => fail()
+    }
+  }
+
+  it should "transition to Transforming while preserving error and incompleteness information upon materialize" in new IntermediateView {
+    val startState = Retrying(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, true, true, 2)
+
+    viewUnderTest.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Transforming(
+          view, viewTransformationChecksum,
+          interestedParties,
+          DEFAULT, true, true, 2),
+        s) => {
+        view shouldBe viewUnderTest
+        interestedParties shouldEqual Set(DependentView(dependentView))
+        s shouldBe 'empty
       }
 
       case _ => fail()

@@ -79,8 +79,8 @@ case class Failed(override val view: View) extends ViewSchedulingState(view)
 case class Retrying(
   override val view: View,
   lastTransformationChecksum: String,
-  materializationMode: MaterializeViewMode,
   listenersWaitingForMaterialize: Set[PartyInterestedInViewSchedulingStateChange],
+  materializationMode: MaterializeViewMode,
   withErrors: Boolean,
   incomplete: Boolean,
   nextRetry: Int) extends ViewSchedulingState(view)

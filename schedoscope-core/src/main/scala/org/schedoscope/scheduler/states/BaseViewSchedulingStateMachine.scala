@@ -198,8 +198,8 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
     case Retrying(
       view,
       lastTransformationChecksum,
-      materializationMode,
       listenersWaitingForMaterialize,
+      materializationMode,
       withErrors,
       incomplete,
       retry) => {
@@ -392,8 +392,8 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
           Retrying(
             view,
             lastTransformationChecksum,
-            materializationMode,
             listenersWaitingForMaterialize,
+            materializationMode,
             withErrors,
             incomplete,
             retry + 1),
