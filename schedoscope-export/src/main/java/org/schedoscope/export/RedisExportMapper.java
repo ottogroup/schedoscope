@@ -35,9 +35,9 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 	private HCatSchema schema;
 
-	private Class<?> RWKlass;
+	private Class<?> RWClazz;
 
-	private Class<?> RVKlass;
+	private Class<?> RVClazz;
 
 	private String keyPrefix;
 
@@ -51,8 +51,8 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		RedisMRUtils.checkKeyType(schema, conf.get(RedisMRUtils.REDIS_EXPORT_KEY_NAME));
 		RedisMRUtils.checkValueType(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
 
-		RWKlass = RedisMRUtils.getRedisWritableKlass(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
-		RVKlass = RedisMRUtils.getRedisValueKlass(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
+		RWClazz = RedisMRUtils.getRedisWritableClazz(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
+		RVClazz = RedisMRUtils.getRedisValueClazz(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
 
 		keyPrefix = RedisMRUtils.getExportKeyPrefix(conf);
 	}
@@ -63,8 +63,8 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		Text redisKey = new Text(keyPrefix + value.getString(conf.get(RedisMRUtils.REDIS_EXPORT_KEY_NAME), schema));
 		RedisWritable redisValue = null;
 		try {
-			Constructor<?> ctor = RWKlass.getConstructor(String.class, RVKlass);
-			redisValue = (RedisWritable) ctor.newInstance(redisKey.toString(), RVKlass.cast(value.get(conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME), schema)));
+			Constructor<?> ctor = RWClazz.getConstructor(String.class, RVClazz);
+			redisValue = (RedisWritable) ctor.newInstance(redisKey.toString(), RVClazz.cast(value.get(conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME), schema)));
 
 		} catch (Exception e) {
 		}

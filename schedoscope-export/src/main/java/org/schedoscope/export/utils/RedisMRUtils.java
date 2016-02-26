@@ -66,50 +66,50 @@ public class RedisMRUtils {
 		}
 	}
 
-	public static Class<?> getRedisValueKlass(HCatSchema schema, String fieldName) throws IOException {
+	public static Class<?> getRedisValueClazz(HCatSchema schema, String fieldName) throws IOException {
 		HCatFieldSchema.Category category = schema.get(fieldName).getCategory();
 
-		Class<?> RVKlass = null;
+		Class<?> RVClazz = null;
 
 		switch (category) {
 		case PRIMITIVE:
-			RVKlass = String.class;
+			RVClazz = String.class;
 			break;
 		case MAP:
-			RVKlass = Map.class;
+			RVClazz = Map.class;
 			break;
 		case ARRAY:
-			RVKlass = List.class;
+			RVClazz = List.class;
 			break;
 		case STRUCT:
 			break;
 		default:
 			break;
 		}
-		return RVKlass;
+		return RVClazz;
 	}
 
-	public static Class<?> getRedisWritableKlass(HCatSchema schema, String fieldName) throws IOException {
+	public static Class<?> getRedisWritableClazz(HCatSchema schema, String fieldName) throws IOException {
 		HCatFieldSchema.Category category = schema.get(fieldName).getCategory();
 
-		Class<?> RWKlass = null;
+		Class<?> RWClazz = null;
 
 		switch (category) {
 		case PRIMITIVE:
-			RWKlass = RedisStringWritable.class;
+			RWClazz = RedisStringWritable.class;
 			break;
 		case MAP:
-			RWKlass = RedisHashWritable.class;
+			RWClazz = RedisHashWritable.class;
 			break;
 		case ARRAY:
-			RWKlass = RedisListWritable.class;
+			RWClazz = RedisListWritable.class;
 			break;
 		case STRUCT:
 			break;
 		default:
 			break;
 		}
-		return RWKlass;
+		return RWClazz;
 	}
 
 	public static String getExportKeyPrefix(Configuration conf) {

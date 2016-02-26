@@ -69,7 +69,7 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Class<?> klass  = RedisMRUtils.getRedisWritableKlass(hcatInputSchema, VALUE);
+		Class<?> OutputClaszz  = RedisMRUtils.getRedisWritableClazz(hcatInputSchema, VALUE);
 
 		job.setMapperClass(RedisExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);
@@ -78,8 +78,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(klass);
-		job.setOutputKeyClass(klass);
+		job.setMapOutputValueClass(OutputClaszz);
+		job.setOutputKeyClass(OutputClaszz);
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
@@ -104,7 +104,7 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Class<?> OutputKlass  = RedisMRUtils.getRedisWritableKlass(hcatInputSchema, VALUE);
+		Class<?> OutputClazz  = RedisMRUtils.getRedisWritableClazz(hcatInputSchema, VALUE);
 
 		job.setMapperClass(RedisExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);
@@ -113,8 +113,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(OutputKlass);
-		job.setOutputKeyClass(OutputKlass);
+		job.setMapOutputValueClass(OutputClazz);
+		job.setOutputKeyClass(OutputClazz);
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
@@ -138,7 +138,7 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Class<?> OutputKlass  = RedisMRUtils.getRedisWritableKlass(hcatInputSchema, VALUE);
+		Class<?> OutputClazz  = RedisMRUtils.getRedisWritableClazz(hcatInputSchema, VALUE);
 
 		job.setMapperClass(RedisExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);
@@ -147,8 +147,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(OutputKlass);
-		job.setOutputKeyClass(OutputKlass);
+		job.setMapOutputValueClass(OutputClazz);
+		job.setOutputKeyClass(OutputClazz);
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));

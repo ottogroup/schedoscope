@@ -41,10 +41,10 @@ public class RedisHashWritable implements RedisWritable, Writable {
 		value = new MapWritable();
 	}
 
-	public RedisHashWritable(String skey, Map<String, String> svalue) {
+	public RedisHashWritable(String key, Map<String, String> value) {
 
-		this.key = new Text(String.valueOf(skey));
-		this.value = toMapWritable(svalue);
+		this.key = new Text(String.valueOf(key));
+		this.value = toMapWritable(value);
 	}
 
 	public RedisHashWritable(Text key, MapWritable value) {
@@ -64,9 +64,9 @@ public class RedisHashWritable implements RedisWritable, Writable {
 	}
 
 	@Override
-	public void readFields(Jedis jedis, String skey) {
-		value = toMapWritable(jedis.hgetAll(skey));
-		key = new Text(skey);
+	public void readFields(Jedis jedis, String key) {
+		this.value = toMapWritable(jedis.hgetAll(key));
+		this.key = new Text(key);
 
 	}
 
@@ -82,10 +82,10 @@ public class RedisHashWritable implements RedisWritable, Writable {
 		value.readFields(in);
 	}
 
-	private MapWritable toMapWritable(Map<String, String> svalue) {
+	private MapWritable toMapWritable(Map<String, String> value) {
 
 		MapWritable mr = new MapWritable();
-		for (Entry<String, String> e : svalue.entrySet()) {
+		for (Entry<String, String> e : value.entrySet()) {
 			mr.put(new Text(e.getKey()), new Text(String.valueOf(e.getValue())));
 		}
 		return mr;
@@ -93,10 +93,10 @@ public class RedisHashWritable implements RedisWritable, Writable {
 
 	private Map<String, String> fromMapWritable(MapWritable value) {
 
-		Map<String, String> svalue = new HashMap<String, String>();
+		Map<String, String> mapValue = new HashMap<String, String>();
 		for (Entry<Writable, Writable> e : value.entrySet()) {
-			svalue.put(e.getKey().toString(), e.getValue().toString());
+			mapValue.put(e.getKey().toString(), e.getValue().toString());
 		}
-		return svalue;
+		return mapValue;
 	}
 }
