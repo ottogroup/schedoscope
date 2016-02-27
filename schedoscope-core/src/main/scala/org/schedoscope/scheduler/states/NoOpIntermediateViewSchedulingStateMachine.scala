@@ -1,10 +1,26 @@
+/**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.scheduler.states
 
 import java.util.Date
-import org.schedoscope.scheduler.messages.MaterializeViewMode._
-import org.schedoscope.dsl.transformations.Checksum.defaultDigest
-import org.schedoscope.dsl.View
+
 import org.schedoscope.Schedoscope
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.Checksum.defaultDigest
+import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
 class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMachine {
 
@@ -15,7 +31,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
     materializationMode: MaterializeViewMode = DEFAULT,
     currentTime: Long = new Date().getTime) = currentState match {
 
-    case CreatedByViewManager(view) => {
+    case CreatedByViewManager(view) =>
       ResultingViewSchedulingState(
         Waiting(view,
           defaultDigest,
@@ -23,14 +39,15 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           view.dependencies.toSet,
           Set(listener),
           materializationMode,
-          false,
-          false,
-          false,
+          oneDependencyReturnedData = false,
+          withErrors = false,
+          incomplete = false,
           0l),
-        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
-    }
+        view.dependencies.map {
+          Materialize(_, view, materializationMode)
+        }.toSet)
 
-    case ReadFromSchemaManager(view, lastTransformationChecksum, lastTransformationTimestamp) => {
+    case ReadFromSchemaManager(view, lastTransformationChecksum, lastTransformationTimestamp) =>
       ResultingViewSchedulingState(
         Waiting(view,
           lastTransformationChecksum,
@@ -38,14 +55,15 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           view.dependencies.toSet,
           Set(listener),
           materializationMode,
-          false,
-          false,
-          false,
+          oneDependencyReturnedData = false,
+          withErrors = false,
+          incomplete = false,
           0l),
-        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
-    }
+        view.dependencies.map {
+          Materialize(_, view, materializationMode)
+        }.toSet)
 
-    case NoData(view) => {
+    case NoData(view) =>
       ResultingViewSchedulingState(
         Waiting(view,
           defaultDigest,
@@ -53,14 +71,15 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           view.dependencies.toSet,
           Set(listener),
           materializationMode,
-          false,
-          false,
-          false,
+          oneDependencyReturnedData = false,
+          withErrors = false,
+          incomplete = false,
           0l),
-        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
-    }
+        view.dependencies.map {
+          Materialize(_, view, materializationMode)
+        }.toSet)
 
-    case Invalidated(view) => {
+    case Invalidated(view) =>
       ResultingViewSchedulingState(
         Waiting(view,
           defaultDigest,
@@ -68,12 +87,13 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           view.dependencies.toSet,
           Set(listener),
           materializationMode,
-          false,
-          false,
-          false,
+          oneDependencyReturnedData = false,
+          withErrors = false,
+          incomplete = false,
           0l),
-        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
-    }
+        view.dependencies.map {
+          Materialize(_, view, materializationMode)
+        }.toSet)
 
     case Waiting(
       view,
@@ -81,11 +101,11 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       lastTransformationTimestamp,
       dependenciesMaterializing,
       listenersWaitingForMaterialize,
-      materializationMode,
+      `materializationMode`,
       oneDependencyReturnedData,
       withErrors,
       incomplete,
-      dependenciesFreshness) => {
+      dependenciesFreshness) =>
       ResultingViewSchedulingState(
         Waiting(
           view,
@@ -98,9 +118,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           withErrors,
           incomplete,
           dependenciesFreshness), Set())
-    }
 
-    case Materialized(view, lastTransformationChecksum, lastTransformationTimestamp, _, _) => {
+    case Materialized(view, lastTransformationChecksum, lastTransformationTimestamp, _, _) =>
       ResultingViewSchedulingState(
         Waiting(view,
           lastTransformationChecksum,
@@ -108,12 +127,13 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           view.dependencies.toSet,
           Set(listener),
           materializationMode,
-          false,
-          false,
-          false,
+          oneDependencyReturnedData = false,
+          withErrors = false,
+          incomplete = false,
           0l),
-        view.dependencies.map { Materialize(_, view, materializationMode) }.toSet)
-    }
+        view.dependencies.map {
+          Materialize(_, view, materializationMode)
+        }.toSet)
   }
 
   def invalidate(
@@ -140,7 +160,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       oneDependencyReturnedData,
       withErrors,
       incomplete,
-      dependenciesFreshness) => {
+      dependenciesFreshness) =>
 
       if (oneDependencyReturnedData && successFlagExists) {
         if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
@@ -150,8 +170,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
               view.transformation().checksum,
               currentTime,
               withErrors | setError,
-              incomplete | setIncomplete),
-            {
+              incomplete | setIncomplete), {
               if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS || lastTransformationChecksum != view.transformation().checksum)
                 Set(WriteTransformationCheckum(view))
               else
@@ -191,7 +210,6 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
           NoData(view),
           Set(
             ReportNoDataAvailable(view, listenersWaitingForMaterialize)))
-    }
   }
 
   def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
@@ -205,9 +223,9 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       oneDependencyReturnedData,
       withErrors,
       incomplete,
-      dependenciesFreshness) => {
+      dependenciesFreshness) =>
       if (dependenciesMaterializing == Set(reportingDependency))
-        leaveWaitingState(currentState, true, false, successFlagExists, currentTime)
+        leaveWaitingState(currentState, setIncomplete = true, setError = false, successFlagExists = successFlagExists, currentTime)
       else
         ResultingViewSchedulingState(
           Waiting(
@@ -219,9 +237,8 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
             materializationMode,
             oneDependencyReturnedData,
             withErrors,
-            true,
+            incomplete = true,
             dependenciesFreshness), Set())
-    }
   }
 
   def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
@@ -235,9 +252,9 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       oneDependencyReturnedData,
       withErrors,
       incomplete,
-      dependenciesFreshness) => {
+      dependenciesFreshness) =>
       if (dependenciesMaterializing == Set(reportingDependency))
-        leaveWaitingState(currentState, true, true, successFlagExists, currentTime)
+        leaveWaitingState(currentState, setIncomplete = true, setError = true, successFlagExists = successFlagExists, currentTime)
       else
         ResultingViewSchedulingState(
           Waiting(
@@ -248,10 +265,9 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
             listenersWaitingForMaterialize,
             materializationMode,
             oneDependencyReturnedData,
-            true,
-            true,
+            withErrors = true,
+            incomplete = true,
             dependenciesFreshness), Set())
-    }
   }
 
   def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
@@ -265,7 +281,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       oneDependencyReturnedData,
       withErrors,
       incomplete,
-      dependenciesFreshness) => {
+      dependenciesFreshness) =>
 
       val updatedWaitingState = Waiting(
         view,
@@ -274,17 +290,16 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
         dependenciesMaterializing - reportingDependency,
         listenersWaitingForMaterialize,
         materializationMode,
-        true,
-        withErrors,
-        incomplete,
+        oneDependencyReturnedData = true,
+        withErrors = withErrors,
+        incomplete = incomplete,
 
         Math.max(dependenciesFreshness, transformationTimestamp))
 
       if (dependenciesMaterializing == Set(reportingDependency))
-        leaveWaitingState(updatedWaitingState, false, false, successFlagExists, currentTime)
+        leaveWaitingState(updatedWaitingState, setIncomplete = false, setError = false, successFlagExists = successFlagExists, currentTime)
       else
         ResultingViewSchedulingState(updatedWaitingState, Set())
-    }
   }
 
   def transformationSucceeded(currentState: Transforming, currentTime: Long = new Date().getTime) = ???

@@ -94,7 +94,7 @@ case class ProductBrand(
       				p.${product().id.n} AS ${this.productId.n},
           			b.${brand().name.n} AS ${this.brandName.n},
           			p.${product().occurredAt.n} AS ${this.occurredAt.n}
-          			${new Date} AS ${this.createdAt.n}
+          			'some date time' AS ${this.createdAt.n}
           			${"ProductBrand"} AS ${this.createdBy.n}
           FROM 		${product().n} p
           JOIN 		${brand().n} b
@@ -135,7 +135,7 @@ case class ProductBrandMaterializeOnce(
       				p.${product().id.n} AS ${this.productId.n},
           			b.${brand().name.n} AS ${this.brandName.n},
           			p.${product().occurredAt.n} AS ${this.occurredAt.n}
-          			${new Date} AS ${this.createdAt.n}
+          			'some date time' AS ${this.createdAt.n}
           			${"ProductBrand"} AS ${this.createdBy.n}
           FROM 		${product().n} p
           JOIN 		${brand().n} b

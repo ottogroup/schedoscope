@@ -1,12 +1,26 @@
+/**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.scheduler.states
 
 import org.scalatest.{ FlatSpec, Matchers }
-import PartyInterestedInViewSchedulingStateChange._
-import ViewSchedulingStateMachine._
-import test.eci.datahub.Brand
 import org.schedoscope.dsl.Parameter.p
-import test.eci.datahub.ProductBrand
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
+import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
+import org.schedoscope.scheduler.states.ViewSchedulingStateMachine._
+import test.eci.datahub.ProductBrand
 
 class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
@@ -20,7 +34,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = CreatedByViewManager(viewUnderTest)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
-      case ResultingViewSchedulingState(Materialized(v, viewTransformationChecksum, 10, false, false), _) => v shouldBe viewUnderTest
+      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
       case _ => fail()
     }
   }
@@ -47,7 +61,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = CreatedByViewManager(viewUnderTest)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, false, false))
+      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
       case _                                  => fail()
     }
   }
@@ -71,25 +85,25 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
   }
 
   "A NoOp leaf view in Materialized state with existing _SUCCESS flag" should "remain Materialized upon materialize" in new NoOpLeafView {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, false, false)
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
-      case ResultingViewSchedulingState(Materialized(v, viewTransformationChecksum, 10, false, false), _) => v shouldBe viewUnderTest
+      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
       case _ => fail()
     }
   }
 
   it should "report materialization to issuer" in new NoOpLeafView {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, false, false)
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, false, false))
+      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
       case _                                  => fail()
     }
   }
 
   it should "request writing of new transformation checksum if materialization mode is RESET_TRANSFORMATION_CHECKSUMS" in new NoOpLeafView {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, false, false)
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
@@ -98,25 +112,25 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
   }
 
   "A NoOp leaf view in Materialized state without _SUCCESS flag" should "remain Materialized upon materialize" in new NoOpLeafView {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, false, false)
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = false, currentTime = 20) match {
-      case ResultingViewSchedulingState(Materialized(v, viewTransformationChecksum, 10, false, false), _) => v shouldBe viewUnderTest
+      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
       case _ => fail()
     }
   }
 
   it should "report materialization to issuer" in new NoOpLeafView {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, false, false)
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = false, currentTime = 20) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, false, false))
+      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
       case _                                  => fail()
     }
   }
 
   it should "request writing of new transformation checksum if materialization mode is RESET_TRANSFORMATION_CHECKSUMS" in new NoOpLeafView {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, false, false)
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = false, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
@@ -128,7 +142,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = NoData(viewUnderTest)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
-      case ResultingViewSchedulingState(Materialized(v, viewTransformationChecksum, 10, false, false), _) => v shouldBe viewUnderTest
+      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
       case _ => fail()
     }
   }
@@ -155,7 +169,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = NoData(viewUnderTest)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, false, false))
+      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
       case _                                  => fail()
     }
   }
@@ -182,7 +196,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
-      case ResultingViewSchedulingState(Materialized(v, viewTransformationChecksum, 10, false, false), _) => v shouldBe viewUnderTest
+      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
       case _ => fail()
     }
   }
@@ -191,7 +205,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, false, false))
+      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
       case _                                  => fail()
     }
   }
@@ -209,7 +223,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = false, currentTime = 20) match {
-      case ResultingViewSchedulingState(Materialized(v, viewTransformationChecksum, 10, false, false), _) => v shouldBe viewUnderTest
+      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
       case _ => fail()
     }
   }
@@ -218,7 +232,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = false, currentTime = 20) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, false, false))
+      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
       case _                                  => fail()
     }
   }
@@ -236,7 +250,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = Invalidated(viewUnderTest)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
-      case ResultingViewSchedulingState(Materialized(v, viewTransformationChecksum, 10, false, false), _) => v shouldBe viewUnderTest
+      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
       case _ => fail()
     }
   }
@@ -263,7 +277,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
     val startState = Invalidated(viewUnderTest)
 
     viewUnderTest.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, false, false))
+      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
       case _                                  => fail()
     }
   }

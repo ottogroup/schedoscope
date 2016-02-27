@@ -1,8 +1,24 @@
+/**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.scheduler.states
 
-import scala.language.implicitConversions
-import org.schedoscope.dsl.View
 import akka.actor.ActorRef
+import org.schedoscope.dsl.View
+
+import scala.language.implicitConversions
 
 /**
  * A view scheduling state machine might want to know who needs to be informed about a state transition.
@@ -25,7 +41,7 @@ object PartyInterestedInViewSchedulingStateChange {
    * Implicit conversion of view to party type
    */
   implicit def toParty(view: View) = DependentView(view)
-  
+
   /**
    * Implicit conversion of view to party type
    */

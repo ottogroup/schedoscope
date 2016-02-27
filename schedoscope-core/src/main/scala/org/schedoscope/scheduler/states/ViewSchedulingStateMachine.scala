@@ -1,12 +1,28 @@
+/**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.scheduler.states
 
-import org.schedoscope.dsl.transformations.NoOp
-import org.schedoscope.dsl.View
 import java.util.Date
-import scala.language.implicitConversions
-import org.schedoscope.scheduler.messages.MaterializeViewMode._
-import org.schedoscope.Settings
+
 import org.schedoscope.Schedoscope
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.NoOp
+import org.schedoscope.scheduler.messages.MaterializeViewMode._
+
+import scala.language.implicitConversions
 
 /**
  * The result of applying a view scheduling state machine function. Contains the current state (which may be unchanged)
@@ -68,7 +84,7 @@ trait ViewSchedulingStateMachine {
 }
 
 object ViewSchedulingStateMachine {
-  
+
   val noOpLeafViewSchedulingStateMachine = new NoOpLeafViewSchedulingStateMachine
 
   val noOpIntermediateViewSchedulingStateMachine = new NoOpIntermediateViewSchedulingStateMachine
@@ -79,12 +95,11 @@ object ViewSchedulingStateMachine {
    * Implicit factory of the view scheduling state machine appropriate for a view's transformation type.
    */
   implicit def schedulingStateMachineForView(view: View) = view.transformation() match {
-    case NoOp() => {
+    case NoOp() =>
       if (view.dependencies.isEmpty)
         noOpLeafViewSchedulingStateMachine
       else
         noOpIntermediateViewSchedulingStateMachine
-    }
 
     case _ => baseViewSchedulingStateMachine
   }
