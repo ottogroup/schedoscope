@@ -35,7 +35,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter;
 import org.schedoscope.export.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
-import org.schedoscope.export.utils.RedisMRUtils;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"javax.*", "org.apache.*", "com.*", "org.mortbay.*", "org.xml.*", "org.w3c.*"})
@@ -62,14 +61,14 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "visitor_id";
 		final String VALUE = "created_at";
 
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "string_export");
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_NAME, KEY);
-		conf.set(RedisMRUtils.REDIS_EXPORT_VALUE_NAME, VALUE);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "string_export");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
 		// conf.setBoolean(RedisOutputFormat.REDIS_PIPELINE_MODE, true);
 
-		Job job = Job.getInstance(conf);
+		Class<?> OutputClazz  = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
 
-		Class<?> OutputClaszz  = RedisMRUtils.getRedisWritableClazz(hcatInputSchema, VALUE);
+		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(RedisExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);
@@ -78,8 +77,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(OutputClaszz);
-		job.setOutputKeyClass(OutputClaszz);
+		job.setMapOutputValueClass(OutputClazz);
+		job.setOutputKeyClass(OutputClazz);
 		job.setOutputValueClass(NullWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
@@ -98,13 +97,13 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "visitor_id";
 		final String VALUE = "uri_path_hashed_count";
 
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "map_export");
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_NAME, KEY);
-		conf.set(RedisMRUtils.REDIS_EXPORT_VALUE_NAME, VALUE);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "map_export");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
+
+		Class<?> OutputClazz  = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
 
 		Job job = Job.getInstance(conf);
-
-		Class<?> OutputClazz  = RedisMRUtils.getRedisWritableClazz(hcatInputSchema, VALUE);
 
 		job.setMapperClass(RedisExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);
@@ -132,13 +131,13 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		final String KEY = "id";
 		final String VALUE = "type";
 
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "list_export");
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_NAME, KEY);
-		conf.set(RedisMRUtils.REDIS_EXPORT_VALUE_NAME, VALUE);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "list_export");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
+
+		Class<?> OutputClazz  = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
 
 		Job job = Job.getInstance(conf);
-
-		Class<?> OutputClazz  = RedisMRUtils.getRedisWritableClazz(hcatInputSchema, VALUE);
 
 		job.setMapperClass(RedisExportMapper.class);
 		job.setReducerClass(RedisExportReducer.class);

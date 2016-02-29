@@ -17,8 +17,6 @@ package org.schedoscope.export.outputformat;
 
 import java.io.IOException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -27,7 +25,8 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
-import org.schedoscope.export.JdbcExportMapper;
+import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
+import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
 
 import redis.clients.jedis.Jedis;
@@ -36,9 +35,18 @@ import redis.clients.jedis.Pipeline;
 public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<K, V> {
 
 	public static final String REDIS_CONNECT_STRING = "redis.export.server.host";
+
 	public static final String REDIS_PIPELINE_MODE = "redis.export.pipeline.mode";
 
-	private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
+	public static final String REDIS_EXPORT_KEY_NAME = "redis.export.key.name";
+
+	public static final String REDIS_EXPORT_VALUE_NAME = "redis.export.value.name";
+
+	public static final String REDIS_EXPORT_DATA_APPEND = "redis.export.data.append";
+
+	public static final String REDIS_EXPORT_KEY_PREFIX = "redis.export.key.prefix";
+
+	// private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
 
 	@Override
 	public void checkOutputSpecs(JobContext context) throws IOException {
@@ -66,6 +74,75 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 		} else {
 			return new RedisRecordWriter(jedis);
 		}
+	}
+
+	public static void checkKeyType(HCatSchema schema, String fieldName) throws IOException {
+
+		HCatFieldSchema keyType = schema.get(fieldName);
+		HCatFieldSchema.Category category = keyType.getCategory();
+
+		if (category != HCatFieldSchema.Category.PRIMITIVE) {
+			throw new IllegalArgumentException("key must be primitive type");
+		}
+	}
+
+	public static void checkValueType(HCatSchema schema, String fieldName) throws IOException {
+
+		HCatFieldSchema valueType = schema.get(fieldName);
+		HCatFieldSchema.Category valueCat = valueType.getCategory();
+
+		if ((valueCat != HCatFieldSchema.Category.PRIMITIVE) && (valueCat != HCatFieldSchema.Category.MAP) && (valueCat != HCatFieldSchema.Category.ARRAY)) {
+			throw new IllegalArgumentException("value must be one of primitive, list or map type");
+		}
+
+		if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
+			if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+				throw new IllegalArgumentException("map value type must be a primitive type");
+			}
+		}
+
+		if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
+			if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+				throw new IllegalArgumentException("array element type must be a primitive type");
+			}
+		}
+	}
+
+	public static Boolean getAppend(Configuration conf) {
+		return conf.getBoolean(REDIS_EXPORT_DATA_APPEND, false);
+	}
+
+	public static String getExportKeyPrefix(Configuration conf) {
+
+		String prefix = conf.get(REDIS_EXPORT_KEY_PREFIX, "");
+		StringBuilder keyPrefixBuilder = new StringBuilder();
+		if (!prefix.isEmpty()) {
+			keyPrefixBuilder.append(prefix).append("_");
+		}
+		return keyPrefixBuilder.toString();
+	}
+
+	public static Class<?> getRedisWritableClazz(HCatSchema schema, String fieldName) throws IOException {
+		HCatFieldSchema.Category category = schema.get(fieldName).getCategory();
+
+		Class<?> RWClazz = null;
+
+		switch (category) {
+		case PRIMITIVE:
+			RWClazz = RedisStringWritable.class;
+			break;
+		case MAP:
+			RWClazz = RedisHashWritable.class;
+			break;
+		case ARRAY:
+			RWClazz = RedisListWritable.class;
+			break;
+		case STRUCT:
+			break;
+		default:
+			break;
+		}
+		return RWClazz;
 	}
 
 	public class RedisRecordWriter extends RecordWriter<K, V> {

@@ -36,7 +36,6 @@ import org.rarefiedredis.redis.adapter.jedis.JedisAdapter;
 import org.schedoscope.export.outputformat.RedisHashWritable;
 import org.schedoscope.export.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
-import org.schedoscope.export.utils.RedisMRUtils;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({"javax.*", "org.apache.*", "com.*", "org.mortbay.*", "org.xml.*", "org.w3c.*"})
@@ -61,8 +60,8 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
 				"ogm_event_features");
 
 		final String KEY = "visitor_id";
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "export1");
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export1");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 
 		Job job = Job.getInstance(conf);
 
@@ -90,8 +89,8 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
 				"webtrends_event");
 
 		final String KEY = "id";
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_PREFIX, "export2");
-		conf.set(RedisMRUtils.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export2");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 
 		Job job = Job.getInstance(conf);
 

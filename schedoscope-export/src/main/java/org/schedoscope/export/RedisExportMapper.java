@@ -16,17 +16,24 @@
 package org.schedoscope.export;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hive.hcatalog.data.HCatRecord;
+import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.schedoscope.export.outputformat.RedisHashWritable;
+import org.schedoscope.export.outputformat.RedisListWritable;
+import org.schedoscope.export.outputformat.RedisOutputFormat;
+import org.schedoscope.export.outputformat.RedisStringWritable;
 import org.schedoscope.export.outputformat.RedisWritable;
-import org.schedoscope.export.utils.RedisMRUtils;
 
 public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisWritable> {
 
@@ -35,11 +42,13 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 	private HCatSchema schema;
 
-	private Class<?> RWClazz;
+	private String keyName;
 
-	private Class<?> RVClazz;
+	private String valueName;
 
 	private String keyPrefix;
+
+	private Boolean append;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -48,26 +57,45 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		conf = context.getConfiguration();
 		schema = HCatInputFormat.getTableSchema(conf);
 
-		RedisMRUtils.checkKeyType(schema, conf.get(RedisMRUtils.REDIS_EXPORT_KEY_NAME));
-		RedisMRUtils.checkValueType(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
+		RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+		RedisOutputFormat.checkValueType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME));
 
-		RWClazz = RedisMRUtils.getRedisWritableClazz(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
-		RVClazz = RedisMRUtils.getRedisValueClazz(schema, conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME));
+		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
+		valueName = conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME);
 
-		keyPrefix = RedisMRUtils.getExportKeyPrefix(conf);
+		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
+		append = RedisOutputFormat.getAppend(conf);
 	}
 
 	@Override
 	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException  {
 
-		Text redisKey = new Text(keyPrefix + value.getString(conf.get(RedisMRUtils.REDIS_EXPORT_KEY_NAME), schema));
+		Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
 		RedisWritable redisValue = null;
-		try {
-			Constructor<?> ctor = RWClazz.getConstructor(String.class, RVClazz);
-			redisValue = (RedisWritable) ctor.newInstance(redisKey.toString(), RVClazz.cast(value.get(conf.get(RedisMRUtils.REDIS_EXPORT_VALUE_NAME), schema)));
 
-		} catch (Exception e) {
+		HCatFieldSchema fieldSchema = schema.get(valueName);
+
+		switch(fieldSchema.getCategory()) {
+		case MAP:
+			redisValue = new RedisHashWritable(redisKey.toString(), (Map<String, String>) value.getMap(valueName, schema), append);
+			break;
+		case ARRAY:
+			redisValue = new RedisListWritable(redisKey.toString(), (List<String>) value.getList(valueName, schema), append);
+			break;
+		case PRIMITIVE:
+			redisValue = new RedisStringWritable(redisKey.toString(), value.getString(valueName, schema));
+			break;
+		case STRUCT:
+			List<String> vals = (List<String>) value.getStruct(valueName, schema);
+			HCatSchema structSchema = fieldSchema.getStructSubSchema();
+			MapWritable structValue = new MapWritable();
+			for (int i = 0; i < structSchema.size(); i++) {
+				structValue.put(new Text(structSchema.get(i).getName()), new Text(vals.get(i)));
+			}
+			redisValue = new RedisHashWritable(redisKey, structValue, new BooleanWritable(false));
+			break;
 		}
+
 		context.write(redisKey, redisValue);
 	}
 }

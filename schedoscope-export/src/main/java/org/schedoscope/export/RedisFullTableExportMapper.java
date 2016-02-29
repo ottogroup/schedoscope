@@ -26,7 +26,7 @@ import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.outputformat.RedisHashWritable;
-import org.schedoscope.export.utils.RedisMRUtils;
+import org.schedoscope.export.outputformat.RedisOutputFormat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -49,14 +49,14 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
 		jsonMapper = new ObjectMapper();
 
-		RedisMRUtils.checkKeyType(schema, conf.get(RedisMRUtils.REDIS_EXPORT_KEY_NAME));
-		keyPrefix = RedisMRUtils.getExportKeyPrefix(conf);
+		RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
 	}
 
 	@Override
 	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException {
 
-		Text redisKey = new Text(keyPrefix + value.getString(conf.get(RedisMRUtils.REDIS_EXPORT_KEY_NAME), schema));
+		Text redisKey = new Text(keyPrefix + value.getString(conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME), schema));
 
 		MapWritable redisValue = new MapWritable();
 

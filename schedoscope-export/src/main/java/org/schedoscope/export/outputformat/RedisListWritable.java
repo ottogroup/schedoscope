@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.hadoop.io.ArrayWritable;
+import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
 
@@ -34,23 +35,39 @@ public class RedisListWritable implements RedisWritable, Writable {
 
 	private ArrayWritable value;
 
+	private BooleanWritable append;
+
 	public RedisListWritable() {
 		key = new Text();
 		value = new ArrayWritable(Text.class);
+		append = new BooleanWritable(false);
+	}
+
+	public RedisListWritable(String key, List<String> value, Boolean append) {
+		this.key = new Text(String.valueOf(key));
+		this.value = toArrayWritable(value);
+		this.append = new BooleanWritable(append);
 	}
 
 	public RedisListWritable(String key, List<String> value) {
-		this.key = new Text(String.valueOf(key));
-		this.value = toArrayWritable(value);
+		this(key, value, false);
+	}
+
+	public RedisListWritable(Text key, ArrayWritable value, BooleanWritable append) {
+		this.key = key;
+		this.value = value;
+		this.append = append;
 	}
 
 	public RedisListWritable(Text key, ArrayWritable value) {
-		this.key = key;
-		this.value = value;
+		this(key, value, new BooleanWritable(false));
 	}
 
 	@Override
 	public void write(Jedis jedis) {
+		if (!append.get()) {
+			jedis.del(key.toString());
+		}
 		for (String v : fromArrayWritable(value)) {
 			jedis.lpush(key.toString(), v);
 		}
@@ -58,6 +75,9 @@ public class RedisListWritable implements RedisWritable, Writable {
 
 	@Override
 	public void write(Pipeline jedis) {
+		if (!append.get()) {
+			jedis.del(key.toString());
+		}
 		for (String v : fromArrayWritable(value)) {
 			jedis.lpush(key.toString(), v);
 		}
@@ -73,12 +93,14 @@ public class RedisListWritable implements RedisWritable, Writable {
 	public void write(DataOutput out) throws IOException {
 		key.write(out);
 		value.write(out);
+		append.write(out);
 	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		key.readFields(in);
 		value.readFields(in);
+		append.readFields(in);
 	}
 
 	ArrayWritable toArrayWritable(List<String> value) {
