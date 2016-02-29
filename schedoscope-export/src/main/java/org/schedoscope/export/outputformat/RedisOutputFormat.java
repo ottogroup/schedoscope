@@ -46,8 +46,6 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 	public static final String REDIS_EXPORT_KEY_PREFIX = "redis.export.key.prefix";
 
-	// private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
-
 	@Override
 	public void checkOutputSpecs(JobContext context) throws IOException {
 
@@ -122,6 +120,22 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 		return keyPrefixBuilder.toString();
 	}
 
+	public static void setOutput(Configuration conf, String redisHost,
+			String keyName, String keyPrefix, String valueName,
+			boolean append, boolean pipeline) {
+		conf.set(REDIS_CONNECT_STRING, redisHost);
+		conf.set(REDIS_EXPORT_KEY_NAME, keyName);
+		conf.set(REDIS_EXPORT_KEY_PREFIX, keyPrefix);
+		conf.set(REDIS_EXPORT_VALUE_NAME, valueName);
+		conf.setBoolean(REDIS_EXPORT_DATA_APPEND, append);
+		conf.setBoolean(REDIS_PIPELINE_MODE, pipeline);
+	}
+
+	public static void setOutput(Configuration conf, String redisHost,
+			String keyName, String keyPrefix, boolean append, boolean pipeline) {
+		setOutput(conf, redisHost, keyName, keyPrefix, "", append, pipeline);
+	}
+
 	public static Class<?> getRedisWritableClazz(HCatSchema schema, String fieldName) throws IOException {
 		HCatFieldSchema.Category category = schema.get(fieldName).getCategory();
 
@@ -138,8 +152,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 			RWClazz = RedisListWritable.class;
 			break;
 		case STRUCT:
-			break;
-		default:
+			RWClazz = RedisHashWritable.class;
 			break;
 		}
 		return RWClazz;

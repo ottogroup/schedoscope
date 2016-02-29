@@ -43,10 +43,16 @@ public class RedisExportJob extends Configured implements Tool {
 	private String valueName;
 
 	@Option(name="-r", usage="optional key prefix for redis key")
-	private String keyPrefix;
+	private String keyPrefix = "";
 
 	@Option(name="-c", usage="number of reducers, concurrency level")
 	private int numReducer = 2;
+
+	@Option(name="-a", usage="append data to existing keys, only useful for native export of map/list types")
+	boolean append = false;
+
+	@Option(name="-l", usage="pipeline mode for redis client")
+	boolean pipeline = false;
 
 	public int run(String[] args) throws Exception {
 
@@ -85,8 +91,10 @@ public class RedisExportJob extends Configured implements Tool {
 
 		if (valueName.isEmpty()) {
 			job.setMapperClass(RedisFullTableExportMapper.class);
+			RedisOutputFormat.setOutput(conf, redisHost, keyName, keyPrefix, append, pipeline);
 		} else {
 			job.setMapperClass(RedisExportMapper.class);
+			RedisOutputFormat.setOutput(conf, redisHost, keyName, keyPrefix, valueName, append, pipeline);
 			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hCatSchema, valueName);
 		}
 
