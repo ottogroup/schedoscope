@@ -47,12 +47,12 @@ public class RedisStringWritable implements RedisWritable, Writable {
 	}
 
 	@Override
-	public void write(Jedis jedis) {
+	public void write(Jedis jedis, boolean replace) {
 		jedis.set(key.toString(), value.toString());
 	}
 
 	@Override
-	public void write(Pipeline jedis) {
+	public void write(Pipeline jedis, boolean replace) {
 		jedis.set(key.toString(), value.toString());
 	}
 

@@ -33,7 +33,7 @@ public interface RedisWritable {
 	 *
 	 * @param jedis
 	 */
-	public void write(Jedis jedis);
+	public void write(Jedis jedis, boolean replace);
 
 	/**
 	 * Write data back to redis using the
@@ -41,7 +41,7 @@ public interface RedisWritable {
 	 *
 	 * @param jedis
 	 */
-	public void write(Pipeline jedis);
+	public void write(Pipeline jedis, boolean replace);
 
 	/**
 	 * Read data from Redis using the

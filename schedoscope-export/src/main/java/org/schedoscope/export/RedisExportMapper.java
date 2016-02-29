@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
@@ -48,8 +47,6 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 	private String keyPrefix;
 
-	private Boolean append;
-
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
 
@@ -64,7 +61,6 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		valueName = conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME);
 
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
-		append = RedisOutputFormat.getAppend(conf);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -78,10 +74,10 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 		switch(fieldSchema.getCategory()) {
 		case MAP:
-			redisValue = new RedisHashWritable(redisKey.toString(), (Map<String, String>) value.getMap(valueName, schema), append);
+			redisValue = new RedisHashWritable(redisKey.toString(), (Map<String, String>) value.getMap(valueName, schema));
 			break;
 		case ARRAY:
-			redisValue = new RedisListWritable(redisKey.toString(), (List<String>) value.getList(valueName, schema), append);
+			redisValue = new RedisListWritable(redisKey.toString(), (List<String>) value.getList(valueName, schema));
 			break;
 		case PRIMITIVE:
 			redisValue = new RedisStringWritable(redisKey.toString(), value.getString(valueName, schema));
@@ -93,7 +89,7 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 			for (int i = 0; i < structSchema.size(); i++) {
 				structValue.put(new Text(structSchema.get(i).getName()), new Text(vals.get(i)));
 			}
-			redisValue = new RedisHashWritable(redisKey, structValue, new BooleanWritable(false));
+			redisValue = new RedisHashWritable(redisKey, structValue);
 			break;
 		}
 

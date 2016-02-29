@@ -42,7 +42,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 	public static final String REDIS_EXPORT_VALUE_NAME = "redis.export.value.name";
 
-	public static final String REDIS_EXPORT_DATA_APPEND = "redis.export.data.append";
+	public static final String REDIS_EXPORT_VALUE_REPLACE = "redis.export.value.replace";
 
 	public static final String REDIS_EXPORT_KEY_PREFIX = "redis.export.key.prefix";
 
@@ -66,11 +66,13 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 		Jedis jedis = RedisMRJedisFactory.getJedisClient(conf);
 
+		boolean replace = conf.getBoolean(REDIS_EXPORT_VALUE_REPLACE, true);
+
 		if (conf.getBoolean(REDIS_PIPELINE_MODE, false)) {
 			Pipeline pipelinedJedis = jedis.pipelined();
-			return new PipelinedRedisRecordWriter(pipelinedJedis);
+			return new PipelinedRedisRecordWriter(pipelinedJedis, replace);
 		} else {
-			return new RedisRecordWriter(jedis);
+			return new RedisRecordWriter(jedis, replace);
 		}
 	}
 
@@ -111,10 +113,6 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 		}
 	}
 
-	public static Boolean getAppend(Configuration conf) {
-		return conf.getBoolean(REDIS_EXPORT_DATA_APPEND, false);
-	}
-
 	public static String getExportKeyPrefix(Configuration conf) {
 
 		String prefix = conf.get(REDIS_EXPORT_KEY_PREFIX, "");
@@ -127,18 +125,18 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 	public static void setOutput(Configuration conf, String redisHost,
 			String keyName, String keyPrefix, String valueName,
-			boolean append, boolean pipeline) {
+			boolean replace, boolean pipeline) {
 		conf.set(REDIS_CONNECT_STRING, redisHost);
 		conf.set(REDIS_EXPORT_KEY_NAME, keyName);
 		conf.set(REDIS_EXPORT_KEY_PREFIX, keyPrefix);
 		conf.set(REDIS_EXPORT_VALUE_NAME, valueName);
-		conf.setBoolean(REDIS_EXPORT_DATA_APPEND, append);
+		conf.setBoolean(REDIS_EXPORT_VALUE_REPLACE, replace);
 		conf.setBoolean(REDIS_PIPELINE_MODE, pipeline);
 	}
 
 	public static void setOutput(Configuration conf, String redisHost,
-			String keyName, String keyPrefix, boolean append, boolean pipeline) {
-		setOutput(conf, redisHost, keyName, keyPrefix, "", append, pipeline);
+			String keyName, String keyPrefix, boolean replace, boolean pipeline) {
+		setOutput(conf, redisHost, keyName, keyPrefix, "", replace, pipeline);
 	}
 
 	public static Class<?> getRedisWritableClazz(HCatSchema schema, String fieldName) throws IOException {
@@ -167,13 +165,16 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 		private Jedis jedis;
 
-		public RedisRecordWriter(Jedis jedis) {
+		boolean replace;
+
+		public RedisRecordWriter(Jedis jedis, boolean replace) {
 			this.jedis = jedis;
+			this.replace = replace;
 		}
 
 		@Override
 		public void write(K key, V value) {
-			key.write(jedis);
+			key.write(jedis, replace);
 		}
 
 		@Override
@@ -186,13 +187,16 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
 		private Pipeline jedis;
 
-		public PipelinedRedisRecordWriter(Pipeline jedis) {
+		private boolean replace;
+
+		public PipelinedRedisRecordWriter(Pipeline jedis, boolean replace) {
 			this.jedis = jedis;
+			this.replace = replace;
 		}
 
 		@Override
 		public void write(K key, V value) {
-			key.write(jedis);
+			key.write(jedis, replace);
 		}
 
 		@Override

@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.MapWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
@@ -36,48 +35,35 @@ public class RedisHashWritable implements RedisWritable, Writable {
 
 	private MapWritable value;
 
-	private BooleanWritable append;
-
 	public RedisHashWritable() {
 
 		key = new Text();
 		value = new MapWritable();
-		append = new BooleanWritable(false);
-	}
-
-	public RedisHashWritable(String key, Map<String, String> value, Boolean append) {
-
-		this.key = new Text(String.valueOf(key));
-		this.value = toMapWritable(value);
-		this.append = new BooleanWritable(append);
 	}
 
 	public RedisHashWritable(String key, Map<String, String> value) {
-		this(key, value, false);
-	}
 
-	public RedisHashWritable(Text key, MapWritable value, BooleanWritable append) {
-
-		this.key = key;
-		this.value = value;
-		this.append = append;
+		this.key = new Text(String.valueOf(key));
+		this.value = toMapWritable(value);
 	}
 
 	public RedisHashWritable(Text key, MapWritable value) {
-		this(key, value, new BooleanWritable(false));
+
+		this.key = key;
+		this.value = value;
 	}
 
 	@Override
-	public void write(Jedis jedis) {
-		if (!append.get()) {
+	public void write(Jedis jedis, boolean replace) {
+		if (replace) {
 			jedis.del(key.toString());
 		}
 		jedis.hmset(key.toString(), fromMapWritable(value));
 	}
 
 	@Override
-	public void write(Pipeline jedis) {
-		if (!append.get()) {
+	public void write(Pipeline jedis, boolean replace) {
+		if (replace) {
 			jedis.del(key.toString());
 		}
 		jedis.hmset(key.toString(), fromMapWritable(value));
@@ -94,14 +80,12 @@ public class RedisHashWritable implements RedisWritable, Writable {
 	public void write(DataOutput out) throws IOException {
 		key.write(out);
 		value.write(out);
-		append.write(out);
 	}
 
 	@Override
 	public void readFields(DataInput in) throws IOException {
 		key.readFields(in);
 		value.readFields(in);
-		append.readFields(in);
 	}
 
 	private MapWritable toMapWritable(Map<String, String> value) {
