@@ -87,11 +87,6 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 	public static void checkValueType(HCatSchema schema, String fieldName) throws IOException {
 
 		HCatFieldSchema valueType = schema.get(fieldName);
-		HCatFieldSchema.Category valueCat = valueType.getCategory();
-
-		if ((valueCat != HCatFieldSchema.Category.PRIMITIVE) && (valueCat != HCatFieldSchema.Category.MAP) && (valueCat != HCatFieldSchema.Category.ARRAY)) {
-			throw new IllegalArgumentException("value must be one of primitive, list or map type");
-		}
 
 		if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
 			if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
@@ -103,6 +98,16 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 			if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
 				throw new IllegalArgumentException("array element type must be a primitive type");
 			}
+		}
+
+		if (valueType.getCategory() == HCatFieldSchema.Category.STRUCT) {
+			HCatSchema structSchema = valueType.getStructSubSchema();
+			for (HCatFieldSchema f : structSchema.getFields()) {
+				if (f.getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+					throw new IllegalArgumentException("struct element type must be a primitive type");
+				}
+			}
+
 		}
 	}
 

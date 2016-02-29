@@ -153,4 +153,36 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		assertTrue(job.waitForCompletion(true));
 		assertEquals("search_result_display", jedisAdapter.lpop("list_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000036"));
 	}
+
+	@Test
+	public void testRedisStructExport() throws Exception {
+
+		setUpHiveServer("src/test/resources/webtrends_struct_data.txt",
+				"src/test/resources/webtrends_struct.hql",
+				"webtrends_struct");
+
+		final String KEY = "id";
+		final String VALUE = "type";
+
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "struct_export");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
+
+		Class<?> OutputClazz  = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
+
+		Job job = Job.getInstance(conf);
+
+		job.setMapperClass(RedisExportMapper.class);
+		job.setReducerClass(RedisExportReducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(RedisOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(OutputClazz);
+		job.setOutputKeyClass(OutputClazz);
+		job.setOutputValueClass(NullWritable.class);
+
+		assertTrue(job.waitForCompletion(true));
+	}
 }

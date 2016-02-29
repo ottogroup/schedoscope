@@ -67,6 +67,7 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		append = RedisOutputFormat.getAppend(conf);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException  {
 
