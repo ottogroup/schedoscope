@@ -10,19 +10,21 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.schedoscope.export.outputformat.RedisHashWritable;
 import org.schedoscope.export.outputformat.RedisOutputFormat;
 
 public class RedisExportJob extends Configured implements Tool {
 
 	@Option(name="-s", usage="set to true if kerberos is enabled")
-	private boolean isSecured;
+	private boolean isSecured = false;
 
 	@Option(name="-m", usage="specify the metastore URI")
 	private String metaStoreUris;
 
-	@Option(name="-p", usage="the kerberos principal")
+	@Option(name="-p", usage="the kerberos principal", depends={"-s"})
 	private String principal;
 
 	@Option(name="-h", usage="redis host")
@@ -35,24 +37,30 @@ public class RedisExportJob extends Configured implements Tool {
 	private String inputTable;
 
 	@Option(name="-k", usage="key column", required=true)
-	private String key;
+	private String keyName;
 
 	@Option(name="-v", usage="value column, if empty full table export", depends={"-k"})
-	private String value;
+	private String valueName;
 
 	@Option(name="-r", usage="optional key prefix for redis key")
 	private String keyPrefix;
+
+	@Option(name="-c", usage="number of reducers, concurrency level")
+	private int numReducer = 2;
 
 	public int run(String[] args) throws Exception {
 
 		Configuration conf = getConf();
 
 		CmdLineParser cmd = new CmdLineParser(this);
-		if (args.length == 0) {
-			cmd.printUsage(System.err);
-		}
 
-		cmd.parseArgument(args);
+		try {
+			cmd.parseArgument(args);
+		} catch (CmdLineException e) {
+			System.err.println(e.getMessage());
+			cmd.printUsage(System.err);
+			System.exit(1);
+		}
 
 		if (isSecured) {
 
@@ -73,17 +81,23 @@ public class RedisExportJob extends Configured implements Tool {
 		HCatInputFormat.setInput(conf, inputDatabase, inputTable);
 		HCatSchema hCatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
-		Class<?> OutputClaszz  = RedisOutputFormat.getRedisWritableClazz(hCatSchema, value);
+		Class<?> OutputClazz = RedisHashWritable.class;
 
-		job.setMapperClass(RedisExportMapper.class);
+		if (valueName.isEmpty()) {
+			job.setMapperClass(RedisFullTableExportMapper.class);
+		} else {
+			job.setMapperClass(RedisExportMapper.class);
+			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hCatSchema, valueName);
+		}
+
 		job.setReducerClass(RedisExportReducer.class);
-		job.setNumReduceTasks(1);
+		job.setNumReduceTasks(numReducer);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(OutputClaszz);
-		job.setOutputKeyClass(OutputClaszz);
+		job.setMapOutputValueClass(OutputClazz);
+		job.setOutputKeyClass(OutputClazz);
 		job.setOutputValueClass(NullWritable.class);
 
 		boolean success = job.waitForCompletion(true);
@@ -97,7 +111,6 @@ public class RedisExportJob extends Configured implements Tool {
 			System.exit(exitCode);
 		} catch (Exception e) {
 			System.err.println(e.getMessage());
-			System.exit(1);
 		}
 	}
 }
