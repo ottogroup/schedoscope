@@ -108,4 +108,31 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
 		assertTrue(job.waitForCompletion(true));
 		assertEquals("[\"product_listing_display\",\"search_result_display\"]", jedisAdapter.hget("export2_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000036", "type"));
 	}
+
+	@Test
+	public void testRedisFullExport3() throws Exception {
+
+		setUpHiveServer("src/test/resources/webtrends_struct_data.txt",
+				"src/test/resources/webtrends_struct.hql",
+				"webtrends_struct");
+
+		final String KEY = "id";
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export3");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+
+		Job job = Job.getInstance(conf);
+
+		job.setMapperClass(RedisFullTableExportMapper.class);
+		job.setReducerClass(RedisExportReducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(RedisOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(RedisHashWritable.class);
+		job.setOutputKeyClass(RedisHashWritable.class);
+		job.setOutputValueClass(NullWritable.class);
+
+		assertTrue(job.waitForCompletion(true));
+	}
 }
