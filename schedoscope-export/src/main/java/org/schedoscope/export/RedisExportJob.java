@@ -100,7 +100,7 @@ public class RedisExportJob extends Configured implements Tool {
 			}
 		}
 
-		if (valueName.isEmpty()) {
+		if (valueName == null) {
 			RedisOutputFormat.setOutput(conf, redisHost, keyName, keyPrefix, append, pipeline);
 		} else {
 			RedisOutputFormat.setOutput(conf, redisHost, keyName, keyPrefix, valueName, append, pipeline);
@@ -114,7 +114,7 @@ public class RedisExportJob extends Configured implements Tool {
 
 		Class<?> OutputClazz;
 
-		if (valueName.isEmpty()) {
+		if (valueName == null) {
 			job.setMapperClass(RedisFullTableExportMapper.class);
 			OutputClazz = RedisHashWritable.class;
 

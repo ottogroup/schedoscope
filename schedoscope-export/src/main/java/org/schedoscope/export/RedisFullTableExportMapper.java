@@ -59,17 +59,24 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 		Text redisKey = new Text(keyPrefix + value.getString(conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME), schema));
 
 		MapWritable redisValue = new MapWritable();
+		boolean write = false;
 
 		for (String f : schema.getFieldNames()) {
 
 			Object obj = value.get(f, schema);
-			String jsonString = obj.toString();
+			if (obj != null) {
+				String jsonString = obj.toString();
 
-			if (schema.get(f).isComplex()) {
-				jsonString = jsonMapper.writeValueAsString(obj);
+				if (schema.get(f).isComplex()) {
+					jsonString = jsonMapper.writeValueAsString(obj);
+				}
+				redisValue.put(new Text(f), new Text(jsonString));
+				write = true;
 			}
-			redisValue.put(new Text(f), new Text(jsonString));
 		}
-		context.write(redisKey, new RedisHashWritable(redisKey, redisValue));
+
+		if (write) {
+			context.write(redisKey, new RedisHashWritable(redisKey, redisValue));
+		}
 	}
 }

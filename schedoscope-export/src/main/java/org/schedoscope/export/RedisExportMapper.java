@@ -69,30 +69,51 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 		Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
 		RedisWritable redisValue = null;
+		boolean write = false;
 
 		HCatFieldSchema fieldSchema = schema.get(valueName);
 
 		switch(fieldSchema.getCategory()) {
 		case MAP:
-			redisValue = new RedisHashWritable(redisKey.toString(), (Map<String, String>) value.getMap(valueName, schema));
+			Map<String, String> valMap =  (Map<String, String>) value.getMap(valueName, schema);
+			if (valMap != null) {
+				redisValue = new RedisHashWritable(redisKey.toString(), valMap);
+				write = true;
+			}
 			break;
 		case ARRAY:
-			redisValue = new RedisListWritable(redisKey.toString(), (List<String>) value.getList(valueName, schema));
+			List<String> valArray =  (List<String>) value.getList(valueName, schema);
+			if (valArray != null) {
+				redisValue = new RedisListWritable(redisKey.toString(), valArray);
+				write = true;
+			}
 			break;
 		case PRIMITIVE:
-			redisValue = new RedisStringWritable(redisKey.toString(), value.getString(valueName, schema));
+			String valStr = value.getString(valueName, schema);
+			if (valStr != null) {
+				redisValue = new RedisStringWritable(redisKey.toString(), valStr);
+				write = true;
+			}
 			break;
 		case STRUCT:
-			List<String> vals = (List<String>) value.getStruct(valueName, schema);
+			List<String> valStruct = (List<String>) value.getStruct(valueName, schema);
 			HCatSchema structSchema = fieldSchema.getStructSubSchema();
-			MapWritable structValue = new MapWritable();
-			for (int i = 0; i < structSchema.size(); i++) {
-				structValue.put(new Text(structSchema.get(i).getName()), new Text(vals.get(i)));
+			if (valStruct != null) {
+				MapWritable structValue = new MapWritable();
+
+				for (int i = 0; i < structSchema.size(); i++) {
+					if (valStruct.get(i) != null) {
+						structValue.put(new Text(structSchema.get(i).getName()), new Text(valStruct.get(i)));
+						write = true;
+					}
+				}
+				redisValue = new RedisHashWritable(redisKey, structValue);
 			}
-			redisValue = new RedisHashWritable(redisKey, structValue);
 			break;
 		}
 
-		context.write(redisKey, redisValue);
+		if (write) {
+			context.write(redisKey, redisValue);
+		}
 	}
 }
