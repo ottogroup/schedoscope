@@ -108,7 +108,8 @@ public class RedisExportJob extends Configured implements Tool {
 
 		Job job = Job.getInstance(conf, "RedisExport");
 
-		HCatInputFormat.setInput(conf, inputDatabase, inputTable);
+		job.setJarByClass(RedisExportJob.class);
+		HCatInputFormat.setInput(job, inputDatabase, inputTable);
 		HCatSchema hCatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
 		Class<?> OutputClazz;

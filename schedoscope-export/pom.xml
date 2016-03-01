@@ -180,7 +180,8 @@
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.19</version>
 				<configuration>
-					<skipTests>false</skipTests>
+					<!-- <skipTests>false</skipTests> -->
+					<argLine>-XX:MaxPermSize=512m -XX:PermSize=512m</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
