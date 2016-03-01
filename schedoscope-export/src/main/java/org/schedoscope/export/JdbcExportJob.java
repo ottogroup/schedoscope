@@ -28,6 +28,9 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 import org.schedoscope.export.outputformat.JdbcOutputFormat;
 import org.schedoscope.export.outputformat.JdbcOutputWritable;
 import org.schedoscope.export.outputschema.Schema;
@@ -38,19 +41,46 @@ public class JdbcExportJob extends Configured implements Tool {
 
 	private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
 
-	private boolean isSecured;
-	private String metastoreuris;
+	@Option(name="-s", usage="set to true if kerberos is enabled")
+	private boolean isSecured = false;
+
+	@Option(name="-m", usage="specify the metastore URI")
+	private String metaStoreUris;
+
+	@Option(name="-p", usage="the kerberos principal", depends={"-s"})
 	private String principal;
+
+	@Option(name="-j", usage="the jdbc connection string, jdbc:mysql://remote-host:3306/schema", required=true)
 	private String dbConnectionString;
+
+	@Option(name="-u", usage="the database user")
 	private String dbUser;
+
+	@Option(name="-p", usage="the database password")
 	private String dbPassword;
+
+	@Option(name="-d", usage="input database", required=true)
 	private String inputDatabase;
+
+	@Option(name="-t", usage="input table", required=true)
 	private String inputTable;
+
+	@Option(name="-o", usage="output table", required=true)
 	private String outputTable;
+
+	@Option(name="-i", usage="input filter, e.g. \"month='08' and year='2015'\"")
 	private String inputFilter;
+
+	@Option(name="-e", usage="storage engine, either 'InnoDB' or 'MyISAM', works only for MySQL")
 	private String storageEngine;
-	private int outputNumberOfPartitions;
-	private int outputCommitSize;
+
+	@Option(name="-c", usage="number of reducers, concurrency level")
+	private int outputNumberOfPartitions = 2;
+
+	@Option(name="-k", usage="batch size")
+	private int outputCommitSize = 10000;
+
+	@Option(name="-q", usage="job name")
 	private String jobName;
 
 	public int run(String[] args) throws Exception {
@@ -59,10 +89,20 @@ public class JdbcExportJob extends Configured implements Tool {
 
 		args = new GenericOptionsParser(conf, args).getRemainingArgs();
 
-		parseArguments(args);
+		CmdLineParser cmd = new CmdLineParser(this);
+
+		try {
+			cmd.parseArgument(args);
+		} catch (CmdLineException e) {
+			System.err.println(e.getMessage());
+			cmd.printUsage(System.err);
+			System.exit(1);
+		}
+
+		// parseArguments(args);
 
 		conf.set("hive.metastore.local", "false");
-		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metastoreuris);
+		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
 
 		if (isSecured) {
 			conf.setBoolean(
@@ -131,77 +171,4 @@ public class JdbcExportJob extends Configured implements Tool {
 		int exitCode = ToolRunner.run(new JdbcExportJob(), args);
 		System.exit(exitCode);
 	}
-
-	private void parseArguments(String[] args) {
-
-		for (String arg : args) {
-			LOG.info("arg: " + arg);
-		}
-
-		isSecured = Boolean.parseBoolean(args[0]);
-		if (isSecured && args.length == 13) {
-
-			metastoreuris = args[1];
-			principal = args[2];
-			storageEngine = args[3];
-			dbConnectionString = args[4];
-			dbUser = args[5];
-			dbPassword = args[6];
-			inputDatabase = args[7];
-			inputTable = args[8];
-			outputTable = args[7] + "_" + args[8];
-			inputFilter = args[9];
-			outputNumberOfPartitions = Integer.valueOf(args[10]);
-			outputCommitSize = Integer.valueOf(args[11]);
-			jobName = args[12];
-
-		} else if (isSecured && args.length == 12) {
-
-			metastoreuris = args[1];
-			principal = args[2];
-			storageEngine = args[3];
-			dbConnectionString = args[4];
-			dbUser = args[5];
-			dbPassword = args[6];
-			inputDatabase = args[7];
-			inputTable = args[8];
-			outputTable = args[7] + "_" + args[8];
-			outputNumberOfPartitions = Integer.valueOf(args[9]);
-			outputCommitSize = Integer.valueOf(args[10]);
-			jobName = args[11];
-
-		} else if (!isSecured && args.length == 12) {
-
-			metastoreuris = args[1];
-			storageEngine = args[2];
-			dbConnectionString = args[3];
-			dbUser = args[4];
-			dbPassword = args[5];
-			inputDatabase = args[6];
-			inputTable = args[7];
-			outputTable = args[6] + "_" + args[7];
-			inputFilter = args[8];
-			outputNumberOfPartitions = Integer.valueOf(args[9]);
-			outputCommitSize = Integer.valueOf(args[10]);
-			jobName = args[11];
-
-		} else if (!isSecured && args.length == 11) {
-
-			metastoreuris = args[1];
-			storageEngine = args[2];
-			dbConnectionString = args[3];
-			dbUser = args[4];
-			dbPassword = args[5];
-			inputDatabase = args[6];
-			inputTable = args[7];
-			outputTable = args[6] + "_" + args[7];
-			outputNumberOfPartitions = Integer.valueOf(args[8]);
-			outputCommitSize = Integer.valueOf(args[9]);
-			jobName = args[10];
-
-		} else {
-			throw new IllegalArgumentException("Illegal number of arguments");
-		}
-	}
-
 }
