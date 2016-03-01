@@ -43,7 +43,7 @@ trait ViewSchedulingStateMachine {
    * Given the view's current view scheduling state apply a materialize command. This issuer of the command is passed along as an interested listener in the outcome.
    *
    */
-  def materialize(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange, successFlagExists: => Boolean, materializationMode: MaterializeViewMode = DEFAULT, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  def materialize(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode = DEFAULT, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 
   /**
    * Given the view's current view scheduling state apply an invalidate command. This issuer of the command is passed along as an interested listener in the outcome.
@@ -54,19 +54,19 @@ trait ViewSchedulingStateMachine {
    * Apply a NoData report of a dependency to the current scheduling state of a waiting view.
    *
    */
-  def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  def noDataAvailable(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 
   /**
    * Apply a Failed report of a dependency to the current scheduling state of a waiting view.
    *
    */
-  def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  def failed(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 
   /**
    * Apply a Materialized report of a dependency to the current scheduling state of a waiting view.
    *
    */
-  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, successFlagExists: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 
   /**
    * Transition a view in Transforming state given a successful transformation.

@@ -22,12 +22,11 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Checksum.defaultDigest
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
-class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMachine {
+class NoOpIntermediateViewSchedulingStateMachine(successFlagExists: => Boolean, folderEmpty: => Boolean) extends ViewSchedulingStateMachine {
 
   def materialize(
     currentState: ViewSchedulingState,
     listener: PartyInterestedInViewSchedulingStateChange,
-    successFlagExists: => Boolean,
     materializationMode: MaterializeViewMode = DEFAULT,
     currentTime: Long = new Date().getTime) = currentState match {
 
@@ -149,7 +148,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
         ReportInvalidated(currentState.view, Set(issuer))))
   }
 
-  private def leaveWaitingState(currentState: Waiting, setIncomplete: Boolean, setError: Boolean, successFlagExists: => Boolean, currentTime: Long) = currentState match {
+  private def leaveWaitingState(currentState: Waiting, setIncomplete: Boolean, setError: Boolean, currentTime: Long) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -212,7 +211,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
             ReportNoDataAvailable(view, listenersWaitingForMaterialize)))
   }
 
-  def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
+  def noDataAvailable(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -225,7 +224,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       incomplete,
       dependenciesFreshness) =>
       if (dependenciesMaterializing == Set(reportingDependency))
-        leaveWaitingState(currentState, setIncomplete = true, setError = false, successFlagExists = successFlagExists, currentTime)
+        leaveWaitingState(currentState, setIncomplete = true, setError = false, currentTime)
       else
         ResultingViewSchedulingState(
           Waiting(
@@ -241,7 +240,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
             dependenciesFreshness), Set())
   }
 
-  def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
+  def failed(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -254,7 +253,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
       incomplete,
       dependenciesFreshness) =>
       if (dependenciesMaterializing == Set(reportingDependency))
-        leaveWaitingState(currentState, setIncomplete = true, setError = true, successFlagExists = successFlagExists, currentTime)
+        leaveWaitingState(currentState, setIncomplete = true, setError = true, currentTime)
       else
         ResultingViewSchedulingState(
           Waiting(
@@ -270,7 +269,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
             dependenciesFreshness), Set())
   }
 
-  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
+  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -297,7 +296,7 @@ class NoOpIntermediateViewSchedulingStateMachine extends ViewSchedulingStateMach
         Math.max(dependenciesFreshness, transformationTimestamp))
 
       if (dependenciesMaterializing == Set(reportingDependency))
-        leaveWaitingState(updatedWaitingState, setIncomplete = false, setError = false, successFlagExists = successFlagExists, currentTime)
+        leaveWaitingState(updatedWaitingState, setIncomplete = false, setError = false, currentTime)
       else
         ResultingViewSchedulingState(updatedWaitingState, Set())
   }

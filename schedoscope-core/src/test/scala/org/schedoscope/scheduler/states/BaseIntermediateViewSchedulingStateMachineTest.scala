@@ -37,7 +37,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   "An intermediate view in CreatedByViewManager state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = CreatedByViewManager(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Waiting(
           `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
@@ -52,7 +52,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "ask its dependencies to materialize" in new IntermediateView {
     val startState = CreatedByViewManager(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, DEFAULT))
@@ -64,7 +64,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "remember the materialization mode" in new IntermediateView {
     val startState = CreatedByViewManager(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Waiting(
           _, _, _, _, _,
@@ -78,7 +78,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "pass the materialization mode to the dependencies" in new IntermediateView {
     val startState = CreatedByViewManager(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, RESET_TRANSFORMATION_CHECKSUMS))
@@ -100,7 +100,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   "An intermediate view in Invalidated state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = Invalidated(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Waiting(
           `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
@@ -115,7 +115,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "ask its dependencies to materialize" in new IntermediateView {
     val startState = Invalidated(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, DEFAULT))
@@ -127,7 +127,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "remember the materialization mode" in new IntermediateView {
     val startState = Invalidated(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Waiting(
           _, _, _, _, _,
@@ -141,7 +141,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "pass the materialization mode to the dependencies" in new IntermediateView {
     val startState = Invalidated(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, RESET_TRANSFORMATION_CHECKSUMS))
@@ -163,7 +163,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   "An intermediate view in NoData state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = NoData(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Waiting(
           `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
@@ -178,7 +178,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "ask its dependencies to materialize" in new IntermediateView {
     val startState = NoData(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, DEFAULT))
@@ -200,7 +200,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   "An intermediate view in ReadFromSchemaManager state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(
         Waiting(
           `viewUnderTest`, `viewTransformationChecksum`, 10,
@@ -215,7 +215,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "ask its dependencies to materialize" in new IntermediateView {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, DEFAULT))
@@ -227,7 +227,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "remember the materialization mode" in new IntermediateView {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Waiting(
           _, _, _, _, _,
@@ -241,7 +241,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "pass the materialization mode to the dependencies" in new IntermediateView {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, RESET_TRANSFORMATION_CHECKSUMS))
@@ -263,7 +263,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "become Materialized upon materialize if materialize once is set" in new IntermediateView {
     val startState = ReadFromSchemaManager(materializeOnceView, viewTransformationChecksum, 10)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -287,7 +287,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "become Materialized upon materialize if materialize once is set and write transformation checksum if RESET_TRANSFORMATION_CHECKSUMS is set" in new IntermediateView {
     val startState = ReadFromSchemaManager(materializeOnceView, viewTransformationChecksum, 10)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, RESET_TRANSFORMATION_CHECKSUMS, currentTime = 20) match {
+    stateMachine.materialize(startState, dependentView, RESET_TRANSFORMATION_CHECKSUMS, currentTime = 20) match {
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) =>
         s should contain(WriteTransformationCheckum(materializeOnceView))
@@ -299,7 +299,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   "An intermediate view in Materialized state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(
         Waiting(
           `viewUnderTest`, `viewTransformationChecksum`, 10,
@@ -314,7 +314,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "ask its dependencies to materialize" in new IntermediateView {
     val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, DEFAULT))
@@ -326,7 +326,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "remember the materialization mode" in new IntermediateView {
     val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Waiting(
           _, _, _, _, _,
@@ -340,7 +340,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "pass the materialization mode to the dependencies" in new IntermediateView {
     val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
           s should contain(Materialize(d, viewUnderTest, RESET_TRANSFORMATION_CHECKSUMS))
@@ -362,7 +362,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "stay Materialized upon materialize if materialize once is set" in new IntermediateView {
     val startState = Materialized(materializeOnceView, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 20) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -386,7 +386,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
   it should "become Materialized upon materialize if materialize once is set and write transformation checksum if RESET_TRANSFORMATION_CHECKSUMS is set" in new IntermediateView {
     val startState = Materialized(materializeOnceView, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, RESET_TRANSFORMATION_CHECKSUMS, currentTime = 20) match {
+    stateMachine.materialize(startState, dependentView, RESET_TRANSFORMATION_CHECKSUMS, currentTime = 20) match {
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) =>
         s should contain(WriteTransformationCheckum(materializeOnceView))
@@ -401,7 +401,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       viewUnderTest.dependencies.toSet, Set(anotherDependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
 
-    stateMachine.materialize(startState, dependentView, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Waiting(
           `viewUnderTest`, `viewTransformationChecksum`, 10,
@@ -436,7 +436,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       viewUnderTest.dependencies.toSet, Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, successFlagExists = false, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, 20) match {
       case ResultingViewSchedulingState(
         Waiting(
           view,
@@ -460,7 +460,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       viewUnderTest.dependencies.toSet, Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = true, incomplete = true, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, successFlagExists = false, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, 20) match {
       case ResultingViewSchedulingState(
         Waiting(
           view,
@@ -484,7 +484,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
 
-    stateMachine.noDataAvailable(startState, firstDependency, successFlagExists = false, 20) match {
+    stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
         NoData(view),
         s) =>
@@ -501,7 +501,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, successFlagExists = false, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, 20) match {
       case ResultingViewSchedulingState(
         Transforming(
           view,
@@ -527,7 +527,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 15)
 
-    stateMachine.noDataAvailable(startState, firstDependency, successFlagExists = false, 20) match {
+    stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
         Transforming(
           view,
@@ -553,7 +553,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 15)
 
-    stateMachine.noDataAvailable(startState, firstDependency, successFlagExists = false, 20) match {
+    stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -580,7 +580,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 15)
 
-    stateMachine.noDataAvailable(startState, firstDependency, successFlagExists = false, 20) match {
+    stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) =>
         s should contain(
@@ -596,7 +596,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 15)
 
-    stateMachine.noDataAvailable(startState, firstDependency, successFlagExists = false, 20) match {
+    stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) =>
         s should not(contain(
@@ -612,7 +612,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 15)
 
-    stateMachine.noDataAvailable(startState, firstDependency, successFlagExists = false, 20) match {
+    stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) =>
         s should contain(
@@ -628,7 +628,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 5)
 
-    stateMachine.materialized(startState, firstDependency, 5, successFlagExists = false, 20) match {
+    stateMachine.materialized(startState, firstDependency, 5, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -655,7 +655,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       RESET_TRANSFORMATION_CHECKSUMS, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 5)
 
-    stateMachine.materialized(startState, firstDependency, 5, successFlagExists = false, 20) match {
+    stateMachine.materialized(startState, firstDependency, 5, 20) match {
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) =>
         s should contain(WriteTransformationCheckum(viewUnderTest))
@@ -806,7 +806,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 2)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Transforming(
           view, `viewTransformationChecksum`,
@@ -827,7 +827,7 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(dependentView),
       DEFAULT, withErrors = true, incomplete = true, 2)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, successFlagExists = true, currentTime = 10) match {
+    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
         Transforming(
           view,

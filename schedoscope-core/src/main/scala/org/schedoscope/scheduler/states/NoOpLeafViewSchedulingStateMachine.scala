@@ -24,12 +24,11 @@ import org.schedoscope.scheduler.messages.MaterializeViewMode._
 /**
  * This class implements a ViewSchedulingStateMachine for views with NoOp transformations.
  */
-class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
-
+class NoOpLeafViewSchedulingStateMachine(successFlagExists: => Boolean, folderEmpty: => Boolean) extends ViewSchedulingStateMachine {
+  
   def materialize(
     currentState: ViewSchedulingState,
     listener: PartyInterestedInViewSchedulingStateChange,
-    successFlagExists: => Boolean,
     materializationMode: MaterializeViewMode = DEFAULT,
     currentTime: Long = new Date().getTime) = currentState match {
 
@@ -155,11 +154,11 @@ class NoOpLeafViewSchedulingStateMachine extends ViewSchedulingStateMachine {
       Set(
         ReportInvalidated(currentState.view, Set(issuer))))
 
-  def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
+  def noDataAvailable(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime) = ???
 
-  def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
+  def failed(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime) = ???
 
-  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = ???
+  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, currentTime: Long = new Date().getTime) = ???
 
   def transformationSucceeded(currentState: Transforming, currentTime: Long = new Date().getTime) = ???
 

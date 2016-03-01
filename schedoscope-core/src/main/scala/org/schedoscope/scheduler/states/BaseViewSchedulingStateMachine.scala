@@ -156,7 +156,6 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
   def materialize(
     currentState: ViewSchedulingState,
     listener: PartyInterestedInViewSchedulingStateChange,
-    successFlagExists: => Boolean,
     materializationMode: MaterializeViewMode = DEFAULT,
     currentTime: Long = new Date().getTime) = currentState match {
 
@@ -260,7 +259,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
         ReportInvalidated(currentState.view, Set(issuer))))
   }
 
-  def noDataAvailable(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
+  def noDataAvailable(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -289,7 +288,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
             dependenciesFreshness), Set())
   }
 
-  def failed(currentState: Waiting, reportingDependency: View, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
+  def failed(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -318,7 +317,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
             dependenciesFreshness), Set())
   }
 
-  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, successFlagExists: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
+  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
