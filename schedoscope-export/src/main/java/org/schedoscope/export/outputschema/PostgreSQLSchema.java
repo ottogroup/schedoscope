@@ -55,6 +55,7 @@ public class PostgreSQLSchema extends AbstractSchema implements Schema {
 					put("double precision", "double");
 					put("real", "float");
 					put("smallint", "int");
+					put("json", "string");
 				}
 			});
 
