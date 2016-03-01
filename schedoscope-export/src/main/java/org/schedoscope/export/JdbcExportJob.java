@@ -49,7 +49,6 @@ public class JdbcExportJob extends Configured implements Tool {
 	private String outputTable;
 	private String inputFilter;
 	private String storageEngine;
-	private String complexTypeSupport;
 	private int outputNumberOfPartitions;
 	private int outputCommitSize;
 	private String jobName;
@@ -78,7 +77,7 @@ public class JdbcExportJob extends Configured implements Tool {
 			}
 		}
 
-		Job job = Job.getInstance(conf, "JDBCExporter");
+		Job job = Job.getInstance(conf, jobName);
 
 		job.setJarByClass(JdbcExportJob.class);
 		job.setMapperClass(JdbcExportMapper.class);
@@ -106,7 +105,7 @@ public class JdbcExportJob extends Configured implements Tool {
 		JdbcOutputFormat.setOutput(job.getConfiguration(),
 				dbConnectionString, dbUser, dbPassword, outputTable,
 				inputFilter, outputNumberOfPartitions, outputCommitSize,
-				storageEngine, complexTypeSupport, columnNames, columnTypes);
+				storageEngine, columnNames, columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(JdbcOutputFormat.class);
@@ -154,7 +153,7 @@ public class JdbcExportJob extends Configured implements Tool {
 			inputFilter = args[9];
 			outputNumberOfPartitions = Integer.valueOf(args[10]);
 			outputCommitSize = Integer.valueOf(args[11]);
-			complexTypeSupport = args[12];
+			jobName = args[12];
 
 		} else if (isSecured && args.length == 12) {
 
@@ -169,7 +168,7 @@ public class JdbcExportJob extends Configured implements Tool {
 			outputTable = args[7] + "_" + args[8];
 			outputNumberOfPartitions = Integer.valueOf(args[9]);
 			outputCommitSize = Integer.valueOf(args[10]);
-			complexTypeSupport = args[11];
+			jobName = args[11];
 
 		} else if (!isSecured && args.length == 12) {
 
@@ -184,7 +183,7 @@ public class JdbcExportJob extends Configured implements Tool {
 			inputFilter = args[8];
 			outputNumberOfPartitions = Integer.valueOf(args[9]);
 			outputCommitSize = Integer.valueOf(args[10]);
-			complexTypeSupport = args[11];
+			jobName = args[11];
 
 		} else if (!isSecured && args.length == 11) {
 
@@ -198,7 +197,7 @@ public class JdbcExportJob extends Configured implements Tool {
 			outputTable = args[6] + "_" + args[7];
 			outputNumberOfPartitions = Integer.valueOf(args[8]);
 			outputCommitSize = Integer.valueOf(args[9]);
-			complexTypeSupport = args[10];
+			jobName = args[10];
 
 		} else {
 			throw new IllegalArgumentException("Illegal number of arguments");

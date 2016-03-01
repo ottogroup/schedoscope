@@ -73,16 +73,4 @@ public class PostgreSQLSchema extends AbstractSchema implements Schema {
 	public Map<String, String> getPreparedStatementTypeMapping() {
 		return preparedStatementTypeMapping;
 	}
-
-	@Override
-	public String getColumnTypeMappingComplexType() {
-
-		boolean complexTypeSupport = Boolean.parseBoolean(conf.get(JDBC_POSTGRESQL_JSON_SUPPORT));
-
-		if (complexTypeSupport) {
-			return "json";
-		} else {
-			return "text";
-		}
-	}
 }

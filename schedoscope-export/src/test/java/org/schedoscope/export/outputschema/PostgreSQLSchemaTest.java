@@ -39,7 +39,7 @@ public class PostgreSQLSchemaTest {
 	@Before
 	public void setUp() {
 		schema  = new PostgreSQLSchema(conf);
-		schema.setOutput("jdbc:postgresql://localhost:5432/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, null, COLUMN_NAMES, COLUMN_TYPES);
+		schema.setOutput("jdbc:postgresql://localhost:5432/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, COLUMN_NAMES, COLUMN_TYPES);
 
 	}
 
@@ -72,19 +72,6 @@ public class PostgreSQLSchemaTest {
 	public void testGetFilter() {
 		assertEquals(null, schema.getFilter());
 	}
-
-	@Test
-	public void testGetColumnTypeMappingComplexType() {
-		assertEquals("text", schema.getColumnTypeMappingComplexType());
-	}
-
-	@Test
-	public void testGetColumnTypeMappingComplexTypeComplex() {
-		schema  = new PostgreSQLSchema(conf);
-		schema.setOutput("jdbc:postgresql://localhost:5432/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, "true", COLUMN_NAMES, COLUMN_TYPES);
-		assertEquals("json", schema.getColumnTypeMappingComplexType());
-	}
-
 
 	@Test
 	public void testBuildCreateTableStatememt() {

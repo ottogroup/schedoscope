@@ -156,13 +156,13 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends
 			String connectionString, String username, String password,
 			String outputTable, String inputFilter,
 			int outputNumberOfPartitions, int outputCommitSize,
-			String storageEngine, String complexTypeSupport,
+			String storageEngine,
 			String[] columnNames, String[] columnsTypes) throws IOException {
 
 		Schema outputSchema = SchemaFactory.getSchema(connectionString, conf);
 		outputSchema.setOutput(connectionString, username, password,
 				outputTable, inputFilter, outputNumberOfPartitions,
-				outputCommitSize, storageEngine, complexTypeSupport,
+				outputCommitSize, storageEngine,
 				columnNames, columnsTypes);
 
 	}

@@ -96,11 +96,6 @@ abstract public class AbstractSchema implements Schema {
 		return "";
 	};
 
-	@Override
-	public String getColumnTypeMappingComplexType() {
-		return getColumnTypeMapping().get("string");
-	}
-
 	protected String buildCreateTableStatement(String table,
 			String[] columnNames, String[] columnTypes) {
 
@@ -131,7 +126,7 @@ abstract public class AbstractSchema implements Schema {
 	@Override
 	public void setOutput(String connectionString, String username, String password, String outputTable,
 			String inputFilter, int outputNumberOfPartitions, int outputCommitSize, String storageEngine,
-			String complexTypeSupport, String[] columnNames, String[] columnTypes) {
+			String[] columnNames, String[] columnTypes) {
 
 		conf.set(Schema.JDBC_CONNECTION_STRING, connectionString);
 		if (username != null) {
@@ -156,12 +151,6 @@ abstract public class AbstractSchema implements Schema {
 				LOG.warn("invalid storage engine: " + storageEngine + " - default to InnoDB");
 				conf.set(Schema.JDBC_MYSQL_STORAGE_ENGINE, MySQLSchema.JDBC_MYSQL_DEFAULT_STORAGE_ENGINE);
 			}
-		}
-
-		if (complexTypeSupport != null) {
-			conf.set(Schema.JDBC_POSTGRESQL_JSON_SUPPORT, complexTypeSupport);
-		} else {
-			conf.set(Schema.JDBC_POSTGRESQL_JSON_SUPPORT, "false");
 		}
 
 		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES, columnNames);

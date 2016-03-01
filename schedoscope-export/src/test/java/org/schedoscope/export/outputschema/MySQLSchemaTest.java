@@ -40,7 +40,7 @@ public class MySQLSchemaTest {
 	@Before
 	public void setUp() {
 		schema  = new MySQLSchema(conf);
-		schema.setOutput("jdbc:mysql://localhost:3306/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, null, COLUMN_NAMES, COLUMN_TYPES);
+		schema.setOutput("jdbc:mysql://localhost:3306/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, COLUMN_NAMES, COLUMN_TYPES);
 
 	}
 
@@ -98,14 +98,14 @@ public class MySQLSchemaTest {
 	@Test
 	public void testCreateTableSuffixMyISAM() {
 		schema  = new MySQLSchema(conf);
-		schema.setOutput("jdbc:mysql://localhost:3306/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, "MyISAM", null, COLUMN_NAMES, COLUMN_TYPES);
+		schema.setOutput("jdbc:mysql://localhost:3306/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, "MyISAM", COLUMN_NAMES, COLUMN_TYPES);
 		assertEquals(" ENGINE=MyISAM DEFAULT CHARSET=utf8", schema.getCreateTableSuffix());
 	}
 
 	@Test
 	public void testCreateTableSuffixWrongStorageEngine() {
 		schema  = new MySQLSchema(conf);
-		schema.setOutput("jdbc:mysql://localhost:3306/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, "NoEngine", null, COLUMN_NAMES, COLUMN_TYPES);
+		schema.setOutput("jdbc:mysql://localhost:3306/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, "NoEngine", COLUMN_NAMES, COLUMN_TYPES);
 		assertEquals(" ENGINE=InnoDB DEFAULT CHARSET=utf8", schema.getCreateTableSuffix());
 	}
 }
