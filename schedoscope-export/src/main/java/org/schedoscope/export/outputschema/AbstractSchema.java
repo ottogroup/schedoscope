@@ -29,9 +29,6 @@ import org.apache.hadoop.conf.Configuration;
 /**
  * This class provides a couple of functions
  * common to all concrete Schema implementations.
- *
- * @author Otto
- *
  */
 abstract public class AbstractSchema implements Schema {
 

@@ -26,7 +26,6 @@ import org.apache.hadoop.conf.Configuration;
  * to write data into a particular database technology, e.g. mysql,
  * postgresql, etc. It hold information about database connection
  * settings and creates the SQL statements, provides the JDBC connection.
- * @author richter
  *
  */
 public interface Schema {

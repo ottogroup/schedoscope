@@ -21,9 +21,6 @@ import redis.clients.jedis.Pipeline;
 /**
  * The base class for all RedisWritables, takes
  * care of writing data back to redis KV store.
- *
- * @author Otto
- *
  */
 public interface RedisWritable {
 

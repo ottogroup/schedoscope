@@ -20,9 +20,6 @@ import org.apache.hadoop.conf.Configuration;
 /**
  * The SchemaFactory returns a concrete Schema implementation
  * determined by the given JDBC connection string.
- *
- * @author Otto
- *
  */
 public class SchemaFactory {
 
