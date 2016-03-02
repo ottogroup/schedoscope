@@ -22,7 +22,7 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Checksum.defaultDigest
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
-class NoOpIntermediateViewSchedulingStateMachine(successFlagExists: => Boolean, folderEmpty: => Boolean) extends ViewSchedulingStateMachine {
+class NoOpIntermediateViewSchedulingStateMachine(successFlagExists: => Boolean) extends ViewSchedulingStateMachine {
 
   def materialize(
     currentState: ViewSchedulingState,
@@ -301,7 +301,7 @@ class NoOpIntermediateViewSchedulingStateMachine(successFlagExists: => Boolean, 
         ResultingViewSchedulingState(updatedWaitingState, Set())
   }
 
-  def transformationSucceeded(currentState: Transforming, currentTime: Long = new Date().getTime) = ???
+  def transformationSucceeded(currentState: Transforming, folderEmpty: => Boolean, currentTime: Long = new Date().getTime) = ???
 
   def transformationFailed(currentState: Transforming, maxRetries: Int = Schedoscope.settings.retries, currentTime: Long = new Date().getTime) = ???
 

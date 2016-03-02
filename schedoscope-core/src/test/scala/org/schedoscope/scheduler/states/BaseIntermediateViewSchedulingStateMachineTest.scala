@@ -664,13 +664,13 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     }
   }
 
-  "An intermediate view in Transforming state" should "transition to Materialized when getting a transformation succeeded notification" in new IntermediateView {
+  "An intermediate view in Transforming state" should "transition to Materialized when getting a transformation succeeded notification and the folder is not empty" in new IntermediateView {
     val startState = Transforming(
       viewUnderTest, viewTransformationChecksum,
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, 20) match {
+    stateMachine.transformationSucceeded(startState, false, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -691,13 +691,13 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     }
   }
 
-  it should "write a new transformation timestamp" in new IntermediateView {
+  it should "write a new transformation timestamp when the folder is not empty" in new IntermediateView {
     val startState = Transforming(
       viewUnderTest, viewTransformationChecksum,
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, 20) match {
+    stateMachine.transformationSucceeded(startState, false, 20) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           WriteTransformationTimestamp(viewUnderTest, 20))
@@ -706,13 +706,13 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     }
   }
 
-  it should "write a new transformation checksum if it changed" in new IntermediateView {
+  it should "write a new transformation checksum if it changed and the folder is not empty" in new IntermediateView {
     val startState = Transforming(
       viewUnderTest, "outdated checksum",
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, 20) match {
+    stateMachine.transformationSucceeded(startState, false, 20) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           WriteTransformationCheckum(viewUnderTest))
@@ -721,13 +721,13 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     }
   }
 
-  it should "not write a new transformation checksum if it changed" in new IntermediateView {
+  it should "not write a new transformation checksum if it changed and the folder is not empty" in new IntermediateView {
     val startState = Transforming(
       viewUnderTest, viewTransformationChecksum,
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, 20) match {
+    stateMachine.transformationSucceeded(startState, false, 20) match {
       case ResultingViewSchedulingState(_, s) =>
         s should not(contain(
           WriteTransformationCheckum(viewUnderTest)))
@@ -736,13 +736,13 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     }
   }
 
-  it should "propagate error & completeness information upon materialization" in new IntermediateView {
+  it should "propagate error & completeness information upon materialization when the folder is not empty" in new IntermediateView {
     val startState = Transforming(
       viewUnderTest, viewTransformationChecksum,
       Set(dependentView),
       DEFAULT, withErrors = true, incomplete = true, 0)
 
-    stateMachine.transformationSucceeded(startState, 20) match {
+    stateMachine.transformationSucceeded(startState, false, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -795,6 +795,21 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
         s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportFailed(viewUnderTest, Set(DependentView(dependentView))))
+
+      case _ => fail()
+    }
+  }
+
+  it should "transition to and report NoData when getting a transformation succeeded notification but the folder is empty" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, withErrors = false, incomplete = false, 0)
+
+    stateMachine.transformationSucceeded(startState, true, 20) match {
+      case ResultingViewSchedulingState(NoData(view), s) =>
+        view shouldBe viewUnderTest
+        s shouldEqual Set(ReportNoDataAvailable(viewUnderTest, Set(DependentView(dependentView))))
 
       case _ => fail()
     }

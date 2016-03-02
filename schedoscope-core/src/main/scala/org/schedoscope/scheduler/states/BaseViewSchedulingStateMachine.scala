@@ -348,7 +348,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
         ResultingViewSchedulingState(updatedWaitingState, Set())
   }
 
-  def transformationSucceeded(currentState: Transforming, currentTime: Long = new Date().getTime) = currentState match {
+  def transformationSucceeded(currentState: Transforming, folderEmpty: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
     case Transforming(
       view,
       lastTransformationChecksum,
@@ -357,26 +357,32 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       retry) =>
-      ResultingViewSchedulingState(
-        Materialized(
-          view,
-          view.transformation().checksum,
-          currentTime,
-          incomplete,
-          withErrors), {
-          if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS || lastTransformationChecksum != view.transformation().checksum)
-            Set(WriteTransformationCheckum(view))
-          else
-            Set()
-        } ++
+      if (!folderEmpty)
+        ResultingViewSchedulingState(
+          Materialized(
+            view,
+            view.transformation().checksum,
+            currentTime,
+            incomplete,
+            withErrors), {
+            if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS || lastTransformationChecksum != view.transformation().checksum)
+              Set(WriteTransformationCheckum(view))
+            else
+              Set()
+          } ++
+            Set(
+              WriteTransformationTimestamp(view, currentTime),
+              ReportMaterialized(
+                view,
+                listenersWaitingForMaterialize,
+                currentTime,
+                withErrors,
+                incomplete)))
+      else
+        ResultingViewSchedulingState(
+          NoData(view),
           Set(
-            WriteTransformationTimestamp(view, currentTime),
-            ReportMaterialized(
-              view,
-              listenersWaitingForMaterialize,
-              currentTime,
-              withErrors,
-              incomplete)))
+            ReportNoDataAvailable(view, listenersWaitingForMaterialize)))
   }
 
   def transformationFailed(currentState: Transforming, maxRetries: Int = Schedoscope.settings.retries, currentTime: Long = new Date().getTime) = currentState match {

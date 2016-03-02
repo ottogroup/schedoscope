@@ -24,11 +24,11 @@ import test.eci.datahub.ProductBrand
 class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
   trait SuccessFlag {
-    val stateMachine = new NoOpLeafViewSchedulingStateMachine(true, false)
+    val stateMachine = new NoOpLeafViewSchedulingStateMachine(true)
   }
   
   trait NoSuccessFlag {
-    val stateMachine = new NoOpLeafViewSchedulingStateMachine(false, true)
+    val stateMachine = new NoOpLeafViewSchedulingStateMachine(false)
   }
   
   trait NoOpLeafView {
