@@ -138,6 +138,9 @@ abstract public class AbstractSchema implements Schema {
 		}
 
 		if (inputFilter != null && !inputFilter.isEmpty()) {
+			inputFilter = inputFilter.replace(" ", "");
+			inputFilter = inputFilter.replace("'", "");
+			inputFilter = inputFilter.replace("\"", "");
 			conf.set(Schema.JDBC_INPUT_FILTER, inputFilter);
 		}
 

@@ -99,8 +99,6 @@ public class JdbcExportJob extends Configured implements Tool {
 			System.exit(1);
 		}
 
-		// parseArguments(args);
-
 		conf.set("hive.metastore.local", "false");
 		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
 
