@@ -93,7 +93,12 @@ public class JdbcExportMapper extends
 
 		}
 
-		output.append(inputFilter);
+		if (inputFilter == null) {
+			output.append("NULL");
+		}
+		else {
+			output.append(inputFilter);
+		}
 		context.write(new Text(output.toString()), NullWritable.get());
 
 	}
