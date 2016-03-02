@@ -36,6 +36,8 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
 	private HCatSchema schema;
 
+	private String keyName;
+
 	private String keyPrefix;
 
 	private ObjectMapper jsonMapper;
@@ -50,13 +52,15 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 		jsonMapper = new ObjectMapper();
 
 		RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+
+		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
 	}
 
 	@Override
 	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException {
 
-		Text redisKey = new Text(keyPrefix + value.getString(conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME), schema));
+		Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
 
 		MapWritable redisValue = new MapWritable();
 		boolean write = false;
@@ -65,10 +69,12 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
 			Object obj = value.get(f, schema);
 			if (obj != null) {
-				String jsonString = obj.toString();
+				String jsonString;
 
 				if (schema.get(f).isComplex()) {
 					jsonString = jsonMapper.writeValueAsString(obj);
+				} else {
+					jsonString = obj.toString();
 				}
 				redisValue.put(new Text(f), new Text(jsonString));
 				write = true;

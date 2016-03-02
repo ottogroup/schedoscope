@@ -23,7 +23,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.util.GenericOptionsParser;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
@@ -75,19 +74,14 @@ public class JdbcExportJob extends Configured implements Tool {
 	private String distributedBy;
 
 	@Option(name="-c", usage="number of reducers, concurrency level")
-	private int outputNumberOfPartitions = 2;
+	private int numReducer = 2;
 
 	@Option(name="-k", usage="batch size")
-	private int outputCommitSize = 10000;
-
-	@Option(name="-q", usage="job name")
-	private String jobName;
+	private int commitSize = 10000;
 
 	public int run(String[] args) throws Exception {
 
-		Configuration conf = getConf();
-
-		args = new GenericOptionsParser(conf, args).getRemainingArgs();
+		// args = new GenericOptionsParser(conf, args).getRemainingArgs();
 
 		CmdLineParser cmd = new CmdLineParser(this);
 
@@ -99,52 +93,87 @@ public class JdbcExportJob extends Configured implements Tool {
 			System.exit(1);
 		}
 
+		Job job = configure();
+		boolean success = job.waitForCompletion(true);
+
+		if (success) {
+			JdbcOutputFormat.finalizeOutput(job.getConfiguration());
+		} else {
+			JdbcOutputFormat.rollback(job.getConfiguration());
+		}
+		return (success ? 0 : 1);
+	}
+
+	public Job configure(boolean isSecured,
+						String metaStoreUris,
+						String principal,
+						String dbConnectionString,
+						String dbUser,
+						String dbPassword,
+						String inputDatabase,
+						String inputTable,
+						String inputFilter,
+						String storageEngine,
+						String distributedBy,
+						int numReducer,
+						int commitSize) throws Exception {
+
+		this.isSecured = isSecured;
+		this.metaStoreUris = metaStoreUris;
+		this.principal = principal;
+		this.dbConnectionString = dbConnectionString;
+		this.dbUser = dbUser;
+		this.dbPassword = dbPassword;
+		this.inputDatabase = inputDatabase;
+		this.inputTable = inputTable;
+		this.storageEngine = storageEngine;
+		this.distributedBy = distributedBy;
+		this.numReducer = numReducer;
+		this.commitSize = commitSize;
+		return configure();
+	}
+
+	public Job configure() throws Exception {
+
+		Configuration conf = getConf();
+
 		String outputTable = inputDatabase + "_" + inputTable;
 
 		conf.set("hive.metastore.local", "false");
 		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
 
 		if (isSecured) {
-			conf.setBoolean(
-					HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
-					principal);
+			conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
 
 			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary",
-						System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-
+				conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
 			}
 		}
 
-		Job job = Job.getInstance(conf, jobName);
+		Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(JdbcExportJob.class);
 		job.setMapperClass(JdbcExportMapper.class);
 		job.setReducerClass(JdbcExportReducer.class);
-		job.setNumReduceTasks(outputNumberOfPartitions);
+		job.setNumReduceTasks(numReducer);
 
 		if (inputFilter == null || inputFilter.trim().equals("")) {
 			HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
 		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable,
-					inputFilter);
+			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
 		}
 
-		Schema outputSchema = SchemaFactory.getSchema(dbConnectionString,
-				job.getConfiguration());
-		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job
-				.getConfiguration());
+		Schema outputSchema = SchemaFactory.getSchema(dbConnectionString, job.getConfiguration());
+		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
-		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(
-				hcatInputSchema, outputSchema);
-		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(
-				hcatInputSchema, outputSchema);
+		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(hcatInputSchema, outputSchema);
+		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema);
 
 		JdbcOutputFormat.setOutput(job.getConfiguration(),
 				dbConnectionString, dbUser, dbPassword, outputTable,
-				inputFilter, outputNumberOfPartitions, outputCommitSize,
+				inputFilter, numReducer, commitSize,
 				storageEngine, distributedBy, columnNames, columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
@@ -155,15 +184,7 @@ public class JdbcExportJob extends Configured implements Tool {
 		job.setOutputKeyClass(JdbcOutputWritable.class);
 		job.setOutputValueClass(NullWritable.class);
 
-		boolean success = job.waitForCompletion(true);
-
-		if (success) {
-			JdbcOutputFormat.finalizeOutput(job.getConfiguration());
-		} else {
-			JdbcOutputFormat.rollback(job.getConfiguration());
-		}
-
-		return (success ? 0 : 1);
+		return job;
 	}
 
 	public static void main(String[] args) throws Exception {

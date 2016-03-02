@@ -64,14 +64,13 @@ public class RedisExportJob extends Configured implements Tool {
 	private int numReducer = 2;
 
 	@Option(name="-a", usage="append data to existing keys, only useful for native export of map/list types")
-	boolean append = false;
+	boolean replace = false;
 
 	@Option(name="-l", usage="pipeline mode for redis client")
 	boolean pipeline = false;
 
-	public int run(String[] args) throws Exception {
 
-		Configuration conf = getConf();
+	public int run(String[] args) throws Exception {
 
 		CmdLineParser cmd = new CmdLineParser(this);
 
@@ -83,24 +82,56 @@ public class RedisExportJob extends Configured implements Tool {
 			System.exit(1);
 		}
 
+		Job job = configure();
+		boolean success = job.waitForCompletion(true);
+		return (success ? 0 : 1);
+	}
+
+	public Job configure(boolean isSecured,
+						String metaStoreUris,
+						String principal,
+						String redisHost,
+						String inputDatabase,
+						String inputTable,
+						String keyName,
+						String valueName,
+						String keyPrefix,
+						int numReducer,
+						boolean append,
+						boolean pipeline) throws Exception {
+
+		this.isSecured = isSecured;
+		this.metaStoreUris = metaStoreUris;
+		this.principal = principal;
+		this.redisHost = redisHost;
+		this.inputDatabase = inputDatabase;
+		this.inputTable = inputTable;
+		this.keyName = keyName;
+		this.valueName = valueName;
+		this.numReducer = numReducer;
+		this.replace = append;
+		this.pipeline = pipeline;
+		return configure();
+	}
+
+	public Job configure() throws Exception {
+
+		Configuration conf = getConf();
+
 		conf.set("hive.metastore.local", "false");
 		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
 
 		if (isSecured) {
 
-			conf.setBoolean(
-					HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
-					principal);
+			conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
 
 			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary",
-						System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-
+				conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
 			}
 		}
 
-		Job job = Job.getInstance(conf, "RedisExport");
+		Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(RedisExportJob.class);
 		HCatInputFormat.setInput(job, inputDatabase, inputTable);
@@ -109,12 +140,12 @@ public class RedisExportJob extends Configured implements Tool {
 		Class<?> OutputClazz;
 
 		if (valueName == null) {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, append, pipeline);
+			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, replace, pipeline);
 			job.setMapperClass(RedisFullTableExportMapper.class);
 			OutputClazz = RedisHashWritable.class;
 
 		} else {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, valueName, append, pipeline);
+			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, valueName, replace, pipeline);
 			job.setMapperClass(RedisExportMapper.class);
 			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hCatSchema, valueName);
 		}
@@ -128,10 +159,7 @@ public class RedisExportJob extends Configured implements Tool {
 		job.setMapOutputValueClass(OutputClazz);
 		job.setOutputKeyClass(OutputClazz);
 		job.setOutputValueClass(NullWritable.class);
-
-		boolean success = job.waitForCompletion(true);
-
-		return (success ? 0 : 1);
+		return job;
 	}
 
 	public static void main(String[] args) throws Exception {
