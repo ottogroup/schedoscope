@@ -56,7 +56,7 @@ public class JdbcExportJob extends Configured implements Tool {
 	@Option(name="-u", usage="the database user")
 	private String dbUser;
 
-	@Option(name="-p", usage="the database password")
+	@Option(name="-w", usage="the database password")
 	private String dbPassword;
 
 	@Option(name="-d", usage="input database", required=true)
@@ -64,9 +64,6 @@ public class JdbcExportJob extends Configured implements Tool {
 
 	@Option(name="-t", usage="input table", required=true)
 	private String inputTable;
-
-	@Option(name="-o", usage="output table", required=true)
-	private String outputTable;
 
 	@Option(name="-i", usage="input filter, e.g. \"month='08' and year='2015'\"")
 	private String inputFilter;
@@ -98,6 +95,8 @@ public class JdbcExportJob extends Configured implements Tool {
 			cmd.printUsage(System.err);
 			System.exit(1);
 		}
+
+		String outputTable = inputDatabase + "_" + inputTable;
 
 		conf.set("hive.metastore.local", "false");
 		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
@@ -165,8 +164,12 @@ public class JdbcExportJob extends Configured implements Tool {
 	}
 
 	public static void main(String[] args) throws Exception {
-
-		int exitCode = ToolRunner.run(new JdbcExportJob(), args);
-		System.exit(exitCode);
+		try {
+			int exitCode = ToolRunner.run(new JdbcExportJob(), args);
+			System.exit(exitCode);
+		} catch (Exception e) {
+			LOG.error(e.getMessage());
+			System.exit(1);
+		}
 	}
 }
