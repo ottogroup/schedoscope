@@ -39,7 +39,7 @@ public class PostgreSQLSchemaTest {
 	@Before
 	public void setUp() {
 		schema  = new PostgreSQLSchema(conf);
-		schema.setOutput("jdbc:postgresql://localhost:5432/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, COLUMN_NAMES, COLUMN_TYPES);
+		schema.setOutput("jdbc:postgresql://localhost:5432/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, null, COLUMN_NAMES, COLUMN_TYPES);
 
 	}
 

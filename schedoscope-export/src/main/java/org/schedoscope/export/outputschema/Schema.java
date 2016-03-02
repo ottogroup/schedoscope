@@ -43,6 +43,7 @@ public interface Schema {
 	public static final String JDBC_OUTPUT_COLUMN_NAMES = "jdbc.output.column.names";
 	public static final String JDBC_OUTPUT_COLUMN_TYPES = "jdbc.output.column.types";
 	public static final String JDBC_MYSQL_STORAGE_ENGINE = "jdbc.mysql.storage.engine";
+	public static final String JDBC_EXASOL_DISTRIBUTED_CLAUSE = "jdbc.exasol.distributed.clause";
 
 	/**
 	 * Initializes a {@link Schema} with the given
@@ -62,7 +63,7 @@ public interface Schema {
 			String username, String password, String outputTable,
 			String inputFilter, int outputNumberOfPartitions,
 			int outputCommitSize, String storageEngine,
-			String[] columnNames, String[] columnsTypes);
+			String distributedBy, String[] columnNames, String[] columnsTypes);
 
 	/**
 	 * Returns the table name.

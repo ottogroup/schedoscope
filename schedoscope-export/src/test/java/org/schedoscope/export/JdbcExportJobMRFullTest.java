@@ -74,7 +74,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 				hcatInputSchema, outputSchema);
 
 		JdbcOutputFormat.setOutput(job.getConfiguration(), CONNECTION_STRING, null, null, "testing", null,
-				NUM_PARTITIONS, 10000, null, columnNames, columnTypes);
+				NUM_PARTITIONS, 10000, null, null, columnNames, columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(JdbcOutputFormat.class);

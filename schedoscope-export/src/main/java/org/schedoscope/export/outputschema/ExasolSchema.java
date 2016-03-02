@@ -72,4 +72,13 @@ public class ExasolSchema extends AbstractSchema implements Schema {
 	public Map<String, String> getPreparedStatementTypeMapping() {
 		return preparedStatementTypeMapping;
 	}
+
+	@Override
+	protected String getDistributedByClause() {
+		if (conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE) != null) {
+			return new String("DISTRIBUTED BY " + conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE + "\n"));
+		} else {
+			return "";
+		}
+	}
 }

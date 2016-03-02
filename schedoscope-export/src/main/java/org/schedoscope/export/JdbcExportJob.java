@@ -71,6 +71,9 @@ public class JdbcExportJob extends Configured implements Tool {
 	@Option(name="-e", usage="storage engine, either 'InnoDB' or 'MyISAM', works only for MySQL")
 	private String storageEngine;
 
+	@Option(name="-x", usage="columns to use for the 'DISTRIBUTED BY' clause, only Exasol")
+	private String distributedBy;
+
 	@Option(name="-c", usage="number of reducers, concurrency level")
 	private int outputNumberOfPartitions = 2;
 
@@ -142,7 +145,7 @@ public class JdbcExportJob extends Configured implements Tool {
 		JdbcOutputFormat.setOutput(job.getConfiguration(),
 				dbConnectionString, dbUser, dbPassword, outputTable,
 				inputFilter, outputNumberOfPartitions, outputCommitSize,
-				storageEngine, columnNames, columnTypes);
+				storageEngine, distributedBy, columnNames, columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(JdbcOutputFormat.class);

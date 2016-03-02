@@ -43,7 +43,7 @@ public class DerbySchemaTest {
 	@Before
 	public void setUp() {
 		schema = new DerbySchema(conf);
-		schema.setOutput("jdbc:derby:memory:TestingDB;create=true", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, COLUMN_NAMES, COLUMN_TYPES);
+		schema.setOutput("jdbc:derby:memory:TestingDB;create=true", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS, COMMIT_SIZE, null, null, COLUMN_NAMES, COLUMN_TYPES);
 	}
 
 	@Test
