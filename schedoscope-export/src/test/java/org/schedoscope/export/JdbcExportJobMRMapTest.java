@@ -98,7 +98,7 @@ public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
 	}
 
 	@Test
-	public void testReducer() throws IOException{
+	public void testReducerWrongInput() throws IOException{
 
 		// input data
 		Text key = new Text("1\ttest");
@@ -107,10 +107,7 @@ public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
 
 		reduceDriver.withInput(key, values);
 		List<Pair<JdbcOutputWritable, NullWritable>> out = reduceDriver.run();
-		// assertEquals(10, out.size());
-
-		//JdbcOutputWritable outWritable = out.get(0).getFirst();
-		// assertNotNull(outWritable);
+		assertEquals(0, out.size());
 	}
 }
 
