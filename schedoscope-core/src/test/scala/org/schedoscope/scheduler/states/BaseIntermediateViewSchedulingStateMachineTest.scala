@@ -706,6 +706,21 @@ class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     }
   }
 
+  it should "touch a _SUCCESS flag when the folder is not empty" in new IntermediateView {
+    val startState = Transforming(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, withErrors = false, incomplete = false, 0)
+
+    stateMachine.transformationSucceeded(startState, false, 20) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          TouchSuccessFlag(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+  
   it should "write a new transformation checksum if it changed and the folder is not empty" in new IntermediateView {
     val startState = Transforming(
       viewUnderTest, "outdated checksum",

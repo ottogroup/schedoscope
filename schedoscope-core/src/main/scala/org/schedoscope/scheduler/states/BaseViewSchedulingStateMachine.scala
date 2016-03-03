@@ -372,6 +372,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
           } ++
             Set(
               WriteTransformationTimestamp(view, currentTime),
+              TouchSuccessFlag(view),
               ReportMaterialized(
                 view,
                 listenersWaitingForMaterialize,
