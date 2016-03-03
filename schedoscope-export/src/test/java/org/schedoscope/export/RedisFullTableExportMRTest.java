@@ -38,101 +38,101 @@ import org.schedoscope.export.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
 
 @RunWith(PowerMockRunner.class)
-@PowerMockIgnore({"javax.*", "org.apache.*", "com.*", "org.mortbay.*", "org.xml.*", "org.w3c.*"})
+@PowerMockIgnore({ "javax.*", "org.apache.*", "com.*", "org.mortbay.*", "org.xml.*", "org.w3c.*" })
 @PrepareForTest(RedisMRJedisFactory.class)
 public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
 
-	JedisAdapter jedisAdapter;
+    JedisAdapter jedisAdapter;
 
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-		jedisAdapter = new JedisAdapter();
-		PowerMockito.mockStatic(RedisMRJedisFactory.class);
-		when(RedisMRJedisFactory.getJedisClient(any(Configuration.class))).thenReturn(jedisAdapter);
-	}
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        jedisAdapter = new JedisAdapter();
+        PowerMockito.mockStatic(RedisMRJedisFactory.class);
+        when(RedisMRJedisFactory.getJedisClient(any(Configuration.class))).thenReturn(jedisAdapter);
+    }
 
-	@Test
-	public void testRedisFullExport1() throws Exception {
+    @Test
+    public void testRedisFullExport1() throws Exception {
 
-		setUpHiveServer("src/test/resources/ogm_event_features_data.txt",
-				"src/test/resources/ogm_event_features.hql",
-				"ogm_event_features");
+        setUpHiveServer("src/test/resources/ogm_event_features_data.txt", "src/test/resources/ogm_event_features.hql",
+                "ogm_event_features");
 
-		final String KEY = "visitor_id";
-		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export1");
-		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+        final String KEY = "visitor_id";
+        conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export1");
+        conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 
-		Job job = Job.getInstance(conf);
+        Job job = Job.getInstance(conf);
 
-		job.setMapperClass(RedisFullTableExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
-		job.setNumReduceTasks(1);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(RedisOutputFormat.class);
+        job.setMapperClass(RedisFullTableExportMapper.class);
+        job.setReducerClass(RedisExportReducer.class);
+        job.setNumReduceTasks(1);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(RedisOutputFormat.class);
 
-		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(RedisHashWritable.class);
-		job.setOutputKeyClass(RedisHashWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(RedisHashWritable.class);
+        job.setOutputKeyClass(RedisHashWritable.class);
+        job.setOutputValueClass(NullWritable.class);
 
-		assertTrue(job.waitForCompletion(true));
-		assertEquals("2016-02-09T12:21:24.581+01:00", jedisAdapter.hget("export1_0000e5da-0c7f-43d4-ba63-c7cd74eca7f6", "created_at"));
-		assertEquals("{\"a817\":3,\"a91\":3,\"a942\":3,\"a239\":3,\"a751\":3,\"a674\":3}", jedisAdapter.hget("export1_000202f5-6f6a-47af-b7aa-6c9b371dc87c", "uri_path_hashed_count"));
-	}
+        assertTrue(job.waitForCompletion(true));
+        assertEquals("2016-02-09T12:21:24.581+01:00",
+                jedisAdapter.hget("export1_0000e5da-0c7f-43d4-ba63-c7cd74eca7f6", "created_at"));
+        assertEquals("{\"a817\":3,\"a91\":3,\"a942\":3,\"a239\":3,\"a751\":3,\"a674\":3}",
+                jedisAdapter.hget("export1_000202f5-6f6a-47af-b7aa-6c9b371dc87c", "uri_path_hashed_count"));
+    }
 
-	@Test
-	public void testRedisFullExport2() throws Exception {
+    @Test
+    public void testRedisFullExport2() throws Exception {
 
-		setUpHiveServer("src/test/resources/webtrends_event_data.txt",
-				"src/test/resources/webtrends_event.hql",
-				"webtrends_event");
+        setUpHiveServer("src/test/resources/webtrends_event_data.txt", "src/test/resources/webtrends_event.hql",
+                "webtrends_event");
 
-		final String KEY = "id";
-		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export2");
-		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+        final String KEY = "id";
+        conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export2");
+        conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 
-		Job job = Job.getInstance(conf);
+        Job job = Job.getInstance(conf);
 
-		job.setMapperClass(RedisFullTableExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
-		job.setNumReduceTasks(1);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(RedisOutputFormat.class);
+        job.setMapperClass(RedisFullTableExportMapper.class);
+        job.setReducerClass(RedisExportReducer.class);
+        job.setNumReduceTasks(1);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(RedisOutputFormat.class);
 
-		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(RedisHashWritable.class);
-		job.setOutputKeyClass(RedisHashWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(RedisHashWritable.class);
+        job.setOutputKeyClass(RedisHashWritable.class);
+        job.setOutputValueClass(NullWritable.class);
 
-		assertTrue(job.waitForCompletion(true));
-		assertEquals("[\"product_listing_display\",\"search_result_display\"]", jedisAdapter.hget("export2_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000036", "type"));
-	}
+        assertTrue(job.waitForCompletion(true));
+        assertEquals("[\"product_listing_display\",\"search_result_display\"]", jedisAdapter
+                .hget("export2_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000036", "type"));
+    }
 
-	@Test
-	public void testRedisFullExport3() throws Exception {
+    @Test
+    public void testRedisFullExport3() throws Exception {
 
-		setUpHiveServer("src/test/resources/webtrends_struct_data.txt",
-				"src/test/resources/webtrends_struct.hql",
-				"webtrends_struct");
+        setUpHiveServer("src/test/resources/webtrends_struct_data.txt", "src/test/resources/webtrends_struct.hql",
+                "webtrends_struct");
 
-		final String KEY = "id";
-		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export3");
-		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+        final String KEY = "id";
+        conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "export3");
+        conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 
-		Job job = Job.getInstance(conf);
+        Job job = Job.getInstance(conf);
 
-		job.setMapperClass(RedisFullTableExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
-		job.setNumReduceTasks(1);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(RedisOutputFormat.class);
+        job.setMapperClass(RedisFullTableExportMapper.class);
+        job.setReducerClass(RedisExportReducer.class);
+        job.setNumReduceTasks(1);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(RedisOutputFormat.class);
 
-		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(RedisHashWritable.class);
-		job.setOutputKeyClass(RedisHashWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(RedisHashWritable.class);
+        job.setOutputKeyClass(RedisHashWritable.class);
+        job.setOutputValueClass(NullWritable.class);
 
-		assertTrue(job.waitForCompletion(true));
-	}
+        assertTrue(job.waitForCompletion(true));
+    }
 }

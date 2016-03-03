@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export;
 
 import java.io.IOException;
@@ -30,59 +31,64 @@ import org.schedoscope.export.outputformat.RedisOutputFormat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * A mapper to read a full Hive table via HCatalog and emits a RedisWritable containing
+ * all columns and values as pairs.
+ */
 public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisHashWritable> {
 
-	private Configuration conf;
+    private Configuration conf;
 
-	private HCatSchema schema;
+    private HCatSchema schema;
 
-	private String keyName;
+    private String keyName;
 
-	private String keyPrefix;
+    private String keyPrefix;
 
-	private ObjectMapper jsonMapper;
+    private ObjectMapper jsonMapper;
 
-	@Override
-	protected void setup(Context context) throws IOException, InterruptedException {
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
 
-		super.setup(context);
-		conf = context.getConfiguration();
-		schema = HCatInputFormat.getTableSchema(conf);
+        super.setup(context);
+        conf = context.getConfiguration();
+        schema = HCatInputFormat.getTableSchema(conf);
 
-		jsonMapper = new ObjectMapper();
+        jsonMapper = new ObjectMapper();
 
-		RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+        RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
 
-		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
-		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
-	}
+        keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
+        keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
+    }
 
-	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value, Context context) throws IOException, InterruptedException {
+    @Override
+    protected void map(WritableComparable<?> key, HCatRecord value, Context context)
+            throws IOException, InterruptedException {
 
-		Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
+        Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
 
-		MapWritable redisValue = new MapWritable();
-		boolean write = false;
+        MapWritable redisValue = new MapWritable();
+        boolean write = false;
 
-		for (String f : schema.getFieldNames()) {
+        for (String f : schema.getFieldNames()) {
 
-			Object obj = value.get(f, schema);
-			if (obj != null) {
-				String jsonString;
+            Object obj = value.get(f, schema);
+            if (obj != null) {
+                String jsonString;
 
-				if (schema.get(f).isComplex()) {
-					jsonString = jsonMapper.writeValueAsString(obj);
-				} else {
-					jsonString = obj.toString();
-				}
-				redisValue.put(new Text(f), new Text(jsonString));
-				write = true;
-			}
-		}
+                if (schema.get(f).isComplex()) {
+                    jsonString = jsonMapper.writeValueAsString(obj);
+                } else {
+                    jsonString = obj.toString();
+                }
+                redisValue.put(new Text(f), new Text(jsonString));
+                write = true;
+            }
+        }
 
-		if (write) {
-			context.write(redisKey, new RedisHashWritable(redisKey, redisValue));
-		}
-	}
+        if (write) {
+            context.write(redisKey, new RedisHashWritable(redisKey, redisValue));
+        }
+    }
 }

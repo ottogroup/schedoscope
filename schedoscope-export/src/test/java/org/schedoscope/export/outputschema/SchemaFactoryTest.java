@@ -23,87 +23,87 @@ import org.junit.Test;
 
 public class SchemaFactoryTest {
 
-	private static final String EXASOL_CONNECT_STRING = "jdbc:exa:10.15.101.11..13:8563;schema=XXXX";
-	private static final String DERBY_CONNECT_STRING = "jdbc:derby:memory:TestingDB";
-	private static final String MYSQL_CONNECT_STRING = "jdbc:mysql://remotehost/nonexistent";
-	private static final String POSTGRESQL_CONNECT_STRING = "jdbc:postgresql://remotehost/notavailable";
+    private static final String EXASOL_CONNECT_STRING = "jdbc:exa:10.15.101.11..13:8563;schema=XXXX";
+    private static final String DERBY_CONNECT_STRING = "jdbc:derby:memory:TestingDB";
+    private static final String MYSQL_CONNECT_STRING = "jdbc:mysql://remotehost/nonexistent";
+    private static final String POSTGRESQL_CONNECT_STRING = "jdbc:postgresql://remotehost/notavailable";
 
-	Configuration conf = new Configuration();
+    Configuration conf = new Configuration();
 
-	@Test
-	public void testGetDerbySchemaByConf() {
-		conf.set(Schema.JDBC_CONNECTION_STRING, DERBY_CONNECT_STRING);
-		Schema schema = SchemaFactory.getSchema(conf);
-		assertThat(schema, instanceOf(DerbySchema.class));
-	}
+    @Test
+    public void testGetDerbySchemaByConf() {
+        conf.set(Schema.JDBC_CONNECTION_STRING, DERBY_CONNECT_STRING);
+        Schema schema = SchemaFactory.getSchema(conf);
+        assertThat(schema, instanceOf(DerbySchema.class));
+    }
 
-	@Test
-	public void testGetDerbySchemaByString() {
-		Schema schema = SchemaFactory.getSchema(DERBY_CONNECT_STRING, conf);
-		assertThat(schema, instanceOf(DerbySchema.class));
-	}
+    @Test
+    public void testGetDerbySchemaByString() {
+        Schema schema = SchemaFactory.getSchema(DERBY_CONNECT_STRING, conf);
+        assertThat(schema, instanceOf(DerbySchema.class));
+    }
 
-	@Test
-	public void testGetExasolSchemaByConf() {
-		conf.set(Schema.JDBC_CONNECTION_STRING, EXASOL_CONNECT_STRING);
-		Schema schema = SchemaFactory.getSchema(conf);
-		assertThat(schema, instanceOf(ExasolSchema.class));
-	}
+    @Test
+    public void testGetExasolSchemaByConf() {
+        conf.set(Schema.JDBC_CONNECTION_STRING, EXASOL_CONNECT_STRING);
+        Schema schema = SchemaFactory.getSchema(conf);
+        assertThat(schema, instanceOf(ExasolSchema.class));
+    }
 
-	@Test
-	public void testGetExasolSchemaByString() {
-		Schema schema = SchemaFactory.getSchema(EXASOL_CONNECT_STRING, conf);
-		assertThat(schema, instanceOf(ExasolSchema.class));
-	}
+    @Test
+    public void testGetExasolSchemaByString() {
+        Schema schema = SchemaFactory.getSchema(EXASOL_CONNECT_STRING, conf);
+        assertThat(schema, instanceOf(ExasolSchema.class));
+    }
 
-	@Test
-	public void testGetMySQLSchemaByConf() {
-		conf.set(Schema.JDBC_CONNECTION_STRING, MYSQL_CONNECT_STRING);
-		Schema schema = SchemaFactory.getSchema(conf);
-		assertThat(schema, instanceOf(MySQLSchema.class));
-	}
+    @Test
+    public void testGetMySQLSchemaByConf() {
+        conf.set(Schema.JDBC_CONNECTION_STRING, MYSQL_CONNECT_STRING);
+        Schema schema = SchemaFactory.getSchema(conf);
+        assertThat(schema, instanceOf(MySQLSchema.class));
+    }
 
-	@Test
-	public void testGetMySQLSchemaByString() {
-		Schema schema = SchemaFactory.getSchema(MYSQL_CONNECT_STRING, conf);
-		assertThat(schema, instanceOf(MySQLSchema.class));
-	}
+    @Test
+    public void testGetMySQLSchemaByString() {
+        Schema schema = SchemaFactory.getSchema(MYSQL_CONNECT_STRING, conf);
+        assertThat(schema, instanceOf(MySQLSchema.class));
+    }
 
-	@Test
-	public void testGetPostgreSQLSchemaByConf() {
-		conf.set(Schema.JDBC_CONNECTION_STRING, POSTGRESQL_CONNECT_STRING);
-		Schema schema = SchemaFactory.getSchema(conf);
-		assertThat(schema, instanceOf(PostgreSQLSchema.class));
-	}
+    @Test
+    public void testGetPostgreSQLSchemaByConf() {
+        conf.set(Schema.JDBC_CONNECTION_STRING, POSTGRESQL_CONNECT_STRING);
+        Schema schema = SchemaFactory.getSchema(conf);
+        assertThat(schema, instanceOf(PostgreSQLSchema.class));
+    }
 
-	@Test
-	public void testGetPostgreSQLSchemaByString() {
-		Schema schema = SchemaFactory.getSchema(POSTGRESQL_CONNECT_STRING, conf);
-		assertThat(schema, instanceOf(PostgreSQLSchema.class));
-	}
+    @Test
+    public void testGetPostgreSQLSchemaByString() {
+        Schema schema = SchemaFactory.getSchema(POSTGRESQL_CONNECT_STRING, conf);
+        assertThat(schema, instanceOf(PostgreSQLSchema.class));
+    }
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testGetSchemaInvalidConnectString1() {
-		SchemaFactory.getSchema("jdbc:dery:memory", conf);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetSchemaInvalidConnectString1() {
+        SchemaFactory.getSchema("jdbc:dery:memory", conf);
+    }
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testGetSchemaInvalidConnectString2() {
-		SchemaFactory.getSchema("jdbc:mysqll", conf);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetSchemaInvalidConnectString2() {
+        SchemaFactory.getSchema("jdbc:mysqll", conf);
+    }
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testGetSchemaInvalidConnectString3() {
-		SchemaFactory.getSchema("", conf);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetSchemaInvalidConnectString3() {
+        SchemaFactory.getSchema("", conf);
+    }
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testGetSchemaInvalidConnectString4() {
-		SchemaFactory.getSchema("jdbc:dery:memory", conf);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetSchemaInvalidConnectString4() {
+        SchemaFactory.getSchema("jdbc:dery:memory", conf);
+    }
 
-	@Test(expected=IllegalArgumentException.class)
-	public void testGetSchemaInvalidConnectString5() {
-		SchemaFactory.getSchema("jdbc", conf);
-	}
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetSchemaInvalidConnectString5() {
+        SchemaFactory.getSchema("jdbc", conf);
+    }
 }

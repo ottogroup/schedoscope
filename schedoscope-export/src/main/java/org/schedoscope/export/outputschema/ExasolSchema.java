@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export.outputschema;
 
 import java.util.Collections;
@@ -27,58 +28,64 @@ import org.apache.hadoop.conf.Configuration;
  */
 public class ExasolSchema extends AbstractSchema implements Schema {
 
-	protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver";
+    protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver";
 
-	@SuppressWarnings("serial")
-	private static final Map<String, String> columnTypeMapping = Collections.unmodifiableMap(
-			new HashMap<String, String>() {
-				{
-					put("string", "varchar(100000)");
-					put("boolean", "boolean");
-					put("int", "int");
-					put("long", "bigint");
-					put("bigint", "bigint");
-					put("double", "double");
-					put("float", "float");
-					put("tinyint", "int");
-				}
-			});
+    @SuppressWarnings("serial")
+    private static final Map<String, String> columnTypeMapping = Collections
+            .unmodifiableMap(new HashMap<String, String>() {
+                {
+                    put("string", "varchar(100000)");
+                    put("boolean", "boolean");
+                    put("int", "int");
+                    put("long", "bigint");
+                    put("bigint", "bigint");
+                    put("double", "double");
+                    put("float", "float");
+                    put("tinyint", "int");
+                }
+            });
 
-	@SuppressWarnings("serial")
-	private static final Map<String, String> preparedStatementTypeMapping = Collections.unmodifiableMap(
-			new HashMap<String, String>() {
-				{
-					put("varchar(100000)", "string");
-					put("boolean", "boolean");
-					put("int", "int");
-					put("bigint", "long");
-					put("double", "double");
-					put("float", "float");
-					put("tinyint", "int");
-				}
-			});
+    @SuppressWarnings("serial")
+    private static final Map<String, String> preparedStatementTypeMapping = Collections
+            .unmodifiableMap(new HashMap<String, String>() {
+                {
+                    put("varchar(100000)", "string");
+                    put("boolean", "boolean");
+                    put("int", "int");
+                    put("bigint", "long");
+                    put("double", "double");
+                    put("float", "float");
+                    put("tinyint", "int");
+                }
+            });
 
-	public ExasolSchema(Configuration conf) {
-		super(conf);
-		this.conf.set(Schema.JDBC_DRIVER_CLASS, JDBC_DRIVER_NAME);
-	}
+    /**
+     * The constructor to initialize the
+     * Exasol dialect.
+     *
+     * @param conf The Hadoop configuration object.
+     */
+    public ExasolSchema(Configuration conf) {
+        super(conf);
+        this.conf.set(Schema.JDBC_DRIVER_CLASS, JDBC_DRIVER_NAME);
+    }
 
-	@Override
-	public Map<String, String> getColumnTypeMapping() {
-		return columnTypeMapping;
-	}
+    @Override
+    public Map<String, String> getColumnTypeMapping() {
+        return columnTypeMapping;
+    }
 
-	@Override
-	public Map<String, String> getPreparedStatementTypeMapping() {
-		return preparedStatementTypeMapping;
-	}
+    @Override
+    public Map<String, String> getPreparedStatementTypeMapping() {
+        return preparedStatementTypeMapping;
+    }
 
-	@Override
-	protected String getDistributedByClause() {
-		if (conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE) != null) {
-			return new String(", DISTRIBUTE BY " + conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE + "\n"));
-		} else {
-			return "";
-		}
-	}
+    @Override
+    protected String getDistributedByClause() {
+        if (conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE) != null) {
+            return new String(", DISTRIBUTE BY " + conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE + "\n"));
+        } else {
+            return "";
+        }
+    }
 }

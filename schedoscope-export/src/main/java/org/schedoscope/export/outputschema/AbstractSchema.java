@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export.outputschema;
 
 import java.sql.Connection;
@@ -25,158 +26,154 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 
-
 /**
- * This class provides a couple of functions
- * common to all concrete Schema implementations.
+ * This class provides a couple of functions common to all concrete Schema implementations.
  */
-abstract public class AbstractSchema implements Schema {
+public abstract class AbstractSchema implements Schema {
 
-	private static final Log LOG = LogFactory.getLog(AbstractSchema.class);
+    private static final Log LOG = LogFactory.getLog(AbstractSchema.class);
 
-	protected Configuration conf;
+    protected Configuration conf;
 
-	public AbstractSchema(Configuration conf) {
-		this.conf = conf;
-	}
+    public AbstractSchema(Configuration conf) {
 
-	@Override
-	public String getTable() {
-		return conf.get(Schema.JDBC_OUTPUT_TABLE);
-	}
+        this.conf = conf;
+    }
 
-	@Override
-	public String[] getColumnNames() {
-		return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES);
-	}
+    @Override
+    public String getTable() {
+        return conf.get(Schema.JDBC_OUTPUT_TABLE);
+    }
 
-	@Override
-	public String[] getColumnTypes() {
-		return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES);
-	}
+    @Override
+    public String[] getColumnNames() {
+        return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES);
+    }
 
-	@Override
-	public String getCreateTableQuery() {
-		return conf.get(Schema.JDBC_CREATE_TABLE_QUERY);
-	}
+    @Override
+    public String[] getColumnTypes() {
+        return conf.getStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES);
+    }
 
-	@Override
-	public int getNumberOfPartitions() {
-		return conf.getInt(Schema.JDBC_NUMBER_OF_PARTITIONS, 1);
-	}
+    @Override
+    public String getCreateTableQuery() {
+        return conf.get(Schema.JDBC_CREATE_TABLE_QUERY);
+    }
 
-	@Override
-	public int getCommitSize() {
-		return conf.getInt(Schema.JDBC_COMMIT_SIZE, 1);
-	}
+    @Override
+    public int getNumberOfPartitions() {
+        return conf.getInt(Schema.JDBC_NUMBER_OF_PARTITIONS, 1);
+    }
 
-	@Override
-	public String getFilter() {
-		return conf.get(Schema.JDBC_INPUT_FILTER);
-	}
+    @Override
+    public int getCommitSize() {
+        return conf.getInt(Schema.JDBC_COMMIT_SIZE, 1);
+    }
 
-	@Override
-	public Configuration getConf() {
-		return conf;
-	}
+    @Override
+    public String getFilter() {
+        return conf.get(Schema.JDBC_INPUT_FILTER);
+    }
 
-	@Override
-	public Map<String, String> getColumnNameMapping() {
-		Map<String, String> columnNames = new HashMap<String, String>();
-		columnNames.put("year", "data_year");
-		columnNames.put("month", "data_month");
-		columnNames.put("day", "data_day");
-		return columnNames;
-	}
+    @Override
+    public Configuration getConf() {
+        return conf;
+    }
 
-	protected String getCreateTableSuffix() {
-		return "";
-	};
+    @Override
+    public Map<String, String> getColumnNameMapping() {
+        Map<String, String> columnNames = new HashMap<String, String>();
+        columnNames.put("year", "data_year");
+        columnNames.put("month", "data_month");
+        columnNames.put("day", "data_day");
+        return columnNames;
+    }
 
-	protected String getDistributedByClause() {
-		return "";
-	}
+    protected String getCreateTableSuffix() {
+        return "";
+    }
 
-	protected String buildCreateTableStatement(String table,
-			String[] columnNames, String[] columnTypes) {
+    protected String getDistributedByClause() {
+        return "";
+    }
 
-		StringBuilder createTableStatement = new StringBuilder();
+    protected String buildCreateTableStatement(String table, String[] columnNames, String[] columnTypes) {
 
-		createTableStatement.append("CREATE TABLE ");
-		createTableStatement.append(table);
-		createTableStatement.append(" \n");
-		createTableStatement.append("(");
-		createTableStatement.append("\n");
+        StringBuilder createTableStatement = new StringBuilder();
 
-		for (int i = 0; i < columnNames.length; i++) {
-			createTableStatement.append(columnNames[i]);
-			createTableStatement.append(" ");
-			createTableStatement.append(columnTypes[i]);
-			if (i != columnNames.length - 1) {
-				createTableStatement.append(",");
-			}
-			createTableStatement.append("\n");
-		}
+        createTableStatement.append("CREATE TABLE ");
+        createTableStatement.append(table);
+        createTableStatement.append(" \n");
+        createTableStatement.append("(");
+        createTableStatement.append("\n");
 
-		createTableStatement = createTableStatement.append(getDistributedByClause());
-		createTableStatement = createTableStatement.append(")");
-		createTableStatement = createTableStatement.append(getCreateTableSuffix());
+        for (int i = 0; i < columnNames.length; i++) {
+            createTableStatement.append(columnNames[i]);
+            createTableStatement.append(" ");
+            createTableStatement.append(columnTypes[i]);
+            if (i != columnNames.length - 1) {
+                createTableStatement.append(",");
+            }
+            createTableStatement.append("\n");
+        }
 
-		return createTableStatement.toString();
-	}
+        createTableStatement = createTableStatement.append(getDistributedByClause());
+        createTableStatement = createTableStatement.append(")");
+        createTableStatement = createTableStatement.append(getCreateTableSuffix());
 
-	@Override
-	public void setOutput(String connectionString, String username, String password, String outputTable,
-			String inputFilter, int outputNumberOfPartitions, int outputCommitSize, String storageEngine,
-			String distributedBy, String[] columnNames, String[] columnTypes) {
+        return createTableStatement.toString();
+    }
 
-		conf.set(Schema.JDBC_CONNECTION_STRING, connectionString);
-		if (username != null) {
-			conf.set(Schema.JDBC_USERNAME, username);
-		}
+    @Override
+    public void setOutput(String connectionString, String username, String password, String outputTable,
+            String inputFilter, int outputNumberOfPartitions, int outputCommitSize, String storageEngine,
+            String distributedBy, String[] columnNames, String[] columnTypes) {
 
-		if (password != null) {
-			conf.set(Schema.JDBC_PASSWORD, password);
-		}
+        conf.set(Schema.JDBC_CONNECTION_STRING, connectionString);
+        if (username != null) {
+            conf.set(Schema.JDBC_USERNAME, username);
+        }
 
-		if (inputFilter != null && !inputFilter.isEmpty()) {
-			inputFilter = inputFilter.replace(" ", "");
-			inputFilter = inputFilter.replace("'", "");
-			inputFilter = inputFilter.replace("\"", "");
-			conf.set(Schema.JDBC_INPUT_FILTER, inputFilter);
-		}
+        if (password != null) {
+            conf.set(Schema.JDBC_PASSWORD, password);
+        }
 
-		conf.set(Schema.JDBC_OUTPUT_TABLE, outputTable);
+        if (inputFilter != null && !inputFilter.isEmpty()) {
+            inputFilter = inputFilter.replace(" ", "");
+            inputFilter = inputFilter.replace("'", "");
+            inputFilter = inputFilter.replace("\"", "");
+            conf.set(Schema.JDBC_INPUT_FILTER, inputFilter);
+        }
 
-		if (storageEngine != null) {
+        conf.set(Schema.JDBC_OUTPUT_TABLE, outputTable);
 
-			if (storageEngine.equals("MyISAM") || storageEngine.equals("InnoDB")) {
-				conf.set(Schema.JDBC_MYSQL_STORAGE_ENGINE, storageEngine);
-			} else {
-				LOG.warn("invalid storage engine: " + storageEngine + " - default to InnoDB");
-				conf.set(Schema.JDBC_MYSQL_STORAGE_ENGINE, MySQLSchema.JDBC_MYSQL_DEFAULT_STORAGE_ENGINE);
-			}
-		}
+        if (storageEngine != null) {
 
-		if (distributedBy != null) {
-			conf.set(JDBC_EXASOL_DISTRIBUTED_CLAUSE, distributedBy);
-		}
+            if (storageEngine.equals("MyISAM") || storageEngine.equals("InnoDB")) {
+                conf.set(Schema.JDBC_MYSQL_STORAGE_ENGINE, storageEngine);
+            } else {
+                LOG.warn("invalid storage engine: " + storageEngine + " - default to InnoDB");
+                conf.set(Schema.JDBC_MYSQL_STORAGE_ENGINE, MySQLSchema.JDBC_MYSQL_DEFAULT_STORAGE_ENGINE);
+            }
+        }
 
-		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES, columnNames);
-		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, columnTypes);
-		conf.setInt(Schema.JDBC_NUMBER_OF_PARTITIONS, outputNumberOfPartitions);
-		conf.setInt(Schema.JDBC_COMMIT_SIZE, outputCommitSize);
+        if (distributedBy != null) {
+            conf.set(JDBC_EXASOL_DISTRIBUTED_CLAUSE, distributedBy);
+        }
 
-		conf.set(Schema.JDBC_CREATE_TABLE_QUERY, buildCreateTableStatement(outputTable, columnNames, columnTypes));
-	}
+        conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES, columnNames);
+        conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, columnTypes);
+        conf.setInt(Schema.JDBC_NUMBER_OF_PARTITIONS, outputNumberOfPartitions);
+        conf.setInt(Schema.JDBC_COMMIT_SIZE, outputCommitSize);
 
-	@Override
-	public Connection getConnection() throws ClassNotFoundException, SQLException {
-		Class.forName(conf.get(Schema.JDBC_DRIVER_CLASS));
+        conf.set(Schema.JDBC_CREATE_TABLE_QUERY, buildCreateTableStatement(outputTable, columnNames, columnTypes));
+    }
 
-		return DriverManager.getConnection(
-				conf.get(Schema.JDBC_CONNECTION_STRING),
-				conf.get(Schema.JDBC_USERNAME),
-				conf.get(Schema.JDBC_PASSWORD));
-	}
+    @Override
+    public Connection getConnection() throws ClassNotFoundException, SQLException {
+        Class.forName(conf.get(Schema.JDBC_DRIVER_CLASS));
+
+        return DriverManager.getConnection(conf.get(Schema.JDBC_CONNECTION_STRING), conf.get(Schema.JDBC_USERNAME),
+                conf.get(Schema.JDBC_PASSWORD));
+    }
 }

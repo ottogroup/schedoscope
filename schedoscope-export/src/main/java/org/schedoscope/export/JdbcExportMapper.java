@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export;
 
 import java.io.IOException;
@@ -34,93 +35,83 @@ import org.schedoscope.export.outputschema.Schema;
 import org.schedoscope.export.outputschema.SchemaFactory;
 import org.schedoscope.export.utils.ComplexTypeUtils;
 
-public class JdbcExportMapper extends
-		Mapper<WritableComparable<?>, HCatRecord, Text, NullWritable> {
+/**
+ * A mapper that reads data from Hive via HCatalog and emits a concatenated
+ * string of all HCatRecord fields.
+ */
+public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, NullWritable> {
 
-	private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
-	private static final String FIELDSEPARATOR = "\t";
-	private HCatSchema inputSchema;
-	private String inputFilter;
+    private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
+    private static final String FIELDSEPARATOR = "\t";
+    private HCatSchema inputSchema;
+    private String inputFilter;
 
-	@Override
-	protected void setup(Context context) throws IOException,
-			InterruptedException {
-		super.setup(context);
-		inputSchema = HCatInputFormat
-				.getTableSchema(context.getConfiguration());
+    @Override
+    protected void setup(Context context) throws IOException, InterruptedException {
+        super.setup(context);
+        inputSchema = HCatInputFormat.getTableSchema(context.getConfiguration());
 
-		Schema outputSchema = SchemaFactory.getSchema(context
-				.getConfiguration());
-		inputFilter = outputSchema.getFilter();
+        Schema outputSchema = SchemaFactory.getSchema(context.getConfiguration());
+        inputFilter = outputSchema.getFilter();
 
-		LOG.info("Used Filter: " + inputFilter);
+        LOG.info("Used Filter: " + inputFilter);
 
-	}
+    }
 
-	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value,
-			Context context) throws IOException, InterruptedException {
+    @Override
+    protected void map(WritableComparable<?> key, HCatRecord value, Context context)
+            throws IOException, InterruptedException {
 
-		StringBuilder output = new StringBuilder();
+        StringBuilder output = new StringBuilder();
 
-		for (int i = 0; i < value.size(); i++) {
-			String fieldValue = "NULL";
+        for (int i = 0; i < value.size(); i++) {
+            String fieldValue = "NULL";
 
-			if (inputSchema.get(i).isComplex()
-					&& inputSchema.get(i).getCategory() == Category.STRUCT
-					&& value.getStruct(inputSchema.get(i).getName(),
-							inputSchema) != null) {
-				fieldValue = validateJsonFormat(ComplexTypeUtils
-						.structToJSONString(value, i, inputSchema));
-			} else if (inputSchema.get(i).isComplex()
-					&& inputSchema.get(i).getCategory() == Category.ARRAY
-					&& value.getList(inputSchema.get(i).getName(), inputSchema) != null) {
-				fieldValue = validateJsonFormat(ComplexTypeUtils
-						.arrayToJSONString(value, i, inputSchema));
-			} else if (inputSchema.get(i).isComplex()
-					&& inputSchema.get(i).getCategory() == Category.MAP
-					&& value.getMap(inputSchema.get(i).getName(), inputSchema) != null) {
-				fieldValue = validateJsonFormat(ComplexTypeUtils
-						.mapToJSONString(value, i, inputSchema));
-			} else {
+            if (inputSchema.get(i).isComplex() && inputSchema.get(i).getCategory() == Category.STRUCT
+                    && value.getStruct(inputSchema.get(i).getName(), inputSchema) != null) {
+                fieldValue = validateJsonFormat(ComplexTypeUtils.structToJsonString(value, i, inputSchema));
+            } else if (inputSchema.get(i).isComplex() && inputSchema.get(i).getCategory() == Category.ARRAY
+                    && value.getList(inputSchema.get(i).getName(), inputSchema) != null) {
+                fieldValue = validateJsonFormat(ComplexTypeUtils.arrayToJsonString(value, i, inputSchema));
+            } else if (inputSchema.get(i).isComplex() && inputSchema.get(i).getCategory() == Category.MAP
+                    && value.getMap(inputSchema.get(i).getName(), inputSchema) != null) {
+                fieldValue = validateJsonFormat(ComplexTypeUtils.mapToJsonString(value, i, inputSchema));
+            } else {
 
-				if (value.get(i) != null) {
-					fieldValue = value.get(i).toString();
-				}
-			}
-			output.append(fieldValue);
-			output.append(FIELDSEPARATOR);
+                if (value.get(i) != null) {
+                    fieldValue = value.get(i).toString();
+                }
+            }
+            output.append(fieldValue);
+            output.append(FIELDSEPARATOR);
 
-		}
+        }
 
-		if (inputFilter == null) {
-			output.append("NULL");
-		}
-		else {
-			output.append(inputFilter);
-		}
-		context.write(new Text(output.toString()), NullWritable.get());
+        if (inputFilter == null) {
+            output.append("NULL");
+        } else {
+            output.append(inputFilter);
+        }
+        context.write(new Text(output.toString()), NullWritable.get());
 
-	}
+    }
 
-	private String validateJsonFormat(String jsonString) {
+    private String validateJsonFormat(String jsonString) {
 
-		try {
-			if (jsonString.startsWith("{")) {
-				new JSONObject(jsonString);
-			} else if (jsonString.startsWith("[")) {
-				new JSONArray(jsonString);
-			}
-			return jsonString;
-		} catch (JSONException e) {
-			LOG.warn(jsonString + " is not valide.");
-			return jsonString;
+        try {
+            if (jsonString.startsWith("{")) {
+                new JSONObject(jsonString);
+            } else if (jsonString.startsWith("[")) {
+                new JSONArray(jsonString);
+            }
+            return jsonString;
+        } catch (JSONException e) {
+            LOG.warn(jsonString + " is not valide.");
+            return jsonString;
 
-		} catch (NumberFormatException e) {
-			LOG.warn(jsonString + " is not valide.");
-			return jsonString;
-
-		}
-	}
-
+        } catch (NumberFormatException e) {
+            LOG.warn(jsonString + " is not valide.");
+            return jsonString;
+        }
+    }
 }

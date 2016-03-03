@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export;
 
 import org.apache.commons.logging.Log;
@@ -36,164 +37,181 @@ import org.schedoscope.export.outputschema.Schema;
 import org.schedoscope.export.outputschema.SchemaFactory;
 import org.schedoscope.export.outputschema.SchemaUtils;
 
+/**
+ * The MR driver to run the Hive to database export, uses JDBC under the
+ * hood.
+ */
 public class JdbcExportJob extends Configured implements Tool {
 
-	private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
+    private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
 
-	@Option(name="-s", usage="set to true if kerberos is enabled")
-	private boolean isSecured = false;
+    @Option(name = "-s", usage = "set to true if kerberos is enabled")
+    private boolean isSecured = false;
 
-	@Option(name="-m", usage="specify the metastore URI")
-	private String metaStoreUris;
+    @Option(name = "-m", usage = "specify the metastore URI")
+    private String metaStoreUris;
 
-	@Option(name="-p", usage="the kerberos principal", depends={"-s"})
-	private String principal;
+    @Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
+    private String principal;
 
-	@Option(name="-j", usage="the jdbc connection string, jdbc:mysql://remote-host:3306/schema", required=true)
-	private String dbConnectionString;
+    @Option(name = "-j", usage = "the jdbc connection string, jdbc:mysql://remote-host:3306/schema", required = true)
+    private String dbConnectionString;
 
-	@Option(name="-u", usage="the database user")
-	private String dbUser;
+    @Option(name = "-u", usage = "the database user")
+    private String dbUser;
 
-	@Option(name="-w", usage="the database password")
-	private String dbPassword;
+    @Option(name = "-w", usage = "the database password")
+    private String dbPassword;
 
-	@Option(name="-d", usage="input database", required=true)
-	private String inputDatabase;
+    @Option(name = "-d", usage = "input database", required = true)
+    private String inputDatabase;
 
-	@Option(name="-t", usage="input table", required=true)
-	private String inputTable;
+    @Option(name = "-t", usage = "input table", required = true)
+    private String inputTable;
 
-	@Option(name="-i", usage="input filter, e.g. \"month='08' and year='2015'\"")
-	private String inputFilter;
+    @Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
+    private String inputFilter;
 
-	@Option(name="-e", usage="storage engine, either 'InnoDB' or 'MyISAM', works only for MySQL")
-	private String storageEngine;
+    @Option(name = "-e", usage = "storage engine, either 'InnoDB' or 'MyISAM', works only for MySQL")
+    private String storageEngine;
 
-	@Option(name="-x", usage="columns to use for the 'DISTRIBUTED BY' clause, only Exasol")
-	private String distributedBy;
+    @Option(name = "-x", usage = "columns to use for the 'DISTRIBUTED BY' clause, only Exasol")
+    private String distributedBy;
 
-	@Option(name="-c", usage="number of reducers, concurrency level")
-	private int numReducer = 2;
+    @Option(name = "-c", usage = "number of reducers, concurrency level")
+    private int numReducer = 2;
 
-	@Option(name="-k", usage="batch size")
-	private int commitSize = 10000;
+    @Option(name = "-k", usage = "batch size")
+    private int commitSize = 10000;
 
-	public int run(String[] args) throws Exception {
+    @Override
+    public int run(String[] args) throws Exception {
 
-		// args = new GenericOptionsParser(conf, args).getRemainingArgs();
+        CmdLineParser cmd = new CmdLineParser(this);
 
-		CmdLineParser cmd = new CmdLineParser(this);
+        try {
+            cmd.parseArgument(args);
+        } catch (CmdLineException e) {
+            System.err.println(e.getMessage());
+            cmd.printUsage(System.err);
+            System.exit(1);
+        }
 
-		try {
-			cmd.parseArgument(args);
-		} catch (CmdLineException e) {
-			System.err.println(e.getMessage());
-			cmd.printUsage(System.err);
-			System.exit(1);
-		}
+        Job job = configure();
+        boolean success = job.waitForCompletion(true);
 
-		Job job = configure();
-		boolean success = job.waitForCompletion(true);
+        if (success) {
+            JdbcOutputFormat.finalizeOutput(job.getConfiguration());
+        } else {
+            JdbcOutputFormat.rollback(job.getConfiguration());
+        }
+        return (success ? 0 : 1);
+    }
 
-		if (success) {
-			JdbcOutputFormat.finalizeOutput(job.getConfiguration());
-		} else {
-			JdbcOutputFormat.rollback(job.getConfiguration());
-		}
-		return (success ? 0 : 1);
-	}
+    /**
+     * This function takes all required parameters and
+     * returns a configured job object.
+     *
+     * @param isSecured  A flag indicating if Kerberos is enabled.
+     * @param metaStoreUris A string containing the Hive meta store URI
+     * @param principal The Kerberos principal.
+     * @param dbConnectionString The JDBC connection string.
+     * @param dbUser The database user
+     * @param dbPassword The database password
+     * @param inputDatabase The Hive input database
+     * @param inputTable The Hive input table
+     * @param inputFilter An optional input filter.
+     * @param storageEngine An optional storage engine (only MySQL)
+     * @param distributedBy An optional distribute by clause (only Exasol)
+     * @param numReducer Number of reducers / partitions
+     * @param commitSize The batch size.
+     * @return A configured job instance.
+     * @throws Exception Is thrown if an error occurs.
+     */
+    public Job configure(boolean isSecured, String metaStoreUris, String principal, String dbConnectionString,
+            String dbUser, String dbPassword, String inputDatabase, String inputTable, String inputFilter,
+            String storageEngine, String distributedBy, int numReducer, int commitSize) throws Exception {
 
-	public Job configure(boolean isSecured,
-						String metaStoreUris,
-						String principal,
-						String dbConnectionString,
-						String dbUser,
-						String dbPassword,
-						String inputDatabase,
-						String inputTable,
-						String inputFilter,
-						String storageEngine,
-						String distributedBy,
-						int numReducer,
-						int commitSize) throws Exception {
+        this.isSecured = isSecured;
+        this.metaStoreUris = metaStoreUris;
+        this.principal = principal;
+        this.dbConnectionString = dbConnectionString;
+        this.dbUser = dbUser;
+        this.dbPassword = dbPassword;
+        this.inputDatabase = inputDatabase;
+        this.inputTable = inputTable;
+        this.storageEngine = storageEngine;
+        this.distributedBy = distributedBy;
+        this.numReducer = numReducer;
+        this.commitSize = commitSize;
+        return configure();
+    }
 
-		this.isSecured = isSecured;
-		this.metaStoreUris = metaStoreUris;
-		this.principal = principal;
-		this.dbConnectionString = dbConnectionString;
-		this.dbUser = dbUser;
-		this.dbPassword = dbPassword;
-		this.inputDatabase = inputDatabase;
-		this.inputTable = inputTable;
-		this.storageEngine = storageEngine;
-		this.distributedBy = distributedBy;
-		this.numReducer = numReducer;
-		this.commitSize = commitSize;
-		return configure();
-	}
+    private Job configure() throws Exception {
 
-	public Job configure() throws Exception {
+        Configuration conf = getConf();
 
-		Configuration conf = getConf();
+        conf.set("hive.metastore.local", "false");
+        conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
 
-		String outputTable = inputDatabase + "_" + inputTable;
+        if (isSecured) {
+            conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+            conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
 
-		conf.set("hive.metastore.local", "false");
-		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
+            if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+                conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+            }
+        }
 
-		if (isSecured) {
-			conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
+        Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "." + inputTable);
 
-			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-			}
-		}
+        job.setJarByClass(JdbcExportJob.class);
+        job.setMapperClass(JdbcExportMapper.class);
+        job.setReducerClass(JdbcExportReducer.class);
+        job.setNumReduceTasks(numReducer);
 
-		Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "." + inputTable);
+        if (inputFilter == null || inputFilter.trim().equals("")) {
+            HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
-		job.setJarByClass(JdbcExportJob.class);
-		job.setMapperClass(JdbcExportMapper.class);
-		job.setReducerClass(JdbcExportReducer.class);
-		job.setNumReduceTasks(numReducer);
+        } else {
+            HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
+        }
 
-		if (inputFilter == null || inputFilter.trim().equals("")) {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable);
+        Schema outputSchema = SchemaFactory.getSchema(dbConnectionString, job.getConfiguration());
+        HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
-		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
-		}
+        String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(hcatInputSchema, outputSchema);
+        String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema);
 
-		Schema outputSchema = SchemaFactory.getSchema(dbConnectionString, job.getConfiguration());
-		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
+        String outputTable = inputDatabase + "_" + inputTable;
 
-		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(hcatInputSchema, outputSchema);
-		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema);
+        JdbcOutputFormat.setOutput(job.getConfiguration(), dbConnectionString, dbUser, dbPassword, outputTable,
+                inputFilter, numReducer, commitSize, storageEngine, distributedBy, columnNames, columnTypes);
 
-		JdbcOutputFormat.setOutput(job.getConfiguration(),
-				dbConnectionString, dbUser, dbPassword, outputTable,
-				inputFilter, numReducer, commitSize,
-				storageEngine, distributedBy, columnNames, columnTypes);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(JdbcOutputFormat.class);
 
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(JdbcOutputFormat.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(NullWritable.class);
+        job.setOutputKeyClass(JdbcOutputWritable.class);
+        job.setOutputValueClass(NullWritable.class);
 
-		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(NullWritable.class);
-		job.setOutputKeyClass(JdbcOutputWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+        return job;
+    }
 
-		return job;
-	}
-
-	public static void main(String[] args) throws Exception {
-		try {
-			int exitCode = ToolRunner.run(new JdbcExportJob(), args);
-			System.exit(exitCode);
-		} catch (Exception e) {
-			LOG.error(e.getMessage());
-			System.exit(1);
-		}
-	}
+    /**
+     * The entry point when called from the command line.
+     *
+     * @param args A string array containing the cmdl args.
+     * @throws Exception is thrown if an error occurs.
+     */
+    public static void main(String[] args) throws Exception {
+        try {
+            int exitCode = ToolRunner.run(new JdbcExportJob(), args);
+            System.exit(exitCode);
+        } catch (Exception e) {
+            LOG.error(e.getMessage());
+            System.exit(1);
+        }
+    }
 }

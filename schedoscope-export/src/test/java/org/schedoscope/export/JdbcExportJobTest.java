@@ -45,200 +45,184 @@ import org.schedoscope.export.outputschema.SchemaFactory;
 
 public class JdbcExportJobTest {
 
-	private JdbcOutputFormat<JdbcOutputWritable, NullWritable> outputFormat = new JdbcOutputFormat<>();
-	private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
-	private static final String CREATE_CONNECTIONSTRING = "jdbc:derby:memory:TestingDB;create=true";
-	private static final String CONNECTIONSTRING = "jdbc:derby:memory:TestingDB";
-	private static final String OUTPUTTABLE = "test";
-	private static final int COMMITSIZE = 10;
-	private static final String[] COLUMNNAMES = new String[] { "id", "val" };
-	private static final String[] COLUMNTYPES = new String[] { "int",
-			"varchar(32000)" };
+    private JdbcOutputFormat<JdbcOutputWritable, NullWritable> outputFormat = new JdbcOutputFormat<>();
+    private static final String DRIVER = "org.apache.derby.jdbc.EmbeddedDriver";
+    private static final String CREATE_CONNECTIONSTRING = "jdbc:derby:memory:TestingDB;create=true";
+    private static final String CONNECTIONSTRING = "jdbc:derby:memory:TestingDB";
+    private static final String OUTPUTTABLE = "test";
+    private static final int COMMITSIZE = 10;
+    private static final String[] COLUMNNAMES = new String[] { "id", "val" };
+    private static final String[] COLUMNTYPES = new String[] { "int", "varchar(32000)" };
 
-	private Configuration conf = new Configuration();
+    private Configuration conf = new Configuration();
 
-	@Before
-	public void setUp() throws ClassNotFoundException, SQLException,
-			IOException {
-		Class.forName(DRIVER);
-		DriverManager.getConnection(CREATE_CONNECTIONSTRING);
+    @Before
+    public void setUp() throws ClassNotFoundException, SQLException, IOException {
+        Class.forName(DRIVER);
+        DriverManager.getConnection(CREATE_CONNECTIONSTRING);
 
-	}
+    }
 
-	@Test
-	public void testDatabaseExportWithMultipleWriters() throws IOException,
-			SQLException, InterruptedException, ClassNotFoundException {
+    @Test
+    public void testDatabaseExportWithMultipleWriters()
+            throws IOException, SQLException, InterruptedException, ClassNotFoundException {
 
-		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
-				OUTPUTTABLE, null, 2, COMMITSIZE, null, null, COLUMNNAMES, COLUMNTYPES);
-		Schema outputSchema = SchemaFactory.getSchema(conf);
-		Connection connection = outputSchema.getConnection();
-		TaskAttemptContext ctx1 = new TaskAttemptContextImpl(conf,
-				new TaskAttemptID(new TaskID(new JobID("multipleReducers", 1),
-						TaskType.REDUCE, 0), 1));
-		TaskAttemptContext ctx2 = new TaskAttemptContextImpl(conf,
-				new TaskAttemptID(new TaskID(new JobID("multipleReducers", 1),
-						TaskType.REDUCE, 1), 1));
-		RecordWriter<JdbcOutputWritable, NullWritable> rw1 = outputFormat
-				.getRecordWriter(ctx1);
-		RecordWriter<JdbcOutputWritable, NullWritable> rw2 = outputFormat
-				.getRecordWriter(ctx2);
+        JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null, OUTPUTTABLE, null, 2, COMMITSIZE, null, null,
+                COLUMNNAMES, COLUMNTYPES);
+        Schema outputSchema = SchemaFactory.getSchema(conf);
+        Connection connection = outputSchema.getConnection();
+        TaskAttemptContext ctx1 = new TaskAttemptContextImpl(conf,
+                new TaskAttemptID(new TaskID(new JobID("multipleReducers", 1), TaskType.REDUCE, 0), 1));
+        TaskAttemptContext ctx2 = new TaskAttemptContextImpl(conf,
+                new TaskAttemptID(new TaskID(new JobID("multipleReducers", 1), TaskType.REDUCE, 1), 1));
+        RecordWriter<JdbcOutputWritable, NullWritable> rw1 = outputFormat.getRecordWriter(ctx1);
+        RecordWriter<JdbcOutputWritable, NullWritable> rw2 = outputFormat.getRecordWriter(ctx2);
 
-		List<Text> rows = new ArrayList<>();
+        List<Text> rows = new ArrayList<>();
 
-		rows.add(new Text("1\ttest"));
-		rows.add(new Text("2\ttest"));
-		rows.add(new Text("3\ttest"));
-		rows.add(new Text("4\ttest"));
-		rows.add(new Text("5\ttest"));
-		rows.add(new Text("6\ttest"));
-		rows.add(new Text("7\ttest"));
-		rows.add(new Text("8\ttest"));
-		rows.add(new Text("9\ttest"));
-		rows.add(new Text("10\ttest"));
+        rows.add(new Text("1\ttest"));
+        rows.add(new Text("2\ttest"));
+        rows.add(new Text("3\ttest"));
+        rows.add(new Text("4\ttest"));
+        rows.add(new Text("5\ttest"));
+        rows.add(new Text("6\ttest"));
+        rows.add(new Text("7\ttest"));
+        rows.add(new Text("8\ttest"));
+        rows.add(new Text("9\ttest"));
+        rows.add(new Text("10\ttest"));
 
-		for (int i = 0; i < rows.size() / 2; i++) {
-			JdbcOutputWritable output = new JdbcOutputWritable(rows.get(i)
-					.toString().split("\t"), outputSchema.getColumnTypes(),
-					outputSchema.getPreparedStatementTypeMapping());
-			rw1.write(output, NullWritable.get());
-		}
+        for (int i = 0; i < rows.size() / 2; i++) {
+            JdbcOutputWritable output = new JdbcOutputWritable(rows.get(i).toString().split("\t"),
+                    outputSchema.getColumnTypes(), outputSchema.getPreparedStatementTypeMapping());
+            rw1.write(output, NullWritable.get());
+        }
 
-		for (int i = rows.size() / 2; i < rows.size(); i++) {
-			JdbcOutputWritable output = new JdbcOutputWritable(rows.get(i)
-					.toString().split("\t"), outputSchema.getColumnTypes(),
-					outputSchema.getPreparedStatementTypeMapping());
-			rw2.write(output, NullWritable.get());
-		}
+        for (int i = rows.size() / 2; i < rows.size(); i++) {
+            JdbcOutputWritable output = new JdbcOutputWritable(rows.get(i).toString().split("\t"),
+                    outputSchema.getColumnTypes(), outputSchema.getPreparedStatementTypeMapping());
+            rw2.write(output, NullWritable.get());
+        }
 
-		rw1.close(ctx1);
-		rw2.close(ctx2);
+        rw1.close(ctx1);
+        rw2.close(ctx2);
 
-		JdbcOutputFormat.finalizeOutput(outputSchema.getConf());
+        JdbcOutputFormat.finalizeOutput(outputSchema.getConf());
 
-		Statement resultStatement = connection.createStatement();
-		String resultQuery = "Select * from test";
+        Statement resultStatement = connection.createStatement();
+        String resultQuery = "Select * from test";
 
-		int rowcount = 0;
-		ResultSet rs = resultStatement.executeQuery(resultQuery);
+        int rowcount = 0;
+        ResultSet rs = resultStatement.executeQuery(resultQuery);
 
-		while (rs.next()) {
-			Text output = new Text(rs.getInt(1) + "\t" + rs.getString(2));
-			assertEquals(rows.get(rowcount).toString(), output.toString());
-			rowcount++;
+        while (rs.next()) {
+            Text output = new Text(rs.getInt(1) + "\t" + rs.getString(2));
+            assertEquals(rows.get(rowcount).toString(), output.toString());
+            rowcount++;
 
-		}
+        }
 
-		assertEquals(rows.size(), rowcount);
+        assertEquals(rows.size(), rowcount);
 
-	}
+    }
 
-	@Test
-	public void testDatabaseExportWithSingleWriter() throws IOException,
-			SQLException, InterruptedException, ClassNotFoundException {
-		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
-				OUTPUTTABLE, null, 1, COMMITSIZE, null, null, COLUMNNAMES, COLUMNTYPES);
-		Schema outputSchema = SchemaFactory.getSchema(conf);
-		Connection connection = outputSchema.getConnection();
-		TaskAttemptContext ctx = new TaskAttemptContextImpl(conf,
-				new TaskAttemptID(new TaskID(new JobID("singleReducer", 1),
-						TaskType.REDUCE, 0), 1));
-		RecordWriter<JdbcOutputWritable, NullWritable> rw = outputFormat
-				.getRecordWriter(ctx);
+    @Test
+    public void testDatabaseExportWithSingleWriter()
+            throws IOException, SQLException, InterruptedException, ClassNotFoundException {
+        JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null, OUTPUTTABLE, null, 1, COMMITSIZE, null, null,
+                COLUMNNAMES, COLUMNTYPES);
+        Schema outputSchema = SchemaFactory.getSchema(conf);
+        Connection connection = outputSchema.getConnection();
+        TaskAttemptContext ctx = new TaskAttemptContextImpl(conf,
+                new TaskAttemptID(new TaskID(new JobID("singleReducer", 1), TaskType.REDUCE, 0), 1));
+        RecordWriter<JdbcOutputWritable, NullWritable> rw = outputFormat.getRecordWriter(ctx);
 
-		List<Text> rows = new ArrayList<>();
+        List<Text> rows = new ArrayList<>();
 
-		rows.add(new Text("1\ttest"));
-		rows.add(new Text("2\ttest"));
-		rows.add(new Text("3\ttest"));
-		rows.add(new Text("4\ttest"));
-		rows.add(new Text("5\ttest"));
-		rows.add(new Text("6\ttest"));
-		rows.add(new Text("7\ttest"));
-		rows.add(new Text("8\ttest"));
-		rows.add(new Text("9\ttest"));
-		rows.add(new Text("10\ttest"));
+        rows.add(new Text("1\ttest"));
+        rows.add(new Text("2\ttest"));
+        rows.add(new Text("3\ttest"));
+        rows.add(new Text("4\ttest"));
+        rows.add(new Text("5\ttest"));
+        rows.add(new Text("6\ttest"));
+        rows.add(new Text("7\ttest"));
+        rows.add(new Text("8\ttest"));
+        rows.add(new Text("9\ttest"));
+        rows.add(new Text("10\ttest"));
 
-		for (int i = 0; i < rows.size(); i++) {
-			JdbcOutputWritable output = new JdbcOutputWritable(rows.get(i)
-					.toString().split("\t"), outputSchema.getColumnTypes(),
-					outputSchema.getPreparedStatementTypeMapping());
-			rw.write(output, NullWritable.get());
-		}
+        for (int i = 0; i < rows.size(); i++) {
+            JdbcOutputWritable output = new JdbcOutputWritable(rows.get(i).toString().split("\t"),
+                    outputSchema.getColumnTypes(), outputSchema.getPreparedStatementTypeMapping());
+            rw.write(output, NullWritable.get());
+        }
 
-		rw.close(ctx);
+        rw.close(ctx);
 
-		JdbcOutputFormat.finalizeOutput(outputSchema.getConf());
+        JdbcOutputFormat.finalizeOutput(outputSchema.getConf());
 
-		Statement resultStatement = connection.createStatement();
-		String resultQuery = "Select * from test";
+        Statement resultStatement = connection.createStatement();
+        String resultQuery = "Select * from test";
 
-		int rowcount = 0;
-		ResultSet rs = resultStatement.executeQuery(resultQuery);
+        int rowcount = 0;
+        ResultSet rs = resultStatement.executeQuery(resultQuery);
 
-		while (rs.next()) {
-			Text output = new Text(rs.getInt(1) + "\t" + rs.getString(2));
-			assertEquals(rows.get(rowcount).toString(), output.toString());
-			rowcount++;
+        while (rs.next()) {
+            Text output = new Text(rs.getInt(1) + "\t" + rs.getString(2));
+            assertEquals(rows.get(rowcount).toString(), output.toString());
+            rowcount++;
 
-		}
+        }
 
-		assertEquals(rows.size(), rowcount);
+        assertEquals(rows.size(), rowcount);
 
-	}
+    }
 
-	@Test
-	public void testDatabaseTemporaryExportWithSingleWriter()
-			throws IOException, SQLException, InterruptedException,
-			ClassNotFoundException {
-		JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null,
-				OUTPUTTABLE, null, 1, COMMITSIZE, null, null, COLUMNNAMES, COLUMNTYPES);
-		Schema outputSchema = SchemaFactory.getSchema(conf);
-		Connection connection = outputSchema.getConnection();
-		TaskAttemptContext ctx = new TaskAttemptContextImpl(conf,
-				new TaskAttemptID(new TaskID(new JobID("singleReducer", 1),
-						TaskType.REDUCE, 0), 1));
-		RecordWriter<JdbcOutputWritable, NullWritable> rw = outputFormat
-				.getRecordWriter(ctx);
+    @Test
+    public void testDatabaseTemporaryExportWithSingleWriter()
+            throws IOException, SQLException, InterruptedException, ClassNotFoundException {
+        JdbcOutputFormat.setOutput(conf, CONNECTIONSTRING, null, null, OUTPUTTABLE, null, 1, COMMITSIZE, null, null,
+                COLUMNNAMES, COLUMNTYPES);
+        Schema outputSchema = SchemaFactory.getSchema(conf);
+        Connection connection = outputSchema.getConnection();
+        TaskAttemptContext ctx = new TaskAttemptContextImpl(conf,
+                new TaskAttemptID(new TaskID(new JobID("singleReducer", 1), TaskType.REDUCE, 0), 1));
+        RecordWriter<JdbcOutputWritable, NullWritable> rw = outputFormat.getRecordWriter(ctx);
 
-		List<Text> rows = new ArrayList<>();
+        List<Text> rows = new ArrayList<>();
 
-		rows.add(new Text("1\ttest"));
-		rows.add(new Text("2\ttest"));
-		rows.add(new Text("3\ttest"));
-		rows.add(new Text("4\ttest"));
-		rows.add(new Text("5\ttest"));
-		rows.add(new Text("6\ttest"));
-		rows.add(new Text("7\ttest"));
-		rows.add(new Text("8\ttest"));
-		rows.add(new Text("9\ttest"));
-		rows.add(new Text("10\ttest"));
+        rows.add(new Text("1\ttest"));
+        rows.add(new Text("2\ttest"));
+        rows.add(new Text("3\ttest"));
+        rows.add(new Text("4\ttest"));
+        rows.add(new Text("5\ttest"));
+        rows.add(new Text("6\ttest"));
+        rows.add(new Text("7\ttest"));
+        rows.add(new Text("8\ttest"));
+        rows.add(new Text("9\ttest"));
+        rows.add(new Text("10\ttest"));
 
-		for (int i = 0; i < rows.size(); i++) {
-			JdbcOutputWritable output = new JdbcOutputWritable(rows.get(i)
-					.toString().split("\t"), outputSchema.getColumnTypes(),
-					outputSchema.getPreparedStatementTypeMapping());
-			rw.write(output, NullWritable.get());
-		}
+        for (int i = 0; i < rows.size(); i++) {
+            JdbcOutputWritable output = new JdbcOutputWritable(rows.get(i).toString().split("\t"),
+                    outputSchema.getColumnTypes(), outputSchema.getPreparedStatementTypeMapping());
+            rw.write(output, NullWritable.get());
+        }
 
-		rw.close(ctx);
+        rw.close(ctx);
 
-		Statement resultStatement = connection.createStatement();
-		String resultQuery = "Select * from tmp_test_"
-				+ ctx.getTaskAttemptID().getTaskID().getId();
+        Statement resultStatement = connection.createStatement();
+        String resultQuery = "Select * from tmp_test_" + ctx.getTaskAttemptID().getTaskID().getId();
 
-		int rowcount = 0;
-		ResultSet rs = resultStatement.executeQuery(resultQuery);
+        int rowcount = 0;
+        ResultSet rs = resultStatement.executeQuery(resultQuery);
 
-		while (rs.next()) {
-			Text output = new Text(rs.getInt(1) + "\t" + rs.getString(2));
-			assertEquals(rows.get(rowcount).toString(), output.toString());
-			rowcount++;
+        while (rs.next()) {
+            Text output = new Text(rs.getInt(1) + "\t" + rs.getString(2));
+            assertEquals(rows.get(rowcount).toString(), output.toString());
+            rowcount++;
 
-		}
+        }
 
-		assertEquals(rows.size(), rowcount);
+        assertEquals(rows.size(), rowcount);
 
-	}
+    }
 
 }

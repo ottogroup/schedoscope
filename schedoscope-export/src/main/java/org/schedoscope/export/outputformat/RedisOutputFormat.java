@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export.outputformat;
 
 import java.io.IOException;
@@ -32,177 +33,259 @@ import org.schedoscope.export.utils.RedisMRJedisFactory;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 
+/**
+ * The Redis output format is responsible to
+ * write data into Redis, initializes the Redis
+ * Record Writer.
+ *
+ * @param <K> The key class,must be sub class of Rediswritable
+ * @param <V> The value class.
+ */
 public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<K, V> {
 
-	public static final String REDIS_CONNECT_STRING = "redis.export.server.host";
+    public static final String REDIS_CONNECT_STRING = "redis.export.server.host";
 
-	public static final String REDIS_PIPELINE_MODE = "redis.export.pipeline.mode";
+    public static final String REDIS_PIPELINE_MODE = "redis.export.pipeline.mode";
 
-	public static final String REDIS_EXPORT_KEY_NAME = "redis.export.key.name";
+    public static final String REDIS_EXPORT_KEY_NAME = "redis.export.key.name";
 
-	public static final String REDIS_EXPORT_VALUE_NAME = "redis.export.value.name";
+    public static final String REDIS_EXPORT_VALUE_NAME = "redis.export.value.name";
 
-	public static final String REDIS_EXPORT_VALUE_REPLACE = "redis.export.value.replace";
+    public static final String REDIS_EXPORT_VALUE_REPLACE = "redis.export.value.replace";
 
-	public static final String REDIS_EXPORT_KEY_PREFIX = "redis.export.key.prefix";
+    public static final String REDIS_EXPORT_KEY_PREFIX = "redis.export.key.prefix";
 
-	@Override
-	public void checkOutputSpecs(JobContext context) throws IOException {
+    @Override
+    public void checkOutputSpecs(JobContext context) throws IOException {
 
-/*		Jedis jedis = RedisMRJedisFactory.getJedisClient(context.getConfiguration());
-		LOG.info("set up redis: " + jedis.ping());
-		jedis.close();*/
-	}
+        /*
+         * Jedis jedis = RedisMRJedisFactory.getJedisClient(context.getConfiguration()); LOG.info("set up redis: " +
+         * jedis.ping()); jedis.close();
+         */
+    }
 
-	@Override
-	public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
-		return (new NullOutputFormat<NullWritable, NullWritable>()).getOutputCommitter(context);
-	}
+    @Override
+    public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
 
-	@Override
-	public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) {
+        return (new NullOutputFormat<NullWritable, NullWritable>()).getOutputCommitter(context);
+    }
 
-		Configuration conf = context.getConfiguration();
+    @Override
+    public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) {
 
-		Jedis jedis = RedisMRJedisFactory.getJedisClient(conf);
+        Configuration conf = context.getConfiguration();
 
-		boolean replace = conf.getBoolean(REDIS_EXPORT_VALUE_REPLACE, true);
+        Jedis jedis = RedisMRJedisFactory.getJedisClient(conf);
 
-		if (conf.getBoolean(REDIS_PIPELINE_MODE, false)) {
-			Pipeline pipelinedJedis = jedis.pipelined();
-			return new PipelinedRedisRecordWriter(pipelinedJedis, replace);
-		} else {
-			return new RedisRecordWriter(jedis, replace);
-		}
-	}
+        boolean replace = conf.getBoolean(REDIS_EXPORT_VALUE_REPLACE, true);
 
-	public static void checkKeyType(HCatSchema schema, String fieldName) throws IOException {
+        if (conf.getBoolean(REDIS_PIPELINE_MODE, false)) {
+            Pipeline pipelinedJedis = jedis.pipelined();
+            return new PipelinedRedisRecordWriter(pipelinedJedis, replace);
+        } else {
+            return new RedisRecordWriter(jedis, replace);
+        }
+    }
 
-		HCatFieldSchema keyType = schema.get(fieldName);
-		HCatFieldSchema.Category category = keyType.getCategory();
+    /**
+     * This function checks if the key type is a primitive type.
+     *
+     * @param schema The HCatSchema.
+     * @param fieldName The name of the field to check.
+     * @throws IOException Is thrown in case of errors.
+     */
+    public static void checkKeyType(HCatSchema schema, String fieldName) throws IOException {
 
-		if (category != HCatFieldSchema.Category.PRIMITIVE) {
-			throw new IllegalArgumentException("key must be primitive type");
-		}
-	}
+        HCatFieldSchema keyType = schema.get(fieldName);
+        HCatFieldSchema.Category category = keyType.getCategory();
 
-	public static void checkValueType(HCatSchema schema, String fieldName) throws IOException {
+        if (category != HCatFieldSchema.Category.PRIMITIVE) {
+            throw new IllegalArgumentException("key must be primitive type");
+        }
+    }
 
-		HCatFieldSchema valueType = schema.get(fieldName);
+    /**
+     * This function checks the type category of the value.
+     *
+     * @param schema The HCatSchema.
+     * @param fieldName The name of the field to check.
+     * @throws IOException Is thrown in case of errors.
+     */
+    public static void checkValueType(HCatSchema schema, String fieldName) throws IOException {
 
-		if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
-			if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-				throw new IllegalArgumentException("map value type must be a primitive type");
-			}
-		}
+        HCatFieldSchema valueType = schema.get(fieldName);
 
-		if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
-			if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-				throw new IllegalArgumentException("array element type must be a primitive type");
-			}
-		}
+        if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
+            if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+                throw new IllegalArgumentException("map value type must be a primitive type");
+            }
+        }
 
-		if (valueType.getCategory() == HCatFieldSchema.Category.STRUCT) {
-			HCatSchema structSchema = valueType.getStructSubSchema();
-			for (HCatFieldSchema f : structSchema.getFields()) {
-				if (f.getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-					throw new IllegalArgumentException("struct element type must be a primitive type");
-				}
-			}
+        if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
+            if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+                throw new IllegalArgumentException("array element type must be a primitive type");
+            }
+        }
 
-		}
-	}
+        if (valueType.getCategory() == HCatFieldSchema.Category.STRUCT) {
+            HCatSchema structSchema = valueType.getStructSubSchema();
+            for (HCatFieldSchema f : structSchema.getFields()) {
+                if (f.getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+                    throw new IllegalArgumentException("struct element type must be a primitive type");
+                }
+            }
 
-	public static String getExportKeyPrefix(Configuration conf) {
+        }
+    }
 
-		String prefix = conf.get(REDIS_EXPORT_KEY_PREFIX, "");
-		StringBuilder keyPrefixBuilder = new StringBuilder();
-		if (!prefix.isEmpty()) {
-			keyPrefixBuilder.append(prefix).append("_");
-		}
-		return keyPrefixBuilder.toString();
-	}
+    /**
+     * Returns the optional key prefix to prepend
+     * to the Redis key.
+     *
+     * @param conf The Hadoop configuration object.
+     * @return The prefix as string.
+     */
+    public static String getExportKeyPrefix(Configuration conf) {
 
-	public static void setOutput(Configuration conf, String redisHost,
-			String keyName, String keyPrefix, String valueName,
-			boolean replace, boolean pipeline) {
-		conf.set(REDIS_CONNECT_STRING, redisHost);
-		conf.set(REDIS_EXPORT_KEY_NAME, keyName);
-		conf.set(REDIS_EXPORT_KEY_PREFIX, keyPrefix);
-		conf.set(REDIS_EXPORT_VALUE_NAME, valueName);
-		conf.setBoolean(REDIS_EXPORT_VALUE_REPLACE, replace);
-		conf.setBoolean(REDIS_PIPELINE_MODE, pipeline);
-	}
+        String prefix = conf.get(REDIS_EXPORT_KEY_PREFIX, "");
+        StringBuilder keyPrefixBuilder = new StringBuilder();
+        if (!prefix.isEmpty()) {
+            keyPrefixBuilder.append(prefix).append("_");
+        }
+        return keyPrefixBuilder.toString();
+    }
 
-	public static void setOutput(Configuration conf, String redisHost,
-			String keyName, String keyPrefix, boolean replace, boolean pipeline) {
-		setOutput(conf, redisHost, keyName, keyPrefix, "", replace, pipeline);
-	}
+    /**
+     * Initializes the RedisOutputFormat.
+     *
+     * @param conf The Hadoop configuration object.
+     * @param redisHost The Redis hostname
+     * @param keyName The name of the key field
+     * @param keyPrefix The key prefix
+     * @param valueName The name of the value field
+     * @param replace A flag indicating if existing data should be replaced
+     * @param pipeline A flag to use the Redis pipeline mode.
+     */
+    public static void setOutput(Configuration conf, String redisHost, String keyName, String keyPrefix,
+            String valueName, boolean replace, boolean pipeline) {
 
-	public static Class<?> getRedisWritableClazz(HCatSchema schema, String fieldName) throws IOException {
-		HCatFieldSchema.Category category = schema.get(fieldName).getCategory();
+        conf.set(REDIS_CONNECT_STRING, redisHost);
+        conf.set(REDIS_EXPORT_KEY_NAME, keyName);
+        conf.set(REDIS_EXPORT_KEY_PREFIX, keyPrefix);
+        conf.set(REDIS_EXPORT_VALUE_NAME, valueName);
+        conf.setBoolean(REDIS_EXPORT_VALUE_REPLACE, replace);
+        conf.setBoolean(REDIS_PIPELINE_MODE, pipeline);
+    }
 
-		Class<?> RWClazz = null;
+    public static void setOutput(Configuration conf, String redisHost, String keyName, String keyPrefix,
+            boolean replace, boolean pipeline) {
 
-		switch (category) {
-		case PRIMITIVE:
-			RWClazz = RedisStringWritable.class;
-			break;
-		case MAP:
-			RWClazz = RedisHashWritable.class;
-			break;
-		case ARRAY:
-			RWClazz = RedisListWritable.class;
-			break;
-		case STRUCT:
-			RWClazz = RedisHashWritable.class;
-			break;
-		}
-		return RWClazz;
-	}
+        setOutput(conf, redisHost, keyName, keyPrefix, "", replace, pipeline);
+    }
 
-	public class RedisRecordWriter extends RecordWriter<K, V> {
+    /**
+     * A function to return the writable depending on the name
+     * of the value field.
+     * @param schema The Hcatalog schema
+     * @param fieldName The name of the field.
+     * @return A class used as writable
+     * @throws IOException Thrown if an error occurs.
+     */
+    public static Class<?> getRedisWritableClazz(HCatSchema schema, String fieldName) throws IOException {
 
-		private Jedis jedis;
+        HCatFieldSchema.Category category = schema.get(fieldName).getCategory();
 
-		boolean replace;
+        Class<?> RWClazz = null;
 
-		public RedisRecordWriter(Jedis jedis, boolean replace) {
-			this.jedis = jedis;
-			this.replace = replace;
-		}
+        switch (category) {
+        case PRIMITIVE:
+            RWClazz = RedisStringWritable.class;
+            break;
+        case MAP:
+            RWClazz = RedisHashWritable.class;
+            break;
+        case ARRAY:
+            RWClazz = RedisListWritable.class;
+            break;
+        case STRUCT:
+            RWClazz = RedisHashWritable.class;
+            break;
+        default:
+            break;
+        }
+        return RWClazz;
+    }
 
-		@Override
-		public void write(K key, V value) {
-			key.write(jedis, replace);
-		}
+    /**
+     * The Redis Record Writer is used to write data
+     * into Redis.
+     */
+    public class RedisRecordWriter extends RecordWriter<K, V> {
 
-		@Override
-		public void close(TaskAttemptContext context) throws IOException {
-			jedis.close();
-		}
-	}
+        private Jedis jedis;
 
-	public class PipelinedRedisRecordWriter extends RecordWriter<K, V> {
+        boolean replace;
 
-		private Pipeline jedis;
+        /**
+         * The constructor to initialize
+         * the record writer.
+         *
+         * @param jedis The redis client.
+         * @param replace A flag to enable replace mode.
+         */
+        public RedisRecordWriter(Jedis jedis, boolean replace) {
 
-		private boolean replace;
+            this.jedis = jedis;
+            this.replace = replace;
+        }
 
-		public PipelinedRedisRecordWriter(Pipeline jedis, boolean replace) {
-			this.jedis = jedis;
-			this.replace = replace;
-		}
+        @Override
+        public void write(K key, V value) {
 
-		@Override
-		public void write(K key, V value) {
-			key.write(jedis, replace);
-		}
+            key.write(jedis, replace);
+        }
 
-		@Override
-		public void close(TaskAttemptContext context) throws IOException {
-			jedis.sync();
-			jedis.close();
-		}
-	}
+        @Override
+        public void close(TaskAttemptContext context) throws IOException {
+
+            jedis.close();
+        }
+    }
+
+    /**
+     * A piplined version of the Redis Record Writer,
+     * uses pipeline mode to write data into Redis.
+     */
+    public class PipelinedRedisRecordWriter extends RecordWriter<K, V> {
+
+        private Pipeline jedis;
+
+        private boolean replace;
+
+        /**
+         * The constructor to initialize
+         * the pipelined writer.
+         *
+         * @param jedis The pipelined Redis client.
+         * @param replace A flag to enable replace mode.
+         */
+        public PipelinedRedisRecordWriter(Pipeline jedis, boolean replace) {
+
+            this.jedis = jedis;
+            this.replace = replace;
+        }
+
+        @Override
+        public void write(K key, V value) {
+
+            key.write(jedis, replace);
+        }
+
+        @Override
+        public void close(TaskAttemptContext context) throws IOException {
+
+            jedis.sync();
+            jedis.close();
+        }
+    }
 }

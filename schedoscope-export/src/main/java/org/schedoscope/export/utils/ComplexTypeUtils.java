@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export.utils;
 
 import java.util.List;
@@ -24,195 +25,210 @@ import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema.Category;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
+/**
+ * This class provides static methods
+ * to create Json from HCatRecords.
+ *
+ */
 public class ComplexTypeUtils {
 
-	private static String removeJsonFormatCharacters(String value) {
-		value = value.replace("\n", " ");
-		value = value.replace("\r", " ");
-		value = value.replace("\"", "");
-		value = value.replace("\\\\", "");
-		value = value.replace(":", "");
-		value = value.replace(",", "");
-		value = value.replace("{", "");
-		value = value.replace("}", "");
-		value = value.replace("\t", " ");
+    private static String removeJsonFormatCharacters(String value) {
+        value = value.replace("\n", " ");
+        value = value.replace("\r", " ");
+        value = value.replace("\"", "");
+        value = value.replace("\\\\", "");
+        value = value.replace(":", "");
+        value = value.replace(",", "");
+        value = value.replace("{", "");
+        value = value.replace("}", "");
+        value = value.replace("\t", " ");
 
-		return value;
+        return value;
+    }
 
-	}
+    /**
+     * This function converts a struct to Json.
+     *
+     * @param record The HCatRecord.
+     * @param pos Position of field within the record.
+     * @param schema The HCatSchema.
+     * @return A string representing the Json.
+     * @throws InterruptedException Exception is thrown if conversion is unsuccessful.
+     */
+    public static String structToJsonString(HCatRecord record, int pos, HCatSchema schema) throws InterruptedException {
 
-	public static String structToJSONString(HCatRecord record, int pos,
-			HCatSchema schema) throws InterruptedException {
+        StringBuilder jsonString = new StringBuilder();
 
-		StringBuilder jsonString = new StringBuilder();
+        try {
+            jsonString.append("{");
+            for (int sf = 0; sf < schema.get(pos).getStructSubSchema().size(); sf++) {
+                String stuctKey = schema.get(pos).getStructSubSchema().get(sf).getName();
 
-		try {
-			jsonString.append("{");
-			for (int sf = 0; sf < schema.get(pos).getStructSubSchema().size(); sf++) {
-				String stuctKey = schema.get(pos).getStructSubSchema().get(sf)
-						.getName();
+                jsonString.append("\"");
+                jsonString.append(stuctKey);
 
-				jsonString.append("\"");
-				jsonString.append(stuctKey);
+                if (record.getStruct(schema.get(pos).getName(), schema).get(sf) != null) {
+                    String structVal = removeJsonFormatCharacters(
+                            record.getStruct(schema.get(pos).getName(), schema).get(sf).toString());
+                    jsonString.append("\":\"");
+                    jsonString.append(structVal);
+                    jsonString.append("\"");
+                } else {
+                    jsonString.append("\":");
+                    jsonString.append("null");
+                }
 
-				if (record.getStruct(schema.get(pos).getName(), schema).get(sf) != null) {
-					String structVal = removeJsonFormatCharacters(record
-							.getStruct(schema.get(pos).getName(), schema)
-							.get(sf).toString());
-					jsonString.append("\":\"");
-					jsonString.append(structVal);
-					jsonString.append("\"");
-				} else {
-					jsonString.append("\":");
-					jsonString.append("null");
-				}
+                if (sf != schema.get(pos).getStructSubSchema().size() - 1) {
+                    jsonString.append(",");
+                }
+            }
+            return jsonString.append("}").toString();
+        } catch (HCatException e) {
+            throw new InterruptedException(e.getMessage());
+        }
+    }
 
-				if (sf != schema.get(pos).getStructSubSchema().size() - 1) {
-					jsonString.append(",");
-				}
-			}
-			return jsonString.append("}").toString();
-		} catch (HCatException e) {
-			throw new InterruptedException(e.getMessage());
-		}
+    /**
+     * Function converts an array to Json.
+     *
+     * @param record The HCatRecord.
+     * @param pos Position of field within the record.
+     * @param schema The HCatSchema.
+     * @return A string representing the Json.
+     * @throws InterruptedException Exception is thrown if conversion is unsuccessful.
+     */
+    public static String arrayToJsonString(HCatRecord record, int pos, HCatSchema schema) throws InterruptedException {
 
-	}
+        StringBuilder jsonString = new StringBuilder();
 
-	public static String arrayToJSONString(HCatRecord record, int pos,
-			HCatSchema schema) throws InterruptedException {
+        try {
+            jsonString.append("[");
+            HCatFieldSchema entrySchema = schema.get(pos).getArrayElementSchema().get(0);
+            List<?> entries = record.getList(schema.get(pos).getName(), schema);
 
-		StringBuilder jsonString = new StringBuilder();
+            for (int i = 0; i < entries.size(); i++) {
+                Object entry = entries.get(i);
 
-		try {
-			jsonString.append("[");
-			HCatFieldSchema entrySchema = schema.get(pos)
-					.getArrayElementSchema().get(0);
-			List<?> entries = record.getList(schema.get(pos).getName(), schema);
+                if (entry != null && !entrySchema.isComplex()) {
+                    String value = removeJsonFormatCharacters(entry.toString());
+                    if (!value.trim().equals("")) {
+                        jsonString.append("\"");
+                        jsonString.append(value);
+                        jsonString.append("\"");
 
-			for (int i = 0; i < entries.size(); i++) {
-				Object entry = entries.get(i);
+                    }
 
-				if (entry != null && !entrySchema.isComplex()) {
-					String value = removeJsonFormatCharacters(entry.toString());
-					if (!value.trim().equals("")) {
-						jsonString.append("\"");
-						jsonString.append(value);
-						jsonString.append("\"");
+                } else if (entry != null && entrySchema.isComplex()) {
+                    if (entrySchema.getCategory() == Category.STRUCT) {
+                        String nestedValue = nestedStructToJsonString((List<?>) entry, pos, entrySchema);
+                        jsonString.append(nestedValue);
 
-					}
+                    }
 
-				} else if (entry != null && entrySchema.isComplex()) {
-					if (entrySchema.getCategory() == Category.STRUCT) {
-						String nestedValue = nestedStructToJSONString(
-								(List<?>) entry, pos, entrySchema);
-						jsonString.append(nestedValue);
+                }
 
-					}
+                if (i < entries.size() - 1) {
+                    jsonString.append(",");
+                }
 
-				}
+            }
 
-				if (i < entries.size() - 1) {
-					jsonString.append(",");
-				}
+            if (jsonString.toString().trim().length() > 1) {
+                return jsonString.append("]").toString();
+            } else {
+                return "[]";
+            }
 
-			}
+        } catch (HCatException e) {
+            throw new InterruptedException(e.getMessage());
+        }
+    }
 
-			if (jsonString.toString().trim().length() > 1) {
-				return jsonString.append("]").toString();
-			} else {
-				return "[]";
-			}
+    /**
+     * Function converts a map to Json.
+     *
+     * @param record The HCatRecord.
+     * @param pos Position of field within the record.
+     * @param schema The HCatSchema.
+     * @return A string representing the Json.
+     * @throws InterruptedException Exception is thrown if conversion is unsuccessful.
+     */
+    public static String mapToJsonString(HCatRecord record, int pos, HCatSchema schema) throws InterruptedException {
 
-		} catch (HCatException e) {
-			throw new InterruptedException(e.getMessage());
-		}
+        StringBuilder jsonString = new StringBuilder();
 
-	}
+        try {
+            jsonString.append("{");
 
-	public static String mapToJSONString(HCatRecord record, int pos,
-			HCatSchema schema) throws InterruptedException {
+            HCatFieldSchema mapValueSchema = schema.get(pos).getMapValueSchema().get(0);
 
-		StringBuilder jsonString = new StringBuilder();
+            Map<?, ?> mapEntries = record.getMap(schema.get(pos).getName(), schema);
+            if (mapEntries != null && !mapValueSchema.isComplex() && !mapEntries.isEmpty()) {
+                for (int i = 0; i < mapEntries.keySet().size(); i++) {
+                    String key = mapEntries.keySet().toArray()[i].toString();
+                    String value = mapEntries.get(key).toString();
 
-		try {
-			jsonString.append("{");
+                    if (!key.trim().equals("")) {
 
-			HCatFieldSchema mapValueSchema = schema.get(pos)
-					.getMapValueSchema().get(0);
+                        jsonString.append("\"");
+                        jsonString.append(key);
 
-			Map<?, ?> mapEntries = record.getMap(schema.get(pos).getName(),
-					schema);
-			if (mapEntries != null && !mapValueSchema.isComplex()
-					&& !mapEntries.isEmpty()) {
-				for (int i = 0; i < mapEntries.keySet().size(); i++) {
-					String key = mapEntries.keySet().toArray()[i].toString();
-					String value = mapEntries.get(key).toString();
+                        if (value.startsWith("{") && value.contains(",")) {
+                            jsonString.append("\":");
+                            jsonString.append(value);
+                        } else {
+                            value = removeJsonFormatCharacters(value);
+                            jsonString.append("\":\"");
+                            jsonString.append(value);
+                            jsonString.append("\"");
+                        }
 
-					if (!key.trim().equals("")) {
+                        if (i < mapEntries.keySet().size() - 1) {
+                            jsonString.append(",");
+                        }
+                    }
 
-						jsonString.append("\"");
-						jsonString.append(key);
+                }
+            }
 
-						if (value.startsWith("{") && value.contains(",")) {
-							jsonString.append("\":");
-							jsonString.append(value);
-						} else {
-							value = removeJsonFormatCharacters(value);
-							jsonString.append("\":\"");
-							jsonString.append(value);
-							jsonString.append("\"");
-						}
+            return jsonString.append("}").toString();
 
-						if (i < mapEntries.keySet().size() - 1) {
-							jsonString.append(",");
-						}
-					}
+        } catch (HCatException e) {
+            throw new InterruptedException(e.getMessage());
+        }
+    }
 
-				}
-			}
+    private static String nestedStructToJsonString(List<?> value, int pos, HCatFieldSchema schema)
+            throws InterruptedException {
 
-			return jsonString.append("}").toString();
+        StringBuilder jsonString = new StringBuilder();
 
-		} catch (HCatException e) {
-			throw new InterruptedException(e.getMessage());
-		}
+        try {
+            jsonString.append("{");
+            for (int sf = 0; sf < schema.getStructSubSchema().size(); sf++) {
+                String stuctKey = schema.getStructSubSchema().get(sf).getName();
 
-	}
+                jsonString.append("\"");
+                jsonString.append(stuctKey);
 
-	private static String nestedStructToJSONString(List<?> value, int pos,
-			HCatFieldSchema schema) throws InterruptedException {
+                if (value.get(sf) != null) {
+                    String structVal = removeJsonFormatCharacters(value.get(sf).toString());
+                    jsonString.append("\":\"");
+                    jsonString.append(structVal);
+                    jsonString.append("\"");
+                } else {
+                    jsonString.append("\":");
+                    jsonString.append("null");
+                }
 
-		StringBuilder jsonString = new StringBuilder();
+                if (sf != schema.getStructSubSchema().size() - 1) {
+                    jsonString.append(",");
+                }
 
-		try {
-			jsonString.append("{");
-			for (int sf = 0; sf < schema.getStructSubSchema().size(); sf++) {
-				String stuctKey = schema.getStructSubSchema().get(sf).getName();
-
-				jsonString.append("\"");
-				jsonString.append(stuctKey);
-
-				if (value.get(sf) != null) {
-					String structVal = removeJsonFormatCharacters(value.get(sf)
-							.toString());
-					jsonString.append("\":\"");
-					jsonString.append(structVal);
-					jsonString.append("\"");
-				} else {
-					jsonString.append("\":");
-					jsonString.append("null");
-				}
-
-				if (sf != schema.getStructSubSchema().size() - 1) {
-					jsonString.append(",");
-				}
-
-			}
-			return jsonString.append("}").toString();
-		} catch (HCatException e) {
-			throw new InterruptedException(e.getMessage());
-		}
-
-	}
-
+            }
+            return jsonString.append("}").toString();
+        } catch (HCatException e) {
+            throw new InterruptedException(e.getMessage());
+        }
+    }
 }

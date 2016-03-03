@@ -39,75 +39,73 @@ import org.schedoscope.export.outputformat.JdbcOutputWritable;
 
 public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
 
-	MapDriver<WritableComparable<?>, HCatRecord, Text, NullWritable> mapDriver;
-	ReduceDriver<Text, NullWritable, JdbcOutputWritable, NullWritable> reduceDriver;
-	MapReduceDriver<WritableComparable<?>, HCatRecord, Text, NullWritable, JdbcOutputWritable, NullWritable> mapReduceDriver;
+    MapDriver<WritableComparable<?>, HCatRecord, Text, NullWritable> mapDriver;
+    ReduceDriver<Text, NullWritable, JdbcOutputWritable, NullWritable> reduceDriver;
+    MapReduceDriver<WritableComparable<?>, HCatRecord, Text, NullWritable, JdbcOutputWritable, NullWritable> mapReduceDriver;
 
-	@SuppressWarnings("deprecation")
-	@Before
-	public void setUp() throws Exception {
-		super.setUp();
-		JdbcExportMapper mapper = new JdbcExportMapper();
-		mapDriver = MapDriver.newMapDriver(mapper);
-		mapDriver.setConfiguration(conf);
+    @SuppressWarnings("deprecation")
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        JdbcExportMapper mapper = new JdbcExportMapper();
+        mapDriver = MapDriver.newMapDriver(mapper);
+        mapDriver.setConfiguration(conf);
 
-		JdbcExportReducer reducer = new JdbcExportReducer();
-		reduceDriver = ReduceDriver.newReduceDriver(reducer);
-		reduceDriver.setConfiguration(conf);
+        JdbcExportReducer reducer = new JdbcExportReducer();
+        reduceDriver = ReduceDriver.newReduceDriver(reducer);
+        reduceDriver.setConfiguration(conf);
 
-		mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
-		mapReduceDriver.setConfiguration(conf);
+        mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
+        mapReduceDriver.setConfiguration(conf);
 
-		setUpHiveServer("src/test/resources/ogm_event_features_data.txt",
-				"src/test/resources/ogm_event_features.hql",
-				"ogm_event_features");
-	}
+        setUpHiveServer("src/test/resources/ogm_event_features_data.txt", "src/test/resources/ogm_event_features.hql",
+                "ogm_event_features");
+    }
 
-	@Test
-	public void testJdbcMapper() throws IOException, JSONException {
+    @Test
+    public void testJdbcMapper() throws IOException, JSONException {
 
-		Iterator<HCatRecord> it = hcatRecordReader.read();
-		while (it.hasNext()) {
-			HCatRecord record = it.next();
-			mapDriver.withInput(NullWritable.get(), record);
-		}
-		List<Pair<Text, NullWritable>> out = mapDriver.run();
-		assertEquals(10, out.size());
+        Iterator<HCatRecord> it = hcatRecordReader.read();
+        while (it.hasNext()) {
+            HCatRecord record = it.next();
+            mapDriver.withInput(NullWritable.get(), record);
+        }
+        List<Pair<Text, NullWritable>> out = mapDriver.run();
+        assertEquals(10, out.size());
 
-		for (Pair<Text, NullWritable> p : out) {
-			String jsonData = p.getFirst().toString().split("\t")[1];
-			JSONObject json = new JSONObject(jsonData);
-			assertNotEquals(0, json.length());
+        for (Pair<Text, NullWritable> p : out) {
+            String jsonData = p.getFirst().toString().split("\t")[1];
+            JSONObject json = new JSONObject(jsonData);
+            assertNotEquals(0, json.length());
 
-			String fixed = p.getFirst().toString().split("\t")[3];
-			assertEquals("app.eci.datahub.OgmEventFeatures", fixed);
-		}
-	}
+            String fixed = p.getFirst().toString().split("\t")[3];
+            assertEquals("app.eci.datahub.OgmEventFeatures", fixed);
+        }
+    }
 
-	@Test
-	public void testMapReduce() throws IOException {
+    @Test
+    public void testMapReduce() throws IOException {
 
-		Iterator<HCatRecord> it = hcatRecordReader.read();
-		while (it.hasNext()) {
-			HCatRecord record = it.next();
-			mapReduceDriver.withInput(NullWritable.get(), record);
-		}
-		List<Pair<JdbcOutputWritable, NullWritable>> out = mapReduceDriver.run();
-		assertEquals(10, out.size());
+        Iterator<HCatRecord> it = hcatRecordReader.read();
+        while (it.hasNext()) {
+            HCatRecord record = it.next();
+            mapReduceDriver.withInput(NullWritable.get(), record);
+        }
+        List<Pair<JdbcOutputWritable, NullWritable>> out = mapReduceDriver.run();
+        assertEquals(10, out.size());
 
-	}
+    }
 
-	@Test
-	public void testReducerWrongInput() throws IOException{
+    @Test
+    public void testReducerWrongInput() throws IOException {
 
-		// input data
-		Text key = new Text("1\ttest");
-		List<NullWritable> values = new ArrayList<NullWritable>();
-		values.add(NullWritable.get());
+        // input data
+        Text key = new Text("1\ttest");
+        List<NullWritable> values = new ArrayList<NullWritable>();
+        values.add(NullWritable.get());
 
-		reduceDriver.withInput(key, values);
-		List<Pair<JdbcOutputWritable, NullWritable>> out = reduceDriver.run();
-		assertEquals(0, out.size());
-	}
+        reduceDriver.withInput(key, values);
+        List<Pair<JdbcOutputWritable, NullWritable>> out = reduceDriver.run();
+        assertEquals(0, out.size());
+    }
 }
-

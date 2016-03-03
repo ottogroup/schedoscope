@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export;
 
 import org.apache.hadoop.conf.Configuration;
@@ -31,143 +32,165 @@ import org.kohsuke.args4j.Option;
 import org.schedoscope.export.outputformat.RedisHashWritable;
 import org.schedoscope.export.outputformat.RedisOutputFormat;
 
+/**
+ * The MR driver to run the Hive to Redis export. Depending on
+ * the cmdl params it either runs a full table export or only
+ * a selected field.
+ */
 public class RedisExportJob extends Configured implements Tool {
 
-	@Option(name="-s", usage="set to true if kerberos is enabled")
-	private boolean isSecured = false;
+    @Option(name = "-s", usage = "set to true if kerberos is enabled")
+    private boolean isSecured = false;
 
-	@Option(name="-m", usage="specify the metastore URI")
-	private String metaStoreUris;
+    @Option(name = "-m", usage = "specify the metastore URI")
+    private String metaStoreUris;
 
-	@Option(name="-p", usage="the kerberos principal", depends={"-s"})
-	private String principal;
+    @Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
+    private String principal;
 
-	@Option(name="-h", usage="redis host")
-	private String redisHost;
+    @Option(name = "-h", usage = "redis host")
+    private String redisHost;
 
-	@Option(name="-d", usage="input database", required=true)
-	private String inputDatabase;
+    @Option(name = "-d", usage = "input database", required = true)
+    private String inputDatabase;
 
-	@Option(name="-t", usage="input table", required=true)
-	private String inputTable;
+    @Option(name = "-t", usage = "input table", required = true)
+    private String inputTable;
 
-	@Option(name="-k", usage="key column", required=true)
-	private String keyName;
+    @Option(name = "-k", usage = "key column", required = true)
+    private String keyName;
 
-	@Option(name="-v", usage="value column, if empty full table export", depends={"-k"})
-	private String valueName;
+    @Option(name = "-v", usage = "value column, if empty full table export", depends = { "-k" })
+    private String valueName;
 
-	@Option(name="-r", usage="optional key prefix for redis key")
-	private String keyPrefix = "";
+    @Option(name = "-r", usage = "optional key prefix for redis key")
+    private String keyPrefix = "";
 
-	@Option(name="-c", usage="number of reducers, concurrency level")
-	private int numReducer = 2;
+    @Option(name = "-c", usage = "number of reducers, concurrency level")
+    private int numReducer = 2;
 
-	@Option(name="-a", usage="append data to existing keys, only useful for native export of map/list types")
-	boolean replace = false;
+    @Option(name = "-a", usage = "append data to existing keys, only useful for native export of map/list types")
+    boolean replace = false;
 
-	@Option(name="-l", usage="pipeline mode for redis client")
-	boolean pipeline = false;
+    @Option(name = "-l", usage = "pipeline mode for redis client")
+    boolean pipeline = false;
 
+    @Override
+    public int run(String[] args) throws Exception {
 
-	public int run(String[] args) throws Exception {
+        CmdLineParser cmd = new CmdLineParser(this);
 
-		CmdLineParser cmd = new CmdLineParser(this);
+        try {
+            cmd.parseArgument(args);
+        } catch (CmdLineException e) {
+            System.err.println(e.getMessage());
+            cmd.printUsage(System.err);
+            System.exit(1);
+        }
 
-		try {
-			cmd.parseArgument(args);
-		} catch (CmdLineException e) {
-			System.err.println(e.getMessage());
-			cmd.printUsage(System.err);
-			System.exit(1);
-		}
+        Job job = configure();
+        boolean success = job.waitForCompletion(true);
+        return (success ? 0 : 1);
+    }
 
-		Job job = configure();
-		boolean success = job.waitForCompletion(true);
-		return (success ? 0 : 1);
-	}
+    /**
+     * This function takes all required parameters and
+     * returns a configured job object.
+     *
+     * @param isSecured A flag indicating if Kerberos is enabled.
+     * @param metaStoreUris A string containing the Hive meta store URI
+     * @param principal The Kerberos principal.
+     * @param redisHost The Redis Host.
+     * @param inputDatabase The Hive input database
+     * @param inputTable The Hive inut table.
+     * @param keyName The field name to use as key.
+     * @param valueName The fields name to use a value, can be null.
+     * @param keyPrefix An optional key prefix.
+     * @param numReducer Number of reducers / partitions.
+     * @param replace A flag indicating of data should be replaced.
+     * @param pipeline A flag to set the Redis client pipeline mode.
+     * @return A configured job instance
+     * @throws Exception is thrown if an error occurs.
+     */
+    public Job configure(boolean isSecured, String metaStoreUris, String principal, String redisHost,
+            String inputDatabase, String inputTable, String keyName, String valueName, String keyPrefix, int numReducer,
+            boolean replace, boolean pipeline) throws Exception {
 
-	public Job configure(boolean isSecured,
-						String metaStoreUris,
-						String principal,
-						String redisHost,
-						String inputDatabase,
-						String inputTable,
-						String keyName,
-						String valueName,
-						String keyPrefix,
-						int numReducer,
-						boolean append,
-						boolean pipeline) throws Exception {
+        this.isSecured = isSecured;
+        this.metaStoreUris = metaStoreUris;
+        this.principal = principal;
+        this.redisHost = redisHost;
+        this.inputDatabase = inputDatabase;
+        this.inputTable = inputTable;
+        this.keyName = keyName;
+        this.valueName = valueName;
+        this.numReducer = numReducer;
+        this.replace = replace;
+        this.pipeline = pipeline;
+        return configure();
+    }
 
-		this.isSecured = isSecured;
-		this.metaStoreUris = metaStoreUris;
-		this.principal = principal;
-		this.redisHost = redisHost;
-		this.inputDatabase = inputDatabase;
-		this.inputTable = inputTable;
-		this.keyName = keyName;
-		this.valueName = valueName;
-		this.numReducer = numReducer;
-		this.replace = append;
-		this.pipeline = pipeline;
-		return configure();
-	}
+    private Job configure() throws Exception {
 
-	public Job configure() throws Exception {
+        Configuration conf = getConf();
 
-		Configuration conf = getConf();
+        conf.set("hive.metastore.local", "false");
+        conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
 
-		conf.set("hive.metastore.local", "false");
-		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
+        if (isSecured) {
 
-		if (isSecured) {
+            conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+            conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
 
-			conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
+            if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+                conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+            }
+        }
 
-			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-			}
-		}
+        Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "." + inputTable);
 
-		Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "." + inputTable);
+        job.setJarByClass(RedisExportJob.class);
+        HCatInputFormat.setInput(job, inputDatabase, inputTable);
+        HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
-		job.setJarByClass(RedisExportJob.class);
-		HCatInputFormat.setInput(job, inputDatabase, inputTable);
-		HCatSchema hCatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
+        Class<?> OutputClazz;
 
-		Class<?> OutputClazz;
+        if (valueName == null) {
+            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, replace, pipeline);
+            job.setMapperClass(RedisFullTableExportMapper.class);
+            OutputClazz = RedisHashWritable.class;
 
-		if (valueName == null) {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, replace, pipeline);
-			job.setMapperClass(RedisFullTableExportMapper.class);
-			OutputClazz = RedisHashWritable.class;
+        } else {
+            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, valueName, replace,
+                    pipeline);
+            job.setMapperClass(RedisExportMapper.class);
+            OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema, valueName);
+        }
 
-		} else {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, valueName, replace, pipeline);
-			job.setMapperClass(RedisExportMapper.class);
-			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hCatSchema, valueName);
-		}
+        job.setReducerClass(RedisExportReducer.class);
+        job.setNumReduceTasks(numReducer);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(RedisOutputFormat.class);
 
-		job.setReducerClass(RedisExportReducer.class);
-		job.setNumReduceTasks(numReducer);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(RedisOutputFormat.class);
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(OutputClazz);
+        job.setOutputKeyClass(OutputClazz);
+        job.setOutputValueClass(NullWritable.class);
+        return job;
+    }
 
-		job.setMapOutputKeyClass(Text.class);
-		job.setMapOutputValueClass(OutputClazz);
-		job.setOutputKeyClass(OutputClazz);
-		job.setOutputValueClass(NullWritable.class);
-		return job;
-	}
-
-	public static void main(String[] args) throws Exception {
-		try {
-			int exitCode = ToolRunner.run(new RedisExportJob(), args);
-			System.exit(exitCode);
-		} catch (Exception e) {
-			System.err.println(e.getMessage());
-		}
-	}
+    /**
+     * The entry point when called from the command line.
+     *
+     * @param args A string array containing the cmdl args.
+     * @throws Exception is thrown if an error occurs.
+     */
+    public static void main(String[] args) throws Exception {
+        try {
+            int exitCode = ToolRunner.run(new RedisExportJob(), args);
+            System.exit(exitCode);
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
+        }
+    }
 }
