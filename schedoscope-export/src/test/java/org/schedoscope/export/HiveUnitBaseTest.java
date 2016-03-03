@@ -31,9 +31,9 @@ import org.apache.hive.hcatalog.data.transfer.ReaderContext;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.After;
 import org.junit.Before;
-import org.schedoscope.export.outputschema.Schema;
-import org.schedoscope.export.outputschema.SchemaFactory;
-import org.schedoscope.export.outputschema.SchemaUtils;
+import org.schedoscope.export.jdbc.outputschema.Schema;
+import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
+import org.schedoscope.export.jdbc.outputschema.SchemaUtils;
 
 import com.inmobi.hive.test.HiveTestSuite;
 

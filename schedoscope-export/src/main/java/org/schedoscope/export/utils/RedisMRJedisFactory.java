@@ -1,7 +1,7 @@
 package org.schedoscope.export.utils;
 
 import org.apache.hadoop.conf.Configuration;
-import org.schedoscope.export.outputformat.RedisOutputFormat;
+import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 
 import redis.clients.jedis.Jedis;
 
