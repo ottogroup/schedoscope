@@ -140,6 +140,7 @@ public class JdbcExportJob extends Configured implements Tool {
         this.dbPassword = dbPassword;
         this.inputDatabase = inputDatabase;
         this.inputTable = inputTable;
+        this.inputFilter = inputFilter;
         this.storageEngine = storageEngine;
         this.distributedBy = distributedBy;
         this.numReducer = numReducer;

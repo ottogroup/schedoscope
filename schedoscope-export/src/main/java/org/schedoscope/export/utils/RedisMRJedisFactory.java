@@ -22,7 +22,8 @@ public class RedisMRJedisFactory {
     public static Jedis getJedisClient(Configuration conf) {
 
         if (jedis == null) {
-            jedis = new Jedis(conf.get(RedisOutputFormat.REDIS_CONNECT_STRING, "localhost"));
+            jedis = new Jedis(conf.get(RedisOutputFormat.REDIS_EXPORT_SERVER_HOST, "localhost"),
+                            conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_PORT, 6379));
         }
         return jedis;
     }

@@ -6,6 +6,6 @@
 
 <suppressions>
     <suppress files="[\\/]test[\\/]" checks="."/>
-    <suppress files="RedisOutputFormat.java" lines="198" checks="LocalVariableName"/>
-    <suppress files="RedisExportJob.java" lines="156" checks="LocalVariableName"/>
+    <suppress files="RedisOutputFormat.java" lines="200-250" checks="LocalVariableName"/>
+    <suppress files="RedisExportJob.java" lines="150-250" checks="LocalVariableName"/>
 </suppressions>

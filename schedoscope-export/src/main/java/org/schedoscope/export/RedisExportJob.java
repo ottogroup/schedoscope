@@ -42,20 +42,26 @@ public class RedisExportJob extends Configured implements Tool {
     @Option(name = "-s", usage = "set to true if kerberos is enabled")
     private boolean isSecured = false;
 
-    @Option(name = "-m", usage = "specify the metastore URI")
+    @Option(name = "-m", usage = "specify the metastore URIs", required = true)
     private String metaStoreUris;
 
     @Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
     private String principal;
 
     @Option(name = "-h", usage = "redis host")
-    private String redisHost;
+    private String redisHost = "localhost";
+
+    @Option(name = "-h", usage = "redis port")
+    private int redisPort = 6379;
 
     @Option(name = "-d", usage = "input database", required = true)
     private String inputDatabase;
 
     @Option(name = "-t", usage = "input table", required = true)
     private String inputTable;
+
+    @Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
+    private String inputFilter;
 
     @Option(name = "-k", usage = "key column", required = true)
     private String keyName;
@@ -103,6 +109,7 @@ public class RedisExportJob extends Configured implements Tool {
      * @param redisHost The Redis Host.
      * @param inputDatabase The Hive input database
      * @param inputTable The Hive inut table.
+     * @param inputFilter An optional filter for Hive.
      * @param keyName The field name to use as key.
      * @param valueName The fields name to use a value, can be null.
      * @param keyPrefix An optional key prefix.
@@ -113,15 +120,17 @@ public class RedisExportJob extends Configured implements Tool {
      * @throws Exception is thrown if an error occurs.
      */
     public Job configure(boolean isSecured, String metaStoreUris, String principal, String redisHost,
-            String inputDatabase, String inputTable, String keyName, String valueName, String keyPrefix, int numReducer,
-            boolean replace, boolean pipeline) throws Exception {
+            int redisPort, String inputDatabase, String inputTable, String inputFilter, String keyName,
+            String valueName, String keyPrefix, int numReducer, boolean replace, boolean pipeline) throws Exception {
 
         this.isSecured = isSecured;
         this.metaStoreUris = metaStoreUris;
         this.principal = principal;
         this.redisHost = redisHost;
+        this.redisPort = redisPort;
         this.inputDatabase = inputDatabase;
         this.inputTable = inputTable;
+        this.inputFilter = inputFilter;
         this.keyName = keyName;
         this.valueName = valueName;
         this.numReducer = numReducer;
@@ -150,19 +159,28 @@ public class RedisExportJob extends Configured implements Tool {
         Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "." + inputTable);
 
         job.setJarByClass(RedisExportJob.class);
-        HCatInputFormat.setInput(job, inputDatabase, inputTable);
+
+        if (inputFilter == null || inputFilter.trim().equals("")) {
+            HCatInputFormat.setInput(job, inputDatabase, inputTable);
+
+        } else {
+            HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
+        }
+
         HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
         Class<?> OutputClazz;
 
         if (valueName == null) {
-            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, replace, pipeline);
+            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, keyName,
+                    keyPrefix, replace, pipeline);
+
             job.setMapperClass(RedisFullTableExportMapper.class);
             OutputClazz = RedisHashWritable.class;
 
         } else {
-            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, keyName, keyPrefix, valueName, replace,
-                    pipeline);
+            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, keyName, keyPrefix, valueName,
+                    replace, pipeline);
             job.setMapperClass(RedisExportMapper.class);
             OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema, valueName);
         }
