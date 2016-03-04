@@ -66,8 +66,8 @@ object SchedoscopeCliFormat {
             }
 
           val data = vl.views.map(d => Array(d.view,d.status,
-            if (fields.get(d.fqdn.get).isDefined) {
-              fields.get(d.fqdn.get).get.map(fieldStatus => fieldStatus.name + " :: " + fieldStatus.fieldtype).mkString(",") + " " + d.properties.mkString(",")
+            if (d.fqdn.isDefined && fields.get(d.fqdn.get).isDefined) {
+              fields.get(d.fqdn.get).get.map(fieldStatus => fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") + " " + d.properties.mkString(",")
             } else {
               d.properties.mkString(",")
             }
