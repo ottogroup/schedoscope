@@ -22,7 +22,7 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Checksum.defaultDigest
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
-class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
+class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def toWaitingTransformingOrMaterialize(view: View, lastTransformationChecksum: String, lastTransformationTimestamp: Long, listener: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode, currentTime: Long) = {
     if (view.isMaterializeOnce && lastTransformationTimestamp > 0)
@@ -47,7 +47,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
               Set()
           })
     else if (view.dependencies.isEmpty)
-      fromWaitingToTransformingOrMaterialize(
+      leaveWaitingState(
         Waiting(view,
           lastTransformationChecksum,
           lastTransformationTimestamp,
@@ -78,7 +78,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
         }.toSet)
   }
 
-  def fromWaitingToTransformingOrMaterialize(currentState: Waiting, setIncomplete: Boolean, setError: Boolean, currentTime: Long) = currentState match {
+  def leaveWaitingState(currentState: Waiting, setIncomplete: Boolean, setError: Boolean, currentTime: Long) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -272,7 +272,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
       incomplete,
       dependenciesFreshness) =>
       if (dependenciesMaterializing == Set(reportingDependency))
-        fromWaitingToTransformingOrMaterialize(currentState, setIncomplete = true, setError = false, currentTime)
+        leaveWaitingState(currentState, setIncomplete = true, setError = false, currentTime)
       else
         ResultingViewSchedulingState(
           Waiting(
@@ -301,7 +301,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
       incomplete,
       dependenciesFreshness) =>
       if (dependenciesMaterializing == Set(reportingDependency))
-        fromWaitingToTransformingOrMaterialize(currentState, setIncomplete = true, setError = true, currentTime)
+        leaveWaitingState(currentState, setIncomplete = true, setError = true, currentTime)
       else
         ResultingViewSchedulingState(
           Waiting(
@@ -343,7 +343,7 @@ class BaseViewSchedulingStateMachine extends ViewSchedulingStateMachine {
         Math.max(dependenciesFreshness, transformationTimestamp))
 
       if (dependenciesMaterializing == Set(reportingDependency))
-        fromWaitingToTransformingOrMaterialize(updatedWaitingState, setIncomplete = false, setError = false, currentTime)
+        leaveWaitingState(updatedWaitingState, setIncomplete = false, setError = false, currentTime)
       else
         ResultingViewSchedulingState(updatedWaitingState, Set())
   }

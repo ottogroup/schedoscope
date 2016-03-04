@@ -24,11 +24,11 @@ import test.eci.datahub.ProductBrand
 class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
   trait SuccessFlag {
-    val stateMachine = new NoOpLeafViewSchedulingStateMachine(true)
+    val stateMachine = new NoOpViewSchedulingStateMachine(true)
   }
   
   trait NoSuccessFlag {
-    val stateMachine = new NoOpLeafViewSchedulingStateMachine(false)
+    val stateMachine = new NoOpViewSchedulingStateMachine(false)
   }
   
   trait NoOpLeafView {
@@ -40,7 +40,8 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
   "A NoOp leaf view in CreatedByViewManager state with existing _SUCCESS flag" should "transition to Materialized upon materialize" in new NoOpLeafView with SuccessFlag {
     val startState = CreatedByViewManager(viewUnderTest)
 
-    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
+    val x = stateMachine.materialize(startState, dependentView, currentTime = 10)
+    x match {
       case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
       case _ => fail()
     }
@@ -110,33 +111,6 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
   }
  
   it should "request writing of new transformation checksum if materialization mode is RESET_TRANSFORMATION_CHECKSUMS" in new NoOpLeafView with SuccessFlag {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
-
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
-    }
-  }
-
-  "A NoOp leaf view in Materialized state without _SUCCESS flag" should "remain Materialized upon materialize" in new NoOpLeafView with NoSuccessFlag {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
-
-    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
-      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
-      case _ => fail()
-    }
-  }
-
-  it should "report materialization to issuer" in new NoOpLeafView with NoSuccessFlag {
-    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
-
-    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
-    }
-  }
-
-  it should "request writing of new transformation checksum if materialization mode is RESET_TRANSFORMATION_CHECKSUMS" in new NoOpLeafView with NoSuccessFlag {
     val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
@@ -218,33 +192,6 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
   }
 
   it should "request writing of new transformation checksum if materialization mode is RESET_TRANSFORMATION_CHECKSUMS" in new NoOpLeafView with SuccessFlag {
-    val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
-
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
-    }
-  }
-
-  "A NoOp leaf view in ReadFromSchemaManager state with no _SUCCESS flag" should "transition to Materialized upon materialize" in new NoOpLeafView with NoSuccessFlag  {
-    val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
-
-    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
-      case ResultingViewSchedulingState(Materialized(v, `viewTransformationChecksum`, 10, false, false), _) => v shouldBe viewUnderTest
-      case _ => fail()
-    }
-  }
-
-  it should "report materialization to issuer" in new NoOpLeafView with NoSuccessFlag {
-    val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
-
-    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
-      case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
-    }
-  }
-
-  it should "request writing of new transformation checksum if materialization mode is RESET_TRANSFORMATION_CHECKSUMS" in new NoOpLeafView with NoSuccessFlag {
     val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {

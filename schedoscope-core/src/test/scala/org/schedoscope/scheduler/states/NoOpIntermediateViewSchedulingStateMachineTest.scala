@@ -24,11 +24,11 @@ import test.eci.datahub.{ ProductBrandsNoOpMirror, ProductBrandsNoOpMirrorDepend
 class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
   trait SuccessFlag {
-    val stateMachine = new NoOpIntermediateViewSchedulingStateMachine(true)
+    val stateMachine = new NoOpViewSchedulingStateMachine(true)
   }
 
   trait NoSuccessFlag {
-    val stateMachine = new NoOpIntermediateViewSchedulingStateMachine(false)
+    val stateMachine = new NoOpViewSchedulingStateMachine(false)
   }
 
   trait NoOpIntermediateView {

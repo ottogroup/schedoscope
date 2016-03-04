@@ -21,10 +21,10 @@ import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
 import test.eci.datahub.{ ProductBrandMaterializeOnce, ProductBrandsNoOpMirror }
 
-class BaseIntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
+class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
   trait IntermediateView {
-    val stateMachine = new BaseViewSchedulingStateMachine()
+    val stateMachine = new ViewSchedulingStateMachineImpl()
     val dependentView = ProductBrandsNoOpMirror(p("2014"), p("01"), p("01"))
     val anotherDependentView = ProductBrandsNoOpMirror(p("2014"), p("01"), p("02"))
     val viewUnderTest = dependentView.dependencies(0)
