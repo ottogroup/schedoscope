@@ -20,6 +20,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
+
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -38,6 +40,8 @@ import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({ "javax.*", "org.apache.*", "com.*", "org.mortbay.*", "org.xml.*", "org.w3c.*" })
 @PrepareForTest(RedisMRJedisFactory.class)
@@ -54,6 +58,7 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
         when(RedisMRJedisFactory.getJedisClient(any(Configuration.class))).thenReturn(jedisAdapter);
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void testRedisFullExport1() throws Exception {
 
@@ -80,8 +85,17 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
         assertTrue(job.waitForCompletion(true));
         assertEquals("2016-02-09T12:21:24.581+01:00",
                 jedisAdapter.hget("export1_0000e5da-0c7f-43d4-ba63-c7cd74eca7f6", "created_at"));
-        assertEquals("{\"a817\":3,\"a91\":3,\"a942\":3,\"a239\":3,\"a751\":3,\"a674\":3}",
-                jedisAdapter.hget("export1_000202f5-6f6a-47af-b7aa-6c9b371dc87c", "uri_path_hashed_count"));
+
+
+        ObjectMapper objMapper = new ObjectMapper();
+        Map<String, String> expected = objMapper
+                .readValue("{\"a817\":3,\"a91\":3,\"a942\":3,\"a239\":3,\"a751\":3,\"a674\":3}", Map.class);
+        Map<String, String> result = objMapper.readValue(
+                jedisAdapter.hget("export1_000202f5-6f6a-47af-b7aa-6c9b371dc87c", "uri_path_hashed_count"), Map.class);
+
+        assertEquals(expected.get("a817"), result.get("a817"));
+        assertEquals(expected.get("a91"), result.get("a91"));
+        assertEquals(expected.get("a942"), result.get("a942"));
     }
 
     @Test
