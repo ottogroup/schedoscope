@@ -202,8 +202,8 @@
         <module name="EmptyCatchBlock">
             <property name="exceptionVariableName" value="expected"/>
         </module>
-    </module>
-       <module name="SuppressionFilter">
-            <property name="file" value="${config_loc}/mysupressions.xml" />
-    </module>
+      </module>
+     <module name="SuppressionFilter">
+         <property name="file" value="${config_loc}/mysupressions.xml" />
+     </module>
 </module>

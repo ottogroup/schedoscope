@@ -214,7 +214,7 @@
 						<configuration>
 							<configLocation>${project.basedir}/src/main/resources/checkstyle.xml</configLocation>
 							<suppressionsLocation>${project.basedir}/src/main/resources/mysupressions.xml</suppressionsLocation>
-							<propertiesLocation>${project.basedir}/src/main/resources/maven.properties</propertiesLocation>
+							<propertyExpansion>config_loc=${basedir}/src/main/resources</propertyExpansion>
 							<encoding>UTF-8</encoding>
 							<consoleOutput>true</consoleOutput>
 							<failsOnError>false</failsOnError>
