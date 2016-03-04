@@ -25,10 +25,11 @@ import org.schedoscope.AskPattern._
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.{ Named, View }
 import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.dsl.transformations.Transformation._
 import org.schedoscope.scheduler.actors.ViewManagerActor
 import org.schedoscope.scheduler.driver.{ DriverRunFailed, DriverRunOngoing, DriverRunState, DriverRunSucceeded }
 import org.schedoscope.scheduler.messages._
-
+import org.schedoscope.schema.ddl.HiveQl
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
@@ -167,11 +168,34 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     submitCommandInternal(viewActors, "newdata", viewUrlPath, status, filter)
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]) = {
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
     val views = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false))
     val statusMap = views.map(v => (v.view.urlPath, v.status)).toMap // needed for status of dependencies in output
-    val viewStatusList = views
-      .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!dependencies.getOrElse(false)) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, statusMap.getOrElse(d.urlPath, ""), None, None)).toList)))
+    
+    var viewStatusList = views.map(v => ViewStatus(v.view.urlPath, if (all.getOrElse(false)) Some(v.view.tableName) else None, v.status, None, None, None, 
+         if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty) Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2))) else None, 
+         None, None, None, None, None, if (all.getOrElse(false)) Some(false) else None)).toList;
+    
+    if (all.getOrElse(false)) {
+      val tables = views.groupBy(v => v.view.tableName).map(e => e._2.head).toList
+        .map(v => ViewStatus(
+          v.view.tableName,
+          Option(v.view.tableName),
+          v.status, 
+          None,
+          Option(v.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
+          if (!v.view.parameters.isEmpty) Some(v.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList) else None,
+          None,
+          Option(stringRepresentation(v.view.transformation())),
+          Option(v.view.storageFormat.getClass.getSimpleName),
+          Option(v.view.isExternal),
+          Option(v.view.isMaterializeOnce),
+          Option(v.view.comment), 
+          Option(true)
+          )).toList
+      viewStatusList = tables ::: viewStatusList;
+    }
+    
     val ov = viewStatusList.groupBy(_.status).mapValues(_.size)
     ViewStatusList(ov, if (overview.getOrElse(false)) List() else viewStatusList)
   }
