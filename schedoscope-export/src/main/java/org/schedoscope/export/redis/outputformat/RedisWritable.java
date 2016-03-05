@@ -29,6 +29,7 @@ public interface RedisWritable {
      * regular client.
      *
      * @param jedis The Redis client.
+     * @param replace Flag to toggle replace mode.
      */
     public void write(Jedis jedis, boolean replace);
 
@@ -37,6 +38,7 @@ public interface RedisWritable {
      * pipelined client.
      *
      * @param jedis The Redis client.
+     * @param replace Flag to toggle replace mode.
      */
     public void write(Pipeline jedis, boolean replace);
 

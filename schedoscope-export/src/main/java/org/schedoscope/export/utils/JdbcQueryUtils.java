@@ -107,6 +107,7 @@ public class JdbcQueryUtils {
      * merging.
      *
      * @param table The final table containing the merged result.
+     * @param tablePrefix The prefix to prepend to the output table name.
      * @param numberOfPartitions The number of temporary tables to merge.
      * @param connection The JDBC connection object.
      */

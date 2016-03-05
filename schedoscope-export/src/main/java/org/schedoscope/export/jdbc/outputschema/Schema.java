@@ -55,6 +55,8 @@ public interface Schema {
      * @param inputFilter The input filter (optional).
      * @param outputNumberOfPartitions The number of partitions.
      * @param outputCommitSize The commit size.
+     * @param storageEngine The storage engine for MySQL.
+     * @param distributedBy An optional clause for Exasol.
      * @param columnNames The column names.
      * @param columnsTypes The column types.
      */

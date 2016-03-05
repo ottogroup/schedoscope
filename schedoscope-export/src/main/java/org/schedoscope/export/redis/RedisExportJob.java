@@ -106,7 +106,8 @@ public class RedisExportJob extends Configured implements Tool {
      * @param isSecured A flag indicating if Kerberos is enabled.
      * @param metaStoreUris A string containing the Hive meta store URI
      * @param principal The Kerberos principal.
-     * @param redisHost The Redis Host.
+     * @param redisHost The Redis host.
+     * @param redisPort The Redis port.
      * @param inputDatabase The Hive input database
      * @param inputTable The Hive inut table.
      * @param inputFilter An optional filter for Hive.
