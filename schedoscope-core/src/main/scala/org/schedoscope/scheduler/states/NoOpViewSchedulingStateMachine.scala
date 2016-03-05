@@ -15,8 +15,8 @@
  */
 package org.schedoscope.scheduler.states
 
-import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
 class NoOpViewSchedulingStateMachine(successFlagExists: => Boolean) extends ViewSchedulingStateMachineImpl {
 

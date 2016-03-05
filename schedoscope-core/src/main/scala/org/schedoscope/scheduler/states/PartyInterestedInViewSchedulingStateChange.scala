@@ -40,10 +40,10 @@ object PartyInterestedInViewSchedulingStateChange {
   /**
    * Implicit conversion of view to party type
    */
-  implicit def toParty(view: View) = DependentView(view)
+  implicit def toParty(view: View): DependentView = DependentView(view)
 
   /**
    * Implicit conversion of view to party type
    */
-  implicit def toParty(actorRef: ActorRef) = AkkaActor(actorRef)
+  implicit def toParty(actorRef: ActorRef): AkkaActor = AkkaActor(actorRef)
 }
