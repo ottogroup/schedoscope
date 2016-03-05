@@ -21,7 +21,7 @@ import org.schedoscope.dsl.View
 class NoOpViewSchedulingStateMachine(successFlagExists: => Boolean) extends ViewSchedulingStateMachineImpl {
 
   override def toWaitingTransformingOrMaterialize(view: View, lastTransformationChecksum: String, lastTransformationTimestamp: Long, listener: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode, currentTime: Long) = {
-    if (view.dependencies.isEmpty) 
+    if (view.dependencies.isEmpty)
       leaveWaitingState(
         Waiting(view,
           if (lastTransformationTimestamp > 0) lastTransformationChecksum else "RESETME",
@@ -39,7 +39,7 @@ class NoOpViewSchedulingStateMachine(successFlagExists: => Boolean) extends View
     else
       super.toWaitingTransformingOrMaterialize(view, lastTransformationChecksum, lastTransformationTimestamp, listener, materializationMode, currentTime)
   }
-  
+
   override def leaveWaitingState(currentState: Waiting, setIncomplete: Boolean, setError: Boolean, currentTime: Long) = currentState match {
     case Waiting(
       view,
@@ -53,29 +53,35 @@ class NoOpViewSchedulingStateMachine(successFlagExists: => Boolean) extends View
       incomplete,
       dependenciesFreshness) =>
 
-      if (oneDependencyReturnedData && successFlagExists) {
-        if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
-          ResultingViewSchedulingState(
-            Materialized(
-              view,
-              view.transformation().checksum,
-              currentTime,
-              withErrors | setError,
-              incomplete | setIncomplete), {
-              if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS || lastTransformationChecksum != view.transformation().checksum)
-                Set(WriteTransformationCheckum(view))
-              else
-                Set()
-            } ++
+      if (oneDependencyReturnedData)
+        if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum)
+          if (successFlagExists)
+            ResultingViewSchedulingState(
+              Materialized(
+                view,
+                view.transformation().checksum,
+                currentTime,
+                withErrors | setError,
+                incomplete | setIncomplete), {
+                if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS || lastTransformationChecksum != view.transformation().checksum)
+                  Set(WriteTransformationCheckum(view))
+                else
+                  Set()
+              } ++
+                Set(
+                  WriteTransformationTimestamp(view, currentTime),
+                  ReportMaterialized(
+                    view,
+                    listenersWaitingForMaterialize,
+                    currentTime,
+                    withErrors | setError,
+                    incomplete | setIncomplete)))
+          else
+            ResultingViewSchedulingState(
+              NoData(view),
               Set(
-                WriteTransformationTimestamp(view, currentTime),
-                ReportMaterialized(
-                  view,
-                  listenersWaitingForMaterialize,
-                  currentTime,
-                  withErrors | setError,
-                  incomplete | setIncomplete)))
-        } else
+                ReportNoDataAvailable(view, listenersWaitingForMaterialize)))
+        else
           ResultingViewSchedulingState(
             Materialized(
               view,
@@ -96,7 +102,7 @@ class NoOpViewSchedulingStateMachine(successFlagExists: => Boolean) extends View
                 else
                   Set()
               })
-      } else
+      else
         ResultingViewSchedulingState(
           NoData(view),
           Set(

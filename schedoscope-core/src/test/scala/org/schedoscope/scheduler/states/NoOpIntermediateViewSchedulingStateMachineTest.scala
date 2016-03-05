@@ -614,23 +614,6 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
     }
   }
 
-  it should "transition to and report NoDataAvailable even if one dependency answered with data but no _SUCCESS flag exists" in new NoOpIntermediateView with NoSuccessFlag {
-    val startState = Waiting(
-      viewUnderTest, viewTransformationChecksum, 10,
-      Set(firstDependency), Set(dependentView),
-      DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 0)
-
-    stateMachine.noDataAvailable(startState, firstDependency, 20) match {
-      case ResultingViewSchedulingState(
-        NoData(view),
-        s) =>
-        view shouldBe viewUnderTest
-        s shouldEqual Set(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
-
-      case _ => fail()
-    }
-  }
-
   it should "transition to Materialize (incomplete) if at least one dependency answered with data and a _SUCCESS flag exists and the last transformation checksums / timestamps are current" in new NoOpIntermediateView with SuccessFlag {
     val startState = Waiting(
       viewUnderTest, viewTransformationChecksum, 20,
@@ -875,23 +858,6 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       viewUnderTest, viewTransformationChecksum, 10,
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
-
-    stateMachine.failed(startState, firstDependency, 20) match {
-      case ResultingViewSchedulingState(
-        NoData(view),
-        s) =>
-        view shouldBe viewUnderTest
-        s shouldEqual Set(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
-
-      case _ => fail()
-    }
-  }
-
-  it should "transition to and report NoDataAvailable even if one dependency answered with data but no _SUCCESS flag exists" in new NoOpIntermediateView with NoSuccessFlag {
-    val startState = Waiting(
-      viewUnderTest, viewTransformationChecksum, 10,
-      Set(firstDependency), Set(dependentView),
-      DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 0)
 
     stateMachine.failed(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
