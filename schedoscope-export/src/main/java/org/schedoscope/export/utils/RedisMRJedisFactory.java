@@ -11,7 +11,7 @@ import redis.clients.jedis.Jedis;
  */
 public class RedisMRJedisFactory {
 
-    private static Jedis jedis = null;
+    private static volatile Jedis jedis = null;
 
     /**
      * Returns a configured Redis client.
@@ -23,7 +23,8 @@ public class RedisMRJedisFactory {
 
         if (jedis == null) {
             jedis = new Jedis(conf.get(RedisOutputFormat.REDIS_EXPORT_SERVER_HOST, "localhost"),
-                            conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_PORT, 6379));
+                            conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_PORT, 6379),
+                            1800);
         }
         return jedis;
     }

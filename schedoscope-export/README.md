@@ -75,3 +75,16 @@ This Map/Reduce job moves data into Redis, it supports to modes:
  * -a replace data for given key, only useful for native export of map/list types
  
  * -l pipeline mode for redis client
+
+#### Run the Redis export
+
+##### Run full table export
+<pre>
+yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d crichter_app_eci_datahub -t webtrends_event -h 'alananderson' -k id -s -p 'hive/_HOST@OTTOGROUP.COM' -m 'thrift://brentano.unbelievable-machine.net:9083'  -c 10
+</pre>
+
+##### Run custom column export
+
+<pre>
+yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d crichter_app_eci_datahub -t webtrends_event -h 'alananderson' -k id -v product_listing -s -p 'hive/_HOST@OTTOGROUP.COM' -m 'thrift://brentano.unbelievable-machine.net:9083'  -c 10
+</pre>
