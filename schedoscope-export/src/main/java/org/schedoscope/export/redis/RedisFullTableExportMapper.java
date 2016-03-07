@@ -55,32 +55,6 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
         schema = HCatInputFormat.getTableSchema(conf);
 
         serializer = new CustomHCatListSerializer(conf, schema);
-//        jsonMapper = new ObjectMapper();
-//
-//        StringBuilder columnNameProperty = new StringBuilder();
-//        StringBuilder columnTypeProperty = new StringBuilder();
-//
-//        String prefix = "";
-//        serde = new JsonSerDe();
-//        for (HCatFieldSchema f : schema.getFields()) {
-//            columnTypeProperty.append(prefix);
-//            columnNameProperty.append(prefix);
-//            prefix = ",";
-//            columnNameProperty.append(f.getName());
-//            columnTypeProperty.append(f.getTypeString());
-//
-//        }
-//
-//        Properties tblProps = new Properties();
-//        tblProps.setProperty(serdeConstants.LIST_COLUMNS, columnNameProperty.toString());
-//        tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES, columnTypeProperty.toString());
-//        try {
-//            serde.initialize(conf, tblProps);
-//            inspector = serde.getObjectInspector();
-//        } catch (SerDeException e) {
-//            // TODO Auto-generated catch block
-//            e.printStackTrace();
-//        }
 
         RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
 
@@ -101,14 +75,12 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
             Object obj = value.get(f, schema);
             if (obj != null) {
-                String jsonString = obj.toString();
+                String jsonString;
 
                 if (schema.get(f).isComplex()) {
-                    try {
-                        jsonString = serializer.getJsonComplexType(value, f);
-                    } catch (Exception e) {
-
-                    }
+                    jsonString = serializer.getJsonComplexType(value, f);
+                } else {
+                    jsonString = obj.toString();
                 }
                 redisValue.put(new Text(f), new Text(jsonString));
                 write = true;

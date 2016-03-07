@@ -1,3 +1,19 @@
+/**
+ * Copyright 2016 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.schedoscope.export.utils;
 
 import java.io.IOException;
@@ -14,6 +30,10 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ *The CustomHCatSerializer serializes complex HCatalog
+ *types into Json.
+ */
 public class CustomHCatListSerializer {
 
     private ObjectMapper jsonMapper;
@@ -22,6 +42,13 @@ public class CustomHCatListSerializer {
 
     private ObjectInspector inspector;
 
+    /**
+     * The constructor initializes the JsonSerDe and
+     * Jackson ObjectMapper.
+     *
+     * @param conf The Hadoop configuration object.
+     * @param schema The HCatalog Schema
+     */
     public CustomHCatListSerializer(Configuration conf, HCatSchema schema) {
 
         jsonMapper = new ObjectMapper();
@@ -32,8 +59,8 @@ public class CustomHCatListSerializer {
         String prefix = "";
         serde = new JsonSerDe();
         for (HCatFieldSchema f : schema.getFields()) {
-            columnTypeProperty.append(prefix);
             columnNameProperty.append(prefix);
+            columnTypeProperty.append(prefix);
             prefix = ",";
             columnNameProperty.append(f.getName());
             columnTypeProperty.append(f.getTypeString());
@@ -47,13 +74,27 @@ public class CustomHCatListSerializer {
             serde.initialize(conf, tblProps);
             inspector = serde.getObjectInspector();
         } catch (SerDeException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
-    public String getJsonComplexType(HCatRecord value, String fieldName) throws IOException, SerDeException {
-        return jsonMapper.readTree(serde.serialize(value, inspector).toString()).get(fieldName).toString();
-    }
+    /**
+     * Extracts a complex field as Json from a
+     * HCatalog record.
+     *
+     * @param value The HCatalogRecord
+     * @param fieldName The field to extract.
+     * @return A string representation of the field.
+     * @throws IOException Is thrown if an error occurs.
+     */
+    public String getJsonComplexType(HCatRecord value, String fieldName) throws IOException {
 
+        String json = null;
+        try {
+            json = serde.serialize(value, inspector).toString();
+        } catch (SerDeException e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+        return jsonMapper.readTree(json).get(fieldName).toString();
+    }
 }
