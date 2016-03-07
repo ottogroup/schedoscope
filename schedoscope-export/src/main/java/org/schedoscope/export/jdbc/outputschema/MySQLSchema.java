@@ -26,7 +26,7 @@ import org.apache.hadoop.conf.Configuration;
  * Contains the mysql specific mapping of the column types.
  *
  */
-public class MySQLSchema extends AbstractSchema implements Schema {
+public class MySQLSchema extends AbstractSchema {
 
     protected static final String JDBC_DRIVER_NAME = "com.mysql.jdbc.Driver";
 
@@ -83,7 +83,7 @@ public class MySQLSchema extends AbstractSchema implements Schema {
 
     @Override
     protected String getCreateTableSuffix() {
-        return new String(" ENGINE=" + conf.get(JDBC_MYSQL_STORAGE_ENGINE, JDBC_MYSQL_DEFAULT_STORAGE_ENGINE)
-                + " DEFAULT CHARSET=utf8");
+        return " ENGINE=" + conf.get(JDBC_MYSQL_STORAGE_ENGINE, JDBC_MYSQL_DEFAULT_STORAGE_ENGINE)
+                + " DEFAULT CHARSET=utf8";
     }
 }

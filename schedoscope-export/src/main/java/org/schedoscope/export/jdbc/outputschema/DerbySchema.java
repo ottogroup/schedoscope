@@ -26,7 +26,7 @@ import org.apache.hadoop.conf.Configuration;
  * Contains the derby specific mapping of the column types.
  *
  */
-public class DerbySchema extends AbstractSchema implements Schema {
+public class DerbySchema extends AbstractSchema {
 
     protected static final String JDBC_DRIVER_NAME = "org.apache.derby.jdbc.EmbeddedDriver";
 

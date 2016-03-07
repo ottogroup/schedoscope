@@ -28,6 +28,7 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
+import org.schedoscope.export.utils.StatCounter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -88,7 +89,10 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
         }
 
         if (write) {
+            context.getCounter(StatCounter.SUCCESS).increment(1);
             context.write(redisKey, new RedisHashWritable(redisKey, redisValue));
+        } else {
+            context.getCounter(StatCounter.FAILED).increment(1);
         }
     }
 }

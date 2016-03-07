@@ -26,7 +26,7 @@ import org.apache.hadoop.conf.Configuration;
  * Contains the exasol specific mapping of the column types.
  *
  */
-public class ExasolSchema extends AbstractSchema implements Schema {
+public class ExasolSchema extends AbstractSchema {
 
     protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver";
 
@@ -83,7 +83,7 @@ public class ExasolSchema extends AbstractSchema implements Schema {
     @Override
     protected String getDistributedByClause() {
         if (conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE) != null) {
-            return new String(", DISTRIBUTE BY " + conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE + "\n"));
+            return ", DISTRIBUTE BY " + conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE + "\n");
         } else {
             return "";
         }

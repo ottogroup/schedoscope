@@ -26,7 +26,7 @@ import org.apache.hadoop.conf.Configuration;
  * Contains the postgresql specific mapping of the column types.
  *
  */
-public class PostgreSQLSchema extends AbstractSchema implements Schema {
+public class PostgreSQLSchema extends AbstractSchema {
 
     protected static final String JDBC_DRIVER_NAME = "org.postgresql.Driver";
 
