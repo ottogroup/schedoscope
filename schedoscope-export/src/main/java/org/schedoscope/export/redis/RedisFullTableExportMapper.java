@@ -28,9 +28,8 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
+import org.schedoscope.export.utils.CustomHCatListSerializer;
 import org.schedoscope.export.utils.StatCounter;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A mapper to read a full Hive table via HCatalog and emits a RedisWritable containing
@@ -46,7 +45,7 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
     private String keyPrefix;
 
-    private ObjectMapper jsonMapper;
+    private CustomHCatListSerializer serializer;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -55,7 +54,33 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
         conf = context.getConfiguration();
         schema = HCatInputFormat.getTableSchema(conf);
 
-        jsonMapper = new ObjectMapper();
+        serializer = new CustomHCatListSerializer(conf, schema);
+//        jsonMapper = new ObjectMapper();
+//
+//        StringBuilder columnNameProperty = new StringBuilder();
+//        StringBuilder columnTypeProperty = new StringBuilder();
+//
+//        String prefix = "";
+//        serde = new JsonSerDe();
+//        for (HCatFieldSchema f : schema.getFields()) {
+//            columnTypeProperty.append(prefix);
+//            columnNameProperty.append(prefix);
+//            prefix = ",";
+//            columnNameProperty.append(f.getName());
+//            columnTypeProperty.append(f.getTypeString());
+//
+//        }
+//
+//        Properties tblProps = new Properties();
+//        tblProps.setProperty(serdeConstants.LIST_COLUMNS, columnNameProperty.toString());
+//        tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES, columnTypeProperty.toString());
+//        try {
+//            serde.initialize(conf, tblProps);
+//            inspector = serde.getObjectInspector();
+//        } catch (SerDeException e) {
+//            // TODO Auto-generated catch block
+//            e.printStackTrace();
+//        }
 
         RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
 
@@ -76,12 +101,14 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
             Object obj = value.get(f, schema);
             if (obj != null) {
-                String jsonString;
+                String jsonString = obj.toString();
 
                 if (schema.get(f).isComplex()) {
-                    jsonString = jsonMapper.writeValueAsString(obj);
-                } else {
-                    jsonString = obj.toString();
+                    try {
+                        jsonString = serializer.getJsonComplexType(value, f);
+                    } catch (Exception e) {
+
+                    }
                 }
                 redisValue.put(new Text(f), new Text(jsonString));
                 write = true;
