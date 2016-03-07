@@ -40,6 +40,7 @@ import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(PowerMockRunner.class)
@@ -150,5 +151,8 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
         job.setOutputValueClass(NullWritable.class);
 
         assertTrue(job.waitForCompletion(true));
+        ObjectMapper objMapper = new ObjectMapper();
+        JsonNode node = objMapper.readTree(jedisAdapter.hget("export3_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000030", "type"));
+        assertEquals("\"product_listing_display\"", node.get("field1").toString());
     }
 }
