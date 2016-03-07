@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *The CustomHCatSerializer serializes complex HCatalog
  *types into Json.
  */
-public class CustomHCatListSerializer {
+public class CustomHCatRecordSerializer {
 
     private ObjectMapper jsonMapper;
 
@@ -49,7 +49,7 @@ public class CustomHCatListSerializer {
      * @param conf The Hadoop configuration object.
      * @param schema The HCatalog Schema
      */
-    public CustomHCatListSerializer(Configuration conf, HCatSchema schema) {
+    public CustomHCatRecordSerializer(Configuration conf, HCatSchema schema) {
 
         jsonMapper = new ObjectMapper();
 

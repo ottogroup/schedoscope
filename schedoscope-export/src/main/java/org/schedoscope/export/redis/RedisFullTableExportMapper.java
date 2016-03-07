@@ -28,7 +28,7 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
-import org.schedoscope.export.utils.CustomHCatListSerializer;
+import org.schedoscope.export.utils.CustomHCatRecordSerializer;
 import org.schedoscope.export.utils.StatCounter;
 
 /**
@@ -45,7 +45,7 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
     private String keyPrefix;
 
-    private CustomHCatListSerializer serializer;
+    private CustomHCatRecordSerializer serializer;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
@@ -54,7 +54,7 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
         conf = context.getConfiguration();
         schema = HCatInputFormat.getTableSchema(conf);
 
-        serializer = new CustomHCatListSerializer(conf, schema);
+        serializer = new CustomHCatRecordSerializer(conf, schema);
 
         RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
 
