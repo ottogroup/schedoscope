@@ -51,7 +51,7 @@ public class RedisExportJob extends Configured implements Tool {
     @Option(name = "-h", usage = "redis host")
     private String redisHost = "localhost";
 
-    @Option(name = "-h", usage = "redis port")
+    @Option(name = "-P", usage = "redis port")
     private int redisPort = 6379;
 
     @Option(name = "-d", usage = "input database", required = true)
