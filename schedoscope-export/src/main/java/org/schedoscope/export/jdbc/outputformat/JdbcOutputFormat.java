@@ -230,7 +230,7 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
             throw new IOException(ex.getMessage());
         } finally {
             try {
-                outputSchema.getConnection().commit();
+                // outputSchema.getConnection().commit();
                 outputSchema.getConnection().close();
             } catch (ClassNotFoundException e) {
                 LOG.error("class could not be found: " + e.getMessage());
@@ -262,7 +262,7 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
             throw new IOException(ex.getMessage());
         } finally {
             try {
-                outputSchema.getConnection().commit();
+                // outputSchema.getConnection().commit();
                 outputSchema.getConnection().close();
             } catch (ClassNotFoundException e) {
                 LOG.error("class could not be found: " + e.getMessage());
