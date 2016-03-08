@@ -1,7 +1,7 @@
-CREATE TABLE `webtrends_struct`(
+CREATE TABLE `test_array`(
   `id` string, 
-  `type` struct<field1:string, field2:string>)
-COMMENT 'Datahub view of interpreted webtrends events'
+  `type` array<string>)
+COMMENT 'a test table using array as complex type'
 PARTITIONED BY ( 
   `year` string, 
   `month` string, 
@@ -17,5 +17,5 @@ OUTPUTFORMAT
 TBLPROPERTIES (
   'schema.checksum'='EBA465FA05431991234808D74CD59FD4', 
   'transient_lastDdlTime'='1449940102');
-LOAD DATA LOCAL INPATH '${DATA_FILE_PATH}' OVERWRITE INTO TABLE webtrends_struct PARTITION (year='2015', month='08', month_id='201508');
-SELECT COUNT(*) FROM webtrends_struct;
+LOAD DATA LOCAL INPATH '${DATA_FILE_PATH}' OVERWRITE INTO TABLE test_array PARTITION (year='2015', month='08', month_id='201508');
+SELECT COUNT(*) FROM test_array;

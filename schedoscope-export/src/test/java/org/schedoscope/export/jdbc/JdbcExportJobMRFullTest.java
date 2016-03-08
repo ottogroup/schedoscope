@@ -50,8 +50,8 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        setUpHiveServer("src/test/resources/ogm_event_features_data.txt", "src/test/resources/ogm_event_features.hql",
-                "ogm_event_features");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql",
+                "test_map");
 
         Class.forName(JDBC_DRIVER_NAME);
         DriverManager.getConnection(CREATE_CONNECTION_STRING);

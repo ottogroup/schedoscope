@@ -59,8 +59,8 @@ public class JdbcExportJobMRArrayTest extends HiveUnitBaseTest {
         mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
         mapReduceDriver.setConfiguration(conf);
 
-        setUpHiveServer("src/test/resources/webtrends_event_data.txt", "src/test/resources/webtrends_event.hql",
-                "webtrends_event");
+        setUpHiveServer("src/test/resources/test_array_data.txt", "src/test/resources/test_array.hql",
+                "test_array");
     }
 
     @Test

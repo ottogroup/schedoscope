@@ -60,8 +60,8 @@ public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
         mapReduceDriver = MapReduceDriver.newMapReduceDriver(mapper, reducer);
         mapReduceDriver.setConfiguration(conf);
 
-        setUpHiveServer("src/test/resources/ogm_event_features_data.txt", "src/test/resources/ogm_event_features.hql",
-                "ogm_event_features");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql",
+                "test_map");
     }
 
     @Test
@@ -81,7 +81,7 @@ public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
             assertNotEquals(0, json.length());
 
             String fixed = p.getFirst().toString().split("\t")[3];
-            assertEquals("app.eci.datahub.OgmEventFeatures", fixed);
+            assertEquals("value1", fixed);
         }
     }
 

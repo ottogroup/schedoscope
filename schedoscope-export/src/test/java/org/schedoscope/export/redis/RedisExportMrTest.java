@@ -56,10 +56,10 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
     @Test
     public void testRedisStringExport() throws Exception {
 
-        setUpHiveServer("src/test/resources/ogm_event_features_data.txt", "src/test/resources/ogm_event_features.hql",
-                "ogm_event_features");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql",
+                "test_map");
 
-        final String KEY = "visitor_id";
+        final String KEY = "id";
         final String VALUE = "created_at";
 
         conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "string_export");
@@ -93,11 +93,11 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
     @Test
     public void testRedisMapExport() throws Exception {
 
-        setUpHiveServer("src/test/resources/ogm_event_features_data.txt", "src/test/resources/ogm_event_features.hql",
-                "ogm_event_features");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql",
+                "test_map");
 
-        final String KEY = "visitor_id";
-        final String VALUE = "uri_path_hashed_count";
+        final String KEY = "id";
+        final String VALUE = "type";
 
         conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "map_export");
         conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
@@ -126,8 +126,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
     @Test
     public void testRedisListExport() throws Exception {
 
-        setUpHiveServer("src/test/resources/webtrends_event_data.txt", "src/test/resources/webtrends_event.hql",
-                "webtrends_event");
+        setUpHiveServer("src/test/resources/test_array_data.txt", "src/test/resources/test_array.hql",
+                "test_array");
 
         final String KEY = "id";
         final String VALUE = "type";
@@ -152,15 +152,15 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
         job.setOutputValueClass(NullWritable.class);
 
         assertTrue(job.waitForCompletion(true));
-        assertEquals("search_result_display",
+        assertEquals("value2",
                 jedisAdapter.lpop("list_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000036"));
     }
 
     @Test
     public void testRedisStructExport() throws Exception {
 
-        setUpHiveServer("src/test/resources/webtrends_struct_data.txt", "src/test/resources/webtrends_struct.hql",
-                "webtrends_struct");
+        setUpHiveServer("src/test/resources/test_struct_data.txt", "src/test/resources/test_struct.hql",
+                "test_struct");
 
         final String KEY = "id";
         final String VALUE = "type";
@@ -185,6 +185,6 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
         job.setOutputValueClass(NullWritable.class);
 
         assertTrue(job.waitForCompletion(true));
-        assertEquals("product_listing_display",jedisAdapter.hget("struct_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000030", "field1"));
+        assertEquals("value1",jedisAdapter.hget("struct_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000030", "field1"));
     }
 }
