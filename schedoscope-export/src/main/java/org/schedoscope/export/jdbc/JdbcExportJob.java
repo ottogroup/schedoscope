@@ -49,6 +49,8 @@ public class JdbcExportJob extends Configured implements Tool {
 
     private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
 
+    private static final String LOCAL_PATH_PREFIX = "file://";
+
     @Option(name = "-s", usage = "set to true if kerberos is enabled")
     private boolean isSecured = false;
 
@@ -215,11 +217,13 @@ public class JdbcExportJob extends Configured implements Tool {
         job.setOutputKeyClass(JdbcOutputWritable.class);
         job.setOutputValueClass(NullWritable.class);
 
-
-        Class<?> clazz = Class.forName("com.mysql.jdbc.Driver");
+        Class<?> clazz = Class.forName(outputSchema.getDriverName());
         String jarFile = ClassUtil.findContainingJar(clazz);
-        job.addArchiveToClassPath(new Path(jarFile));
+        String jarSelf = ClassUtil.findContainingJar(JdbcExportJob.class);
 
+        if (jarFile != null && jarSelf != null && !jarFile.equals(jarSelf)) {
+            job.addArchiveToClassPath(new Path(LOCAL_PATH_PREFIX + jarFile));
+        }
 
         return job;
     }

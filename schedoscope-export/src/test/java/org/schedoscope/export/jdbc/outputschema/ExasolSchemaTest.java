@@ -24,7 +24,6 @@ import static org.junit.Assert.assertThat;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
-import org.schedoscope.export.jdbc.outputschema.ExasolSchema;
 
 public class ExasolSchemaTest {
 
@@ -96,8 +95,8 @@ public class ExasolSchemaTest {
         assertEquals("", schema.getDistributedByClause());
     }
 
-    // @Test
-    // public void testGetConnection() throws SQLException, ClassNotFoundException {
-    // assertNotNull(schema.getConnection());
-    // }
+    @Test
+    public void testGetDriverName() {
+        assertEquals("com.exasol.jdbc.EXADriver", schema.getDriverName());
+    }
 }

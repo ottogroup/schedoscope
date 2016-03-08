@@ -176,4 +176,9 @@ public abstract class AbstractSchema implements Schema {
         return DriverManager.getConnection(conf.get(Schema.JDBC_CONNECTION_STRING), conf.get(Schema.JDBC_USERNAME),
                 conf.get(Schema.JDBC_PASSWORD));
     }
+
+    @Override
+    public String getDriverName() {
+        return conf.get(Schema.JDBC_DRIVER_CLASS);
+    }
 }

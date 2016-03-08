@@ -162,4 +162,11 @@ public interface Schema {
      * @return The configuration object.
      */
     public Configuration getConf();
+
+    /**
+     * Returns the JDBC driver name.
+     *
+     * @return The JDBC driver name.
+     */
+    public String getDriverName();
 }

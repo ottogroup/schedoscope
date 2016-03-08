@@ -28,7 +28,6 @@ import java.sql.SQLException;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
-import org.schedoscope.export.jdbc.outputschema.DerbySchema;
 
 public class DerbySchemaTest {
 
@@ -88,5 +87,10 @@ public class DerbySchemaTest {
     @Test
     public void testGetConnection() throws SQLException, ClassNotFoundException {
         assertNotNull(schema.getConnection());
+    }
+
+    @Test
+    public void testGetDriverName() {
+        assertEquals("org.apache.derby.jdbc.EmbeddedDriver", schema.getDriverName());
     }
 }

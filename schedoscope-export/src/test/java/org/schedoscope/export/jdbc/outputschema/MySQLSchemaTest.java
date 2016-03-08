@@ -24,7 +24,6 @@ import static org.junit.Assert.assertThat;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
-import org.schedoscope.export.jdbc.outputschema.MySQLSchema;
 
 public class MySQLSchemaTest {
 
@@ -104,5 +103,10 @@ public class MySQLSchemaTest {
         schema.setOutput("jdbc:mysql://localhost:3306/testing", "user", "pass", TABLE_NAME, null, NUM_PARTITIONS,
                 COMMIT_SIZE, "NoEngine", null, COLUMN_NAMES, COLUMN_TYPES);
         assertEquals(" ENGINE=InnoDB DEFAULT CHARSET=utf8", schema.getCreateTableSuffix());
+    }
+
+    @Test
+    public void testGetDriverName() {
+        assertEquals("com.mysql.jdbc.Driver", schema.getDriverName());
     }
 }

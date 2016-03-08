@@ -24,7 +24,6 @@ import static org.junit.Assert.assertThat;
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Before;
 import org.junit.Test;
-import org.schedoscope.export.jdbc.outputschema.PostgreSQLSchema;
 
 public class PostgreSQLSchemaTest {
 
@@ -80,5 +79,10 @@ public class PostgreSQLSchemaTest {
         assertThat(schema.getCreateTableQuery(),
                 allOf(containsString("CREATE"), containsString(TABLE_NAME), containsString("real"),
                         containsString("integer"), containsString("identifier"), containsString("userpass")));
+    }
+
+    @Test
+    public void testGetDriverName() {
+        assertEquals("org.postgresql.Driver", schema.getDriverName());
     }
 }
