@@ -16,6 +16,8 @@
 
 package org.schedoscope.export.jdbc;
 
+import java.io.IOException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -100,12 +102,26 @@ public class JdbcExportJob extends Configured implements Tool {
         Job job = configure();
         boolean success = job.waitForCompletion(true);
 
-        if (success) {
-            JdbcOutputFormat.finalizeOutput(job.getConfiguration());
-        } else {
-            JdbcOutputFormat.rollback(job.getConfiguration());
-        }
+        postCommit(success, job.getConfiguration());
         return (success ? 0 : 1);
+    }
+
+    /**
+     * Triggers the post commit action, in this instance
+     * the final table is created and filled with data
+     * from all partition tables.
+     *
+     * @param jobSuccessful A flag indicating if job was successful.
+     * @param conf The Hadoop configuration object.
+     * @throws IOException Is thrown if an error occurs.
+     */
+    public void postCommit(boolean jobSuccessful, Configuration conf) throws IOException {
+
+        if (jobSuccessful) {
+            JdbcOutputFormat.finalizeOutput(conf);
+        } else {
+            JdbcOutputFormat.rollback(conf);
+        }
     }
 
     /**
