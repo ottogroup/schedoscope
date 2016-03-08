@@ -159,7 +159,7 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
         try {
             Connection connection = outputSchema.getConnection();
 
-            JdbcQueryUtils.dropTemporaryOutputTable(tmpOutputTable, connection);
+            JdbcQueryUtils.dropOutputTable(tmpOutputTable, connection);
             JdbcQueryUtils.createTable(createTableQuery, connection);
 
             PreparedStatement statement = null;
@@ -220,7 +220,7 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
             if (inputFilter != null) {
                 JdbcQueryUtils.deleteExisitingRows(outputTable, inputFilter, connection);
             } else {
-                JdbcQueryUtils.dropTemporaryOutputTable(outputTable, connection);
+                JdbcQueryUtils.dropOutputTable(outputTable, connection);
             }
             JdbcQueryUtils.createTable(createTableStatement, connection);
             JdbcQueryUtils.mergeOutput(outputTable, TMPDB, outputNumberOfPartitions, connection);

@@ -37,7 +37,7 @@ public class JdbcQueryUtils {
      * @param table The table to drop.
      * @param connection The JDBC connection to use.
      */
-    public static void dropTemporaryOutputTable(String table, Connection connection) {
+    public static void dropOutputTable(String table, Connection connection) {
 
         table = table.replace(";", "");
 
