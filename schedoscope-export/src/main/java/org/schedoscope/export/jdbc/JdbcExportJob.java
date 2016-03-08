@@ -22,10 +22,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
@@ -212,6 +214,12 @@ public class JdbcExportJob extends Configured implements Tool {
         job.setMapOutputValueClass(NullWritable.class);
         job.setOutputKeyClass(JdbcOutputWritable.class);
         job.setOutputValueClass(NullWritable.class);
+
+
+        Class<?> clazz = Class.forName("com.mysql.jdbc.Driver");
+        String jarFile = ClassUtil.findContainingJar(clazz);
+        job.addArchiveToClassPath(new Path(jarFile));
+
 
         return job;
     }
