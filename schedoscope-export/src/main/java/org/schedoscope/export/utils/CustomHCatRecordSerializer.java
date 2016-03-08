@@ -22,7 +22,6 @@ import java.util.Properties;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDeException;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.JsonSerDe;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
@@ -39,8 +38,6 @@ public class CustomHCatRecordSerializer {
     private ObjectMapper jsonMapper;
 
     private JsonSerDe serde;
-
-    private ObjectInspector inspector;
 
     /**
      * The constructor initializes the JsonSerDe and
@@ -72,7 +69,6 @@ public class CustomHCatRecordSerializer {
         tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES, columnTypeProperty.toString());
         try {
             serde.initialize(conf, tblProps);
-            inspector = serde.getObjectInspector();
         } catch (SerDeException e) {
             throw new IllegalArgumentException(e.getMessage());
         }
@@ -91,7 +87,7 @@ public class CustomHCatRecordSerializer {
 
         String json = null;
         try {
-            json = serde.serialize(value, inspector).toString();
+            json = serde.serialize(value, serde.getObjectInspector()).toString();
         } catch (SerDeException e) {
             throw new IllegalArgumentException(e.getMessage());
         }

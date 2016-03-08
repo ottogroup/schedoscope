@@ -185,5 +185,6 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
         job.setOutputValueClass(NullWritable.class);
 
         assertTrue(job.waitForCompletion(true));
+        assertEquals("product_listing_display",jedisAdapter.hget("struct_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000030", "field1"));
     }
 }
