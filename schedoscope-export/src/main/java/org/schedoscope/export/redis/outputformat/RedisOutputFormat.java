@@ -47,6 +47,8 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 
     public static final String REDIS_EXPORT_SERVER_PORT = "redis.export.server.port";
 
+    public static final String REDIS_EXPORT_SERVER_DB = "redis.export.server.db";
+
     public static final String REDIS_PIPELINE_MODE = "redis.export.pipeline.mode";
 
     public static final String REDIS_EXPORT_KEY_NAME = "redis.export.key.name";
@@ -163,17 +165,19 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
      * @param conf The Hadoop configuration object.
      * @param redisHost The Redis hostname
      * @param redisPort The Redis port
+     * @param redisDb The Redis database.
      * @param keyName The name of the key field
      * @param keyPrefix The key prefix
      * @param valueName The name of the value field
      * @param replace A flag indicating if existing data should be replaced
      * @param pipeline A flag to use the Redis pipeline mode.
      */
-    public static void setOutput(Configuration conf, String redisHost, int redisPort, String keyName,
-            String keyPrefix, String valueName, boolean replace, boolean pipeline) {
+    public static void setOutput(Configuration conf, String redisHost, int redisPort, int redisDb,
+            String keyName, String keyPrefix, String valueName, boolean replace, boolean pipeline) {
 
         conf.set(REDIS_EXPORT_SERVER_HOST, redisHost);
         conf.setInt(REDIS_EXPORT_SERVER_PORT, redisPort);
+        conf.setInt(REDIS_EXPORT_SERVER_DB, redisDb);
         conf.set(REDIS_EXPORT_KEY_NAME, keyName);
         conf.set(REDIS_EXPORT_KEY_PREFIX, keyPrefix);
         conf.set(REDIS_EXPORT_VALUE_NAME, valueName);
@@ -181,10 +185,10 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
         conf.setBoolean(REDIS_PIPELINE_MODE, pipeline);
     }
 
-    public static void setOutput(Configuration conf, String redisHost, int redisPort, String keyName,
-            String keyPrefix, boolean replace, boolean pipeline) {
+    public static void setOutput(Configuration conf, String redisHost, int redisPort, int redisDb,
+            String keyName, String keyPrefix, boolean replace, boolean pipeline) {
 
-        setOutput(conf, redisHost, redisPort, keyName, keyPrefix, "", replace, pipeline);
+        setOutput(conf, redisHost, redisPort, redisDb, keyName, keyPrefix, "", replace, pipeline);
     }
 
     /**

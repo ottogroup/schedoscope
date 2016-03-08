@@ -42,6 +42,8 @@ public class RedisMRJedisFactory {
                             conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_PORT, 6379),
                             1800);
         }
+        int redisDb = conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_DB, 0);
+        jedis.select(redisDb);
         return jedis;
     }
 }

@@ -31,6 +31,9 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
+import org.schedoscope.export.utils.RedisMRJedisFactory;
+
+import redis.clients.jedis.Jedis;
 
 /**
  * The MR driver to run the Hive to Redis export. Depending on
@@ -53,6 +56,9 @@ public class RedisExportJob extends Configured implements Tool {
 
     @Option(name = "-P", usage = "redis port")
     private int redisPort = 6379;
+
+    @Option(name = "-K", usage = "redis key space (default is 0)")
+    private int redisDb = 0;
 
     @Option(name = "-d", usage = "input database", required = true)
     private String inputDatabase;
@@ -81,6 +87,9 @@ public class RedisExportJob extends Configured implements Tool {
     @Option(name = "-l", usage = "pipeline mode for redis client")
     boolean pipeline = false;
 
+    @Option(name = "-f", usage = "flush redis key space")
+    boolean flush = false;
+
     @Override
     public int run(String[] args) throws Exception {
 
@@ -108,6 +117,7 @@ public class RedisExportJob extends Configured implements Tool {
      * @param principal The Kerberos principal.
      * @param redisHost The Redis host.
      * @param redisPort The Redis port.
+     * @param redisDb The Redis key space / database.
      * @param inputDatabase The Hive input database
      * @param inputTable The Hive inut table.
      * @param inputFilter An optional filter for Hive.
@@ -117,18 +127,21 @@ public class RedisExportJob extends Configured implements Tool {
      * @param numReducer Number of reducers / partitions.
      * @param replace A flag indicating of data should be replaced.
      * @param pipeline A flag to set the Redis client pipeline mode.
+     * @param flush A flag indicating Redis key space should be flushed.
      * @return A configured job instance
      * @throws Exception is thrown if an error occurs.
      */
     public Job configure(boolean isSecured, String metaStoreUris, String principal, String redisHost,
-            int redisPort, String inputDatabase, String inputTable, String inputFilter, String keyName,
-            String valueName, String keyPrefix, int numReducer, boolean replace, boolean pipeline) throws Exception {
+            int redisPort, int redisDb, String inputDatabase, String inputTable, String inputFilter,
+            String keyName, String valueName, String keyPrefix, int numReducer, boolean replace,
+            boolean pipeline, boolean flush) throws Exception {
 
         this.isSecured = isSecured;
         this.metaStoreUris = metaStoreUris;
         this.principal = principal;
         this.redisHost = redisHost;
         this.redisPort = redisPort;
+        this.redisDb = redisDb;
         this.inputDatabase = inputDatabase;
         this.inputTable = inputTable;
         this.inputFilter = inputFilter;
@@ -137,6 +150,7 @@ public class RedisExportJob extends Configured implements Tool {
         this.numReducer = numReducer;
         this.replace = replace;
         this.pipeline = pipeline;
+        this.flush = flush;
         return configure();
     }
 
@@ -173,17 +187,22 @@ public class RedisExportJob extends Configured implements Tool {
         Class<?> OutputClazz;
 
         if (valueName == null) {
-            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, keyName,
-                    keyPrefix, replace, pipeline);
+            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb,
+                    keyName, keyPrefix, replace, pipeline);
 
             job.setMapperClass(RedisFullTableExportMapper.class);
             OutputClazz = RedisHashWritable.class;
 
         } else {
-            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, keyName, keyPrefix, valueName,
-                    replace, pipeline);
+            RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb,
+                    keyName, keyPrefix, valueName, replace, pipeline);
             job.setMapperClass(RedisExportMapper.class);
             OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema, valueName);
+        }
+
+        if (flush) {
+            Jedis jedis = RedisMRJedisFactory.getJedisClient(job.getConfiguration());
+            jedis.flushDB();
         }
 
         job.setReducerClass(RedisExportReducer.class);
