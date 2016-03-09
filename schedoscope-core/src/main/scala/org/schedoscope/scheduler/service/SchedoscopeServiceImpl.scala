@@ -19,16 +19,18 @@ import akka.actor.{ ActorRef, ActorSystem, actorRef2Scala }
 import akka.event.Logging
 import akka.pattern.Patterns
 import akka.util.Timeout
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import org.schedoscope.AskPattern._
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.{ Named, View }
-import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.actors.ViewManagerActor
 import org.schedoscope.scheduler.driver.{ DriverRunFailed, DriverRunOngoing, DriverRunState, DriverRunSucceeded }
 import org.schedoscope.scheduler.messages._
-
+import org.schedoscope.schema.ddl.HiveQl
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
@@ -147,6 +149,26 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     if (o != null) o else d;
   }
 
+  private def viewTransformationStatus(transformation: Transformation): ViewTransformationStatus = {
+    transformation match {
+      case t: HiveTransformation => ViewTransformationStatus(t.name, Some(Map("sql" -> t.sql)));
+      case t: MapreduceTransformation => ViewTransformationStatus(t.name,
+        Some(Map("input" -> t.job.getConfiguration().get(FileInputFormat.INPUT_DIR),
+          "output" -> t.job.getConfiguration().get(FileOutputFormat.OUTDIR))));
+      case t: PigTransformation   => ViewTransformationStatus(t.name, Some(Map("latin" -> t.latin)));
+      case t: OozieTransformation => ViewTransformationStatus(t.name, Some(Map("bundle" -> t.bundle, "workflow" -> t.workflow)));
+      case t: ShellTransformation => ViewTransformationStatus(t.name, Some(Map("shell" -> t.shell, "script" -> t.script,
+        "scriptFile" -> t.scriptFile) ++ t.env));
+      case t: CopyFrom => ViewTransformationStatus("filesystem -> CopyFromTransformation", Some(Map("from" -> t.fromPattern,
+        "destinationView" -> t.toView.urlPath, "recursive" -> t.recursive.toString())));
+      case t: Copy => ViewTransformationStatus("filesystem -> CopyTransformation", Some(Map("from" -> t.fromPattern,
+        "destinationPath" -> t.toPath)));
+      case t: Move => ViewTransformationStatus("filesystem -> MoveTransformation", Some(Map("from" -> t.fromPattern,
+        "destinationPath" -> t.toPath)));
+      case t: StoreFrom => ViewTransformationStatus("filesystem -> StoreFromTransformation", Some(Map("destinationView" -> t.toView.urlPath)));
+      case t            => ViewTransformationStatus(t.name, None);
+    }
+  }
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
     submitCommandInternal(viewActors, MaterializeView(
@@ -167,13 +189,64 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     submitCommandInternal(viewActors, "newdata", viewUrlPath, status, filter)
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]) = {
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
     val views = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false))
     val statusMap = views.map(v => (v.view.urlPath, v.status)).toMap // needed for status of dependencies in output
-    val viewStatusList = views
-      .map(v => ViewStatus(v.view.urlPath, v.status, None, if (!dependencies.getOrElse(false)) None else Some(v.view.dependencies.map(d => ViewStatus(d.urlPath, statusMap.getOrElse(d.urlPath, ""), None, None)).toList)))
-    val ov = viewStatusList.groupBy(_.status).mapValues(_.size)
-    ViewStatusList(ov, if (overview.getOrElse(false)) List() else viewStatusList)
+
+    val viewStatusListWithoutViewDetails = views.map {
+      v =>
+        ViewStatus(
+          viewPath = v.view.urlPath,
+          viewTableName = if (all.getOrElse(false))
+            Some(v.view.tableName)
+          else
+            None,
+          status = v.status,
+          properties = None,
+          fields = None,
+          parameters = None,
+          dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
+            Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
+          else
+            None,
+          transformation = None,
+          storageFormat = None,
+          external = None,
+          materializeOnce = None,
+          comment = None,
+          isTable = if (all.getOrElse(false))
+            Some(false)
+          else
+            None)
+    }.toList
+
+    val viewStatusList = if (all.getOrElse(false))
+      views
+        .groupBy(v => v.view.tableName)
+        .map(e => e._2.head)
+        .map(v => ViewStatus(
+          viewPath = v.view.urlPath,
+          viewTableName = Option(v.view.tableName),
+          status = v.status,
+          properties = None,
+          fields = Option(v.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
+          parameters = if (!v.view.parameters.isEmpty)
+            Some(v.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList)
+          else
+            None,
+          dependencies = None,
+          transformation = Option(viewTransformationStatus(v.view.transformation())),
+          storageFormat = Option(v.view.storageFormat.getClass.getSimpleName),
+          external = Option(v.view.isExternal),
+          materializeOnce = Option(v.view.isMaterializeOnce),
+          comment = Option(v.view.comment),
+          isTable = Option(true)))
+        .toList ::: viewStatusListWithoutViewDetails
+    else
+      viewStatusListWithoutViewDetails
+
+    val statusOverview = viewStatusListWithoutViewDetails.groupBy(_.status).mapValues(_.size)
+    ViewStatusList(statusOverview, if (overview.getOrElse(false)) List() else viewStatusList)
   }
 
   def transformations(status: Option[String], filter: Option[String]) = {
