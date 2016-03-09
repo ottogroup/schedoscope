@@ -16,7 +16,6 @@
 package org.schedoscope.dsl.transformations
 
 import org.schedoscope.dsl.View
-
 import scala.collection.mutable.HashMap
 
 /**

@@ -15,7 +15,7 @@
  */
 package org.schedoscope.scheduler.rest
 
-import org.schedoscope.scheduler.service.{ QueueStatusList, RunStatus, SchedoscopeCommandStatus, TransformationStatus, TransformationStatusList, ViewStatus, ViewStatusList }
+import org.schedoscope.scheduler.service.{ QueueStatusList, RunStatus, SchedoscopeCommandStatus, TransformationStatus, TransformationStatusList, ViewStatus, ViewStatusList, ViewTransformationStatus, FieldStatus }
 import spray.json.{ DefaultJsonProtocol, JsonFormat }
 
 /**
@@ -26,7 +26,9 @@ object SchedoscopeJsonDataFormat extends DefaultJsonProtocol {
   implicit val actionStatusFormat = jsonFormat5(TransformationStatus)
   implicit val actionStatusListFormat = jsonFormat2(TransformationStatusList)
   implicit val schedoscopeCommandStatusFormat = jsonFormat4(SchedoscopeCommandStatus)
-  implicit val viewStatusFormat: JsonFormat[ViewStatus] = lazyFormat(jsonFormat4(ViewStatus))
+  implicit val viewTransformationStatusFormat: JsonFormat[ViewTransformationStatus] = lazyFormat(jsonFormat2(ViewTransformationStatus))
+  implicit val viewStatusFormat: JsonFormat[ViewStatus] = lazyFormat(jsonFormat13(ViewStatus))
+  implicit val fieldStatusFormat: JsonFormat[FieldStatus] = lazyFormat(jsonFormat3(FieldStatus))
   implicit val viewStatusListFormat = jsonFormat2(ViewStatusList)
   implicit val queueStatusListFormat = jsonFormat2(QueueStatusList)
 }
