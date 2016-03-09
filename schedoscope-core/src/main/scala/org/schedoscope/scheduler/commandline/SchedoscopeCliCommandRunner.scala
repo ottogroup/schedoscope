@@ -35,7 +35,7 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
   val parser = new scopt.OptionParser[Config]("schedoscope-control") {
     override def showUsageOnError = true
 
-    head("schedoscope-control", "0.0.1")
+    head("schedoscope-control")
     help("help") text ("print usage")
 
     cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text ("lists all view actors, along with their status") children (

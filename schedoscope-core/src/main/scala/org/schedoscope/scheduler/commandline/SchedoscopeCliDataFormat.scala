@@ -60,14 +60,14 @@ object SchedoscopeCliFormat {
           val header = Array("VIEW", "STATUS", "PROPS")
 
           val fields = vl.views
-            .filter { viewStatus => viewStatus.fields.isDefined && viewStatus.fqdn.isDefined }
+            .filter { viewStatus => viewStatus.fields.isDefined && viewStatus.viewTableName.isDefined }
             .foldLeft(scala.collection.mutable.Map[String, List[FieldStatus]]()) {
-              (map, viewStatus) => map += (viewStatus.fqdn.get -> viewStatus.fields.get)
+              (map, viewStatus) => map += (viewStatus.viewTableName.get -> viewStatus.fields.get)
             }
 
-          val data = vl.views.map(d => Array(d.view,d.status,
-            if (d.fqdn.isDefined && fields.get(d.fqdn.get).isDefined) {
-              fields.get(d.fqdn.get).get.map(fieldStatus => fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") + " " + d.properties.mkString(",")
+          val data = vl.views.map(d => Array(d.viewPath,d.status,
+            if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
+              fields.get(d.viewTableName.get).get.map(fieldStatus => fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") + " " + d.properties.mkString(",")
             } else {
               d.properties.mkString(",")
             }

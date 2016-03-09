@@ -79,36 +79,33 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
  * Main object for launching the schedoscope rest service.
  */
 object SchedoscopeRestService {
-  implicit val actorSystem = Schedoscope.actorSystem
-  val settings = Schedoscope.settings
-  val viewManagerActor = Schedoscope.viewManagerActor
-  val transactionManagerActor = Schedoscope.transformationManagerActor
 
   LogManager.getLogManager().reset()
   SLF4JBridgeHandler.removeHandlersForRootLogger()
   SLF4JBridgeHandler.install()
   Logger.getLogger("global").setLevel(Level.FINEST)
 
-  val schedoscope = new SchedoscopeServiceImpl(actorSystem, settings, viewManagerActor, transactionManagerActor)
-
   case class Config(shell: Boolean = false)
 
   val parser = new scopt.OptionParser[Config]("schedoscope-rest-service") {
     override def showUsageOnError = true
 
-    head("schedoscope-rest-service", "0.0.1")
+    head("schedoscope-rest-service")
     help("help") text ("print usage")
     opt[Unit]('s', "shell") action { (_, c) => c.copy(shell = true) } optional () text ("start an interactive shell with direct schedoscope access.")
   }
 
-  def start(config: Config) {
+  implicit val actorSystem = Schedoscope.actorSystem
 
-    val numActors = settings.restApiConcurrency
-    val host = settings.host
-    val port = settings.port
-    val service = actorSystem.actorOf(new SmallestMailboxPool(numActors).props(Props(classOf[SchedoscopeRestServiceActor], schedoscope)), "schedoscope-webservice-actor")
-    implicit val timeout = Timeout(settings.webserviceTimeout)
-    IO(Http) ? Http.Bind(service, interface = host, port = port)
+  import Schedoscope._
+
+  implicit val timeout = Timeout(settings.webserviceTimeout)
+
+  val schedoscope = new SchedoscopeServiceImpl(actorSystem, settings, viewManagerActor, transformationManagerActor)
+  val service = actorSystem.actorOf(new SmallestMailboxPool(settings.restApiConcurrency).props(Props(classOf[SchedoscopeRestServiceActor], schedoscope)), "schedoscope-webservice-actor")
+
+  def start(config: Config) {
+    IO(Http) ? Http.Bind(service, interface = settings.host, port = settings.port)
 
     if (config.shell) {
       Thread.sleep(5000)
@@ -122,11 +119,10 @@ object SchedoscopeRestService {
   }
 
   def main(args: Array[String]) {
-    val config = parser.parse(args, Config()) match {
+    start(parser.parse(args, Config()) match {
       case Some(config) => config
       case None         => Config()
-    }
-    start(config)
+    })
   }
 }
 
