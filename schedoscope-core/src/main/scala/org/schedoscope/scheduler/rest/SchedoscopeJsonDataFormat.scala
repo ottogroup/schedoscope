@@ -27,7 +27,7 @@ object SchedoscopeJsonDataFormat extends DefaultJsonProtocol {
   implicit val actionStatusListFormat = jsonFormat2(TransformationStatusList)
   implicit val schedoscopeCommandStatusFormat = jsonFormat4(SchedoscopeCommandStatus)
   implicit val viewTransformationStatusFormat: JsonFormat[ViewTransformationStatus] = lazyFormat(jsonFormat2(ViewTransformationStatus))
-  implicit val viewStatusFormat: JsonFormat[ViewStatus] = lazyFormat(jsonFormat13(ViewStatus))
+  implicit val viewStatusFormat: JsonFormat[ViewStatus] = lazyFormat(jsonFormat12(ViewStatus))
   implicit val fieldStatusFormat: JsonFormat[FieldStatus] = lazyFormat(jsonFormat3(FieldStatus))
   implicit val viewStatusListFormat = jsonFormat2(ViewStatusList)
   implicit val queueStatusListFormat = jsonFormat2(QueueStatusList)

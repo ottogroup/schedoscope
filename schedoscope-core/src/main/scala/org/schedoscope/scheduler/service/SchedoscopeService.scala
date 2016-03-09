@@ -31,7 +31,6 @@ case class ViewStatus(
     dependencies: Option[Map[String, List[String]]], 
     transformation: Option[ViewTransformationStatus], 
     storageFormat: Option[String], 
-    external: Option[Boolean], 
     materializeOnce: Option[Boolean], 
     comment: Option[Option[String]], 
     isTable: Option[Boolean])
