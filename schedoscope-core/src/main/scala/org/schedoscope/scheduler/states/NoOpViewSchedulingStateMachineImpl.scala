@@ -18,7 +18,7 @@ package org.schedoscope.scheduler.states
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
-class NoOpViewSchedulingStateMachine(successFlagExists: => Boolean) extends ViewSchedulingStateMachineImpl {
+class NoOpViewSchedulingStateMachineImpl(successFlagExists: => Boolean) extends ViewSchedulingStateMachineImpl {
 
   override def toWaitingTransformingOrMaterialize(view: View, lastTransformationChecksum: String, lastTransformationTimestamp: Long, listener: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode, currentTime: Long) = {
     if (view.dependencies.isEmpty)
