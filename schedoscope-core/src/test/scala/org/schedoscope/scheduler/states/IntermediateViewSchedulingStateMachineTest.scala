@@ -15,11 +15,11 @@
  */
 package org.schedoscope.scheduler.states
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
-import test.eci.datahub.{ ProductBrandMaterializeOnce, ProductBrandsNoOpMirror }
+import test.eci.datahub.{ProductBrandMaterializeOnce, ProductBrandsNoOpMirror}
 
 class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
@@ -27,8 +27,8 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     val stateMachine = new ViewSchedulingStateMachineImpl()
     val dependentView = ProductBrandsNoOpMirror(p("2014"), p("01"), p("01"))
     val anotherDependentView = ProductBrandsNoOpMirror(p("2014"), p("01"), p("02"))
-    val viewUnderTest = dependentView.dependencies(0)
-    val firstDependency = viewUnderTest.dependencies(0)
+    val viewUnderTest = dependentView.dependencies.head
+    val firstDependency = viewUnderTest.dependencies.head
     val secondDependency = viewUnderTest.dependencies(1)
     val materializeOnceView = ProductBrandMaterializeOnce(p("EC0101"), p("2014"), p("01"), p("02"))
     val viewTransformationChecksum = viewUnderTest.transformation().checksum
@@ -670,7 +670,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, false, 20) match {
+    stateMachine.transformationSucceeded(startState, folderEmpty = false, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -697,7 +697,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, false, 20) match {
+    stateMachine.transformationSucceeded(startState, folderEmpty = false, 20) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           WriteTransformationTimestamp(viewUnderTest, 20))
@@ -712,7 +712,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, false, 20) match {
+    stateMachine.transformationSucceeded(startState, folderEmpty = false, 20) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           TouchSuccessFlag(viewUnderTest))
@@ -727,7 +727,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, false, 20) match {
+    stateMachine.transformationSucceeded(startState, folderEmpty = false, 20) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           WriteTransformationCheckum(viewUnderTest))
@@ -742,7 +742,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, false, 20) match {
+    stateMachine.transformationSucceeded(startState, folderEmpty = false, 20) match {
       case ResultingViewSchedulingState(_, s) =>
         s should not(contain(
           WriteTransformationCheckum(viewUnderTest)))
@@ -757,7 +757,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(dependentView),
       DEFAULT, withErrors = true, incomplete = true, 0)
 
-    stateMachine.transformationSucceeded(startState, false, 20) match {
+    stateMachine.transformationSucceeded(startState, folderEmpty = false, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -821,7 +821,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 0)
 
-    stateMachine.transformationSucceeded(startState, true, 20) match {
+    stateMachine.transformationSucceeded(startState, folderEmpty = true, 20) match {
       case ResultingViewSchedulingState(NoData(view), s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportNoDataAvailable(viewUnderTest, Set(DependentView(dependentView))))

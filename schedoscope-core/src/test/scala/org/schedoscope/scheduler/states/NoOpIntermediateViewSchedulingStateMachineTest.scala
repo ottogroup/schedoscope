@@ -15,11 +15,11 @@
  */
 package org.schedoscope.scheduler.states
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
-import test.eci.datahub.{ ProductBrandsNoOpMirror, ProductBrandsNoOpMirrorDependent }
+import test.eci.datahub.{ProductBrandsNoOpMirror, ProductBrandsNoOpMirrorDependent}
 
 class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
@@ -33,7 +33,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
   trait NoOpIntermediateView {
     val viewUnderTest = ProductBrandsNoOpMirror(p("2014"), p("01"), p("01"))
-    val firstDependency = viewUnderTest.dependencies(0)
+    val firstDependency = viewUnderTest.dependencies.head
     val secondDependency = viewUnderTest.dependencies(1)
     val viewTransformationChecksum = viewUnderTest.transformation().checksum
     val dependentView = ProductBrandsNoOpMirrorDependent(p("2014"), p("01"), p("01"))

@@ -19,7 +19,6 @@ import java.util.Date
 
 import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 
 import scala.language.implicitConversions
