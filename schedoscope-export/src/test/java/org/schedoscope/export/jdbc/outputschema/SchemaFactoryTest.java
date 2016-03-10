@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.schedoscope.export.jdbc.outputschema;
 
 import static org.hamcrest.CoreMatchers.instanceOf;
@@ -20,12 +21,6 @@ import static org.junit.Assert.assertThat;
 
 import org.apache.hadoop.conf.Configuration;
 import org.junit.Test;
-import org.schedoscope.export.jdbc.outputschema.DerbySchema;
-import org.schedoscope.export.jdbc.outputschema.ExasolSchema;
-import org.schedoscope.export.jdbc.outputschema.MySQLSchema;
-import org.schedoscope.export.jdbc.outputschema.PostgreSQLSchema;
-import org.schedoscope.export.jdbc.outputschema.Schema;
-import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 
 public class SchemaFactoryTest {
 
