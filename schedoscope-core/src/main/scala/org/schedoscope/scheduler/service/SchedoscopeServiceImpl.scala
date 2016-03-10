@@ -224,7 +224,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         .groupBy(v => v.view.tableName)
         .map(e => e._2.head)
         .map(v => ViewStatus(
-          viewPath = v.view.urlPath,
+          viewPath = v.view.urlPathPrefix,
           viewTableName = Option(v.view.tableName),
           status = v.status,
           properties = None,
