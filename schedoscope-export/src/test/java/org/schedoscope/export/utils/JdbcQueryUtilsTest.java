@@ -47,7 +47,7 @@ public class JdbcQueryUtilsTest {
     @Test
     public void testDropTemporaryOutputTable() throws SQLException {
 
-        JdbcQueryUtils.dropOutputTable("my_table", conn);
+        JdbcQueryUtils.dropTable("my_table", conn);
 
         verify(stmt).executeUpdate("DROP TABLE my_table");
         verify(stmt).close();

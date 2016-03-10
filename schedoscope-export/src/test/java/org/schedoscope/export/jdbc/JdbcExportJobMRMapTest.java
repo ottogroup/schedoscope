@@ -16,15 +16,14 @@
 package org.schedoscope.export.jdbc;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
@@ -32,7 +31,6 @@ import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.json.JSONException;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
@@ -40,9 +38,9 @@ import org.schedoscope.export.jdbc.outputformat.JdbcOutputWritable;
 
 public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
 
-    MapDriver<WritableComparable<?>, HCatRecord, Text, NullWritable> mapDriver;
-    ReduceDriver<Text, NullWritable, JdbcOutputWritable, NullWritable> reduceDriver;
-    MapReduceDriver<WritableComparable<?>, HCatRecord, Text, NullWritable, JdbcOutputWritable, NullWritable> mapReduceDriver;
+    MapDriver<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable> mapDriver;
+    ReduceDriver<LongWritable, JdbcOutputWritable, JdbcOutputWritable, NullWritable> reduceDriver;
+    MapReduceDriver<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable, JdbcOutputWritable, NullWritable> mapReduceDriver;
 
     @Override
     @SuppressWarnings("deprecation")
@@ -72,16 +70,11 @@ public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
             HCatRecord record = it.next();
             mapDriver.withInput(NullWritable.get(), record);
         }
-        List<Pair<Text, NullWritable>> out = mapDriver.run();
+        List<Pair<LongWritable, JdbcOutputWritable>> out = mapDriver.run();
         assertEquals(10, out.size());
 
-        for (Pair<Text, NullWritable> p : out) {
-            String jsonData = p.getFirst().toString().split("\t")[1];
-            JSONObject json = new JSONObject(jsonData);
-            assertNotEquals(0, json.length());
-
-            String fixed = p.getFirst().toString().split("\t")[3];
-            assertEquals("value1", fixed);
+        for (Pair<LongWritable, JdbcOutputWritable> p : out) {
+            assertNotNull(p.getSecond());
         }
     }
 
@@ -95,19 +88,5 @@ public class JdbcExportJobMRMapTest extends HiveUnitBaseTest {
         }
         List<Pair<JdbcOutputWritable, NullWritable>> out = mapReduceDriver.run();
         assertEquals(10, out.size());
-
-    }
-
-    @Test
-    public void testReducerWrongInput() throws IOException {
-
-        // input data
-        Text key = new Text("1\ttest");
-        List<NullWritable> values = new ArrayList<NullWritable>();
-        values.add(NullWritable.get());
-
-        reduceDriver.withInput(key, values);
-        List<Pair<JdbcOutputWritable, NullWritable>> out = reduceDriver.run();
-        assertEquals(0, out.size());
     }
 }

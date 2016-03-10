@@ -16,21 +16,20 @@
 package org.schedoscope.export.jdbc;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
 import org.apache.hadoop.mrunit.types.Pair;
 import org.apache.hive.hcatalog.data.HCatRecord;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,9 +38,9 @@ import org.schedoscope.export.jdbc.outputformat.JdbcOutputWritable;
 
 public class JdbcExportJobMRArrayTest extends HiveUnitBaseTest {
 
-    MapDriver<WritableComparable<?>, HCatRecord, Text, NullWritable> mapDriver;
-    ReduceDriver<Text, NullWritable, JdbcOutputWritable, NullWritable> reduceDriver;
-    MapReduceDriver<WritableComparable<?>, HCatRecord, Text, NullWritable, JdbcOutputWritable, NullWritable> mapReduceDriver;
+    MapDriver<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable> mapDriver;
+    ReduceDriver<LongWritable, JdbcOutputWritable, JdbcOutputWritable, NullWritable> reduceDriver;
+    MapReduceDriver<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable, JdbcOutputWritable, NullWritable> mapReduceDriver;
 
     @Override
     @SuppressWarnings("deprecation")
@@ -71,13 +70,11 @@ public class JdbcExportJobMRArrayTest extends HiveUnitBaseTest {
             HCatRecord record = it.next();
             mapDriver.withInput(NullWritable.get(), record);
         }
-        List<Pair<Text, NullWritable>> out = mapDriver.run();
+        List<Pair<LongWritable, JdbcOutputWritable>> out = mapDriver.run();
         assertEquals(10, out.size());
 
-        for (Pair<Text, NullWritable> p : out) {
-            String jsonData = p.getFirst().toString().split("\t")[1];
-            JSONArray json = new JSONArray(jsonData);
-            assertNotEquals(0, json.length());
+        for (Pair<LongWritable, JdbcOutputWritable> p : out) {
+            assertNotNull(p.getSecond());
         }
     }
 

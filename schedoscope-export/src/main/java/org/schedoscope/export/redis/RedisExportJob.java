@@ -100,7 +100,7 @@ public class RedisExportJob extends Configured implements Tool {
         } catch (CmdLineException e) {
             System.err.println(e.getMessage());
             cmd.printUsage(System.err);
-            System.exit(1);
+            throw e;
         }
 
         Job job = configure();

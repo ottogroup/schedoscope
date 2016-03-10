@@ -93,7 +93,7 @@ public abstract class AbstractSchema implements Schema {
         return "";
     }
 
-    protected String getDistributedByClause() {
+    protected String getDistributeByClause() {
         return "";
     }
 
@@ -117,9 +117,9 @@ public abstract class AbstractSchema implements Schema {
             createTableStatement.append("\n");
         }
 
-        createTableStatement = createTableStatement.append(getDistributedByClause());
-        createTableStatement = createTableStatement.append(")");
-        createTableStatement = createTableStatement.append(getCreateTableSuffix());
+        createTableStatement.append(getDistributeByClause());
+        createTableStatement.append(")");
+        createTableStatement.append(getCreateTableSuffix());
 
         return createTableStatement.toString();
     }
@@ -127,7 +127,7 @@ public abstract class AbstractSchema implements Schema {
     @Override
     public void setOutput(String connectionString, String username, String password, String outputTable,
             String inputFilter, int outputNumberOfPartitions, int outputCommitSize, String storageEngine,
-            String distributedBy, String[] columnNames, String[] columnTypes) {
+            String distributeBy, String[] columnNames, String[] columnTypes) {
 
         conf.set(Schema.JDBC_CONNECTION_STRING, connectionString);
         if (username != null) {
@@ -157,8 +157,8 @@ public abstract class AbstractSchema implements Schema {
             }
         }
 
-        if (distributedBy != null) {
-            conf.set(JDBC_EXASOL_DISTRIBUTED_CLAUSE, distributedBy);
+        if (distributeBy != null) {
+            conf.set(JDBC_EXASOL_DISTRIBUTE_CLAUSE, distributeBy);
         }
 
         conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_NAMES, columnNames);

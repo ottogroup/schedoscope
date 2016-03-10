@@ -54,9 +54,11 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
 
     private static final String TMPDB = "TMP_";
 
+    @Override
     public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
     }
 
+    @Override
     public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
 
         return new FileOutputCommitter(FileOutputFormat.getOutputPath(context), context);
@@ -155,11 +157,10 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
         createTableQuery = createTableQuery.replace(outputSchema.getTable(), tmpOutputTable);
         int commitSize = outputSchema.getCommitSize();
         String[] fieldNames = outputSchema.getColumnNames();
-
         try {
             Connection connection = outputSchema.getConnection();
 
-            JdbcQueryUtils.dropOutputTable(tmpOutputTable, connection);
+            JdbcQueryUtils.dropTable(tmpOutputTable, connection);
             JdbcQueryUtils.createTable(createTableQuery, connection);
 
             PreparedStatement statement = null;
@@ -220,7 +221,7 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
             if (inputFilter != null) {
                 JdbcQueryUtils.deleteExisitingRows(outputTable, inputFilter, connection);
             } else {
-                JdbcQueryUtils.dropOutputTable(outputTable, connection);
+                JdbcQueryUtils.dropTable(outputTable, connection);
             }
             JdbcQueryUtils.createTable(createTableStatement, connection);
             JdbcQueryUtils.mergeOutput(outputTable, TMPDB, outputNumberOfPartitions, connection);

@@ -16,6 +16,7 @@
 
 package org.schedoscope.export.jdbc.outputschema;
 
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
@@ -74,12 +75,12 @@ public class SchemaUtils {
 
             if (!inputSchema.get(i).isComplex()) {
 
-                if (inputSchema.get(i).getTypeString().toLowerCase() == null
-                        || inputSchema.get(i).getTypeString().toLowerCase().equals("null")) {
+                if (inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()) == null
+                        || inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()).equals("null")) {
 
                     type = columnTypeMapping.get("tinyint");
                 } else {
-                    type = columnTypeMapping.get(inputSchema.get(i).getTypeString().toLowerCase());
+                    type = columnTypeMapping.get(inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()));
                 }
             }
             fieldTypes[i] = type;

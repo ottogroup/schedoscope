@@ -84,7 +84,7 @@ public class ExasolSchemaTest {
         schema = new ExasolSchema(conf);
         schema.setOutput("jdbc:exa:10.15.101.11..13:8563;schema=USR_TESTER_EXASOL", "user", "pass", TABLE_NAME, null,
                 NUM_PARTITIONS, COMMIT_SIZE, null, "a,b", COLUMN_NAMES, COLUMN_TYPES);
-        assertEquals(", DISTRIBUTE BY a,b", schema.getDistributedByClause());
+        assertEquals(", DISTRIBUTE BY a,b", schema.getDistributeByClause());
     }
 
     @Test
@@ -92,7 +92,7 @@ public class ExasolSchemaTest {
         schema = new ExasolSchema(conf);
         schema.setOutput("jdbc:exa:10.15.101.11..13:8563;schema=USR_TESTER_EXASOL", "user", "pass", TABLE_NAME, null,
                 NUM_PARTITIONS, COMMIT_SIZE, null, null, COLUMN_NAMES, COLUMN_TYPES);
-        assertEquals("", schema.getDistributedByClause());
+        assertEquals("", schema.getDistributeByClause());
     }
 
     @Test

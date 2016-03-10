@@ -81,9 +81,9 @@ public class ExasolSchema extends AbstractSchema {
     }
 
     @Override
-    protected String getDistributedByClause() {
-        if (conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE) != null) {
-            return ", DISTRIBUTE BY " + conf.get(JDBC_EXASOL_DISTRIBUTED_CLAUSE + "\n");
+    protected String getDistributeByClause() {
+        if (conf.get(JDBC_EXASOL_DISTRIBUTE_CLAUSE) != null) {
+            return ", DISTRIBUTE BY " + conf.get(JDBC_EXASOL_DISTRIBUTE_CLAUSE + "\n");
         } else {
             return "";
         }

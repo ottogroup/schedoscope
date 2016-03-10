@@ -42,7 +42,7 @@ public interface Schema {
     public static final String JDBC_OUTPUT_COLUMN_NAMES = "jdbc.output.column.names";
     public static final String JDBC_OUTPUT_COLUMN_TYPES = "jdbc.output.column.types";
     public static final String JDBC_MYSQL_STORAGE_ENGINE = "jdbc.mysql.storage.engine";
-    public static final String JDBC_EXASOL_DISTRIBUTED_CLAUSE = "jdbc.exasol.distributed.clause";
+    public static final String JDBC_EXASOL_DISTRIBUTE_CLAUSE = "jdbc.exasol.distribute.clause";
 
     /**
      * Initializes a {@link Schema} with the given

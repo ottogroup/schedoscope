@@ -24,8 +24,8 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.Tool;
@@ -66,7 +66,7 @@ public class JdbcExportJob extends Configured implements Tool {
     @Option(name = "-u", usage = "the database user")
     private String dbUser;
 
-    @Option(name = "-w", usage = "the database password")
+    @Option(name = "-w", usage = "the database password", depends = { "-u" })
     private String dbPassword;
 
     @Option(name = "-d", usage = "input database", required = true)
@@ -81,8 +81,8 @@ public class JdbcExportJob extends Configured implements Tool {
     @Option(name = "-e", usage = "storage engine, either 'InnoDB' or 'MyISAM', works only for MySQL")
     private String storageEngine;
 
-    @Option(name = "-x", usage = "columns to use for the 'DISTRIBUTED BY' clause, only Exasol")
-    private String distributedBy;
+    @Option(name = "-x", usage = "columns to use for the 'DISTRIBUTE BY' clause, only Exasol")
+    private String distributeBy;
 
     @Option(name = "-c", usage = "number of reducers, concurrency level")
     private int numReducer = 2;
@@ -100,7 +100,7 @@ public class JdbcExportJob extends Configured implements Tool {
         } catch (CmdLineException e) {
             System.err.println(e.getMessage());
             cmd.printUsage(System.err);
-            System.exit(1);
+            throw e;
         }
 
         Job job = configure();
@@ -142,7 +142,7 @@ public class JdbcExportJob extends Configured implements Tool {
      * @param inputTable The Hive input table
      * @param inputFilter An optional input filter.
      * @param storageEngine An optional storage engine (only MySQL)
-     * @param distributedBy An optional distribute by clause (only Exasol)
+     * @param distributeBy An optional distribute by clause (only Exasol)
      * @param numReducer Number of reducers / partitions
      * @param commitSize The batch size.
      * @return A configured job instance.
@@ -150,7 +150,7 @@ public class JdbcExportJob extends Configured implements Tool {
      */
     public Job configure(boolean isSecured, String metaStoreUris, String principal, String dbConnectionString,
             String dbUser, String dbPassword, String inputDatabase, String inputTable, String inputFilter,
-            String storageEngine, String distributedBy, int numReducer, int commitSize) throws Exception {
+            String storageEngine, String distributeBy, int numReducer, int commitSize) throws Exception {
 
         this.isSecured = isSecured;
         this.metaStoreUris = metaStoreUris;
@@ -162,7 +162,7 @@ public class JdbcExportJob extends Configured implements Tool {
         this.inputTable = inputTable;
         this.inputFilter = inputFilter;
         this.storageEngine = storageEngine;
-        this.distributedBy = distributedBy;
+        this.distributeBy = distributeBy;
         this.numReducer = numReducer;
         this.commitSize = commitSize;
         return configure();
@@ -207,13 +207,13 @@ public class JdbcExportJob extends Configured implements Tool {
         String outputTable = inputDatabase + "_" + inputTable;
 
         JdbcOutputFormat.setOutput(job.getConfiguration(), dbConnectionString, dbUser, dbPassword, outputTable,
-                inputFilter, numReducer, commitSize, storageEngine, distributedBy, columnNames, columnTypes);
+                inputFilter, numReducer, commitSize, storageEngine, distributeBy, columnNames, columnTypes);
 
         job.setInputFormatClass(HCatInputFormat.class);
         job.setOutputFormatClass(JdbcOutputFormat.class);
 
-        job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(NullWritable.class);
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(JdbcOutputWritable.class);
         job.setOutputKeyClass(JdbcOutputWritable.class);
         job.setOutputValueClass(NullWritable.class);
 

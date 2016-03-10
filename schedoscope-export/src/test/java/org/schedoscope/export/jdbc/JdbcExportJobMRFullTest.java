@@ -23,8 +23,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
-import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.Before;
@@ -35,6 +35,8 @@ import org.schedoscope.export.jdbc.outputformat.JdbcOutputWritable;
 import org.schedoscope.export.jdbc.outputschema.Schema;
 import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 import org.schedoscope.export.jdbc.outputschema.SchemaUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 
@@ -50,15 +52,16 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql",
-                "test_map");
 
         Class.forName(JDBC_DRIVER_NAME);
         DriverManager.getConnection(CREATE_CONNECTION_STRING);
     }
 
     @Test
-    public void testRunMrJob() throws Exception {
+    public void testRunMrJobMap() throws Exception {
+
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql",
+                "test_map");
 
         Job job = Job.getInstance(conf);
 
@@ -77,8 +80,8 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
         job.setInputFormatClass(HCatInputFormat.class);
         job.setOutputFormatClass(JdbcOutputFormat.class);
 
-        job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(NullWritable.class);
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(JdbcOutputWritable.class);
         job.setOutputKeyClass(JdbcOutputWritable.class);
         job.setOutputValueClass(NullWritable.class);
 
@@ -90,6 +93,110 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
         ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM testing");
         while (rs.next()) {
             assertEquals(10, rs.getInt(1));
+        }
+
+        ObjectMapper objMapper = new ObjectMapper();
+        Statement stmt2 = conn.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT type FROM testing ORDER BY id");
+        if (rs2.next()) {
+            String data = rs2.getString(1);
+            assertEquals(2, objMapper.readTree(data).get("a821").asInt());
+        }
+    }
+
+    @Test
+    public void testRunMrJobArray() throws Exception {
+
+        setUpHiveServer("src/test/resources/test_array_data.txt", "src/test/resources/test_array.hql",
+                "test_array");
+
+        Job job = Job.getInstance(conf);
+
+        job.setMapperClass(JdbcExportMapper.class);
+        job.setReducerClass(JdbcExportReducer.class);
+        job.setNumReduceTasks(NUM_PARTITIONS);
+
+        Schema outputSchema = SchemaFactory.getSchema(CONNECTION_STRING, job.getConfiguration());
+
+        String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(hcatInputSchema, outputSchema);
+        String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema);
+
+        JdbcOutputFormat.setOutput(job.getConfiguration(), CONNECTION_STRING, null, null, "testing", null,
+                NUM_PARTITIONS, 10000, null, null, columnNames, columnTypes);
+
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(JdbcOutputFormat.class);
+
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(JdbcOutputWritable.class);
+        job.setOutputKeyClass(JdbcOutputWritable.class);
+        job.setOutputValueClass(NullWritable.class);
+
+        assertTrue(job.waitForCompletion(true));
+        JdbcOutputFormat.finalizeOutput(job.getConfiguration());
+
+        Connection conn = outputSchema.getConnection();
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM testing");
+        while (rs.next()) {
+            assertEquals(10, rs.getInt(1));
+        }
+
+        ObjectMapper objMapper = new ObjectMapper();
+        Statement stmt2 = conn.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT type FROM testing ORDER BY id");
+        while (rs2.next()) {
+            String data = rs2.getString(1);
+            assertEquals("value1", objMapper.readTree(data).get(0).asText());
+            assertEquals("value2", objMapper.readTree(data).get(1).asText());
+        }
+    }
+
+    @Test
+    public void testRunMrJobStruct() throws Exception {
+
+        setUpHiveServer("src/test/resources/test_struct_data.txt", "src/test/resources/test_struct.hql",
+                "test_struct");
+
+        Job job = Job.getInstance(conf);
+
+        job.setMapperClass(JdbcExportMapper.class);
+        job.setReducerClass(JdbcExportReducer.class);
+        job.setNumReduceTasks(NUM_PARTITIONS);
+
+        Schema outputSchema = SchemaFactory.getSchema(CONNECTION_STRING, job.getConfiguration());
+
+        String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(hcatInputSchema, outputSchema);
+        String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema);
+
+        JdbcOutputFormat.setOutput(job.getConfiguration(), CONNECTION_STRING, null, null, "testing", null,
+                NUM_PARTITIONS, 10000, null, null, columnNames, columnTypes);
+
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(JdbcOutputFormat.class);
+
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(JdbcOutputWritable.class);
+        job.setOutputKeyClass(JdbcOutputWritable.class);
+        job.setOutputValueClass(NullWritable.class);
+
+        assertTrue(job.waitForCompletion(true));
+        JdbcOutputFormat.finalizeOutput(job.getConfiguration());
+
+        Connection conn = outputSchema.getConnection();
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM testing");
+        while (rs.next()) {
+            assertEquals(10, rs.getInt(1));
+        }
+
+        ObjectMapper objMapper = new ObjectMapper();
+        Statement stmt2 = conn.createStatement();
+        ResultSet rs2 = stmt2.executeQuery("SELECT type FROM testing ORDER BY id");
+        while (rs2.next()) {
+            String data = rs2.getString(1);
+            assertEquals("value1", objMapper.readTree(data).get("field1").asText());
+            assertEquals("value2", objMapper.readTree(data).get("field2").asText());
         }
     }
 }
