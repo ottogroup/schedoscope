@@ -39,7 +39,7 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   def receive: Receive = LoggingReceive {
     {
 
-      case MaterializeView(mode) =>
+      case MaterializeView(mode) => 
 
       case InvalidateView() =>
 
@@ -126,7 +126,7 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
       })
     .foldLeft(0l) {
       (size, status) => size + status.getLen()
-    } > 0
+    } <= 0
 
   def successFlagExists(view: View) = settings
     .userGroupInformation.doAs(
