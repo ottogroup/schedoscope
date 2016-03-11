@@ -25,7 +25,7 @@ import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
 import org.schedoscope.{ AskPattern, SchedoscopeSettings }
 import org.schedoscope.scheduler.states.{ ViewSchedulingState, ViewSchedulingAction }
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{Touch, NoOp }
+import org.schedoscope.dsl.transformations.{ Touch, NoOp }
 import org.schedoscope.scheduler.states.{ DependentView, AkkaActor, PartyInterestedInViewSchedulingStateChange, NoOpViewSchedulingStateMachineImpl, ViewSchedulingStateMachineImpl, Materialize, ReportMaterialized, ReportNotInvalidated, ReportInvalidated, ReportFailed, ReportNoDataAvailable, Transform, TouchSuccessFlag, WriteTransformationCheckum, WriteTransformationTimestamp, CreatedByViewManager, ReadFromSchemaManager, Invalidated, NoData, Failed, Waiting, Transforming, Materialized, Retrying }
 import org.schedoscope.scheduler.messages.{ SetViewVersion, LogTransformationTimestamp, ViewStatusResponse, MaterializeView, ViewHasNoData, ViewFailed, ViewMaterialized, TransformationSuccess, TransformationFailure, Retry, InvalidateView }
 import org.schedoscope.scheduler.states.AkkaActor
@@ -38,32 +38,61 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
 
   def receive: Receive = LoggingReceive {
     {
+      
       case MaterializeView(mode) =>
+        
       case InvalidateView() =>
+        
       case ViewHasNoData(dependency) =>
+        
       case ViewFailed(dependency) =>
+        
       case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) =>
+        
       case _: TransformationSuccess[_] =>
+        
       case _: TransformationFailure[_] =>
+        
       case Retry() =>
     }
   }
 
-  def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions
-    .foreach {
-      _ match {
-        case WriteTransformationTimestamp(view, transformationTimestamp) => metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
-        case WriteTransformationCheckum(view) => metadataLoggerActor ! SetViewVersion(view)
-        case TouchSuccessFlag(view) => transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
-        case Materialize(view, mode) => actorForView(view) ! MaterializeView(mode)
-        case Transform(view) => transformationManagerActor ! view
-        case ReportNoDataAvailable(view, listeners) => listeners.foreach { actorForParty(_) ! ViewHasNoData(view) }
-        case ReportFailed(view, listeners) => listeners.foreach { actorForParty(_) ! ViewFailed(view) }
-        case ReportInvalidated(view, listeners) => listeners.foreach { actorForParty(_) ! ViewStatusResponse("invalidated", view, self) }
-        case ReportNotInvalidated(view, listeners) =>
-        case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) => listeners.foreach { actorForParty(_) ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors) }
-      }
+  def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
+    _ match {
+
+      case WriteTransformationTimestamp(view, transformationTimestamp) =>
+        metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
+
+      case WriteTransformationCheckum(view) =>
+        metadataLoggerActor ! SetViewVersion(view)
+
+      case TouchSuccessFlag(view) =>
+        transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
+
+      case Materialize(view, mode) =>
+        actorForView(view) ! MaterializeView(mode)
+
+      case Transform(view) =>
+        transformationManagerActor ! view
+
+      case ReportNoDataAvailable(view, listeners) =>
+        listeners.foreach { actorForParty(_) ! ViewHasNoData(view) }
+
+      case ReportFailed(view, listeners) =>
+        listeners.foreach { actorForParty(_) ! ViewFailed(view) }
+
+      case ReportInvalidated(view, listeners) =>
+        listeners.foreach { actorForParty(_) ! ViewStatusResponse("invalidated", view, self) }
+
+      case ReportNotInvalidated(view, listeners) =>
+        log.warning("VIEWACTOR: Could not invalidate view ${view}")
+
+      case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
+        listeners.foreach {
+          actorForParty(_) ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
+        }
     }
+  }
 
   def stateMachine(view: View = currentState.view) = view.transformation() match {
     case NoOp() => new NoOpViewSchedulingStateMachineImpl(successFlagExists(view))
@@ -89,15 +118,13 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
     log.info(s"VIEWACTOR STATE CHANGE ===> ${stateHandle.toUpperCase()}: newState${newState} previousState=$previousState} ")
   }
 
-  
-  
   def actorForParty(party: PartyInterestedInViewSchedulingStateChange) = party match {
     case DependentView(view) => actorForView(view)
-    case AkkaActor(actor) => system.actorSelection(actor.path)
+    case AkkaActor(actor)    => system.actorSelection(actor.path)
   }
-  
+
   def actorForView(view: View) = ViewManagerActor.actorForView(view)
-  
+
   def folderEmpty(view: View) = settings
     .userGroupInformation.doAs(
       new PrivilegedAction[Array[FileStatus]]() {
