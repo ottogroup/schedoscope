@@ -43,7 +43,7 @@ case class TouchSuccessFlag(view: View) extends ViewSchedulingAction(view)
 /**
  * A view should materialize.
  */
-case class Materialize(view: View, requester: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode) extends ViewSchedulingAction(view)
+case class Materialize(view: View, materializationMode: MaterializeViewMode) extends ViewSchedulingAction(view)
 
 /**
  * A view should transform.

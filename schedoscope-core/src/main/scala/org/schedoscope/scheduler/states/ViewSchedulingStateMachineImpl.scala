@@ -74,7 +74,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
           incomplete = false,
           0l),
         view.dependencies.map {
-          Materialize(_, view, materializationMode)
+          Materialize(_, materializationMode)
         }.toSet)
   }
 

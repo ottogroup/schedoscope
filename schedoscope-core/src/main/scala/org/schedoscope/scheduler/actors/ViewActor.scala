@@ -25,9 +25,10 @@ import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
 import org.schedoscope.{ AskPattern, SchedoscopeSettings }
 import org.schedoscope.scheduler.states.{ ViewSchedulingState, ViewSchedulingAction }
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.NoOp
-import org.schedoscope.scheduler.states.{ NoOpViewSchedulingStateMachineImpl, ViewSchedulingStateMachineImpl, Materialize, ReportMaterialized, ReportNotInvalidated, ReportInvalidated, ReportFailed, ReportNoDataAvailable, Transform, TouchSuccessFlag, WriteTransformationCheckum, WriteTransformationTimestamp, CreatedByViewManager, ReadFromSchemaManager, Invalidated, NoData, Waiting, Transforming, Materialized, Retrying }
-import org.schedoscope.scheduler.messages.{ ViewStatusResponse, MaterializeView, ViewHasNoData, ViewFailed, ViewMaterialized, TransformationSuccess, TransformationFailure, Retry, InvalidateView }
+import org.schedoscope.dsl.transformations.{Touch, NoOp }
+import org.schedoscope.scheduler.states.{ DependentView, AkkaActor, PartyInterestedInViewSchedulingStateChange, NoOpViewSchedulingStateMachineImpl, ViewSchedulingStateMachineImpl, Materialize, ReportMaterialized, ReportNotInvalidated, ReportInvalidated, ReportFailed, ReportNoDataAvailable, Transform, TouchSuccessFlag, WriteTransformationCheckum, WriteTransformationTimestamp, CreatedByViewManager, ReadFromSchemaManager, Invalidated, NoData, Failed, Waiting, Transforming, Materialized, Retrying }
+import org.schedoscope.scheduler.messages.{ SetViewVersion, LogTransformationTimestamp, ViewStatusResponse, MaterializeView, ViewHasNoData, ViewFailed, ViewMaterialized, TransformationSuccess, TransformationFailure, Retry, InvalidateView }
+import org.schedoscope.scheduler.states.AkkaActor
 
 class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import AskPattern._
@@ -51,16 +52,16 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions
     .foreach {
       _ match {
-        case WriteTransformationTimestamp(view, transformationTimestamp) =>
-        case WriteTransformationCheckum(view) =>
-        case TouchSuccessFlag(view) =>
-        case Materialize(view, requester, mode) =>
-        case Transform(view) =>
-        case ReportNoDataAvailable(view, listeners) =>
-        case ReportFailed(view, listeners) =>
-        case ReportInvalidated(view, listeners) =>
+        case WriteTransformationTimestamp(view, transformationTimestamp) => metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
+        case WriteTransformationCheckum(view) => metadataLoggerActor ! SetViewVersion(view)
+        case TouchSuccessFlag(view) => transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
+        case Materialize(view, mode) => actorForView(view) ! MaterializeView(mode)
+        case Transform(view) => transformationManagerActor ! view
+        case ReportNoDataAvailable(view, listeners) => listeners.foreach { actorForParty(_) ! ViewHasNoData(view) }
+        case ReportFailed(view, listeners) => listeners.foreach { actorForParty(_) ! ViewFailed(view) }
+        case ReportInvalidated(view, listeners) => listeners.foreach { actorForParty(_) ! ViewStatusResponse("invalidated", view, self) }
         case ReportNotInvalidated(view, listeners) =>
-        case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
+        case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) => listeners.foreach { actorForParty(_) ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors) }
       }
     }
 
@@ -71,6 +72,32 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
 
   def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
 
+  def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
+    val stateHandle = newState match {
+      case _: CreatedByViewManager | _: ReadFromSchemaManager => "receive"
+      case _: Invalidated => "invalidated"
+      case _: NoData => "nodata"
+      case _: Waiting => "waiting"
+      case _: Transforming => "transforming"
+      case _: Materialized => "materialized"
+      case _: Failed => "failed"
+      case _: Retrying => "retrying"
+    }
+
+    viewManagerActor ! ViewStatusResponse(stateHandle, newState.view, self)
+
+    log.info(s"VIEWACTOR STATE CHANGE ===> ${stateHandle.toUpperCase()}: newState${newState} previousState=$previousState} ")
+  }
+
+  
+  
+  def actorForParty(party: PartyInterestedInViewSchedulingStateChange) = party match {
+    case DependentView(view) => actorForView(view)
+    case AkkaActor(actor) => system.actorSelection(actor.path)
+  }
+  
+  def actorForView(view: View) = ViewManagerActor.actorForView(view)
+  
   def folderEmpty(view: View) = settings
     .userGroupInformation.doAs(
       new PrivilegedAction[Array[FileStatus]]() {
@@ -91,27 +118,12 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
           hdfs.exists(new Path(view.fullPath + "/_SUCCESS"))
         }
       })
-
-  def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
-    val stateHandle = newState match {
-      case _: CreatedByViewManager | _: ReadFromSchemaManager => "receive"
-      case _: Invalidated => "invalidated"
-      case _: NoData => "nodata"
-      case _: Waiting => "waiting"
-      case _: Transforming => "transforming"
-      case _: Materialized => "materialized"
-      case _: org.schedoscope.scheduler.states.Failed => "failed"
-      case _: Retrying => "retrying"
-    }
-
-    viewManagerActor ! ViewStatusResponse(stateHandle, newState.view, self)
-
-    log.info(s"VIEWACTOR STATE CHANGE ===> ${stateHandle.toUpperCase()}: newState${newState} previousState=$previousState} ")
-  }
 }
 
 object ViewActor {
+
   def props(state: ViewSchedulingState, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef): Props = (Props(classOf[ViewActor], state, settings, hdfs, viewManagerActor, transformationManagerActor, metadataLoggerActor)).withDispatcher("akka.actor.views-dispatcher")
 
   def props(state: ViewSchedulingState, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef): Props = props(state, settings, defaultFileSystem(settings.hadoopConf), viewManagerActor, transformationManagerActor, metadataLoggerActor)
+
 }

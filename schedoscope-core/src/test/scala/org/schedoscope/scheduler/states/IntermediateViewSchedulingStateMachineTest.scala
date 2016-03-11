@@ -55,7 +55,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, DEFAULT))
+          s should contain(Materialize(d, DEFAULT))
         }
       case _ => fail()
     }
@@ -81,7 +81,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, RESET_TRANSFORMATION_CHECKSUMS))
+          s should contain(Materialize(d, RESET_TRANSFORMATION_CHECKSUMS))
         }
       case _ => fail()
     }
@@ -118,7 +118,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, DEFAULT))
+          s should contain(Materialize(d, DEFAULT))
         }
       case _ => fail()
     }
@@ -144,7 +144,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, RESET_TRANSFORMATION_CHECKSUMS))
+          s should contain(Materialize(d, RESET_TRANSFORMATION_CHECKSUMS))
         }
       case _ => fail()
     }
@@ -181,7 +181,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, DEFAULT))
+          s should contain(Materialize(d, DEFAULT))
         }
       case _ => fail()
     }
@@ -218,7 +218,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, DEFAULT))
+          s should contain(Materialize(d, DEFAULT))
         }
       case _ => fail()
     }
@@ -244,7 +244,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, RESET_TRANSFORMATION_CHECKSUMS))
+          s should contain(Materialize(d, RESET_TRANSFORMATION_CHECKSUMS))
         }
       case _ => fail()
     }
@@ -317,7 +317,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, DEFAULT))
+          s should contain(Materialize(d, DEFAULT))
         }
       case _ => fail()
     }
@@ -343,7 +343,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
-          s should contain(Materialize(d, viewUnderTest, RESET_TRANSFORMATION_CHECKSUMS))
+          s should contain(Materialize(d, RESET_TRANSFORMATION_CHECKSUMS))
         }
       case _ => fail()
     }
