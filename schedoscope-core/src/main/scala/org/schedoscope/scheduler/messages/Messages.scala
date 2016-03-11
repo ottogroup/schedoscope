@@ -28,7 +28,7 @@ sealed class Failure
 /**
  * View actor signals its materialization failure to a waiting view actor
  */
-case class Failed(view: View) extends Failure
+case class ViewFailed(view: View) extends Failure
 
 /**
  * Driver actor signaling a failure of a transfomation that requires a retry by the receiving view actor.
@@ -135,7 +135,7 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
 /**
  * Instructs a view actor to assume that its data needs to be recomputed.
  */
-case class Invalidate() extends CommandRequest
+case class InvalidateView() extends CommandRequest
 
 /**
  * Instructs a view-actor to retry a transformation after a failure
@@ -215,7 +215,7 @@ case class TransformationMetadata(metadata: Map[View, (String, Long)]) extends C
 /**
  * A view actor notifying a depending view that it has no data available
  */
-case class NoDataAvailable(view: View) extends CommandResponse
+case class ViewHasNoData(view: View) extends CommandResponse
 
 /**
  * A view actor notifying a depending view that it has materialized

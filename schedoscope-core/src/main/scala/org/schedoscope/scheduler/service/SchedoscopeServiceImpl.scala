@@ -181,7 +181,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
     val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map(v => v.actor)
-    submitCommandInternal(viewActors, Invalidate(), viewUrlPath, status, filter)
+    submitCommandInternal(viewActors, InvalidateView(), viewUrlPath, status, filter)
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
@@ -281,8 +281,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
             Await.result(f, 0 seconds) match {
               // FIXME: Here we have to map all possible return messages to status codes
               case ViewMaterialized(view, incomplete, changed, errors) => "materialized"
-              case NoDataAvailable(view) => "no-data"
-              case Failed(view) => "failed"
+              case ViewHasNoData(view) => "no-data"
+              case ViewFailed(view) => "failed"
               case ViewStatusResponse(status, view, actor) => status
               case _ => "other"
             }
