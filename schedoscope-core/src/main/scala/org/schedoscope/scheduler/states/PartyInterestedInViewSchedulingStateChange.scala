@@ -17,7 +17,6 @@ package org.schedoscope.scheduler.states
 
 import akka.actor.ActorRef
 import org.schedoscope.dsl.View
-
 import scala.language.implicitConversions
 
 /**
@@ -46,4 +45,5 @@ object PartyInterestedInViewSchedulingStateChange {
    * Implicit conversion of view to party type
    */
   implicit def toParty(actorRef: ActorRef): AkkaActor = AkkaActor(actorRef)
+
 }

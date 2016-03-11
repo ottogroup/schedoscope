@@ -38,22 +38,23 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
 
   def receive: Receive = LoggingReceive {
     {
-      
+
       case MaterializeView(mode) =>
-        
+
       case InvalidateView() =>
-        
+
       case ViewHasNoData(dependency) =>
-        
+
       case ViewFailed(dependency) =>
-        
+
       case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) =>
-        
+
       case _: TransformationSuccess[_] =>
-        
+
       case _: TransformationFailure[_] =>
-        
+
       case Retry() =>
+
     }
   }
 
@@ -95,27 +96,16 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   }
 
   def stateMachine(view: View = currentState.view) = view.transformation() match {
-    case NoOp() => new NoOpViewSchedulingStateMachineImpl(successFlagExists(view))
-    case _      => new ViewSchedulingStateMachineImpl
+    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(successFlagExists(view))
+    case _       => new ViewSchedulingStateMachineImpl
   }
 
   def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
 
   def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
-    val stateHandle = newState match {
-      case _: CreatedByViewManager | _: ReadFromSchemaManager => "receive"
-      case _: Invalidated => "invalidated"
-      case _: NoData => "nodata"
-      case _: Waiting => "waiting"
-      case _: Transforming => "transforming"
-      case _: Materialized => "materialized"
-      case _: Failed => "failed"
-      case _: Retrying => "retrying"
-    }
+    viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
 
-    viewManagerActor ! ViewStatusResponse(stateHandle, newState.view, self)
-
-    log.info(s"VIEWACTOR STATE CHANGE ===> ${stateHandle.toUpperCase()}: newState${newState} previousState=$previousState} ")
+    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState${newState} previousState=$previousState} ")
   }
 
   def actorForParty(party: PartyInterestedInViewSchedulingStateChange) = party match {
