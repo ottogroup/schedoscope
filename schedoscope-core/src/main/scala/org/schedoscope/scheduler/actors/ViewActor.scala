@@ -26,7 +26,7 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{NoOp, Touch}
 import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages.{InvalidateView, LogTransformationTimestamp, MaterializeView, Retry, SetViewVersion, TransformationFailure, TransformationSuccess, ViewFailed, ViewHasNoData, ViewMaterialized, ViewStatusResponse}
-import org.schedoscope.scheduler.states.{AkkaActor, DependentView, Materialize, NoOpViewSchedulingStateMachineImpl, PartyInterestedInViewSchedulingStateChange, ReportFailed, ReportInvalidated, ReportMaterialized, ReportNoDataAvailable, ReportNotInvalidated, TouchSuccessFlag, Transform, ViewSchedulingAction, ViewSchedulingState, ViewSchedulingStateMachineImpl, WriteTransformationCheckum, WriteTransformationTimestamp}
+import org.schedoscope.scheduler.states._
 
 class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
@@ -96,9 +96,9 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
       }
   }
 
-  def stateMachine = stateMachine(currentState.view)
+  def stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
 
-  def stateMachine(view: View) = view.transformation() match {
+  def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
     case _: NoOp => new NoOpViewSchedulingStateMachineImpl(successFlagExists(view))
     case _       => new ViewSchedulingStateMachineImpl
   }
