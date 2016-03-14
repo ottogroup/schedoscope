@@ -106,7 +106,7 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
       metadataLoggerActor ! SetViewVersion(view)
 
     case TouchSuccessFlag(view) =>
-      transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
+      touchSuccessFlag(view)
 
     case Materialize(view, mode) =>
       actorForView(view) ! MaterializeView(mode)
@@ -180,6 +180,18 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
           hdfs.exists(new Path(view.fullPath + "/_SUCCESS"))
         }
       })
+
+  def touchSuccessFlag(view: View) {
+    actorOf(Props(new Actor {
+      override def preStart() {
+        transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
+      }
+
+      def receive = {
+        case _ => context stop self
+      }
+    }))
+  }
 }
 
 object ViewActor {
