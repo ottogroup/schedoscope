@@ -39,6 +39,18 @@ This Map/Reduce job moves data into a relational database via a JDBC connection.
 
 #### Run the JDBC export
 
+The schedoscope-export project doesn't bundle any JDBC driver. It's necessary to add a JDBC driver to the classpath, the export job will copy into HDFS / distributed cache and add the driver to the classpath:
+
+<pre>
+export YARN_USER_CLASSPATH=/path/to/jdbc/jar/file/mysql-connector-java-5.1.38.jar
+</pre>
+
+After the classpath has been defined the JDBC export job can now be started:
+
+<pre>
+yarn jar target/schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.jdbc.JdbcExportJob -d crichter_app_eci_datahub -t webtrends_event_small   -s -p 'hive/_HOST@OTTOGROUP.COM' -m 'thrift://brentano.unbelievable-machine.net:9083'  -c 10 -j 'jdbc:mysql://alananderson/crichter' -k 1000  -u dev_crichter -w qweR1234
+</pre>
+
 ### Redis
 
 This Map/Reduce job moves data into Redis, it supports to modes:
@@ -57,7 +69,9 @@ This Map/Reduce job moves data into Redis, it supports to modes:
  * -h Redis host
  
  * -P Redis port
- 
+
+ * -K Redis key space (default is 0)
+
  * -d input database
  
  * -t input table
@@ -75,6 +89,8 @@ This Map/Reduce job moves data into Redis, it supports to modes:
  * -a replace data for given key, only useful for native export of map/list types
  
  * -l pipeline mode for redis client
+
+ * -f flush redis key space
 
 #### Run the Redis export
 
