@@ -212,7 +212,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       incomplete,
       retry) =>
       ResultingViewSchedulingState(
-        Transforming(
+        Retrying(
           view,
           lastTransformationChecksum,
           listenersWaitingForMaterialize + listener,
@@ -238,6 +238,26 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
           withErrors,
           incomplete,
           retry), Set())
+  }
+
+  def retry(currentState: Retrying) = currentState match {
+    case Retrying(
+      view,
+      lastTransformationChecksum,
+      listenersWaitingForMaterialize,
+      currentMaterializationMode,
+      withErrors,
+      incomplete,
+      retry) =>
+      ResultingViewSchedulingState(
+        Transforming(
+          view,
+          lastTransformationChecksum,
+          listenersWaitingForMaterialize,
+          currentMaterializationMode,
+          withErrors,
+          incomplete,
+          retry + 1), Set())
   }
 
   def invalidate(
@@ -317,7 +337,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
             dependenciesFreshness), Set())
   }
 
-  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, currentTime: Long = new Date().getTime) = currentState match {
+  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, withErrors: Boolean, incomplete: Boolean, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
       view,
       lastTransformationChecksum,
@@ -326,8 +346,8 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       listenersWaitingForMaterialize,
       materializationMode,
       oneDependencyReturnedData,
-      withErrors,
-      incomplete,
+      currentWithErrors,
+      currentIncomplete,
       dependenciesFreshness) =>
 
       val updatedWaitingState = Waiting(
@@ -338,8 +358,8 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
         listenersWaitingForMaterialize,
         materializationMode,
         oneDependencyReturnedData = true,
-        withErrors = incomplete,
-        incomplete = withErrors,
+        withErrors = withErrors || currentWithErrors,
+        incomplete = incomplete || currentIncomplete,
         Math.max(dependenciesFreshness, transformationTimestamp))
 
       if (dependenciesMaterializing == Set(reportingDependency))

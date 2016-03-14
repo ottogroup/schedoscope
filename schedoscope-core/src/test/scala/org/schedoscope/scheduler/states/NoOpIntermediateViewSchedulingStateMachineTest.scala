@@ -15,11 +15,11 @@
  */
 package org.schedoscope.scheduler.states
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
-import test.eci.datahub.{ProductBrandsNoOpMirror, ProductBrandsNoOpMirrorDependent}
+import test.eci.datahub.{ ProductBrandsNoOpMirror, ProductBrandsNoOpMirrorDependent }
 
 class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
@@ -1016,7 +1016,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       viewUnderTest.dependencies.toSet, Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
         Waiting(
           view,
@@ -1057,7 +1057,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
         NoData(view),
         s) =>
@@ -1074,7 +1074,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 10)
 
-    stateMachine.materialized(startState, firstDependency, 15, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -1095,7 +1095,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 10)
 
-    stateMachine.materialized(startState, firstDependency, 15, 30) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 30) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           ReportMaterialized(
@@ -1114,7 +1114,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 30)
 
-    stateMachine.materialized(startState, firstDependency, 15, 30) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 30) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           WriteTransformationTimestamp(viewUnderTest, 30))
@@ -1129,7 +1129,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       RESET_TRANSFORMATION_CHECKSUMS, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 30)
 
-    stateMachine.materialized(startState, firstDependency, 15, 30) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 30) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           WriteTransformationCheckum(viewUnderTest))
@@ -1144,7 +1144,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 10)
 
-    stateMachine.materialized(startState, firstDependency, 15, 30) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 30) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           ReportMaterialized(
@@ -1163,7 +1163,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 10)
 
-    stateMachine.materialized(startState, firstDependency, 15, 30) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 30) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           WriteTransformationTimestamp(viewUnderTest, 30))
@@ -1178,7 +1178,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 10)
 
-    stateMachine.materialized(startState, firstDependency, 15, 30) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 30) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           WriteTransformationCheckum(viewUnderTest))
@@ -1193,7 +1193,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = true, incomplete = true, 10)
 
-    stateMachine.materialized(startState, firstDependency, 15, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -1214,7 +1214,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = true, incomplete = true, 10)
 
-    stateMachine.materialized(startState, firstDependency, 15, 30) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 30) match {
       case ResultingViewSchedulingState(_, s) =>
         s should contain(
           ReportMaterialized(
@@ -1233,7 +1233,7 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
       viewUnderTest.dependencies.toSet, Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = true, incomplete = true, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
         Waiting(
           view,

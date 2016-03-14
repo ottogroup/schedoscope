@@ -15,11 +15,11 @@
  */
 package org.schedoscope.scheduler.states
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
-import test.eci.datahub.{ProductBrandMaterializeOnce, ProductBrandsNoOpMirror}
+import test.eci.datahub.{ ProductBrandMaterializeOnce, ProductBrandsNoOpMirror }
 
 class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
@@ -436,7 +436,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       viewUnderTest.dependencies.toSet, Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
         Waiting(
           view,
@@ -460,7 +460,31 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       viewUnderTest.dependencies.toSet, Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = true, incomplete = true, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
+      case ResultingViewSchedulingState(
+        Waiting(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          waitingForDependencies, dependViews,
+          DEFAULT,
+          true, true, true, 15
+          ), _) =>
+        waitingForDependencies shouldEqual Set(secondDependency)
+        dependViews shouldEqual Set(DependentView(dependentView))
+        view shouldBe viewUnderTest
+
+      case _ => fail()
+    }
+  }
+
+  it should "leave incomplete / error settings set them when reported" in new IntermediateView {
+    val startState = Waiting(
+      viewUnderTest, viewTransformationChecksum, 10,
+      viewUnderTest.dependencies.toSet, Set(dependentView),
+      DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
+
+    stateMachine.materialized(startState, firstDependency, 15, true, true, 20) match {
       case ResultingViewSchedulingState(
         Waiting(
           view,
@@ -501,7 +525,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 0)
 
-    stateMachine.materialized(startState, firstDependency, 15, 20) match {
+    stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
         Transforming(
           view,
@@ -628,7 +652,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(firstDependency), Set(dependentView),
       DEFAULT, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 5)
 
-    stateMachine.materialized(startState, firstDependency, 5, 20) match {
+    stateMachine.materialized(startState, firstDependency, 5, false, false, 20) match {
       case ResultingViewSchedulingState(
         Materialized(
           view,
@@ -655,7 +679,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       Set(firstDependency), Set(dependentView),
       RESET_TRANSFORMATION_CHECKSUMS, oneDependencyReturnedData = true, withErrors = false, incomplete = false, 5)
 
-    stateMachine.materialized(startState, firstDependency, 5, 20) match {
+    stateMachine.materialized(startState, firstDependency, 5, false, false, 20) match {
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) =>
         s should contain(WriteTransformationCheckum(viewUnderTest))
@@ -720,7 +744,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       case _ => fail()
     }
   }
-  
+
   it should "write a new transformation checksum if it changed and the folder is not empty" in new IntermediateView {
     val startState = Transforming(
       viewUnderTest, "outdated checksum",
@@ -830,40 +854,61 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
-  "An intermediate view in Retrying state" should "transition to Transforming upon materialize" in new IntermediateView {
+  "An intermediate view in Retrying state" should "stay in Retrying upon materialize" in new IntermediateView {
     val startState = Retrying(
       viewUnderTest, viewTransformationChecksum,
       Set(dependentView),
       DEFAULT, withErrors = false, incomplete = false, 2)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
+    stateMachine.materialize(startState, anotherDependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Transforming(
+        Retrying(
           view, `viewTransformationChecksum`,
           interestedParties,
           DEFAULT, false, false, 2),
         s) =>
         view shouldBe viewUnderTest
-        interestedParties shouldEqual Set(DependentView(dependentView))
+        interestedParties shouldEqual Set(DependentView(dependentView), DependentView(anotherDependentView))
         s shouldBe 'empty
 
       case _ => fail()
     }
   }
 
-  it should "transition to Transforming while preserving error and incompleteness information upon materialize" in new IntermediateView {
+  it should "add listeners while preserving error and incompleteness information upon materialize" in new IntermediateView {
     val startState = Retrying(
       viewUnderTest, viewTransformationChecksum,
       Set(dependentView),
       DEFAULT, withErrors = true, incomplete = true, 2)
 
-    stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
+    stateMachine.materialize(startState, anotherDependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Retrying(
+          view, `viewTransformationChecksum`,
+          interestedParties,
+          DEFAULT, true, true, 2),
+        s) =>
+        view shouldBe viewUnderTest
+        interestedParties shouldEqual Set(DependentView(dependentView), DependentView(anotherDependentView))
+        s shouldBe 'empty
+
+      case _ => fail()
+    }
+  }
+
+  it should "transition to Transforming while preserving error and incompleteness information and incrementing retry number upon retry" in new IntermediateView {
+    val startState = Retrying(
+      viewUnderTest, viewTransformationChecksum,
+      Set(dependentView),
+      DEFAULT, withErrors = true, incomplete = true, 2)
+
+    stateMachine.retry(startState) match {
       case ResultingViewSchedulingState(
         Transforming(
           view,
           `viewTransformationChecksum`,
           interestedParties,
-          DEFAULT, true, true, 2),
+          DEFAULT, true, true, 3),
         s) =>
         view shouldBe viewUnderTest
         interestedParties shouldEqual Set(DependentView(dependentView))

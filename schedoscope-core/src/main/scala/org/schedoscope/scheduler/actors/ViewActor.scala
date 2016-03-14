@@ -16,17 +16,18 @@
 package org.schedoscope.scheduler.actors
 
 import java.security.PrivilegedAction
-
+import java.lang.Math.pow
 import akka.actor.ActorSelection.toScala
-import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
-import akka.event.{Logging, LoggingReceive}
-import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
+import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
+import akka.event.{ Logging, LoggingReceive }
+import org.apache.hadoop.fs.{ FileStatus, FileSystem, Path, PathFilter }
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{NoOp, Touch}
+import org.schedoscope.dsl.transformations.{ NoOp, Touch }
 import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
-import org.schedoscope.scheduler.messages.{InvalidateView, LogTransformationTimestamp, MaterializeView, Retry, SetViewVersion, TransformationFailure, TransformationSuccess, ViewFailed, ViewHasNoData, ViewMaterialized, ViewStatusResponse}
+import org.schedoscope.scheduler.messages.{ InvalidateView, LogTransformationTimestamp, MaterializeView, Retry, SetViewVersion, TransformationFailure, TransformationSuccess, ViewFailed, ViewHasNoData, ViewMaterialized, ViewStatusResponse }
 import org.schedoscope.scheduler.states._
+import scala.concurrent.duration.Duration
 
 class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
   import context._
@@ -36,22 +37,63 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   def receive: Receive = LoggingReceive {
     {
 
-      case MaterializeView(mode) => 
+      case MaterializeView(mode) => stateTransition {
+        stateMachine.materialize(currentState, sender, mode)
+      }
 
-      case InvalidateView() =>
+      case InvalidateView() => stateTransition {
+        stateMachine.invalidate(currentState, sender)
+      }
 
-      case ViewHasNoData(dependency) =>
+      case ViewHasNoData(dependency) => stateTransition {
+        stateMachine.noDataAvailable(currentState.asInstanceOf[Waiting], dependency)
+      }
 
-      case ViewFailed(dependency) =>
+      case ViewFailed(dependency) => stateTransition {
+        stateMachine.failed(currentState.asInstanceOf[Waiting], dependency)
+      }
 
-      case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) =>
+      case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) => stateTransition {
+        stateMachine.materialized(currentState.asInstanceOf[Waiting], dependency, transformationTimestamp, withErrors, incomplete)
+      }
 
-      case _: TransformationSuccess[_] =>
+      case _: TransformationSuccess[_] => stateTransition {
+        stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], folderEmpty(currentState.view))
+      }
 
-      case _: TransformationFailure[_] =>
+      case _: TransformationFailure[_] => stateTransition {
+        val s = currentState.asInstanceOf[Transforming]
+        val result = stateMachine.transformationFailed(s)
+        val retry = s.retry
 
-      case Retry() =>
+        result.currentState match {
+          case r: Retrying =>
+            system
+              .scheduler
+              .scheduleOnce(Duration.create(pow(2, retry).toLong, "seconds")) {
+                self ! Retry()
+              }
 
+            result
+
+          case _ => result
+        }
+      }
+
+      case Retry() => stateTransition {
+        stateMachine.retry(currentState.asInstanceOf[Retrying])
+      }
+    }
+  }
+
+  def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
+    case ResultingViewSchedulingState(updatedState, actions) => {
+      if (stateChange(currentState, updatedState))
+        logStateChange(updatedState, currentState)
+
+      performSchedulingActions(actions)
+
+      currentState = updatedState
     }
   }
 
@@ -108,7 +150,7 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
     viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
 
-    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState$newState previousState=$previousState} ")
+    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
   }
 
   def actorForParty(party: PartyInterestedInViewSchedulingStateChange) = party match {

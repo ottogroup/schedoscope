@@ -50,6 +50,11 @@ trait ViewSchedulingStateMachine {
   def invalidate(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange): ResultingViewSchedulingState
 
   /**
+   * Restart a retrying view's materialization
+   */
+  def retry(currentState: Retrying): ResultingViewSchedulingState
+
+  /**
    * Apply a NoData report of a dependency to the current scheduling state of a waiting view.
    *
    */
@@ -65,10 +70,10 @@ trait ViewSchedulingStateMachine {
    * Apply a Materialized report of a dependency to the current scheduling state of a waiting view.
    *
    */
-  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, withErrors: Boolean, incomplete: Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 
   /**
-   * Transition a view in Transforming state given a successful transformation. 
+   * Transition a view in Transforming state given a successful transformation.
    */
   def transformationSucceeded(currentState: Transforming, folderEmpty: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 
