@@ -224,12 +224,13 @@ public class JdbcExportJob extends Configured implements Tool {
 
         FileSystem fs = FileSystem.get(job.getConfiguration());
         String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
+        Path hdfsDir = new Path(tmpDir + "/" + new Path(jarFile).getName());
 
         if (jarFile != null && jarSelf != null && tmpDir != null && !jarFile.equals(jarSelf)) {
             LOG.info("copy " + LOCAL_PATH_PREFIX + jarFile + " to " + tmpDir);
-            fs.copyFromLocalFile(false, true, new Path(LOCAL_PATH_PREFIX + jarFile), new Path(tmpDir + "/" + jarFile));
+            fs.copyFromLocalFile(false, true, new Path(LOCAL_PATH_PREFIX + jarFile), hdfsDir);
             LOG.info("add " + tmpDir + "/" + jarFile + " to distributed cache");
-            job.addArchiveToClassPath(new Path(tmpDir + "/" + jarFile));
+            job.addArchiveToClassPath(hdfsDir);
         }
 
         return job;
