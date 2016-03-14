@@ -3,6 +3,7 @@
     <Match>
         <Class name="~.*\.*Test" />
     </Match>
+    <!-- database identifiers like table name can not be used in prepared statements. -->
     <Match>
        <Class name="org.schedoscope.export.utils.JdbcQueryUtils"/>
        <Bug code="SQL" />
