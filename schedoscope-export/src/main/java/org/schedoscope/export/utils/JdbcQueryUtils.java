@@ -20,6 +20,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -203,13 +204,7 @@ public class JdbcQueryUtils {
         } catch (SQLException se) {
             LOG.error("error executing statement:" + se.getMessage());
         } finally {
-            try {
-                if (statement != null) {
-                    statement.close();
-                }
-            } catch (SQLException se2) {
-                LOG.error("error closing statement: " + se2.getMessage());
-            }
+            DbUtils.closeQuietly(statement);
         }
     }
 }

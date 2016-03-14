@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -120,12 +121,8 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
                 }
                 throw new IOException(e.getMessage());
             } finally {
-                try {
-                    statement.close();
-                    connection.close();
-                } catch (SQLException ex) {
-                    throw new IOException(ex.getMessage());
-                }
+                DbUtils.closeQuietly(statement);
+                DbUtils.closeQuietly(connection);
             }
         }
 
@@ -154,9 +151,12 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
 
         String tmpOutputTable = TMPDB + outputSchema.getTable() + "_" + context.getTaskAttemptID().getTaskID().getId();
         String createTableQuery = outputSchema.getCreateTableQuery();
+
         createTableQuery = createTableQuery.replace(outputSchema.getTable(), tmpOutputTable);
+
         int commitSize = outputSchema.getCommitSize();
         String[] fieldNames = outputSchema.getColumnNames();
+
         try {
             Connection connection = outputSchema.getConnection();
 
@@ -164,10 +164,10 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
             JdbcQueryUtils.createTable(createTableQuery, connection);
 
             PreparedStatement statement = null;
-
             statement = connection.prepareStatement(JdbcQueryUtils.createInsertQuery(tmpOutputTable, fieldNames));
 
             return new JdbcRecordWriter(connection, statement, commitSize);
+
         } catch (Exception ex) {
             throw new IOException(ex.getMessage());
         }
@@ -216,13 +216,17 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
         String inputFilter = outputSchema.getFilter();
         int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
 
+        Connection connection = null;
+
         try {
-            Connection connection = outputSchema.getConnection();
+            connection = outputSchema.getConnection();
+
             if (inputFilter != null) {
                 JdbcQueryUtils.deleteExisitingRows(outputTable, inputFilter, connection);
             } else {
                 JdbcQueryUtils.dropTable(outputTable, connection);
             }
+
             JdbcQueryUtils.createTable(createTableStatement, connection);
             JdbcQueryUtils.mergeOutput(outputTable, TMPDB, outputNumberOfPartitions, connection);
             JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable, outputNumberOfPartitions, connection);
@@ -230,15 +234,7 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
         } catch (Exception ex) {
             throw new IOException(ex.getMessage());
         } finally {
-            try {
-                // outputSchema.getConnection().commit();
-                outputSchema.getConnection().close();
-            } catch (ClassNotFoundException e) {
-                LOG.error("class could not be found: " + e.getMessage());
-            } catch (SQLException e) {
-                LOG.error("an database error occured: " + e.getMessage());
-            }
-
+            DbUtils.closeQuietly(connection);
         }
     }
 
@@ -255,21 +251,16 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
         String tmpOutputTable = TMPDB + outputSchema.getTable();
         int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
 
+        Connection connection = null;
+
         try {
-            Connection connection = outputSchema.getConnection();
+            connection = outputSchema.getConnection();
             JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable, outputNumberOfPartitions, connection);
 
         } catch (Exception ex) {
             throw new IOException(ex.getMessage());
         } finally {
-            try {
-                // outputSchema.getConnection().commit();
-                outputSchema.getConnection().close();
-            } catch (ClassNotFoundException e) {
-                LOG.error("class could not be found: " + e.getMessage());
-            } catch (SQLException e) {
-                LOG.error("an database error occured: " + e.getMessage());
-            }
+            DbUtils.closeQuietly(connection);
         }
     }
 }

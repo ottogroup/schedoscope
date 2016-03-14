@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
-<Match>
-    <Class name="~.*\.*Test" />
-    
-</Match>
+    <Match>
+        <Class name="~.*\.*Test" />
+    </Match>
+    <Match>
+       <Class name="org.schedoscope.export.utils.JdbcQueryUtils"/>
+       <Bug code="SQL" />
+     </Match>
+     <Match>
+       <Class name="org.schedoscope.export.jdbc.outputformat.JdbcOutputFormat"/>
+       <Bug code="SQL" />
+     </Match>
 </FindBugsFilter>
