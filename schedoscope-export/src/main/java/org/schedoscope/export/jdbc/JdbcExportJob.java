@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.io.LongWritable;
@@ -221,8 +222,14 @@ public class JdbcExportJob extends Configured implements Tool {
         String jarFile = ClassUtil.findContainingJar(clazz);
         String jarSelf = ClassUtil.findContainingJar(JdbcExportJob.class);
 
-        if (jarFile != null && jarSelf != null && !jarFile.equals(jarSelf)) {
-            job.addArchiveToClassPath(new Path(LOCAL_PATH_PREFIX + jarFile));
+        FileSystem fs = FileSystem.get(job.getConfiguration());
+        String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
+
+        if (jarFile != null && jarSelf != null && tmpDir != null && !jarFile.equals(jarSelf)) {
+            LOG.info("copy " + LOCAL_PATH_PREFIX + jarFile + " to " + tmpDir);
+            fs.copyFromLocalFile(false, true, new Path(LOCAL_PATH_PREFIX + jarFile), new Path(tmpDir + "/" + jarFile));
+            LOG.info("add " + tmpDir + "/" + jarFile + " to distributed cache");
+            job.addArchiveToClassPath(new Path(tmpDir + "/" + jarFile));
         }
 
         return job;
