@@ -25,28 +25,7 @@ import org.schedoscope.scheduler.messages.MaterializeViewMode._
 class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def toWaitingTransformingOrMaterialize(view: View, lastTransformationChecksum: String, lastTransformationTimestamp: Long, listener: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode, currentTime: Long) = {
-    if (view.isMaterializeOnce && lastTransformationTimestamp > 0)
-      ResultingViewSchedulingState(
-        Materialized(
-          view,
-          lastTransformationChecksum,
-          lastTransformationTimestamp,
-          withErrors = false,
-          incomplete = false),
-        Set(
-          ReportMaterialized(
-            view,
-            Set(listener),
-            lastTransformationTimestamp,
-            withErrors = false,
-            incomplete = false))
-          ++ {
-            if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
-              Set(WriteTransformationCheckum(view))
-            else
-              Set()
-          })
-    else if (view.dependencies.isEmpty)
+    if (view.dependencies.isEmpty)
       leaveWaitingState(
         Waiting(view,
           lastTransformationChecksum,
@@ -91,7 +70,28 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       incomplete,
       dependenciesFreshness) =>
 
-      if (oneDependencyReturnedData) {
+      if (view.isMaterializeOnce && lastTransformationTimestamp > 0)
+        ResultingViewSchedulingState(
+          Materialized(
+            view,
+            lastTransformationChecksum,
+            lastTransformationTimestamp,
+            withErrors,
+            incomplete),
+          Set(
+            ReportMaterialized(
+              view,
+              listenersWaitingForMaterialize,
+              lastTransformationTimestamp,
+              withErrors,
+              incomplete))
+            ++ {
+              if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
+                Set(WriteTransformationCheckum(view))
+              else
+                Set()
+            })
+      else if (oneDependencyReturnedData)
         if (lastTransformationTimestamp <= dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
           if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
             ResultingViewSchedulingState(
@@ -146,7 +146,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
                 else
                   Set()
               })
-      } else
+      else
         ResultingViewSchedulingState(
           NoData(view),
           Set(

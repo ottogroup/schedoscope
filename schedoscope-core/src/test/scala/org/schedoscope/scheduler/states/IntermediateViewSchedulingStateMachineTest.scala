@@ -260,42 +260,6 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
-  it should "become Materialized upon materialize if materialize once is set" in new IntermediateView {
-    val startState = ReadFromSchemaManager(materializeOnceView, viewTransformationChecksum, 10)
-
-    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
-      case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          10,
-          false,
-          false), s) =>
-        view shouldBe materializeOnceView
-        s shouldEqual Set(
-          ReportMaterialized(
-            materializeOnceView,
-            Set(dependentView),
-            10,
-            withErrors = false,
-            incomplete = false))
-
-      case _ => fail()
-    }
-  }
-
-  it should "become Materialized upon materialize if materialize once is set and write transformation checksum if RESET_TRANSFORMATION_CHECKSUMS is set" in new IntermediateView {
-    val startState = ReadFromSchemaManager(materializeOnceView, viewTransformationChecksum, 10)
-
-    stateMachine.materialize(startState, dependentView, RESET_TRANSFORMATION_CHECKSUMS, currentTime = 20) match {
-      case ResultingViewSchedulingState(
-        Materialized(_, _, _, _, _), s) =>
-        s should contain(WriteTransformationCheckum(materializeOnceView))
-
-      case _ => fail()
-    }
-  }
-
   "An intermediate view in Materialized state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
@@ -356,42 +320,6 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       case ResultingViewSchedulingState(Invalidated(view), s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportInvalidated(view, Set(dependentView)))
-    }
-  }
-
-  it should "stay Materialized upon materialize if materialize once is set" in new IntermediateView {
-    val startState = Materialized(materializeOnceView, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
-
-    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
-      case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          10,
-          false,
-          false), s) =>
-        view shouldBe materializeOnceView
-        s shouldEqual Set(
-          ReportMaterialized(
-            materializeOnceView,
-            Set(dependentView),
-            10,
-            withErrors = false,
-            incomplete = false))
-
-      case _ => fail()
-    }
-  }
-
-  it should "become Materialized upon materialize if materialize once is set and write transformation checksum if RESET_TRANSFORMATION_CHECKSUMS is set" in new IntermediateView {
-    val startState = Materialized(materializeOnceView, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
-
-    stateMachine.materialize(startState, dependentView, RESET_TRANSFORMATION_CHECKSUMS, currentTime = 20) match {
-      case ResultingViewSchedulingState(
-        Materialized(_, _, _, _, _), s) =>
-        s should contain(WriteTransformationCheckum(materializeOnceView))
-
-      case _ => fail()
     }
   }
 
@@ -683,6 +611,54 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       case ResultingViewSchedulingState(
         Materialized(_, _, _, _, _), s) =>
         s should contain(WriteTransformationCheckum(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
+  it should "become Materialized without transformation after all dependencies materialized if materialize once is set" in new IntermediateView {
+    val startState = Waiting(
+      materializeOnceView, viewTransformationChecksum, 10,
+      Set(firstDependency), Set(dependentView),
+      DEFAULT, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 5)
+
+    stateMachine.materialized(startState, firstDependency, 15, false, false, currentTime = 20) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          false,
+          false), s) =>
+        view shouldBe materializeOnceView
+        s shouldEqual Set(
+          ReportMaterialized(
+            materializeOnceView,
+            Set(dependentView),
+            10,
+            withErrors = false,
+            incomplete = false))
+
+      case _ => fail()
+    }
+  }
+
+  it should "become Materialized without transformation after all dependencies materialized if materialize once is set and write transformation checksum if RESET_TRANSFORMATION_CHECKSUMS is set" in new IntermediateView {
+    val startState = Waiting(
+      materializeOnceView, viewTransformationChecksum, 10,
+      Set(firstDependency), Set(dependentView),
+      RESET_TRANSFORMATION_CHECKSUMS, oneDependencyReturnedData = false, withErrors = false, incomplete = false, 5)
+
+    stateMachine.materialized(startState, firstDependency, 15, false, false, currentTime = 20) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          false,
+          false), s) =>
+        view shouldBe materializeOnceView
+        s should contain(WriteTransformationCheckum(materializeOnceView))
 
       case _ => fail()
     }

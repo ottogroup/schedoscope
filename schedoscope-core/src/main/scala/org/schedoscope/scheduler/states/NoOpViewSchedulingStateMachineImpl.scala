@@ -52,8 +52,29 @@ class NoOpViewSchedulingStateMachineImpl(successFlagExists: => Boolean) extends 
       withErrors,
       incomplete,
       dependenciesFreshness) =>
-
-      if (oneDependencyReturnedData)
+        
+      if (view.isMaterializeOnce && lastTransformationTimestamp > 0)
+        ResultingViewSchedulingState(
+          Materialized(
+            view,
+            lastTransformationChecksum,
+            lastTransformationTimestamp,
+            withErrors,
+            incomplete),
+          Set(
+            ReportMaterialized(
+              view,
+              listenersWaitingForMaterialize,
+              lastTransformationTimestamp,
+              withErrors,
+              incomplete))
+            ++ {
+              if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
+                Set(WriteTransformationCheckum(view))
+              else
+                Set()
+            })
+      else if (oneDependencyReturnedData)
         if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum)
           if (successFlagExists)
             ResultingViewSchedulingState(
