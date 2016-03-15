@@ -872,7 +872,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
-  it should "transition to Transforming while preserving error and incompleteness information and incrementing retry number upon retry" in new IntermediateView {
+  it should "transition to Transforming and trigger transformation while preserving error and incompleteness information and incrementing retry number upon retry" in new IntermediateView {
     val startState = Retrying(
       viewUnderTest, viewTransformationChecksum,
       Set(dependentView),
@@ -888,7 +888,7 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
         s) =>
         view shouldBe viewUnderTest
         interestedParties shouldEqual Set(DependentView(dependentView))
-        s shouldBe 'empty
+        s shouldBe Set(Transform(viewUnderTest))
 
       case _ => fail()
     }

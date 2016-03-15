@@ -257,7 +257,8 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
           currentMaterializationMode,
           withErrors,
           incomplete,
-          retry + 1), Set())
+          retry + 1), 
+          Set(Transform(view)))
   }
 
   def invalidate(
