@@ -123,7 +123,9 @@ object MaterializeViewMode extends Enumeration {
 
   val DEFAULT, // no special mode
   RESET_TRANSFORMATION_CHECKSUMS, // do not consider version checksum changes when making transformation decisions
-  RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS // perform a transformation dry run, only update checksums and timestamps
+  RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS, // perform a transformation dry run, only update checksums and timestamps
+  TRANSFORM_ONLY, // directly transform a view without materializing its dependencies
+  SET_ONLY // set the view to materialized with materializing its dependencies and without 
   = Value
 }
 

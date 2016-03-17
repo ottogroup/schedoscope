@@ -46,62 +46,71 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   val runningCommands = collection.mutable.HashMap[String, SchedoscopeCommand]()
   val doneCommands = collection.mutable.HashMap[String, SchedoscopeCommandStatus]()
 
-  private def viewsFromUrl(viewUrlPath: String) = {
+  private def viewsFromUrl(viewUrlPath: String) =
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
-  }
 
   private def getViews(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
     val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
+
     queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.viewManagerResponseTimeout).viewStatusList
   }
 
   private def commandId(command: Any, args: Seq[Option[String]], start: Option[LocalDateTime] = None) = {
     val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
+
     val c = command match {
       case s: String => s
       case c: Any    => Named.camelToLowerUnderscore(c.getClass.getSimpleName)
     }
+
     val a = if (args.size == 0) "_" else args.filter(_.isDefined).map(_.getOrElse("_")).mkString(":")
-    if (start.isDefined) {
-      val s = format.print(start.get)
-      s"${c}::${a}::${s}"
-    } else {
+
+    if (start.isDefined)
+      s"${c}::${a}::${format.print(start.get)}"
+    else
       s"${c}::${a}"
-    }
+
   }
 
   private def submitCommandInternal(actors: List[ActorRef], command: Any, args: Option[String]*) = {
     val currentCommandId = runningCommandId(command.toString, args: _*)
-    if (currentCommandId.isDefined) {
+
+    if (currentCommandId.isDefined)
       commandStatus(currentCommandId.get)
-    } else {
+    else {
       val jobFutures = actors.map { actor => Patterns.ask(actor, command, Timeout(settings.completitionTimeout)) }
       val start = new LocalDateTime()
       val id = commandId(command, args, Some(start))
+
       runningCommands.put(id, SchedoscopeCommand(id, formatDate(start), jobFutures))
+
       SchedoscopeCommandStatus(id, formatDate(start), None, Map("submitted" -> jobFutures.size))
     }
   }
 
   private def finalizeInternal(commandId: String, start: String, status: Map[String, Int]) = {
     runningCommands.remove(commandId)
+
     val scs = SchedoscopeCommandStatus(commandId, start, Some(formatDate(new LocalDateTime())), status)
+
     doneCommands.put(commandId, scs)
+
     scs
   }
 
   private def runningCommandId(command: String, args: Option[String]*): Option[String] = {
     val cidPrefix = commandId(command, args)
+
     runningCommands.keys
       .foreach(k =>
         if (k.startsWith(cidPrefix))
           return Some(k))
+
     None
   }
 
-  private def formatDate(d: LocalDateTime): String = {
+  private def formatDate(d: LocalDateTime): String =
     if (d != null) DateTimeFormat.shortDateTime().print(d) else ""
-  }
 
   private def parseActionStatus(a: TransformationStatusResponse[_]): TransformationStatus = {
     val actor = getOrElse(a.actor.path.toStringWithoutAddress, "unknown")
@@ -112,12 +121,15 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
+
         case s: DriverRunSucceeded[_] => {
           comment = getOrElse(s.comment, "no-comment"); status = "succeeded"
         }
+
         case f: DriverRunFailed[_] => {
           comment = getOrElse(f.reason, "no-reason"); status = "failed"
         }
+
         case o: DriverRunOngoing[_] => {
           drh = o.runHandle
         }
@@ -129,48 +141,83 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       val view = drh.transformation.asInstanceOf[Transformation].getView()
       val started = drh.started
       val runStatus = RunStatus(getOrElse(desc, "no-desc"), getOrElse(view, "no-view"), getOrElse(formatDate(started), ""), comment, None)
+
       TransformationStatus(actor, typ, status, Some(runStatus), None)
-    } else {
+    } else
       TransformationStatus(actor, typ, status, None, None)
-    }
+
   }
 
   private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = {
     q.map(o =>
       if (o.isInstanceOf[Transformation]) {
         val trans = o.asInstanceOf[Transformation]
+
         RunStatus(trans.description, trans.getView(), "", "", None)
-      } else {
-        RunStatus(o.toString, "", "", "", None)
-      })
+      } else
+        RunStatus(o.toString, "", "", "", None))
   }
 
-  private def getOrElse[T](o: T, d: T) = {
-    if (o != null) o else d;
-  }
+  private def getOrElse[T](o: T, d: T) = if (o != null) o else d
 
   private def viewTransformationStatus(transformation: Transformation): ViewTransformationStatus = {
     transformation match {
-      case t: HiveTransformation => ViewTransformationStatus(t.name, Some(Map("sql" -> t.sql)))
-      case t: MapreduceTransformation => ViewTransformationStatus(t.name,
-        Some(Map("input" -> t.job.getConfiguration().get(FileInputFormat.INPUT_DIR),
+
+      case t: HiveTransformation => ViewTransformationStatus(
+        t.name,
+        Some(Map("sql" -> t.sql)))
+
+      case t: MapreduceTransformation => ViewTransformationStatus(
+        t.name,
+        Some(Map(
+          "input" -> t.job.getConfiguration().get(FileInputFormat.INPUT_DIR),
           "output" -> t.job.getConfiguration().get(FileOutputFormat.OUTDIR))))
-      case t: PigTransformation   => ViewTransformationStatus(t.name, Some(Map("latin" -> t.latin)))
-      case t: OozieTransformation => ViewTransformationStatus(t.name, Some(Map("bundle" -> t.bundle, "workflow" -> t.workflow)))
-      case t: ShellTransformation => ViewTransformationStatus(t.name, Some(Map("shell" -> t.shell, "script" -> t.script,
-        "scriptFile" -> t.scriptFile)))
-      case t: CopyFrom => ViewTransformationStatus("filesystem -> CopyFromTransformation", Some(Map("from" -> t.fromPattern,
-        "destinationView" -> t.toView.urlPath, "recursive" -> t.recursive.toString())))
-      case t: Copy => ViewTransformationStatus("filesystem -> CopyTransformation", Some(Map("from" -> t.fromPattern,
-        "destinationPath" -> t.toPath)))
-      case t: Move => ViewTransformationStatus("filesystem -> MoveTransformation", Some(Map("from" -> t.fromPattern,
-        "destinationPath" -> t.toPath)))
-      case t: StoreFrom => ViewTransformationStatus("filesystem -> StoreFromTransformation", Some(Map("destinationView" -> t.toView.urlPath)))
-      case t            => ViewTransformationStatus(t.name, None)
+
+      case t: PigTransformation => ViewTransformationStatus(
+        t.name,
+        Some(Map("latin" -> t.latin)))
+
+      case t: OozieTransformation => ViewTransformationStatus(
+        t.name,
+        Some(Map(
+          "bundle" -> t.bundle,
+          "workflow" -> t.workflow)))
+
+      case t: ShellTransformation => ViewTransformationStatus(
+        t.name,
+        Some(Map(
+          "shell" -> t.shell, "script" -> t.script,
+          "scriptFile" -> t.scriptFile)))
+
+      case t: CopyFrom => ViewTransformationStatus(
+        "filesystem -> CopyFromTransformation",
+        Some(Map(
+          "from" -> t.fromPattern,
+          "destinationView" -> t.toView.urlPath, "recursive" -> t.recursive.toString())))
+
+      case t: Copy => ViewTransformationStatus(
+        "filesystem -> CopyTransformation",
+        Some(Map(
+          "from" -> t.fromPattern,
+          "destinationPath" -> t.toPath)))
+
+      case t: Move => ViewTransformationStatus(
+        "filesystem -> MoveTransformation",
+        Some(Map(
+          "from" -> t.fromPattern,
+          "destinationPath" -> t.toPath)))
+
+      case t: StoreFrom => ViewTransformationStatus(
+        "filesystem -> StoreFromTransformation",
+        Some(Map("destinationView" -> t.toView.urlPath)))
+
+      case t => ViewTransformationStatus(t.name, None)
     }
   }
+
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
+
     submitCommandInternal(viewActors, MaterializeView(
       try {
         MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
@@ -181,11 +228,13 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
     val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map(v => v.actor)
+
     submitCommandInternal(viewActors, InvalidateView(), viewUrlPath, status, filter)
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
     val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
+
     submitCommandInternal(viewActors, "newdata", viewUrlPath, status, filter)
   }
 
@@ -244,6 +293,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       viewStatusListWithoutViewDetails
 
     val statusOverview = viewStatusListWithoutViewDetails.groupBy(_.status).mapValues(_.size)
+
     ViewStatusList(statusOverview, if (overview.getOrElse(false)) List() else viewStatusList)
   }
 
@@ -256,32 +306,37 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     val overview = actions
       .groupBy(_.status)
       .map(el => (el._1, el._2.size))
+
     TransformationStatusList(overview, actions)
   }
 
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
     val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.statusListAggregationTimeout)
+
     val queues = result.transformationQueues
       .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
       .map { case (t, queue) => (t, parseQueueElements(queue)) }
       .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
+
     val overview = queues
       .map(el => (el._1, el._2.size))
+
     QueueStatusList(overview, queues)
   }
 
   def commandStatus(commandId: String) = {
     val cmd = runningCommands.get(commandId)
-    if (!cmd.isDefined) {
+
+    if (!cmd.isDefined)
       SchedoscopeCommandStatus(commandId, "", None, Map("non-existent" -> 1))
-    } else {
+    else {
       val statusCounts = cmd.get.parts
         .map(f => {
           if (f.isCompleted)
             Await.result(f, 0 seconds) match {
               // FIXME: Here we have to map all possible return messages to status codes
               case ViewMaterialized(view, incomplete, changed, errors) => "materialized"
-              case ViewHasNoData(view) => "no-data"
+              case ViewHasNoData(view) => "nodata"
               case ViewFailed(view) => "failed"
               case ViewStatusResponse(status, view, actor) => status
               case _ => "other"
@@ -292,18 +347,17 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         .groupBy(_.toString)
         .mapValues(_.size)
 
-      if (statusCounts.get("running").getOrElse(0) == 0) {
+      if (statusCounts.get("running").getOrElse(0) == 0)
         finalizeInternal(commandId, cmd.get.start, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
-      } else {
+      else
         SchedoscopeCommandStatus(commandId, cmd.get.start, None, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
-      }
+
     }
   }
 
   def commands(status: Option[String], filter: Option[String]) = {
-    val running = runningCommands.keys.map(id => {
-      commandStatus(id)
-    }).toList
+    val running = runningCommands.keys.map { commandStatus(_) }.toList
+
     (running ++ doneCommands.values)
       .groupBy(_.id)
       .map(p => p._2.head)

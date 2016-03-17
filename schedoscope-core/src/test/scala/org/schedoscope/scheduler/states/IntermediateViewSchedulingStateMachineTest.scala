@@ -19,6 +19,7 @@ import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
+import org.schedoscope.dsl.transformations.Checksum.defaultDigest
 import test.eci.datahub.{ ProductBrandMaterializeOnce, ProductBrandsNoOpMirror }
 
 class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
@@ -97,6 +98,28 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
+  it should "directly enter transforming if materialization mode is TRANSFORM_ONLY" in new IntermediateView {
+    val startState = CreatedByViewManager(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = TRANSFORM_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Transforming(
+          view,
+          `defaultDigest`,
+          interestedParties,
+          TRANSFORM_ONLY,
+          false,
+          false,
+          0
+          ),
+        s) =>
+        interestedParties shouldEqual Set(DependentView(dependentView))
+        view shouldBe viewUnderTest
+        s shouldEqual Set(Transform(viewUnderTest))
+      case _ => fail()
+    }
+  }
+
   "An intermediate view in Invalidated state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = Invalidated(viewUnderTest)
 
@@ -160,6 +183,28 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
+  it should "directly enter transforming if materialization mode is TRANSFORM_ONLY" in new IntermediateView {
+    val startState = Invalidated(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = TRANSFORM_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Transforming(
+          view,
+          `defaultDigest`,
+          interestedParties,
+          TRANSFORM_ONLY,
+          false,
+          false,
+          0
+          ),
+        s) =>
+        interestedParties shouldEqual Set(DependentView(dependentView))
+        view shouldBe viewUnderTest
+        s shouldEqual Set(Transform(viewUnderTest))
+      case _ => fail()
+    }
+  }
+
   "An intermediate view in NoData state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = NoData(viewUnderTest)
 
@@ -194,6 +239,28 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       case ResultingViewSchedulingState(Invalidated(view), s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportInvalidated(view, Set(dependentView)))
+    }
+  }
+
+  it should "directly enter transforming if materialization mode is TRANSFORM_ONLY" in new IntermediateView {
+    val startState = NoData(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = TRANSFORM_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Transforming(
+          view,
+          `defaultDigest`,
+          interestedParties,
+          TRANSFORM_ONLY,
+          false,
+          false,
+          0
+          ),
+        s) =>
+        interestedParties shouldEqual Set(DependentView(dependentView))
+        view shouldBe viewUnderTest
+        s shouldEqual Set(Transform(viewUnderTest))
+      case _ => fail()
     }
   }
 
@@ -257,6 +324,52 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       case ResultingViewSchedulingState(Invalidated(view), s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportInvalidated(view, Set(dependentView)))
+    }
+  }
+
+  it should "directly enter transforming if materialization mode is TRANSFORM_ONLY and checksum or transformation timestamp changed" in new IntermediateView {
+    val startState = ReadFromSchemaManager(viewUnderTest, defaultDigest, 10)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = TRANSFORM_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Transforming(
+          view,
+          viewTransformationChecksum,
+          interestedParties,
+          TRANSFORM_ONLY,
+          false,
+          false,
+          0
+          ),
+        s) =>
+        interestedParties shouldEqual Set(DependentView(dependentView))
+        view shouldBe viewUnderTest
+        s shouldEqual Set(Transform(viewUnderTest))
+      case _ => fail()
+    }
+  }
+
+  it should "enter materialized if materialization mode is TRANSFORM_ONLY but checksum or transformation timestamp have not changed" in new IntermediateView {
+    val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = TRANSFORM_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          false,
+          false), s) =>
+        view shouldBe viewUnderTest
+        s shouldEqual Set(
+          ReportMaterialized(
+            viewUnderTest,
+            Set(dependentView),
+            10,
+            withErrors = false,
+            incomplete = false))
+
+      case _ => fail()
     }
   }
 

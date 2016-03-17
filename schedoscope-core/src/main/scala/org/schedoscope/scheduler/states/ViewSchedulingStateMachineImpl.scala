@@ -25,7 +25,7 @@ import org.schedoscope.scheduler.messages.MaterializeViewMode._
 class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def toWaitingTransformingOrMaterialize(view: View, lastTransformationChecksum: String, lastTransformationTimestamp: Long, listener: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode, currentTime: Long) = {
-    if (view.dependencies.isEmpty)
+    if (view.dependencies.isEmpty || materializationMode == TRANSFORM_ONLY)
       leaveWaitingState(
         Waiting(view,
           lastTransformationChecksum,
@@ -257,8 +257,8 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
           currentMaterializationMode,
           withErrors,
           incomplete,
-          retry + 1), 
-          Set(Transform(view)))
+          retry + 1),
+        Set(Transform(view)))
   }
 
   def invalidate(
