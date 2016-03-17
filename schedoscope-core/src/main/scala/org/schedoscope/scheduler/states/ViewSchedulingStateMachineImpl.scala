@@ -25,7 +25,29 @@ import org.schedoscope.scheduler.messages.MaterializeViewMode._
 class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def toWaitingTransformingOrMaterialize(view: View, lastTransformationChecksum: String, lastTransformationTimestamp: Long, listener: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode, currentTime: Long) = {
-    if (view.dependencies.isEmpty || materializationMode == TRANSFORM_ONLY)
+    if (materializationMode == SET_ONLY)
+      ResultingViewSchedulingState(
+        Materialized(
+          view,
+          view.transformation().checksum,
+          currentTime,
+          false,
+          false), {
+          if (lastTransformationChecksum != view.transformation().checksum)
+            Set(WriteTransformationCheckum(view))
+          else
+            Set()
+        } ++ Set(
+          WriteTransformationTimestamp(view, currentTime),
+          TouchSuccessFlag(view),
+          ReportMaterialized(
+            view,
+            Set(listener),
+            currentTime,
+            false,
+            false)))
+
+    else if (view.dependencies.isEmpty || materializationMode == TRANSFORM_ONLY)
       leaveWaitingState(
         Waiting(view,
           lastTransformationChecksum,
@@ -41,6 +63,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
         setError = false,
         currentTime)
     else
+
       ResultingViewSchedulingState(
         Waiting(view,
           lastTransformationChecksum,
@@ -84,13 +107,13 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
               listenersWaitingForMaterialize,
               lastTransformationTimestamp,
               withErrors,
-              incomplete))
-            ++ {
+              incomplete)) ++ {
               if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
                 Set(WriteTransformationCheckum(view))
               else
                 Set()
             })
+
       else if (oneDependencyReturnedData)
         if (lastTransformationTimestamp <= dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
           if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
@@ -105,16 +128,16 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
                   Set(WriteTransformationCheckum(view))
                 else
                   Set()
-              } ++
-                Set(
-                  WriteTransformationTimestamp(view, currentTime),
-                  ReportMaterialized(
-                    view,
-                    listenersWaitingForMaterialize,
-                    currentTime,
-                    withErrors | setError,
-                    incomplete | setIncomplete)))
+              } ++ Set(
+                WriteTransformationTimestamp(view, currentTime),
+                ReportMaterialized(
+                  view,
+                  listenersWaitingForMaterialize,
+                  currentTime,
+                  withErrors | setError,
+                  incomplete | setIncomplete)))
           else
+
             ResultingViewSchedulingState(
               Transforming(
                 view,
@@ -126,6 +149,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
                 0),
               Set(Transform(view)))
         } else
+
           ResultingViewSchedulingState(
             Materialized(
               view,
@@ -139,13 +163,13 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
                 listenersWaitingForMaterialize,
                 lastTransformationTimestamp,
                 withErrors | setError,
-                incomplete | setIncomplete))
-              ++ {
+                incomplete | setIncomplete)) ++ {
                 if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
                   Set(WriteTransformationCheckum(view))
                 else
                   Set()
               })
+
       else
         ResultingViewSchedulingState(
           NoData(view),
@@ -175,6 +199,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       toWaitingTransformingOrMaterialize(view, lastTransformationChecksum, lastTransformationTimestamp, listener, materializationMode, currentTime)
 
     case Failed(view) =>
+
       ResultingViewSchedulingState(
         Failed(view),
         Set(ReportFailed(view, Set(listener))))
@@ -190,6 +215,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       dependenciesFreshness) =>
+
       ResultingViewSchedulingState(
         Waiting(
           view,
@@ -211,6 +237,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       retry) =>
+
       ResultingViewSchedulingState(
         Retrying(
           view,
@@ -229,6 +256,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       retry) =>
+
       ResultingViewSchedulingState(
         Transforming(
           view,
@@ -249,6 +277,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       retry) =>
+
       ResultingViewSchedulingState(
         Transforming(
           view,
@@ -292,6 +321,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       dependenciesFreshness) =>
+
       if (dependenciesMaterializing == Set(reportingDependency))
         leaveWaitingState(currentState, setIncomplete = true, setError = false, currentTime)
       else
@@ -321,6 +351,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       dependenciesFreshness) =>
+
       if (dependenciesMaterializing == Set(reportingDependency))
         leaveWaitingState(currentState, setIncomplete = true, setError = true, currentTime)
       else
@@ -378,6 +409,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       retry) =>
+
       if (!folderEmpty)
         ResultingViewSchedulingState(
           Materialized(
@@ -390,16 +422,16 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
               Set(WriteTransformationCheckum(view))
             else
               Set()
-          } ++
-            Set(
-              WriteTransformationTimestamp(view, currentTime),
-              TouchSuccessFlag(view),
-              ReportMaterialized(
-                view,
-                listenersWaitingForMaterialize,
-                currentTime,
-                withErrors,
-                incomplete)))
+          } ++ Set(
+            WriteTransformationTimestamp(view, currentTime),
+            TouchSuccessFlag(view),
+            ReportMaterialized(
+              view,
+              listenersWaitingForMaterialize,
+              currentTime,
+              withErrors,
+              incomplete)))
+
       else
         ResultingViewSchedulingState(
           NoData(view),
@@ -416,6 +448,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       withErrors,
       incomplete,
       retry) =>
+
       if (retry < maxRetries)
         ResultingViewSchedulingState(
           Retrying(
@@ -427,6 +460,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
             incomplete,
             retry + 1),
           Set())
+
       else
         ResultingViewSchedulingState(
           Failed(view),

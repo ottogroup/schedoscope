@@ -21,7 +21,7 @@ import org.schedoscope.scheduler.messages.MaterializeViewMode._
 class NoOpViewSchedulingStateMachineImpl(successFlagExists: => Boolean) extends ViewSchedulingStateMachineImpl {
 
   override def toWaitingTransformingOrMaterialize(view: View, lastTransformationChecksum: String, lastTransformationTimestamp: Long, listener: PartyInterestedInViewSchedulingStateChange, materializationMode: MaterializeViewMode, currentTime: Long) = {
-    if (view.dependencies.isEmpty)
+    if (view.dependencies.isEmpty && materializationMode != SET_ONLY)
       leaveWaitingState(
         Waiting(view,
           if (lastTransformationTimestamp > 0) lastTransformationChecksum else "RESETME",
@@ -52,7 +52,7 @@ class NoOpViewSchedulingStateMachineImpl(successFlagExists: => Boolean) extends 
       withErrors,
       incomplete,
       dependenciesFreshness) =>
-        
+
       if (view.isMaterializeOnce && lastTransformationTimestamp > 0)
         ResultingViewSchedulingState(
           Materialized(

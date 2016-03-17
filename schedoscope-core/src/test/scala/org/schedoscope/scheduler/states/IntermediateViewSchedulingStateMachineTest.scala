@@ -120,6 +120,66 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
+  it should "transition to and report Materialized upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = CreatedByViewManager(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          false,
+          false), s) =>
+        view shouldBe viewUnderTest
+        s should contain(
+          ReportMaterialized(
+            viewUnderTest,
+            Set(dependentView),
+            10,
+            withErrors = false,
+            incomplete = false))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation timestamp upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = CreatedByViewManager(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationTimestamp(viewUnderTest, 10))
+
+      case _ => fail()
+    }
+  }
+
+  it should "touch a _SUCCESS upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = CreatedByViewManager(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          TouchSuccessFlag(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation checksum upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = CreatedByViewManager(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationCheckum(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
   "An intermediate view in Invalidated state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = Invalidated(viewUnderTest)
 
@@ -205,6 +265,66 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
+  it should "transition to and report Materialized upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = Invalidated(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          false,
+          false), s) =>
+        view shouldBe viewUnderTest
+        s should contain(
+          ReportMaterialized(
+            viewUnderTest,
+            Set(dependentView),
+            10,
+            withErrors = false,
+            incomplete = false))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation timestamp upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = Invalidated(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationTimestamp(viewUnderTest, 10))
+
+      case _ => fail()
+    }
+  }
+
+  it should "touch a _SUCCESS upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = Invalidated(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          TouchSuccessFlag(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation checksum upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = Invalidated(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationCheckum(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
   "An intermediate view in NoData state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = NoData(viewUnderTest)
 
@@ -260,6 +380,66 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
         interestedParties shouldEqual Set(DependentView(dependentView))
         view shouldBe viewUnderTest
         s shouldEqual Set(Transform(viewUnderTest))
+      case _ => fail()
+    }
+  }
+
+  it should "transition to and report Materialized upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = NoData(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          false,
+          false), s) =>
+        view shouldBe viewUnderTest
+        s should contain(
+          ReportMaterialized(
+            viewUnderTest,
+            Set(dependentView),
+            10,
+            withErrors = false,
+            incomplete = false))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation timestamp upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = NoData(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationTimestamp(viewUnderTest, 10))
+
+      case _ => fail()
+    }
+  }
+
+  it should "touch a _SUCCESS upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = NoData(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          TouchSuccessFlag(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation checksum upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = NoData(viewUnderTest)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationCheckum(viewUnderTest))
+
       case _ => fail()
     }
   }
@@ -373,6 +553,78 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
+  it should "transition to and report Materialized upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          false,
+          false), s) =>
+        view shouldBe viewUnderTest
+        s should contain(
+          ReportMaterialized(
+            viewUnderTest,
+            Set(dependentView),
+            10,
+            withErrors = false,
+            incomplete = false))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation timestamp upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationTimestamp(viewUnderTest, 10))
+
+      case _ => fail()
+    }
+  }
+
+  it should "touch a _SUCCESS upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          TouchSuccessFlag(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation checksum upon materialization with SET_ONLY materialization mode if it changed" in new IntermediateView {
+    val startState = ReadFromSchemaManager(viewUnderTest, defaultDigest, 10)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationCheckum(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
+  it should "not write a new transformation checksum upon materialization with SET_ONLY materialization mode if it hasn't changed" in new IntermediateView {
+    val startState = ReadFromSchemaManager(viewUnderTest, viewTransformationChecksum, 10)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should not contain (
+          WriteTransformationCheckum(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
   "An intermediate view in Materialized state" should "transition to Waiting upon materialize" in new IntermediateView {
     val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
 
@@ -433,6 +685,78 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       case ResultingViewSchedulingState(Invalidated(view), s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportInvalidated(view, Set(dependentView)))
+    }
+  }
+
+  it should "transition to and report Materialized upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+        Materialized(
+          view,
+          `viewTransformationChecksum`,
+          10,
+          false,
+          false), s) =>
+        view shouldBe viewUnderTest
+        s should contain(
+          ReportMaterialized(
+            viewUnderTest,
+            Set(dependentView),
+            10,
+            withErrors = false,
+            incomplete = false))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation timestamp upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationTimestamp(viewUnderTest, 10))
+
+      case _ => fail()
+    }
+  }
+
+  it should "touch a _SUCCESS upon materialization with SET_ONLY materialization mode" in new IntermediateView {
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          TouchSuccessFlag(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
+  it should "write a new transformation checksum upon materialization with SET_ONLY materialization mode if it changed" in new IntermediateView {
+    val startState = Materialized(viewUnderTest, defaultDigest, 10, withErrors = false, incomplete = false)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should contain(
+          WriteTransformationCheckum(viewUnderTest))
+
+      case _ => fail()
+    }
+  }
+
+  it should "not write a new transformation checksum upon materialization with SET_ONLY materialization mode if it hasn't changed" in new IntermediateView {
+    val startState = Materialized(viewUnderTest, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
+
+    stateMachine.materialize(startState, dependentView, materializationMode = SET_ONLY, currentTime = 10) match {
+      case ResultingViewSchedulingState(_, s) =>
+        s should not contain (
+          WriteTransformationCheckum(viewUnderTest))
+
+      case _ => fail()
     }
   }
 
@@ -1006,5 +1330,4 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       case _ => fail()
     }
   }
-
 }

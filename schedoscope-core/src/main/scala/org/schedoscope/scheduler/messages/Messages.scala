@@ -125,7 +125,7 @@ object MaterializeViewMode extends Enumeration {
   RESET_TRANSFORMATION_CHECKSUMS, // do not consider version checksum changes when making transformation decisions
   RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS, // perform a transformation dry run, only update checksums and timestamps
   TRANSFORM_ONLY, // directly transform a view without materializing its dependencies
-  SET_ONLY // set the view to materialized with materializing its dependencies and without 
+  SET_ONLY // set the view to materialized without materializing its dependencies and without transforming itself
   = Value
 }
 
