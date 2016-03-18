@@ -22,6 +22,9 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
 import com.google.common.collect.ImmutableList;
 
+/**
+ * This class covnerts an HCatRecord to an AvroRecord.
+ */
 public class HCatToAvroRecordConverter {
 
     private static final Log LOG = LogFactory.getLog(HCatToAvroRecordConverter.class);
@@ -44,16 +47,44 @@ public class HCatToAvroRecordConverter {
                 }
             });
 
-    public GenericRecord convert(HCatRecord record, HCatSchema hcatSchema) throws HCatException {
+    /**
+     * Converts a given HCatrecord to a GeneircRecord (Avro).
+     *
+     * @param record The HCatRecord.
+     * @param hcatSchema The HCatSchema.
+     * @param tableName The Hive table name, will be the name of the GenericRecord.
+     * @return A GenericRecord..
+     * @throws HCatException Is thrown if an error occurs.
+     */
+    public static GenericRecord convertRecord(HCatRecord record, HCatSchema hcatSchema, String tableName)
+            throws HCatException {
 
         LOG.info(record.toString());
-        GenericRecord rec = getRecordValue(hcatSchema, "my_table", record);
+        GenericRecord rec = getRecordValue(hcatSchema, tableName, record);
         LOG.info(rec.toString());
         LOG.info(rec.getSchema());
         return rec;
     }
 
-    private GenericRecord getRecordValue(HCatSchema structSchema, String fieldName, HCatRecord record)
+    /**
+     * Converts a HCatSchema to an Avro Schema.
+     *
+     * @param hcatSchema The HCatSchema.
+     * @param tableName The name of the table, will be the record name.
+     * @return A derived Avro Schema.
+     * @throws HCatException Is thrown if an error occurs.
+     */
+    public static Schema convertSchema(HCatSchema hcatSchema, String tableName)
+            throws HCatException {
+
+        LOG.info(hcatSchema.getSchemaAsTypeString());
+        Schema avroSchema = getRecordAvroFieldSchema(hcatSchema, tableName);
+        LOG.info(avroSchema.toString());
+        return avroSchema;
+    }
+
+
+    private static GenericRecord getRecordValue(HCatSchema structSchema, String fieldName, HCatRecord record)
             throws HCatException {
 
         List<Pair<String, Object>> values = new ArrayList<Pair<String, Object>>();
@@ -79,7 +110,7 @@ public class HCatToAvroRecordConverter {
         return rec;
     }
 
-    private Schema getRecordAvroFieldSchema(HCatSchema structSchema, String fieldName) throws HCatException {
+    private static Schema getRecordAvroFieldSchema(HCatSchema structSchema, String fieldName) throws HCatException {
 
         List<Field> fields = new ArrayList<Field>();
 
@@ -96,7 +127,8 @@ public class HCatToAvroRecordConverter {
         return Schema.createRecord(fieldName, structSchema.getSchemaAsTypeString(), NAMESPACE, false, fields);
     }
 
-    private Schema getComplexAvroFieldSchema(HCatFieldSchema fieldSchema, boolean nullable) throws HCatException {
+    private static Schema getComplexAvroFieldSchema(HCatFieldSchema fieldSchema, boolean nullable)
+            throws HCatException {
 
         Schema schema = null;
         switch (fieldSchema.getCategory()) {
@@ -143,7 +175,7 @@ public class HCatToAvroRecordConverter {
         }
     }
 
-    private Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema) throws HCatException {
+    private static Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema) throws HCatException {
 
         if (primitiveTypeMap.containsKey(fieldSchema.getTypeInfo().getPrimitiveCategory())) {
             Schema schema = Schema.create(primitiveTypeMap.get(fieldSchema.getTypeInfo().getPrimitiveCategory()));
