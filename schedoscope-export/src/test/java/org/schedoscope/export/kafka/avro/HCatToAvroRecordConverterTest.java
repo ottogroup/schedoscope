@@ -58,4 +58,30 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
             GenericRecord rec = converter.convert(record, hcatInputSchema);
         }
     }
+
+    @Test
+    public void testMapMapConverter() throws Exception {
+
+        setUpHiveServer("src/test/resources/test_mapmap_data.txt", "src/test/resources/test_mapmap.hql", "test_mapmap");
+        Schema schema = HCatToAvroSchemaConverter.convert(hcatInputSchema, "mytable");
+        converter = new HCatToAvroRecordConverter();
+        Iterator<HCatRecord> it = hcatRecordReader.read();
+        while (it.hasNext()) {
+            HCatRecord record = it.next();
+            GenericRecord rec = converter.convert(record, hcatInputSchema);
+        }
+    }
+
+    @Test
+    public void testStructStructConverter() throws Exception {
+
+        setUpHiveServer("src/test/resources/test_structstruct_data.txt", "src/test/resources/test_structstruct.hql", "test_structstruct");
+        Schema schema = HCatToAvroSchemaConverter.convert(hcatInputSchema, "mytable");
+        converter = new HCatToAvroRecordConverter();
+        Iterator<HCatRecord> it = hcatRecordReader.read();
+        while (it.hasNext()) {
+            HCatRecord record = it.next();
+            GenericRecord rec = converter.convert(record, hcatInputSchema);
+        }
+    }
 }

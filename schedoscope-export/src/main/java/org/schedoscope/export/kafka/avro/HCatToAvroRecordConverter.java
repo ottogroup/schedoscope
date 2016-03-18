@@ -11,6 +11,8 @@ import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.HCatRecord;
@@ -21,6 +23,8 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import com.google.common.collect.ImmutableList;
 
 public class HCatToAvroRecordConverter {
+
+    private static final Log LOG = LogFactory.getLog(HCatToAvroRecordConverter.class);
 
     private static final String NAMESPACE = "org.schedoscope.export";
 
@@ -42,7 +46,11 @@ public class HCatToAvroRecordConverter {
 
     public GenericRecord convert(HCatRecord record, HCatSchema hcatSchema) throws HCatException {
 
-        return getRecordValue(hcatSchema, "my_table", record);
+        LOG.info(record.toString());
+        GenericRecord rec = getRecordValue(hcatSchema, "my_table", record);
+        LOG.info(rec.toString());
+        LOG.info(rec.getSchema());
+        return rec;
     }
 
     private GenericRecord getRecordValue(HCatSchema structSchema, String fieldName, HCatRecord record)
@@ -53,7 +61,7 @@ public class HCatToAvroRecordConverter {
 
         for (HCatFieldSchema f : structSchema.getFields()) {
             if (f.isComplex()) {
-                Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f), f.getTypeString(), false);
+                Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(), false);
                 fields.add(complexField);
                 values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
             } else {
@@ -77,7 +85,7 @@ public class HCatToAvroRecordConverter {
 
         for (HCatFieldSchema f : structSchema.getFields()) {
             if (f.isComplex()) {
-                Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f), f.getTypeString(), false);
+                Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(), false);
                 fields.add(complexField);
 
             } else {
@@ -88,7 +96,7 @@ public class HCatToAvroRecordConverter {
         return Schema.createRecord(fieldName, structSchema.getSchemaAsTypeString(), NAMESPACE, false, fields);
     }
 
-    private Schema getComplexAvroFieldSchema(HCatFieldSchema fieldSchema) throws HCatException {
+    private Schema getComplexAvroFieldSchema(HCatFieldSchema fieldSchema, boolean nullable) throws HCatException {
 
         Schema schema = null;
         switch (fieldSchema.getCategory()) {
@@ -99,6 +107,9 @@ public class HCatToAvroRecordConverter {
             if (valueCategory == Category.PRIMITIVE) {
                 Schema subType = getPrimitiveAvroField(valueSchema);
                 schema = Schema.createMap(subType);
+            } else {
+                Schema subType = schema = getComplexAvroFieldSchema(valueSchema, true);
+                schema = Schema.createMap(subType);
             }
         }
             break;
@@ -108,6 +119,9 @@ public class HCatToAvroRecordConverter {
             Category valueCategory = valueSchema.getCategory();
             if (valueCategory == Category.PRIMITIVE) {
                 Schema subType = getPrimitiveAvroField(valueSchema);
+                schema = Schema.createArray(subType);
+            } else {
+                Schema subType = getComplexAvroFieldSchema(valueSchema, true);
                 schema = Schema.createArray(subType);
             }
         }
@@ -122,7 +136,11 @@ public class HCatToAvroRecordConverter {
             throw new IllegalArgumentException("invalid type");
         }
 
-        return Schema.createUnion(ImmutableList.of(schema, nullSchema));
+        if (nullable) {
+            return Schema.createUnion(ImmutableList.of(schema, nullSchema));
+        } else {
+            return schema;
+        }
     }
 
     private Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema) throws HCatException {

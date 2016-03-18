@@ -128,14 +128,15 @@ public class HCatToAvroSchemaConverter {
             throw new IllegalArgumentException("invalid type");
         }
 
-        return Schema.createUnion(ImmutableList.of(schema, nullSchema));
+        return schema; //Schema.createUnion(ImmutableList.of(schema, nullSchema));
     }
 
     private static Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema) {
 
         if (primitiveTypeMap.containsKey(fieldSchema.getTypeInfo().getPrimitiveCategory())) {
             Schema schema = Schema.create(primitiveTypeMap.get(fieldSchema.getTypeInfo().getPrimitiveCategory()));
-            return Schema.createUnion(ImmutableList.of(schema, nullSchema));
+            //schema.getJsonProps();
+            return Schema.createUnion(ImmutableList.of(nullSchema, schema));
         }
         throw new IllegalArgumentException("can not find primitive type in typeMap");
     }
