@@ -1,0 +1,94 @@
+package org.schedoscope.export.kafka;
+
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.mapred.AvroValue;
+import org.apache.avro.mapreduce.AvroJob;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
+import org.apache.hive.hcatalog.data.schema.HCatSchema;
+import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.kohsuke.args4j.Option;
+import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
+import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
+
+/**
+ * The MR driver to run the Hive to Kafka export. Depending on the
+ * cmdl params it either runs in regular mode or in log compaction
+ * mode.
+ */
+public class KafkaExportJob extends Configured implements Tool {
+
+    @Option(name = "-s", usage = "set to true if kerberos is enabled")
+    private boolean isSecured = false;
+
+    @Option(name = "-m", usage = "specify the metastore URI")
+    private String metaStoreUris;
+
+    @Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
+    private String principal;
+
+    @Option(name = "-d", usage = "input database", required = true)
+    private String inputDatabase;
+
+    @Option(name = "-t", usage = "input table", required = true)
+    private String inputTable;
+
+    @Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
+    private String inputFilter;
+
+    @Override
+    public int run(String[] args) throws Exception {
+
+        Configuration conf = getConf();
+
+        conf.set("hive.metastore.local", "false");
+        conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
+
+        if (isSecured) {
+            conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+            conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
+
+            if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+                conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+            }
+        }
+
+        Job job = Job.getInstance(conf);
+
+        job.setJarByClass(KafkaExportJob.class);
+
+        if (inputFilter == null || inputFilter.trim().equals("")) {
+            HCatInputFormat.setInput(job, inputDatabase, inputTable);
+
+        } else {
+            HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
+        }
+
+        HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
+        Schema avroSchema = HCatToAvroRecordConverter.convertSchema(hcatSchema, inputTable);
+        AvroJob.setMapOutputValueSchema(job, avroSchema);
+
+        job.setMapperClass(KafkaExportMapper.class);
+        job.setReducerClass(KafkaExportReducer.class);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(KafkaOutputFormat.class);
+
+        job.setMapOutputKeyClass(Text.class);
+        job.setMapOutputValueClass(AvroValue.class);
+        job.setOutputKeyClass(String.class);
+        job.setOutputValueClass(GenericRecord.class);
+
+        return job.waitForCompletion(true) ? 0 : 1;
+    }
+
+    public static void main(String[] args) throws Exception {
+        int exitCode = ToolRunner.run(new KafkaExportJob(), args);
+        System.exit(exitCode);
+    }
+}

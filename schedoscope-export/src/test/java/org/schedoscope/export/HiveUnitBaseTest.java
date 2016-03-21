@@ -56,6 +56,7 @@ public abstract class HiveUnitBaseTest {
     protected Configuration conf;
     protected HCatSchema hcatInputSchema;
 
+
     @Before
     public void setUp() throws Exception {
         testSuite = new HiveTestSuite();
@@ -64,7 +65,7 @@ public abstract class HiveUnitBaseTest {
     }
 
     @After
-    public void testHCatInputFormat() {
+    public void tearDown() throws Exception {
         testSuite.shutdownTestCluster();
     }
 

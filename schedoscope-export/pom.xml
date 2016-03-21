@@ -21,6 +21,7 @@
 			<properties>
 				<hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
 				<hive.version>1.1.0-cdh5.5.1</hive.version>
+				<avro.version>1.7.6</avro.version>
 				<mrunit.version>1.1.0</mrunit.version>
 			</properties>
 		</profile>
@@ -72,6 +73,16 @@
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.avro</groupId>
+			<artifactId>avro</artifactId>
+			<version>${avro.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.avro</groupId>
+			<artifactId>avro-mapred</artifactId>
+			<version>${avro.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>args4j</groupId>
@@ -129,6 +140,12 @@
 			<artifactId>mrunit</artifactId>
 			<version>${mrunit.version}</version>
 			<classifier>hadoop2</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-test</artifactId>
+			<version>2.7.1</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

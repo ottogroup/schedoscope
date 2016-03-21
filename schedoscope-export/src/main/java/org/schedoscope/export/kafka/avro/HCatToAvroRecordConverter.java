@@ -92,7 +92,8 @@ public class HCatToAvroRecordConverter {
 
         for (HCatFieldSchema f : structSchema.getFields()) {
             if (f.isComplex()) {
-                Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(), false);
+                Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true),
+                        f.getTypeString(), false);
                 fields.add(complexField);
                 values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
             } else {
@@ -116,7 +117,8 @@ public class HCatToAvroRecordConverter {
 
         for (HCatFieldSchema f : structSchema.getFields()) {
             if (f.isComplex()) {
-                Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(), false);
+                Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true),
+                        f.getTypeString(), false);
                 fields.add(complexField);
 
             } else {

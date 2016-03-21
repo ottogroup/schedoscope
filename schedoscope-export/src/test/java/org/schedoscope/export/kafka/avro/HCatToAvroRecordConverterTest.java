@@ -1,5 +1,7 @@
 package org.schedoscope.export.kafka.avro;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.util.Iterator;
 
 import org.apache.avro.generic.GenericRecord;
@@ -28,6 +30,7 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
         while (it.hasNext()) {
             HCatRecord record = it.next();
             GenericRecord rec = HCatToAvroRecordConverter.convertRecord(record, hcatInputSchema, "MyRecord");
+            assertNotNull(rec);
         }
     }
 
@@ -38,7 +41,8 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
         Iterator<HCatRecord> it = hcatRecordReader.read();
         while (it.hasNext()) {
             HCatRecord record = it.next();
-            HCatToAvroRecordConverter.convertRecord(record, hcatInputSchema, "MyRecord");
+            GenericRecord rec = HCatToAvroRecordConverter.convertRecord(record, hcatInputSchema, "MyRecord");
+            assertNotNull(rec);
         }
     }
 
@@ -50,6 +54,7 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
         while (it.hasNext()) {
             HCatRecord record = it.next();
             GenericRecord rec = HCatToAvroRecordConverter.convertRecord(record, hcatInputSchema, "MyRecord");
+            assertNotNull(rec);
         }
     }
 
@@ -61,6 +66,7 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
         while (it.hasNext()) {
             HCatRecord record = it.next();
             GenericRecord rec = HCatToAvroRecordConverter.convertRecord(record, hcatInputSchema, "MyRecord");
+            assertNotNull(rec);
         }
     }
 
@@ -72,6 +78,7 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
         while (it.hasNext()) {
             HCatRecord record = it.next();
             GenericRecord rec = HCatToAvroRecordConverter.convertRecord(record, hcatInputSchema, "MyRecord");
+            assertNotNull(rec);
         }
     }
 }
