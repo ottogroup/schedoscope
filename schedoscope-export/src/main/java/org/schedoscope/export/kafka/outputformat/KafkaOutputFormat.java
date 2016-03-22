@@ -101,6 +101,7 @@ public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<
      *
      * @param conf The Hadoop configuration object.
      * @param brokerList The list of Kafka brokers to bootstrap from.
+     * @param zookeeperHosts The list of Zookeeper srvers to connect to.
      * @param producerType The Kafka producer type (sync / async).
      * @param cleanupPolicy The Kafka topic cleanup policy (delete / compact)
      * @param keyName The name of the key field.
