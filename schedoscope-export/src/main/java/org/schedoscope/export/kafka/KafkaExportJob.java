@@ -31,12 +31,16 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
+import org.schedoscope.export.kafka.outputformat.CleanupPolicy;
 import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
+import org.schedoscope.export.kafka.outputformat.ProducerType;
 
 /**
  * The MR driver to run the Hive to Kafka export. Depending on the
  * cmdl params it either runs in regular mode or in log compaction
  * mode.
+ *
+ * TODO: assertions in unit test + add more unit tests
  */
 public class KafkaExportJob extends Configured implements Tool {
 
@@ -57,6 +61,27 @@ public class KafkaExportJob extends Configured implements Tool {
 
     @Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
     private String inputFilter;
+
+    @Option(name = "-k", usage = "key column")
+    private String keyName;
+
+    @Option(name = "-b", usage = "list of brokers: host1:9092,host2:9092,host3:9092", required = true)
+    private String brokerList;
+
+    @Option(name = "-z", usage = "list of zookeeper hosts: host1:2181,host2:2181,host3:2181", required = true)
+    private String zookeeperHosts;
+
+    @Option(name = "-P", usage = "broker type, either 'async' or 'sync'")
+    private ProducerType producerType = ProducerType.sync;
+
+    @Option(name = "-c", usage = "cleanup policy, either 'delete' or 'compact'")
+    private CleanupPolicy cleanupPolicy = CleanupPolicy.delete;
+
+    @Option(name = "-n", usage = "number of partitons, default to 1")
+    private int numPartitions = 1;
+
+    @Option(name = "-r", usage = "replication factor, defaults to 1")
+    private int replicationFactor = 1;
 
     @Override
     public int run(String[] args) throws Exception {
@@ -89,6 +114,9 @@ public class KafkaExportJob extends Configured implements Tool {
         HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
         Schema avroSchema = HCatToAvroRecordConverter.convertSchema(hcatSchema, inputTable);
         AvroJob.setMapOutputValueSchema(job, avroSchema);
+
+        KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList, zookeeperHosts, producerType,
+                cleanupPolicy, keyName, inputTable, numPartitions, replicationFactor);
 
         job.setMapperClass(KafkaExportMapper.class);
         job.setReducerClass(KafkaExportReducer.class);

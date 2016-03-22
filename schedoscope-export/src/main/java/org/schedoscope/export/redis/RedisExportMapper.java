@@ -34,6 +34,7 @@ import org.schedoscope.export.redis.outputformat.RedisListWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 import org.schedoscope.export.redis.outputformat.RedisStringWritable;
 import org.schedoscope.export.redis.outputformat.RedisWritable;
+import org.schedoscope.export.utils.HCatUtils;
 import org.schedoscope.export.utils.StatCounter;
 
 /**
@@ -58,8 +59,8 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
         conf = context.getConfiguration();
         schema = HCatInputFormat.getTableSchema(conf);
 
-        RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
-        RedisOutputFormat.checkValueType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME));
+        HCatUtils.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+        HCatUtils.checkValueType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME));
 
         keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
         valueName = conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME);

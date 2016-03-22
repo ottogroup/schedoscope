@@ -28,25 +28,31 @@ import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
+import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
+import org.schedoscope.export.utils.HCatUtils;
 
 /**
  * A mapper that reads data from Hive tables and emits a GenericRecord.
  */
 public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, AvroValue<GenericRecord>> {
 
-    String tableName;
+    private String tableName;
 
-    HCatSchema hcatSchema;
+    private HCatSchema hcatSchema;
+
+    private String keyName;
 
     @Override
     protected void setup(Context context) throws IOException, InterruptedException {
 
         super.setup(context);
-
         Configuration conf = context.getConfiguration();
         hcatSchema = HCatInputFormat.getTableSchema(conf);
 
-        tableName = "MyTable";
+        keyName = conf.get(KafkaOutputFormat.KAFKA_EXPORT_KEY_NAME);
+        tableName = conf.get(KafkaOutputFormat.KAFKA_EXPORT_TABLE_NAME);
+
+        HCatUtils.checkKeyType(hcatSchema, keyName);
     }
 
     @Override

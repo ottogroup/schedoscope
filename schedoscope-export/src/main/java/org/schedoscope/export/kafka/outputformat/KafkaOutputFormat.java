@@ -19,7 +19,9 @@ package org.schedoscope.export.kafka.outputformat;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.I0Itec.zkclient.ZkClient;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -28,6 +30,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 
+import kafka.admin.AdminUtils;
 import kafka.javaapi.producer.Producer;
 import kafka.message.SnappyCompressionCodec;
 import kafka.producer.KeyedMessage;
@@ -43,7 +46,7 @@ import kafka.producer.ProducerConfig;
  */
 public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<K,V> {
 
-
+    // identifiers
     public static final String KAFKA_EXPORT_METADATA_BROKER_LIST = "metadata.broker.list";
 
     public static final String KAFKA_EXPORT_SERIALIZER_CLASS = "serializer.class";
@@ -55,6 +58,12 @@ public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<
     public static final String KAFKA_EXPORT_REQUEST_REQUIRED_ACKS = "request.required.acks";
 
     public static final String KAFKA_EXPORT_PRODUCER_TYPE = "producer.type";
+
+    public static final String KAFKA_EXPORT_CLEANUP_POLICY = "cleanup.policy";
+
+    public static final String KAFKA_EXPORT_KEY_NAME = "kafka.export.key.name";
+
+    public static final String KAFKA_EXPORT_TABLE_NAME = "kafka.export.table.name";
 
     @Override
     public void checkOutputSpecs(JobContext context) throws IOException {
@@ -69,19 +78,62 @@ public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<
     @Override
     public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) {
 
-        // Configuration conf = context.getConfiguration();
+        Configuration conf = context.getConfiguration();
 
-        Properties props = new Properties();
-        props.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST, "localhost:9092");
-        props.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
-        props.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
-        props.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC, SnappyCompressionCodec.name());
-        props.setProperty(KAFKA_EXPORT_PRODUCER_TYPE, "sync");
+        Properties producerProps = new Properties();
+        producerProps.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST, conf.get(KAFKA_EXPORT_METADATA_BROKER_LIST));
+        producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
+        producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
+        producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC, SnappyCompressionCodec.name());
+        producerProps.setProperty(KAFKA_EXPORT_PRODUCER_TYPE,
+                conf.get(KAFKA_EXPORT_PRODUCER_TYPE, ProducerType.sync.toString()));
+        producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
+                conf.get(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS, "1"));
 
-        ProducerConfig config = new ProducerConfig(props);
+        ProducerConfig config = new ProducerConfig(producerProps);
         Producer<String, String> producer = new Producer<String, String>(config);
 
         return new KafkaStringRecordWriter(producer);
+    }
+
+    /**
+     * Initializes the KafkaOutputFormat.
+     *
+     * @param conf The Hadoop configuration object.
+     * @param brokerList The list of Kafka brokers to bootstrap from.
+     * @param producerType The Kafka producer type (sync / async).
+     * @param cleanupPolicy The Kafka topic cleanup policy (delete / compact)
+     * @param keyName The name of the key field.
+     * @param tableName The name of the Hive table.
+     * @param numPartitions The number of partitions for the given topic.
+     * @param replicationFactor The replication factor for the given topic.
+     */
+    public static void setOutput(Configuration conf, String brokerList, String zookeeperHosts,
+            ProducerType producerType, CleanupPolicy cleanupPolicy, String keyName, String tableName,
+            int numPartitions, int replicationFactor) {
+
+        conf.set(KAFKA_EXPORT_METADATA_BROKER_LIST, brokerList);
+        conf.set(KAFKA_EXPORT_PRODUCER_TYPE, producerType.toString());
+        conf.set(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
+        conf.set(KAFKA_EXPORT_KEY_NAME, keyName);
+        conf.set(KAFKA_EXPORT_TABLE_NAME, tableName);
+
+        createOrUpdateTopic(zookeeperHosts, tableName, cleanupPolicy, numPartitions, replicationFactor);
+    }
+
+    private static void createOrUpdateTopic(String zookeeperHosts, String tableName,
+            CleanupPolicy cleanupPolicy, int numPartitions, int replicationFactor) {
+
+        Properties topicProps = new Properties();
+        topicProps.setProperty(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
+
+        ZkClient zkClient = new ZkClient(zookeeperHosts);
+        if (AdminUtils.topicExists(zkClient, tableName)) {
+            AdminUtils.changeTopicConfig(zkClient, tableName, topicProps);
+        } else {
+            AdminUtils.createTopic(zkClient, tableName, numPartitions, replicationFactor, topicProps);
+        }
+        zkClient.close();
     }
 
     /**
@@ -100,6 +152,7 @@ public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<
 
         @Override
         public void write(K key, V value) {
+
             KeyedMessage<String, String> message = new KeyedMessage<String, String>("topic", value.toString());
             producer.send(message);
         }

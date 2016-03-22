@@ -28,6 +28,7 @@ import kafka.server.KafkaServer;
 import kafka.utils.SystemTime$;
 
 public class EmbeddedKafkaCluster {
+
     private final List<Integer> ports;
     private final String zkConnection;
     private final Properties baseProperties;

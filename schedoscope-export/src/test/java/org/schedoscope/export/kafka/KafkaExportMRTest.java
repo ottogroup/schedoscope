@@ -34,7 +34,9 @@ import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
+import org.schedoscope.export.kafka.outputformat.CleanupPolicy;
 import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
+import org.schedoscope.export.kafka.outputformat.ProducerType;
 import org.schedoscope.export.testsupport.EmbeddedKafkaCluster;
 
 public class KafkaExportMRTest extends HiveUnitBaseTest {
@@ -49,15 +51,19 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
         super.setUp();
         setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql",
                 "test_map");
+
+        zkServer = new TestingServer(2182);
+        zkServer.start();
+        Thread.sleep(1000);
         startKafkaServer();
     }
 
     @Override
     @After
     public void tearDown() throws Exception {
-
-        stopKafkaServer();
         super.tearDown();
+        stopKafkaServer();
+        zkServer.close();
     }
 
     @Test
@@ -67,6 +73,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
         Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
         AvroJob.setMapOutputValueSchema(job, schema);
+        KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
+                ProducerType.sync, CleanupPolicy.delete, "id", "test_map", 1, 1);
 
         job.setMapperClass(KafkaExportMapper.class);
         job.setReducerClass(KafkaExportReducer.class);
@@ -85,10 +93,6 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
     private void startKafkaServer() throws Exception {
 
-        zkServer = new TestingServer(2181);
-        zkServer.start();
-        Thread.sleep(1000);
-
         ArrayList<Integer> ports = new ArrayList<Integer>();
         ports.add(9092);
         kafka = new EmbeddedKafkaCluster(zkServer.getConnectString(), new Properties(), ports);
@@ -99,7 +103,6 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
     private void stopKafkaServer() throws Exception {
 
         kafka.shutdown();
-        zkServer.stop();
         Thread.sleep(1000);
     }
 }
