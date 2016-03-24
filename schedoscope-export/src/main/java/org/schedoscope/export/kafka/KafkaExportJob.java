@@ -83,7 +83,7 @@ public class KafkaExportJob extends Configured implements Tool {
     @Option(name = "-r", usage = "replication factor, defaults to 1")
     private int replicationFactor = 1;
 
-    @Option(name ="-x", usage ="compression codec, either 'none', 'snappy' or 'gzip'")
+    @Option(name = "-x", usage = "compression codec, either 'none', 'snappy' or 'gzip'")
     private CompressionCodec codec = CompressionCodec.none;
 
     @Override

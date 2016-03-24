@@ -1,5 +1,9 @@
 package org.schedoscope.export.kafka.outputformat;
 
+/**
+ * An enum representing the different
+ * compression codecs Kafka can use (gzip / snappy / none).
+ */
 public enum CompressionCodec {
     none {
         @Override
