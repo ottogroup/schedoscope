@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
 import org.schedoscope.export.kafka.outputformat.CleanupPolicy;
+import org.schedoscope.export.kafka.outputformat.CompressionCodec;
 import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
 import org.schedoscope.export.kafka.outputformat.ProducerType;
 import org.schedoscope.export.testsupport.EmbeddedKafkaCluster;
@@ -73,7 +74,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
         Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
         AvroJob.setMapOutputValueSchema(job, schema);
         KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
-                ProducerType.sync, CleanupPolicy.delete, "id", "test_map", 1, 1);
+                ProducerType.sync, CleanupPolicy.delete, "id", "test_map", 1, 1, CompressionCodec.gzip);
 
         job.setMapperClass(KafkaExportMapper.class);
         job.setReducerClass(KafkaExportReducer.class);

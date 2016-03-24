@@ -31,6 +31,7 @@ import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
 import org.schedoscope.export.kafka.outputformat.CleanupPolicy;
+import org.schedoscope.export.kafka.outputformat.CompressionCodec;
 import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
 import org.schedoscope.export.kafka.outputformat.ProducerType;
 
@@ -82,6 +83,9 @@ public class KafkaExportJob extends Configured implements Tool {
     @Option(name = "-r", usage = "replication factor, defaults to 1")
     private int replicationFactor = 1;
 
+    @Option(name ="-x", usage ="compression codec, either 'none', 'snappy' or 'gzip'")
+    private CompressionCodec codec = CompressionCodec.none;
+
     @Override
     public int run(String[] args) throws Exception {
 
@@ -115,7 +119,7 @@ public class KafkaExportJob extends Configured implements Tool {
         AvroJob.setMapOutputValueSchema(job, avroSchema);
 
         KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList, zookeeperHosts, producerType,
-                cleanupPolicy, keyName, inputTable, numPartitions, replicationFactor);
+                cleanupPolicy, keyName, inputTable, numPartitions, replicationFactor, codec);
 
         job.setMapperClass(KafkaExportMapper.class);
         job.setReducerClass(KafkaExportReducer.class);

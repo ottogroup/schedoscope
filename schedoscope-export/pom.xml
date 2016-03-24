@@ -102,6 +102,10 @@
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
 					<groupId>org.slf4j</groupId>
+					</exclusion>
+				<exclusion>
+					<artifactId>org.xerial.snappy</artifactId>
+					<groupId>snappy-java</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -176,6 +180,11 @@
 			<groupId>com.101tec</groupId>
 			<artifactId>zkclient</artifactId>
 			<version>0.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.xerial.snappy</groupId>
+			<artifactId>snappy-java</artifactId>
+			<version>1.1.2.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>

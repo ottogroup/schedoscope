@@ -86,7 +86,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
         producerProps.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST, conf.get(KAFKA_EXPORT_METADATA_BROKER_LIST));
         producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
         producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
-        // producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC, SnappyCompressionCodec.name());
+        producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC,
+                conf.get(KAFKA_EXPORT_COMPRESSION_CODEC, CompressionCodec.gzip.toString()));
         producerProps.setProperty(KAFKA_EXPORT_PRODUCER_TYPE,
                 conf.get(KAFKA_EXPORT_PRODUCER_TYPE, ProducerType.sync.toString()));
         producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
@@ -110,16 +111,18 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
      * @param tableName The name of the Hive table.
      * @param numPartitions The number of partitions for the given topic.
      * @param replicationFactor The replication factor for the given topic.
+     * @param codec The compression codec to use (none / snappy / gzip).
      */
     public static void setOutput(Configuration conf, String brokerList, String zookeeperHosts,
             ProducerType producerType, CleanupPolicy cleanupPolicy, String keyName, String tableName,
-            int numPartitions, int replicationFactor) {
+            int numPartitions, int replicationFactor, CompressionCodec codec) {
 
         conf.set(KAFKA_EXPORT_METADATA_BROKER_LIST, brokerList);
         conf.set(KAFKA_EXPORT_PRODUCER_TYPE, producerType.toString());
         conf.set(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
         conf.set(KAFKA_EXPORT_KEY_NAME, keyName);
         conf.set(KAFKA_EXPORT_TABLE_NAME, tableName);
+        conf.set(KAFKA_EXPORT_COMPRESSION_CODEC, codec.toString());
 
         createOrUpdateTopic(zookeeperHosts, tableName, cleanupPolicy, numPartitions, replicationFactor);
     }
