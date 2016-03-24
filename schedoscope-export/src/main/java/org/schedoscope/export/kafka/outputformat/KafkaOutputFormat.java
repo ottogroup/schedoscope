@@ -21,8 +21,10 @@ import java.util.Properties;
 
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.mapred.AvroValue;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.OutputFormat;
@@ -32,9 +34,9 @@ import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
 
 import kafka.admin.AdminUtils;
 import kafka.javaapi.producer.Producer;
-import kafka.message.SnappyCompressionCodec;
 import kafka.producer.KeyedMessage;
 import kafka.producer.ProducerConfig;
+import kafka.utils.ZKStringSerializer$;
 
 /**
  * The Kafka output format is responsible to
@@ -44,7 +46,7 @@ import kafka.producer.ProducerConfig;
  * @param <K> The key class.
  * @param <V> The value class, must be a GenericRecord.
  */
-public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<K,V> {
+public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord>> extends OutputFormat<K,V> {
 
     // identifiers
     public static final String KAFKA_EXPORT_METADATA_BROKER_LIST = "metadata.broker.list";
@@ -84,7 +86,7 @@ public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<
         producerProps.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST, conf.get(KAFKA_EXPORT_METADATA_BROKER_LIST));
         producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
         producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
-        producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC, SnappyCompressionCodec.name());
+        // producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC, SnappyCompressionCodec.name());
         producerProps.setProperty(KAFKA_EXPORT_PRODUCER_TYPE,
                 conf.get(KAFKA_EXPORT_PRODUCER_TYPE, ProducerType.sync.toString()));
         producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
@@ -93,7 +95,7 @@ public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<
         ProducerConfig config = new ProducerConfig(producerProps);
         Producer<String, String> producer = new Producer<String, String>(config);
 
-        return new KafkaStringRecordWriter(producer);
+        return new KafkaStringRecordWriter(producer, conf.get(KAFKA_EXPORT_TABLE_NAME));
     }
 
     /**
@@ -128,7 +130,7 @@ public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<
         Properties topicProps = new Properties();
         topicProps.setProperty(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
 
-        ZkClient zkClient = new ZkClient(zookeeperHosts);
+        ZkClient zkClient = new ZkClient(zookeeperHosts, 30000, 30000, ZKStringSerializer$.MODULE$);
         if (AdminUtils.topicExists(zkClient, tableName)) {
             AdminUtils.changeTopicConfig(zkClient, tableName, topicProps);
         } else {
@@ -146,15 +148,25 @@ public class KafkaOutputFormat<K, V extends GenericRecord> extends OutputFormat<
 
         private Producer<String, String> producer;
 
-        public KafkaStringRecordWriter(Producer<String, String> producer) {
+        private String topic;
+
+        /**
+         * Inializes a new Kafka Record Writer using
+         * a Kafka producer under the hood.
+         *
+         * @param producer The configured Kafka producer.
+         * @param topic The Kafka topic to send the data to.
+         */
+        public KafkaStringRecordWriter(Producer<String, String> producer, String topic) {
 
             this.producer = producer;
+            this.topic = topic;
         }
 
         @Override
         public void write(K key, V value) {
 
-            KeyedMessage<String, String> message = new KeyedMessage<String, String>("topic", value.toString());
+            KeyedMessage<String, String> message = new KeyedMessage<String, String>(topic, value.datum().toString());
             producer.send(message);
         }
 

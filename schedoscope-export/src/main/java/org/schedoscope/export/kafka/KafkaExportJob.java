@@ -17,7 +17,6 @@
 package org.schedoscope.export.kafka;
 
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.hadoop.conf.Configuration;
@@ -125,8 +124,8 @@ public class KafkaExportJob extends Configured implements Tool {
 
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(AvroValue.class);
-        job.setOutputKeyClass(String.class);
-        job.setOutputValueClass(GenericRecord.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(AvroValue.class);
 
         return job.waitForCompletion(true) ? 0 : 1;
     }

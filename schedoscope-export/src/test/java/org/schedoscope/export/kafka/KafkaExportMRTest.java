@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
 import org.apache.curator.test.TestingServer;
@@ -85,8 +84,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(AvroValue.class);
 
-        job.setOutputKeyClass(String.class);
-        job.setOutputValueClass(GenericRecord.class);
+        job.setOutputKeyClass(Text.class);
+        job.setOutputValueClass(AvroValue.class);
 
         assertTrue(job.waitForCompletion(true));
     }

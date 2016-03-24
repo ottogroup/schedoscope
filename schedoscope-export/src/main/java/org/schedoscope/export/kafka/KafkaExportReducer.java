@@ -26,7 +26,7 @@ import org.apache.hadoop.mapreduce.Reducer;
 /**
  * A reducer to write data into Kafka.
  */
-public class KafkaExportReducer extends Reducer<Text, AvroValue<GenericRecord>, String, GenericRecord> {
+public class KafkaExportReducer extends Reducer<Text, AvroValue<GenericRecord>, Text, AvroValue<GenericRecord>> {
 
     @Override
     public void setup(Context context) throws IOException, InterruptedException {
@@ -39,7 +39,7 @@ public class KafkaExportReducer extends Reducer<Text, AvroValue<GenericRecord>, 
             throws IOException, InterruptedException {
 
         for (AvroValue<GenericRecord> r : values) {
-            context.write(key.toString(), r.datum());
+            context.write(key, r);
         }
     }
 }
