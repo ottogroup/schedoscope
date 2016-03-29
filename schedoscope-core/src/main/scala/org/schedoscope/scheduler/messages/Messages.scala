@@ -28,7 +28,7 @@ sealed class Failure
 /**
  * View actor signals its materialization failure to a waiting view actor
  */
-case class Failed(view: View) extends Failure
+case class ViewFailed(view: View) extends Failure
 
 /**
  * Driver actor signaling a failure of a transfomation that requires a retry by the receiving view actor.
@@ -123,7 +123,9 @@ object MaterializeViewMode extends Enumeration {
 
   val DEFAULT, // no special mode
   RESET_TRANSFORMATION_CHECKSUMS, // do not consider version checksum changes when making transformation decisions
-  RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS // perform a transformation dry run, only update checksums and timestamps
+  RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS, // perform a transformation dry run, only update checksums and timestamps
+  TRANSFORM_ONLY, // directly transform a view without materializing its dependencies
+  SET_ONLY // set the view to materialized without materializing its dependencies and without transforming itself
   = Value
 }
 
@@ -135,7 +137,7 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
 /**
  * Instructs a view actor to assume that its data needs to be recomputed.
  */
-case class Invalidate() extends CommandRequest
+case class InvalidateView() extends CommandRequest
 
 /**
  * Instructs a view-actor to retry a transformation after a failure
@@ -215,7 +217,7 @@ case class TransformationMetadata(metadata: Map[View, (String, Long)]) extends C
 /**
  * A view actor notifying a depending view that it has no data available
  */
-case class NoDataAvailable(view: View) extends CommandResponse
+case class ViewHasNoData(view: View) extends CommandResponse
 
 /**
  * A view actor notifying a depending view that it has materialized

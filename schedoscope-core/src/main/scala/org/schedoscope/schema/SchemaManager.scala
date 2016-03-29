@@ -23,7 +23,7 @@ import org.apache.hadoop.hive.metastore.api.{ AlreadyExistsException, Partition 
 import org.joda.time.DateTime
 import org.schedoscope.Schedoscope.settings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{ Checksum, ExternalTransformation }
+import org.schedoscope.dsl.transformations.{ Checksum }
 import org.schedoscope.schema.ddl.HiveQl
 import org.slf4j.LoggerFactory
 import scala.collection.JavaConversions.{ asScalaBuffer, mapAsScalaMap, mutableMapAsJavaMap, seqAsJavaList }
@@ -67,7 +67,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   private def createNonExistingPartitions(tablePrototype: View, partitions: List[Partition], retry: Int = 3): Map[View, (String, Long)] = try {
-    if (partitions.isEmpty || !tablePrototype.isPartitioned() || tablePrototype.transformation().isInstanceOf[ExternalTransformation]) {
+    if (partitions.isEmpty || !tablePrototype.isPartitioned()) {
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
@@ -86,12 +86,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   private def getExistingTransformationMetadata(tablePrototype: View, partitions: Map[String, Partition]): Map[View, (String, Long)] = {
-    if (tablePrototype.isExternal) {
-      val dbMetadata = metastoreClient.getDatabase(tablePrototype.dbName).getParameters
-      Map((tablePrototype,
-        (dbMetadata.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest),
-          dbMetadata.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)))
-    } else if (tablePrototype.isPartitioned) {
+    if (tablePrototype.isPartitioned) {
       val existingPartitions = metastoreClient.getPartitionsByNames(tablePrototype.dbName, tablePrototype.n, partitions.keys.toList)
       existingPartitions.map { p => (partitionToView(tablePrototype, p), (p.getParameters.getOrElse(Checksum.TransformationChecksum.checksumProperty, Checksum.defaultDigest), p.getParameters.getOrElse(Checksum.TransformationChecksum.timestampProperty, "0").toLong)) }.toMap
     } else {
@@ -218,10 +213,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
    *
    */
   def setTransformationVersion(view: View) = try {
-    if (view.isExternal) {
-      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
-
-    } else if (view.isPartitioned()) {
+    if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
     } else {
       setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
@@ -247,10 +239,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
    *
    */
   def setTransformationTimestamp(view: View, timestamp: Long) = try {
-    if (view.isExternal) {
-      setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
-
-    } else if (view.isPartitioned()) {
+    if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
     } else {
       setTableProperty(view.dbName, view.n, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
@@ -280,7 +269,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     log.info(s"Reading partition names for view: ${tablePrototype.module}.${tablePrototype.n}")
 
-    if (!tablePrototype.isPartitioned || tablePrototype.isExternal) {
+    if (!tablePrototype.isPartitioned) {
       log.info(s"View ${tablePrototype.module}.${tablePrototype.n} is not partitioned, returning metadata from table properties")
       return getExistingTransformationMetadata(tablePrototype, Map[String, Partition]())
     }

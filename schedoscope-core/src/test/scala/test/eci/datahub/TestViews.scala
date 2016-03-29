@@ -28,7 +28,6 @@ import org.schedoscope.dsl.views.DailyParameterization
 import org.schedoscope.dsl.views.Id
 import org.schedoscope.dsl.views.JobMetadata
 import org.schedoscope.dsl.views.PointOccurrence
-import org.schedoscope.dsl.transformations.MorphlineTransformation
 import org.schedoscope.Settings
 import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.dsl.storageformats._
@@ -95,7 +94,7 @@ case class ProductBrand(
       				p.${product().id.n} AS ${this.productId.n},
           			b.${brand().name.n} AS ${this.brandName.n},
           			p.${product().occurredAt.n} AS ${this.occurredAt.n}
-          			${new Date} AS ${this.createdAt.n}
+          			'some date time' AS ${this.createdAt.n}
           			${"ProductBrand"} AS ${this.createdBy.n}
           FROM 		${product().n} p
           JOIN 		${brand().n} b
@@ -104,6 +103,64 @@ case class ProductBrand(
           AND 		p.${product().month.n} = ${this.month.v.get}
           AND 		p.${product().day.n} = ${this.day.v.get}
           """)))
+}
+
+case class ProductBrandMaterializeOnce(
+  ecNr: Parameter[String],
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+    with PointOccurrence
+    with JobMetadata
+    with DailyParameterization {
+
+  comment("ProductBrand joins brands with products")
+
+  val ecShopCode = fieldOf[String]
+  val productId = fieldOf[String]
+  val brandName = privacySensitive(fieldOf[String])
+
+  val brand = dependsOn(() => Brand(ecNr))
+  val product = dependsOn(() => Product(ecNr, year, month, day))
+
+  asTableSuffix(privacySensitive(ecNr))
+  storedAs(Parquet())
+  materializeOnce
+
+  transformVia(() =>
+    HiveTransformation(insertInto(
+      this,
+      s"""
+         SELECT 	${this.ecNr.v.get} AS ${this.ecShopCode.n},
+      				p.${product().id.n} AS ${this.productId.n},
+          			b.${brand().name.n} AS ${this.brandName.n},
+          			p.${product().occurredAt.n} AS ${this.occurredAt.n}
+          			'some date time' AS ${this.createdAt.n}
+          			${"ProductBrand"} AS ${this.createdBy.n}
+          FROM 		${product().n} p
+          JOIN 		${brand().n} b
+          ON		p.${product().brandId.n} = b.${brand().id.n}
+          WHERE 	p.${product().year.n} = ${this.year.v.get}
+          AND 		p.${product().month.n} = ${this.month.v.get}
+          AND 		p.${product().day.n} = ${this.day.v.get}
+          """)))
+}
+
+case class ProductBrandsNoOpMirror(
+    year: Parameter[String],
+    month: Parameter[String],
+    day: Parameter[String]) extends View {
+
+  dependsOn(() => ProductBrand(p("EC0101"), year, month, day))
+  dependsOn(() => ProductBrand(p("EC0102"), year, month, day))
+}
+
+case class ProductBrandsNoOpMirrorDependent(
+    year: Parameter[String],
+    month: Parameter[String],
+    day: Parameter[String]) extends View {
+
+  dependsOn(() => ProductBrandsNoOpMirror(year, month, day))
 }
 
 case class NestedStructure() extends Structure {
@@ -200,47 +257,9 @@ case class SimpleDependendView() extends View with Id {
 
 }
 
-case class MorphlineView() extends View with Id {
-  val field1 = fieldOf[String]
-  dependsOn(() => SimpleDependendView())
-  transformVia(() => MorphlineTransformation(s"""{ id :"bla"
-      importCommands : ["org.kitesdk.**"]
-		  commands : [ {
-		  				if  {
-                                          conditions: [{ not: {equals {ec_shop_code : ["${field1.n}"]}}}]
-    								      then : [{ dropRecord{} }]
-    										}}]}""").forView(this))
-  tablePathBuilder = s => "src/test/resources/morphline.csv"
-  storedAs(ExternalTextFile())
-}
-
-case class CompilingMorphlineView() extends View with Id {
-  val visit_id = fieldOf[String]
-  val site = fieldOf[String]
-  dependsOn(() => SimpleDependendView())
-
-  transformVia(() => MorphlineTransformation(s"""{ id :"bla"
-      importCommands : ["org.kitesdk.**"]
-		  commands : [ { extractAvroTree{} }
-		  				]}""").forView(this))
-  tablePathBuilder = s => "src/test/resources/compling_morphline.csv"
-  storedAs(ExternalTextFile())
-}
-
-case class FailingMorphlineView() extends View with Id {
-  dependsOn(() => SimpleDependendView())
-  transformVia(() => MorphlineTransformation("invalid morphline code").forView(this))
-  tablePathBuilder = s => "src/test/resources/failing_morphline.csv"
-  storedAs(ExternalTextFile())
-
-}
-
-
-
 case class HDFSInputView() extends View with Id {
   val field1 = fieldOf[String]
   tablePathBuilder = s => "/tmp/test"
   storedAs(Parquet())
-
 }
 
