@@ -17,20 +17,19 @@
 package org.schedoscope.export.kafka.outputformat;
 
 /**
- * An Enum representing the cleanup
- * policy.
+ * An Enum representing the cleanup policy.
  */
 public enum CleanupPolicy {
-    delete {
-        @Override
-        public String toString() {
-            return "delete";
-        }
-    },
-    compact {
-        @Override
-        public String toString() {
-            return "compact";
-        }
-    }
+	delete {
+		@Override
+		public String toString() {
+			return "delete";
+		}
+	},
+	compact {
+		@Override
+		public String toString() {
+			return "compact";
+		}
+	}
 }

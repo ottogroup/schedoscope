@@ -28,18 +28,18 @@ import org.apache.hadoop.mapreduce.Reducer;
  */
 public class KafkaExportReducer extends Reducer<Text, AvroValue<GenericRecord>, Text, AvroValue<GenericRecord>> {
 
-    @Override
-    public void setup(Context context) throws IOException, InterruptedException {
+	@Override
+	public void setup(Context context) throws IOException, InterruptedException {
 
-        super.setup(context);
-    }
+		super.setup(context);
+	}
 
-    @Override
-    protected void reduce(Text key, Iterable<AvroValue<GenericRecord>> values, Context context)
-            throws IOException, InterruptedException {
+	@Override
+	protected void reduce(Text key, Iterable<AvroValue<GenericRecord>> values, Context context)
+			throws IOException, InterruptedException {
 
-        for (AvroValue<GenericRecord> r : values) {
-            context.write(key, r);
-        }
-    }
+		for (AvroValue<GenericRecord> r : values) {
+			context.write(key, r);
+		}
+	}
 }

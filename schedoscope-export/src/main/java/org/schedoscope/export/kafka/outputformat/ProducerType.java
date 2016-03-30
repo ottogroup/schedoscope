@@ -17,20 +17,19 @@
 package org.schedoscope.export.kafka.outputformat;
 
 /**
- * An Enum representing the different Kafka
- * producer types (sync / async).
+ * An Enum representing the different Kafka producer types (sync / async).
  */
 public enum ProducerType {
-    sync {
-        @Override
-        public String toString() {
-            return "sync";
-        }
-    },
-    async {
-        @Override
-        public String toString() {
-            return "async";
-        }
-    }
+	sync {
+		@Override
+		public String toString() {
+			return "sync";
+		}
+	},
+	async {
+		@Override
+		public String toString() {
+			return "async";
+		}
+	}
 }

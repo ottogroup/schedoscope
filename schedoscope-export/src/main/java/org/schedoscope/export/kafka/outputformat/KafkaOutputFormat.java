@@ -39,144 +39,156 @@ import kafka.producer.ProducerConfig;
 import kafka.utils.ZKStringSerializer$;
 
 /**
- * The Kafka output format is responsible to
- * write data into Kafka, it initializes the
- * KafkaRecordWriter.
+ * The Kafka output format is responsible to write data into Kafka, it
+ * initializes the KafkaRecordWriter.
  *
- * @param <K> The key class.
- * @param <V> The value class, must be a GenericRecord.
+ * @param <K>
+ *            The key class.
+ * @param <V>
+ *            The value class, must be a GenericRecord.
  */
-public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord>> extends OutputFormat<K,V> {
+public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord>> extends OutputFormat<K, V> {
 
-    // identifiers
-    public static final String KAFKA_EXPORT_METADATA_BROKER_LIST = "metadata.broker.list";
+	// identifiers
+	public static final String KAFKA_EXPORT_METADATA_BROKER_LIST = "metadata.broker.list";
 
-    public static final String KAFKA_EXPORT_SERIALIZER_CLASS = "serializer.class";
+	public static final String KAFKA_EXPORT_SERIALIZER_CLASS = "serializer.class";
 
-    public static final String KAFKA_EXPORT_KEY_SERIALIZER_CLASS = "key.serializer.class";
+	public static final String KAFKA_EXPORT_KEY_SERIALIZER_CLASS = "key.serializer.class";
 
-    public static final String KAFKA_EXPORT_COMPRESSION_CODEC = "compression.codec";
+	public static final String KAFKA_EXPORT_COMPRESSION_CODEC = "compression.codec";
 
-    public static final String KAFKA_EXPORT_REQUEST_REQUIRED_ACKS = "request.required.acks";
+	public static final String KAFKA_EXPORT_REQUEST_REQUIRED_ACKS = "request.required.acks";
 
-    public static final String KAFKA_EXPORT_PRODUCER_TYPE = "producer.type";
+	public static final String KAFKA_EXPORT_PRODUCER_TYPE = "producer.type";
 
-    public static final String KAFKA_EXPORT_CLEANUP_POLICY = "cleanup.policy";
+	public static final String KAFKA_EXPORT_CLEANUP_POLICY = "cleanup.policy";
 
-    public static final String KAFKA_EXPORT_KEY_NAME = "kafka.export.key.name";
+	public static final String KAFKA_EXPORT_KEY_NAME = "kafka.export.key.name";
 
-    public static final String KAFKA_EXPORT_TABLE_NAME = "kafka.export.table.name";
+	public static final String KAFKA_EXPORT_TABLE_NAME = "kafka.export.table.name";
 
-    @Override
-    public void checkOutputSpecs(JobContext context) throws IOException {
-    }
+	@Override
+	public void checkOutputSpecs(JobContext context) throws IOException {
+	}
 
-    @Override
-    public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
+	@Override
+	public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
 
-        return (new NullOutputFormat<NullWritable, NullWritable>()).getOutputCommitter(context);
-    }
+		return (new NullOutputFormat<NullWritable, NullWritable>()).getOutputCommitter(context);
+	}
 
-    @Override
-    public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) {
+	@Override
+	public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) {
 
-        Configuration conf = context.getConfiguration();
+		Configuration conf = context.getConfiguration();
 
-        Properties producerProps = new Properties();
-        producerProps.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST, conf.get(KAFKA_EXPORT_METADATA_BROKER_LIST));
-        producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
-        producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
-        producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC,
-                conf.get(KAFKA_EXPORT_COMPRESSION_CODEC, CompressionCodec.gzip.toString()));
-        producerProps.setProperty(KAFKA_EXPORT_PRODUCER_TYPE,
-                conf.get(KAFKA_EXPORT_PRODUCER_TYPE, ProducerType.sync.toString()));
-        producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
-                conf.get(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS, "1"));
+		Properties producerProps = new Properties();
+		producerProps.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST, conf.get(KAFKA_EXPORT_METADATA_BROKER_LIST));
+		producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
+		producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
+		producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC,
+				conf.get(KAFKA_EXPORT_COMPRESSION_CODEC, CompressionCodec.gzip.toString()));
+		producerProps.setProperty(KAFKA_EXPORT_PRODUCER_TYPE,
+				conf.get(KAFKA_EXPORT_PRODUCER_TYPE, ProducerType.sync.toString()));
+		producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
+				conf.get(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS, "1"));
 
-        ProducerConfig config = new ProducerConfig(producerProps);
-        Producer<String, String> producer = new Producer<String, String>(config);
+		ProducerConfig config = new ProducerConfig(producerProps);
+		Producer<String, String> producer = new Producer<String, String>(config);
 
-        return new KafkaStringRecordWriter(producer, conf.get(KAFKA_EXPORT_TABLE_NAME));
-    }
+		return new KafkaStringRecordWriter(producer, conf.get(KAFKA_EXPORT_TABLE_NAME));
+	}
 
-    /**
-     * Initializes the KafkaOutputFormat.
-     *
-     * @param conf The Hadoop configuration object.
-     * @param brokerList The list of Kafka brokers to bootstrap from.
-     * @param zookeeperHosts The list of Zookeeper srvers to connect to.
-     * @param producerType The Kafka producer type (sync / async).
-     * @param cleanupPolicy The Kafka topic cleanup policy (delete / compact)
-     * @param keyName The name of the key field.
-     * @param tableName The name of the Hive table.
-     * @param numPartitions The number of partitions for the given topic.
-     * @param replicationFactor The replication factor for the given topic.
-     * @param codec The compression codec to use (none / snappy / gzip).
-     */
-    public static void setOutput(Configuration conf, String brokerList, String zookeeperHosts,
-            ProducerType producerType, CleanupPolicy cleanupPolicy, String keyName, String tableName,
-            int numPartitions, int replicationFactor, CompressionCodec codec) {
+	/**
+	 * Initializes the KafkaOutputFormat.
+	 *
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 * @param brokerList
+	 *            The list of Kafka brokers to bootstrap from.
+	 * @param zookeeperHosts
+	 *            The list of Zookeeper srvers to connect to.
+	 * @param producerType
+	 *            The Kafka producer type (sync / async).
+	 * @param cleanupPolicy
+	 *            The Kafka topic cleanup policy (delete / compact)
+	 * @param keyName
+	 *            The name of the key field.
+	 * @param tableName
+	 *            The name of the Hive table.
+	 * @param numPartitions
+	 *            The number of partitions for the given topic.
+	 * @param replicationFactor
+	 *            The replication factor for the given topic.
+	 * @param codec
+	 *            The compression codec to use (none / snappy / gzip).
+	 */
+	public static void setOutput(Configuration conf, String brokerList, String zookeeperHosts,
+			ProducerType producerType, CleanupPolicy cleanupPolicy, String keyName, String tableName, int numPartitions,
+			int replicationFactor, CompressionCodec codec) {
 
-        conf.set(KAFKA_EXPORT_METADATA_BROKER_LIST, brokerList);
-        conf.set(KAFKA_EXPORT_PRODUCER_TYPE, producerType.toString());
-        conf.set(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
-        conf.set(KAFKA_EXPORT_KEY_NAME, keyName);
-        conf.set(KAFKA_EXPORT_TABLE_NAME, tableName);
-        conf.set(KAFKA_EXPORT_COMPRESSION_CODEC, codec.toString());
+		conf.set(KAFKA_EXPORT_METADATA_BROKER_LIST, brokerList);
+		conf.set(KAFKA_EXPORT_PRODUCER_TYPE, producerType.toString());
+		conf.set(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
+		conf.set(KAFKA_EXPORT_KEY_NAME, keyName);
+		conf.set(KAFKA_EXPORT_TABLE_NAME, tableName);
+		conf.set(KAFKA_EXPORT_COMPRESSION_CODEC, codec.toString());
 
-        createOrUpdateTopic(zookeeperHosts, tableName, cleanupPolicy, numPartitions, replicationFactor);
-    }
+		createOrUpdateTopic(zookeeperHosts, tableName, cleanupPolicy, numPartitions, replicationFactor);
+	}
 
-    private static void createOrUpdateTopic(String zookeeperHosts, String tableName,
-            CleanupPolicy cleanupPolicy, int numPartitions, int replicationFactor) {
+	private static void createOrUpdateTopic(String zookeeperHosts, String tableName, CleanupPolicy cleanupPolicy,
+			int numPartitions, int replicationFactor) {
 
-        Properties topicProps = new Properties();
-        topicProps.setProperty(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
+		Properties topicProps = new Properties();
+		topicProps.setProperty(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
 
-        ZkClient zkClient = new ZkClient(zookeeperHosts, 30000, 30000, ZKStringSerializer$.MODULE$);
-        if (AdminUtils.topicExists(zkClient, tableName)) {
-            AdminUtils.changeTopicConfig(zkClient, tableName, topicProps);
-        } else {
-            AdminUtils.createTopic(zkClient, tableName, numPartitions, replicationFactor, topicProps);
-        }
-        zkClient.close();
-    }
+		ZkClient zkClient = new ZkClient(zookeeperHosts, 30000, 30000, ZKStringSerializer$.MODULE$);
+		if (AdminUtils.topicExists(zkClient, tableName)) {
+			AdminUtils.changeTopicConfig(zkClient, tableName, topicProps);
+		} else {
+			AdminUtils.createTopic(zkClient, tableName, numPartitions, replicationFactor, topicProps);
+		}
+		zkClient.close();
+	}
 
-    /**
-     * The Kafka Record Writer is used to write data into
-     * Kafka. It takes a GenericRecord but writes the JSON
-     * representation into Kafka.
-     */
-    public class KafkaStringRecordWriter extends RecordWriter<K, V> {
+	/**
+	 * The Kafka Record Writer is used to write data into Kafka. It takes a
+	 * GenericRecord but writes the JSON representation into Kafka.
+	 */
+	public class KafkaStringRecordWriter extends RecordWriter<K, V> {
 
-        private Producer<String, String> producer;
+		private Producer<String, String> producer;
 
-        private String topic;
+		private String topic;
 
-        /**
-         * Inializes a new Kafka Record Writer using
-         * a Kafka producer under the hood.
-         *
-         * @param producer The configured Kafka producer.
-         * @param topic The Kafka topic to send the data to.
-         */
-        public KafkaStringRecordWriter(Producer<String, String> producer, String topic) {
+		/**
+		 * Inializes a new Kafka Record Writer using a Kafka producer under the
+		 * hood.
+		 *
+		 * @param producer
+		 *            The configured Kafka producer.
+		 * @param topic
+		 *            The Kafka topic to send the data to.
+		 */
+		public KafkaStringRecordWriter(Producer<String, String> producer, String topic) {
 
-            this.producer = producer;
-            this.topic = topic;
-        }
+			this.producer = producer;
+			this.topic = topic;
+		}
 
-        @Override
-        public void write(K key, V value) {
+		@Override
+		public void write(K key, V value) {
 
-            KeyedMessage<String, String> message = new KeyedMessage<String, String>(topic, value.datum().toString());
-            producer.send(message);
-        }
+			KeyedMessage<String, String> message = new KeyedMessage<String, String>(topic, value.datum().toString());
+			producer.send(message);
+		}
 
-        @Override
-        public void close(TaskAttemptContext context) throws IOException {
+		@Override
+		public void close(TaskAttemptContext context) throws IOException {
 
-            producer.close();
-        }
-    }
+			producer.close();
+		}
+	}
 }

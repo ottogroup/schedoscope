@@ -36,33 +36,33 @@ import org.schedoscope.export.utils.HCatUtils;
  */
 public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, AvroValue<GenericRecord>> {
 
-    private String tableName;
+	private String tableName;
 
-    private HCatSchema hcatSchema;
+	private HCatSchema hcatSchema;
 
-    private String keyName;
+	private String keyName;
 
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
+	@Override
+	protected void setup(Context context) throws IOException, InterruptedException {
 
-        super.setup(context);
-        Configuration conf = context.getConfiguration();
-        hcatSchema = HCatInputFormat.getTableSchema(conf);
+		super.setup(context);
+		Configuration conf = context.getConfiguration();
+		hcatSchema = HCatInputFormat.getTableSchema(conf);
 
-        keyName = conf.get(KafkaOutputFormat.KAFKA_EXPORT_KEY_NAME);
-        tableName = conf.get(KafkaOutputFormat.KAFKA_EXPORT_TABLE_NAME);
+		keyName = conf.get(KafkaOutputFormat.KAFKA_EXPORT_KEY_NAME);
+		tableName = conf.get(KafkaOutputFormat.KAFKA_EXPORT_TABLE_NAME);
 
-        HCatUtils.checkKeyType(hcatSchema, keyName);
-    }
+		HCatUtils.checkKeyType(hcatSchema, keyName);
+	}
 
-    @Override
-    protected void map(WritableComparable<?> key, HCatRecord value, Context context)
-            throws IOException, InterruptedException {
+	@Override
+	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
+			throws IOException, InterruptedException {
 
-        GenericRecord record = HCatToAvroRecordConverter.convertRecord(value, hcatSchema, tableName);
-        AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(record);
+		GenericRecord record = HCatToAvroRecordConverter.convertRecord(value, hcatSchema, tableName);
+		AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(record);
 
-        Text localKey = new Text();
-        context.write(localKey, recordWrapper);
-    }
+		Text localKey = new Text();
+		context.write(localKey, recordWrapper);
+	}
 }
