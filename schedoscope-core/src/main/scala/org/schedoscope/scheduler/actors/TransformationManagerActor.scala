@@ -141,7 +141,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
 
         if (cmd.command.isInstanceOf[Transformation]) {
           val transformation = cmd.command.asInstanceOf[Transformation]
-          log.info(s"TRANSFORMATIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
+          log.info(s"TRANSFORMATIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
         } else
           log.info("TRANSFORMATIONMANAGER DEQUEUE: Dequeued deploy action")
       }
@@ -153,7 +153,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
         val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
 
         queues.get(queueName).get.enqueue(commandToExecute)
-        log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation ${transformation}${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
+        log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
       } else {
         queues.values.foreach {
           _.enqueue(commandToExecute)

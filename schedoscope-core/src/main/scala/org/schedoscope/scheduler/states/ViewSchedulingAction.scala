@@ -17,6 +17,7 @@ package org.schedoscope.scheduler.states
 
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
+import scala.collection.Set
 
 /**
  * Abstract class to capture the various actions to be performed upon a reaching a view scheduling state result.

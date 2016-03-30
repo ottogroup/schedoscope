@@ -88,12 +88,15 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
 
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
     case ResultingViewSchedulingState(updatedState, actions) => {
-      if (stateChange(currentState, updatedState))
-        logStateChange(updatedState, currentState)
-
-      performSchedulingActions(actions)
+    
+      val previousState = currentState
 
       currentState = updatedState
+      performSchedulingActions(actions)
+
+      if (stateChange(previousState, updatedState))
+        logStateChange(updatedState, previousState)
+
     }
   }
 
@@ -116,17 +119,17 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
 
     case ReportNoDataAvailable(view, listeners) =>
       listeners.foreach {
-        actorForParty(_) ! ViewHasNoData(view)
+        _ ! ViewHasNoData(view)
       }
 
     case ReportFailed(view, listeners) =>
       listeners.foreach {
-        actorForParty(_) ! ViewFailed(view)
+        _ ! ViewFailed(view)
       }
 
     case ReportInvalidated(view, listeners) =>
       listeners.foreach {
-        actorForParty(_) ! ViewStatusResponse("invalidated", view, self)
+        _ ! ViewStatusResponse("invalidated", view, self)
       }
 
     case ReportNotInvalidated(view, listeners) =>
@@ -134,11 +137,11 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
 
     case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
       listeners.foreach {
-        actorForParty(_) ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
+        _ ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
       }
   }
 
-  def stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
+  lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
 
   def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
     case _: NoOp => new NoOpViewSchedulingStateMachineImpl(successFlagExists(view))
@@ -151,11 +154,6 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
     viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
 
     log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
-  }
-
-  def actorForParty(party: PartyInterestedInViewSchedulingStateChange) = party match {
-    case DependentView(view) => actorForView(view)
-    case AkkaActor(actor)    => system.actorSelection(actor.path)
   }
 
   def actorForView(view: View) = ViewManagerActor.actorForView(view)

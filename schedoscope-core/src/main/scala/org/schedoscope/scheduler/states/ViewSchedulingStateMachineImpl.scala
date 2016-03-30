@@ -322,7 +322,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       incomplete,
       dependenciesFreshness) =>
 
-      if (dependenciesMaterializing == Set(reportingDependency))
+      if (dependenciesMaterializing.size == 1 && dependenciesMaterializing.contains(reportingDependency))
         leaveWaitingState(currentState, setIncomplete = true, setError = false, currentTime)
       else
         ResultingViewSchedulingState(
@@ -352,7 +352,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
       incomplete,
       dependenciesFreshness) =>
 
-      if (dependenciesMaterializing == Set(reportingDependency))
+      if (dependenciesMaterializing.size == 1 && dependenciesMaterializing.contains(reportingDependency))
         leaveWaitingState(currentState, setIncomplete = true, setError = true, currentTime)
       else
         ResultingViewSchedulingState(
@@ -394,7 +394,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
         incomplete = incomplete || currentIncomplete,
         Math.max(dependenciesFreshness, transformationTimestamp))
 
-      if (dependenciesMaterializing == Set(reportingDependency))
+      if (dependenciesMaterializing.size == 1 && dependenciesMaterializing.contains(reportingDependency))
         leaveWaitingState(updatedWaitingState, setIncomplete = false, setError = false, currentTime)
       else
         ResultingViewSchedulingState(updatedWaitingState, Set())

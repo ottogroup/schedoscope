@@ -18,22 +18,31 @@ package org.schedoscope.scheduler.states
 import akka.actor.ActorRef
 import org.schedoscope.dsl.View
 import scala.language.implicitConversions
+import org.schedoscope.scheduler.actors.ViewManagerActor
 
 /**
  * A view scheduling state machine might want to know who needs to be informed about a state transition.
  * These listeners may be of different type, which are subsumed and wrapped by this class.
+ *
+ * For informing, one needs to provide an adequate message sending ! operator
  */
-sealed abstract class PartyInterestedInViewSchedulingStateChange
+sealed abstract class PartyInterestedInViewSchedulingStateChange {
+  def !(message: AnyRef): Unit
+}
 
 /**
  * A view depending on a given view with a state change.
  */
-case class DependentView(view: View) extends PartyInterestedInViewSchedulingStateChange
+case class DependentView(view: View) extends PartyInterestedInViewSchedulingStateChange {
+  override def !(message: AnyRef) = ViewManagerActor.actorForView(view) ! message
+}
 
 /**
  * A generic Akka actor interested in a state change
  */
-case class AkkaActor(actorRef: ActorRef) extends PartyInterestedInViewSchedulingStateChange
+case class AkkaActor(actorRef: ActorRef) extends PartyInterestedInViewSchedulingStateChange {
+  override def !(message: AnyRef) = actorRef ! message
+}
 
 object PartyInterestedInViewSchedulingStateChange {
   /**

@@ -17,6 +17,7 @@ package org.schedoscope.scheduler.states
 
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
+import scala.collection.Set
 
 /**
  * Captures the various possible scheduling states views may be in.
