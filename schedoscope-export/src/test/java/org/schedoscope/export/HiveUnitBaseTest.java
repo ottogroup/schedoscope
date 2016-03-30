@@ -22,6 +22,9 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
@@ -35,11 +38,19 @@ import org.junit.Before;
 import org.schedoscope.export.jdbc.outputschema.Schema;
 import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 import org.schedoscope.export.jdbc.outputschema.SchemaUtils;
-
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import com.inmobi.hive.test.HiveTestSuite;
 
 public abstract class HiveUnitBaseTest {
 
+	// Remove logging noise because of Jersey in Mini Hadoop test cluster
+	static {
+		LogManager.getLogManager().reset();
+		SLF4JBridgeHandler.removeHandlersForRootLogger();
+		SLF4JBridgeHandler.install();
+		Logger.getLogger("global").setLevel(Level.FINEST);
+	}
+	
 	private static final String DEFAUlT_HIVE_DB = "default";
 	private static final String DEFAULT_DERBY_DB = "jdbc:derby:memory:TestingDB;create=true";
 	private static final String DATA_FILE_PATH = "DATA_FILE_PATH";
