@@ -92,8 +92,8 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
     Await.result(get[List[SchedoscopeCommandStatus]](s"/commands", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies), ("overview", overview))), 3600 seconds)
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): ViewStatusList = {
+    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies), ("overview", overview), ("all", all))), 3600 seconds)
   }
 
   def transformations(status: Option[String], filter: Option[String]): TransformationStatusList = {

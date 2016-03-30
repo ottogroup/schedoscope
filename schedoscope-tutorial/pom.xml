@@ -1,11 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-tutorial</artifactId>
-	<version>0.3.6-SNAPSHOT</version>
 	<name>Schedoscope Tutorial</name>
 	<description>An example Schedoscope project using Open Street Map data</description>
+
+	<parent>
+		<artifactId>schedoscope-suite</artifactId>
+		<groupId>schedoscope</groupId>
+		<version>0.3.6-SNAPSHOT</version>
+	</parent>
 
 	<dependencies>
 		<dependency>
@@ -314,11 +319,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<repositories>
-		<repository>
-			<id>otto-bintray</id>
-			<url>https://dl.bintray.com/ottogroup/maven</url>
-		</repository>
-	</repositories>
 </project> 

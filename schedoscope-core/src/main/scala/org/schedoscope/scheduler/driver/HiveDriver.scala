@@ -84,6 +84,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 
     queriesToExecute.foreach(
       q => try {
+        log.debug(s"Hive driver executing query ${q.trim()}")
         statement.execute(q.trim())
       } catch {
         case t: Throwable => {

@@ -20,7 +20,7 @@ import akka.event.{ Logging, LoggingReceive }
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.schedoscope.{ DriverSettings, SchedoscopeSettings }
 import org.schedoscope.dsl.transformations._
-import org.schedoscope.scheduler.driver.{ Driver, RetryableDriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FileSystemDriver, HiveDriver, MapreduceDriver, MorphlineDriver, OozieDriver, PigDriver, ShellDriver }
+import org.schedoscope.scheduler.driver.{ Driver, RetryableDriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FileSystemDriver, HiveDriver, MapreduceDriver, OozieDriver, PigDriver, ShellDriver }
 import org.schedoscope.scheduler.messages._
 import scala.concurrent.duration.{ DurationInt, FiniteDuration }
 import scala.language.postfixOps
@@ -244,11 +244,7 @@ object DriverActor {
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
         transformationManager, ds, (ds: DriverSettings) => OozieDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-
-      case "morphline" => Props(
-        classOf[DriverActor[MorphlineTransformation]],
-        transformationManager, ds, (ds: DriverSettings) => MorphlineDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-
+     
       case "shell" => Props(
         classOf[DriverActor[ShellTransformation]],
         transformationManager, ds, (ds: DriverSettings) => ShellDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")

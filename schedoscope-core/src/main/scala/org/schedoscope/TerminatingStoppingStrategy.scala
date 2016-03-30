@@ -28,6 +28,7 @@ class TerminatingStoppingStrategy extends SupervisorStrategyConfigurator {
 
       System.err
         .println("Terminating Schedoscope: unhandled exception got escalated up the supervisor hierarchy.")
+
       t.printStackTrace()
 
       System.exit(1)

@@ -21,7 +21,23 @@ case class TransformationStatus(actor: String, typ: String, status: String, runS
 
 case class TransformationStatusList(overview: Map[String, Int], transformations: List[TransformationStatus])
 
-case class ViewStatus(view: String, status: String, properties: Option[Map[String, String]], dependencies: Option[List[ViewStatus]])
+case class ViewStatus(
+    viewPath:String, 
+    viewTableName: Option[String], 
+    status: String, 
+    properties: Option[Map[String, String]], 
+    fields: Option[List[FieldStatus]], 
+    parameters: Option[List[FieldStatus]], 
+    dependencies: Option[Map[String, List[String]]], 
+    transformation: Option[ViewTransformationStatus], 
+    storageFormat: Option[String], 
+    materializeOnce: Option[Boolean], 
+    comment: Option[Option[String]], 
+    isTable: Option[Boolean])
+    
+case class FieldStatus(name: String, fieldtype: String, comment: Option[String])
+
+case class ViewTransformationStatus(name: String, properties: Option[Map[String, String]])
 
 case class ViewStatusList(overview: Map[String, Int], views: List[ViewStatus])
 
@@ -75,7 +91,7 @@ trait SchedoscopeService {
    *
    * Finally, there is the option to just return an overview count of views in states instead of returning the states themselves.
    */
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean]): ViewStatusList
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): ViewStatusList
 
   /**
    * Return the states of the transformation drivers. Transformation driver info can be filtered by transformation state or a regexp

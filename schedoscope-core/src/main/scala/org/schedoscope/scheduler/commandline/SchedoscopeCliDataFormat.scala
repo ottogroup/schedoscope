@@ -16,7 +16,7 @@
 package org.schedoscope.scheduler.commandline
 
 import com.bethecoder.ascii_table.ASCIITable
-import org.schedoscope.scheduler.service.{ QueueStatusList, SchedoscopeCommandStatus, TransformationStatusList, ViewStatusList }
+import org.schedoscope.scheduler.service.{ QueueStatusList, SchedoscopeCommandStatus, TransformationStatusList, ViewStatusList, FieldStatus }
 
 import scala.concurrent.Future
 
@@ -58,7 +58,23 @@ object SchedoscopeCliFormat {
         if (!vl.views.isEmpty) {
           sb.append(s"Details:\n")
           val header = Array("VIEW", "STATUS", "PROPS")
-          val data = vl.views.map(d => Array(d.view, d.status, d.properties.mkString(","))).toArray
+
+          val fields = vl.views
+            .filter { viewStatus => viewStatus.fields.isDefined && viewStatus.viewTableName.isDefined }
+            .foldLeft(scala.collection.mutable.Map[String, List[FieldStatus]]()) {
+              (map, viewStatus) => map += (viewStatus.viewTableName.get -> viewStatus.fields.get)
+            }
+
+          val data = vl.views
+          .filter(!_.isTable.getOrElse(false))
+          .map(d => Array(d.viewPath,d.status,
+            if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
+              fields.get(d.viewTableName.get).get.map(fieldStatus => fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") + " " + d.properties.mkString(",")
+            } else {
+              d.properties.mkString(",")
+            }
+          )).toArray
+
           sb.append(ASCIITable.getInstance.getTable(header, data))
           sb.append(s"Total: ${data.size}\n")
         }

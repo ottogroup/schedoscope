@@ -94,7 +94,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 
   def locationDdl(view: View): String = view.tablePath match {
     case "" => ""
-    case l  => if (!view.isExternal) s"LOCATION '${l}'" else ""
+    case l  => s"LOCATION '${l}'"
   }
 
   def ddl(view: View): String =

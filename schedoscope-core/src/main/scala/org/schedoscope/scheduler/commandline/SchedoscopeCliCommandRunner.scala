@@ -30,12 +30,12 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
 
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None, mode: Option[String] = None, overview: Option[Boolean] = None)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None, mode: Option[String] = None, overview: Option[Boolean] = None, all: Option[Boolean] = None)
 
   val parser = new scopt.OptionParser[Config]("schedoscope-control") {
     override def showUsageOnError = true
 
-    head("schedoscope-control", "0.0.1")
+    head("schedoscope-control")
     help("help") text ("print usage")
 
     cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text ("lists all view actors, along with their status") children (
@@ -43,7 +43,8 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional () valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional () valueName ("<regex>") text ("regular expression to filter view display (e.g. 'my.database/.*/Partition1/.*'). "),
       opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional () text ("include dependencies"),
-      opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional () text ("show only overview, skip individual views"))
+      opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional () text ("show only overview, skip individual views"),
+      opt[Unit]('a', "all") action { (_, c) => c.copy(all = Some(true)) } optional () text ("show details for views"))
 
     cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text ("show transformation status") children (
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional () valueName ("<status>") text ("filter transformations by their status (e.g. 'queued, running, idle')"),
@@ -93,7 +94,7 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
               schedoscope.queues(config.typ, config.filter)
             }
             case VIEWS => {
-              schedoscope.views(config.viewUrlPath, config.status, config.filter, config.dependencies, config.overview)
+              schedoscope.views(config.viewUrlPath, config.status, config.filter, config.dependencies, config.overview, config.all)
             }
             case MATERIALIZE => {
               schedoscope.materialize(config.viewUrlPath, config.status, config.filter, config.mode)

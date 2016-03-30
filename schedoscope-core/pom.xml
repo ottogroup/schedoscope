@@ -1,52 +1,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-core</artifactId>
-	<version>0.3.6-SNAPSHOT</version>
 	<name>Schedoscope Core</name>
 	<description>The Schedoscope Hadoop scheduler</description>
 
-	<properties>
-		<akka.version>2.3.14</akka.version>
-		<scala.version>2.11</scala.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-	</properties>
-
-	<profiles>
-		<profile>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<id>cloudera</id>
-			<properties>
-				<hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
-				<hive.version>1.1.0-cdh5.5.1</hive.version>
-				<oozie.version>4.1.0-cdh5.5.1</oozie.version>
-				<pig.version>0.12.0-cdh5.5.1</pig.version>
-			</properties>
-		</profile>
-	</profiles>
-
-	<repositories>
-		<repository>
-			<id>cloudera</id>
-			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-		</repository>
-		<repository>
-			<id>conjars</id>
-			<url>http://conjars.org/repo</url>
-		</repository>
-		<repository>
-			<id>scratch</id>
-			<url>http://pk11-scratch.googlecode.com/svn/trunk</url>
-		</repository>
-		<repository>
-			<id>otto-bintray</id>
-			<url>https://dl.bintray.com/ottogroup/maven</url>
-		</repository>
-	</repositories>
+	<parent>
+		<artifactId>schedoscope-suite</artifactId>
+		<groupId>schedoscope</groupId>
+		<version>0.3.6-SNAPSHOT</version>
+	</parent>
 
 	<dependencies>
 		<dependency>
@@ -248,11 +212,6 @@
 			<version>1.5.0-cdh5.5.0</version>
 		</dependency>
 		<dependency>
-			<groupId>morphline-utils</groupId>
-			<artifactId>morphline-utils</artifactId>
-			<version>0.1.11</version>
-		</dependency>
-		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
 			<version>0.1.11</version>
@@ -314,6 +273,12 @@
 			</exclusions>
 		</dependency>
 		<dependency>
+			<groupId>schedoscope</groupId>
+			<artifactId>schedoscope-export</artifactId>
+			<version>0.3.6-SNAPSHOT</version>
+			<classifier>jar-with-dependencies</classifier>
+		</dependency>
+		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.version}</artifactId>
 			<version>2.2.5</version>
@@ -326,6 +291,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
 		<testSourceDirectory>src/test/scala</testSourceDirectory>
@@ -406,15 +372,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<distributionManagement>
-		<repository>
-			<id>bintray-ottogroup-maven</id>
-			<url>https://api.bintray.com/maven/ottogroup/maven/schedoscope</url>
-		</repository>
-		<snapshotRepository>
-			<id>gbi-snapshots</id>
-			<name>Ecbi-Snapshot-Releases</name>
-			<url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 </project>

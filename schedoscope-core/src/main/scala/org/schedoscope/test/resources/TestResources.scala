@@ -25,7 +25,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.scheduler.driver.{ DriverRunCompletionHandler, DriverRunHandle, DriverRunState, FileSystemDriver, HiveDriver, MapreduceDriver, MorphlineDriver, OozieDriver, PigDriver, ShellDriver }
+import org.schedoscope.scheduler.driver.{ DriverRunCompletionHandler, DriverRunHandle, DriverRunState, FileSystemDriver, HiveDriver, MapreduceDriver, OozieDriver, PigDriver, ShellDriver }
 import org.schedoscope.schema.SchemaManager
 import org.schedoscope.test.Database
 
@@ -88,8 +88,6 @@ abstract class TestResources {
   lazy val pigDriver: PigDriver = new PigDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi)
 
   lazy val mapreduceDriver: MapreduceDriver = new MapreduceDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, fileSystemDriver)
-
-  lazy val morphlineDriver = new MorphlineDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true))
 
   lazy val shellDriver = new ShellDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"))
 

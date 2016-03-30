@@ -17,7 +17,7 @@ package org.schedoscope.dsl
 
 import com.openpojo.reflection.impl.PojoClassFactory
 import org.schedoscope.dsl.storageformats._
-import org.schedoscope.dsl.transformations.{ ExternalTransformation, NoOp, Transformation }
+import org.schedoscope.dsl.transformations.{ NoOp, Transformation }
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.{ ParsedView, ParsedViewAugmentor }
 import org.schedoscope.test.rows
@@ -269,11 +269,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     val t = transformation()
     transformVia(() => t.configureWith(Map((k, v))))
   }
-
-  /**
-   * Is the view computed using an external transformation.
-   */
-  def isExternal = transformation().isInstanceOf[ExternalTransformation]
 
   var isMaterializeOnce = false
 

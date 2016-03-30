@@ -1,15 +1,72 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion>4.0.0</modelVersion>
-        <groupId>schedoscope</groupId>
-        <artifactId>schedoscope-suite</artifactId>
-        <version>0.3.6-SNAPSHOT</version>
-        <packaging>pom</packaging>
-        <name>Schedoscope Suite</name>
-	    <description>A wrapper building all modules of the Schedoscope project</description>
-        <modules>
-                <module>schedoscope-core</module>
-                <module>schedoscope-export</module>
-                <module>schedoscope-tutorial</module>
-        </modules>
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>schedoscope</groupId>
+	<artifactId>schedoscope-suite</artifactId>
+	<version>0.3.6-SNAPSHOT</version>
+	<packaging>pom</packaging>
+	<name>Schedoscope Suite</name>
+	<description>A wrapper building all modules of the Schedoscope project</description>
+
+	<properties>
+		<akka.version>2.3.14</akka.version>
+		<scala.version>2.11</scala.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
+
+	<profiles>
+		<profile>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<id>cloudera</id>
+			<properties>
+				<hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
+				<hive.version>1.1.0-cdh5.5.1</hive.version>
+				<oozie.version>4.1.0-cdh5.5.1</oozie.version>
+				<pig.version>0.12.0-cdh5.5.1</pig.version>
+				<mrunit.version>1.1.0</mrunit.version>
+			</properties>
+		</profile>
+	</profiles>
+
+	<modules>
+		<module>schedoscope-core</module>
+		<module>schedoscope-export</module>
+		<module>schedoscope-tutorial</module>
+	</modules>
+	
+	
+	<repositories>
+		<repository>
+			<id>cloudera</id>
+			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+		</repository>
+		<repository>
+			<id>conjars</id>
+			<url>http://conjars.org/repo</url>
+		</repository>
+		<repository>
+			<id>scratch</id>
+			<url>http://pk11-scratch.googlecode.com/svn/trunk</url>
+		</repository>
+		<repository>
+			<id>otto-bintray</id>
+			<url>https://dl.bintray.com/ottogroup/maven</url>
+		</repository>
+	</repositories>
+
+	<distributionManagement>
+		<repository>
+			<id>bintray-ottogroup-maven</id>
+			<url>https://api.bintray.com/maven/ottogroup/maven/schedoscope</url>
+		</repository>
+		<snapshotRepository>
+			<id>gbi-snapshots</id>
+			<name>Ecbi-Snapshot-Releases</name>
+			<url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>

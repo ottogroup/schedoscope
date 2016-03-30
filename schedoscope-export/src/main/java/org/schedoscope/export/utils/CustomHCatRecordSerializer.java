@@ -30,67 +30,73 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- *The CustomHCatSerializer serializes complex HCatalog
- *types into Json.
+ * The CustomHCatSerializer serializes complex HCatalog types into Json.
  */
 public class CustomHCatRecordSerializer {
 
-    private ObjectMapper jsonMapper;
+	private ObjectMapper jsonMapper;
 
-    private JsonSerDe serde;
+	private JsonSerDe serde;
 
-    /**
-     * The constructor initializes the JsonSerDe and
-     * Jackson ObjectMapper.
-     *
-     * @param conf The Hadoop configuration object.
-     * @param schema The HCatalog Schema
-     */
-    public CustomHCatRecordSerializer(Configuration conf, HCatSchema schema) {
+	/**
+	 * The constructor initializes the JsonSerDe and Jackson ObjectMapper.
+	 *
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 * @param schema
+	 *            The HCatalog Schema
+	 */
+	public CustomHCatRecordSerializer(Configuration conf, HCatSchema schema) {
 
-        jsonMapper = new ObjectMapper();
+		jsonMapper = new ObjectMapper();
 
-        StringBuilder columnNameProperty = new StringBuilder();
-        StringBuilder columnTypeProperty = new StringBuilder();
+		StringBuilder columnNameProperty = new StringBuilder();
+		StringBuilder columnTypeProperty = new StringBuilder();
 
-        String prefix = "";
-        serde = new JsonSerDe();
-        for (HCatFieldSchema f : schema.getFields()) {
-            columnNameProperty.append(prefix);
-            columnTypeProperty.append(prefix);
-            prefix = ",";
-            columnNameProperty.append(f.getName());
-            columnTypeProperty.append(f.getTypeString());
+		String prefix = "";
+		serde = new JsonSerDe();
+		for (HCatFieldSchema f : schema.getFields()) {
+			columnNameProperty.append(prefix);
+			columnTypeProperty.append(prefix);
+			prefix = ",";
+			columnNameProperty.append(f.getName());
+			columnTypeProperty.append(f.getTypeString());
 
-        }
+		}
 
-        Properties tblProps = new Properties();
-        tblProps.setProperty(serdeConstants.LIST_COLUMNS, columnNameProperty.toString());
-        tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES, columnTypeProperty.toString());
-        try {
-            serde.initialize(conf, tblProps);
-        } catch (SerDeException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
-    }
+		Properties tblProps = new Properties();
+		tblProps.setProperty(serdeConstants.LIST_COLUMNS,
+				columnNameProperty.toString());
+		tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES,
+				columnTypeProperty.toString());
+		try {
+			serde.initialize(conf, tblProps);
+		} catch (SerDeException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
+	}
 
-    /**
-     * Extracts a complex field as Json from a
-     * HCatalog record.
-     *
-     * @param value The HCatalogRecord
-     * @param fieldName The field to extract.
-     * @return A string representation of the field.
-     * @throws IOException Is thrown if an error occurs.
-     */
-    public String getJsonComplexType(HCatRecord value, String fieldName) throws IOException {
+	/**
+	 * Extracts a complex field as Json from a HCatalog record.
+	 *
+	 * @param value
+	 *            The HCatalogRecord
+	 * @param fieldName
+	 *            The field to extract.
+	 * @return A string representation of the field.
+	 * @throws IOException
+	 *             Is thrown if an error occurs.
+	 */
+	public String getJsonComplexType(HCatRecord value, String fieldName)
+			throws IOException {
 
-        String json = null;
-        try {
-            json = serde.serialize(value, serde.getObjectInspector()).toString();
-        } catch (SerDeException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
-        return jsonMapper.readTree(json).get(fieldName).toString();
-    }
+		String json = null;
+		try {
+			json = serde.serialize(value, serde.getObjectInspector())
+					.toString();
+		} catch (SerDeException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
+		return jsonMapper.readTree(json).get(fieldName).toString();
+	}
 }

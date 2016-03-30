@@ -28,64 +28,65 @@ import org.apache.hadoop.conf.Configuration;
  */
 public class ExasolSchema extends AbstractSchema {
 
-    protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver";
+	protected static final String JDBC_DRIVER_NAME = "com.exasol.jdbc.EXADriver";
 
-    @SuppressWarnings("serial")
-    private static final Map<String, String> columnTypeMapping = Collections
-            .unmodifiableMap(new HashMap<String, String>() {
-                {
-                    put("string", "varchar(100000)");
-                    put("boolean", "boolean");
-                    put("int", "int");
-                    put("long", "bigint");
-                    put("bigint", "bigint");
-                    put("double", "double");
-                    put("float", "float");
-                    put("tinyint", "int");
-                }
-            });
+	@SuppressWarnings("serial")
+	private static final Map<String, String> columnTypeMapping = Collections
+			.unmodifiableMap(new HashMap<String, String>() {
+				{
+					put("string", "varchar(100000)");
+					put("boolean", "boolean");
+					put("int", "int");
+					put("long", "bigint");
+					put("bigint", "bigint");
+					put("double", "double");
+					put("float", "float");
+					put("tinyint", "int");
+				}
+			});
 
-    @SuppressWarnings("serial")
-    private static final Map<String, String> preparedStatementTypeMapping = Collections
-            .unmodifiableMap(new HashMap<String, String>() {
-                {
-                    put("varchar(100000)", "string");
-                    put("boolean", "boolean");
-                    put("int", "int");
-                    put("bigint", "long");
-                    put("double", "double");
-                    put("float", "float");
-                    put("tinyint", "int");
-                }
-            });
+	@SuppressWarnings("serial")
+	private static final Map<String, String> preparedStatementTypeMapping = Collections
+			.unmodifiableMap(new HashMap<String, String>() {
+				{
+					put("varchar(100000)", "string");
+					put("boolean", "boolean");
+					put("int", "int");
+					put("bigint", "long");
+					put("double", "double");
+					put("float", "float");
+					put("tinyint", "int");
+				}
+			});
 
-    /**
-     * The constructor to initialize the
-     * Exasol dialect.
-     *
-     * @param conf The Hadoop configuration object.
-     */
-    public ExasolSchema(Configuration conf) {
-        super(conf);
-        this.conf.set(Schema.JDBC_DRIVER_CLASS, JDBC_DRIVER_NAME);
-    }
+	/**
+	 * The constructor to initialize the Exasol dialect.
+	 *
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 */
+	public ExasolSchema(Configuration conf) {
+		super(conf);
+		this.conf.set(Schema.JDBC_DRIVER_CLASS, JDBC_DRIVER_NAME);
+	}
 
-    @Override
-    public Map<String, String> getColumnTypeMapping() {
-        return columnTypeMapping;
-    }
+	@Override
+	public Map<String, String> getColumnTypeMapping() {
+		return columnTypeMapping;
+	}
 
-    @Override
-    public Map<String, String> getPreparedStatementTypeMapping() {
-        return preparedStatementTypeMapping;
-    }
+	@Override
+	public Map<String, String> getPreparedStatementTypeMapping() {
+		return preparedStatementTypeMapping;
+	}
 
-    @Override
-    protected String getDistributeByClause() {
-        if (conf.get(JDBC_EXASOL_DISTRIBUTE_CLAUSE) != null) {
-            return ", DISTRIBUTE BY " + conf.get(JDBC_EXASOL_DISTRIBUTE_CLAUSE + "\n");
-        } else {
-            return "";
-        }
-    }
+	@Override
+	protected String getDistributeByClause() {
+		if (conf.get(JDBC_EXASOL_DISTRIBUTE_CLAUSE) != null) {
+			return ", DISTRIBUTE BY "
+					+ conf.get(JDBC_EXASOL_DISTRIBUTE_CLAUSE + "\n");
+		} else {
+			return "";
+		}
+	}
 }
