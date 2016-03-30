@@ -22,71 +22,86 @@ import java.util.Map;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
 /**
- * This class provides utility functions to convert names and types between different database dialects.
+ * This class provides utility functions to convert names and types between
+ * different database dialects.
  *
  */
 public class SchemaUtils {
 
-    /**
-     * Converts the column names from HCatalogSchema to a given database dialect.
-     *
-     * @param inputSchema The HCatalog Schema containing the meta data.
-     * @param schema The database schema dialect.
-     * @return An array of string containing the names of the columns, order is important.
-     */
-    public static String[] getColumnNamesFromHcatSchema(HCatSchema inputSchema, Schema schema) {
+	/**
+	 * Converts the column names from HCatalogSchema to a given database
+	 * dialect.
+	 *
+	 * @param inputSchema
+	 *            The HCatalog Schema containing the meta data.
+	 * @param schema
+	 *            The database schema dialect.
+	 * @return An array of string containing the names of the columns, order is
+	 *         important.
+	 */
+	public static String[] getColumnNamesFromHcatSchema(HCatSchema inputSchema,
+			Schema schema) {
 
-        Map<String, String> columnNameMapping = schema.getColumnNameMapping();
+		Map<String, String> columnNameMapping = schema.getColumnNameMapping();
 
-        Object[] hcatInputNames = inputSchema.getFieldNames().toArray();
-        String[] outputColumnNames = new String[hcatInputNames.length + 1];
+		Object[] hcatInputNames = inputSchema.getFieldNames().toArray();
+		String[] outputColumnNames = new String[hcatInputNames.length + 1];
 
-        for (int i = 0; i < hcatInputNames.length; i++) {
+		for (int i = 0; i < hcatInputNames.length; i++) {
 
-            String fieldName = hcatInputNames[i].toString();
+			String fieldName = hcatInputNames[i].toString();
 
-            if (columnNameMapping.containsKey(fieldName)) {
-                fieldName = columnNameMapping.get(fieldName);
-            }
+			if (columnNameMapping.containsKey(fieldName)) {
+				fieldName = columnNameMapping.get(fieldName);
+			}
 
-            outputColumnNames[i] = fieldName;
-        }
+			outputColumnNames[i] = fieldName;
+		}
 
-        outputColumnNames[hcatInputNames.length] = "used_filter";
-        return outputColumnNames;
-    }
+		outputColumnNames[hcatInputNames.length] = "used_filter";
+		return outputColumnNames;
+	}
 
-    /**
-     * Converts the column types from HCatSchema to the database dialect.
-     *
-     * @param inputSchema The HCatalog Schema containing the meta data.
-     * @param schema The database schema dialect.
-     * @return An array of string containing the column types, order is important.
-     */
-    public static String[] getColumnTypesFromHcatSchema(HCatSchema inputSchema, Schema schema) {
+	/**
+	 * Converts the column types from HCatSchema to the database dialect.
+	 *
+	 * @param inputSchema
+	 *            The HCatalog Schema containing the meta data.
+	 * @param schema
+	 *            The database schema dialect.
+	 * @return An array of string containing the column types, order is
+	 *         important.
+	 */
+	public static String[] getColumnTypesFromHcatSchema(HCatSchema inputSchema,
+			Schema schema) {
 
-        Map<String, String> columnTypeMapping = schema.getColumnTypeMapping();
+		Map<String, String> columnTypeMapping = schema.getColumnTypeMapping();
 
-        String[] fieldTypes = new String[inputSchema.getFieldNames().size() + 1];
+		String[] fieldTypes = new String[inputSchema.getFieldNames().size() + 1];
 
-        for (int i = 0; i < inputSchema.getFieldNames().size(); i++) {
+		for (int i = 0; i < inputSchema.getFieldNames().size(); i++) {
 
-            String type = columnTypeMapping.get("string");
+			String type = columnTypeMapping.get("string");
 
-            if (!inputSchema.get(i).isComplex()) {
+			if (!inputSchema.get(i).isComplex()) {
 
-                if (inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()) == null
-                        || inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()).equals("null")) {
+				if (inputSchema.get(i).getTypeString()
+						.toLowerCase(Locale.getDefault()) == null
+						|| inputSchema.get(i).getTypeString()
+								.toLowerCase(Locale.getDefault())
+								.equals("null")) {
 
-                    type = columnTypeMapping.get("tinyint");
-                } else {
-                    type = columnTypeMapping.get(inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()));
-                }
-            }
-            fieldTypes[i] = type;
-        }
+					type = columnTypeMapping.get("tinyint");
+				} else {
+					type = columnTypeMapping.get(inputSchema.get(i)
+							.getTypeString().toLowerCase(Locale.getDefault()));
+				}
+			}
+			fieldTypes[i] = type;
+		}
 
-        fieldTypes[inputSchema.getFieldNames().size()] = columnTypeMapping.get("string");
-        return fieldTypes;
-    }
+		fieldTypes[inputSchema.getFieldNames().size()] = columnTypeMapping
+				.get("string");
+		return fieldTypes;
+	}
 }

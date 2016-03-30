@@ -41,226 +41,265 @@ import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 import org.schedoscope.export.utils.JdbcQueryUtils;
 
 /**
- * The JDBC output format is responsible to write
- * data into a database using JDBC connection.
+ * The JDBC output format is responsible to write data into a database using
+ * JDBC connection.
  *
- * @param <K> The key class.
- * @param <V> The value class.
+ * @param <K>
+ *            The key class.
+ * @param <V>
+ *            The value class.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V> {
+public class JdbcOutputFormat<K extends DBWritable, V> extends
+		OutputFormat<K, V> {
 
-    private static final Log LOG = LogFactory.getLog(JdbcOutputFormat.class);
+	private static final Log LOG = LogFactory.getLog(JdbcOutputFormat.class);
 
-    private static final String TMPDB = "TMP_";
+	private static final String TMPDB = "TMP_";
 
-    @Override
-    public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
-    }
+	@Override
+	public void checkOutputSpecs(JobContext context) throws IOException,
+			InterruptedException {
+	}
 
-    @Override
-    public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
+	@Override
+	public OutputCommitter getOutputCommitter(TaskAttemptContext context)
+			throws IOException, InterruptedException {
 
-        return new FileOutputCommitter(FileOutputFormat.getOutputPath(context), context);
-    }
+		return new FileOutputCommitter(FileOutputFormat.getOutputPath(context),
+				context);
+	}
 
-    /**
-     * The JDBC Record Writer is used to write data
-     * into a database using a JDBC connection.
-     */
-    @InterfaceStability.Evolving
-    public class JdbcRecordWriter extends RecordWriter<K, V> {
+	/**
+	 * The JDBC Record Writer is used to write data into a database using a JDBC
+	 * connection.
+	 */
+	@InterfaceStability.Evolving
+	public class JdbcRecordWriter extends RecordWriter<K, V> {
 
-        private Connection connection;
-        private PreparedStatement statement;
-        private int rowsInBatch = 0;
-        private int commitSize = 25000;
+		private Connection connection;
+		private PreparedStatement statement;
+		private int rowsInBatch = 0;
+		private int commitSize = 25000;
 
-        public JdbcRecordWriter() throws SQLException {
-        }
+		public JdbcRecordWriter() throws SQLException {
+		}
 
-        /**
-         * The constructor to initialize the JDBC Record Writer.
-         *
-         * @param connection The JDBC connection.
-         * @param statement The prepared statement.
-         * @param commitSize The batch size
-         * @throws SQLException Is thrown if a error occurs.
-         */
-        public JdbcRecordWriter(Connection connection, PreparedStatement statement, int commitSize)
-                throws SQLException {
+		/**
+		 * The constructor to initialize the JDBC Record Writer.
+		 *
+		 * @param connection
+		 *            The JDBC connection.
+		 * @param statement
+		 *            The prepared statement.
+		 * @param commitSize
+		 *            The batch size
+		 * @throws SQLException
+		 *             Is thrown if a error occurs.
+		 */
+		public JdbcRecordWriter(Connection connection,
+				PreparedStatement statement, int commitSize)
+				throws SQLException {
 
-            this.connection = connection;
-            this.statement = statement;
-            this.commitSize = commitSize;
-            this.connection.setAutoCommit(false);
-        }
+			this.connection = connection;
+			this.statement = statement;
+			this.commitSize = commitSize;
+			this.connection.setAutoCommit(false);
+		}
 
-        public Connection getConnection() {
+		public Connection getConnection() {
 
-            return connection;
-        }
+			return connection;
+		}
 
-        public PreparedStatement getStatement() {
+		public PreparedStatement getStatement() {
 
-            return statement;
-        }
+			return statement;
+		}
 
-        @Override
-        public void close(TaskAttemptContext context) throws IOException {
+		@Override
+		public void close(TaskAttemptContext context) throws IOException {
 
-            try {
-                statement.executeBatch();
-                connection.commit();
-            } catch (SQLException e) {
-                try {
-                    connection.rollback();
-                } catch (SQLException ex) {
-                    LOG.warn(StringUtils.stringifyException(ex));
-                }
-                throw new IOException(e.getMessage());
-            } finally {
-                DbUtils.closeQuietly(statement);
-                DbUtils.closeQuietly(connection);
-            }
-        }
+			try {
+				statement.executeBatch();
+				connection.commit();
+			} catch (SQLException e) {
+				try {
+					connection.rollback();
+				} catch (SQLException ex) {
+					LOG.warn(StringUtils.stringifyException(ex));
+				}
+				throw new IOException(e.getMessage());
+			} finally {
+				DbUtils.closeQuietly(statement);
+				DbUtils.closeQuietly(connection);
+			}
+		}
 
-        @Override
-        public void write(K key, V value) throws IOException {
+		@Override
+		public void write(K key, V value) throws IOException {
 
-            try {
-                key.write(statement);
-                statement.addBatch();
-                if (rowsInBatch == commitSize) {
-                    statement.executeBatch();
-                    rowsInBatch = 0;
-                } else {
-                    rowsInBatch++;
-                }
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
+			try {
+				key.write(statement);
+				statement.addBatch();
+				if (rowsInBatch == commitSize) {
+					statement.executeBatch();
+					rowsInBatch = 0;
+				} else {
+					rowsInBatch++;
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+		}
+	}
 
-    @Override
-    public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException {
+	@Override
+	public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context)
+			throws IOException {
 
-        Schema outputSchema = SchemaFactory.getSchema(context.getConfiguration());
+		Schema outputSchema = SchemaFactory.getSchema(context
+				.getConfiguration());
 
-        String tmpOutputTable = TMPDB + outputSchema.getTable() + "_" + context.getTaskAttemptID().getTaskID().getId();
-        String createTableQuery = outputSchema.getCreateTableQuery();
+		String tmpOutputTable = TMPDB + outputSchema.getTable() + "_"
+				+ context.getTaskAttemptID().getTaskID().getId();
+		String createTableQuery = outputSchema.getCreateTableQuery();
 
-        createTableQuery = createTableQuery.replace(outputSchema.getTable(), tmpOutputTable);
+		createTableQuery = createTableQuery.replace(outputSchema.getTable(),
+				tmpOutputTable);
 
-        int commitSize = outputSchema.getCommitSize();
-        String[] fieldNames = outputSchema.getColumnNames();
+		int commitSize = outputSchema.getCommitSize();
+		String[] fieldNames = outputSchema.getColumnNames();
 
-        try {
-            Connection connection = outputSchema.getConnection();
+		try {
+			Connection connection = outputSchema.getConnection();
 
-            JdbcQueryUtils.dropTable(tmpOutputTable, connection);
-            JdbcQueryUtils.createTable(createTableQuery, connection);
+			JdbcQueryUtils.dropTable(tmpOutputTable, connection);
+			JdbcQueryUtils.createTable(createTableQuery, connection);
 
-            PreparedStatement statement = null;
-            statement = connection.prepareStatement(JdbcQueryUtils.createInsertQuery(tmpOutputTable, fieldNames));
+			PreparedStatement statement = null;
+			statement = connection.prepareStatement(JdbcQueryUtils
+					.createInsertQuery(tmpOutputTable, fieldNames));
 
-            return new JdbcRecordWriter(connection, statement, commitSize);
+			return new JdbcRecordWriter(connection, statement, commitSize);
 
-        } catch (Exception ex) {
-            throw new IOException(ex.getMessage());
-        }
-    }
+		} catch (Exception ex) {
+			throw new IOException(ex.getMessage());
+		}
+	}
 
-    /**
-     * Initializes the JDBCOutputFormat.
-     *
-     * @param conf The Hadoop configuration object.
-     * @param connectionString The JDBC connection string.
-     * @param username The database user name
-     * @param password The database password
-     * @param outputTable The output table
-     * @param inputFilter The input filter
-     * @param outputNumberOfPartitions The number of partitions / reducers
-     * @param outputCommitSize The batch size
-     * @param storageEngine The storage engine, either MyISAM or InnoDB (MySQL)
-     * @param distributedBy An optional distribute by clause (Exasol)
-     * @param columnNames The column names.
-     * @param columnsTypes The column types.
-     * @throws IOException Is thrown if an error occurs.
-     */
-    public static void setOutput(Configuration conf, String connectionString, String username, String password,
-            String outputTable, String inputFilter, int outputNumberOfPartitions, int outputCommitSize,
-            String storageEngine, String distributedBy, String[] columnNames, String[] columnsTypes)
-                    throws IOException {
+	/**
+	 * Initializes the JDBCOutputFormat.
+	 *
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 * @param connectionString
+	 *            The JDBC connection string.
+	 * @param username
+	 *            The database user name
+	 * @param password
+	 *            The database password
+	 * @param outputTable
+	 *            The output table
+	 * @param inputFilter
+	 *            The input filter
+	 * @param outputNumberOfPartitions
+	 *            The number of partitions / reducers
+	 * @param outputCommitSize
+	 *            The batch size
+	 * @param storageEngine
+	 *            The storage engine, either MyISAM or InnoDB (MySQL)
+	 * @param distributedBy
+	 *            An optional distribute by clause (Exasol)
+	 * @param columnNames
+	 *            The column names.
+	 * @param columnsTypes
+	 *            The column types.
+	 * @throws IOException
+	 *             Is thrown if an error occurs.
+	 */
+	public static void setOutput(Configuration conf, String connectionString,
+			String username, String password, String outputTable,
+			String inputFilter, int outputNumberOfPartitions,
+			int outputCommitSize, String storageEngine, String distributedBy,
+			String[] columnNames, String[] columnsTypes) throws IOException {
 
-        Schema outputSchema = SchemaFactory.getSchema(connectionString, conf);
-        outputSchema.setOutput(connectionString, username, password, outputTable, inputFilter, outputNumberOfPartitions,
-                outputCommitSize, storageEngine, distributedBy, columnNames, columnsTypes);
-    }
+		Schema outputSchema = SchemaFactory.getSchema(connectionString, conf);
+		outputSchema.setOutput(connectionString, username, password,
+				outputTable, inputFilter, outputNumberOfPartitions,
+				outputCommitSize, storageEngine, distributedBy, columnNames,
+				columnsTypes);
+	}
 
-    /**
-     * This function finalizes the JDBC export, it merges all partitions
-     * and drops the temporary tables, optionally updates the output table.
-     *
-     * @param conf The Hadoop configuration object.
-     * @throws IOException Is thrown if an error occurs.
-     */
-    public static void finalizeOutput(Configuration conf) throws IOException {
+	/**
+	 * This function finalizes the JDBC export, it merges all partitions and
+	 * drops the temporary tables, optionally updates the output table.
+	 *
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 * @throws IOException
+	 *             Is thrown if an error occurs.
+	 */
+	public static void finalizeOutput(Configuration conf) throws IOException {
 
-        Schema outputSchema = SchemaFactory.getSchema(conf);
-        String outputTable = outputSchema.getTable();
-        String tmpOutputTable = TMPDB + outputSchema.getTable();
-        String createTableStatement = outputSchema.getCreateTableQuery();
-        String inputFilter = outputSchema.getFilter();
-        int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
+		Schema outputSchema = SchemaFactory.getSchema(conf);
+		String outputTable = outputSchema.getTable();
+		String tmpOutputTable = TMPDB + outputSchema.getTable();
+		String createTableStatement = outputSchema.getCreateTableQuery();
+		String inputFilter = outputSchema.getFilter();
+		int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
 
-        Connection connection = null;
+		Connection connection = null;
 
-        try {
-            connection = outputSchema.getConnection();
+		try {
+			connection = outputSchema.getConnection();
 
-            if (inputFilter != null) {
-                JdbcQueryUtils.deleteExisitingRows(outputTable, inputFilter, connection);
-            } else {
-                JdbcQueryUtils.dropTable(outputTable, connection);
-            }
+			if (inputFilter != null) {
+				JdbcQueryUtils.deleteExisitingRows(outputTable, inputFilter,
+						connection);
+			} else {
+				JdbcQueryUtils.dropTable(outputTable, connection);
+			}
 
-            JdbcQueryUtils.createTable(createTableStatement, connection);
-            JdbcQueryUtils.mergeOutput(outputTable, TMPDB, outputNumberOfPartitions, connection);
-            JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable, outputNumberOfPartitions, connection);
+			JdbcQueryUtils.createTable(createTableStatement, connection);
+			JdbcQueryUtils.mergeOutput(outputTable, TMPDB,
+					outputNumberOfPartitions, connection);
+			JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable,
+					outputNumberOfPartitions, connection);
 
-        } catch (Exception ex) {
-            throw new IOException(ex.getMessage());
-        } finally {
-            DbUtils.closeQuietly(connection);
-        }
-    }
+		} catch (Exception ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			DbUtils.closeQuietly(connection);
+		}
+	}
 
-    /**
-     * This function is called if the MR job doesn't finish
-     * successfully.
-     *
-     * @param conf The Hadoop configuration object.
-     * @throws IOException Is thrown if an error occurs.
-     */
-    public static void rollback(Configuration conf) throws IOException {
+	/**
+	 * This function is called if the MR job doesn't finish successfully.
+	 *
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 * @throws IOException
+	 *             Is thrown if an error occurs.
+	 */
+	public static void rollback(Configuration conf) throws IOException {
 
-        Schema outputSchema = SchemaFactory.getSchema(conf);
-        String tmpOutputTable = TMPDB + outputSchema.getTable();
-        int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
+		Schema outputSchema = SchemaFactory.getSchema(conf);
+		String tmpOutputTable = TMPDB + outputSchema.getTable();
+		int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
 
-        Connection connection = null;
+		Connection connection = null;
 
-        try {
-            connection = outputSchema.getConnection();
-            JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable, outputNumberOfPartitions, connection);
+		try {
+			connection = outputSchema.getConnection();
+			JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable,
+					outputNumberOfPartitions, connection);
 
-        } catch (Exception ex) {
-            throw new IOException(ex.getMessage());
-        } finally {
-            DbUtils.closeQuietly(connection);
-        }
-    }
+		} catch (Exception ex) {
+			throw new IOException(ex.getMessage());
+		} finally {
+			DbUtils.closeQuietly(connection);
+		}
+	}
 }

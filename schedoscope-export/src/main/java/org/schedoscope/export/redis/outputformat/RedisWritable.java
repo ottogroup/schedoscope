@@ -20,34 +20,38 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Pipeline;
 
 /**
- * The base class for all RedisWritables, takes care of writing data back to redis KV store.
+ * The base class for all RedisWritables, takes care of writing data back to
+ * redis KV store.
  */
 public interface RedisWritable {
 
-    /**
-     * Write data back to redis using the
-     * regular client.
-     *
-     * @param jedis The Redis client.
-     * @param replace Flag to toggle replace mode.
-     */
-    public void write(Jedis jedis, boolean replace);
+	/**
+	 * Write data back to redis using the regular client.
+	 *
+	 * @param jedis
+	 *            The Redis client.
+	 * @param replace
+	 *            Flag to toggle replace mode.
+	 */
+	public void write(Jedis jedis, boolean replace);
 
-    /**
-     * Write data back to redis using the
-     * pipelined client.
-     *
-     * @param jedis The Redis client.
-     * @param replace Flag to toggle replace mode.
-     */
-    public void write(Pipeline jedis, boolean replace);
+	/**
+	 * Write data back to redis using the pipelined client.
+	 *
+	 * @param jedis
+	 *            The Redis client.
+	 * @param replace
+	 *            Flag to toggle replace mode.
+	 */
+	public void write(Pipeline jedis, boolean replace);
 
-    /**
-     * Read data from Redis using the
-     * regular client.
-     *
-     * @param jedis The Redis client
-     * @param key The key to use for lookups.
-     */
-    public void readFields(Jedis jedis, String key);
+	/**
+	 * Read data from Redis using the regular client.
+	 *
+	 * @param jedis
+	 *            The Redis client
+	 * @param key
+	 *            The key to use for lookups.
+	 */
+	public void readFields(Jedis jedis, String key);
 }

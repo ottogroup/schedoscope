@@ -39,91 +39,102 @@ import org.schedoscope.export.utils.StatCounter;
 /**
  * A mapper that reads from Hive tables and emits a RedisWritable.
  */
-public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisWritable> {
+public class RedisExportMapper extends
+		Mapper<WritableComparable<?>, HCatRecord, Text, RedisWritable> {
 
-    private Configuration conf;
+	private Configuration conf;
 
-    private HCatSchema schema;
+	private HCatSchema schema;
 
-    private String keyName;
+	private String keyName;
 
-    private String valueName;
+	private String valueName;
 
-    private String keyPrefix;
+	private String keyPrefix;
 
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
+	@Override
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
-        super.setup(context);
-        conf = context.getConfiguration();
-        schema = HCatInputFormat.getTableSchema(conf);
+		super.setup(context);
+		conf = context.getConfiguration();
+		schema = HCatInputFormat.getTableSchema(conf);
 
-        RedisOutputFormat.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
-        RedisOutputFormat.checkValueType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME));
+		RedisOutputFormat.checkKeyType(schema,
+				conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+		RedisOutputFormat.checkValueType(schema,
+				conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME));
 
-        keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
-        valueName = conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME);
+		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
+		valueName = conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME);
 
-        keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
-    }
+		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
+	}
 
-    @SuppressWarnings("unchecked")
-    @Override
-    protected void map(WritableComparable<?> key, HCatRecord value, Context context)
-            throws IOException, InterruptedException {
+	@SuppressWarnings("unchecked")
+	@Override
+	protected void map(WritableComparable<?> key, HCatRecord value,
+			Context context) throws IOException, InterruptedException {
 
-        Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
-        RedisWritable redisValue = null;
-        boolean write = false;
+		Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
+		RedisWritable redisValue = null;
+		boolean write = false;
 
-        HCatFieldSchema fieldSchema = schema.get(valueName);
+		HCatFieldSchema fieldSchema = schema.get(valueName);
 
-        switch (fieldSchema.getCategory()) {
-        case MAP:
-            Map<String, String> valMap = (Map<String, String>) value.getMap(valueName, schema);
-            if (valMap != null) {
-                redisValue = new RedisHashWritable(redisKey.toString(), valMap);
-                write = true;
-            }
-            break;
-        case ARRAY:
-            List<String> valArray = (List<String>) value.getList(valueName, schema);
-            if (valArray != null) {
-                redisValue = new RedisListWritable(redisKey.toString(), valArray);
-                write = true;
-            }
-            break;
-        case PRIMITIVE:
-            String valStr = value.getString(valueName, schema);
-            if (valStr != null) {
-                redisValue = new RedisStringWritable(redisKey.toString(), valStr);
-                write = true;
-            }
-            break;
-        case STRUCT:
-            List<String> valStruct = (List<String>) value.getStruct(valueName, schema);
-            HCatSchema structSchema = fieldSchema.getStructSubSchema();
-            if (valStruct != null) {
-                MapWritable structValue = new MapWritable();
+		switch (fieldSchema.getCategory()) {
+		case MAP:
+			Map<String, String> valMap = (Map<String, String>) value.getMap(
+					valueName, schema);
+			if (valMap != null) {
+				redisValue = new RedisHashWritable(redisKey.toString(), valMap);
+				write = true;
+			}
+			break;
+		case ARRAY:
+			List<String> valArray = (List<String>) value.getList(valueName,
+					schema);
+			if (valArray != null) {
+				redisValue = new RedisListWritable(redisKey.toString(),
+						valArray);
+				write = true;
+			}
+			break;
+		case PRIMITIVE:
+			String valStr = value.getString(valueName, schema);
+			if (valStr != null) {
+				redisValue = new RedisStringWritable(redisKey.toString(),
+						valStr);
+				write = true;
+			}
+			break;
+		case STRUCT:
+			List<String> valStruct = (List<String>) value.getStruct(valueName,
+					schema);
+			HCatSchema structSchema = fieldSchema.getStructSubSchema();
+			if (valStruct != null) {
+				MapWritable structValue = new MapWritable();
 
-                for (int i = 0; i < structSchema.size(); i++) {
-                    if (valStruct.get(i) != null) {
-                        structValue.put(new Text(structSchema.get(i).getName()), new Text(valStruct.get(i)));
-                        write = true;
-                    }
-                }
-                redisValue = new RedisHashWritable(redisKey, structValue);
-            }
-            break;
-        default:
-            break;
-        }
+				for (int i = 0; i < structSchema.size(); i++) {
+					if (valStruct.get(i) != null) {
+						structValue.put(
+								new Text(structSchema.get(i).getName()),
+								new Text(valStruct.get(i)));
+						write = true;
+					}
+				}
+				redisValue = new RedisHashWritable(redisKey, structValue);
+			}
+			break;
+		default:
+			break;
+		}
 
-        if (write) {
-            context.write(redisKey, redisValue);
-            context.getCounter(StatCounter.SUCCESS).increment(1);
-        } else {
-            context.getCounter(StatCounter.FAILED).increment(1);
-        }
-    }
+		if (write) {
+			context.write(redisKey, redisValue);
+			context.getCounter(StatCounter.SUCCESS).increment(1);
+		} else {
+			context.getCounter(StatCounter.FAILED).increment(1);
+		}
+	}
 }

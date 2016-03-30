@@ -4,33 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>schedoscope-export</artifactId>
 	<name>Schedoscope Export</name>
-	<description>The export framework of Schedoscope Hadoop scheduler</description>
+	<description>A view export framework for Schedoscope</description>
 
 	<parent>
 		<artifactId>schedoscope-suite</artifactId>
 		<groupId>schedoscope</groupId>
 		<version>0.3.6-SNAPSHOT</version>
 	</parent>
-
-	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-	</properties>
-
-	<repositories>
-		<repository>
-			<id>cloudera</id>
-			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-		</repository>
-		<repository>
-			<id>conjars.org</id>
-			<url>http://conjars.org/repo</url>
-		</repository>
-		<repository>
-			<id>bintray.com</id>
-			<url>https://dl.bintray.com/ottogroup/maven</url>
-		</repository>
-	</repositories>
 
 	<dependencies>
 		<dependency>
@@ -300,7 +280,7 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<version>2.17</version>
@@ -322,7 +302,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>findbugs-maven-plugin</artifactId>
@@ -347,15 +327,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<distributionManagement>
-		<repository>
-			<id>bintray-ottogroup-maven</id>
-			<url>https://api.bintray.com/maven/ottogroup/maven/schedoscope</url>
-		</repository>
-		<snapshotRepository>
-			<id>gbi-snapshots</id>
-			<name>Ecbi-Snapshot-Releases</name>
-			<url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 </project>

@@ -12,32 +12,6 @@
 		<version>0.3.6-SNAPSHOT</version>
 	</parent>
 
-	<properties>
-		<akka.version>2.3.14</akka.version>
-		<scala.version>2.11</scala.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-	</properties>
-
-	<repositories>
-		<repository>
-			<id>cloudera</id>
-			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-		</repository>
-		<repository>
-			<id>conjars</id>
-			<url>http://conjars.org/repo</url>
-		</repository>
-		<repository>
-			<id>scratch</id>
-			<url>http://pk11-scratch.googlecode.com/svn/trunk</url>
-		</repository>
-		<repository>
-			<id>otto-bintray</id>
-			<url>https://dl.bintray.com/ottogroup/maven</url>
-		</repository>
-	</repositories>
-
 	<dependencies>
 		<dependency>
 			<groupId>org.slf4j</groupId>
@@ -311,6 +285,7 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
+
 	<build>
 		<sourceDirectory>src/main/scala</sourceDirectory>
 		<testSourceDirectory>src/test/scala</testSourceDirectory>
@@ -391,15 +366,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<distributionManagement>
-		<repository>
-			<id>bintray-ottogroup-maven</id>
-			<url>https://api.bintray.com/maven/ottogroup/maven/schedoscope</url>
-		</repository>
-		<snapshotRepository>
-			<id>gbi-snapshots</id>
-			<name>Ecbi-Snapshot-Releases</name>
-			<url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
 </project>

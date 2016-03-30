@@ -28,56 +28,56 @@ import org.apache.hadoop.conf.Configuration;
  */
 public class DerbySchema extends AbstractSchema {
 
-    protected static final String JDBC_DRIVER_NAME = "org.apache.derby.jdbc.EmbeddedDriver";
+	protected static final String JDBC_DRIVER_NAME = "org.apache.derby.jdbc.EmbeddedDriver";
 
-    @SuppressWarnings("serial")
-    private static final Map<String, String> columnTypeMapping = Collections
-            .unmodifiableMap(new HashMap<String, String>() {
-                {
-                    put("string", "varchar(32000)");
-                    put("boolean", "boolean");
-                    put("int", "int");
-                    put("long", "bigint");
-                    put("bigint", "bigint");
-                    put("double", "double");
-                    put("float", "float");
-                    put("tinyint", "int");
-                }
-            });
+	@SuppressWarnings("serial")
+	private static final Map<String, String> columnTypeMapping = Collections
+			.unmodifiableMap(new HashMap<String, String>() {
+				{
+					put("string", "varchar(32000)");
+					put("boolean", "boolean");
+					put("int", "int");
+					put("long", "bigint");
+					put("bigint", "bigint");
+					put("double", "double");
+					put("float", "float");
+					put("tinyint", "int");
+				}
+			});
 
-    @SuppressWarnings("serial")
-    private static final Map<String, String> preparedStatementTypeMapping = Collections
-            .unmodifiableMap(new HashMap<String, String>() {
-                {
-                    put("varchar(32000)", "string");
-                    put("boolean", "boolean");
-                    put("int", "int");
-                    put("bigint", "long");
-                    put("double", "double");
-                    put("float", "float");
-                    put("tinyint", "int");
-                }
-            });
+	@SuppressWarnings("serial")
+	private static final Map<String, String> preparedStatementTypeMapping = Collections
+			.unmodifiableMap(new HashMap<String, String>() {
+				{
+					put("varchar(32000)", "string");
+					put("boolean", "boolean");
+					put("int", "int");
+					put("bigint", "long");
+					put("double", "double");
+					put("float", "float");
+					put("tinyint", "int");
+				}
+			});
 
-    /**
-     * The constructor to initialize the
-     * Derby dialect.
-     *
-     * @param conf The Hadoop configuration object.
-     */
-    public DerbySchema(Configuration conf) {
+	/**
+	 * The constructor to initialize the Derby dialect.
+	 *
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 */
+	public DerbySchema(Configuration conf) {
 
-        super(conf);
-        this.conf.set(Schema.JDBC_DRIVER_CLASS, JDBC_DRIVER_NAME);
-    }
+		super(conf);
+		this.conf.set(Schema.JDBC_DRIVER_CLASS, JDBC_DRIVER_NAME);
+	}
 
-    @Override
-    public Map<String, String> getColumnTypeMapping() {
-        return columnTypeMapping;
-    }
+	@Override
+	public Map<String, String> getColumnTypeMapping() {
+		return columnTypeMapping;
+	}
 
-    @Override
-    public Map<String, String> getPreparedStatementTypeMapping() {
-        return preparedStatementTypeMapping;
-    }
+	@Override
+	public Map<String, String> getPreparedStatementTypeMapping() {
+		return preparedStatementTypeMapping;
+	}
 }

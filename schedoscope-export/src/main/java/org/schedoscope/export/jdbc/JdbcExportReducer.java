@@ -26,20 +26,24 @@ import org.schedoscope.export.jdbc.outputformat.JdbcOutputWritable;
 /**
  * A reducer that writes data into a database using JDBC connection.
  */
-public class JdbcExportReducer extends Reducer<LongWritable, JdbcOutputWritable, JdbcOutputWritable, NullWritable> {
+public class JdbcExportReducer
+		extends
+		Reducer<LongWritable, JdbcOutputWritable, JdbcOutputWritable, NullWritable> {
 
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
+	@Override
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
-        super.setup(context);
-    }
+		super.setup(context);
+	}
 
-    @Override
-    protected void reduce(LongWritable key, Iterable<JdbcOutputWritable> values, Context context)
-            throws IOException, InterruptedException {
+	@Override
+	protected void reduce(LongWritable key,
+			Iterable<JdbcOutputWritable> values, Context context)
+			throws IOException, InterruptedException {
 
-        for (JdbcOutputWritable w : values) {
-            context.write(w, NullWritable.get());
-        }
-    }
+		for (JdbcOutputWritable w : values) {
+			context.write(w, NullWritable.get());
+		}
+	}
 }

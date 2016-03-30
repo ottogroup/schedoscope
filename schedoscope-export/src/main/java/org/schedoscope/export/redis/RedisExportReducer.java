@@ -26,20 +26,22 @@ import org.schedoscope.export.redis.outputformat.RedisWritable;
 /**
  * A reducer to write data into Redis.
  */
-public class RedisExportReducer extends Reducer<Text, RedisWritable, RedisWritable, NullWritable> {
+public class RedisExportReducer extends
+		Reducer<Text, RedisWritable, RedisWritable, NullWritable> {
 
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
+	@Override
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
-        super.setup(context);
-    }
+		super.setup(context);
+	}
 
-    @Override
-    protected void reduce(Text key, Iterable<RedisWritable> values, Context context)
-            throws IOException, InterruptedException {
+	@Override
+	protected void reduce(Text key, Iterable<RedisWritable> values,
+			Context context) throws IOException, InterruptedException {
 
-        for (RedisWritable w : values) {
-            context.write(w, NullWritable.get());
-        }
-    }
+		for (RedisWritable w : values) {
+			context.write(w, NullWritable.get());
+		}
+	}
 }

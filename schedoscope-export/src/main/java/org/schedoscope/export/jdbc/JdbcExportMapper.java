@@ -40,74 +40,82 @@ import org.schedoscope.export.utils.CustomHCatRecordSerializer;
 /**
  * A mapper that reads data from Hive via HCatalog and emits a JDBC writable..
  */
-public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable> {
+public class JdbcExportMapper
+		extends
+		Mapper<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable> {
 
-    private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
+	private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
 
-    private String[] columnTypes;
+	private String[] columnTypes;
 
-    private Map<String, String> typeMapping;
+	private Map<String, String> typeMapping;
 
-    private HCatSchema inputSchema;
+	private HCatSchema inputSchema;
 
-    private String inputFilter;
+	private String inputFilter;
 
-    private Configuration conf;
+	private Configuration conf;
 
-    private CustomHCatRecordSerializer serializer;
+	private CustomHCatRecordSerializer serializer;
 
-    @Override
-    protected void setup(Context context) throws IOException, InterruptedException {
+	@Override
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
-        super.setup(context);
-        conf = context.getConfiguration();
-        inputSchema = HCatInputFormat.getTableSchema(context.getConfiguration());
+		super.setup(context);
+		conf = context.getConfiguration();
+		inputSchema = HCatInputFormat
+				.getTableSchema(context.getConfiguration());
 
-        serializer = new CustomHCatRecordSerializer(conf, inputSchema);
+		serializer = new CustomHCatRecordSerializer(conf, inputSchema);
 
-        Schema outputSchema = SchemaFactory.getSchema(context.getConfiguration());
+		Schema outputSchema = SchemaFactory.getSchema(context
+				.getConfiguration());
 
-        inputFilter = outputSchema.getFilter();
+		inputFilter = outputSchema.getFilter();
 
-        columnTypes = outputSchema.getColumnTypes();
+		columnTypes = outputSchema.getColumnTypes();
 
-        typeMapping = outputSchema.getPreparedStatementTypeMapping();
+		typeMapping = outputSchema.getPreparedStatementTypeMapping();
 
-        LOG.info("Used Filter: " + inputFilter);
+		LOG.info("Used Filter: " + inputFilter);
 
-    }
+	}
 
-    @Override
-    protected void map(WritableComparable<?> key, HCatRecord value, Context context)
-            throws IOException, InterruptedException {
+	@Override
+	protected void map(WritableComparable<?> key, HCatRecord value,
+			Context context) throws IOException, InterruptedException {
 
-        List<Pair<String, String>> record = new ArrayList<Pair<String, String>>();
+		List<Pair<String, String>> record = new ArrayList<Pair<String, String>>();
 
-        for (String f : inputSchema.getFieldNames()) {
+		for (String f : inputSchema.getFieldNames()) {
 
-            String fieldValue = "NULL";
-            String fieldType = typeMapping.get(columnTypes[inputSchema.getPosition(f)]);
+			String fieldValue = "NULL";
+			String fieldType = typeMapping.get(columnTypes[inputSchema
+					.getPosition(f)]);
 
-            Object obj = value.get(f, inputSchema);
-            if (obj != null) {
+			Object obj = value.get(f, inputSchema);
+			if (obj != null) {
 
-                if (inputSchema.get(f).isComplex()) {
-                    fieldValue = serializer.getJsonComplexType(value, f);
-                } else {
-                    fieldValue = obj.toString();
-                }
-            }
-            record.add(Pair.of(fieldType, fieldValue));
-        }
+				if (inputSchema.get(f).isComplex()) {
+					fieldValue = serializer.getJsonComplexType(value, f);
+				} else {
+					fieldValue = obj.toString();
+				}
+			}
+			record.add(Pair.of(fieldType, fieldValue));
+		}
 
-        String filterType = typeMapping.get(columnTypes[columnTypes.length - 1]);
-        if (inputFilter == null) {
-            record.add(Pair.of(filterType, "NULL"));
-        } else {
-            record.add(Pair.of(filterType, inputFilter));
-        }
+		String filterType = typeMapping
+				.get(columnTypes[columnTypes.length - 1]);
+		if (inputFilter == null) {
+			record.add(Pair.of(filterType, "NULL"));
+		} else {
+			record.add(Pair.of(filterType, inputFilter));
+		}
 
-        LongWritable localKey = new LongWritable(context.getCounter(TaskCounter.MAP_INPUT_RECORDS).getValue());
-        context.write(localKey, new JdbcOutputWritable(record));
-    }
+		LongWritable localKey = new LongWritable(context.getCounter(
+				TaskCounter.MAP_INPUT_RECORDS).getValue());
+		context.write(localKey, new JdbcOutputWritable(record));
+	}
 }

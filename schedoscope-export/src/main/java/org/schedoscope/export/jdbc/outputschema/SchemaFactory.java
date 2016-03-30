@@ -19,49 +19,56 @@ package org.schedoscope.export.jdbc.outputschema;
 import org.apache.hadoop.conf.Configuration;
 
 /**
- * The SchemaFactory returns a concrete Schema implementation determined by the given JDBC connection string.
+ * The SchemaFactory returns a concrete Schema implementation determined by the
+ * given JDBC connection string.
  */
 public class SchemaFactory {
 
-    /**
-     * Returns a concrete schema implementation determined by the JDBC connection string.
-     *
-     * @param dbConnectionString The JDBC connection string.
-     * @param conf The Hadoop configuration object.
-     * @return A concrete {@link Schema} implementation.
-     */
-    public static Schema getSchema(String dbConnectionString, Configuration conf) {
-        String dialect = getDialect(dbConnectionString);
-        if (dialect.equals("exa")) {
-            return new ExasolSchema(conf);
-        } else if (dialect.equals("derby")) {
-            return new DerbySchema(conf);
-        } else if (dialect.equals("mysql")) {
-            return new MySQLSchema(conf);
-        } else if (dialect.equals("postgresql")) {
-            return new PostgreSQLSchema(conf);
-        } else {
-            throw new IllegalArgumentException(dbConnectionString + " not a valid jdbc connection string");
-        }
-    }
+	/**
+	 * Returns a concrete schema implementation determined by the JDBC
+	 * connection string.
+	 *
+	 * @param dbConnectionString
+	 *            The JDBC connection string.
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 * @return A concrete {@link Schema} implementation.
+	 */
+	public static Schema getSchema(String dbConnectionString, Configuration conf) {
+		String dialect = getDialect(dbConnectionString);
+		if (dialect.equals("exa")) {
+			return new ExasolSchema(conf);
+		} else if (dialect.equals("derby")) {
+			return new DerbySchema(conf);
+		} else if (dialect.equals("mysql")) {
+			return new MySQLSchema(conf);
+		} else if (dialect.equals("postgresql")) {
+			return new PostgreSQLSchema(conf);
+		} else {
+			throw new IllegalArgumentException(dbConnectionString
+					+ " not a valid jdbc connection string");
+		}
+	}
 
-    /**
-     * Returns a concrete schema implementation determined by the JDBC connection string, extracted from the Hadoop
-     * configuration object.
-     *
-     * @param conf The Hadoop configuration object.
-     * @return A concrete {@link Schema} implementation.
-     */
-    public static Schema getSchema(Configuration conf) {
-        String dbConnectionString = conf.get(Schema.JDBC_CONNECTION_STRING);
-        return getSchema(dbConnectionString, conf);
-    }
+	/**
+	 * Returns a concrete schema implementation determined by the JDBC
+	 * connection string, extracted from the Hadoop configuration object.
+	 *
+	 * @param conf
+	 *            The Hadoop configuration object.
+	 * @return A concrete {@link Schema} implementation.
+	 */
+	public static Schema getSchema(Configuration conf) {
+		String dbConnectionString = conf.get(Schema.JDBC_CONNECTION_STRING);
+		return getSchema(dbConnectionString, conf);
+	}
 
-    private static String getDialect(String dbConnectionString) {
-        String[] parts = dbConnectionString.split(":");
-        if (parts.length >= 2 && !parts[1].equals("")) {
-            return parts[1];
-        }
-        throw new IllegalArgumentException(dbConnectionString + " not a valid jdbc connection string");
-    }
+	private static String getDialect(String dbConnectionString) {
+		String[] parts = dbConnectionString.split(":");
+		if (parts.length >= 2 && !parts[1].equals("")) {
+			return parts[1];
+		}
+		throw new IllegalArgumentException(dbConnectionString
+				+ " not a valid jdbc connection string");
+	}
 }
