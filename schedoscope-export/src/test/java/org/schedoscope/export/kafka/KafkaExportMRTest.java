@@ -41,68 +41,67 @@ import org.schedoscope.export.testsupport.EmbeddedKafkaCluster;
 
 public class KafkaExportMRTest extends HiveUnitBaseTest {
 
-    protected EmbeddedKafkaCluster kafka;
+	protected EmbeddedKafkaCluster kafka;
 
-    protected TestingServer zkServer;
+	protected TestingServer zkServer;
 
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql",
-                "test_map");
+	@Override
+	@Before
+	public void setUp() throws Exception {
+		super.setUp();
+		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
-        zkServer = new TestingServer(2182);
-        zkServer.start();
-        Thread.sleep(1000);
-        startKafkaServer();
-    }
+		zkServer = new TestingServer(2182);
+		zkServer.start();
+		Thread.sleep(1000);
+		startKafkaServer();
+	}
 
-    @Override
-    @After
-    public void tearDown() throws Exception {
-        super.tearDown();
-        stopKafkaServer();
-        zkServer.close();
-    }
+	@Override
+	@After
+	public void tearDown() throws Exception {
+		super.tearDown();
+		stopKafkaServer();
+		zkServer.close();
+	}
 
-    @Test
-    public void testKafkaMapExport() throws Exception {
+	@Test
+	public void testKafkaMapExport() throws Exception {
 
-        Job job = Job.getInstance(conf);
+		Job job = Job.getInstance(conf);
 
-        Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
-        AvroJob.setMapOutputValueSchema(job, schema);
-        KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
-                ProducerType.sync, CleanupPolicy.delete, "id", "test_map", 1, 1, CompressionCodec.gzip);
+		Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
+		AvroJob.setMapOutputValueSchema(job, schema);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
+				ProducerType.sync, CleanupPolicy.delete, "id", "test_map", 1, 1, CompressionCodec.gzip);
 
-        job.setMapperClass(KafkaExportMapper.class);
-        job.setReducerClass(KafkaExportReducer.class);
-        job.setNumReduceTasks(1);
-        job.setInputFormatClass(HCatInputFormat.class);
-        job.setOutputFormatClass(KafkaOutputFormat.class);
+		job.setMapperClass(KafkaExportMapper.class);
+		job.setReducerClass(KafkaExportReducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(KafkaOutputFormat.class);
 
-        job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(AvroValue.class);
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(AvroValue.class);
 
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(AvroValue.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(AvroValue.class);
 
-        assertTrue(job.waitForCompletion(true));
-    }
+		assertTrue(job.waitForCompletion(true));
+	}
 
-    private void startKafkaServer() throws Exception {
+	private void startKafkaServer() throws Exception {
 
-        ArrayList<Integer> ports = new ArrayList<Integer>();
-        ports.add(9092);
-        kafka = new EmbeddedKafkaCluster(zkServer.getConnectString(), new Properties(), ports);
-        kafka.startup();
-        Thread.sleep(2000);
-    }
+		ArrayList<Integer> ports = new ArrayList<Integer>();
+		ports.add(9092);
+		kafka = new EmbeddedKafkaCluster(zkServer.getConnectString(), new Properties(), ports);
+		kafka.startup();
+		Thread.sleep(2000);
+	}
 
-    private void stopKafkaServer() throws Exception {
+	private void stopKafkaServer() throws Exception {
 
-        kafka.shutdown();
-        Thread.sleep(1000);
-    }
+		kafka.shutdown();
+		Thread.sleep(1000);
+	}
 }

@@ -31,131 +31,136 @@ import org.junit.Test;
 
 public class HCatToAvroRecordConverterSchemaTest {
 
-    PrimitiveTypeInfo stringType = new PrimitiveTypeInfo();
-    PrimitiveTypeInfo longType = new PrimitiveTypeInfo();
-    PrimitiveTypeInfo intType = new PrimitiveTypeInfo();
+	PrimitiveTypeInfo stringType = new PrimitiveTypeInfo();
+	PrimitiveTypeInfo longType = new PrimitiveTypeInfo();
+	PrimitiveTypeInfo intType = new PrimitiveTypeInfo();
 
-    HCatSchema subSchemaMulti;
-    HCatSchema subSchemaSingle;
+	HCatSchema subSchemaMulti;
+	HCatSchema subSchemaSingle;
 
-    @Before
-    public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception {
 
-        stringType.setTypeName("string");
-        longType.setTypeName("bigint");
-        intType.setTypeName("int");
+		stringType.setTypeName("string");
+		longType.setTypeName("bigint");
+		intType.setTypeName("int");
 
-        // create nested sub schema
-        List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
-        HCatFieldSchema field1 = new HCatFieldSchema("nested_field1", longType, "comment");
-        HCatFieldSchema field2 = new HCatFieldSchema("nested_field2", stringType, "comment");
-        HCatFieldSchema field3 = new HCatFieldSchema("nested_field3", intType, "comment");
-        fields.add(field1);
-        subSchemaSingle = new HCatSchema(fields);
-        fields.add(field2);
-        fields.add(field3);
-        subSchemaMulti = new HCatSchema(fields);
-    }
+		// create nested sub schema
+		List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
+		HCatFieldSchema field1 = new HCatFieldSchema("nested_field1", longType, "comment");
+		HCatFieldSchema field2 = new HCatFieldSchema("nested_field2", stringType, "comment");
+		HCatFieldSchema field3 = new HCatFieldSchema("nested_field3", intType, "comment");
+		fields.add(field1);
+		subSchemaSingle = new HCatSchema(fields);
+		fields.add(field2);
+		fields.add(field3);
+		subSchemaMulti = new HCatSchema(fields);
+	}
 
-    @Test
-    public void testStructSchemaConversion() throws IOException {
+	@Test
+	public void testStructSchemaConversion() throws IOException {
 
-        List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
-        HCatFieldSchema field1 = new HCatFieldSchema("field1", longType, "comment");
-        HCatFieldSchema field2 = new HCatFieldSchema("field2", stringType, "comment");
-        HCatFieldSchema field3 = new HCatFieldSchema("field3", intType, "comment");
-        HCatFieldSchema field4 = new HCatFieldSchema("field4", HCatFieldSchema.Type.STRUCT, subSchemaMulti, "comment");
-        fields.add(field1);
-        fields.add(field2);
-        fields.add(field3);
-        fields.add(field4);
+		List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
+		HCatFieldSchema field1 = new HCatFieldSchema("field1", longType, "comment");
+		HCatFieldSchema field2 = new HCatFieldSchema("field2", stringType, "comment");
+		HCatFieldSchema field3 = new HCatFieldSchema("field3", intType, "comment");
+		HCatFieldSchema field4 = new HCatFieldSchema("field4", HCatFieldSchema.Type.STRUCT, subSchemaMulti, "comment");
+		fields.add(field1);
+		fields.add(field2);
+		fields.add(field3);
+		fields.add(field4);
 
-        HCatSchema schemaComplete = new HCatSchema(fields);
-        Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
+		HCatSchema schemaComplete = new HCatSchema(fields);
+		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
 
-        assertEquals("my_table", avroSchema.getName());
+		assertEquals("my_table", avroSchema.getName());
 
-        assertEquals(4, avroSchema.getFields().size());
-        assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
+		assertEquals(4, avroSchema.getFields().size());
+		assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
 
-        assertEquals(Schema.create(Schema.Type.INT), avroSchema.getField("field4").schema().getTypes().get(0).getField("nested_field3").schema().getTypes().get(0));
-        assertEquals(Schema.create(Schema.Type.STRING), avroSchema.getField("field4").schema().getTypes().get(0).getField("nested_field2").schema().getTypes().get(0));
-        assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
-    }
+		assertEquals(Schema.create(Schema.Type.INT), avroSchema.getField("field4").schema().getTypes().get(0)
+				.getField("nested_field3").schema().getTypes().get(0));
+		assertEquals(Schema.create(Schema.Type.STRING), avroSchema.getField("field4").schema().getTypes().get(0)
+				.getField("nested_field2").schema().getTypes().get(0));
+		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
+	}
 
-    @Test
-    public void testArraySchemaConversion() throws IOException {
+	@Test
+	public void testArraySchemaConversion() throws IOException {
 
-        List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
-        HCatFieldSchema field1 = new HCatFieldSchema("field1", longType, "comment");
-        HCatFieldSchema field2 = new HCatFieldSchema("field2", stringType, "comment");
-        HCatFieldSchema field3 = new HCatFieldSchema("field3", intType, "comment");
-        HCatFieldSchema field4 = new HCatFieldSchema("field4", HCatFieldSchema.Type.ARRAY, subSchemaSingle, "comment");
-        fields.add(field1);
-        fields.add(field2);
-        fields.add(field3);
-        fields.add(field4);
+		List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
+		HCatFieldSchema field1 = new HCatFieldSchema("field1", longType, "comment");
+		HCatFieldSchema field2 = new HCatFieldSchema("field2", stringType, "comment");
+		HCatFieldSchema field3 = new HCatFieldSchema("field3", intType, "comment");
+		HCatFieldSchema field4 = new HCatFieldSchema("field4", HCatFieldSchema.Type.ARRAY, subSchemaSingle, "comment");
+		fields.add(field1);
+		fields.add(field2);
+		fields.add(field3);
+		fields.add(field4);
 
-        HCatSchema schemaComplete = new HCatSchema(fields);
-        Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
+		HCatSchema schemaComplete = new HCatSchema(fields);
+		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
 
-        assertEquals("my_table", avroSchema.getName());
-        assertEquals(4, avroSchema.getFields().size());
-        assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
+		assertEquals("my_table", avroSchema.getName());
+		assertEquals(4, avroSchema.getFields().size());
+		assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
 
-        assertEquals(Schema.Type.ARRAY, avroSchema.getField("field4").schema().getTypes().get(0).getType());
-        assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field4").schema().getTypes().get(0).getElementType().getTypes().get(0));
-        assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
-    }
+		assertEquals(Schema.Type.ARRAY, avroSchema.getField("field4").schema().getTypes().get(0).getType());
+		assertEquals(Schema.create(Schema.Type.LONG),
+				avroSchema.getField("field4").schema().getTypes().get(0).getElementType().getTypes().get(0));
+		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
+	}
 
-    @Test
-    public void testMapSchemaConversion() throws IOException {
+	@Test
+	public void testMapSchemaConversion() throws IOException {
 
-        List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
-        HCatFieldSchema field1 = new HCatFieldSchema("field1", longType, "comment");
-        HCatFieldSchema field2 = new HCatFieldSchema("field2", stringType, "comment");
-        HCatFieldSchema field3 = new HCatFieldSchema("field3", intType, "comment");
-        HCatFieldSchema field4 = HCatFieldSchema.createMapTypeFieldSchema("field4", stringType, subSchemaSingle, "comment");
-        fields.add(field1);
-        fields.add(field2);
-        fields.add(field3);
-        fields.add(field4);
+		List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
+		HCatFieldSchema field1 = new HCatFieldSchema("field1", longType, "comment");
+		HCatFieldSchema field2 = new HCatFieldSchema("field2", stringType, "comment");
+		HCatFieldSchema field3 = new HCatFieldSchema("field3", intType, "comment");
+		HCatFieldSchema field4 = HCatFieldSchema.createMapTypeFieldSchema("field4", stringType, subSchemaSingle,
+				"comment");
+		fields.add(field1);
+		fields.add(field2);
+		fields.add(field3);
+		fields.add(field4);
 
-        HCatSchema schemaComplete = new HCatSchema(fields);
-        Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
+		HCatSchema schemaComplete = new HCatSchema(fields);
+		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
 
-        assertEquals("my_table", avroSchema.getName());
-        assertEquals(4, avroSchema.getFields().size());
-        assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
+		assertEquals("my_table", avroSchema.getName());
+		assertEquals(4, avroSchema.getFields().size());
+		assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
 
-        assertEquals(Schema.Type.MAP, avroSchema.getField("field4").schema().getTypes().get(0).getType());
-        assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field4").schema().getTypes().get(0).getValueType().getTypes().get(0));
-        assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
-    }
+		assertEquals(Schema.Type.MAP, avroSchema.getField("field4").schema().getTypes().get(0).getType());
+		assertEquals(Schema.create(Schema.Type.LONG),
+				avroSchema.getField("field4").schema().getTypes().get(0).getValueType().getTypes().get(0));
+		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
+	}
 
-    @Test
-    public void testStuctStructSchemaConversion() throws IOException {
+	@Test
+	public void testStuctStructSchemaConversion() throws IOException {
 
-        List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
-        HCatFieldSchema field1 = new HCatFieldSchema("field1", longType, "comment");
-        HCatFieldSchema field2 = new HCatFieldSchema("field2", stringType, "comment");
-        HCatFieldSchema field3 = new HCatFieldSchema("field3", intType, "comment");
-        HCatFieldSchema field4 = new HCatFieldSchema("field4", HCatFieldSchema.Type.STRUCT, subSchemaMulti, "comment");
-        fields.add(field1);
-        fields.add(field2);
-        fields.add(field3);
-        fields.add(field4);
+		List<HCatFieldSchema> fields = new ArrayList<HCatFieldSchema>();
+		HCatFieldSchema field1 = new HCatFieldSchema("field1", longType, "comment");
+		HCatFieldSchema field2 = new HCatFieldSchema("field2", stringType, "comment");
+		HCatFieldSchema field3 = new HCatFieldSchema("field3", intType, "comment");
+		HCatFieldSchema field4 = new HCatFieldSchema("field4", HCatFieldSchema.Type.STRUCT, subSchemaMulti, "comment");
+		fields.add(field1);
+		fields.add(field2);
+		fields.add(field3);
+		fields.add(field4);
 
-        HCatSchema subStructSchema = new HCatSchema(fields);
+		HCatSchema subStructSchema = new HCatSchema(fields);
 
-        HCatFieldSchema field5 = new HCatFieldSchema("field5", HCatFieldSchema.Type.STRUCT, subStructSchema, "comment");
-        fields.add(field5);
+		HCatFieldSchema field5 = new HCatFieldSchema("field5", HCatFieldSchema.Type.STRUCT, subStructSchema, "comment");
+		fields.add(field5);
 
-        HCatSchema schemaComplete = new HCatSchema(fields);
+		HCatSchema schemaComplete = new HCatSchema(fields);
 
-        Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
+		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
 
-        assertEquals(5, avroSchema.getFields().size());
-        assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
-    }
+		assertEquals(5, avroSchema.getFields().size());
+		assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
+	}
 }
