@@ -144,7 +144,7 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
 
   def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
-    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(successFlagExists(view))
+    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
     case _       => new ViewSchedulingStateMachineImpl
   }
 
