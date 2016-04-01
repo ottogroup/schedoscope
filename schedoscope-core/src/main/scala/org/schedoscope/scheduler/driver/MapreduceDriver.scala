@@ -82,24 +82,13 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
   /**
    * Run mapreduce job, block, and return the result as a run state when job terminated.
    */
-  override def runAndWait(t: MapreduceTransformation): DriverRunState[MapreduceTransformation] = try {
+  override def runAndWait(t: MapreduceTransformation): DriverRunState[MapreduceTransformation] = {
+    val runHandle = run(t)
 
-    ugi.doAs {
+    while (getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[MapreduceTransformation]])
+      Thread.sleep(5000)
 
-      new PrivilegedAction[DriverRunState[MapreduceTransformation]]() {
-
-        def run(): DriverRunState[MapreduceTransformation] = {
-          t.configure()
-          t.directoriesToDelete.foreach(d => fileSystemDriver.delete(d, true))
-
-          t.job.waitForCompletion(true)
-
-          getDriverRunState(new DriverRunHandle[MapreduceTransformation](driver, new LocalDateTime(), t, t.job))
-        }
-      }
-    }
-  } catch {
-    case e: Throwable => DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${t.job.getJobName} failed", e)
+    getDriverRunState(runHandle)
   }
 
   /**

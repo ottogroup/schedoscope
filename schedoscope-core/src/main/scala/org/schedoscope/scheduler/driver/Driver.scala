@@ -98,7 +98,7 @@ class DoNothingCompletionHandler[T <: Transformation] extends DriverRunCompletio
  *
  * Generally, there are two classes of implementations of this trait depending on the API
  * supporting a transformation. For blocking APIs, driver run states are implemented using futures.
- * For non-blocking APIs, driver run states can encapsulate whatever handler mechanism is supported
+ * For non-blocking APIs, driver run states can encapsulate whatever job handle mechanism is supported
  * by the API.
  *
  * The present trait provides default implementations for blocking APIs. To support one, the methods

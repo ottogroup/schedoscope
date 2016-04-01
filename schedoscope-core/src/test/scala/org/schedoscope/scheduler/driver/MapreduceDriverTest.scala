@@ -74,12 +74,6 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute Mapreduce tranformations and return errors when running synchronously" taggedAs (DriverTests) in {
-    val driverRunState = driver.runAndWait(MapreduceTransformation(new DummyView(), invalidJob))
-
-    driverRunState shouldBe a[DriverRunFailed[_]]
-  }
-
   it should "execute Mapreduce tranformations asynchronously" taggedAs (DriverTests) in {
     val driverRunHandle = driver.run(MapreduceTransformation(new DummyView(), identityJob))
 
