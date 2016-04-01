@@ -20,7 +20,7 @@ import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.{ DriverTests, OozieTests }
 import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.test.resources.OozieTestResources
-import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
 
 class OozieDriverTest extends FlatSpec with Matchers {
 
@@ -112,13 +112,21 @@ class OozieDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+  it should "call its DriverRunCompletitionHandlers' driverRunCompleted upon request" taggedAs (DriverTests) in {
     val runHandle = driver.run(workingOozieTransformation)
 
     while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
 
     driver.driverRunCompleted(runHandle)
 
-    driverRunCompletionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+    driverRunCompletedCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+  }
+
+  it should "call its DriverRunCompletitionHandlers' driverRunStarted upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(workingOozieTransformation)
+
+    driver.driverRunStarted(runHandle)
+
+    driverRunStartedCalled(runHandle) shouldBe true
   }
 }

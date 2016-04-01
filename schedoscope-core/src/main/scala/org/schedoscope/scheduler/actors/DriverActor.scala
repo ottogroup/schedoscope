@@ -191,16 +191,17 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
         runningCommand = None
       } else {
         val runHandle = driver.run(commandToRun.command.asInstanceOf[T])
+        driver.driverRunStarted(runHandle)
 
         logStateInfo("running", s"DRIVER ACTOR: Running command ${commandToRun}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
 
         become(running(runHandle, commandToRun.sender))
       }
     } catch {
-      case exception: RetryableDriverException => {
-        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in receive state, rethrowing: ${exception.message}, cause ${exception.cause}")
+      case retryableException: RetryableDriverException => {
+        log.error(s"DRIVER ACTOR: Driver exception caught by driver actor in receive state, rethrowing: ${retryableException.message}, cause ${retryableException.cause}")
 
-        throw exception
+        throw retryableException
       }
 
       case t: Throwable => {
@@ -244,7 +245,7 @@ object DriverActor {
       case "oozie" => Props(
         classOf[DriverActor[OozieTransformation]],
         transformationManager, ds, (ds: DriverSettings) => OozieDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-     
+
       case "shell" => Props(
         classOf[DriverActor[ShellTransformation]],
         transformationManager, ds, (ds: DriverSettings) => ShellDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")

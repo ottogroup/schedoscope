@@ -22,7 +22,7 @@ import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.transformations.{ FilesystemTransformation, _ }
 import org.schedoscope.test.resources.LocalTestResources
-import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
 import test.eci.datahub.Product
 
 class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
@@ -241,14 +241,22 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
     inputFile("subfolder") shouldBe 'exists
   }
 
-  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+  it should "call its DriverRunCompletitionHandlers' driverRunCompleted upon request" taggedAs (DriverTests) in {
     val runHandle = driver.run(Touch(outputPath("aTest.file")))
 
     while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[FilesystemTransformation]]) {}
 
     driver.driverRunCompleted(runHandle)
 
-    driverRunCompletionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+    driverRunCompletedCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 
+  it should "call its DriverRunCompletitionHandlers' driverRunStarted upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(Touch(outputPath("aTest.file")))
+
+    driver.driverRunStarted(runHandle)
+
+    driverRunStartedCalled(runHandle) shouldBe true
+  }
+  
 }

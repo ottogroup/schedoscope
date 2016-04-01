@@ -17,6 +17,7 @@ package org.schedoscope.test.resources
 
 import java.sql.{ Connection, DriverManager }
 import java.util.concurrent.ConcurrentHashMap
+import java.util.Collections
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
@@ -30,18 +31,31 @@ import org.schedoscope.schema.SchemaManager
 import org.schedoscope.test.Database
 
 object TestDriverRunCompletionHandlerCallCounter {
-  val calls = new ConcurrentHashMap[DriverRunHandle[_], DriverRunState[_]]()
+  val driverRunStartedCalls = Collections.newSetFromMap(new ConcurrentHashMap[DriverRunHandle[_], java.lang.Boolean]())
+  val driverRunCompletedCalls = new ConcurrentHashMap[DriverRunHandle[_], DriverRunState[_]]()
 
-  def countDriverRunCompletionHandlerCall(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) {
-    calls.put(run, stateOfCompletion)
+  def countDriverRunStartedHandlerCall(run: DriverRunHandle[_]) {
+    driverRunStartedCalls.add(run)
   }
 
-  def driverRunCompletionHandlerCalled(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) = calls.get(run) == stateOfCompletion
+  def countDriverRunCompletedHandlerCall(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) {
+    driverRunCompletedCalls.put(run, stateOfCompletion)
+  }
+
+  def driverRunStartedCalled(run: DriverRunHandle[_]) = driverRunStartedCalls.contains(run)
+
+  def driverRunCompletedCalled(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) = driverRunCompletedCalls.get(run) == stateOfCompletion
 }
 
 class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompletionHandler[T] {
+  import TestDriverRunCompletionHandlerCallCounter._
+
+  def driverRunStarted(run: DriverRunHandle[T]) {
+    countDriverRunStartedHandlerCall(run)
+  }
+
   def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T]) {
-    TestDriverRunCompletionHandlerCallCounter.countDriverRunCompletionHandlerCall(run, stateOfCompletion)
+    countDriverRunCompletedHandlerCall(run, stateOfCompletion)
   }
 }
 

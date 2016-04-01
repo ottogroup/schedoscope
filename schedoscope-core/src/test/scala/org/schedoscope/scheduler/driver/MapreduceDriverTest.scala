@@ -28,7 +28,7 @@ import org.schedoscope.DriverTests
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{ FailingMapper, MapreduceTransformation }
 import org.schedoscope.test.resources.LocalTestResources
-import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
 
 class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
   lazy val driver: MapreduceDriver = new LocalTestResources().mapreduceDriver
@@ -98,13 +98,21 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+  it should "call its DriverRunCompletitionHandlers' driverRunCompleted upon request" taggedAs (DriverTests) in {
     val runHandle = driver.run(MapreduceTransformation(new DummyView(), identityJob))
 
     while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
 
     driver.driverRunCompleted(runHandle)
 
-    driverRunCompletionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+    driverRunCompletedCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+  }
+
+  it should "call its DriverRunCompletitionHandlers' driverRunStarted upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(MapreduceTransformation(new DummyView(), identityJob))
+
+    driver.driverRunStarted(runHandle)
+
+    driverRunStartedCalled(runHandle) shouldBe true
   }
 }
