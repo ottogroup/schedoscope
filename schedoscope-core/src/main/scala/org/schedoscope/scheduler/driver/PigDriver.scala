@@ -33,21 +33,14 @@ import scala.concurrent.Future
  */
 class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[PigTransformation] {
 
-  /**
-   * Set transformation name to pig
-   */
   override def transformationName = "pig"
-
-  val log = LoggerFactory.getLogger(classOf[PigDriver])
-
-  val driver = this // needed to access driver within ugi.doAs below
 
   /**
    * Construct a future-based driver run handle
    */
   def run(t: PigTransformation): DriverRunHandle[PigTransformation] =
     new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, Future {
-      // FIXME: future work: register jars, custom functions
+      // FIXME: future work: custom functions
       executePigTransformation(t.latin, t.dirsToDelete, t.defaultLibraries, t.configuration.toMap, t.getView())
     })
 
@@ -58,16 +51,23 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
     conf.foreach(c => props.put(c._1, c._2.asInstanceOf[Object]))
 
     ugi.doAs(new PrivilegedAction[DriverRunState[PigTransformation]]() {
+
       def run(): DriverRunState[PigTransformation] = {
-        val ps = new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "MAPREDUCE").toString), props)
+
+        val ps = try {
+          new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "MAPREDUCE").toString), props)
+        } catch {
+          case t: Throwable => new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "mapreduce").toString), props)
+        }
+
         try {
-          // FIXME: we're doing parameter replacement by ourselves, because registerQuery doesn't support to specify parameters like
-          // registerScript does (and attention: pig doesn't support variable names containing a dot).
-          // another workaround would be: ps.registerScript(IOUtils.toInputStream(latin, "UTF-8") , conf.filter(!_._1.contains(".")).map(c => (c._1, c._2.toString)))
           ps.setJobName(view)
+
           directoriesToDelete.foreach(d => ps.deleteFile(d))
           libraries.foreach(l => ps.registerJar(l))
+
           ps.registerQuery(actualLatin)
+
           DriverRunSucceeded[PigTransformation](driver, s"Pig script ${actualLatin} executed")
         } catch {
           // FIXME: do we need special handling for some exceptions here (similar to hive?)
@@ -78,6 +78,8 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
       }
     })
   }
+
+  def driver = this
 }
 
 /**
@@ -86,5 +88,4 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
 object PigDriver {
   def apply(ds: DriverSettings) =
     new PigDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation)
-
 }
