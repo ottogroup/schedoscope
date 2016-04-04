@@ -16,8 +16,6 @@
 
 package org.schedoscope.export.jdbc;
 
-import java.io.IOException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -36,6 +34,8 @@ import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.schedoscope.export.jdbc.exception.RetryException;
+import org.schedoscope.export.jdbc.exception.UnrecoverableException;
 import org.schedoscope.export.jdbc.outputformat.JdbcOutputFormat;
 import org.schedoscope.export.jdbc.outputformat.JdbcOutputWritable;
 import org.schedoscope.export.jdbc.outputschema.Schema;
@@ -118,11 +118,13 @@ public class JdbcExportJob extends Configured implements Tool {
 	 *            A flag indicating if job was successful.
 	 * @param conf
 	 *            The Hadoop configuration object.
-	 * @throws IOException
-	 *             Is thrown if an error occurs.
+	 * @throws RetryException
+	 *             Is thrown if a SQL error occurs.
+	 * @throws UnrecoverableException
+	 *             Is thrown if JDBC driver issue occurs.
 	 */
 	public void postCommit(boolean jobSuccessful, Configuration conf)
-			throws IOException {
+			throws RetryException, UnrecoverableException {
 
 		if (jobSuccessful) {
 			JdbcOutputFormat.finalizeOutput(conf);
