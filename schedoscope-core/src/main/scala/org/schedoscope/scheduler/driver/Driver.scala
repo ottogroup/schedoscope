@@ -64,22 +64,30 @@ case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T
 case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
 
 /**
- * Trait for user defined code to be executed after a transformation. e.g. for gathering statistics
+ * Trait for user defined code to be executed before and after  a transformation. e.g. for gathering statistics
  * and logging information from the execution framework (e.g. mapreduce)
+ *
+ * As for exceptions:
+ *
+ * Should a failure within the completion handler not cause the transformation to fail, the exception should be suppressed.
+ *
+ * Should a failure within the completion handler cause a restart of the driver actor and a redo of the transformation,
+ * it should be raised as a DriverException.
+ *
+ * Any other raised exception will cause the driver run to fail and the transformation subsequently to be retried by the view actor.
+ *
  */
 trait DriverRunCompletionHandler[T <: Transformation] {
 
   /**
+   * This method is called immediately after a driver started a transformation. This can be used to take measurements before the execution
+   * of a driver run or other setup tasks.
+   */
+  def driverRunStarted(run: DriverRunHandle[T])
+
+  /**
    * This method has to be implemented for gathering information about a completed run run
    *
-   * As for exceptions:
-   *
-   * In case a failure within the completion handler should not cause the transformation to fail, the exception should be suppressed.
-   *
-   * In case a failure within the completion handler should cause a restart of the driver actor and a redo of the transformation,
-   * it should be raised as a DriverException.
-   *
-   * Any other raised exception will cause the driver run to fail and the transformation subsequently to be retried by the view actor.
    */
   def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T])
 }
@@ -88,7 +96,11 @@ trait DriverRunCompletionHandler[T <: Transformation] {
  * Default implementation of a completion handler. Does nothing
  */
 class DoNothingCompletionHandler[T <: Transformation] extends DriverRunCompletionHandler[T] {
+
+  def driverRunStarted(run: DriverRunHandle[T]) {}
+
   def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T]) {}
+
 }
 
 /**
@@ -98,7 +110,7 @@ class DoNothingCompletionHandler[T <: Transformation] extends DriverRunCompletio
  *
  * Generally, there are two classes of implementations of this trait depending on the API
  * supporting a transformation. For blocking APIs, driver run states are implemented using futures.
- * For non-blocking APIs, driver run states can encapsulate whatever handler mechanism is supported
+ * For non-blocking APIs, driver run states can encapsulate whatever job handle mechanism is supported
  * by the API.
  *
  * The present trait provides default implementations for blocking APIs. To support one, the methods
@@ -189,7 +201,14 @@ trait Driver[T <: Transformation] {
     driverRunCompletionHandlerClassNames.map { className => Class.forName(className).newInstance().asInstanceOf[DriverRunCompletionHandler[T]] }
 
   /**
-   * Invokes completion handler on the given driver run.
+   * Invokes completion handlers prior to the given driver run.
+   */
+  def driverRunStarted(run: DriverRunHandle[T]) {
+    driverRunCompletionHandlers.foreach(_.driverRunStarted(run))
+  }
+
+  /**
+   * Invokes completion handlers after the given driver run.
    */
   def driverRunCompleted(run: DriverRunHandle[T]) {
     getDriverRunState(run) match {

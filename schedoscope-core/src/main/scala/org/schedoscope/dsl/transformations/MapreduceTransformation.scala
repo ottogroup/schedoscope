@@ -21,16 +21,28 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.mapreduce.{ Job, MRJobConfig }
 import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.driver.DriverRunState
 
 /**
  * Compute a view using a plain Map-Reduce job.
  *
  * @param view reference to the view being computed
- * @param createJob closure to create the job configuration
+ *
+ * @param createJob function to create the MapReduce job object.
+ * 									For this purpose, it is passed the transformation configuration map.
+ * 									It must return the prepared job object.
+ * @param cleanupAfterJob function to perform cleanup tasks after job completion.
+ * 									It is passed the job object as well as the driver run state after job completion.
+ * 									It must return a final run state.
+ * 									The default does nothing and returns the run state after job completion unmolested.
  * @param dirsToDelete List of directories to empty before execution. Includes the view's fullPath
  *
  */
-case class MapreduceTransformation(v: View, createJob: (Map[String, Any]) => Job, dirsToDelete: List[String] = List()) extends Transformation {
+case class MapreduceTransformation(
+    v: View,
+    createJob: (Map[String, Any]) => Job,
+    cleanupAfterJob: (Job, DriverRunState[MapreduceTransformation]) => DriverRunState[MapreduceTransformation] = (_, completionRunState) => completionRunState,
+    dirsToDelete: List[String] = List()) extends Transformation {
 
   override def name = "mapreduce"
 
