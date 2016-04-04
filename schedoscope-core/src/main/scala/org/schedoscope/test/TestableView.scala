@@ -70,7 +70,6 @@ trait test extends TestableView {
     }
 
     val d = driver()
-    val rto = d.runTimeOut
     d.runAndWait(trans)
     // FIXME: some transformations may create the partition by themselves?
     if (this.isPartitioned()) {

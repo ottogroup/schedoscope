@@ -11,7 +11,7 @@ package org.schedoscope.dsl.transformations
  *
  */
 case class ShellTransformation(script: String = "", scriptFile: String = "", shell: String = "/bin/bash") extends Transformation {
-  override def name = "shell"
+  def name = "shell"
 
   override def fileResourcesToChecksum = if (scriptFile != "") List(scriptFile) else List()
 

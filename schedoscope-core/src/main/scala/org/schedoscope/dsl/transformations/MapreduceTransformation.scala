@@ -44,7 +44,7 @@ case class MapreduceTransformation(
     cleanupAfterJob: (Job, DriverRunState[MapreduceTransformation]) => DriverRunState[MapreduceTransformation] = (_, completionRunState) => completionRunState,
     dirsToDelete: List[String] = List()) extends Transformation {
 
-  override def name = "mapreduce"
+  def name = "mapreduce"
 
   lazy val job = createJob(configuration.toMap)
 

@@ -31,9 +31,9 @@ import scala.concurrent.Future
 /**
  * Driver for Pig transformations.
  */
-class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends Driver[PigTransformation] {
+class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation) extends DriverOnBlockingApi[PigTransformation] {
 
-  override def transformationName = "pig"
+  def transformationName = "pig"
 
   /**
    * Construct a future-based driver run handle
@@ -44,6 +44,9 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
       executePigTransformation(t.latin, t.dirsToDelete, t.defaultLibraries, t.configuration.toMap, t.getView())
     })
 
+  /**
+   * Really executed the given Pig Latin.
+   */
   def executePigTransformation(latin: String, directoriesToDelete: List[String], libraries: List[String], conf: Map[String, Any], view: String): DriverRunState[PigTransformation] = {
     val actualLatin = replaceParameters(latin, conf)
 

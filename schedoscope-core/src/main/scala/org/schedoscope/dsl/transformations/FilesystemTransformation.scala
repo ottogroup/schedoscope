@@ -23,8 +23,8 @@ import org.schedoscope.dsl.View
  * FileSystem transformations: compute views by copying or moving files
  *
  */
-sealed class FilesystemTransformation extends Transformation {
-  override def name = "filesystem"
+class FilesystemTransformation extends Transformation {
+  def name = "filesystem"
 }
 
 /**

@@ -58,8 +58,8 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   val nonFilesystemQueues = availableTransformations.filter {
     _ != "filesystem"
   }.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
-    (nonFilesystemQueuesSoFar, driverName) =>
-      nonFilesystemQueuesSoFar + (driverName -> new collection.mutable.Queue[CommandWithSender]())
+    (nonFilesystemQueuesSoFar, transformationName) =>
+      nonFilesystemQueuesSoFar + (transformationName -> new collection.mutable.Queue[CommandWithSender]())
   }
 
   val filesystemConcurrency = settings.getDriverSettings("filesystem").concurrency
