@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.schedoscope.export.kafka.outputformat;
+package org.schedoscope.export.kafka.options;
 
 /**
  * An Enum representing the cleanup policy.

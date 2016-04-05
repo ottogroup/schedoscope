@@ -14,29 +14,22 @@
  * limitations under the License.
  */
 
-package org.schedoscope.export.kafka.outputformat;
+package org.schedoscope.export.kafka.options;
 
 /**
- * An enum representing the different compression codecs Kafka can use (gzip /
- * snappy / none).
+ * An Enum representing the output encoding.
  */
-public enum CompressionCodec {
-	none {
+public enum OutputEncoding {
+	string {
 		@Override
 		public String toString() {
-			return "none";
+			return "string";
 		}
 	},
-	snappy {
+	avro {
 		@Override
 		public String toString() {
-			return "snappy";
-		}
-	},
-	gzip {
-		@Override
-		public String toString() {
-			return "gzip";
+			return "avro";
 		}
 	}
 }

@@ -56,6 +56,10 @@
 			<id>otto-bintray</id>
 			<url>https://dl.bintray.com/ottogroup/maven</url>
 		</repository>
+		<repository>
+			<id>lambdanow-bintray</id>
+			<url>https://dl.bintray.com/lambdanow/maven</url>
+		</repository>
 	</repositories>
 
 	<distributionManagement>

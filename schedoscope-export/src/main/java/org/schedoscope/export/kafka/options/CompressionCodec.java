@@ -14,22 +14,29 @@
  * limitations under the License.
  */
 
-package org.schedoscope.export.kafka.outputformat;
+package org.schedoscope.export.kafka.options;
 
 /**
- * An Enum representing the different Kafka producer types (sync / async).
+ * An enum representing the different compression codecs Kafka can use (gzip /
+ * snappy / none).
  */
-public enum ProducerType {
-	sync {
+public enum CompressionCodec {
+	none {
 		@Override
 		public String toString() {
-			return "sync";
+			return "none";
 		}
 	},
-	async {
+	snappy {
 		@Override
 		public String toString() {
-			return "async";
+			return "snappy";
+		}
+	},
+	gzip {
+		@Override
+		public String toString() {
+			return "gzip";
 		}
 	}
 }

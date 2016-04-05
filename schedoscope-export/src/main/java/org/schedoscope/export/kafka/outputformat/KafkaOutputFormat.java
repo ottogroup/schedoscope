@@ -31,6 +31,10 @@ import org.apache.hadoop.mapreduce.OutputFormat;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.NullOutputFormat;
+import org.schedoscope.export.kafka.options.CleanupPolicy;
+import org.schedoscope.export.kafka.options.CompressionCodec;
+import org.schedoscope.export.kafka.options.OutputEncoding;
+import org.schedoscope.export.kafka.options.ProducerType;
 
 import kafka.admin.AdminUtils;
 import kafka.javaapi.producer.Producer;
@@ -68,6 +72,12 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 
 	public static final String KAFKA_EXPORT_TABLE_NAME = "kafka.export.table.name";
 
+	public static final String KAFKA_EXPORT_OUTPUT_ENCODING = "kafka.export.output.encoding";
+
+	public static final String KAFKA_EXPORT_STRING_ENCODING = "kafka.serializer.StringEncoder";
+
+	public static final String KAFKA_EXPORT_AVRO_ENCODING = "com.lambdanow.avro.serde.AvroKafka08SerdeGeneric";
+
 	@Override
 	public void checkOutputSpecs(JobContext context) throws IOException {
 	}
@@ -85,8 +95,7 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 
 		Properties producerProps = new Properties();
 		producerProps.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST, conf.get(KAFKA_EXPORT_METADATA_BROKER_LIST));
-		producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
-		producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, "kafka.serializer.StringEncoder");
+		producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, KAFKA_EXPORT_STRING_ENCODING);
 		producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC,
 				conf.get(KAFKA_EXPORT_COMPRESSION_CODEC, CompressionCodec.gzip.toString()));
 		producerProps.setProperty(KAFKA_EXPORT_PRODUCER_TYPE,
@@ -94,10 +103,19 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
 				conf.get(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS, "1"));
 
-		ProducerConfig config = new ProducerConfig(producerProps);
-		Producer<String, String> producer = new Producer<String, String>(config);
+		if (conf.get(KAFKA_EXPORT_OUTPUT_ENCODING).equals(OutputEncoding.avro.toString())) {
 
-		return new KafkaStringRecordWriter(producer, conf.get(KAFKA_EXPORT_TABLE_NAME));
+			producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, KAFKA_EXPORT_AVRO_ENCODING);
+			ProducerConfig config = new ProducerConfig(producerProps);
+			Producer<String, GenericRecord> producer = new Producer<String, GenericRecord>(config);
+			return new KafkaAvroGenericRecordWriter(producer, conf.get(KAFKA_EXPORT_TABLE_NAME));
+
+		} else {
+			producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, KAFKA_EXPORT_STRING_ENCODING);
+			ProducerConfig config = new ProducerConfig(producerProps);
+			Producer<String, String> producer = new Producer<String, String>(config);
+			return new KafkaStringRecordWriter(producer, conf.get(KAFKA_EXPORT_TABLE_NAME));
+		}
 	}
 
 	/**
@@ -123,10 +141,12 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 	 *            The replication factor for the given topic.
 	 * @param codec
 	 *            The compression codec to use (none / snappy / gzip).
+	 * @param enc
+	 *            The outputencoding to use (string / avro).
 	 */
 	public static void setOutput(Configuration conf, String brokerList, String zookeeperHosts,
 			ProducerType producerType, CleanupPolicy cleanupPolicy, String keyName, String tableName, int numPartitions,
-			int replicationFactor, CompressionCodec codec) {
+			int replicationFactor, CompressionCodec codec, OutputEncoding enc) {
 
 		conf.set(KAFKA_EXPORT_METADATA_BROKER_LIST, brokerList);
 		conf.set(KAFKA_EXPORT_PRODUCER_TYPE, producerType.toString());
@@ -134,6 +154,7 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		conf.set(KAFKA_EXPORT_KEY_NAME, keyName);
 		conf.set(KAFKA_EXPORT_TABLE_NAME, tableName);
 		conf.set(KAFKA_EXPORT_COMPRESSION_CODEC, codec.toString());
+		conf.set(KAFKA_EXPORT_OUTPUT_ENCODING, enc.toString());
 
 		createOrUpdateTopic(zookeeperHosts, tableName, cleanupPolicy, numPartitions, replicationFactor);
 	}
@@ -182,6 +203,45 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		public void write(K key, V value) {
 
 			KeyedMessage<String, String> message = new KeyedMessage<String, String>(topic, value.datum().toString());
+			producer.send(message);
+		}
+
+		@Override
+		public void close(TaskAttemptContext context) throws IOException {
+
+			producer.close();
+		}
+	}
+
+	/**
+	 * The Kafka Record Writer is used to write data into Kafka. It takes a
+	 * GenericRecord but writes the JSON representation into Kafka.
+	 */
+	public class KafkaAvroGenericRecordWriter extends RecordWriter<K, V> {
+
+		private Producer<String, GenericRecord> producer;
+
+		private String topic;
+
+		/**
+		 * Inializes a new Kafka Record Writer using a Kafka producer under the
+		 * hood. This one writes avro generic records to Kafka.
+		 *
+		 * @param producer
+		 *            The configured Kafka producer.
+		 * @param topic
+		 *            The Kafka topic to send the data to.
+		 */
+		public KafkaAvroGenericRecordWriter(Producer<String, GenericRecord> producer, String topic) {
+
+			this.producer = producer;
+			this.topic = topic;
+		}
+
+		@Override
+		public void write(K key, V value) {
+
+			KeyedMessage<String, GenericRecord> message = new KeyedMessage<String, GenericRecord>(topic, value.datum());
 			producer.send(message);
 		}
 

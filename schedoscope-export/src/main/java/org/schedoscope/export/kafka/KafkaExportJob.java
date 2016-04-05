@@ -30,10 +30,11 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
-import org.schedoscope.export.kafka.outputformat.CleanupPolicy;
-import org.schedoscope.export.kafka.outputformat.CompressionCodec;
+import org.schedoscope.export.kafka.options.CleanupPolicy;
+import org.schedoscope.export.kafka.options.CompressionCodec;
+import org.schedoscope.export.kafka.options.OutputEncoding;
+import org.schedoscope.export.kafka.options.ProducerType;
 import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
-import org.schedoscope.export.kafka.outputformat.ProducerType;
 
 /**
  * The MR driver to run the Hive to Kafka export. Depending on the cmdl params
@@ -85,6 +86,9 @@ public class KafkaExportJob extends Configured implements Tool {
 	@Option(name = "-x", usage = "compression codec, either 'none', 'snappy' or 'gzip'")
 	private CompressionCodec codec = CompressionCodec.none;
 
+	@Option(name = "-o", usage = "output encoding, either 'string' or 'avro'")
+	private OutputEncoding encoding = OutputEncoding.string;
+
 	@Override
 	public int run(String[] args) throws Exception {
 
@@ -118,7 +122,7 @@ public class KafkaExportJob extends Configured implements Tool {
 		AvroJob.setMapOutputValueSchema(job, avroSchema);
 
 		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList, zookeeperHosts, producerType, cleanupPolicy,
-				keyName, inputTable, numPartitions, replicationFactor, codec);
+				keyName, inputTable, numPartitions, replicationFactor, codec, encoding);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(KafkaExportReducer.class);

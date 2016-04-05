@@ -44,6 +44,7 @@ import com.inmobi.hive.test.HiveTestSuite;
 
 public abstract class HiveUnitBaseTest {
 
+	// Remove logging noise because of Jersey in Mini Hadoop test cluster
 	static {
 		LogManager.getLogManager().reset();
 		SLF4JBridgeHandler.removeHandlersForRootLogger();
