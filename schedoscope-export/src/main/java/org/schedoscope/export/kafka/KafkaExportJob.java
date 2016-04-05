@@ -39,8 +39,6 @@ import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
 /**
  * The MR driver to run the Hive to Kafka export. Depending on the cmdl params
  * it either runs in regular mode or in log compaction mode.
- *
- * TODO: assertions in unit test + add more unit tests
  */
 public class KafkaExportJob extends Configured implements Tool {
 
