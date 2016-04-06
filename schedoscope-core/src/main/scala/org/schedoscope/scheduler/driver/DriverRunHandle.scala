@@ -23,5 +23,5 @@ import org.joda.time.LocalDateTime
  * The real, technology-specific handle for a executions of a transformation type is kept
  * in the property stateHandle.
  */
-class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, val stateHandle: Any)
+class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, var stateHandle: Any)
 

@@ -174,3 +174,62 @@ trait DriverOnNonBlockingApi[T <: Transformation] extends Driver[T] {
   }
 
 }
+
+/**
+ * Companion object with factory methods for drivers
+ */
+object Driver {
+  /**
+   * Returns the names of the transformations for which drivers are configured.
+   */
+  def transformationsWithDrivers = Schedoscope.settings.availableTransformations.keySet()
+
+  /**
+   * Returns the driver settings for a given transformation type.
+   */
+  def driverSettings(transformationName: String): DriverSettings = Schedoscope.settings.getDriverSettings(transformationName)
+
+  /**
+   * Returns the driver settings for a given transformation.
+   */
+  def driverSettings(t: Transformation): DriverSettings = driverSettings(t.name)
+
+  /**
+   * Returns an appropriately set up driver for the given transformation type and the given driver settings.
+   */
+  def driverFor(transformationName: String, ds: DriverSettings): Driver[_] = transformationName match {
+
+    case "hive"       => HiveDriver(ds)
+
+    case "mapreduce"  => MapreduceDriver(ds)
+
+    case "pig"        => PigDriver(ds)
+
+    case "filesystem" => FileSystemDriver(ds)
+
+    case "oozie"      => OozieDriver(ds)
+
+    case "shell"      => ShellDriver(ds)
+
+    case "seq"        => SeqDriver(ds)
+
+    case _            => throw new IllegalArgumentException(s"Driver for ${transformationName} transformation not found")
+  
+  }
+
+  /**
+   * Returns an appropriately set up driver for the given transformation type using the configured settings.
+   */
+  def driverFor(transformationName: String): Driver[_] = driverFor(transformationName, driverSettings(transformationName))
+
+  /**
+   * Returns an appropriately set up  driver for the given transformation and the given driver settings.
+   */
+  def driverFor(t: Transformation, ds: DriverSettings): Driver[_] = driverFor(t.name, ds)
+
+  /**
+   * Returns an appropriately set up  driver for the given transformation and the configured settings.
+   */
+  def driverFor(t: Transformation): Driver[_] = driverFor(t.name, driverSettings(t))
+
+}

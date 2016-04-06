@@ -222,35 +222,14 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
  * Factory methods for driver actors.
  */
 object DriverActor {
-  def props(settings: SchedoscopeSettings, driverName: String, transformationManager: ActorRef) = {
-    val ds = settings.getDriverSettings(driverName)
+  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef) =
+    Props(
+      classOf[DriverActor[_]],
+      transformationManager,
+      settings.getDriverSettings(transformationName), (ds: DriverSettings) => Driver.driverFor(transformationName, ds),
+      if (transformationName == "filesystem")
+        100 milliseconds
+      else
+        5 seconds).withDispatcher("akka.actor.driver-dispatcher")
 
-    driverName match {
-      case "hive" => Props(
-        classOf[DriverActor[HiveTransformation]],
-        transformationManager, ds, (ds: DriverSettings) => HiveDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-
-      case "mapreduce" => Props(
-        classOf[DriverActor[MapreduceTransformation]],
-        transformationManager, ds, (ds: DriverSettings) => MapreduceDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-
-      case "pig" => Props(
-        classOf[DriverActor[PigTransformation]],
-        transformationManager, ds, (ds: DriverSettings) => PigDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-
-      case "filesystem" => Props(
-        classOf[DriverActor[FilesystemTransformation]],
-        transformationManager, ds, (ds: DriverSettings) => FileSystemDriver(ds), 100 milliseconds).withDispatcher("akka.actor.driver-dispatcher")
-
-      case "oozie" => Props(
-        classOf[DriverActor[OozieTransformation]],
-        transformationManager, ds, (ds: DriverSettings) => OozieDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-
-      case "shell" => Props(
-        classOf[DriverActor[ShellTransformation]],
-        transformationManager, ds, (ds: DriverSettings) => ShellDriver(ds), 5 seconds).withDispatcher("akka.actor.driver-dispatcher")
-
-      case _ => throw RetryableDriverException(s"Driver for ${driverName} not found")
-    }
-  }
 }
