@@ -32,8 +32,25 @@ import scala.Array.canBuildFrom
 class LocalTestResources extends TestResources {
   setupLocalHadoop()
 
-  val hiveSiteXmlPath = "target/test-classes/hive-site.xml"
-  val dependenciesDir = "deploy/dependencies"
+  override lazy val hiveConf: HiveConf = {
+    // we don't directly instantiate a new HiveConf(), because then hive-site.xml
+    // would be loaded from classpath too early (we must make sure to write 
+    // hive-site.xml BEFORE it is loaded the first time)
+    val conf = new Properties()
+    conf.put(METASTOREWAREHOUSE.toString, hiveWarehouseDir)
+    conf.put(LOCALMODEAUTO.toString, "true")
+    conf.put(METASTORECONNECTURLKEY.toString, "jdbc:derby:memory:metastore_db;create=true")
+    conf.put(HIVEAUXJARS.toString, compiledClassesPath())
+    conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
+    conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
+    conf.put(SCRATCHDIR.toString, hiveScratchDir)
+    conf.put(SUBMITLOCALTASKVIACHILD.toString, "false")
+    //conf.put(PLAN_SERIALIZATION.toString(), "javaXML")
+    //conf.put(HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL.toString(), "60000")
+    val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
+    Files.write(Paths.get(hiveSiteXmlPath), ("<configuration>\n" + props + "\n</configuration>").getBytes());
+    new HiveConf()
+  }
 
   override lazy val hiveWarehouseDir: String = {
     val dir = Paths.get("target/hive-warehouse").toAbsolutePath()
@@ -63,35 +80,16 @@ class LocalTestResources extends TestResources {
     new Path(dirUrl).toString()
   }
 
-  override lazy val hiveConf: HiveConf = {
-    // we don't directly instantiate a new HiveConf(), because then hive-site.xml
-    // would be loaded from classpath too early (we must make sure to write 
-    // hive-site.xml BEFORE it is loaded the first time)
-    val conf = new Properties()
-    conf.put(METASTOREWAREHOUSE.toString, hiveWarehouseDir)
-    conf.put(LOCALMODEAUTO.toString, "true")
-    conf.put(METASTORECONNECTURLKEY.toString, "jdbc:derby:memory:metastore_db;create=true")
-    conf.put(HIVEAUXJARS.toString, compiledClassesPath())
-    conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
-    conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
-    conf.put(SCRATCHDIR.toString, hiveScratchDir)
-    conf.put(SUBMITLOCALTASKVIACHILD.toString, "false")
-    //conf.put(PLAN_SERIALIZATION.toString(), "javaXML")
-    //conf.put(HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL.toString(), "60000")
-    val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
-    Files.write(Paths.get(hiveSiteXmlPath), ("<configuration>\n" + props + "\n</configuration>").getBytes());
-    new HiveConf()
-  }
-
-  override val jdbcClass = "org.apache.hive.jdbc.HiveDriver"
+  override lazy val fileSystem: FileSystem = FileSystem.getLocal(new Configuration())
 
   override val jdbcUrl = "jdbc:hive2://"
 
   override lazy val remoteTestDirectory: String = new Path("file:///", Paths.get("target").toAbsolutePath().toString).toString
 
-  override lazy val fileSystem: FileSystem = FileSystem.getLocal(new Configuration())
-
   override val namenode = "file:///"
+
+  val hiveSiteXmlPath = "target/test-classes/hive-site.xml"
+  val dependenciesDir = "deploy/dependencies"
 
   def compiledClassesPath() = {
     val classPathMembers = this.getClass.getClassLoader.asInstanceOf[URLClassLoader].getURLs.map {

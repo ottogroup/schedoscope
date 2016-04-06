@@ -197,7 +197,7 @@ object Driver {
   /**
    * Returns an appropriately set up driver for the given transformation type and the given driver settings.
    */
-  def driverFor(transformationName: String, ds: DriverSettings): Driver[_] = transformationName match {
+  def driverFor(transformationName: String, ds: DriverSettings): Driver[Transformation] = (transformationName match {
 
     case "hive"       => HiveDriver(ds)
 
@@ -214,22 +214,22 @@ object Driver {
     case "seq"        => SeqDriver(ds)
 
     case _            => throw new IllegalArgumentException(s"Driver for ${transformationName} transformation not found")
-  
-  }
+
+  }).asInstanceOf[Driver[Transformation]]
 
   /**
    * Returns an appropriately set up driver for the given transformation type using the configured settings.
    */
-  def driverFor(transformationName: String): Driver[_] = driverFor(transformationName, driverSettings(transformationName))
+  def driverFor(transformationName: String): Driver[Transformation] = driverFor(transformationName, driverSettings(transformationName))
 
   /**
    * Returns an appropriately set up  driver for the given transformation and the given driver settings.
    */
-  def driverFor(t: Transformation, ds: DriverSettings): Driver[_] = driverFor(t.name, ds)
+  def driverFor(t: Transformation, ds: DriverSettings): Driver[Transformation] = driverFor(t.name, ds)
 
   /**
    * Returns an appropriately set up  driver for the given transformation and the configured settings.
    */
-  def driverFor(t: Transformation): Driver[_] = driverFor(t.name, driverSettings(t))
+  def driverFor(t: Transformation): Driver[Transformation] = driverFor(t.name, driverSettings(t))
 
 }
