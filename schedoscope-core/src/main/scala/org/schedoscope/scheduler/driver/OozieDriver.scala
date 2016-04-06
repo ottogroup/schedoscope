@@ -30,15 +30,10 @@ import scala.collection.JavaConversions.asScalaSet
 /**
  * This driver performs Oozie transformations.
  */
-class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val client: OozieClient) extends Driver[OozieTransformation] {
-  /**
-   * Set transformation name to oozie
-   */
-  override def transformationName = "oozie"
+class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val client: OozieClient) extends DriverOnNonBlockingApi[OozieTransformation] {
 
-  /**
-   * Start an Oozie workflow asynchronously and embed the Oozie job ID as the run handle.
-   */
+  def transformationName = "oozie"
+
   def run(t: OozieTransformation): DriverRunHandle[OozieTransformation] = try {
     val jobConf = createOozieJobConf(t)
     val oozieJobId = runOozieJob(jobConf)
@@ -47,10 +42,7 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
     case e: Throwable => throw RetryableDriverException("Unexpected error occurred while running Oozie job", e)
   }
 
-  /**
-   * Return the run state of an Oozie job given a run handle
-   */
-  override def getDriverRunState(run: DriverRunHandle[OozieTransformation]) = {
+  def getDriverRunState(run: DriverRunHandle[OozieTransformation]) = {
     val jobId = run.stateHandle.toString
     try {
       val state = getJobInfo(jobId).getStatus()
@@ -65,21 +57,6 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
     }
   }
 
-  /**
-   * Run an Oozie workflow synchronously.
-   */
-  override def runAndWait(t: OozieTransformation): DriverRunState[OozieTransformation] = {
-    val runHandle = run(t)
-
-    while (getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[OozieTransformation]])
-      Thread.sleep(5000)
-
-    getDriverRunState(runHandle)
-  }
-
-  /**
-   * Kill the run of an Oozie workflow
-   */
   override def killRun(run: DriverRunHandle[OozieTransformation]) = {
     val jobId = run.stateHandle.toString
     try {

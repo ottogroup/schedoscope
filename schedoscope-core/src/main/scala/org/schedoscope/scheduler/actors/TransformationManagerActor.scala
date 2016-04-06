@@ -21,7 +21,7 @@ import akka.event.{ Logging, LoggingReceive }
 import org.schedoscope.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{ FilesystemTransformation, Transformation }
-import org.schedoscope.scheduler.driver.RetryableDriverException
+import org.schedoscope.scheduler.driver.{Driver, RetryableDriverException}
 import org.schedoscope.scheduler.messages.{ CommandWithSender, DeployCommand, GetQueues, GetTransformations, PollCommand, QueueStatusListResponse, TransformationStatusListResponse, TransformationStatusResponse }
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
@@ -52,14 +52,12 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
 
-  val availableTransformations = settings.availableTransformations.keySet()
-
   // create a queue for each driver that is not a filesystem driver
-  val nonFilesystemQueues = availableTransformations.filter {
+  val nonFilesystemQueues = Driver.transformationsWithDrivers.filter {
     _ != "filesystem"
   }.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
-    (nonFilesystemQueuesSoFar, driverName) =>
-      nonFilesystemQueuesSoFar + (driverName -> new collection.mutable.Queue[CommandWithSender]())
+    (nonFilesystemQueuesSoFar, transformationName) =>
+      nonFilesystemQueuesSoFar + (transformationName -> new collection.mutable.Queue[CommandWithSender]())
   }
 
   val filesystemConcurrency = settings.getDriverSettings("filesystem").concurrency
@@ -115,7 +113,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
    * Create driver actors as required by configured transformation types and their concurrency.
    */
   override def preStart {
-    for (transformation <- availableTransformations; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
+    for (transformation <- Driver.transformationsWithDrivers; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
       actorOf(DriverActor.props(settings, transformation, self), s"${transformation}-${c + 1}")
     }
   }
