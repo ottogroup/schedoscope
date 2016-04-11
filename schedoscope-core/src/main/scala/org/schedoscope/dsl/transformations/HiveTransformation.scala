@@ -31,7 +31,7 @@ import scala.collection.mutable.{ HashMap, ListBuffer }
  */
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 
-  override def name = "hive"
+  def name = "hive"
 
   override def fileResourcesToChecksum =
     udfs.flatMap(udf => udf.getResourceUris.map(uri => uri.getUri))

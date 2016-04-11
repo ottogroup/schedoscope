@@ -163,6 +163,7 @@ public class RedisExportJob extends Configured implements Tool {
 		this.inputTable = inputTable;
 		this.inputFilter = inputFilter;
 		this.keyName = keyName;
+		this.keyPrefix = keyPrefix;
 		this.valueName = valueName;
 		this.numReducer = numReducer;
 		this.replace = replace;

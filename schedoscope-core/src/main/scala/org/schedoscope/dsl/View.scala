@@ -253,8 +253,10 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     this.additionalStoragePathSuffix = if (additionalStoragePathSuffix != null) Some(additionalStoragePathSuffix) else None
   }
 
-  var transformation: () => Transformation = () => NoOp()
+  var registeredTransformation: () => Transformation = () => NoOp()
 
+  def transformation = registeredTransformation
+  
   /**
    * Set the transformation with which the view is created. Provide an anonymous function returning the transformation.
    * NoOp is the default transformation if none is specified.
@@ -262,11 +264,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def transformVia(ft: () => Transformation) {
     ensureRegisteredParameters
 
-    transformation = ft
+    registeredTransformation = ft
   }
 
   def configureTransformation(k: String, v: Any) {
-    val t = transformation()
+    val t = registeredTransformation()
     transformVia(() => t.configureWith(Map((k, v))))
   }
 

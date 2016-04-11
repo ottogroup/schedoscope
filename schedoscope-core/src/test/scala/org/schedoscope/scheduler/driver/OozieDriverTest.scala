@@ -64,13 +64,13 @@ class OozieDriverTest extends FlatSpec with Matchers {
     driver.transformationName shouldBe "oozie"
   }
 
-  it should "execute oozie tranformations synchronously" taggedAs (DriverTests, OozieTests) in {
+  it should "execute oozie transformations synchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunState = driver.runAndWait(workingOozieTransformation)
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute oozie tranformations asynchronously" taggedAs (DriverTests, OozieTests) in {
+  it should "execute oozie transformations asynchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunHandle = driver.run(workingOozieTransformation)
 
     var runWasAsynchronous = false
@@ -82,13 +82,13 @@ class OozieDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute oozie tranformations and return errors while running synchronously" taggedAs (DriverTests, OozieTests) in {
+  it should "execute oozie transformations and return errors while running synchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunState = driver.runAndWait(failingOozieTransformation)
 
     driverRunState shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "execute oozie tranformations and return errors while running asynchronously" taggedAs (DriverTests, OozieTests) in {
+  it should "execute oozie transformations and return errors while running asynchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunHandle = driver.run(failingOozieTransformation)
 
     var runWasAsynchronous = false

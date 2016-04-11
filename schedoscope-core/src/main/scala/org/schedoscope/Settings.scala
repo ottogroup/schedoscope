@@ -250,27 +250,27 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   /**
    * Returns driver-specific settings by transformation type name
    *
-   * @param nt the name of the transformation type (e.g. mapreduce)
+   * @param transformationName the name of the transformation type (e.g. mapreduce)
    * @return the driver settings
    */
-  def getDriverSettings(nt: String): DriverSettings = {
-    if (!driverSettings.contains(nt)) {
-      val confName = "schedoscope.transformations." + nt
-      driverSettings.put(nt, new DriverSettings(config.getConfig(confName), nt))
+  def getDriverSettings(transformationName: String): DriverSettings = {
+    if (!driverSettings.contains(transformationName)) {
+      val confName = "schedoscope.transformations." + transformationName
+      driverSettings.put(transformationName, new DriverSettings(config.getConfig(confName), transformationName))
     }
 
-    driverSettings(nt)
+    driverSettings(transformationName)
   }
 
   /**
    * Retrieve a setting  for a transformation type
    *
-   * @param nt	the name of the transformation type (e.g. mapreduce)
-   * @param n	the name of the setting for nt
+   * @param transformationName the name of the transformation type (e.g. mapreduce)
+   * @param n	the name of the setting for transformationName
    * @return the setting's value as a string
    */
-  def getTransformationSetting(bt: String, n: String) = {
-    val confName = s"schedoscope.transformations.${bt}.transformation.${n}"
+  def getTransformationSetting(transformationName: String, n: String) = {
+    val confName = s"schedoscope.transformations.${transformationName}.transformation.${n}"
     config.getString(confName)
   }
 

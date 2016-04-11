@@ -19,7 +19,6 @@ import java.nio.file.Files
 
 import net.lingala.zip4j.core.ZipFile
 import org.apache.commons.io.FileUtils
-import org.joda.time.LocalDateTime
 import org.schedoscope.{ DriverSettings, Schedoscope }
 import org.schedoscope.dsl.transformations.Transformation
 
@@ -28,144 +27,47 @@ import scala.concurrent.duration.Duration
 import scala.util.Random
 
 /**
- * Exceptions occurring in a driver that merit a retry. These will be escalated to the driver actor
- * to cause a driver actor restart.
- */
-case class RetryableDriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
-
-/**
- * Handle for the transformation executed by a driver, called a driver run.
- */
-class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, val stateHandle: Any)
-
-/**
- * Base class for driver run's state, contains reference to driver instance (e.g. to execute code for termination)
+ * In Schedoscope, drivers are responsible for executing transformations.
  *
- */
-sealed abstract class DriverRunState[T <: Transformation](val driver: Driver[T])
-
-/**
- * Driver run state: transformation is still running
- */
-case class DriverRunOngoing[T <: Transformation](override val driver: Driver[T], val runHandle: DriverRunHandle[T]) extends DriverRunState[T](driver)
-
-/**
- * Driver run state: transformation has finished succesfully. The driver actor embedding the driver having sucessfully
- * executed the transformation will return a success message to the view actor initiating the transformation.
- */
-case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T], comment: String) extends DriverRunState[T](driver)
-
-/**
- * Driver run state: transformation has terminated with an error. The driver actor embedding the driver having failed
- * at executing the transformation will return a failure message to the view actor initiating the transformation. That view
- * actor will subsequently retry the transformation.
+ * Drivers encapsulate the respective APIs required to perform a transformation type.
+ * They might be executed from within the DriverActor or directly from a test.
  *
- */
-case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
-
-/**
- * Trait for user defined code to be executed before and after  a transformation. e.g. for gathering statistics
- * and logging information from the execution framework (e.g. mapreduce)
+ * A driver is parameterized by the type of transformation that it is able to execute.
  *
- * As for exceptions:
- *
- * Should a failure within the completion handler not cause the transformation to fail, the exception should be suppressed.
- *
- * Should a failure within the completion handler cause a restart of the driver actor and a redo of the transformation,
- * it should be raised as a DriverException.
- *
- * Any other raised exception will cause the driver run to fail and the transformation subsequently to be retried by the view actor.
- *
- */
-trait DriverRunCompletionHandler[T <: Transformation] {
-
-  /**
-   * This method is called immediately after a driver started a transformation. This can be used to take measurements before the execution
-   * of a driver run or other setup tasks.
-   */
-  def driverRunStarted(run: DriverRunHandle[T])
-
-  /**
-   * This method has to be implemented for gathering information about a completed run run
-   *
-   */
-  def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T])
-}
-
-/**
- * Default implementation of a completion handler. Does nothing
- */
-class DoNothingCompletionHandler[T <: Transformation] extends DriverRunCompletionHandler[T] {
-
-  def driverRunStarted(run: DriverRunHandle[T]) {}
-
-  def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T]) {}
-
-}
-
-/**
- * In Schedoscope, drivers are responsible for actually executing transformations. Drivers might be
- * executed from within the DriverActor or directly from a test. A
- * Driver is parameterized by the type of transformation that it is able to execute.
- *
- * Generally, there are two classes of implementations of this trait depending on the API
- * supporting a transformation. For blocking APIs, driver run states are implemented using futures.
- * For non-blocking APIs, driver run states can encapsulate whatever job handle mechanism is supported
- * by the API.
- *
- * The present trait provides default implementations for blocking APIs. To support one, the methods
- * transformationName, run, and driverRunCompletionHandlerClassNames need to be overridden
- * (for example @see HiveDriver). Run needs to return an appropriate DriverRunHandle with a
- * future as its stateHandle which produces a DriverRunState or throws an exception.
- *
- * For non-blocking APIs, one needs to override transformationName, killRun, getDriverRunState, run,
- * runAndWait, driverRunCompletionHandlerClassNames for the appropriate handle type of the API. As
- * an example @see OozieDriver.
- *
+ * An execution of a transformation - a driver run - is represented by a driver run handle. Depending on the
+ * state of transformation execution, the current driver run state can be queried for a driver
+ * run handle.
  */
 trait Driver[T <: Transformation] {
 
-  implicit val executionContext = Schedoscope.actorSystem.dispatchers.lookup("akka.actor.future-driver-dispatcher")
-
   /**
-   * @return the name of the transformation. This is a string identifier of the transformation type
-   *         used within configurations.
+   * The name of the transformations executed by this driver. Must be equal to t.name for any t: T.
    */
   def transformationName: String
 
   /**
-   * A driver can override this to have a fixed timeout
-   */
-  def runTimeOut: Duration = Schedoscope.settings.getDriverSettings(transformationName).timeout
-
-  /**
-   * Kill the given driver run, default: do nothing
+   * Kill the given driver run. Default: do nothing
    */
   def killRun(run: DriverRunHandle[T]): Unit = {}
 
   /**
-   * Retrieve the driver state from a run handle.
+   * Get the current driver run state for a given driver run represented by the handle.
    */
-  def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T] = {
-    val runState = run.stateHandle.asInstanceOf[Future[DriverRunState[T]]]
-    if (runState.isCompleted)
-      runState.value.get.get
-    else
-      DriverRunOngoing[T](this, run)
-  }
+  def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T]
 
   /**
-   * Run the transformation asychronously/nonblocking
+   * Create a driver run, i.e., start the execution of the transformation asychronously.
    */
   def run(t: T): DriverRunHandle[T]
 
   /**
-   * Run the transformation sychronously/blocking (e.g. for tests)
+   * Execute the transformation synchronously and block until it's done. Return the final state
+   * of the driver run.
    */
-  def runAndWait(t: T): DriverRunState[T] = Await.result(run(t).stateHandle.asInstanceOf[Future[DriverRunState[T]]], runTimeOut)
+  def runAndWait(t: T): DriverRunState[T]
 
   /**
-   * Deploy all resources for this transformation/view to the cluster. By default, deploys all
+   * Deploy all resources for this transformation type to the cluster. By default, this deploys all
    * jars defined in the libJars section of the transformation configuration (@see DriverSettings)
    */
   def deployAll(ds: DriverSettings): Boolean = {
@@ -193,6 +95,7 @@ trait Driver[T <: Transformation] {
 
   /**
    * Needs to be overridden to return the class names of driver run completion handlers to apply.
+   *
    * E.g., provide a val of the same name to the constructor of the driver implementation.
    */
   def driverRunCompletionHandlerClassNames: List[String]
@@ -217,4 +120,116 @@ trait Driver[T <: Transformation] {
       case _                        => throw RetryableDriverException("driverRunCompleted called with non-final driver run state")
     }
   }
+}
+
+/**
+ * DriverOnBlockingApi provides a default implementation for most of the driver contract
+ * for transformations working on blocking APIs.
+ *
+ * The asynchronism of the driver contract is implemented using futures. I.e., the state
+ * handle of the respective driver run state is a future returning the final driver run state
+ * for the transformation being executed.
+ *
+ * Subclasses only need to provide an implementation of the methods transformationName and run
+ * as well as driverRunCompletionHandlerClassNames.
+ *
+ * As examples, @see HiveDriver, @see PigDriver, @see FileSystemDriver
+ *
+ */
+trait DriverOnBlockingApi[T <: Transformation] extends Driver[T] {
+
+  implicit val executionContext = Schedoscope.actorSystem.dispatchers.lookup("akka.actor.future-driver-dispatcher")
+
+  def runTimeOut: Duration = Schedoscope.settings.getDriverSettings(transformationName).timeout
+
+  def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T] = {
+    val runState = run.stateHandle.asInstanceOf[Future[DriverRunState[T]]]
+    if (runState.isCompleted)
+      runState.value.get.get
+    else
+      DriverRunOngoing[T](this, run)
+  }
+
+  def runAndWait(t: T): DriverRunState[T] = Await.result(run(t).stateHandle.asInstanceOf[Future[DriverRunState[T]]], runTimeOut)
+}
+
+/**
+ * DriverOnNonBlockingApi provides a simple default implementation for parts of the driver
+ * contract for asynchronous APIs (namely, the runAndWait method).
+ *
+ * The state handle of driver run handles for such APIs should be the corresponding handle
+ * mechanism used by that API.
+ *
+ * As examples, @see MapreduceDriver and @see OozieDriver
+ */
+trait DriverOnNonBlockingApi[T <: Transformation] extends Driver[T] {
+
+  def runAndWait(t: T): DriverRunState[T] = {
+    val runHandle = run(t)
+
+    while (getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[T]])
+      Thread.sleep(5000)
+
+    getDriverRunState(runHandle)
+  }
+
+}
+
+/**
+ * Companion object with factory methods for drivers
+ */
+object Driver {
+  /**
+   * Returns the names of the transformations for which drivers are configured.
+   */
+  def transformationsWithDrivers = Schedoscope.settings.availableTransformations.keySet()
+
+  /**
+   * Returns the driver settings for a given transformation type.
+   */
+  def driverSettings(transformationName: String): DriverSettings = Schedoscope.settings.getDriverSettings(transformationName)
+
+  /**
+   * Returns the driver settings for a given transformation.
+   */
+  def driverSettings(t: Transformation): DriverSettings = driverSettings(t.name)
+
+  /**
+   * Returns an appropriately set up driver for the given transformation type and the given driver settings.
+   */
+  def driverFor(transformationName: String, ds: DriverSettings): Driver[Transformation] = (transformationName match {
+
+    case "hive"       => HiveDriver(ds)
+
+    case "mapreduce"  => MapreduceDriver(ds)
+
+    case "pig"        => PigDriver(ds)
+
+    case "filesystem" => FileSystemDriver(ds)
+
+    case "oozie"      => OozieDriver(ds)
+
+    case "shell"      => ShellDriver(ds)
+
+    case "seq"        => SeqDriver(ds)
+
+    case _            => throw new IllegalArgumentException(s"Driver for ${transformationName} transformation not found")
+
+  }).asInstanceOf[Driver[Transformation]]
+
+  /**
+   * Returns an appropriately set up driver for the given transformation type using the configured settings.
+   */
+  def driverFor(transformationName: String): Driver[Transformation] = driverFor(transformationName, driverSettings(transformationName))
+
+  /**
+   * Returns an appropriately set up  driver for the given transformation and the given driver settings.
+   */
+  def driverFor(t: Transformation, ds: DriverSettings): Driver[Transformation] = driverFor(t.name, ds)
+
+  /**
+   * Returns an appropriately set up  driver for the given transformation and the configured settings.
+   */
+  def driverFor(t: Transformation): Driver[Transformation] = driverFor(t.name, driverSettings(t))
+
 }

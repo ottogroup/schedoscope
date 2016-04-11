@@ -62,19 +62,19 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
     driver.transformationName shouldBe "mapreduce"
   }
 
-  it should "execute Mapreduce tranformations synchronously" taggedAs (DriverTests) in {
+  it should "execute Mapreduce transformations synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(MapreduceTransformation(new DummyView(), identityJob))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute another Mapreduce tranformations synchronously" taggedAs (DriverTests) in {
+  it should "execute another Mapreduce transformations synchronously" taggedAs (DriverTests) in {
     val driverRunState = driver.runAndWait(MapreduceTransformation(new DummyView(), identityJob))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute Mapreduce tranformations asynchronously" taggedAs (DriverTests) in {
+  it should "execute Mapreduce transformations asynchronously" taggedAs (DriverTests) in {
     val driverRunHandle = driver.run(MapreduceTransformation(new DummyView(), identityJob))
 
     var runWasAsynchronous = false
@@ -86,7 +86,7 @@ class MapreduceDriverTest extends FlatSpec with Matchers with TestFolder {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute Mapreduce tranformations and return errors when running asynchronously" taggedAs (DriverTests) in {
+  it should "execute Mapreduce transformations and return errors when running asynchronously" taggedAs (DriverTests) in {
     val driverRunHandle = driver.run(MapreduceTransformation(new DummyView(), failingJob))
 
     var runWasAsynchronous = false

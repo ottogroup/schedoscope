@@ -17,13 +17,13 @@ class ShellDriverTest extends FlatSpec with Matchers {
     driver.transformationName shouldBe "shell"
   }
 
-  it should "execute shell tranformations synchronously" taggedAs (DriverTests, ShellTests) in {
+  it should "execute shell transformations synchronously" taggedAs (DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("#"))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute another shell tranformations synchronously" taggedAs (DriverTests, ShellTests) in {
+  it should "execute another shell transformations synchronously" taggedAs (DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("echo error >/dev/stderr;zcat /usr/share/man/man1/*gz"))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
@@ -42,7 +42,7 @@ class ShellDriverTest extends FlatSpec with Matchers {
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute pig tranformations and return errors when running synchronously" taggedAs (DriverTests, ShellTests) in {
+  it should "execute pig transformations and return errors when running synchronously" taggedAs (DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("exit 1"))
 
     driverRunState shouldBe a[DriverRunFailed[_]]

@@ -14,14 +14,11 @@ import scala.sys.process._
 /**
  * Driver for executing shell transformations.
  */
-class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extends Driver[ShellTransformation] {
+class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extends DriverOnBlockingApi[ShellTransformation] {
 
   val log = LoggerFactory.getLogger(classOf[ShellDriver])
 
-  /**
-   * Set transformation name to shell
-   */
-  override def transformationName = "shell"
+  def transformationName = "shell"
 
   /**
    * Construct a future-based driver run handle
@@ -31,6 +28,9 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
       doRun(t)
     })
 
+  /**
+   * Actually run the shell transformation.
+   */
   def doRun(t: ShellTransformation): DriverRunState[ShellTransformation] = {
     val stdout = new StringBuilder
     try {
