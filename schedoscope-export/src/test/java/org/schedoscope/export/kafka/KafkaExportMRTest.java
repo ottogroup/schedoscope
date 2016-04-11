@@ -82,6 +82,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@After
 	public void tearDown() throws Exception {
 		super.tearDown();
+		kafkaConsumer.shutDown();
 		stopKafkaServer();
 		zkServer.close();
 	}
@@ -155,7 +156,6 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		for(byte[] message : kafkaConsumer) {
 
 			GenericRecord record = serde.fromBytes(message);
-
 			JsonNode data = objMapper.readTree(record.toString());
 			assertEquals("value1", data.get("created_by").asText());
 		}

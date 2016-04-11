@@ -29,6 +29,8 @@ import kafka.javaapi.consumer.ConsumerConnector;
 
 public class SimpleTestKafkaConsumer implements Iterable<byte[]> {
 
+	private ConsumerConnector consumer;
+
 	final ConsumerIterator<byte[], byte[]> consumerIt;
 
 	final int iterations;
@@ -42,13 +44,17 @@ public class SimpleTestKafkaConsumer implements Iterable<byte[]> {
 		props.put("group.id", "test_consumer_1");
 		props.put("auto.offset.reset", "smallest");
 
-		ConsumerConnector consumer = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
 
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		topicCountMap.put(topic, new Integer(1));
 		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 		KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 		consumerIt = stream.iterator();
+	}
+
+	public void shutDown() {
+		consumer.shutdown();
 	}
 
 	@Override
