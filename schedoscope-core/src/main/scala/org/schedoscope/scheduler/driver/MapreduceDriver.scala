@@ -63,8 +63,8 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
 
         def run(): DriverRunState[MapreduceTransformation] = job.getJobState match {
           case PREP | RUNNING  => DriverRunOngoing[MapreduceTransformation](driver, runHandle)
-          case FAILED | KILLED => cleanupAfterJob(job, DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${jobId} failed with state ${job.getJobState}", null))
-          case SUCCEEDED       => cleanupAfterJob(job, DriverRunSucceeded[MapreduceTransformation](driver, s"Mapreduce job ${jobId} succeeded"))
+          case FAILED | KILLED => cleanupAfterJob(job, driver, DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${jobId} failed with state ${job.getJobState}", null))
+          case SUCCEEDED       => cleanupAfterJob(job, driver, DriverRunSucceeded[MapreduceTransformation](driver, s"Mapreduce job ${jobId} succeeded"))
         }
 
       }

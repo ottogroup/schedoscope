@@ -21,7 +21,7 @@ import org.apache.commons.lang3.StringUtils
 import org.apache.hadoop.mapreduce.{ Job, MRJobConfig }
 import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.View
-import org.schedoscope.scheduler.driver.DriverRunState
+import org.schedoscope.scheduler.driver.{ MapreduceDriver, DriverRunState }
 
 /**
  * Compute a view using a plain Map-Reduce job.
@@ -41,7 +41,7 @@ import org.schedoscope.scheduler.driver.DriverRunState
 case class MapreduceTransformation(
     v: View,
     createJob: (Map[String, Any]) => Job,
-    cleanupAfterJob: (Job, DriverRunState[MapreduceTransformation]) => DriverRunState[MapreduceTransformation] = (_, completionRunState) => completionRunState,
+    cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceTransformation]) => DriverRunState[MapreduceTransformation] = (_, __, completionRunState) => completionRunState,
     dirsToDelete: List[String] = List()) extends Transformation {
 
   def name = "mapreduce"
