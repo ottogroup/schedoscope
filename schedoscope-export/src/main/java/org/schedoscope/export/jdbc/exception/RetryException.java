@@ -36,8 +36,8 @@ public class RetryException extends Exception {
 	 *
 	 * @param message The exception message.
 	 */
-	public RetryException(String reason) {
-		super(reason);
+	public RetryException(String message) {
+		super(message);
 	}
 
 	/**
@@ -56,7 +56,7 @@ public class RetryException extends Exception {
 	 * @param message The exception message.
 	 * @param cause The exception to initialize from.
 	 */
-	public RetryException(String reason, Throwable cause) {
-		super(reason, cause);
+	public RetryException(String message, Throwable cause) {
+		super(message, cause);
 	}
 }
