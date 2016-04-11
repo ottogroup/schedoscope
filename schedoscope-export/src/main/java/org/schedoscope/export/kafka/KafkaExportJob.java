@@ -19,6 +19,8 @@ package org.schedoscope.export.kafka;
 import org.apache.avro.Schema;
 import org.apache.avro.mapred.AvroValue;
 import org.apache.avro.mapreduce.AvroJob;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -28,7 +30,10 @@ import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.schedoscope.export.jdbc.JdbcExportJob;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
 import org.schedoscope.export.kafka.options.CleanupPolicy;
 import org.schedoscope.export.kafka.options.CompressionCodec;
@@ -41,6 +46,8 @@ import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
  * it either runs in regular mode or in log compaction mode.
  */
 public class KafkaExportJob extends Configured implements Tool {
+
+	private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
 
 	@Option(name = "-s", usage = "set to true if kerberos is enabled")
 	private boolean isSecured = false;
@@ -72,7 +79,7 @@ public class KafkaExportJob extends Configured implements Tool {
 	@Option(name = "-P", usage = "broker type, either 'async' or 'sync'")
 	private ProducerType producerType = ProducerType.sync;
 
-	@Option(name = "-c", usage = "cleanup policy, either 'delete' or 'compact'")
+	@Option(name = "-w", usage = "cleanup policy, either 'delete' or 'compact'")
 	private CleanupPolicy cleanupPolicy = CleanupPolicy.delete;
 
 	@Option(name = "-n", usage = "number of partitons, default to 1")
@@ -80,6 +87,9 @@ public class KafkaExportJob extends Configured implements Tool {
 
 	@Option(name = "-r", usage = "replication factor, defaults to 1")
 	private int replicationFactor = 1;
+
+	@Option(name = "-c", usage = "number of reducers, concurrency level")
+	private int numReducer = 2;
 
 	@Option(name = "-x", usage = "compression codec, either 'none', 'snappy' or 'gzip'")
 	private CompressionCodec codec = CompressionCodec.none;
@@ -89,6 +99,84 @@ public class KafkaExportJob extends Configured implements Tool {
 
 	@Override
 	public int run(String[] args) throws Exception {
+
+		CmdLineParser cmd = new CmdLineParser(this);
+
+		try {
+			cmd.parseArgument(args);
+		} catch (CmdLineException e) {
+			System.err.println(e.getMessage());
+			cmd.printUsage(System.err);
+			throw e;
+		}
+
+		Job job = configure();
+		return job.waitForCompletion(true) ? 0 : 1;
+	}
+
+	/**
+	 *
+	 * @param isSecured
+	 *            A flag indicating if Kerberos is enabled
+	 * @param metaStoreUris
+	 *            The Hive metastore uri(s)
+	 * @param principal
+	 *            The Kerberos principal
+	 * @param inputDatabase
+	 *            The Hive input database
+	 * @param inputTable
+	 *            Hive input table
+	 * @param inputFilter
+	 *            An optional filter
+	 * @param keyName
+	 *            The name of the database column used as key
+	 * @param brokers
+	 *            A list of Kafka brokers
+	 * @param zookeepers
+	 *            A list of zookeeper brokers
+	 * @param producerType
+	 *            The Kafka producer type (sync / async)
+	 * @param cleanupPolicy
+	 *            The cleanup policy (delete / compact)
+	 * @param numPartitions
+	 *            Num of partitions for the Kafka topic
+	 * @param replicationFactor
+	 *            The replication factor for the topic
+	 * @param numReducer
+	 *            The number of reducers
+	 * @param codec
+	 *            The compression codec (gzip / snappy / none)
+	 * @param outputEncoding
+	 *            Output encoding (string / avro)
+	 * @return A configured Job instance
+	 * @throws Exception
+	 *             Is thrown if an error occurs
+	 */
+	public Job configure(boolean isSecured, String metaStoreUris, String principal, String inputDatabase,
+			String inputTable, String inputFilter, String keyName, String brokers, String zookeepers,
+			ProducerType producerType, CleanupPolicy cleanupPolicy, int numPartitions, int replicationFactor,
+			int numReducer, CompressionCodec codec, OutputEncoding outputEncoding) throws Exception {
+
+		this.isSecured = isSecured;
+		this.metaStoreUris = metaStoreUris;
+		this.principal = principal;
+		this.inputDatabase = inputDatabase;
+		this.inputTable = inputTable;
+		this.inputFilter = inputFilter;
+		this.keyName = keyName;
+		this.brokerList = brokers;
+		this.zookeeperHosts = zookeepers;
+		this.producerType = producerType;
+		this.cleanupPolicy = cleanupPolicy;
+		this.numPartitions = numPartitions;
+		this.replicationFactor = replicationFactor;
+		this.numReducer = numReducer;
+		this.codec = codec;
+
+		return configure();
+	}
+
+	private Job configure() throws Exception {
 
 		Configuration conf = getConf();
 
@@ -124,6 +212,7 @@ public class KafkaExportJob extends Configured implements Tool {
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(KafkaExportReducer.class);
+		job.setNumReduceTasks(numReducer);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(KafkaOutputFormat.class);
 
@@ -132,11 +221,24 @@ public class KafkaExportJob extends Configured implements Tool {
 		job.setOutputKeyClass(Text.class);
 		job.setOutputValueClass(AvroValue.class);
 
-		return job.waitForCompletion(true) ? 0 : 1;
+		return job;
 	}
 
+	/**
+	 * The entry point when called from the command line.
+	 *
+	 * @param args
+	 *            A string array containing the cmdl args.
+	 * @throws Exception
+	 *             is thrown if an error occurs.
+	 */
 	public static void main(String[] args) throws Exception {
-		int exitCode = ToolRunner.run(new KafkaExportJob(), args);
-		System.exit(exitCode);
+		try {
+			int exitCode = ToolRunner.run(new KafkaExportJob(), args);
+			System.exit(exitCode);
+		} catch (Exception e) {
+			LOG.error(e.getMessage());
+			System.exit(1);
+		}
 	}
 }
