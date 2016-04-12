@@ -23,6 +23,7 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.dsl.transformations.OozieTransformation.oozieWFPath
 import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.views.DailyParameterization
 import org.schedoscope.dsl.views.Id
@@ -34,20 +35,19 @@ import org.schedoscope.dsl.storageformats._
 import scala.io.Source
 
 case class Brand(
-  ecNr: Parameter[String]) extends View
+  shopCode: Parameter[String]) extends View
     with Id
     with JobMetadata {
 
   comment("In this example, brands are per shop but time invariant")
 
-  val ecShopCode = fieldOf[String](99, "Shop code, but field pushed to the right by weight.")
   val name = fieldOf[String]("The brand's name, but field name overriden", "brand_name")
 
-  asTableSuffix(ecNr)
+  asTableSuffix(shopCode)
 }
 
 case class Product(
-  ecNr: Parameter[String],
+  shopCode: Parameter[String],
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
@@ -58,15 +58,14 @@ case class Product(
 
   comment("In this example, shops have different products each day")
 
-  val ecShopCode = fieldOf[String]
   val name = fieldOf[String]
   val brandId = fieldOf[String]
 
-  asTableSuffix(ecNr)
+  asTableSuffix(shopCode)
 }
 
 case class ProductBrand(
-  ecNr: Parameter[String],
+  shopCode: Parameter[String],
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
@@ -76,26 +75,24 @@ case class ProductBrand(
 
   comment("ProductBrand joins brands with products")
 
-  val ecShopCode = fieldOf[String]
   val productId = fieldOf[String]
-  val brandName = privacySensitive(fieldOf[String])
+  val brandName = fieldOf[String]
 
-  val brand = dependsOn(() => Brand(ecNr))
-  val product = dependsOn(() => Product(ecNr, year, month, day))
+  val brand = dependsOn(() => Brand(shopCode))
+  val product = dependsOn(() => Product(shopCode, year, month, day))
 
-  asTableSuffix(privacySensitive(ecNr))
   storedAs(Parquet())
 
   transformVia(() =>
     HiveTransformation(insertInto(
       this,
       s"""
-         SELECT 	${this.ecNr.v.get} AS ${this.ecShopCode.n},
+         SELECT 
       				p.${product().id.n} AS ${this.productId.n},
-          			b.${brand().name.n} AS ${this.brandName.n},
-          			p.${product().occurredAt.n} AS ${this.occurredAt.n}
-          			'some date time' AS ${this.createdAt.n}
-          			${"ProductBrand"} AS ${this.createdBy.n}
+          		b.${brand().name.n} AS ${this.brandName.n},
+          		p.${product().occurredAt.n} AS ${this.occurredAt.n}
+          		'some date time' AS ${this.createdAt.n}
+          		${"ProductBrand"} AS ${this.createdBy.n}
           FROM 		${product().n} p
           JOIN 		${brand().n} b
           ON		p.${product().brandId.n} = b.${brand().id.n}
@@ -106,7 +103,7 @@ case class ProductBrand(
 }
 
 case class ProductBrandMaterializeOnce(
-  ecNr: Parameter[String],
+  shopCode: Parameter[String],
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
@@ -116,14 +113,12 @@ case class ProductBrandMaterializeOnce(
 
   comment("ProductBrand joins brands with products")
 
-  val ecShopCode = fieldOf[String]
   val productId = fieldOf[String]
   val brandName = privacySensitive(fieldOf[String])
 
-  val brand = dependsOn(() => Brand(ecNr))
-  val product = dependsOn(() => Product(ecNr, year, month, day))
+  val brand = dependsOn(() => Brand(shopCode))
+  val product = dependsOn(() => Product(shopCode, year, month, day))
 
-  asTableSuffix(privacySensitive(ecNr))
   storedAs(Parquet())
   materializeOnce
 
@@ -131,12 +126,12 @@ case class ProductBrandMaterializeOnce(
     HiveTransformation(insertInto(
       this,
       s"""
-         SELECT 	${this.ecNr.v.get} AS ${this.ecShopCode.n},
+         SELECT
       				p.${product().id.n} AS ${this.productId.n},
-          			b.${brand().name.n} AS ${this.brandName.n},
-          			p.${product().occurredAt.n} AS ${this.occurredAt.n}
-          			'some date time' AS ${this.createdAt.n}
-          			${"ProductBrand"} AS ${this.createdBy.n}
+          		b.${brand().name.n} AS ${this.brandName.n},
+          		p.${product().occurredAt.n} AS ${this.occurredAt.n}
+          		'some date time' AS ${this.createdAt.n}
+          		${"ProductBrand"} AS ${this.createdBy.n}
           FROM 		${product().n} p
           JOIN 		${brand().n} b
           ON		p.${product().brandId.n} = b.${brand().id.n}
@@ -180,7 +175,6 @@ case class EdgeCasesView() extends View {
 }
 
 case class AvroView(
-  ecNr: Parameter[String],
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
@@ -189,13 +183,10 @@ case class AvroView(
   val aField = fieldOf[String]
   val anotherField = fieldOf[String]
 
-  asTableSuffix(ecNr)
-
   storedAs(Avro("test.avsc"))
 }
 
 case class ViewWithDefaultParams(
-    ecNr: Parameter[String],
     year: Parameter[String],
     month: Parameter[String],
     day: Parameter[String],
@@ -203,7 +194,7 @@ case class ViewWithDefaultParams(
 }
 
 case class Click(
-  ecShopCode: Parameter[String],
+  shopCode: Parameter[String],
   year: Parameter[String],
   month: Parameter[String],
   day: Parameter[String]) extends View
@@ -229,7 +220,7 @@ case class ClickOfEC0101(
       insertInto(this, s"""
             SELECT ${click().id.n}, ${click().url.n}
             FROM ${click().tableName}
-            WHERE ${click().ecShopCode.n} = '${click().ecShopCode.v.get}'""")))
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
 }
 
 case class ClickOfEC0101ViaOozie(

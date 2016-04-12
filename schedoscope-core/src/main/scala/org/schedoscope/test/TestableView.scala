@@ -20,8 +20,8 @@ import org.schedoscope.dsl.{ FieldLike, Structure, View }
 import org.schedoscope.dsl.transformations.{ FilesystemTransformation, HiveTransformation, MapreduceTransformation, OozieTransformation, PigTransformation, Transformation }
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.test.resources.OozieTestResources
-
 import scala.collection.mutable.ListBuffer
+import org.schedoscope.dsl.transformations.SeqTransformation
 
 trait TestableView extends FillableView {}
 
@@ -35,6 +35,7 @@ trait test extends TestableView {
 
   var driver: () => Driver[Transformation] = () => {
     this.transformation() match {
+      case t: SeqTransformation[_,_]   => resources().seqDriver.asInstanceOf[Driver[Transformation]]
       case t: HiveTransformation       => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
       case t: OozieTransformation      => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
       case t: PigTransformation        => resources().pigDriver.asInstanceOf[Driver[Transformation]]
