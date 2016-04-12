@@ -19,9 +19,9 @@ package org.schedoscope.export.redis;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
@@ -232,15 +232,15 @@ public class RedisExportJob extends Configured implements Tool {
 			jedis.flushDB();
 		}
 
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(numReducer);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(OutputClazz);
-		job.setOutputKeyClass(OutputClazz);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(OutputClazz);
 		return job;
 	}
 

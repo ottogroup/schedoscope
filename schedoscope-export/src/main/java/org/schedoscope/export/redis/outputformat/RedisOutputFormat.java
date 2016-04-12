@@ -42,7 +42,7 @@ import redis.clients.jedis.Pipeline;
  * @param <V>
  *            The value class.
  */
-public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<K, V> {
+public class RedisOutputFormat<K, V extends RedisWritable> extends OutputFormat<K, V> {
 
 	public static final String REDIS_EXPORT_SERVER_HOST = "redis.export.server.host";
 
@@ -214,7 +214,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 		@Override
 		public void write(K key, V value) {
 
-			key.write(jedis, replace);
+			value.write(jedis, replace);
 		}
 
 		@Override
@@ -251,7 +251,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends OutputFormat<
 		@Override
 		public void write(K key, V value) {
 
-			key.write(jedis, replace);
+			value.write(jedis, replace);
 		}
 
 		@Override

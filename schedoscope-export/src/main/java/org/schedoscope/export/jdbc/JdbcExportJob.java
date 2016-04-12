@@ -24,8 +24,8 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ClassUtil;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -213,7 +213,7 @@ public class JdbcExportJob extends Configured implements Tool {
 
 		job.setJarByClass(JdbcExportJob.class);
 		job.setMapperClass(JdbcExportMapper.class);
-		job.setReducerClass(JdbcExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(numReducer);
 
 		if (inputFilter == null || inputFilter.trim().equals("")) {
@@ -246,8 +246,8 @@ public class JdbcExportJob extends Configured implements Tool {
 
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(JdbcOutputWritable.class);
-		job.setOutputKeyClass(JdbcOutputWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(LongWritable.class);
+		job.setOutputValueClass(JdbcOutputWritable.class);
 
 		Class<?> clazz = Class.forName(outputSchema.getDriverName());
 		String jarFile = ClassUtil.findContainingJar(clazz);

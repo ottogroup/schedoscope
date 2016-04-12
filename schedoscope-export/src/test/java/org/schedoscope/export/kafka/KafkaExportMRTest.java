@@ -30,6 +30,7 @@ import org.apache.avro.mapreduce.AvroJob;
 import org.apache.curator.test.TestingServer;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.After;
 import org.junit.Before;
@@ -62,6 +63,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	protected SimpleTestKafkaConsumer kafkaConsumer;
 
 	protected ZkClient zkClient;
+
+	private static final int TEST_SIZE = 10;
 
 	@Override
 	@Before
@@ -99,7 +102,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 				OutputEncoding.string);
 
 		job.setMapperClass(KafkaExportMapper.class);
-		job.setReducerClass(KafkaExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(KafkaOutputFormat.class);
@@ -114,12 +117,15 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
 		ObjectMapper objMapper = new ObjectMapper();
 
+		int counter = 0;
 		for(byte[] message : kafkaConsumer) {
-
+			counter++;
 			String record = new String(message, Charsets.UTF_8);
 			JsonNode data = objMapper.readTree(record);
 			assertEquals("value1", data.get("created_by").asText());
 		}
+
+		assertEquals(TEST_SIZE, counter);
 	}
 
 	@Test
@@ -134,7 +140,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 				OutputEncoding.avro);
 
 		job.setMapperClass(KafkaExportMapper.class);
-		job.setReducerClass(KafkaExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(KafkaOutputFormat.class);
@@ -153,12 +159,14 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		registry.register(schema);
 		FingerprintSerdeGeneric serde = new FingerprintSerdeGeneric(registry);
 
+		int counter = 0;
 		for(byte[] message : kafkaConsumer) {
-
+			counter++;
 			GenericRecord record = serde.fromBytes(message);
 			JsonNode data = objMapper.readTree(record.toString());
 			assertEquals("value1", data.get("created_by").asText());
 		}
+		assertEquals(TEST_SIZE, counter);
 	}
 
 	private void startKafkaServer() throws Exception {

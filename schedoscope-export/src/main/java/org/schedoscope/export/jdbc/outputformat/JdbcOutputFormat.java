@@ -53,7 +53,7 @@ import org.schedoscope.export.utils.JdbcQueryUtils;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V> {
+public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V> {
 
 	private static final Log LOG = LogFactory.getLog(JdbcOutputFormat.class);
 
@@ -138,7 +138,7 @@ public class JdbcOutputFormat<K extends DBWritable, V> extends OutputFormat<K, V
 		public void write(K key, V value) throws IOException {
 
 			try {
-				key.write(statement);
+				value.write(statement);
 				statement.addBatch();
 				if (rowsInBatch == commitSize) {
 					statement.executeBatch();

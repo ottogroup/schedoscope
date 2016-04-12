@@ -26,6 +26,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
@@ -211,7 +212,7 @@ public class KafkaExportJob extends Configured implements Tool {
 				keyName, inputTable, numPartitions, replicationFactor, codec, encoding);
 
 		job.setMapperClass(KafkaExportMapper.class);
-		job.setReducerClass(KafkaExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(numReducer);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(KafkaOutputFormat.class);

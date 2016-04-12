@@ -26,6 +26,7 @@ import java.util.List;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.WritableComparable;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mrunit.mapreduce.MapDriver;
 import org.apache.hadoop.mrunit.mapreduce.MapReduceDriver;
 import org.apache.hadoop.mrunit.mapreduce.ReduceDriver;
@@ -40,8 +41,8 @@ import org.schedoscope.export.jdbc.outputformat.JdbcOutputWritable;
 public class JdbcExportJobMRArrayTest extends HiveUnitBaseTest {
 
 	MapDriver<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable> mapDriver;
-	ReduceDriver<LongWritable, JdbcOutputWritable, JdbcOutputWritable, NullWritable> reduceDriver;
-	MapReduceDriver<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable, JdbcOutputWritable, NullWritable> mapReduceDriver;
+	ReduceDriver<LongWritable, JdbcOutputWritable, LongWritable, JdbcOutputWritable> reduceDriver;
+	MapReduceDriver<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable, LongWritable, JdbcOutputWritable> mapReduceDriver;
 
 	@Override
 	@SuppressWarnings("deprecation")
@@ -52,7 +53,7 @@ public class JdbcExportJobMRArrayTest extends HiveUnitBaseTest {
 		mapDriver = MapDriver.newMapDriver(mapper);
 		mapDriver.setConfiguration(conf);
 
-		JdbcExportReducer reducer = new JdbcExportReducer();
+		Reducer<LongWritable, JdbcOutputWritable, LongWritable, JdbcOutputWritable> reducer = new Reducer<>();
 		reduceDriver = ReduceDriver.newReduceDriver(reducer);
 		reduceDriver.setConfiguration(conf);
 
@@ -87,7 +88,7 @@ public class JdbcExportJobMRArrayTest extends HiveUnitBaseTest {
 			HCatRecord record = it.next();
 			mapReduceDriver.withInput(NullWritable.get(), record);
 		}
-		List<Pair<JdbcOutputWritable, NullWritable>> out = mapReduceDriver
+		List<Pair<LongWritable, JdbcOutputWritable>> out = mapReduceDriver
 				.run();
 		assertEquals(10, out.size());
 	}
