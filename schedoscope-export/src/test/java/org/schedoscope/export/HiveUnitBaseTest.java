@@ -39,6 +39,7 @@ import org.schedoscope.export.jdbc.outputschema.Schema;
 import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 import org.schedoscope.export.jdbc.outputschema.SchemaUtils;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
 import com.inmobi.hive.test.HiveTestSuite;
 
 public abstract class HiveUnitBaseTest {
@@ -50,7 +51,7 @@ public abstract class HiveUnitBaseTest {
 		SLF4JBridgeHandler.install();
 		Logger.getLogger("global").setLevel(Level.FINEST);
 	}
-	
+
 	private static final String DEFAUlT_HIVE_DB = "default";
 	private static final String DEFAULT_DERBY_DB = "jdbc:derby:memory:TestingDB;create=true";
 	private static final String DATA_FILE_PATH = "DATA_FILE_PATH";

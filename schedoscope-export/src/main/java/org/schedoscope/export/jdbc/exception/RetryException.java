@@ -17,8 +17,7 @@
 package org.schedoscope.export.jdbc.exception;
 
 /**
- * An exception that is thrown if an error occurs,
- * a retry may be successful.
+ * An exception that is thrown if an error occurs, a retry may be successful.
  */
 public class RetryException extends Exception {
 
@@ -34,7 +33,8 @@ public class RetryException extends Exception {
 	/**
 	 * Initializes the exception with a message.
 	 *
-	 * @param message The exception message.
+	 * @param message
+	 *            The exception message.
 	 */
 	public RetryException(String message) {
 		super(message);
@@ -43,18 +43,20 @@ public class RetryException extends Exception {
 	/**
 	 * Initializes the exception from a throwable.
 	 *
-	 * @param cause The exception to initialize from.
+	 * @param cause
+	 *            The exception to initialize from.
 	 */
 	public RetryException(Throwable cause) {
 		super(cause);
 	}
 
 	/**
-	 * Initializes the exception from a throwable and
-	 * a message.
+	 * Initializes the exception from a throwable and a message.
 	 *
-	 * @param message The exception message.
-	 * @param cause The exception to initialize from.
+	 * @param message
+	 *            The exception message.
+	 * @param cause
+	 *            The exception to initialize from.
 	 */
 	public RetryException(String message, Throwable cause) {
 		super(message, cause);
