@@ -47,13 +47,13 @@ public class SimpleTestKafkaConsumer implements Iterable<byte[]> {
 		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
 
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-		topicCountMap.put(topic, new Integer(1));
+		topicCountMap.put(topic, Integer.valueOf(1));
 		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
 		KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 		consumerIt = stream.iterator();
 	}
 
-	public void shutDown() {
+	public void shutdown() {
 		consumer.shutdown();
 	}
 

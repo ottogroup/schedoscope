@@ -16,6 +16,7 @@
 
 package org.schedoscope.export.kafka.avro;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -80,7 +81,7 @@ public class HCatToAvroRecordConverter {
 	 *             Is thrown if an error occurs.
 	 */
 	public static GenericRecord convertRecord(HCatRecord record, HCatSchema hcatSchema, String tableName)
-			throws HCatException {
+			throws IOException {
 
 		LOG.info(record.toString());
 		GenericRecord rec = getRecordValue(hcatSchema, tableName, record);
@@ -100,7 +101,7 @@ public class HCatToAvroRecordConverter {
 	 * @throws HCatException
 	 *             Is thrown if an error occurs.
 	 */
-	public static Schema convertSchema(HCatSchema hcatSchema, String tableName) throws HCatException {
+	public static Schema convertSchema(HCatSchema hcatSchema, String tableName) throws IOException {
 
 		LOG.info(hcatSchema.getSchemaAsTypeString());
 		Schema avroSchema = getRecordAvroFieldSchema(hcatSchema, tableName);
@@ -109,13 +110,9 @@ public class HCatToAvroRecordConverter {
 	}
 
 	private static GenericRecord getRecordValue(HCatSchema structSchema, String fieldName, HCatRecord record)
-			throws HCatException {
+			throws IOException {
 
-		JsonNode n = null;
-		try {
-			n = new ObjectMapper().readTree("null");
-		} catch (Exception e) {
-		}
+		JsonNode nullNode = new ObjectMapper().readTree("null");
 
 		List<Pair<String, Object>> values = new ArrayList<Pair<String, Object>>();
 		List<Field> fields = new ArrayList<Field>();
@@ -123,11 +120,11 @@ public class HCatToAvroRecordConverter {
 		for (HCatFieldSchema f : structSchema.getFields()) {
 			if (f.isComplex()) {
 				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(),
-						n);
+						nullNode);
 				fields.add(complexField);
 				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
 			} else {
-				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), n);
+				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), nullNode);
 				fields.add(primitiveField);
 				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
 			}
@@ -141,13 +138,9 @@ public class HCatToAvroRecordConverter {
 		return rec;
 	}
 
-	private static Schema getRecordAvroFieldSchema(HCatSchema structSchema, String fieldName) throws HCatException {
+	private static Schema getRecordAvroFieldSchema(HCatSchema structSchema, String fieldName) throws IOException {
 
-		JsonNode n = null;
-		try {
-			n = new ObjectMapper().readTree("null");
-		} catch (Exception e) {
-		}
+		JsonNode n = new ObjectMapper().readTree("null");
 
 		List<Field> fields = new ArrayList<Field>();
 
@@ -166,7 +159,7 @@ public class HCatToAvroRecordConverter {
 	}
 
 	private static Schema getComplexAvroFieldSchema(HCatFieldSchema fieldSchema, boolean nullable)
-			throws HCatException {
+			throws IOException {
 
 		Schema schema = null;
 		switch (fieldSchema.getCategory()) {
@@ -200,7 +193,8 @@ public class HCatToAvroRecordConverter {
 		case STRUCT: {
 			HCatSchema valueSchema = fieldSchema.getStructSubSchema();
 			if (fieldSchema.getName() == null) {
-				String fieldName = "record_" + String.valueOf(Math.abs(fieldSchema.getTypeString().hashCode()));
+				long hashCode = fieldSchema.getTypeString().hashCode() + Integer.MAX_VALUE;
+				String fieldName = "record_" + String.valueOf(hashCode);
 				schema = getRecordAvroFieldSchema(valueSchema, fieldName);
 			} else {
 				schema = getRecordAvroFieldSchema(valueSchema, fieldSchema.getName());
@@ -218,7 +212,7 @@ public class HCatToAvroRecordConverter {
 		}
 	}
 
-	private static Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema) throws HCatException {
+	private static Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema) throws IOException {
 
 		if (primitiveTypeMap.containsKey(fieldSchema.getTypeInfo().getPrimitiveCategory())) {
 			Schema schema = Schema.create(primitiveTypeMap.get(fieldSchema.getTypeInfo().getPrimitiveCategory()));

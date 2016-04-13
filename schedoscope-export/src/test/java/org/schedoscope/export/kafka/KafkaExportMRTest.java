@@ -85,7 +85,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@After
 	public void tearDown() throws Exception {
 		super.tearDown();
-		kafkaConsumer.shutDown();
+		kafkaConsumer.shutdown();
 		stopKafkaServer();
 		zkServer.close();
 	}
