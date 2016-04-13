@@ -80,6 +80,8 @@ class LocalTestResources extends TestResources {
     new Path(dirUrl).toString()
   }
 
+  override lazy val metastoreUri = "jdbc:derby:memory:metastore_db;create=true"
+  
   override lazy val fileSystem: FileSystem = FileSystem.getLocal(new Configuration())
 
   override val jdbcUrl = "jdbc:hive2://"

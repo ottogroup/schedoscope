@@ -66,6 +66,8 @@ abstract class TestResources {
 
   val hiveScratchDir: String
 
+  val metastoreUri : String
+  
   val fileSystem: FileSystem
 
   val jdbcUrl: String
@@ -91,7 +93,7 @@ abstract class TestResources {
   }
 
   lazy val metastoreClient: HiveMetaStoreClient = new HiveMetaStoreClient(hiveConf)
-
+  
   lazy val database = new Database(connection, jdbcUrl)
 
   lazy val crate: SchemaManager = SchemaManager(metastoreClient, connection)
@@ -109,6 +111,7 @@ abstract class TestResources {
     case "hive"       => new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, jdbcUrl, metastoreClient)
 
     case "seq"        => new SeqDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), driverFor)
+  
   }).asInstanceOf[Driver[Transformation]]
 
   lazy val fileSystemDriver: FileSystemDriver = driverFor("filesystem").asInstanceOf[FileSystemDriver]

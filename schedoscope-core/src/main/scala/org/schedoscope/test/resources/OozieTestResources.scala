@@ -20,6 +20,7 @@ import java.util.logging.{ Level, LogManager, Logger }
 import minioozie.MiniOozie
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.hive.conf.HiveConf
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars._
 import org.schedoscope.scheduler.driver.{ OozieDriver, Driver }
 import org.schedoscope.dsl.transformations.Transformation
 import org.slf4j.bridge.SLF4JBridgeHandler
@@ -31,7 +32,9 @@ class OozieTestResources extends TestResources {
 
   override lazy val hiveWarehouseDir: String = mo.getFsTestCaseDir.toString
 
-  override lazy val hiveScratchDir: String = mo.getScratchDir().toString()
+  override lazy val hiveScratchDir: String = mo.getScratchDir().toString
+
+  override lazy val metastoreUri = hiveConf.get(METASTOREURIS.toString)
 
   override lazy val fileSystem: FileSystem = mo.getFileSystem
 
@@ -46,7 +49,7 @@ class OozieTestResources extends TestResources {
     case "oozie" => new OozieDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), mo.getClient).asInstanceOf[Driver[Transformation]]
 
     case _       => super.driverFor(transformationName)
-    
+
   }
 
 }

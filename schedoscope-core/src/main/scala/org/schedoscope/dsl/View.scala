@@ -265,9 +265,12 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     registeredTransformation = ft
   }
 
+  /**
+   * Postfactum configuration of the registered transformation. Useful to override transformation configs within a test.
+   */
   def configureTransformation(k: String, v: Any) {
     ensureRegisteredParameters
-    
+
     val t = registeredTransformation()
     transformVia(() => t.configureWith(Map((k, v))))
   }
@@ -282,6 +285,17 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     ensureRegisteredParameters
 
     registeredExports ::= export
+  }
+
+  /**
+   * Postfactum configuration of the registered exports. Useful to override export configs within a test.
+   */
+  def configureExport(k: String, v: Any) {
+    ensureRegisteredParameters
+
+    val reconfiguredExports = registeredExports.map { e => () => e().configureWith(Map((k, v))) }
+
+    registeredExports = reconfiguredExports
   }
 
   /**

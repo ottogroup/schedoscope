@@ -83,13 +83,6 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   }
 
   /**
-   * The configured timeout for Schedoscope web service calls.
-   */
-  lazy val webserviceTimeout =
-    Duration.create(config.getDuration("schedoscope.webservice.timeout", TimeUnit.MILLISECONDS),
-      TimeUnit.MILLISECONDS)
-
-  /**
    * The configured host of the Schedoscope web service (for calling via the SchedoscopeRestClient).
    */
   lazy val host = config.getString("schedoscope.webservice.host")
@@ -181,19 +174,16 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   lazy val schemaTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schema", TimeUnit.SECONDS), TimeUnit.SECONDS)
 
   /**
-   * The configured timeout for collecting status lists (view / transformation)
+   * Timeout for completion of scheduling commands
    */
-  lazy val statusListAggregationTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.statusListAggregation", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val schedulingCommandTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schedulingCommand", TimeUnit.SECONDS), TimeUnit.SECONDS)
 
   /**
-   * The configured timout for responses of the view manager.
+   * The configured timeout for Schedoscope web service calls.
    */
-  lazy val viewManagerResponseTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.viewManagerResponse", TimeUnit.SECONDS), TimeUnit.SECONDS)
-
-  /**
-   * Timeout for completion of materialization commands
-   */
-  lazy val completitionTimeout = Duration.create(config.getDuration("schedoscope.scheduler.timeouts.completion", TimeUnit.SECONDS), TimeUnit.SECONDS)
+  lazy val webserviceTimeout =
+    Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schedulingCommand", TimeUnit.MILLISECONDS),
+      TimeUnit.MILLISECONDS)
 
   /**
    * The configured number of retries before a view enters failed state.
@@ -215,6 +205,31 @@ class SchedoscopeSettings(val config: Config) extends Extension {
    */
   lazy val metastoreReadBatchSize = config.getInt("schedoscope.metastore.readBatchSize")
 
+  /**
+   * Number of reducers to use for JDBC export.
+   */
+  lazy val jdbcExportNumReducers = config.getInt("schedoscope.export.jdbc.numberOfReducers")
+
+  /**
+   * Size of insert batches for JDBC export.
+   */
+  lazy val jdbcExportBatchSize = config.getInt("schedoscope.export.jdbc.insertBatchSize")
+  
+  /**
+   * Storage engine to use for JDBC export where relevant (MySQL so far).
+   */
+  lazy val jdbcStorageEngine = config.getString("schedoscope.export.jdbc.storageEngine")
+
+  /**
+   * Number of reducers to use for Redis export.
+   */
+  lazy val redisExportNumReducers = config.getInt("schedoscope.export.redis.numberOfReducers")
+
+  /**
+   * Use pipeline mode for writing to redis or not.
+   */
+  lazy val redisExportUsesPipelineMode = config.getBoolean("schedoscope.export.redis.usePipelineMode")
+  
   /**
    * A user group information object ready to use for kerberized interactions.
    */

@@ -23,9 +23,10 @@ import org.schedoscope.export.jdbc.JdbcExportJob
 import org.schedoscope.export.jdbc.exception.{ RetryException, UnrecoverableException }
 import org.schedoscope.export.redis.RedisExportJob
 import org.schedoscope.scheduler.driver.{ Driver, DriverRunFailed, DriverRunState, DriverRunSucceeded, RetryableDriverException }
+import org.schedoscope.Schedoscope
 
 /**
- * A helper class to configure the export MR jobs.
+ * A helper class to with constructors for exportTo() MR jobs.
  */
 object Export {
 
@@ -33,48 +34,90 @@ object Export {
    * This function configures the JDBC export job and returns a MapreduceTransformation.
    *
    * @param v The view to export
-   * @param dbConn A JDBC connection string
+   * @param jdbcConnection A JDBC connection string
    * @param dbUser The database user
    * @param dbPass the database password
    * @param distributionKey The distribution key (only relevant for exasol)
    * @param storageEngine The underlying storage engine (only relevant for MySQL)
-   * @param numReducer The number of reducers, defines concurrency
+   * @param numReducers The number of reducers, defines concurrency
    * @param commitSize The size of batches for JDBC inserts
+   * @param isKerberized Is the cluster kerberized?
+   * @param kerberosPrincipal The kerberos principal to use
+   * @param metastoreUri The thrift URI to the metastore
    */
-  def jdbcExport(v: View, dbConn: String, dbUser: String, dbPass: String, distributionKey: Field[_] = null, storageEngine: String = "InnoDB", numReducer: Int = 10, commitSize: Int = 10000) =
-    MapreduceTransformation(v, (config) => {
+  def Jdbc(
+    v: View,
+    jdbcConnection: String,
+    dbUser: String,
+    dbPass: String,
+    distributionKey: Field[_] = null,
+    storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
+    numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,
+    commitSize: Int = Schedoscope.settings.jdbcExportBatchSize,
+    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+    metastoreUri: String = Schedoscope.settings.metastoreUri) =
 
-      val partitionParameters = v.partitionParameters
-      val filter = partitionParameters.map { p => s"${p.n} = '${p.v.get}'" }
-        .mkString(" and ")
+    MapreduceTransformation(
+      v,
+      (conf) => {
 
-      val distributionField = if (distributionKey != null) distributionKey.n else null
+        val filter = v.partitionParameters
+          .map { (p => s"${p.n} = '${p.v.get}'") }
+          .mkString(" and ")
 
-      val settings = Settings.apply()
-      val secure = if (settings.kerberosPrincipal.isEmpty) false else true
-      val jobConfigurer = new JdbcExportJob()
+        val distributionField = if (distributionKey != null) distributionKey.n else null
 
-      jobConfigurer.configure(secure, settings.metastoreUri, settings.kerberosPrincipal, dbConn, dbUser, dbPass,
-        v.dbName, v.tableName, filter, storageEngine, distributionField, numReducer, commitSize)
-    })
+        new JdbcExportJob().configure(
+          conf.get("isKerberized").get.asInstanceOf[Boolean],
+          conf.get("metastoreUri").get.asInstanceOf[String],
+          conf.get("kerberosPrincipal").get.asInstanceOf[String],
+          conf.get("jdbcConnection").get.asInstanceOf[String],
+          conf.get("dbUser").getOrElse(null).asInstanceOf[String],
+          conf.get("dbPass").getOrElse(null).asInstanceOf[String],
+          v.dbName,
+          v.tableName,
+          filter,
+          conf.get("storageEngine").get.asInstanceOf[String],
+          distributionField,
+          conf.get("numReducers").get.asInstanceOf[Int],
+          conf.get("commitSize").get.asInstanceOf[Int])
 
-    /**
-     * This function runs the post commit action and finalizes the database tables.
-     *
-     * @param job The MR job object
-     * @param driver The schedoscope driver
-     * @param runState The job's runstate
-     */
-  def jdbcPostCommit(job: Job, driver: Driver[MapreduceTransformation], runState: DriverRunState[MapreduceTransformation]): DriverRunState[_] = {
+      },
+      jdbcPostCommit).configureWith(
+        Map(
+          "jdbcConnection" -> jdbcConnection,
+          "dbUser" -> dbUser,
+          "dbPass" -> dbPass,
+          "storageEngine" -> storageEngine,
+          "numReducers" -> numReducers,
+          "commitSize" -> commitSize,
+          "isKerberized" -> isKerberized,
+          "kerberosPrincipal" -> kerberosPrincipal,
+          "metastoreUri" -> metastoreUri))
+
+  /**
+   * This function runs the post commit action and finalizes the database tables.
+   *
+   * @param job The MR job object
+   * @param driver The schedoscope driver
+   * @param runState The job's runstate
+   */
+  def jdbcPostCommit(
+    job: Job,
+    driver: Driver[MapreduceTransformation],
+    runState: DriverRunState[MapreduceTransformation]): DriverRunState[MapreduceTransformation] = {
 
     val jobConfigurer = new JdbcExportJob()
 
     try {
+
       jobConfigurer.postCommit(runState.isInstanceOf[DriverRunSucceeded[MapreduceTransformation]], job.getConfiguration)
       runState
+
     } catch {
-      case ex: RetryException => throw new RetryableDriverException(ex.getMessage, ex)
-      case ex: UnrecoverableException => DriverRunFailed.apply(driver, ex.getMessage, ex)
+      case ex: RetryException         => throw new RetryableDriverException(ex.getMessage, ex)
+      case ex: UnrecoverableException => DriverRunFailed(driver, ex.getMessage, ex)
     }
   }
 
@@ -83,29 +126,71 @@ object Export {
    *
    * @param v The view
    * @param redisHost The Redis hostname
-   * @param keyName The field to use as Redis key
-   * @param redisPort The Redis port
-   * @param redisKeySpace The Redis key space (default 0)
-   * @param valueName An optional field for the native export
+   * @param key The field to use as the Redis key
+   * @param value An optional field to export. If null, all fields are attached to the key as a map. If not null, only that field's value is attached to the key.
    * @param keyPrefix An optional key prefix
-   * @param numReducer The number of reducer, defines concurrency
-   * @param replace A flag indicating of exisiting should be replaced (or extended)
-   * @param pipeline A flag indicating that the Redis pipeline mode should be used for writing data
+   * @param replace A flag indicating of existing keys should be replaced (or extended)
    * @param flush A flag indicating if the key space should be flushed before writing data
+   * @param redisPort The Redis port (default 6379)
+   * @param redisKeySpace The Redis key space (default 0)
+   * @param numReducers The number of reducers, defines concurrency
+   * @param pipeline A flag indicating that the Redis pipeline mode should be used for writing data
+   * @param isKerberized Is the cluster kerberized?
+   * @param kerberosPrincipal The kerberos principal to use
+   * @param metastoreUri The thrift URI to the metastore
    */
-  def redisExport(v: View, redisHost: String, keyName: Field[_], redisPort: Int = 6379, redisKeySpace: Int = 0, valueName: Field[_] = null,
-    keyPrefix: String = "", numReducer: Int = 10, replace: Boolean = false, pipeline: Boolean = false, flush: Boolean = true) =
-    MapreduceTransformation(v, (config) => {
+  def Redis(
+    v: View,
+    redisHost: String,
+    key: Field[_],
+    value: Field[_] = null,
+    keyPrefix: String = "",
+    replace: Boolean = false,
+    flush: Boolean = false,
+    redisPort: Int = 6379,
+    redisKeySpace: Int = 0,
+    numReducers: Int = Schedoscope.settings.redisExportNumReducers,
+    pipeline: Boolean = Schedoscope.settings.redisExportUsesPipelineMode,
+    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+    metastoreUri: String = Schedoscope.settings.metastoreUri) =
 
-      val partitionParameters = v.partitionParameters
-      val filter = partitionParameters.map { p => s"${p.n} = '${p.v.get}'" }.mkString(" and ")
-      val valueField = if (valueName != null) valueName.n else null
+    MapreduceTransformation(
+      v,
+      (conf) => {
 
-      val settings = Settings.apply()
-      val secure = if (settings.kerberosPrincipal.isEmpty) false else true
-      val jobConfigurer = new RedisExportJob()
+        val filter = v.partitionParameters
+          .map { (p => s"${p.n} = '${p.v.get}'") }
+          .mkString(" and ")
 
-      jobConfigurer.configure(secure, settings.metastoreUri, settings.kerberosPrincipal, redisHost, redisPort, redisKeySpace, v.dbName,
-        v.tableName, filter, keyName.n, valueField, keyPrefix, numReducer, replace, pipeline, flush)
-    })
+        val valueFieldName = if (value != null) value.n else null
+
+        new RedisExportJob().configure(
+          conf.get("isKerberized").get.asInstanceOf[Boolean],
+          conf.get("metastoreUri").get.asInstanceOf[String],
+          conf.get("kerberosPrincipal").get.asInstanceOf[String],
+          conf.get("redisHost").get.asInstanceOf[String],
+          conf.get("redisPort").get.asInstanceOf[Int],
+          conf.get("redisKeySpace").get.asInstanceOf[Int],
+          v.dbName,
+          v.tableName,
+          filter,
+          key.n,
+          valueFieldName,
+          keyPrefix,
+          conf.get("numReducers").get.asInstanceOf[Int],
+          replace,
+          conf.get("pipeline").get.asInstanceOf[Boolean],
+          flush)
+          
+      }).configureWith(
+        Map(
+          "redisHost" -> redisHost,
+          "redisPort" -> redisPort,
+          "redisKeySpace" -> redisKeySpace,
+          "numReducers" -> numReducers,
+          "pipeline" -> pipeline,
+          "isKerberized" -> isKerberized,
+          "kerberosPrincipal" -> kerberosPrincipal,
+          "metastoreUri" -> metastoreUri))
 }

@@ -24,6 +24,7 @@ import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.dsl.transformations.OozieTransformation.oozieWFPath
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Touch
+import org.schedoscope.dsl.transformations.Export._
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.views.DailyParameterization
 import org.schedoscope.dsl.views.Id
@@ -221,6 +222,26 @@ case class ClickOfEC0101(
             SELECT ${click().id.n}, ${click().url.n}
             FROM ${click().tableName}
             WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+}
+
+case class ClickOfEC0101WithJdbcExport(
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+    with Id
+    with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this, s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+            
 }
 
 case class ClickOfEC0101ViaOozie(

@@ -64,6 +64,13 @@ trait test extends TestableView {
       d.write()
     })
 
+    //
+    // Patch export configurations to point to the test metastore with no kerberization.
+    //
+    configureExport("isKerberized", false)
+    configureExport("kerberosPrincipal", "")
+    configureExport("metastoreUri", resources().metastoreUri)
+    
     val trans = this.transformation() match {
       case ot: OozieTransformation => deployWorkflow(ot)
       case ht: HiveTransformation  => deployFunctions(ht)
