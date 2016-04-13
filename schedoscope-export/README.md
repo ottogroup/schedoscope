@@ -111,7 +111,7 @@ yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedos
 This Map/Reduce job moves data into Kafka, using Avro schema underneath. The Avro schema is auto generated from the HCatalog schema. It supports 2 output encodings, though internally everything is handled as Avro:
  * JSON (plain string containing the payload as Json)
 
- * Avro (binary blog, containing the payload, the schema fingerprint is embedded in the byte stream)
+ * Avro (binary blob, containing the payload, the schema fingerprint is embedded in the byte stream)
 
 #### Configuration options
 
