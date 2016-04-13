@@ -52,7 +52,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   private def getViews(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
     val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
 
-    queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.viewManagerResponseTimeout).viewStatusList
+    queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.schedulingCommandTimeout).viewStatusList
   }
 
   private def commandId(command: Any, args: Seq[Option[String]], start: Option[LocalDateTime] = None) = {
@@ -78,7 +78,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     if (currentCommandId.isDefined)
       commandStatus(currentCommandId.get)
     else {
-      val jobFutures = actors.map { actor => Patterns.ask(actor, command, Timeout(settings.completitionTimeout)) }
+      val jobFutures = actors.map { actor => Patterns.ask(actor, command, Timeout(settings.schedulingCommandTimeout)) }
       val start = new LocalDateTime()
       val id = commandId(command, args, Some(start))
 
@@ -298,7 +298,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def transformations(status: Option[String], filter: Option[String]) = {
-    val result = queryActor[TransformationStatusListResponse](transformationManagerActor, GetTransformations(), settings.statusListAggregationTimeout)
+    val result = queryActor[TransformationStatusListResponse](transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
     val actions = result.transformationStatusList
       .map(a => parseActionStatus(a))
       .filter(a => !status.isDefined || status.get.equals(a.status))
@@ -311,7 +311,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
-    val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.statusListAggregationTimeout)
+    val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.schedulingCommandTimeout)
 
     val queues = result.transformationQueues
       .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))

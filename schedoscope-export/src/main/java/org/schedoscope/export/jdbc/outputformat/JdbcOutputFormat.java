@@ -53,6 +53,7 @@ import org.schedoscope.export.utils.JdbcQueryUtils;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
+
 public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V> {
 
 	private static final Log LOG = LogFactory.getLog(JdbcOutputFormat.class);
@@ -60,13 +61,16 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 	private static final String TMPDB = "TMP_";
 
 	@Override
-	public void checkOutputSpecs(JobContext context) throws IOException, InterruptedException {
+	public void checkOutputSpecs(JobContext context) throws IOException,
+			InterruptedException {
 	}
 
 	@Override
-	public OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException, InterruptedException {
+	public OutputCommitter getOutputCommitter(TaskAttemptContext context)
+			throws IOException, InterruptedException {
 
-		return new FileOutputCommitter(FileOutputFormat.getOutputPath(context), context);
+		return new FileOutputCommitter(FileOutputFormat.getOutputPath(context),
+				context);
 	}
 
 	/**
@@ -96,7 +100,8 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 		 * @throws SQLException
 		 *             Is thrown if a error occurs.
 		 */
-		public JdbcRecordWriter(Connection connection, PreparedStatement statement, int commitSize)
+		public JdbcRecordWriter(Connection connection,
+				PreparedStatement statement, int commitSize)
 				throws SQLException {
 
 			this.connection = connection;
@@ -153,14 +158,18 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 	}
 
 	@Override
-	public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException {
+	public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context)
+			throws IOException {
 
-		Schema outputSchema = SchemaFactory.getSchema(context.getConfiguration());
+		Schema outputSchema = SchemaFactory.getSchema(context
+				.getConfiguration());
 
-		String tmpOutputTable = TMPDB + outputSchema.getTable() + "_" + context.getTaskAttemptID().getTaskID().getId();
+		String tmpOutputTable = TMPDB + outputSchema.getTable() + "_"
+				+ context.getTaskAttemptID().getTaskID().getId();
 		String createTableQuery = outputSchema.getCreateTableQuery();
 
-		createTableQuery = createTableQuery.replace(outputSchema.getTable(), tmpOutputTable);
+		createTableQuery = createTableQuery.replace(outputSchema.getTable(),
+				tmpOutputTable);
 
 		int commitSize = outputSchema.getCommitSize();
 		String[] fieldNames = outputSchema.getColumnNames();
@@ -172,7 +181,8 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 			JdbcQueryUtils.createTable(createTableQuery, connection);
 
 			PreparedStatement statement = null;
-			statement = connection.prepareStatement(JdbcQueryUtils.createInsertQuery(tmpOutputTable, fieldNames));
+			statement = connection.prepareStatement(JdbcQueryUtils
+					.createInsertQuery(tmpOutputTable, fieldNames));
 
 			return new JdbcRecordWriter(connection, statement, commitSize);
 
@@ -211,14 +221,17 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 	 * @throws IOException
 	 *             Is thrown if an error occurs.
 	 */
-	public static void setOutput(Configuration conf, String connectionString, String username, String password,
-			String outputTable, String inputFilter, int outputNumberOfPartitions, int outputCommitSize,
-			String storageEngine, String distributedBy, String[] columnNames, String[] columnsTypes)
-			throws IOException {
+	public static void setOutput(Configuration conf, String connectionString,
+			String username, String password, String outputTable,
+			String inputFilter, int outputNumberOfPartitions,
+			int outputCommitSize, String storageEngine, String distributedBy,
+			String[] columnNames, String[] columnsTypes) throws IOException {
 
 		Schema outputSchema = SchemaFactory.getSchema(connectionString, conf);
-		outputSchema.setOutput(connectionString, username, password, outputTable, inputFilter, outputNumberOfPartitions,
-				outputCommitSize, storageEngine, distributedBy, columnNames, columnsTypes);
+		outputSchema.setOutput(connectionString, username, password,
+				outputTable, inputFilter, outputNumberOfPartitions,
+				outputCommitSize, storageEngine, distributedBy, columnNames,
+				columnsTypes);
 	}
 
 	/**
@@ -232,7 +245,8 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 	 * @throws UnrecoverableException
 	 *             Is thrown if JDBC driver issue occurs.
 	 */
-	public static void finalizeOutput(Configuration conf) throws RetryException, UnrecoverableException {
+	public static void finalizeOutput(Configuration conf)
+			throws RetryException, UnrecoverableException {
 
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		String outputTable = outputSchema.getTable();
@@ -247,14 +261,17 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 			connection = outputSchema.getConnection();
 
 			if (inputFilter != null) {
-				JdbcQueryUtils.deleteExisitingRows(outputTable, inputFilter, connection);
+				JdbcQueryUtils.deleteExisitingRows(outputTable, inputFilter,
+						connection);
 			} else {
 				JdbcQueryUtils.dropTable(outputTable, connection);
 			}
 
 			JdbcQueryUtils.createTable(createTableStatement, connection);
-			JdbcQueryUtils.mergeOutput(outputTable, TMPDB, outputNumberOfPartitions, connection);
-			JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable, outputNumberOfPartitions, connection);
+			JdbcQueryUtils.mergeOutput(outputTable, TMPDB,
+					outputNumberOfPartitions, connection);
+			JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable,
+					outputNumberOfPartitions, connection);
 
 		} catch (SQLException ex1) {
 			LOG.error(ex1.getMessage());
@@ -277,7 +294,8 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 	 * @throws UnrecoverableException
 	 *             Is thrown if JDBC driver issue occurs.
 	 */
-	public static void rollback(Configuration conf) throws RetryException, UnrecoverableException {
+	public static void rollback(Configuration conf) throws RetryException,
+			UnrecoverableException {
 
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		String tmpOutputTable = TMPDB + outputSchema.getTable();
@@ -287,7 +305,8 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends OutputFormat<K, V
 
 		try {
 			connection = outputSchema.getConnection();
-			JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable, outputNumberOfPartitions, connection);
+			JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable,
+					outputNumberOfPartitions, connection);
 
 		} catch (SQLException ex1) {
 			LOG.error(ex1.getMessage());

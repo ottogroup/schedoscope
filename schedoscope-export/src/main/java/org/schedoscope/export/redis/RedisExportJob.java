@@ -176,8 +176,15 @@ public class RedisExportJob extends Configured implements Tool {
 
 		Configuration conf = getConf();
 
-		conf.set("hive.metastore.local", "false");
-		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
+		if (metaStoreUris.startsWith("thrift://")) {
+			conf.set("hive.metastore.local", "false");
+			conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
+		} else {
+			conf.set("hive.metastore.local", "true");
+			conf.unset(HiveConf.ConfVars.METASTOREURIS.varname);
+			conf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
+					metaStoreUris);
+		}
 
 		if (isSecured) {
 
