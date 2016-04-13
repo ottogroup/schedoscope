@@ -115,11 +115,11 @@ public class HCatToAvroRecordConverter {
 		for (HCatFieldSchema f : structSchema.getFields()) {
 			if (f.isComplex()) {
 				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(),
-						false);
+						"null");
 				fields.add(complexField);
 				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
 			} else {
-				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), false);
+				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), "null");
 				fields.add(primitiveField);
 				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
 			}
@@ -140,11 +140,11 @@ public class HCatToAvroRecordConverter {
 		for (HCatFieldSchema f : structSchema.getFields()) {
 			if (f.isComplex()) {
 				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(),
-						false);
+						"null");
 				fields.add(complexField);
 
 			} else {
-				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), false);
+				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), "null");
 				fields.add(primitiveField);
 			}
 		}
@@ -198,7 +198,7 @@ public class HCatToAvroRecordConverter {
 		}
 
 		if (nullable) {
-			return Schema.createUnion(ImmutableList.of(schema, nullSchema));
+			return Schema.createUnion(ImmutableList.of(nullSchema, schema));
 		} else {
 			return schema;
 		}
@@ -208,7 +208,7 @@ public class HCatToAvroRecordConverter {
 
 		if (primitiveTypeMap.containsKey(fieldSchema.getTypeInfo().getPrimitiveCategory())) {
 			Schema schema = Schema.create(primitiveTypeMap.get(fieldSchema.getTypeInfo().getPrimitiveCategory()));
-			return Schema.createUnion(ImmutableList.of(schema, nullSchema));
+			return Schema.createUnion(ImmutableList.of(nullSchema, schema));
 		}
 		throw new IllegalArgumentException("can not find primitive type in typeMap");
 	}
