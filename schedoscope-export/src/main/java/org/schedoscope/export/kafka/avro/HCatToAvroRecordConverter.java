@@ -35,6 +35,8 @@ import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema.Category;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.map.ObjectMapper;
 
 import com.google.common.collect.ImmutableList;
 
@@ -109,17 +111,23 @@ public class HCatToAvroRecordConverter {
 	private static GenericRecord getRecordValue(HCatSchema structSchema, String fieldName, HCatRecord record)
 			throws HCatException {
 
+		JsonNode n = null;
+		try {
+			n = new ObjectMapper().readTree("null");
+		} catch (Exception e) {
+		}
+
 		List<Pair<String, Object>> values = new ArrayList<Pair<String, Object>>();
 		List<Field> fields = new ArrayList<Field>();
 
 		for (HCatFieldSchema f : structSchema.getFields()) {
 			if (f.isComplex()) {
 				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(),
-						"null");
+						n);
 				fields.add(complexField);
 				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
 			} else {
-				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), "null");
+				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), n);
 				fields.add(primitiveField);
 				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
 			}
@@ -135,16 +143,22 @@ public class HCatToAvroRecordConverter {
 
 	private static Schema getRecordAvroFieldSchema(HCatSchema structSchema, String fieldName) throws HCatException {
 
+		JsonNode n = null;
+		try {
+			n = new ObjectMapper().readTree("null");
+		} catch (Exception e) {
+		}
+
 		List<Field> fields = new ArrayList<Field>();
 
 		for (HCatFieldSchema f : structSchema.getFields()) {
 			if (f.isComplex()) {
 				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(),
-						"null");
+						n);
 				fields.add(complexField);
 
 			} else {
-				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), "null");
+				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), n);
 				fields.add(primitiveField);
 			}
 		}
