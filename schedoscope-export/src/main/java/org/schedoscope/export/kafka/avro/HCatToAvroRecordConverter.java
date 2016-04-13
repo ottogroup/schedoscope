@@ -60,6 +60,7 @@ public class HCatToAvroRecordConverter {
 					put(PrimitiveCategory.VARCHAR, Schema.Type.STRING);
 					put(PrimitiveCategory.FLOAT, Schema.Type.FLOAT);
 					put(PrimitiveCategory.DOUBLE, Schema.Type.DOUBLE);
+					put(PrimitiveCategory.BYTE, Schema.Type.INT);
 				}
 			});
 
@@ -162,7 +163,7 @@ public class HCatToAvroRecordConverter {
 				Schema subType = getPrimitiveAvroField(valueSchema);
 				schema = Schema.createMap(subType);
 			} else {
-				Schema subType = schema = getComplexAvroFieldSchema(valueSchema, true);
+				Schema subType = getComplexAvroFieldSchema(valueSchema, true);
 				schema = Schema.createMap(subType);
 			}
 		}
@@ -173,6 +174,9 @@ public class HCatToAvroRecordConverter {
 			if (valueCategory == Category.PRIMITIVE) {
 				Schema subType = getPrimitiveAvroField(valueSchema);
 				schema = Schema.createArray(subType);
+//			} else if (valueCategory == Category.STRUCT) {
+//				Schema subType = getComplexAvroFieldSchema(valueSchema, false);
+//				schema = Schema.createArray(subType);
 			} else {
 				Schema subType = getComplexAvroFieldSchema(valueSchema, true);
 				schema = Schema.createArray(subType);
@@ -181,7 +185,12 @@ public class HCatToAvroRecordConverter {
 			break;
 		case STRUCT: {
 			HCatSchema valueSchema = fieldSchema.getStructSubSchema();
-			schema = getRecordAvroFieldSchema(valueSchema, fieldSchema.getName());
+			if (fieldSchema.getName() == null) {
+				String fieldName = "record_" + String.valueOf(Math.abs(fieldSchema.getTypeString().hashCode()));
+				schema = getRecordAvroFieldSchema(valueSchema, fieldName);
+			} else {
+				schema = getRecordAvroFieldSchema(valueSchema, fieldSchema.getName());
+			}
 		}
 			break;
 		default:

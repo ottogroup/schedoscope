@@ -111,4 +111,13 @@ public abstract class HiveUnitBaseTest {
 
 		hcatRecordReader = DataTransferFactory.getHCatReader(ctx, 0);
 	}
+
+	public void setUpHiveServerNoData(String hiveScript, String tableName) throws Exception {
+
+		// load data into hive table
+		testSuite.executeScript(hiveScript);
+
+		HCatInputFormat.setInput(conf, DEFAUlT_HIVE_DB, tableName);
+		hcatInputSchema = HCatInputFormat.getTableSchema(conf);
+	}
 }
