@@ -98,4 +98,16 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 			assertNotNull(rec);
 		}
 	}
+
+	@Test
+	public void testArrayStructConverter() throws Exception {
+		setUpHiveServer("src/test/resources/test_arraystruct_data.txt", "src/test/resources/test_arraystruct.hql",
+				"test_arraystruct");
+		Iterator<HCatRecord> it = hcatRecordReader.read();
+		while (it.hasNext()) {
+			HCatRecord record = it.next();
+			GenericRecord rec = HCatToAvroRecordConverter.convertRecord(record, hcatInputSchema, "MyRecord");
+			assertNotNull(rec);
+		}
+	}
 }

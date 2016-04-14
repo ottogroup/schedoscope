@@ -70,7 +70,6 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
 		zkServer = new TestingServer(2182);
 		zkServer.start();
@@ -92,6 +91,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
 	@Test
 	public void testKafkaMapExportString() throws Exception {
+
+		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
 		Job job = Job.getInstance(conf);
 
@@ -131,6 +132,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Test
 	public void testKafkaMapExportAvro() throws Exception {
 
+		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+
 		Job job = Job.getInstance(conf);
 
 		Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
@@ -167,6 +170,35 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 			assertEquals("value1", data.get("created_by").asText());
 		}
 		assertEquals(TEST_SIZE, counter);
+	}
+
+	@Test
+	public void testKafkaArrayStructExportAvro() throws Exception {
+
+		org.apache.log4j.BasicConfigurator.configure();
+		setUpHiveServer("src/test/resources/test_arraystruct_data.txt", "src/test/resources/test_arraystruct.hql", "test_arraystruct");
+
+		Job job = Job.getInstance(conf);
+
+		Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
+		AvroJob.setMapOutputValueSchema(job, schema);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
+				ProducerType.sync, CleanupPolicy.delete, "id", "test_arraystruct", 1, 1, CompressionCodec.gzip,
+				OutputEncoding.avro);
+
+		job.setMapperClass(KafkaExportMapper.class);
+		job.setReducerClass(Reducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(KafkaOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(AvroValue.class);
+
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(AvroValue.class);
+
+		assertTrue(job.waitForCompletion(true));
 	}
 
 	private void startKafkaServer() throws Exception {
