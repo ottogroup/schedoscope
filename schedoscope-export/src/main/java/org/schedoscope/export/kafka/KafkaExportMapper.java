@@ -45,7 +45,9 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 	private String keyName;
 
-	HCatToAvroRecordConverter converter;
+	private HCatToAvroRecordConverter converter;
+
+	private Schema avroSchema;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -58,19 +60,20 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		tableName = conf.get(KafkaOutputFormat.KAFKA_EXPORT_TABLE_NAME);
 
 		HCatUtils.checkKeyType(hcatSchema, keyName);
+
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatSchema);
 		converter = new HCatToAvroRecordConverter(serializer);
+
+		avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema, tableName);
 	}
 
 	@Override
 	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
 			throws IOException, InterruptedException {
 
-		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema, tableName);
 		GenericRecord record = converter.convert(value, avroSchema);
 		AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(record);
 
-		Text localKey = new Text();
-		context.write(localKey, recordWrapper);
+		context.write(new Text(), recordWrapper);
 	}
 }
