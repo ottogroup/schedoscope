@@ -36,7 +36,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
-import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
+import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.kafka.options.CleanupPolicy;
 import org.schedoscope.export.kafka.options.CompressionCodec;
 import org.schedoscope.export.kafka.options.OutputEncoding;
@@ -96,7 +96,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
 				ProducerType.sync, CleanupPolicy.delete, "id", "test_map", 1, 1, CompressionCodec.gzip,
@@ -136,7 +136,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
 				ProducerType.sync, CleanupPolicy.delete, "id", "test_map", 1, 1, CompressionCodec.gzip,
@@ -175,12 +175,11 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Test
 	public void testKafkaArrayStructExportAvro() throws Exception {
 
-		org.apache.log4j.BasicConfigurator.configure();
 		setUpHiveServer("src/test/resources/test_arraystruct_data.txt", "src/test/resources/test_arraystruct.hql", "test_arraystruct");
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroRecordConverter.convertSchema(hcatInputSchema, "MyTable");
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
 				ProducerType.sync, CleanupPolicy.delete, "id", "test_arraystruct", 1, 1, CompressionCodec.gzip,

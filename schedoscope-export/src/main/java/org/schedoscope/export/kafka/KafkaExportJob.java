@@ -35,7 +35,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.jdbc.JdbcExportJob;
-import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
+import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.kafka.options.CleanupPolicy;
 import org.schedoscope.export.kafka.options.CompressionCodec;
 import org.schedoscope.export.kafka.options.OutputEncoding;
@@ -205,7 +205,7 @@ public class KafkaExportJob extends Configured implements Tool {
 		}
 
 		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
-		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(hcatSchema, inputTable);
+		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema, inputTable);
 		AvroJob.setMapOutputValueSchema(job, avroSchema);
 
 		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList, zookeeperHosts, producerType, cleanupPolicy,

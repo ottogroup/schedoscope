@@ -71,7 +71,7 @@ public class HCatToAvroRecordConverterSchemaTest {
 		fields.add(field4);
 
 		HCatSchema schemaComplete = new HCatSchema(fields);
-		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
+		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(schemaComplete, "my_table");
 
 		assertEquals("my_table", avroSchema.getName());
 
@@ -99,7 +99,7 @@ public class HCatToAvroRecordConverterSchemaTest {
 		fields.add(field4);
 
 		HCatSchema schemaComplete = new HCatSchema(fields);
-		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
+		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(schemaComplete, "my_table");
 
 		assertEquals("my_table", avroSchema.getName());
 		assertEquals(4, avroSchema.getFields().size());
@@ -126,7 +126,7 @@ public class HCatToAvroRecordConverterSchemaTest {
 		fields.add(field4);
 
 		HCatSchema schemaComplete = new HCatSchema(fields);
-		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
+		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(schemaComplete, "my_table");
 
 		assertEquals("my_table", avroSchema.getName());
 		assertEquals(4, avroSchema.getFields().size());
@@ -158,7 +158,7 @@ public class HCatToAvroRecordConverterSchemaTest {
 
 		HCatSchema schemaComplete = new HCatSchema(fields);
 
-		Schema avroSchema = HCatToAvroRecordConverter.convertSchema(schemaComplete, "my_table");
+		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(schemaComplete, "my_table");
 
 		assertEquals(5, avroSchema.getFields().size());
 		assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());

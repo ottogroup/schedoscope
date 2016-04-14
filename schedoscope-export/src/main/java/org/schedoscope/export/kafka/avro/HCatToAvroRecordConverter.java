@@ -18,206 +18,119 @@ package org.schedoscope.export.kafka.avro;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
-import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector.PrimitiveCategory;
-import org.apache.hive.hcatalog.common.HCatException;
-import org.apache.hive.hcatalog.data.HCatRecord;
-import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
-import org.apache.hive.hcatalog.data.schema.HCatFieldSchema.Category;
-import org.apache.hive.hcatalog.data.schema.HCatSchema;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
+import org.apache.avro.generic.GenericRecordBuilder;
 
-import com.google.common.collect.ImmutableList;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * This class covnerts an HCatRecord to an AvroRecord.
+ * This class converts an HCatRecord to an AvroRecord.
  */
 public class HCatToAvroRecordConverter {
 
-	private static final Log LOG = LogFactory.getLog(HCatToAvroRecordConverter.class);
+	public static GenericRecord convertRecord(JsonNode json, Schema schema) throws IOException {
 
-	private static final String NAMESPACE = "org.schedoscope.export";
+		GenericRecordBuilder builder = new GenericRecordBuilder(schema);
 
-	private static Schema nullSchema = Schema.create(Schema.Type.NULL);
+		List<Field> fields = schema.getFields();
+		for (Field f : fields) {
 
-	@SuppressWarnings("serial")
-	private static final Map<PrimitiveCategory, Schema.Type> primitiveTypeMap = Collections
-			.unmodifiableMap(new HashMap<PrimitiveCategory, Schema.Type>() {
-				{
-					put(PrimitiveCategory.BOOLEAN, Schema.Type.BOOLEAN);
-					put(PrimitiveCategory.INT, Schema.Type.INT);
-					put(PrimitiveCategory.STRING, Schema.Type.STRING);
-					put(PrimitiveCategory.LONG, Schema.Type.LONG);
-					put(PrimitiveCategory.VARCHAR, Schema.Type.STRING);
-					put(PrimitiveCategory.FLOAT, Schema.Type.FLOAT);
-					put(PrimitiveCategory.DOUBLE, Schema.Type.DOUBLE);
-					put(PrimitiveCategory.BYTE, Schema.Type.INT);
+			for (Schema s : f.schema().getTypes()) {
+				if (s.getType().equals(Schema.Type.STRING)) {
+					builder.set(f.name(), json.get(f.name()).asText());
+				} else if (s.getType().equals(Schema.Type.INT)) {
+					builder.set(f.name(), json.get(f.name()).asInt());
+				} else if (s.getType().equals(Schema.Type.LONG)) {
+					builder.set(f.name(), json.get(f.name()).asLong());
+				} else if (s.getType().equals(Schema.Type.BOOLEAN)) {
+					builder.set(f.name(), json.get(f.name()).asBoolean());
+				} else if (s.getType().equals(Schema.Type.DOUBLE)) {
+					builder.set(f.name(), json.get(f.name()).asDouble());
+				}else if (s.getType().equals(Schema.Type.FLOAT)) {
+					builder.set(f.name(), json.get(f.name()).asDouble());
+				}else if (s.getType().equals(Schema.Type.RECORD)) {
+					builder.set(f.name(), json.get(f.name()));
+				} else if (s.getType().equals(Schema.Type.ARRAY)) {
+					builder.set(f.name(), convertArray(json.get(f.name()), s));
+				} else if (s.getType().equals(Schema.Type.MAP)) {
+					builder.set(f.name(), convertMap(json.get(f.name()), s));
 				}
-			});
-
-	/**
-	 * Converts a given HCatrecord to a GeneircRecord (Avro).
-	 *
-	 * @param record
-	 *            The HCatRecord.
-	 * @param hcatSchema
-	 *            The HCatSchema.
-	 * @param tableName
-	 *            The Hive table name, will be the name of the GenericRecord.
-	 * @return A GenericRecord..
-	 * @throws HCatException
-	 *             Is thrown if an error occurs.
-	 */
-	public static GenericRecord convertRecord(HCatRecord record, HCatSchema hcatSchema, String tableName)
-			throws IOException {
-
-		LOG.info(record.toString());
-		GenericRecord rec = getRecordValue(hcatSchema, tableName, record);
-		LOG.info(rec.toString());
-		LOG.info(rec.getSchema());
-		return rec;
-	}
-
-	/**
-	 * Converts a HCatSchema to an Avro Schema.
-	 *
-	 * @param hcatSchema
-	 *            The HCatSchema.
-	 * @param tableName
-	 *            The name of the table, will be the record name.
-	 * @return A derived Avro Schema.
-	 * @throws HCatException
-	 *             Is thrown if an error occurs.
-	 */
-	public static Schema convertSchema(HCatSchema hcatSchema, String tableName) throws IOException {
-
-		LOG.info(hcatSchema.getSchemaAsTypeString());
-		Schema avroSchema = getRecordAvroFieldSchema(hcatSchema, tableName);
-		LOG.info(avroSchema.toString());
-		return avroSchema;
-	}
-
-	private static GenericRecord getRecordValue(HCatSchema structSchema, String fieldName, HCatRecord record)
-			throws IOException {
-
-		JsonNode nullNode = new ObjectMapper().readTree("null");
-
-		List<Pair<String, Object>> values = new ArrayList<Pair<String, Object>>();
-		List<Field> fields = new ArrayList<Field>();
-
-		for (HCatFieldSchema f : structSchema.getFields()) {
-			if (f.isComplex()) {
-				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(),
-						nullNode);
-				fields.add(complexField);
-				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
-			} else {
-				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), nullNode);
-				fields.add(primitiveField);
-				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
 			}
 		}
-		Schema schema = Schema.createRecord(fieldName, structSchema.getSchemaAsTypeString(), NAMESPACE, false, fields);
-		GenericRecord rec = new GenericData.Record(schema);
-
-		for (Pair<String, Object> v : values) {
-			rec.put(v.getKey(), v.getValue());
-		}
-		return rec;
+		return builder.build();
 	}
 
-	private static Schema getRecordAvroFieldSchema(HCatSchema structSchema, String fieldName) throws IOException {
+	public static Map<String, Object> convertMap(JsonNode json, Schema schema) throws IOException {
 
-		JsonNode n = new ObjectMapper().readTree("null");
+		Map<String, Object> res = new HashMap<>();
 
-		List<Field> fields = new ArrayList<Field>();
+		Iterator<Map.Entry<String, JsonNode>> it = json.fields();
 
-		for (HCatFieldSchema f : structSchema.getFields()) {
-			if (f.isComplex()) {
-				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(),
-						n);
-				fields.add(complexField);
+		while (it.hasNext()) {
 
-			} else {
-				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), n);
-				fields.add(primitiveField);
+			Map.Entry<String, JsonNode> n = it.next();
+			for (Schema s : schema.getValueType().getTypes()) {
+				if (s.getType().equals(Schema.Type.STRING)) {
+					res.put(n.getKey(), n.getValue().asText());
+				} else if (s.getType().equals(Schema.Type.INT)) {
+					res.put(n.getKey(), n.getValue().asInt());
+				} else if (s.getType().equals(Schema.Type.LONG)) {
+					res.put(n.getKey(), n.getValue().asLong());
+				} else if (s.getType().equals(Schema.Type.BOOLEAN)) {
+					res.put(n.getKey(), n.getValue().asBoolean());
+				} else if (s.getType().equals(Schema.Type.DOUBLE)) {
+					res.put(n.getKey(), n.getValue().asDouble());
+				} else if (s.getType().equals(Schema.Type.FLOAT)) {
+					res.put(n.getKey(), n.getValue().asDouble());
+				} else if (s.getType().equals(Schema.Type.RECORD)) {
+					res.put(n.getKey(), convertRecord(n.getValue(), s));
+				} else if (s.getType().equals(Schema.Type.ARRAY)) {
+					res.put(n.getKey(), convertArray(n.getValue(), s));
+				} else if (s.getType().equals(Schema.Type.MAP)) {
+					res.put(n.getKey(), convertMap(n.getValue(), s));
+				}
 			}
 		}
-		return Schema.createRecord(fieldName, structSchema.getSchemaAsTypeString(), NAMESPACE, false, fields);
+		return res;
 	}
 
-	private static Schema getComplexAvroFieldSchema(HCatFieldSchema fieldSchema, boolean nullable)
-			throws IOException {
+	public static List<Object> convertArray(JsonNode json, Schema schema) throws IOException {
 
-		Schema schema = null;
-		switch (fieldSchema.getCategory()) {
-		case MAP: {
-			HCatFieldSchema valueSchema = fieldSchema.getMapValueSchema().get(0);
-			Category valueCategory = valueSchema.getCategory();
-			if (valueCategory == Category.PRIMITIVE) {
-				Schema subType = getPrimitiveAvroField(valueSchema);
-				schema = Schema.createMap(subType);
-			} else {
-				Schema subType = getComplexAvroFieldSchema(valueSchema, true);
-				schema = Schema.createMap(subType);
+		List<Object> res = new ArrayList<>();
+		Iterator<JsonNode> it = json.elements();
+
+		while (it.hasNext()) {
+
+			JsonNode n = it.next();
+			for (Schema s : schema.getElementType().getTypes()) {
+				if (s.getType().equals(Schema.Type.STRING)) {
+					res.add(n.asText());
+				} else if (s.getType().equals(Schema.Type.INT)) {
+					res.add(n.asInt());
+				} else if (s.getType().equals(Schema.Type.LONG)) {
+					res.add(n.asLong());
+				} else if (s.getType().equals(Schema.Type.BOOLEAN)) {
+					res.add(n.asBoolean());
+				} else if (s.getType().equals(Schema.Type.DOUBLE)) {
+					res.add(n.asDouble());
+				} else if (s.getType().equals(Schema.Type.FLOAT)) {
+					res.add(n.asDouble());
+				} else if (s.getType().equals(Schema.Type.RECORD)) {
+					res.add(convertRecord(n, s));
+				} else if (s.getType().equals(Schema.Type.ARRAY)) {
+					res.addAll(convertArray(n, s));
+				} else if (s.getType().equals(Schema.Type.MAP)) {
+					res.add(convertMap(n, s));
+				}
 			}
 		}
-			break;
-		case ARRAY: {
-			HCatFieldSchema valueSchema = fieldSchema.getArrayElementSchema().get(0);
-			Category valueCategory = valueSchema.getCategory();
-			if (valueCategory == Category.PRIMITIVE) {
-				Schema subType = getPrimitiveAvroField(valueSchema);
-				schema = Schema.createArray(subType);
-//			} else if (valueCategory == Category.STRUCT) {
-//				Schema subType = getComplexAvroFieldSchema(valueSchema, false);
-//				schema = Schema.createArray(subType);
-			} else {
-				Schema subType = getComplexAvroFieldSchema(valueSchema, true);
-				schema = Schema.createArray(subType);
-			}
-		}
-			break;
-		case STRUCT: {
-			HCatSchema valueSchema = fieldSchema.getStructSubSchema();
-			if (fieldSchema.getName() == null) {
-				long hashCode = ((long) fieldSchema.getTypeString().hashCode()) + Integer.MAX_VALUE;
-				String fieldName = "record_" + String.valueOf(hashCode);
-				schema = getRecordAvroFieldSchema(valueSchema, fieldName);
-			} else {
-				schema = getRecordAvroFieldSchema(valueSchema, fieldSchema.getName());
-			}
-		}
-			break;
-		default:
-			throw new IllegalArgumentException("invalid type");
-		}
-
-		if (nullable) {
-			return Schema.createUnion(ImmutableList.of(nullSchema, schema));
-		} else {
-			return schema;
-		}
-	}
-
-	private static Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema) throws IOException {
-
-		if (primitiveTypeMap.containsKey(fieldSchema.getTypeInfo().getPrimitiveCategory())) {
-			Schema schema = Schema.create(primitiveTypeMap.get(fieldSchema.getTypeInfo().getPrimitiveCategory()));
-			return Schema.createUnion(ImmutableList.of(nullSchema, schema));
-		}
-		throw new IllegalArgumentException("can not find primitive type in typeMap");
+		return res;
 	}
 }
