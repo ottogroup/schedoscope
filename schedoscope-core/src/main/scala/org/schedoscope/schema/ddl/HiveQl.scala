@@ -88,8 +88,7 @@ ${if (lineTerminator != null) s"\tLINES TERMINATED BY '${lineTerminator}'" else 
 ${if (collectionItemTerminator != null) s"\tCOLLECTION ITEMS TERMINATED BY '${collectionItemTerminator}'" else ""}
 ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'" else ""}
 \tSTORED AS TEXTFILE"""
-    case e: ExternalStorageFormat => "STORED BY 'org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler'"
-    case _                        => "STORED AS TEXTFILE"
+    case _ => "STORED AS TEXTFILE"
   }
 
   def locationDdl(view: View): String = view.tablePath match {

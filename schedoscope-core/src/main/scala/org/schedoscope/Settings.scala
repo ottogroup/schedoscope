@@ -214,7 +214,7 @@ class SchedoscopeSettings(val config: Config) extends Extension {
    * Size of insert batches for JDBC export.
    */
   lazy val jdbcExportBatchSize = config.getInt("schedoscope.export.jdbc.insertBatchSize")
-  
+
   /**
    * Storage engine to use for JDBC export where relevant (MySQL so far).
    */
@@ -229,7 +229,7 @@ class SchedoscopeSettings(val config: Config) extends Extension {
    * Use pipeline mode for writing to redis or not.
    */
   lazy val redisExportUsesPipelineMode = config.getBoolean("schedoscope.export.redis.usePipelineMode")
-  
+
   /**
    * A user group information object ready to use for kerberized interactions.
    */

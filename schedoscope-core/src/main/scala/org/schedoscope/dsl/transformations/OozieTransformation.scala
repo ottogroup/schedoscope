@@ -30,7 +30,7 @@ import scala.collection.JavaConversions._
  * @param workflowAppPath path of the deployed workflow in hdfs
  *
  */
-case class OozieTransformation(bundle: String, workflow: String, workflowAppPath: String) extends Transformation {
+case class OozieTransformation(bundle: String, workflow: String, var workflowAppPath: String) extends Transformation {
   def name = "oozie"
 
   override def fileResourcesToChecksum = List(workflowAppPath)

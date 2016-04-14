@@ -285,9 +285,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>1.9.5</version>
+			<groupId>org.rarefiedredis.redis</groupId>
+			<artifactId>redis-java</artifactId>
+			<version>0.0.17</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

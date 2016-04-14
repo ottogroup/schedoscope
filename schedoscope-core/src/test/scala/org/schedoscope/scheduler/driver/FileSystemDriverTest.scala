@@ -258,5 +258,5 @@ class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
 
     driverRunStartedCalled(runHandle) shouldBe true
   }
-  
+
 }

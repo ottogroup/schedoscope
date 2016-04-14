@@ -242,7 +242,29 @@ case class ClickOfEC0101WithJdbcExport(
             FROM ${click().tableName}
             WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
 
-  exportTo(() => Jdbc(this, "jdbc:derby:memory:TestingDB", null, null))
+  exportTo(() => Jdbc(this, "jdbc:derby:memory:TestingDB"))
+
+}
+
+case class ClickOfEC0101WithRedisExport(
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+    with Id
+    with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this, s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+
+  exportTo(() => Redis(this, "localhost", id))
 
 }
 

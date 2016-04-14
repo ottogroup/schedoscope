@@ -33,8 +33,8 @@ trait TestableView extends FillableView {}
 trait test extends TestableView {
   var rowIdx = 0
 
-  var driver: () => Driver[Transformation] = () => {
-    this.transformation() match {
+  var driver: () => Driver[Transformation] =
+    () => this.transformation() match {
       case t: SeqTransformation[_, _]  => resources().seqDriver.asInstanceOf[Driver[Transformation]]
       case t: HiveTransformation       => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
       case t: OozieTransformation      => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
@@ -42,7 +42,6 @@ trait test extends TestableView {
       case t: MapreduceTransformation  => resources().mapreduceDriver.asInstanceOf[Driver[Transformation]]
       case t: FilesystemTransformation => resources().fileSystemDriver.asInstanceOf[Driver[Transformation]]
     }
-  }
 
   val deps = ListBuffer[View with rows]()
 
