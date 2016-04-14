@@ -1,4 +1,4 @@
-CREATE TABLE `test_mapmap`(
+CREATE TABLE `test_maparray`(
   `id` string, 
   `choice` map<string,array<string>>, 
 --  `choice` map<string,string>,
@@ -19,5 +19,5 @@ OUTPUTFORMAT
 TBLPROPERTIES (
   'schema.checksum'='268A5DEE8D2AC2A757FBB8C5F1265B5C', 
   'transient_lastDdlTime'='1454943496');
-LOAD DATA LOCAL INPATH '${DATA_FILE_PATH}' OVERWRITE INTO TABLE test_mapmap PARTITION (year='2015', month='08', month_id='201508');
-SELECT COUNT(*) FROM test_mapmap;
+LOAD DATA LOCAL INPATH '${DATA_FILE_PATH}' OVERWRITE INTO TABLE test_maparray PARTITION (year='2015', month='08', month_id='201508');
+SELECT COUNT(*) FROM test_maparray;

@@ -75,9 +75,9 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 	}
 
 	@Test
-	public void testMapMapConverter() throws Exception {
+	public void testMapArrayConverter() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_mapmap_data.txt", "src/test/resources/test_mapmap.hql", "test_mapmap");
+		setUpHiveServer("src/test/resources/test_maparray_data.txt", "src/test/resources/test_maparray.hql", "test_maparray");
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
 			HCatRecord record = it.next();
