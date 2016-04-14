@@ -193,7 +193,7 @@ public class HCatToAvroRecordConverter {
 		case STRUCT: {
 			HCatSchema valueSchema = fieldSchema.getStructSubSchema();
 			if (fieldSchema.getName() == null) {
-				long hashCode = fieldSchema.getTypeString().hashCode() + Integer.MAX_VALUE;
+				long hashCode = ((long) fieldSchema.getTypeString().hashCode()) + Integer.MAX_VALUE;
 				String fieldName = "record_" + String.valueOf(hashCode);
 				schema = getRecordAvroFieldSchema(valueSchema, fieldName);
 			} else {

@@ -78,11 +78,11 @@ public class HCatToAvroRecordConverterSchemaTest {
 		assertEquals(4, avroSchema.getFields().size());
 		assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
 
-		assertEquals(Schema.create(Schema.Type.INT), avroSchema.getField("field4").schema().getTypes().get(0)
-				.getField("nested_field3").schema().getTypes().get(0));
-		assertEquals(Schema.create(Schema.Type.STRING), avroSchema.getField("field4").schema().getTypes().get(0)
-				.getField("nested_field2").schema().getTypes().get(0));
-		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
+		assertEquals(Schema.create(Schema.Type.INT), avroSchema.getField("field4").schema().getTypes().get(1)
+				.getField("nested_field3").schema().getTypes().get(1));
+		assertEquals(Schema.create(Schema.Type.STRING), avroSchema.getField("field4").schema().getTypes().get(1)
+				.getField("nested_field2").schema().getTypes().get(1));
+		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(1));
 	}
 
 	@Test
@@ -105,10 +105,10 @@ public class HCatToAvroRecordConverterSchemaTest {
 		assertEquals(4, avroSchema.getFields().size());
 		assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
 
-		assertEquals(Schema.Type.ARRAY, avroSchema.getField("field4").schema().getTypes().get(0).getType());
+		assertEquals(Schema.Type.ARRAY, avroSchema.getField("field4").schema().getTypes().get(1).getType());
 		assertEquals(Schema.create(Schema.Type.LONG),
-				avroSchema.getField("field4").schema().getTypes().get(0).getElementType().getTypes().get(0));
-		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
+				avroSchema.getField("field4").schema().getTypes().get(1).getElementType().getTypes().get(1));
+		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(1));
 	}
 
 	@Test
@@ -132,10 +132,10 @@ public class HCatToAvroRecordConverterSchemaTest {
 		assertEquals(4, avroSchema.getFields().size());
 		assertEquals(schemaComplete.getSchemaAsTypeString(), avroSchema.getDoc());
 
-		assertEquals(Schema.Type.MAP, avroSchema.getField("field4").schema().getTypes().get(0).getType());
+		assertEquals(Schema.Type.MAP, avroSchema.getField("field4").schema().getTypes().get(1).getType());
 		assertEquals(Schema.create(Schema.Type.LONG),
-				avroSchema.getField("field4").schema().getTypes().get(0).getValueType().getTypes().get(0));
-		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(0));
+				avroSchema.getField("field4").schema().getTypes().get(1).getValueType().getTypes().get(1));
+		assertEquals(Schema.create(Schema.Type.LONG), avroSchema.getField("field1").schema().getTypes().get(1));
 	}
 
 	@Test
