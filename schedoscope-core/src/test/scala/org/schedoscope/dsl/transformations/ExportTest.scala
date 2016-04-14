@@ -16,17 +16,25 @@
 package org.schedoscope.dsl.transformations
 
 import org.scalatest.{ FlatSpec, Matchers }
+import org.schedoscope.export.utils.RedisMRJedisFactory
+import org.rarefiedredis.redis.adapter.jedis.JedisAdapter
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
 import test.eci.datahub.{ Click, ClickOfEC0101 }
 import org.schedoscope.test.rows
 import org.schedoscope.test.test
-import test.eci.datahub.ClickOfEC0101WithJdbcExport
+import test.eci.datahub.{ ClickOfEC0101WithJdbcExport, ClickOfEC0101WithRedisExport }
 import java.sql.{ DriverManager, ResultSet, Statement }
-import org.scalamock.scalatest.MockFactory
+import org.apache.hadoop.conf.Configuration
 
-class ExportTest extends FlatSpec with Matchers with MockFactory {
+class ExportTest extends FlatSpec with Matchers {
+
+  Class.forName("org.apache.derby.jdbc.EmbeddedDriver")
+  val dbConnection = DriverManager.getConnection("jdbc:derby:memory:TestingDB;create=true")
+
+  val jedisAdapter = new JedisAdapter()
+  RedisMRJedisFactory.setJedisMock(jedisAdapter)
 
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
@@ -54,18 +62,21 @@ class ExportTest extends FlatSpec with Matchers with MockFactory {
 
   "The test framework" should "execute hive transformations and perform JDBC export" taggedAs (DriverTests) in {
 
-    Class.forName("org.apache.derby.jdbc.EmbeddedDriver")
-    val dbConnection = DriverManager.getConnection("jdbc:derby:memory:TestingDB;create=true")
-
     new ClickOfEC0101WithJdbcExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
+
       `then`()
+
       numRows shouldBe 3
-      row(v(id) shouldBe "event01",
+
+      row(
+        v(id) shouldBe "event01",
         v(url) shouldBe "http://ec0101.com/url1")
-      row(v(id) shouldBe "event02",
+      row(
+        v(id) shouldBe "event02",
         v(url) shouldBe "http://ec0101.com/url2")
-      row(v(id) shouldBe "event03",
+      row(
+        v(id) shouldBe "event03",
         v(url) shouldBe "http://ec0101.com/url3")
 
     }
@@ -78,7 +89,33 @@ class ExportTest extends FlatSpec with Matchers with MockFactory {
 
     resultSet.close()
     statement.close()
-    dbConnection.close()
+  }
+
+  it should "execute hive transformations and perform Redis export" taggedAs (DriverTests) in {
+
+    new ClickOfEC0101WithRedisExport(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+
+      `then`()
+
+      numRows shouldBe 3
+
+      row(
+        v(id) shouldBe "event01",
+        v(url) shouldBe "http://ec0101.com/url1")
+      row(
+        v(id) shouldBe "event02",
+        v(url) shouldBe "http://ec0101.com/url2")
+      row(
+        v(id) shouldBe "event03",
+        v(url) shouldBe "http://ec0101.com/url3")
+
+    }
+
+    jedisAdapter.hget("event01", "url") shouldBe "http://ec0101.com/url1"
+    jedisAdapter.hget("event02", "url") shouldBe "http://ec0101.com/url2"
+    jedisAdapter.hget("event03", "url") shouldBe "http://ec0101.com/url3"
+
   }
 
 }
