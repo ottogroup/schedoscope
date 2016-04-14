@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * The CustomHCatSerializer serializes complex HCatalog types into Json.
  */
-public class CustomHCatRecordSerializer {
+public class HCatRecordJsonSerializer {
 
 	private ObjectMapper jsonMapper;
 
@@ -47,7 +47,7 @@ public class CustomHCatRecordSerializer {
 	 * @param schema
 	 *            The HCatalog Schema
 	 */
-	public CustomHCatRecordSerializer(Configuration conf, HCatSchema schema) {
+	public HCatRecordJsonSerializer(Configuration conf, HCatSchema schema) {
 
 		jsonMapper = new ObjectMapper();
 
@@ -86,7 +86,7 @@ public class CustomHCatRecordSerializer {
 	 * @throws IOException
 	 *             Is thrown if an error occurs.
 	 */
-	public String getJsonComplexType(HCatRecord value, String fieldName) throws IOException {
+	public String getFieldAsJson(HCatRecord value, String fieldName) throws IOException {
 
 		String json = null;
 		try {
@@ -106,7 +106,7 @@ public class CustomHCatRecordSerializer {
 	 * @throws IOException
 	 *             Is thrown if an error occurs
 	 */
-	public JsonNode getAsJson(HCatRecord value) throws IOException {
+	public JsonNode getRecordAsJson(HCatRecord value) throws IOException {
 
 		String json = null;
 		try {

@@ -26,9 +26,7 @@ import org.apache.hive.hcatalog.data.HCatRecord;
 import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
-import org.schedoscope.export.utils.CustomHCatRecordSerializer;
-
-import com.fasterxml.jackson.databind.JsonNode;
+import org.schedoscope.export.utils.HCatRecordJsonSerializer;
 
 public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 
@@ -44,15 +42,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 
 		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
-		CustomHCatRecordSerializer serializer = new CustomHCatRecordSerializer(conf, hcatInputSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
 		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
 
 			HCatRecord record = it.next();
-			JsonNode json = serializer.getAsJson(record);
-			GenericRecord rec = HCatToAvroRecordConverter.convertRecord(json, schema);
+			GenericRecord rec = conv.convert(record, schema);
 			assertNotNull(rec);
 		}
 	}
@@ -62,15 +60,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 
 		setUpHiveServer("src/test/resources/test_array_data.txt", "src/test/resources/test_array.hql", "test_array");
 
-		CustomHCatRecordSerializer serializer = new CustomHCatRecordSerializer(conf, hcatInputSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
 		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
 
 			HCatRecord record = it.next();
-			JsonNode json = serializer.getAsJson(record);
-			GenericRecord rec = HCatToAvroRecordConverter.convertRecord(json, schema);
+			GenericRecord rec = conv.convert(record, schema);
 			assertNotNull(rec);
 		}
 	}
@@ -80,15 +78,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 
 		setUpHiveServer("src/test/resources/test_struct_data.txt", "src/test/resources/test_struct.hql", "test_struct");
 
-		CustomHCatRecordSerializer serializer = new CustomHCatRecordSerializer(conf, hcatInputSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
 		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
 
 			HCatRecord record = it.next();
-			JsonNode json = serializer.getAsJson(record);
-			GenericRecord rec = HCatToAvroRecordConverter.convertRecord(json, schema);
+			GenericRecord rec = conv.convert(record, schema);
 			assertNotNull(rec);
 		}
 	}
@@ -99,15 +97,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		setUpHiveServer("src/test/resources/test_maparray_data.txt", "src/test/resources/test_maparray.hql",
 				"test_maparray");
 
-		CustomHCatRecordSerializer serializer = new CustomHCatRecordSerializer(conf, hcatInputSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
 		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
 
 			HCatRecord record = it.next();
-			JsonNode json = serializer.getAsJson(record);
-			GenericRecord rec = HCatToAvroRecordConverter.convertRecord(json, schema);
+			GenericRecord rec = conv.convert(record, schema);
 			assertNotNull(rec);
 		}
 	}
@@ -118,15 +116,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		setUpHiveServer("src/test/resources/test_structstruct_data.txt", "src/test/resources/test_structstruct.hql",
 				"test_structstruct");
 
-		CustomHCatRecordSerializer serializer = new CustomHCatRecordSerializer(conf, hcatInputSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
 		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
 
 			HCatRecord record = it.next();
-			JsonNode json = serializer.getAsJson(record);
-			GenericRecord rec = HCatToAvroRecordConverter.convertRecord(json, schema);
+			GenericRecord rec = conv.convert(record, schema);
 			assertNotNull(rec);
 		}
 	}
@@ -136,15 +134,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		setUpHiveServer("src/test/resources/test_arraystruct_data.txt", "src/test/resources/test_arraystruct.hql",
 				"test_arraystruct");
 
-		CustomHCatRecordSerializer serializer = new CustomHCatRecordSerializer(conf, hcatInputSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
 		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
 
 			HCatRecord record = it.next();
-			JsonNode json = serializer.getAsJson(record);
-			GenericRecord rec = HCatToAvroRecordConverter.convertRecord(json, schema);
+			GenericRecord rec = conv.convert(record, schema);
 			assertNotNull(rec);
 		}
 	}

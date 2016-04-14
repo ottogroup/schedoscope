@@ -27,7 +27,8 @@ import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
-import org.schedoscope.export.utils.CustomHCatRecordSerializer;
+import org.apache.hive.hcatalog.data.HCatRecord;
+import org.schedoscope.export.utils.HCatRecordJsonSerializer;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -38,20 +39,30 @@ import com.fasterxml.jackson.databind.JsonNode;
  */
 public class HCatToAvroRecordConverter {
 
+	private HCatRecordJsonSerializer serializer;
+
+	public HCatToAvroRecordConverter(HCatRecordJsonSerializer serializer) {
+
+		this.serializer = serializer;
+	}
+
 	/**
-	 * This function converts an HCatRecord provided as JsonNode to an Avro
+	 * This function converts an HCatRecord to an Avro
 	 * GenericRecord.
 	 *
-	 * @param json
-	 *            The HCatRecord as Json, please see
-	 *            {@link CustomHCatRecordSerializer}
-	 * @param schema
-	 *            The Avro schema.
-	 * @return Returns an Avro {@link GenericRecord}
-	 * @throws IOException
-	 *             Is thrown if an error occurs.
+	 * @param hcatRecord The HCatRecord
+	 * @param avroSchema The Avro Schema
+	 * @return Returns an Avro GenericRecord
+	 * @throws IOException Is thrown if an error occurs
 	 */
-	public static GenericRecord convertRecord(JsonNode json, Schema schema) throws IOException {
+	public GenericRecord convert(HCatRecord hcatRecord, Schema avroSchema) throws IOException {
+
+		JsonNode json = serializer.getRecordAsJson(hcatRecord);
+		GenericRecord avroRecord = convertRecord(json, avroSchema);
+		return avroRecord;
+	}
+
+	private GenericRecord convertRecord(JsonNode json, Schema schema) throws IOException {
 
 		GenericRecordBuilder builder = new GenericRecordBuilder(schema);
 
@@ -83,7 +94,7 @@ public class HCatToAvroRecordConverter {
 		return builder.build();
 	}
 
-	private static Map<String, Object> convertMap(JsonNode json, Schema schema) throws IOException {
+	private Map<String, Object> convertMap(JsonNode json, Schema schema) throws IOException {
 
 		Map<String, Object> res = new HashMap<>();
 
@@ -117,7 +128,7 @@ public class HCatToAvroRecordConverter {
 		return res;
 	}
 
-	private static List<Object> convertArray(JsonNode json, Schema schema) throws IOException {
+	private List<Object> convertArray(JsonNode json, Schema schema) throws IOException {
 
 		List<Object> res = new ArrayList<>();
 		Iterator<JsonNode> it = json.elements();

@@ -28,13 +28,11 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
-import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
+import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
-import org.schedoscope.export.utils.CustomHCatRecordSerializer;
+import org.schedoscope.export.utils.HCatRecordJsonSerializer;
 import org.schedoscope.export.utils.HCatUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * A mapper that reads data from Hive tables and emits a GenericRecord.
@@ -47,7 +45,7 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 	private String keyName;
 
-	private CustomHCatRecordSerializer serializer;
+	HCatToAvroRecordConverter converter;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -60,8 +58,8 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		tableName = conf.get(KafkaOutputFormat.KAFKA_EXPORT_TABLE_NAME);
 
 		HCatUtils.checkKeyType(hcatSchema, keyName);
-
-		serializer = new CustomHCatRecordSerializer(conf, hcatSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatSchema);
+		converter = new HCatToAvroRecordConverter(serializer);
 	}
 
 	@Override
@@ -69,9 +67,7 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 			throws IOException, InterruptedException {
 
 		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema, tableName);
-		// GenericRecord record = HCatToAvroRecordConverter.convertRecord(value, hcatSchema, tableName);
-		JsonNode json = serializer.getAsJson(value);
-		GenericRecord record = HCatToAvroRecordConverter.convertRecord(json, avroSchema);
+		GenericRecord record = converter.convert(value, avroSchema);
 		AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(record);
 
 		Text localKey = new Text();

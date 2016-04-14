@@ -64,29 +64,6 @@ public class HCatToAvroSchemaConverter {
 			});
 
 	/**
-	 * Converts a given HCatrecord to a GeneircRecord (Avro).
-	 *
-	 * @param record
-	 *            The HCatRecord.
-	 * @param hcatSchema
-	 *            The HCatSchema.
-	 * @param tableName
-	 *            The Hive table name, will be the name of the GenericRecord.
-	 * @return A GenericRecord..
-	 * @throws HCatException
-	 *             Is thrown if an error occurs.
-	 */
-//	public static GenericRecord convertRecord(HCatRecord record, HCatSchema hcatSchema, String tableName)
-//			throws IOException {
-//
-//		LOG.info(record.toString());
-//		GenericRecord rec = getRecordValue(hcatSchema, tableName, record);
-//		LOG.info(rec.toString());
-//		LOG.info(rec.getSchema());
-//		return rec;
-//	}
-
-	/**
 	 * Converts a HCatSchema to an Avro Schema.
 	 *
 	 * @param hcatSchema
@@ -105,37 +82,10 @@ public class HCatToAvroSchemaConverter {
 		return avroSchema;
 	}
 
-//	private static GenericRecord getRecordValue(HCatSchema structSchema, String fieldName, HCatRecord record)
-//			throws IOException {
-//
-//		JsonNode nullNode = new ObjectMapper().readTree("null");
-//
-//		List<Pair<String, Object>> values = new ArrayList<Pair<String, Object>>();
-//		List<Field> fields = new ArrayList<Field>();
-//
-//		for (HCatFieldSchema f : structSchema.getFields()) {
-//			if (f.isComplex()) {
-//				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(),
-//						nullNode);
-//				fields.add(complexField);
-//				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
-//			} else {
-//				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), nullNode);
-//				fields.add(primitiveField);
-//				values.add(Pair.of(f.getName(), record.get(f.getName(), structSchema)));
-//			}
-//		}
-//		Schema schema = Schema.createRecord(fieldName, structSchema.getSchemaAsTypeString(), NAMESPACE, false, fields);
-//		GenericRecord rec = new GenericData.Record(schema);
-//
-//		for (Pair<String, Object> v : values) {
-//			rec.put(v.getKey(), v.getValue());
-//		}
-//		return rec;
-//	}
-
 	private static Schema getRecordAvroFieldSchema(HCatSchema structSchema, String fieldName) throws IOException {
 
+		// using jackson 1 is important (org.codehaus)
+		// NullNode from jackson 2 doesn't work with avro
 		JsonNode n = new ObjectMapper().readTree("null");
 
 		List<Field> fields = new ArrayList<Field>();
@@ -175,10 +125,6 @@ public class HCatToAvroSchemaConverter {
 			if (valueCategory == Category.PRIMITIVE) {
 				Schema subType = getPrimitiveAvroField(valueSchema);
 				schema = Schema.createArray(subType);
-				// } else if (valueCategory == Category.STRUCT) {
-				// Schema subType = getComplexAvroFieldSchema(valueSchema,
-				// false);
-				// schema = Schema.createArray(subType);
 			} else {
 				Schema subType = getComplexAvroFieldSchema(valueSchema, true);
 				schema = Schema.createArray(subType);

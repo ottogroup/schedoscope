@@ -28,7 +28,7 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
-import org.schedoscope.export.utils.CustomHCatRecordSerializer;
+import org.schedoscope.export.utils.HCatRecordJsonSerializer;
 import org.schedoscope.export.utils.HCatUtils;
 import org.schedoscope.export.utils.StatCounter;
 
@@ -46,7 +46,7 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
 	private String keyPrefix;
 
-	private CustomHCatRecordSerializer serializer;
+	private HCatRecordJsonSerializer serializer;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -55,7 +55,7 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 		conf = context.getConfiguration();
 		schema = HCatInputFormat.getTableSchema(conf);
 
-		serializer = new CustomHCatRecordSerializer(conf, schema);
+		serializer = new HCatRecordJsonSerializer(conf, schema);
 
 		HCatUtils.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
 
@@ -79,7 +79,7 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 				String jsonString;
 
 				if (schema.get(f).isComplex()) {
-					jsonString = serializer.getJsonComplexType(value, f);
+					jsonString = serializer.getFieldAsJson(value, f);
 				} else {
 					jsonString = obj.toString();
 				}

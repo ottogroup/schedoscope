@@ -35,7 +35,7 @@ import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.jdbc.outputformat.JdbcOutputWritable;
 import org.schedoscope.export.jdbc.outputschema.Schema;
 import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
-import org.schedoscope.export.utils.CustomHCatRecordSerializer;
+import org.schedoscope.export.utils.HCatRecordJsonSerializer;
 
 /**
  * A mapper that reads data from Hive via HCatalog and emits a JDBC writable..
@@ -56,7 +56,7 @@ public class JdbcExportMapper
 
 	private Configuration conf;
 
-	private CustomHCatRecordSerializer serializer;
+	private HCatRecordJsonSerializer serializer;
 
 	@Override
 	protected void setup(Context context) throws IOException,
@@ -67,7 +67,7 @@ public class JdbcExportMapper
 		inputSchema = HCatInputFormat
 				.getTableSchema(context.getConfiguration());
 
-		serializer = new CustomHCatRecordSerializer(conf, inputSchema);
+		serializer = new HCatRecordJsonSerializer(conf, inputSchema);
 
 		Schema outputSchema = SchemaFactory.getSchema(context
 				.getConfiguration());
@@ -98,7 +98,7 @@ public class JdbcExportMapper
 			if (obj != null) {
 
 				if (inputSchema.get(f).isComplex()) {
-					fieldValue = serializer.getJsonComplexType(value, f);
+					fieldValue = serializer.getFieldAsJson(value, f);
 				} else {
 					fieldValue = obj.toString();
 				}
