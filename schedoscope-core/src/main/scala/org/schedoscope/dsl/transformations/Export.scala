@@ -56,9 +56,9 @@ object Export {
     commitSize: Int = Schedoscope.settings.jdbcExportBatchSize,
     isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
     kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
-    metastoreUri: String = Schedoscope.settings.metastoreUri) =
+    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
 
-    MapreduceTransformation(
+    val t = MapreduceTransformation(
       v,
       (conf) => {
 
@@ -76,7 +76,7 @@ object Export {
           conf.get("dbUser").getOrElse(null).asInstanceOf[String],
           conf.get("dbPass").getOrElse(null).asInstanceOf[String],
           v.dbName,
-          v.tableName,
+          v.n,
           filter,
           conf.get("storageEngine").get.asInstanceOf[String],
           distributionField,
@@ -84,17 +84,22 @@ object Export {
           conf.get("commitSize").get.asInstanceOf[Int])
 
       },
-      jdbcPostCommit).configureWith(
-        Map(
-          "jdbcConnection" -> jdbcConnection,
-          "dbUser" -> dbUser,
-          "dbPass" -> dbPass,
-          "storageEngine" -> storageEngine,
-          "numReducers" -> numReducers,
-          "commitSize" -> commitSize,
-          "isKerberized" -> isKerberized,
-          "kerberosPrincipal" -> kerberosPrincipal,
-          "metastoreUri" -> metastoreUri))
+      jdbcPostCommit)
+
+    t.directoriesToDelete = List()
+    t.configureWith(
+      Map(
+        "jdbcConnection" -> jdbcConnection,
+        "dbUser" -> dbUser,
+        "dbPass" -> dbPass,
+        "storageEngine" -> storageEngine,
+        "numReducers" -> numReducers,
+        "commitSize" -> commitSize,
+        "isKerberized" -> isKerberized,
+        "kerberosPrincipal" -> kerberosPrincipal,
+        "metastoreUri" -> metastoreUri))
+
+  }
 
   /**
    * This function runs the post commit action and finalizes the database tables.
@@ -153,9 +158,9 @@ object Export {
     pipeline: Boolean = Schedoscope.settings.redisExportUsesPipelineMode,
     isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
     kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
-    metastoreUri: String = Schedoscope.settings.metastoreUri) =
+    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
 
-    MapreduceTransformation(
+    val t = MapreduceTransformation(
       v,
       (conf) => {
 
@@ -173,7 +178,7 @@ object Export {
           conf.get("redisPort").get.asInstanceOf[Int],
           conf.get("redisKeySpace").get.asInstanceOf[Int],
           v.dbName,
-          v.tableName,
+          v.n,
           filter,
           key.n,
           valueFieldName,
@@ -182,15 +187,20 @@ object Export {
           replace,
           conf.get("pipeline").get.asInstanceOf[Boolean],
           flush)
-          
-      }).configureWith(
-        Map(
-          "redisHost" -> redisHost,
-          "redisPort" -> redisPort,
-          "redisKeySpace" -> redisKeySpace,
-          "numReducers" -> numReducers,
-          "pipeline" -> pipeline,
-          "isKerberized" -> isKerberized,
-          "kerberosPrincipal" -> kerberosPrincipal,
-          "metastoreUri" -> metastoreUri))
+
+      })
+
+    t.directoriesToDelete = List()
+    t.configureWith(
+      Map(
+        "redisHost" -> redisHost,
+        "redisPort" -> redisPort,
+        "redisKeySpace" -> redisKeySpace,
+        "numReducers" -> numReducers,
+        "pipeline" -> pipeline,
+        "isKerberized" -> isKerberized,
+        "kerberosPrincipal" -> kerberosPrincipal,
+        "metastoreUri" -> metastoreUri))
+
+  }
 }

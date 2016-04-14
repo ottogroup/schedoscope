@@ -190,7 +190,10 @@ public class JdbcExportJob extends Configured implements Tool {
 	}
 
 	private Job configure() throws Exception {
-
+		
+		if (getConf() == null)
+			setConf(new Configuration());
+		
 		Configuration conf = getConf();
 
 		if (metaStoreUris.startsWith("thrift://")) {

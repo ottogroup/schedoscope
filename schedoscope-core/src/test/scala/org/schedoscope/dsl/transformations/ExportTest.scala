@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.test
+package org.schedoscope.dsl.transformations
 
 import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
 import test.eci.datahub.{ Click, ClickOfEC0101 }
+import org.schedoscope.test.rows
+import org.schedoscope.test.test
+import test.eci.datahub.ClickOfEC0101WithJdbcExport
+import java.sql.{ DriverManager, ResultSet, Statement }
 
 class ExportTest extends FlatSpec with Matchers {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
@@ -46,8 +50,12 @@ class ExportTest extends FlatSpec with Matchers {
       v(url, "http://ec0106.com/url3"))
   }
 
-  "Hive test framework" should "execute hive transformations locally" taggedAs (DriverTests) in {
-    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
+  "Hive test framework" should "execute hive transformations and perform JDBC export" taggedAs (DriverTests) in {
+
+    Class.forName("org.apache.derby.jdbc.EmbeddedDriver")
+    val dbConnection = DriverManager.getConnection("jdbc:derby:memory:TestingDB;create=true")
+
+    new ClickOfEC0101WithJdbcExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       `then`()
       numRows shouldBe 3
@@ -57,6 +65,13 @@ class ExportTest extends FlatSpec with Matchers {
         v(url) shouldBe "http://ec0101.com/url2")
       row(v(id) shouldBe "event03",
         v(url) shouldBe "http://ec0101.com/url3")
+
     }
+
+    val statement = dbConnection.createStatement()
+    val resultSet = statement.executeQuery("SELECT COUNT(*) FROM TEST_TEST_ECI_DATAHUB_CLICK_OF_E_C0101_WITH_JDBC_EXPORT")
+    resultSet.next()
+    resultSet.getInt(1) shouldBe 3
+
   }
 }
