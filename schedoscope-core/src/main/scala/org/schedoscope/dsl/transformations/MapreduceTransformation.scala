@@ -48,7 +48,7 @@ case class MapreduceTransformation(
 
   lazy val job = createJob(configuration.toMap)
 
-  val directoriesToDelete = dirsToDelete ++ List(v.fullPath)
+  var directoriesToDelete = dirsToDelete ++ List(v.fullPath)
 
   description = StringUtils.abbreviate(v.urlPath, 100)
 
@@ -77,6 +77,6 @@ case class MapreduceTransformation(
         }
       })
     }
-    configuration.foreach(c => job.getConfiguration.set(c._1, c._2.toString))
+    configuration.foreach { case (k, v) => if (v == null) job.getConfiguration.unset(k) else job.getConfiguration.set(k, v.toString) }
   }
 }

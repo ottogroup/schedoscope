@@ -241,7 +241,9 @@ case class ClickOfEC0101WithJdbcExport(
             SELECT ${click().id.n}, ${click().url.n}
             FROM ${click().tableName}
             WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
-            
+
+  exportTo(() => Jdbc(this, "jdbc:derby:memory:TestingDB", null, null))
+
 }
 
 case class ClickOfEC0101ViaOozie(

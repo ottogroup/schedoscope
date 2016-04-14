@@ -35,7 +35,7 @@ trait test extends TestableView {
 
   var driver: () => Driver[Transformation] = () => {
     this.transformation() match {
-      case t: SeqTransformation[_,_]   => resources().seqDriver.asInstanceOf[Driver[Transformation]]
+      case t: SeqTransformation[_, _]  => resources().seqDriver.asInstanceOf[Driver[Transformation]]
       case t: HiveTransformation       => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
       case t: OozieTransformation      => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
       case t: PigTransformation        => resources().pigDriver.asInstanceOf[Driver[Transformation]]
@@ -64,25 +64,26 @@ trait test extends TestableView {
       d.write()
     })
 
+    if (this.isPartitioned()) {
+      val part = resources().crate.createPartition(this)
+    }
+
+    this.registeredTransformation() match {
+      case ot: OozieTransformation => deployWorkflow(ot)
+      case ht: HiveTransformation  => deployFunctions(ht)
+    }
+
     //
     // Patch export configurations to point to the test metastore with no kerberization.
     //
     configureExport("isKerberized", false)
     configureExport("kerberosPrincipal", "")
     configureExport("metastoreUri", resources().metastoreUri)
-    
-    val trans = this.transformation() match {
-      case ot: OozieTransformation => deployWorkflow(ot)
-      case ht: HiveTransformation  => deployFunctions(ht)
-      case t: Transformation       => t
-    }
 
     val d = driver()
-    d.runAndWait(trans)
-    // FIXME: some transformations may create the partition by themselves?
-    if (this.isPartitioned()) {
-      val part = resources().crate.createPartition(this)
-    }
+    val t = this.transformation()
+    d.runAndWait(t)
+
     populate(sortedBy)
   }
 
