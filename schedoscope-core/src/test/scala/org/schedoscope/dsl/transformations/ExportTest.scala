@@ -24,8 +24,10 @@ import org.schedoscope.test.rows
 import org.schedoscope.test.test
 import test.eci.datahub.ClickOfEC0101WithJdbcExport
 import java.sql.{ DriverManager, ResultSet, Statement }
+import org.scalamock.scalatest.MockFactory
 
-class ExportTest extends FlatSpec with Matchers {
+class ExportTest extends FlatSpec with Matchers with MockFactory {
+
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
       v(id, "event01"),
@@ -50,7 +52,7 @@ class ExportTest extends FlatSpec with Matchers {
       v(url, "http://ec0106.com/url3"))
   }
 
-  "Hive test framework" should "execute hive transformations and perform JDBC export" taggedAs (DriverTests) in {
+  "The test framework" should "execute hive transformations and perform JDBC export" taggedAs (DriverTests) in {
 
     Class.forName("org.apache.derby.jdbc.EmbeddedDriver")
     val dbConnection = DriverManager.getConnection("jdbc:derby:memory:TestingDB;create=true")
@@ -71,7 +73,12 @@ class ExportTest extends FlatSpec with Matchers {
     val statement = dbConnection.createStatement()
     val resultSet = statement.executeQuery("SELECT COUNT(*) FROM TEST_TEST_ECI_DATAHUB_CLICK_OF_E_C0101_WITH_JDBC_EXPORT")
     resultSet.next()
+
     resultSet.getInt(1) shouldBe 3
 
+    resultSet.close()
+    statement.close()
+    dbConnection.close()
   }
+
 }

@@ -66,14 +66,13 @@ object SchedoscopeCliFormat {
             }
 
           val data = vl.views
-          .filter(!_.isTable.getOrElse(false))
-          .map(d => Array(d.viewPath,d.status,
-            if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
-              fields.get(d.viewTableName.get).get.map(fieldStatus => fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") + " " + d.properties.mkString(",")
-            } else {
-              d.properties.mkString(",")
-            }
-          )).toArray
+            .filter(!_.isTable.getOrElse(false))
+            .map(d => Array(d.viewPath, d.status,
+              if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
+                fields.get(d.viewTableName.get).get.map(fieldStatus => fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") + " " + d.properties.mkString(",")
+              } else {
+                d.properties.mkString(",")
+              })).toArray
 
           sb.append(ASCIITable.getInstance.getTable(header, data))
           sb.append(s"Total: ${data.size}\n")

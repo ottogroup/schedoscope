@@ -48,8 +48,8 @@ object Export {
   def Jdbc(
     v: View,
     jdbcConnection: String,
-    dbUser: String,
-    dbPass: String,
+    dbUser: String = null,
+    dbPass: String = null,
     distributionKey: Field[_] = null,
     storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
     numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,

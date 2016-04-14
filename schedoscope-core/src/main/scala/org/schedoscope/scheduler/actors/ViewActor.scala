@@ -88,7 +88,7 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
 
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
     case ResultingViewSchedulingState(updatedState, actions) => {
-    
+
       val previousState = currentState
 
       currentState = updatedState

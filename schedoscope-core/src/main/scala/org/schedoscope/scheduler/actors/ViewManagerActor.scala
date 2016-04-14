@@ -129,13 +129,13 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
       viewsWithMetadataToCreate.foreach(
         _.metadata.foreach {
           case (view, (version, timestamp)) => {
-            
+
             val initialState =
               if ((version != Checksum.defaultDigest) || (timestamp > 0))
                 ReadFromSchemaManager(view, version, timestamp)
               else
                 CreatedByViewManager(view)
-                
+
             val actorRef = actorOf(ViewActor.props(initialState, settings, self, actionsManagerActor, metadataLoggerActor), ViewManagerActor.actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
