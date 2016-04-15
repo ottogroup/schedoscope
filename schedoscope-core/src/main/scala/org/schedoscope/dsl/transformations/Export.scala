@@ -69,19 +69,19 @@ object Export {
         val distributionField = if (distributionKey != null) distributionKey.n else null
 
         new JdbcExportJob().configure(
-          conf.get("isKerberized").get.asInstanceOf[Boolean],
-          conf.get("metastoreUri").get.asInstanceOf[String],
-          conf.get("kerberosPrincipal").get.asInstanceOf[String],
-          conf.get("jdbcConnection").get.asInstanceOf[String],
-          conf.get("dbUser").getOrElse(null).asInstanceOf[String],
-          conf.get("dbPass").getOrElse(null).asInstanceOf[String],
+          conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
+          conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
+          conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
+          conf.get("schedoscope.export.jdbcConnection").get.asInstanceOf[String],
+          conf.get("schedoscope.export.dbUser").getOrElse(null).asInstanceOf[String],
+          conf.get("schedoscope.export.dbPass").getOrElse(null).asInstanceOf[String],
           v.dbName,
           v.n,
           filter,
-          conf.get("storageEngine").get.asInstanceOf[String],
+          conf.get("schedoscope.export.storageEngine").get.asInstanceOf[String],
           distributionField,
-          conf.get("numReducers").get.asInstanceOf[Int],
-          conf.get("commitSize").get.asInstanceOf[Int])
+          conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
+          conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int])
 
       },
       jdbcPostCommit)
@@ -89,15 +89,15 @@ object Export {
     t.directoriesToDelete = List()
     t.configureWith(
       Map(
-        "jdbcConnection" -> jdbcConnection,
-        "dbUser" -> dbUser,
-        "dbPass" -> dbPass,
-        "storageEngine" -> storageEngine,
-        "numReducers" -> numReducers,
-        "commitSize" -> commitSize,
-        "isKerberized" -> isKerberized,
-        "kerberosPrincipal" -> kerberosPrincipal,
-        "metastoreUri" -> metastoreUri))
+        "schedoscope.export.jdbcConnection" -> jdbcConnection,
+        "schedoscope.export.dbUser" -> dbUser,
+        "schedoscope.export.dbPass" -> dbPass,
+        "schedoscope.export.storageEngine" -> storageEngine,
+        "schedoscope.export.numReducers" -> numReducers,
+        "schedoscope.export.commitSize" -> commitSize,
+        "schedoscope.export.isKerberized" -> isKerberized,
+        "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
+        "schedoscope.export.metastoreUri" -> metastoreUri))
 
   }
 
@@ -171,21 +171,21 @@ object Export {
         val valueFieldName = if (value != null) value.n else null
 
         new RedisExportJob().configure(
-          conf.get("isKerberized").get.asInstanceOf[Boolean],
-          conf.get("metastoreUri").get.asInstanceOf[String],
-          conf.get("kerberosPrincipal").get.asInstanceOf[String],
-          conf.get("redisHost").get.asInstanceOf[String],
-          conf.get("redisPort").get.asInstanceOf[Int],
-          conf.get("redisKeySpace").get.asInstanceOf[Int],
+          conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
+          conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
+          conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
+          conf.get("schedoscope.export.redisHost").get.asInstanceOf[String],
+          conf.get("schedoscope.export.redisPort").get.asInstanceOf[Int],
+          conf.get("schedoscope.export.redisKeySpace").get.asInstanceOf[Int],
           v.dbName,
           v.n,
           filter,
           key.n,
           valueFieldName,
           keyPrefix,
-          conf.get("numReducers").get.asInstanceOf[Int],
+          conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           replace,
-          conf.get("pipeline").get.asInstanceOf[Boolean],
+          conf.get("schedoscope.export.pipeline").get.asInstanceOf[Boolean],
           flush)
 
       })
@@ -193,14 +193,14 @@ object Export {
     t.directoriesToDelete = List()
     t.configureWith(
       Map(
-        "redisHost" -> redisHost,
-        "redisPort" -> redisPort,
-        "redisKeySpace" -> redisKeySpace,
-        "numReducers" -> numReducers,
-        "pipeline" -> pipeline,
-        "isKerberized" -> isKerberized,
-        "kerberosPrincipal" -> kerberosPrincipal,
-        "metastoreUri" -> metastoreUri))
+        "schedoscope.export.redisHost" -> redisHost,
+        "schedoscope.export.redisPort" -> redisPort,
+        "schedoscope.export.redisKeySpace" -> redisKeySpace,
+        "schedoscope.export.numReducers" -> numReducers,
+        "schedoscope.export.pipeline" -> pipeline,
+        "schedoscope.export.isKerberized" -> isKerberized,
+        "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
+        "schedoscope.export.metastoreUri" -> metastoreUri))
 
   }
 }

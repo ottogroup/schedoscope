@@ -87,7 +87,6 @@ public class MySQLSchema extends AbstractSchema {
 	protected String getCreateTableSuffix() {
 		return " ENGINE="
 				+ conf.get(JDBC_MYSQL_STORAGE_ENGINE,
-						JDBC_MYSQL_DEFAULT_STORAGE_ENGINE)
-				+ " DEFAULT CHARSET=utf8";
+						JDBC_MYSQL_DEFAULT_STORAGE_ENGINE) + " DEFAULT CHARSET=utf8";
 	}
 }
