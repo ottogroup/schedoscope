@@ -16,12 +16,16 @@
 package schedoscope.example.osm.datamart
 
 import org.scalatest.{ FlatSpec, Matchers }
+import java.sql.{ DriverManager, ResultSet, Statement }
 import org.schedoscope.dsl.Field._
 import org.schedoscope.test.{ rows, test }
 import schedoscope.example.osm.datahub.{ Restaurants, Shops, Trainstations }
 
 case class ShopProfilesTest() extends FlatSpec
     with Matchers {
+
+  Class.forName("org.apache.derby.jdbc.EmbeddedDriver")
+  val dbConnection = DriverManager.getConnection("jdbc:derby:memory:TestingDB;create=true")
 
   val shops = new Shops() with rows {
     set(v(id, "122546"),
@@ -64,6 +68,10 @@ case class ShopProfilesTest() extends FlatSpec
 
   "datamart.ShopProfiles" should "load correctly from datahub.shops, datahub.restaurants, datahub.trainstations" in {
     new ShopProfiles() with test {
+      configureExport("schedoscope.export.jdbcConnection", "jdbc:derby:memory:NullDB;create=true")
+      configureExport("schedoscope.export.dbUser", null)
+      configureExport("schedoscope.export.dbPass", null)
+
       basedOn(shops, restaurants, trainstations)
       then()
       numRows shouldBe 3
@@ -75,5 +83,28 @@ case class ShopProfilesTest() extends FlatSpec
         v(cntRestaurants) shouldBe 1,
         v(cntTrainstations) shouldBe 1)
     }
+  }
+
+  it should "export data to JDBC as well" in {
+    new ShopProfiles() with test {
+      configureExport("schedoscope.export.jdbcConnection", "jdbc:derby:memory:TestingDB")
+      configureExport("schedoscope.export.dbUser", null)
+      configureExport("schedoscope.export.dbPass", null)
+
+      basedOn(shops, restaurants, trainstations)
+      
+      then()
+      
+      numRows shouldBe 3
+    }
+
+    val statement = dbConnection.createStatement()
+    val resultSet = statement.executeQuery("SELECT COUNT(*) FROM TEST_SCHEDOSCOPE_EXAMPLE_OSM_DATAMART_SHOP_PROFILES")
+    resultSet.next()
+
+    resultSet.getInt(1) shouldBe 3
+
+    resultSet.close()
+    statement.close()
   }
 }

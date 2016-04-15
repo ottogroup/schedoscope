@@ -75,9 +75,9 @@ trait test extends TestableView {
     //
     // Patch export configurations to point to the test metastore with no kerberization.
     //
-    configureExport("isKerberized", false)
-    configureExport("kerberosPrincipal", "")
-    configureExport("metastoreUri", resources().metastoreUri)
+    configureExport("schedoscope.export.isKerberized", false)
+    configureExport("schedoscope.export.kerberosPrincipal", "")
+    configureExport("schedoscope.export.metastoreUri", resources().metastoreUri)
 
     val d = driver()
     val t = this.transformation()
