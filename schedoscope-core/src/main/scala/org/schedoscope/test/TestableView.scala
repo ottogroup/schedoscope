@@ -67,11 +67,15 @@ trait test extends TestableView {
       val part = resources().crate.createPartition(this)
     }
 
-    this.registeredTransformation() match {
+    val t = registeredTransformation()
+    
+    t match {
       case ot: OozieTransformation => deployWorkflow(ot)
       case ht: HiveTransformation  => deployFunctions(ht)
-      case _ => Unit
+      case _                       => Unit
     }
+
+    this.registeredTransformation = () => t
 
     //
     // Patch export configurations to point to the test metastore with no kerberization.
@@ -80,9 +84,7 @@ trait test extends TestableView {
     configureExport("schedoscope.export.kerberosPrincipal", "")
     configureExport("schedoscope.export.metastoreUri", resources().metastoreUri)
 
-    val d = driver()
-    val t = this.transformation()
-    d.runAndWait(t)
+    driver().runAndWait(this.transformation())
 
     populate(sortedBy)
   }

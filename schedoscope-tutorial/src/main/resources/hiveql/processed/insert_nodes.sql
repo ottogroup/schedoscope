@@ -11,11 +11,9 @@ SELECT
   '${workflow_name}' AS created_by
 FROM ${env}_schedoscope_example_osm_processed.nodes_with_geohash n
 JOIN ${env}_schedoscope_example_osm_stage.node_tags nt
-    ON n.id = nt.node_id
-
+ON (n.id = nt.node_id)
 WHERE year(n.tstamp) = '${year}'
   AND month(n.tstamp) = '${month}'
-    
 GROUP BY
   n.id,
   n.tstamp,

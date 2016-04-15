@@ -137,12 +137,16 @@ trait rows extends View {
    *
    */
   def deployFunctions(ht: HiveTransformation) {
-    ht.udfs.map(f => {
-      val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
-      val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
-      f.setResourceUris(List(jarResource))
-    })
-
+    ht.udfs.foreach {
+      f =>
+        {
+          val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
+          val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
+          f.setResourceUris(List(jarResource))
+        }
+    }
+    
+    System.out.println(ht)
   }
 
   def deploySchema() {
