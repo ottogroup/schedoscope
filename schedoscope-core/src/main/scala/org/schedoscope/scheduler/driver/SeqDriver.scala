@@ -174,5 +174,5 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
  */
 object SeqDriver {
   def apply(ds: DriverSettings) =
-    new SeqDriver(ds.driverRunCompletionHandlers, (transformationName: String) => Driver.driverFor(transformationName, ds))
+    new SeqDriver(ds.driverRunCompletionHandlers, (transformationName: String) => Driver.driverFor(transformationName))
 }

@@ -57,7 +57,7 @@
 				<exclusion>
 					<artifactId>hbase</artifactId>
 					<groupId>org.apache.hbase</groupId>
-				</exclusion>
+				</exclusion> 
 				<exclusion>
 					<artifactId>guava</artifactId>
 					<groupId>com.google.guava</groupId>
