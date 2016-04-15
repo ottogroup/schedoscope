@@ -70,6 +70,7 @@ trait test extends TestableView {
     this.registeredTransformation() match {
       case ot: OozieTransformation => deployWorkflow(ot)
       case ht: HiveTransformation  => deployFunctions(ht)
+      case _ => Unit
     }
 
     //
