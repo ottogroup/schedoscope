@@ -36,7 +36,7 @@ public class MySQLSchema extends AbstractSchema {
 	private static final Map<String, String> columnTypeMapping = Collections
 			.unmodifiableMap(new HashMap<String, String>() {
 				{
-					put("string", "text CHARACTER SET utf8 COLLATE utf8_general_ci");
+					put("string", "text");
 					put("boolean", "boolean");
 					put("int", "int");
 					put("long", "bigint");
@@ -87,6 +87,6 @@ public class MySQLSchema extends AbstractSchema {
 	protected String getCreateTableSuffix() {
 		return " ENGINE="
 				+ conf.get(JDBC_MYSQL_STORAGE_ENGINE,
-						JDBC_MYSQL_DEFAULT_STORAGE_ENGINE);
+						JDBC_MYSQL_DEFAULT_STORAGE_ENGINE) + " DEFAULT CHARSET=utf8";
 	}
 }
