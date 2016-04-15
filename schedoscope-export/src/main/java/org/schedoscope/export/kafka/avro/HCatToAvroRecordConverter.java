@@ -88,6 +88,8 @@ public class HCatToAvroRecordConverter {
 					builder.set(f.name(), convertArray(json.get(f.name()), s));
 				} else if (s.getType().equals(Schema.Type.MAP)) {
 					builder.set(f.name(), convertMap(json.get(f.name()), s));
+				} else {
+					throw new IllegalArgumentException("invalid type");
 				}
 			}
 		}
@@ -122,6 +124,8 @@ public class HCatToAvroRecordConverter {
 					res.put(n.getKey(), convertArray(n.getValue(), s));
 				} else if (s.getType().equals(Schema.Type.MAP)) {
 					res.put(n.getKey(), convertMap(n.getValue(), s));
+				} else {
+					throw new IllegalArgumentException("invalid type");
 				}
 			}
 		}
@@ -155,6 +159,8 @@ public class HCatToAvroRecordConverter {
 					res.addAll(convertArray(n, s));
 				} else if (s.getType().equals(Schema.Type.MAP)) {
 					res.add(convertMap(n, s));
+				} else {
+					throw new IllegalArgumentException("invalid type");
 				}
 			}
 		}
