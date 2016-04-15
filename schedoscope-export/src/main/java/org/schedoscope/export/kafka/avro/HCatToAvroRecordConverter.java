@@ -83,7 +83,7 @@ public class HCatToAvroRecordConverter {
 				} else if (s.getType().equals(Schema.Type.FLOAT)) {
 					builder.set(f.name(), json.get(f.name()).asDouble());
 				} else if (s.getType().equals(Schema.Type.RECORD)) {
-					builder.set(f.name(), json.get(f.name()));
+					builder.set(f.name(), convertRecord(json.get(f.name()), s));
 				} else if (s.getType().equals(Schema.Type.ARRAY)) {
 					builder.set(f.name(), convertArray(json.get(f.name()), s));
 				} else if (s.getType().equals(Schema.Type.MAP)) {
