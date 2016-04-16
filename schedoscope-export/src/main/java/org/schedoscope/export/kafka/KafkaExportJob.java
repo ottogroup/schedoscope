@@ -32,7 +32,6 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.BaseExportJob;
-import org.schedoscope.export.jdbc.JdbcExportJob;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.kafka.options.CleanupPolicy;
 import org.schedoscope.export.kafka.options.CompressionCodec;
@@ -46,7 +45,7 @@ import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
  */
 public class KafkaExportJob extends BaseExportJob {
 
-	private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
+	private static final Log LOG = LogFactory.getLog(KafkaExportJob.class);
 
 	@Option(name = "-s", usage = "set to true if kerberos is enabled")
 	private boolean isSecured = false;
