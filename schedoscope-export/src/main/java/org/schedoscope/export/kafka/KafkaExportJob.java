@@ -22,18 +22,16 @@ import org.apache.avro.mapreduce.AvroJob;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.jdbc.JdbcExportJob;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.kafka.options.CleanupPolicy;
@@ -46,7 +44,7 @@ import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
  * The MR driver to run the Hive to Kafka export. Depending on the cmdl params
  * it either runs in regular mode or in log compaction mode.
  */
-public class KafkaExportJob extends Configured implements Tool {
+public class KafkaExportJob extends BaseExportJob {
 
 	private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
 
@@ -179,21 +177,11 @@ public class KafkaExportJob extends Configured implements Tool {
 
 	private Job configure() throws Exception {
 
-		Configuration conf = getConf();
+		Configuration conf = getConfiguration();
+		conf = configureHiveMetaStore(conf, metaStoreUris);
+		conf = configureKerberos(conf, isSecured, principal);
 
-		conf.set("hive.metastore.local", "false");
-		conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
-
-		if (isSecured) {
-			conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
-
-			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-			}
-		}
-
-		Job job = Job.getInstance(conf);
+		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(KafkaExportJob.class);
 
