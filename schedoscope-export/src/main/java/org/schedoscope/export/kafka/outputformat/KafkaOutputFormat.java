@@ -202,7 +202,7 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		@Override
 		public void write(K key, V value) {
 
-			KeyedMessage<String, String> message = new KeyedMessage<String, String>(topic, value.datum().toString());
+			KeyedMessage<String, String> message = new KeyedMessage<String, String>(topic, key.toString(), value.datum().toString());
 			producer.send(message);
 		}
 
@@ -241,7 +241,7 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		@Override
 		public void write(K key, V value) {
 
-			KeyedMessage<String, GenericRecord> message = new KeyedMessage<String, GenericRecord>(topic, value.datum());
+			KeyedMessage<String, GenericRecord> message = new KeyedMessage<String, GenericRecord>(topic, key.toString(), value.datum());
 			producer.send(message);
 		}
 

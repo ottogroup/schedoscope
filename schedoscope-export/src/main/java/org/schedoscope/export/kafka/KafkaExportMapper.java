@@ -71,9 +71,10 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
 			throws IOException, InterruptedException {
 
+		Text kafkaKey = new Text(value.getString(keyName, hcatSchema));
 		GenericRecord record = converter.convert(value, avroSchema);
 		AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(record);
 
-		context.write(new Text(), recordWrapper);
+		context.write(kafkaKey, recordWrapper);
 	}
 }
