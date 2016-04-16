@@ -183,7 +183,7 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends OutputFormat<
 			RWClazz = RedisHashWritable.class;
 			break;
 		default:
-			break;
+			throw new IllegalArgumentException("invalid type");
 		}
 		return RWClazz;
 	}
