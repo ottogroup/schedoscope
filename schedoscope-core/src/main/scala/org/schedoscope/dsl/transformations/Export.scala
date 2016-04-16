@@ -24,6 +24,11 @@ import org.schedoscope.export.jdbc.exception.{ RetryException, UnrecoverableExce
 import org.schedoscope.export.redis.RedisExportJob
 import org.schedoscope.scheduler.driver.{ Driver, DriverRunFailed, DriverRunState, DriverRunSucceeded, RetryableDriverException }
 import org.schedoscope.Schedoscope
+import org.schedoscope.export.kafka.KafkaExportJob
+import org.schedoscope.export.kafka.options.ProducerType
+import org.schedoscope.export.kafka.options.CleanupPolicy
+import org.schedoscope.export.kafka.options.CompressionCodec
+import org.schedoscope.export.kafka.options.OutputEncoding
 
 /**
  * A helper class to with constructors for exportTo() MR jobs.
@@ -202,5 +207,62 @@ object Export {
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
         "schedoscope.export.metastoreUri" -> metastoreUri))
 
+  }
+
+  def Kafka(
+    v: View,
+    key: Field[_],
+    kafkaHosts: String,
+    zookeeperHosts: String,
+    replicationFactor: Int = 1,
+    numPartitons: Int = 3,
+    producerType: ProducerType = ProducerType.sync,
+    cleanupPolicy: CleanupPolicy = CleanupPolicy.delete,
+    compressionCodec: CompressionCodec = CompressionCodec.gzip,
+    encoding: OutputEncoding = OutputEncoding.string,
+    numReducers: Int = Schedoscope.settings.kafkaExportNumReducers,
+    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
+
+    val t = MapreduceTransformation(
+      v,
+      (conf) => {
+
+        val filter = v.partitionParameters
+          .map { (p => s"${p.n} = '${p.v.get}'") }
+          .mkString(" and ")
+
+        new KafkaExportJob().configure(
+          conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
+          conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
+          conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
+          v.dbName,
+          v.n,
+          filter,
+          key.n,
+          conf.get("schedoscope.export.kafkaHosts").get.asInstanceOf[String],
+          conf.get("schedoscope.export.zookeeperHosts").get.asInstanceOf[String],
+          producerType,
+          cleanupPolicy,
+          conf.get("schedoscope.export.numPartitions").get.asInstanceOf[Int],
+          conf.get("schedoscope.export.replicationFactor").get.asInstanceOf[Int],
+          conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
+          compressionCodec,
+          encoding)
+      })
+
+    t.directoriesToDelete = List()
+    t.configureWith(
+      Map(
+        "schedoscope.export.kafkaHosts" -> kafkaHosts,
+        "schedoscope.export.zookeeperHosts" -> zookeeperHosts,
+        "schedoscope.export.numPartitions" -> numPartitons,
+        "schedoscope.export.replicationFactor" -> replicationFactor,
+        "schedoscope.export.numReducers" -> numReducers,
+        "schedoscope.export.isKerberized" -> isKerberized,
+        "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
+        "schedoscope.export.metastoreUri" -> metastoreUri
+        ))
   }
 }

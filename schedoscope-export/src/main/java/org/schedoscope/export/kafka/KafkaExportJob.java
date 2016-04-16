@@ -170,6 +170,7 @@ public class KafkaExportJob extends BaseExportJob {
 		this.replicationFactor = replicationFactor;
 		this.numReducer = numReducer;
 		this.codec = codec;
+		this.encoding = outputEncoding;
 
 		return configure();
 	}
