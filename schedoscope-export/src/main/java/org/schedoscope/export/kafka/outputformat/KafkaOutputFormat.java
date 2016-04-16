@@ -53,7 +53,6 @@ import kafka.utils.ZKStringSerializer$;
  */
 public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord>> extends OutputFormat<K, V> {
 
-	// identifiers
 	public static final String KAFKA_EXPORT_METADATA_BROKER_LIST = "metadata.broker.list";
 
 	public static final String KAFKA_EXPORT_SERIALIZER_CLASS = "serializer.class";
