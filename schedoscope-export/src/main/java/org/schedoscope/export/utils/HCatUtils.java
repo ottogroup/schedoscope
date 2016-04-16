@@ -22,59 +22,64 @@ import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
 /**
- * A utility class providing various checks for HCatSchemas
- * and fields.
+ * A utility class providing various checks for HCatSchemas and fields.
  */
 public class HCatUtils {
 
-    /**
-     * This function checks if the key type is a primitive type.
-     *
-     * @param schema The HCatSchema.
-     * @param fieldName The name of the field to check.
-     * @throws IOException Is thrown in case of errors.
-     */
-    public static void checkKeyType(HCatSchema schema, String fieldName) throws IOException {
+	/**
+	 * This function checks if the key type is a primitive type.
+	 *
+	 * @param schema
+	 *            The HCatSchema.
+	 * @param fieldName
+	 *            The name of the field to check.
+	 * @throws IOException
+	 *             Is thrown in case of errors.
+	 */
+	public static void checkKeyType(HCatSchema schema, String fieldName) throws IOException {
 
-        HCatFieldSchema keyType = schema.get(fieldName);
-        HCatFieldSchema.Category category = keyType.getCategory();
+		HCatFieldSchema keyType = schema.get(fieldName);
+		HCatFieldSchema.Category category = keyType.getCategory();
 
-        if (category != HCatFieldSchema.Category.PRIMITIVE) {
-            throw new IllegalArgumentException("key must be primitive type");
-        }
-    }
+		if (category != HCatFieldSchema.Category.PRIMITIVE) {
+			throw new IllegalArgumentException("key must be primitive type");
+		}
+	}
 
-    /**
-     * This function checks the type category of the value.
-     *
-     * @param schema The HCatSchema.
-     * @param fieldName The name of the field to check.
-     * @throws IOException Is thrown in case of errors.
-     */
-    public static void checkValueType(HCatSchema schema, String fieldName) throws IOException {
+	/**
+	 * This function checks the type category of the value.
+	 *
+	 * @param schema
+	 *            The HCatSchema.
+	 * @param fieldName
+	 *            The name of the field to check.
+	 * @throws IOException
+	 *             Is thrown in case of errors.
+	 */
+	public static void checkValueType(HCatSchema schema, String fieldName) throws IOException {
 
-        HCatFieldSchema valueType = schema.get(fieldName);
+		HCatFieldSchema valueType = schema.get(fieldName);
 
-        if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
-            if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-                throw new IllegalArgumentException("map value type must be a primitive type");
-            }
-        }
+		if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
+			if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+				throw new IllegalArgumentException("map value type must be a primitive type");
+			}
+		}
 
-        if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
-            if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-                throw new IllegalArgumentException("array element type must be a primitive type");
-            }
-        }
+		if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
+			if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+				throw new IllegalArgumentException("array element type must be a primitive type");
+			}
+		}
 
-        if (valueType.getCategory() == HCatFieldSchema.Category.STRUCT) {
-            HCatSchema structSchema = valueType.getStructSubSchema();
-            for (HCatFieldSchema f : structSchema.getFields()) {
-                if (f.getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-                    throw new IllegalArgumentException("struct element type must be a primitive type");
-                }
-            }
+		if (valueType.getCategory() == HCatFieldSchema.Category.STRUCT) {
+			HCatSchema structSchema = valueType.getStructSubSchema();
+			for (HCatFieldSchema f : structSchema.getFields()) {
+				if (f.getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
+					throw new IllegalArgumentException("struct element type must be a primitive type");
+				}
+			}
 
-        }
-    }
+		}
+	}
 }
