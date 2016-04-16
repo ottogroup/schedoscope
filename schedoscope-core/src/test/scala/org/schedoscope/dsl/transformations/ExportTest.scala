@@ -15,18 +15,27 @@
  */
 package org.schedoscope.dsl.transformations
 
-import org.scalatest.{ FlatSpec, Matchers }
-import org.schedoscope.export.utils.RedisMRJedisFactory
+import java.sql.DriverManager
+import java.util.Properties
+
+import scala.collection.JavaConversions.iterableAsScalaIterable
+
+import org.apache.curator.test.TestingServer
+import org.json4s.jvalue2monadic
+import org.json4s.native.JsonMethods.parse
+import org.json4s.string2JsonInput
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter
+import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
-import test.eci.datahub.{ Click, ClickOfEC0101 }
-import org.schedoscope.test.rows
-import org.schedoscope.test.test
-import test.eci.datahub.{ ClickOfEC0101WithJdbcExport, ClickOfEC0101WithRedisExport }
-import java.sql.{ DriverManager, ResultSet, Statement }
-import org.apache.hadoop.conf.Configuration
+import org.schedoscope.export.testsupport.{ EmbeddedKafkaCluster, SimpleTestKafkaConsumer }
+import org.schedoscope.export.utils.RedisMRJedisFactory
+import org.schedoscope.test.{ rows, test }
+
+import com.google.common.collect.ImmutableList
+
+import test.eci.datahub.{ Click, ClickOfEC0101WithJdbcExport, ClickOfEC0101WithKafkaExport, ClickOfEC0101WithRedisExport }
 
 class ExportTest extends FlatSpec with Matchers {
 
@@ -118,4 +127,39 @@ class ExportTest extends FlatSpec with Matchers {
 
   }
 
+  it should "execute hive transformations and perform Kafka export" taggedAs (DriverTests) in {
+
+    val zkServer = new TestingServer(2182);
+    zkServer.start()
+    Thread.sleep(500)
+
+    val kafkaServer = new EmbeddedKafkaCluster(zkServer.getConnectString, new Properties(), ImmutableList.of(9092))
+    kafkaServer.startup();
+
+    val v = new ClickOfEC0101WithKafkaExport(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+
+      `then`()
+
+      numRows shouldBe 3
+
+      row(
+        v(id) shouldBe "event01",
+        v(url) shouldBe "http://ec0101.com/url1")
+      row(
+        v(id) shouldBe "event02",
+        v(url) shouldBe "http://ec0101.com/url2")
+      row(
+        v(id) shouldBe "event03",
+        v(url) shouldBe "http://ec0101.com/url3")
+
+    }
+
+    val consumer = new SimpleTestKafkaConsumer(v.n, zkServer.getConnectString, 3)
+    for (x <- consumer) (parse(new String(x)) \ "date_id").values shouldBe "20140101"
+
+    kafkaServer.shutdown()
+    zkServer.stop()
+
+  }
 }
