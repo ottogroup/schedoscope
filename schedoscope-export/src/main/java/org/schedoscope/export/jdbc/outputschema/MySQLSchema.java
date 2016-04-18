@@ -88,14 +88,16 @@ public class MySQLSchema extends AbstractSchema {
 	protected String getCreateTableSuffix() {
 		return " ENGINE="
 				+ conf.get(JDBC_MYSQL_STORAGE_ENGINE,
-						JDBC_MYSQL_DEFAULT_STORAGE_ENGINE) + " DEFAULT CHARSET=utf8";
+						JDBC_MYSQL_DEFAULT_STORAGE_ENGINE)
+				+ " DEFAULT CHARSET=utf8";
 	}
 
 	@Override
 	protected Properties getConnectionProperties() {
 		Properties props = super.getConnectionProperties();
 		props.setProperty(JDBC_USE_UNICODE_IDENTIFIER, JDBC_USE_UNICODE);
-		props.setProperty(JDBC_CHARACTER_ENCODING_IDENTIFIER, JDBC_CHARACTER_ENCODING);
+		props.setProperty(JDBC_CHARACTER_ENCODING_IDENTIFIER,
+				JDBC_CHARACTER_ENCODING);
 		return props;
 	}
 }
