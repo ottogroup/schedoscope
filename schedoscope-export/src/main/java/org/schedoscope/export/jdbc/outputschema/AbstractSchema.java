@@ -101,8 +101,10 @@ public abstract class AbstractSchema implements Schema {
 
 	protected Properties getConnectionProperties() {
 		Properties props = new Properties();
-		props.setProperty(JDBC_USERNAME_IDENTIFIER, conf.get(Schema.JDBC_USERNAME));
-		props.setProperty(JDBC_PASSWORD_IDENTIFIER, conf.get(Schema.JDBC_PASSWORD));
+		props.setProperty(JDBC_USERNAME_IDENTIFIER,
+				conf.get(Schema.JDBC_USERNAME));
+		props.setProperty(JDBC_PASSWORD_IDENTIFIER,
+				conf.get(Schema.JDBC_PASSWORD));
 		return props;
 	}
 
