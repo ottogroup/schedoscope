@@ -44,6 +44,12 @@ public interface Schema {
 	public static final String JDBC_OUTPUT_COLUMN_TYPES = "jdbc.output.column.types";
 	public static final String JDBC_MYSQL_STORAGE_ENGINE = "jdbc.mysql.storage.engine";
 	public static final String JDBC_EXASOL_DISTRIBUTE_CLAUSE = "jdbc.exasol.distribute.clause";
+	public static final String JDBC_USERNAME_IDENTIFIER = "user";
+	public static final String JDBC_PASSWORD_IDENTIFIER = "password";
+	public static final String JDBC_USE_UNICODE_IDENTIFIER = "useUnicode";
+	public static final String JDBC_USE_UNICODE = "true";
+	public static final String JDBC_CHARACTER_ENCODING_IDENTIFIER = "characterEncoding";
+	public static final String JDBC_CHARACTER_ENCODING = "utf8";
 
 	/**
 	 * Initializes a {@link Schema} with the given parameter.

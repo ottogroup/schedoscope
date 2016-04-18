@@ -21,6 +21,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,6 +97,13 @@ public abstract class AbstractSchema implements Schema {
 
 	protected String getDistributeByClause() {
 		return "";
+	}
+
+	protected Properties getConnectionProperties() {
+		Properties props = new Properties();
+		props.setProperty(JDBC_USERNAME_IDENTIFIER, conf.get(Schema.JDBC_USERNAME));
+		props.setProperty(JDBC_PASSWORD_IDENTIFIER, conf.get(Schema.JDBC_PASSWORD));
+		return props;
 	}
 
 	protected String buildCreateTableStatement(String table,
@@ -183,9 +191,10 @@ public abstract class AbstractSchema implements Schema {
 			SQLException {
 		Class.forName(conf.get(Schema.JDBC_DRIVER_CLASS));
 
+		Properties props = getConnectionProperties();
+
 		return DriverManager.getConnection(
-				conf.get(Schema.JDBC_CONNECTION_STRING),
-				conf.get(Schema.JDBC_USERNAME), conf.get(Schema.JDBC_PASSWORD));
+				conf.get(Schema.JDBC_CONNECTION_STRING), props);
 	}
 
 	@Override
