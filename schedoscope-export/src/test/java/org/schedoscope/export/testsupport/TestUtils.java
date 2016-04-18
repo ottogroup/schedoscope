@@ -29,9 +29,11 @@ public class TestUtils {
 	}
 
 	public static File constructTempDir(String dirPrefix) {
-		File file = new File(System.getProperty("java.io.tmpdir"), dirPrefix + RANDOM.nextInt(10000000));
+		File file = new File(System.getProperty("java.io.tmpdir"), dirPrefix
+				+ RANDOM.nextInt(10000000));
 		if (!file.mkdirs()) {
-			throw new RuntimeException("could not create temp directory: " + file.getAbsolutePath());
+			throw new RuntimeException("could not create temp directory: "
+					+ file.getAbsolutePath());
 		}
 		file.deleteOnExit();
 		return file;
@@ -46,7 +48,8 @@ public class TestUtils {
 				socket.close();
 			}
 		} catch (IOException e) {
-			throw new IllegalStateException("Cannot find available port: " + e.getMessage(), e);
+			throw new IllegalStateException("Cannot find available port: "
+					+ e.getMessage(), e);
 		}
 	}
 

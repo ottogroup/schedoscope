@@ -40,11 +40,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 	@Test
 	public void testMapConverter() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+		setUpHiveServer("src/test/resources/test_map_data.txt",
+				"src/test/resources/test_map.hql", "test_map");
 
-		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
-		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
+				conf, hcatInputSchema);
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
+				serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
@@ -58,11 +62,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 	@Test
 	public void testArrayConverter() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_array_data.txt", "src/test/resources/test_array.hql", "test_array");
+		setUpHiveServer("src/test/resources/test_array_data.txt",
+				"src/test/resources/test_array.hql", "test_array");
 
-		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
-		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
+				conf, hcatInputSchema);
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
+				serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
@@ -76,11 +84,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 	@Test
 	public void testStructConverter() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_struct_data.txt", "src/test/resources/test_struct.hql", "test_struct");
+		setUpHiveServer("src/test/resources/test_struct_data.txt",
+				"src/test/resources/test_struct.hql", "test_struct");
 
-		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
-		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
+				conf, hcatInputSchema);
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
+				serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
@@ -94,12 +106,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 	@Test
 	public void testMapArrayConverter() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_maparray_data.txt", "src/test/resources/test_maparray.hql",
-				"test_maparray");
+		setUpHiveServer("src/test/resources/test_maparray_data.txt",
+				"src/test/resources/test_maparray.hql", "test_maparray");
 
-		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
-		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
+				conf, hcatInputSchema);
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
+				serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
@@ -113,12 +128,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 	@Test
 	public void testStructStructConverter() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_structstruct_data.txt", "src/test/resources/test_structstruct.hql",
-				"test_structstruct");
+		setUpHiveServer("src/test/resources/test_structstruct_data.txt",
+				"src/test/resources/test_structstruct.hql", "test_structstruct");
 
-		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
-		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
+				conf, hcatInputSchema);
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
+				serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {
@@ -131,12 +149,15 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 
 	@Test
 	public void testArrayStructConverter() throws Exception {
-		setUpHiveServer("src/test/resources/test_arraystruct_data.txt", "src/test/resources/test_arraystruct.hql",
-				"test_arraystruct");
+		setUpHiveServer("src/test/resources/test_arraystruct_data.txt",
+				"src/test/resources/test_arraystruct.hql", "test_arraystruct");
 
-		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatInputSchema);
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyRecord");
-		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(serializer);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
+				conf, hcatInputSchema);
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyRecord");
+		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
+				serializer);
 
 		Iterator<HCatRecord> it = hcatRecordReader.read();
 		while (it.hasNext()) {

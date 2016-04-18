@@ -144,7 +144,7 @@ trait rows extends View {
           val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
           f.setResourceUris(List(jarResource))
         }
-    }    
+    }
   }
 
   def deploySchema() {

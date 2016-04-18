@@ -42,7 +42,8 @@ import com.google.common.collect.ImmutableList;
  */
 public class HCatToAvroSchemaConverter {
 
-	private static final Log LOG = LogFactory.getLog(HCatToAvroSchemaConverter.class);
+	private static final Log LOG = LogFactory
+			.getLog(HCatToAvroSchemaConverter.class);
 
 	private static final String NAMESPACE = "org.schedoscope.export";
 
@@ -74,7 +75,8 @@ public class HCatToAvroSchemaConverter {
 	 * @throws HCatException
 	 *             Is thrown if an error occurs.
 	 */
-	public static Schema convertSchema(HCatSchema hcatSchema, String tableName) throws IOException {
+	public static Schema convertSchema(HCatSchema hcatSchema, String tableName)
+			throws IOException {
 
 		LOG.info(hcatSchema.getSchemaAsTypeString());
 		Schema avroSchema = getRecordAvroFieldSchema(hcatSchema, tableName);
@@ -82,7 +84,8 @@ public class HCatToAvroSchemaConverter {
 		return avroSchema;
 	}
 
-	private static Schema getRecordAvroFieldSchema(HCatSchema structSchema, String fieldName) throws IOException {
+	private static Schema getRecordAvroFieldSchema(HCatSchema structSchema,
+			String fieldName) throws IOException {
 
 		// using jackson 1 is important (org.codehaus)
 		// NullNode from jackson 2 doesn't work with avro
@@ -92,23 +95,29 @@ public class HCatToAvroSchemaConverter {
 
 		for (HCatFieldSchema f : structSchema.getFields()) {
 			if (f.isComplex()) {
-				Field complexField = new Field(f.getName(), getComplexAvroFieldSchema(f, true), f.getTypeString(), n);
+				Field complexField = new Field(f.getName(),
+						getComplexAvroFieldSchema(f, true), f.getTypeString(),
+						n);
 				fields.add(complexField);
 
 			} else {
-				Field primitiveField = new Field(f.getName(), getPrimitiveAvroField(f), f.getTypeString(), n);
+				Field primitiveField = new Field(f.getName(),
+						getPrimitiveAvroField(f), f.getTypeString(), n);
 				fields.add(primitiveField);
 			}
 		}
-		return Schema.createRecord(fieldName, structSchema.getSchemaAsTypeString(), NAMESPACE, false, fields);
+		return Schema.createRecord(fieldName,
+				structSchema.getSchemaAsTypeString(), NAMESPACE, false, fields);
 	}
 
-	private static Schema getComplexAvroFieldSchema(HCatFieldSchema fieldSchema, boolean nullable) throws IOException {
+	private static Schema getComplexAvroFieldSchema(
+			HCatFieldSchema fieldSchema, boolean nullable) throws IOException {
 
 		Schema schema = null;
 		switch (fieldSchema.getCategory()) {
 		case MAP: {
-			HCatFieldSchema valueSchema = fieldSchema.getMapValueSchema().get(0);
+			HCatFieldSchema valueSchema = fieldSchema.getMapValueSchema()
+					.get(0);
 			Category valueCategory = valueSchema.getCategory();
 			if (valueCategory == Category.PRIMITIVE) {
 				Schema subType = getPrimitiveAvroField(valueSchema);
@@ -120,7 +129,8 @@ public class HCatToAvroSchemaConverter {
 		}
 			break;
 		case ARRAY: {
-			HCatFieldSchema valueSchema = fieldSchema.getArrayElementSchema().get(0);
+			HCatFieldSchema valueSchema = fieldSchema.getArrayElementSchema()
+					.get(0);
 			Category valueCategory = valueSchema.getCategory();
 			if (valueCategory == Category.PRIMITIVE) {
 				Schema subType = getPrimitiveAvroField(valueSchema);
@@ -134,11 +144,13 @@ public class HCatToAvroSchemaConverter {
 		case STRUCT: {
 			HCatSchema valueSchema = fieldSchema.getStructSubSchema();
 			if (fieldSchema.getName() == null) {
-				long hashCode = ((long) fieldSchema.getTypeString().hashCode()) + Integer.MAX_VALUE;
+				long hashCode = ((long) fieldSchema.getTypeString().hashCode())
+						+ Integer.MAX_VALUE;
 				String fieldName = "record_" + String.valueOf(hashCode);
 				schema = getRecordAvroFieldSchema(valueSchema, fieldName);
 			} else {
-				schema = getRecordAvroFieldSchema(valueSchema, fieldSchema.getName());
+				schema = getRecordAvroFieldSchema(valueSchema,
+						fieldSchema.getName());
 			}
 		}
 			break;
@@ -153,12 +165,16 @@ public class HCatToAvroSchemaConverter {
 		}
 	}
 
-	private static Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema) throws IOException {
+	private static Schema getPrimitiveAvroField(HCatFieldSchema fieldSchema)
+			throws IOException {
 
-		if (primitiveTypeMap.containsKey(fieldSchema.getTypeInfo().getPrimitiveCategory())) {
-			Schema schema = Schema.create(primitiveTypeMap.get(fieldSchema.getTypeInfo().getPrimitiveCategory()));
+		if (primitiveTypeMap.containsKey(fieldSchema.getTypeInfo()
+				.getPrimitiveCategory())) {
+			Schema schema = Schema.create(primitiveTypeMap.get(fieldSchema
+					.getTypeInfo().getPrimitiveCategory()));
 			return Schema.createUnion(ImmutableList.of(nullSchema, schema));
 		}
-		throw new IllegalArgumentException("can not find primitive type in typeMap");
+		throw new IllegalArgumentException(
+				"can not find primitive type in typeMap");
 	}
 }

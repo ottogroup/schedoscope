@@ -19,6 +19,12 @@ package org.schedoscope.export.kafka.outputformat;
 import java.io.IOException;
 import java.util.Properties;
 
+import kafka.admin.AdminUtils;
+import kafka.javaapi.producer.Producer;
+import kafka.producer.KeyedMessage;
+import kafka.producer.ProducerConfig;
+import kafka.utils.ZKStringSerializer$;
+
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroValue;
@@ -36,12 +42,6 @@ import org.schedoscope.export.kafka.options.CompressionCodec;
 import org.schedoscope.export.kafka.options.OutputEncoding;
 import org.schedoscope.export.kafka.options.ProducerType;
 
-import kafka.admin.AdminUtils;
-import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
-import kafka.producer.ProducerConfig;
-import kafka.utils.ZKStringSerializer$;
-
 /**
  * The Kafka output format is responsible to write data into Kafka, it
  * initializes the KafkaRecordWriter.
@@ -51,7 +51,8 @@ import kafka.utils.ZKStringSerializer$;
  * @param <V>
  *            The value class, must be a GenericRecord.
  */
-public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord>> extends OutputFormat<K, V> {
+public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord>>
+		extends OutputFormat<K, V> {
 
 	public static final String KAFKA_EXPORT_METADATA_BROKER_LIST = "metadata.broker.list";
 
@@ -84,7 +85,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 	@Override
 	public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
 
-		return (new NullOutputFormat<NullWritable, NullWritable>()).getOutputCommitter(context);
+		return (new NullOutputFormat<NullWritable, NullWritable>())
+				.getOutputCommitter(context);
 	}
 
 	@Override
@@ -93,27 +95,40 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		Configuration conf = context.getConfiguration();
 
 		Properties producerProps = new Properties();
-		producerProps.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST, conf.get(KAFKA_EXPORT_METADATA_BROKER_LIST));
-		producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS, KAFKA_EXPORT_STRING_ENCODING);
-		producerProps.setProperty(KAFKA_EXPORT_COMPRESSION_CODEC,
-				conf.get(KAFKA_EXPORT_COMPRESSION_CODEC, CompressionCodec.gzip.toString()));
-		producerProps.setProperty(KAFKA_EXPORT_PRODUCER_TYPE,
-				conf.get(KAFKA_EXPORT_PRODUCER_TYPE, ProducerType.sync.toString()));
+		producerProps.setProperty(KAFKA_EXPORT_METADATA_BROKER_LIST,
+				conf.get(KAFKA_EXPORT_METADATA_BROKER_LIST));
+		producerProps.setProperty(KAFKA_EXPORT_KEY_SERIALIZER_CLASS,
+				KAFKA_EXPORT_STRING_ENCODING);
+		producerProps.setProperty(
+				KAFKA_EXPORT_COMPRESSION_CODEC,
+				conf.get(KAFKA_EXPORT_COMPRESSION_CODEC,
+						CompressionCodec.gzip.toString()));
+		producerProps.setProperty(
+				KAFKA_EXPORT_PRODUCER_TYPE,
+				conf.get(KAFKA_EXPORT_PRODUCER_TYPE,
+						ProducerType.sync.toString()));
 		producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
 				conf.get(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS, "1"));
 
-		if (conf.get(KAFKA_EXPORT_OUTPUT_ENCODING).equals(OutputEncoding.avro.toString())) {
+		if (conf.get(KAFKA_EXPORT_OUTPUT_ENCODING).equals(
+				OutputEncoding.avro.toString())) {
 
-			producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, KAFKA_EXPORT_AVRO_ENCODING);
+			producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS,
+					KAFKA_EXPORT_AVRO_ENCODING);
 			ProducerConfig config = new ProducerConfig(producerProps);
-			Producer<String, GenericRecord> producer = new Producer<String, GenericRecord>(config);
-			return new KafkaAvroGenericRecordWriter(producer, conf.get(KAFKA_EXPORT_TABLE_NAME));
+			Producer<String, GenericRecord> producer = new Producer<String, GenericRecord>(
+					config);
+			return new KafkaAvroGenericRecordWriter(producer,
+					conf.get(KAFKA_EXPORT_TABLE_NAME));
 
 		} else {
-			producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS, KAFKA_EXPORT_STRING_ENCODING);
+			producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS,
+					KAFKA_EXPORT_STRING_ENCODING);
 			ProducerConfig config = new ProducerConfig(producerProps);
-			Producer<String, String> producer = new Producer<String, String>(config);
-			return new KafkaStringRecordWriter(producer, conf.get(KAFKA_EXPORT_TABLE_NAME));
+			Producer<String, String> producer = new Producer<String, String>(
+					config);
+			return new KafkaStringRecordWriter(producer,
+					conf.get(KAFKA_EXPORT_TABLE_NAME));
 		}
 	}
 
@@ -143,9 +158,11 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 	 * @param enc
 	 *            The outputencoding to use (string / avro).
 	 */
-	public static void setOutput(Configuration conf, String brokerList, String zookeeperHosts,
-			ProducerType producerType, CleanupPolicy cleanupPolicy, String keyName, String tableName, int numPartitions,
-			int replicationFactor, CompressionCodec codec, OutputEncoding enc) {
+	public static void setOutput(Configuration conf, String brokerList,
+			String zookeeperHosts, ProducerType producerType,
+			CleanupPolicy cleanupPolicy, String keyName, String tableName,
+			int numPartitions, int replicationFactor, CompressionCodec codec,
+			OutputEncoding enc) {
 
 		conf.set(KAFKA_EXPORT_METADATA_BROKER_LIST, brokerList);
 		conf.set(KAFKA_EXPORT_PRODUCER_TYPE, producerType.toString());
@@ -155,20 +172,25 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		conf.set(KAFKA_EXPORT_COMPRESSION_CODEC, codec.toString());
 		conf.set(KAFKA_EXPORT_OUTPUT_ENCODING, enc.toString());
 
-		createOrUpdateTopic(zookeeperHosts, tableName, cleanupPolicy, numPartitions, replicationFactor);
+		createOrUpdateTopic(zookeeperHosts, tableName, cleanupPolicy,
+				numPartitions, replicationFactor);
 	}
 
-	private static void createOrUpdateTopic(String zookeeperHosts, String tableName, CleanupPolicy cleanupPolicy,
-			int numPartitions, int replicationFactor) {
+	private static void createOrUpdateTopic(String zookeeperHosts,
+			String tableName, CleanupPolicy cleanupPolicy, int numPartitions,
+			int replicationFactor) {
 
 		Properties topicProps = new Properties();
-		topicProps.setProperty(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
+		topicProps.setProperty(KAFKA_EXPORT_CLEANUP_POLICY,
+				cleanupPolicy.toString());
 
-		ZkClient zkClient = new ZkClient(zookeeperHosts, 30000, 30000, ZKStringSerializer$.MODULE$);
+		ZkClient zkClient = new ZkClient(zookeeperHosts, 30000, 30000,
+				ZKStringSerializer$.MODULE$);
 		if (AdminUtils.topicExists(zkClient, tableName)) {
 			AdminUtils.changeTopicConfig(zkClient, tableName, topicProps);
 		} else {
-			AdminUtils.createTopic(zkClient, tableName, numPartitions, replicationFactor, topicProps);
+			AdminUtils.createTopic(zkClient, tableName, numPartitions,
+					replicationFactor, topicProps);
 		}
 		zkClient.close();
 	}
@@ -192,7 +214,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		 * @param topic
 		 *            The Kafka topic to send the data to.
 		 */
-		public KafkaStringRecordWriter(Producer<String, String> producer, String topic) {
+		public KafkaStringRecordWriter(Producer<String, String> producer,
+				String topic) {
 
 			this.producer = producer;
 			this.topic = topic;
@@ -201,7 +224,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		@Override
 		public void write(K key, V value) {
 
-			KeyedMessage<String, String> message = new KeyedMessage<String, String>(topic, key.toString(), value.datum().toString());
+			KeyedMessage<String, String> message = new KeyedMessage<String, String>(
+					topic, key.toString(), value.datum().toString());
 			producer.send(message);
 		}
 
@@ -231,7 +255,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		 * @param topic
 		 *            The Kafka topic to send the data to.
 		 */
-		public KafkaAvroGenericRecordWriter(Producer<String, GenericRecord> producer, String topic) {
+		public KafkaAvroGenericRecordWriter(
+				Producer<String, GenericRecord> producer, String topic) {
 
 			this.producer = producer;
 			this.topic = topic;
@@ -240,7 +265,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		@Override
 		public void write(K key, V value) {
 
-			KeyedMessage<String, GenericRecord> message = new KeyedMessage<String, GenericRecord>(topic, key.toString(), value.datum());
+			KeyedMessage<String, GenericRecord> message = new KeyedMessage<String, GenericRecord>(
+					topic, key.toString(), value.datum());
 			producer.send(message);
 		}
 

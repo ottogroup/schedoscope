@@ -37,7 +37,9 @@ import org.schedoscope.export.utils.HCatUtils;
 /**
  * A mapper that reads data from Hive tables and emits a GenericRecord.
  */
-public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, AvroValue<GenericRecord>> {
+public class KafkaExportMapper
+		extends
+		Mapper<WritableComparable<?>, HCatRecord, Text, AvroValue<GenericRecord>> {
 
 	private String tableName;
 
@@ -50,7 +52,8 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 	private Schema avroSchema;
 
 	@Override
-	protected void setup(Context context) throws IOException, InterruptedException {
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
 		super.setup(context);
 		Configuration conf = context.getConfiguration();
@@ -61,19 +64,22 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 		HCatUtils.checkKeyType(hcatSchema, keyName);
 
-		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
+				conf, hcatSchema);
 		converter = new HCatToAvroRecordConverter(serializer);
 
-		avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema, tableName);
+		avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema,
+				tableName);
 	}
 
 	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
-			throws IOException, InterruptedException {
+	protected void map(WritableComparable<?> key, HCatRecord value,
+			Context context) throws IOException, InterruptedException {
 
 		Text kafkaKey = new Text(value.getString(keyName, hcatSchema));
 		GenericRecord record = converter.convert(value, avroSchema);
-		AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(record);
+		AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(
+				record);
 
 		context.write(kafkaKey, recordWrapper);
 	}

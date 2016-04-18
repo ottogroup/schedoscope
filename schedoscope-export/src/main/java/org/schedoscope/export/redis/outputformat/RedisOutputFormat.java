@@ -42,7 +42,8 @@ import redis.clients.jedis.Pipeline;
  * @param <V>
  *            The value class.
  */
-public class RedisOutputFormat<K, V extends RedisWritable> extends OutputFormat<K, V> {
+public class RedisOutputFormat<K, V extends RedisWritable> extends
+		OutputFormat<K, V> {
 
 	public static final String REDIS_EXPORT_SERVER_HOST = "redis.export.server.host";
 
@@ -73,7 +74,8 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends OutputFormat<
 	@Override
 	public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
 
-		return (new NullOutputFormat<NullWritable, NullWritable>()).getOutputCommitter(context);
+		return (new NullOutputFormat<NullWritable, NullWritable>())
+				.getOutputCommitter(context);
 	}
 
 	@Override
@@ -132,8 +134,9 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends OutputFormat<
 	 * @param pipeline
 	 *            A flag to use the Redis pipeline mode.
 	 */
-	public static void setOutput(Configuration conf, String redisHost, int redisPort, int redisDb, String keyName,
-			String keyPrefix, String valueName, boolean replace, boolean pipeline) {
+	public static void setOutput(Configuration conf, String redisHost,
+			int redisPort, int redisDb, String keyName, String keyPrefix,
+			String valueName, boolean replace, boolean pipeline) {
 
 		conf.set(REDIS_EXPORT_SERVER_HOST, redisHost);
 		conf.setInt(REDIS_EXPORT_SERVER_PORT, redisPort);
@@ -145,10 +148,12 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends OutputFormat<
 		conf.setBoolean(REDIS_PIPELINE_MODE, pipeline);
 	}
 
-	public static void setOutput(Configuration conf, String redisHost, int redisPort, int redisDb, String keyName,
-			String keyPrefix, boolean replace, boolean pipeline) {
+	public static void setOutput(Configuration conf, String redisHost,
+			int redisPort, int redisDb, String keyName, String keyPrefix,
+			boolean replace, boolean pipeline) {
 
-		setOutput(conf, redisHost, redisPort, redisDb, keyName, keyPrefix, "", replace, pipeline);
+		setOutput(conf, redisHost, redisPort, redisDb, keyName, keyPrefix, "",
+				replace, pipeline);
 	}
 
 	/**
@@ -163,7 +168,8 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends OutputFormat<
 	 * @throws IOException
 	 *             Thrown if an error occurs.
 	 */
-	public static Class<?> getRedisWritableClazz(HCatSchema schema, String fieldName) throws IOException {
+	public static Class<?> getRedisWritableClazz(HCatSchema schema,
+			String fieldName) throws IOException {
 
 		HCatFieldSchema.Category category = schema.get(fieldName).getCategory();
 

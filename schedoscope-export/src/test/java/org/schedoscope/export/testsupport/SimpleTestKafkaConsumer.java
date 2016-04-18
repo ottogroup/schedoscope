@@ -35,7 +35,8 @@ public class SimpleTestKafkaConsumer implements Iterable<byte[]> {
 
 	final int iterations;
 
-	public SimpleTestKafkaConsumer(String topic, String zookeeperConnect, int iterations) {
+	public SimpleTestKafkaConsumer(String topic, String zookeeperConnect,
+			int iterations) {
 
 		this.iterations = iterations;
 
@@ -44,11 +45,13 @@ public class SimpleTestKafkaConsumer implements Iterable<byte[]> {
 		props.put("group.id", "test_consumer_1");
 		props.put("auto.offset.reset", "smallest");
 
-		consumer = kafka.consumer.Consumer.createJavaConsumerConnector(new ConsumerConfig(props));
+		consumer = kafka.consumer.Consumer
+				.createJavaConsumerConnector(new ConsumerConfig(props));
 
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		topicCountMap.put(topic, Integer.valueOf(1));
-		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer.createMessageStreams(topicCountMap);
+		Map<String, List<KafkaStream<byte[], byte[]>>> consumerMap = consumer
+				.createMessageStreams(topicCountMap);
 		KafkaStream<byte[], byte[]> stream = consumerMap.get(topic).get(0);
 		consumerIt = stream.iterator();
 	}

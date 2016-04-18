@@ -36,7 +36,8 @@ public class HCatUtils {
 	 * @throws IOException
 	 *             Is thrown in case of errors.
 	 */
-	public static void checkKeyType(HCatSchema schema, String fieldName) throws IOException {
+	public static void checkKeyType(HCatSchema schema, String fieldName)
+			throws IOException {
 
 		HCatFieldSchema keyType = schema.get(fieldName);
 		HCatFieldSchema.Category category = keyType.getCategory();
@@ -56,19 +57,22 @@ public class HCatUtils {
 	 * @throws IOException
 	 *             Is thrown in case of errors.
 	 */
-	public static void checkValueType(HCatSchema schema, String fieldName) throws IOException {
+	public static void checkValueType(HCatSchema schema, String fieldName)
+			throws IOException {
 
 		HCatFieldSchema valueType = schema.get(fieldName);
 
 		if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
 			if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-				throw new IllegalArgumentException("map value type must be a primitive type");
+				throw new IllegalArgumentException(
+						"map value type must be a primitive type");
 			}
 		}
 
 		if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
 			if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-				throw new IllegalArgumentException("array element type must be a primitive type");
+				throw new IllegalArgumentException(
+						"array element type must be a primitive type");
 			}
 		}
 
@@ -76,7 +80,8 @@ public class HCatUtils {
 			HCatSchema structSchema = valueType.getStructSubSchema();
 			for (HCatFieldSchema f : structSchema.getFields()) {
 				if (f.getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-					throw new IllegalArgumentException("struct element type must be a primitive type");
+					throw new IllegalArgumentException(
+							"struct element type must be a primitive type");
 				}
 			}
 

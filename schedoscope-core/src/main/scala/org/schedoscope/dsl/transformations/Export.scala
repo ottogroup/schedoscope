@@ -262,7 +262,6 @@ object Export {
         "schedoscope.export.numReducers" -> numReducers,
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
-        "schedoscope.export.metastoreUri" -> metastoreUri
-        ))
+        "schedoscope.export.metastoreUri" -> metastoreUri))
   }
 }

@@ -66,8 +66,10 @@ public class HCatRecordJsonSerializer {
 		}
 
 		Properties tblProps = new Properties();
-		tblProps.setProperty(serdeConstants.LIST_COLUMNS, columnNameProperty.toString());
-		tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES, columnTypeProperty.toString());
+		tblProps.setProperty(serdeConstants.LIST_COLUMNS,
+				columnNameProperty.toString());
+		tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES,
+				columnTypeProperty.toString());
 		try {
 			serde.initialize(conf, tblProps);
 		} catch (SerDeException e) {
@@ -86,11 +88,13 @@ public class HCatRecordJsonSerializer {
 	 * @throws IOException
 	 *             Is thrown if an error occurs.
 	 */
-	public String getFieldAsJson(HCatRecord value, String fieldName) throws IOException {
+	public String getFieldAsJson(HCatRecord value, String fieldName)
+			throws IOException {
 
 		String json = null;
 		try {
-			json = serde.serialize(value, serde.getObjectInspector()).toString();
+			json = serde.serialize(value, serde.getObjectInspector())
+					.toString();
 		} catch (SerDeException e) {
 			throw new IllegalArgumentException(e.getMessage());
 		}
@@ -110,7 +114,8 @@ public class HCatRecordJsonSerializer {
 
 		String json = null;
 		try {
-			json = serde.serialize(value, serde.getObjectInspector()).toString();
+			json = serde.serialize(value, serde.getObjectInspector())
+					.toString();
 		} catch (SerDeException e) {
 			throw new IllegalArgumentException(e.getMessage());
 		}

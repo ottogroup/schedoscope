@@ -68,7 +68,7 @@ trait test extends TestableView {
     }
 
     val t = registeredTransformation()
-    
+
     t match {
       case ot: OozieTransformation => deployWorkflow(ot)
       case ht: HiveTransformation  => deployFunctions(ht)

@@ -46,7 +46,8 @@ public class EmbeddedKafkaCluster {
 		this(zkConnection, baseProperties, Collections.singletonList(-1));
 	}
 
-	public EmbeddedKafkaCluster(String zkConnection, Properties baseProperties, List<Integer> ports) {
+	public EmbeddedKafkaCluster(String zkConnection, Properties baseProperties,
+			List<Integer> ports) {
 		this.zkConnection = zkConnection;
 		this.ports = resolvePorts(ports);
 		this.baseProperties = baseProperties;
@@ -99,7 +100,8 @@ public class EmbeddedKafkaCluster {
 			properties.setProperty("host.name", "localhost");
 			properties.setProperty("port", Integer.toString(port));
 			properties.setProperty("log.dir", logDir.getAbsolutePath());
-			properties.setProperty("log.flush.interval.messages", String.valueOf(1));
+			properties.setProperty("log.flush.interval.messages",
+					String.valueOf(1));
 
 			KafkaServer broker = startBroker(properties);
 
@@ -109,7 +111,8 @@ public class EmbeddedKafkaCluster {
 	}
 
 	private KafkaServer startBroker(Properties props) {
-		KafkaServer server = new KafkaServer(new KafkaConfig(props), SystemTime$.MODULE$);
+		KafkaServer server = new KafkaServer(new KafkaConfig(props),
+				SystemTime$.MODULE$);
 		server.startup();
 		return server;
 	}

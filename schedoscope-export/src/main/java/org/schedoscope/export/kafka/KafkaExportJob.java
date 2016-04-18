@@ -150,10 +150,13 @@ public class KafkaExportJob extends BaseExportJob {
 	 * @throws Exception
 	 *             Is thrown if an error occurs
 	 */
-	public Job configure(boolean isSecured, String metaStoreUris, String principal, String inputDatabase,
-			String inputTable, String inputFilter, String keyName, String brokers, String zookeepers,
-			ProducerType producerType, CleanupPolicy cleanupPolicy, int numPartitions, int replicationFactor,
-			int numReducer, CompressionCodec codec, OutputEncoding outputEncoding) throws Exception {
+	public Job configure(boolean isSecured, String metaStoreUris,
+			String principal, String inputDatabase, String inputTable,
+			String inputFilter, String keyName, String brokers,
+			String zookeepers, ProducerType producerType,
+			CleanupPolicy cleanupPolicy, int numPartitions,
+			int replicationFactor, int numReducer, CompressionCodec codec,
+			OutputEncoding outputEncoding) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -181,7 +184,8 @@ public class KafkaExportJob extends BaseExportJob {
 		conf = configureHiveMetaStore(conf, metaStoreUris);
 		conf = configureKerberos(conf, isSecured, principal);
 
-		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "." + inputTable);
+		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "."
+				+ inputTable);
 
 		job.setJarByClass(KafkaExportJob.class);
 
@@ -189,15 +193,19 @@ public class KafkaExportJob extends BaseExportJob {
 			HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
 		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
+			HCatInputFormat.setInput(job, inputDatabase, inputTable,
+					inputFilter);
 		}
 
-		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
-		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema, inputTable);
+		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job
+				.getConfiguration());
+		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema,
+				inputTable);
 		AvroJob.setMapOutputValueSchema(job, avroSchema);
 
-		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList, zookeeperHosts, producerType, cleanupPolicy,
-				keyName, inputTable, numPartitions, replicationFactor, codec, encoding);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList,
+				zookeeperHosts, producerType, cleanupPolicy, keyName,
+				inputTable, numPartitions, replicationFactor, codec, encoding);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);

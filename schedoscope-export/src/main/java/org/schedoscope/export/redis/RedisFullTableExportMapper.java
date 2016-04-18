@@ -36,7 +36,8 @@ import org.schedoscope.export.utils.StatCounter;
  * A mapper to read a full Hive table via HCatalog and emits a RedisWritable
  * containing all columns and values as pairs.
  */
-public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisHashWritable> {
+public class RedisFullTableExportMapper extends
+		Mapper<WritableComparable<?>, HCatRecord, Text, RedisHashWritable> {
 
 	private Configuration conf;
 
@@ -49,7 +50,8 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 	private HCatRecordJsonSerializer serializer;
 
 	@Override
-	protected void setup(Context context) throws IOException, InterruptedException {
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
 		super.setup(context);
 		conf = context.getConfiguration();
@@ -57,15 +59,16 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
 		serializer = new HCatRecordJsonSerializer(conf, schema);
 
-		HCatUtils.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+		HCatUtils.checkKeyType(schema,
+				conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
 
 		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
 	}
 
 	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
-			throws IOException, InterruptedException {
+	protected void map(WritableComparable<?> key, HCatRecord value,
+			Context context) throws IOException, InterruptedException {
 
 		Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
 

@@ -22,6 +22,8 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import kafka.utils.ZKStringSerializer$;
+
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -48,11 +50,6 @@ import org.schedoscope.export.testsupport.SimpleTestKafkaConsumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
-import com.lambdanow.avro.schema.MemorySchemaRegistry;
-import com.lambdanow.avro.schema.SchemaRegistry;
-import com.lambdanow.avro.serde.FingerprintSerdeGeneric;
-
-import kafka.utils.ZKStringSerializer$;
 
 public class KafkaExportMRTest extends HiveUnitBaseTest {
 
@@ -76,10 +73,12 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		zkServer = new TestingServer(2182);
 		zkServer.start();
 		Thread.sleep(1000);
-		zkClient = new ZkClient(zkServer.getConnectString(), 30000, 30000, ZKStringSerializer$.MODULE$);
+		zkClient = new ZkClient(zkServer.getConnectString(), 30000, 30000,
+				ZKStringSerializer$.MODULE$);
 
 		startKafkaServer();
-		kafkaConsumer = new SimpleTestKafkaConsumer(TEST_TOPIC, zkServer.getConnectString(), 10);
+		kafkaConsumer = new SimpleTestKafkaConsumer(TEST_TOPIC,
+				zkServer.getConnectString(), 10);
 	}
 
 	@Override
@@ -94,15 +93,18 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Test
 	public void testKafkaMapExportString() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+		setUpHiveServer("src/test/resources/test_map_data.txt",
+				"src/test/resources/test_map.hql", "test_map");
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyTable");
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
-		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
-				ProducerType.sync, CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1, CompressionCodec.gzip,
-				OutputEncoding.string);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
+				zkServer.getConnectString(), ProducerType.sync,
+				CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1,
+				CompressionCodec.gzip, OutputEncoding.string);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -121,7 +123,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		ObjectMapper objMapper = new ObjectMapper();
 
 		int counter = 0;
-		for(byte[] message : kafkaConsumer) {
+		for (byte[] message : kafkaConsumer) {
 			counter++;
 			String record = new String(message, Charsets.UTF_8);
 			JsonNode data = objMapper.readTree(record);
@@ -134,15 +136,18 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Test
 	public void testKafkaMapExportAvro() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+		setUpHiveServer("src/test/resources/test_map_data.txt",
+				"src/test/resources/test_map.hql", "test_map");
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyTable");
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
-		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
-				ProducerType.sync, CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1, CompressionCodec.gzip,
-				OutputEncoding.avro);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
+				zkServer.getConnectString(), ProducerType.sync,
+				CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1,
+				CompressionCodec.gzip, OutputEncoding.avro);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -165,7 +170,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		FingerprintSerdeGeneric serde = new FingerprintSerdeGeneric(registry);
 
 		int counter = 0;
-		for(byte[] message : kafkaConsumer) {
+		for (byte[] message : kafkaConsumer) {
 			counter++;
 			GenericRecord record = serde.fromBytes(message);
 			JsonNode data = objMapper.readTree(record.toString());
@@ -177,14 +182,17 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Test
 	public void testKafkaArrayStructExportAvro() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_arraystruct_data.txt", "src/test/resources/test_arraystruct.hql", "test_arraystruct");
+		setUpHiveServer("src/test/resources/test_arraystruct_data.txt",
+				"src/test/resources/test_arraystruct.hql", "test_arraystruct");
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(hcatInputSchema, "MyTable");
+		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+				hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
-		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
-				ProducerType.sync, CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1, CompressionCodec.gzip,
-				OutputEncoding.avro);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
+				zkServer.getConnectString(), ProducerType.sync,
+				CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1,
+				CompressionCodec.gzip, OutputEncoding.avro);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -207,7 +215,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		FingerprintSerdeGeneric serde = new FingerprintSerdeGeneric(registry);
 
 		int counter = 0;
-		for(byte[] message : kafkaConsumer) {
+		for (byte[] message : kafkaConsumer) {
 			counter++;
 			GenericRecord record = serde.fromBytes(message);
 			JsonNode data = objMapper.readTree(record.toString());
@@ -220,7 +228,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
 		ArrayList<Integer> ports = new ArrayList<Integer>();
 		ports.add(9092);
-		kafka = new EmbeddedKafkaCluster(zkServer.getConnectString(), new Properties(), ports);
+		kafka = new EmbeddedKafkaCluster(zkServer.getConnectString(),
+				new Properties(), ports);
 		kafka.startup();
 		Thread.sleep(2000);
 	}
