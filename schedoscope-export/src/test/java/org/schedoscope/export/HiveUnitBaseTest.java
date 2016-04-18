@@ -76,12 +76,11 @@ public abstract class HiveUnitBaseTest {
 	}
 
 	@After
-	public void testHCatInputFormat() {
+	public void tearDown() throws Exception {
 		testSuite.shutdownTestCluster();
 	}
 
-	public void setUpHiveServer(String dataFile, String hiveScript,
-			String tableName) throws Exception {
+	public void setUpHiveServer(String dataFile, String hiveScript, String tableName) throws Exception {
 
 		// load data into hive table
 		File inputRawData = new File(dataFile);
@@ -99,19 +98,26 @@ public abstract class HiveUnitBaseTest {
 		// set up column type mapping
 		HCatInputFormat.setInput(conf, DEFAUlT_HIVE_DB, tableName);
 		hcatInputSchema = HCatInputFormat.getTableSchema(conf);
-		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, SchemaUtils
-				.getColumnTypesFromHcatSchema(hcatInputSchema, schema));
+		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES,
+				SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, schema));
 
 		// set up hcatalog record reader
 		ReadEntity.Builder builder = new ReadEntity.Builder();
-		ReadEntity entity = builder.withDatabase(DEFAUlT_HIVE_DB)
-				.withTable(tableName).build();
+		ReadEntity entity = builder.withDatabase(DEFAUlT_HIVE_DB).withTable(tableName).build();
 
 		Map<String, String> config = new HashMap<String, String>();
-		HCatReader masterReader = DataTransferFactory.getHCatReader(entity,
-				config);
+		HCatReader masterReader = DataTransferFactory.getHCatReader(entity, config);
 		ReaderContext ctx = masterReader.prepareRead();
 
 		hcatRecordReader = DataTransferFactory.getHCatReader(ctx, 0);
+	}
+
+	public void setUpHiveServerNoData(String hiveScript, String tableName) throws Exception {
+
+		// load data into hive table
+		testSuite.executeScript(hiveScript);
+
+		HCatInputFormat.setInput(conf, DEFAUlT_HIVE_DB, tableName);
+		hcatInputSchema = HCatInputFormat.getTableSchema(conf);
 	}
 }

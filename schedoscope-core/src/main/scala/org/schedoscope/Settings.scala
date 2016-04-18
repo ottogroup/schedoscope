@@ -231,6 +231,11 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   lazy val redisExportUsesPipelineMode = config.getBoolean("schedoscope.export.redis.usePipelineMode")
 
   /**
+   * Number of reducers to use for Redis export.
+   */
+  lazy val kafkaExportNumReducers = config.getInt("schedoscope.export.kafka.numberOfReducers")
+
+  /**
    * A user group information object ready to use for kerberized interactions.
    */
   def userGroupInformation = {

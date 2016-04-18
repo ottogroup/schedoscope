@@ -24,9 +24,9 @@ import static org.mockito.Mockito.when;
 import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,15 +76,15 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(RedisFullTableExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(RedisHashWritable.class);
-		job.setOutputKeyClass(RedisHashWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(RedisHashWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
 		assertEquals("2016-02-09T12:21:24.581+01:00", jedisAdapter.hget(
@@ -117,15 +117,15 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(RedisFullTableExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(RedisHashWritable.class);
-		job.setOutputKeyClass(RedisHashWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(RedisHashWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
 		assertEquals(
@@ -148,15 +148,15 @@ public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(RedisFullTableExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(RedisHashWritable.class);
-		job.setOutputKeyClass(RedisHashWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(RedisHashWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
 		ObjectMapper objMapper = new ObjectMapper();

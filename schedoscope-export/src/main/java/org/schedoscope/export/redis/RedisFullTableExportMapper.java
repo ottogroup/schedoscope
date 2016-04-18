@@ -28,15 +28,15 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
-import org.schedoscope.export.utils.CustomHCatRecordSerializer;
+import org.schedoscope.export.utils.HCatRecordJsonSerializer;
+import org.schedoscope.export.utils.HCatUtils;
 import org.schedoscope.export.utils.StatCounter;
 
 /**
  * A mapper to read a full Hive table via HCatalog and emits a RedisWritable
  * containing all columns and values as pairs.
  */
-public class RedisFullTableExportMapper extends
-		Mapper<WritableComparable<?>, HCatRecord, Text, RedisHashWritable> {
+public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisHashWritable> {
 
 	private Configuration conf;
 
@@ -46,28 +46,26 @@ public class RedisFullTableExportMapper extends
 
 	private String keyPrefix;
 
-	private CustomHCatRecordSerializer serializer;
+	private HCatRecordJsonSerializer serializer;
 
 	@Override
-	protected void setup(Context context) throws IOException,
-			InterruptedException {
+	protected void setup(Context context) throws IOException, InterruptedException {
 
 		super.setup(context);
 		conf = context.getConfiguration();
 		schema = HCatInputFormat.getTableSchema(conf);
 
-		serializer = new CustomHCatRecordSerializer(conf, schema);
+		serializer = new HCatRecordJsonSerializer(conf, schema);
 
-		RedisOutputFormat.checkKeyType(schema,
-				conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+		HCatUtils.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
 
 		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
 	}
 
 	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value,
-			Context context) throws IOException, InterruptedException {
+	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
+			throws IOException, InterruptedException {
 
 		Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
 
@@ -81,7 +79,7 @@ public class RedisFullTableExportMapper extends
 				String jsonString;
 
 				if (schema.get(f).isComplex()) {
-					jsonString = serializer.getJsonComplexType(value, f);
+					jsonString = serializer.getFieldAsJson(value, f);
 				} else {
 					jsonString = obj.toString();
 				}

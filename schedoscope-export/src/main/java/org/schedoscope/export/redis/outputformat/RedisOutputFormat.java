@@ -42,8 +42,7 @@ import redis.clients.jedis.Pipeline;
  * @param <V>
  *            The value class.
  */
-public class RedisOutputFormat<K extends RedisWritable, V> extends
-		OutputFormat<K, V> {
+public class RedisOutputFormat<K, V extends RedisWritable> extends OutputFormat<K, V> {
 
 	public static final String REDIS_EXPORT_SERVER_HOST = "redis.export.server.host";
 
@@ -74,8 +73,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends
 	@Override
 	public OutputCommitter getOutputCommitter(TaskAttemptContext context) {
 
-		return (new NullOutputFormat<NullWritable, NullWritable>())
-				.getOutputCommitter(context);
+		return (new NullOutputFormat<NullWritable, NullWritable>()).getOutputCommitter(context);
 	}
 
 	@Override
@@ -92,68 +90,6 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends
 			return new PipelinedRedisRecordWriter(pipelinedJedis, replace);
 		} else {
 			return new RedisRecordWriter(jedis, replace);
-		}
-	}
-
-	/**
-	 * This function checks if the key type is a primitive type.
-	 *
-	 * @param schema
-	 *            The HCatSchema.
-	 * @param fieldName
-	 *            The name of the field to check.
-	 * @throws IOException
-	 *             Is thrown in case of errors.
-	 */
-	public static void checkKeyType(HCatSchema schema, String fieldName)
-			throws IOException {
-
-		HCatFieldSchema keyType = schema.get(fieldName);
-		HCatFieldSchema.Category category = keyType.getCategory();
-
-		if (category != HCatFieldSchema.Category.PRIMITIVE) {
-			throw new IllegalArgumentException("key must be primitive type");
-		}
-	}
-
-	/**
-	 * This function checks the type category of the value.
-	 *
-	 * @param schema
-	 *            The HCatSchema.
-	 * @param fieldName
-	 *            The name of the field to check.
-	 * @throws IOException
-	 *             Is thrown in case of errors.
-	 */
-	public static void checkValueType(HCatSchema schema, String fieldName)
-			throws IOException {
-
-		HCatFieldSchema valueType = schema.get(fieldName);
-
-		if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
-			if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-				throw new IllegalArgumentException(
-						"map value type must be a primitive type");
-			}
-		}
-
-		if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
-			if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-				throw new IllegalArgumentException(
-						"array element type must be a primitive type");
-			}
-		}
-
-		if (valueType.getCategory() == HCatFieldSchema.Category.STRUCT) {
-			HCatSchema structSchema = valueType.getStructSubSchema();
-			for (HCatFieldSchema f : structSchema.getFields()) {
-				if (f.getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-					throw new IllegalArgumentException(
-							"struct element type must be a primitive type");
-				}
-			}
-
 		}
 	}
 
@@ -196,9 +132,8 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends
 	 * @param pipeline
 	 *            A flag to use the Redis pipeline mode.
 	 */
-	public static void setOutput(Configuration conf, String redisHost,
-			int redisPort, int redisDb, String keyName, String keyPrefix,
-			String valueName, boolean replace, boolean pipeline) {
+	public static void setOutput(Configuration conf, String redisHost, int redisPort, int redisDb, String keyName,
+			String keyPrefix, String valueName, boolean replace, boolean pipeline) {
 
 		conf.set(REDIS_EXPORT_SERVER_HOST, redisHost);
 		conf.setInt(REDIS_EXPORT_SERVER_PORT, redisPort);
@@ -210,18 +145,16 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends
 		conf.setBoolean(REDIS_PIPELINE_MODE, pipeline);
 	}
 
-	public static void setOutput(Configuration conf, String redisHost,
-			int redisPort, int redisDb, String keyName, String keyPrefix,
-			boolean replace, boolean pipeline) {
+	public static void setOutput(Configuration conf, String redisHost, int redisPort, int redisDb, String keyName,
+			String keyPrefix, boolean replace, boolean pipeline) {
 
-		setOutput(conf, redisHost, redisPort, redisDb, keyName, keyPrefix, "",
-				replace, pipeline);
+		setOutput(conf, redisHost, redisPort, redisDb, keyName, keyPrefix, "", replace, pipeline);
 	}
 
 	/**
 	 * A function to return the writable depending on the name of the value
 	 * field.
-	 * 
+	 *
 	 * @param schema
 	 *            The Hcatalog schema
 	 * @param fieldName
@@ -230,8 +163,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends
 	 * @throws IOException
 	 *             Thrown if an error occurs.
 	 */
-	public static Class<?> getRedisWritableClazz(HCatSchema schema,
-			String fieldName) throws IOException {
+	public static Class<?> getRedisWritableClazz(HCatSchema schema, String fieldName) throws IOException {
 
 		HCatFieldSchema.Category category = schema.get(fieldName).getCategory();
 
@@ -251,7 +183,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends
 			RWClazz = RedisHashWritable.class;
 			break;
 		default:
-			break;
+			throw new IllegalArgumentException("invalid type");
 		}
 		return RWClazz;
 	}
@@ -282,7 +214,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends
 		@Override
 		public void write(K key, V value) {
 
-			key.write(jedis, replace);
+			value.write(jedis, replace);
 		}
 
 		@Override
@@ -319,7 +251,7 @@ public class RedisOutputFormat<K extends RedisWritable, V> extends
 		@Override
 		public void write(K key, V value) {
 
-			key.write(jedis, replace);
+			value.write(jedis, replace);
 		}
 
 		@Override

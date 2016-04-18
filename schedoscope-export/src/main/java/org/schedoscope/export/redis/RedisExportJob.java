@@ -17,18 +17,16 @@
 package org.schedoscope.export.redis;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
@@ -39,7 +37,7 @@ import redis.clients.jedis.Jedis;
  * The MR driver to run the Hive to Redis export. Depending on the cmdl params
  * it either runs a full table export or only a selected field.
  */
-public class RedisExportJob extends Configured implements Tool {
+public class RedisExportJob extends BaseExportJob {
 
 	@Option(name = "-s", usage = "set to true if kerberos is enabled")
 	private boolean isSecured = false;
@@ -147,11 +145,9 @@ public class RedisExportJob extends Configured implements Tool {
 	 * @throws Exception
 	 *             is thrown if an error occurs.
 	 */
-	public Job configure(boolean isSecured, String metaStoreUris,
-			String principal, String redisHost, int redisPort, int redisDb,
-			String inputDatabase, String inputTable, String inputFilter,
-			String keyName, String valueName, String keyPrefix, int numReducer,
-			boolean replace, boolean pipeline, boolean flush) throws Exception {
+	public Job configure(boolean isSecured, String metaStoreUris, String principal, String redisHost, int redisPort,
+			int redisDb, String inputDatabase, String inputTable, String inputFilter, String keyName, String valueName,
+			String keyPrefix, int numReducer, boolean replace, boolean pipeline, boolean flush) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -174,36 +170,11 @@ public class RedisExportJob extends Configured implements Tool {
 
 	private Job configure() throws Exception {
 
-		if (getConf() == null)
-			setConf(new Configuration());
+		Configuration conf = getConfiguration();
+		conf = configureHiveMetaStore(conf, metaStoreUris);
+		conf = configureKerberos(conf, isSecured, principal);
 
-		Configuration conf = getConf();
-
-		if (metaStoreUris.startsWith("thrift://")) {
-			conf.set("hive.metastore.local", "false");
-			conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
-		} else {
-			conf.set("hive.metastore.local", "true");
-			conf.unset(HiveConf.ConfVars.METASTOREURIS.varname);
-			conf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
-					metaStoreUris);
-		}
-
-		if (isSecured) {
-
-			conf.setBoolean(
-					HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
-					principal);
-
-			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary",
-						System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-			}
-		}
-
-		Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "."
-				+ inputTable);
+		Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(RedisExportJob.class);
 
@@ -211,46 +182,41 @@ public class RedisExportJob extends Configured implements Tool {
 			HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
 		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable,
-					inputFilter);
+			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
 		}
 
-		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job
-				.getConfiguration());
+		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
 		Class<?> OutputClazz;
 
 		if (valueName == null) {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost,
-					redisPort, redisDb, keyName, keyPrefix, replace, pipeline);
+			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb, keyName, keyPrefix,
+					replace, pipeline);
 
 			job.setMapperClass(RedisFullTableExportMapper.class);
 			OutputClazz = RedisHashWritable.class;
 
 		} else {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost,
-					redisPort, redisDb, keyName, keyPrefix, valueName, replace,
-					pipeline);
+			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb, keyName, keyPrefix,
+					valueName, replace, pipeline);
 			job.setMapperClass(RedisExportMapper.class);
-			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema,
-					valueName);
+			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema, valueName);
 		}
 
 		if (flush) {
-			Jedis jedis = RedisMRJedisFactory.getJedisClient(job
-					.getConfiguration());
+			Jedis jedis = RedisMRJedisFactory.getJedisClient(job.getConfiguration());
 			jedis.flushDB();
 		}
 
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(numReducer);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(OutputClazz);
-		job.setOutputKeyClass(OutputClazz);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(OutputClazz);
 		return job;
 	}
 

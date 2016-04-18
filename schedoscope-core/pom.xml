@@ -285,9 +285,22 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>schedoscope</groupId>
+			<artifactId>schedoscope-export</artifactId>
+			<version>0.4.0-SNAPSHOT</version>
+			<classifier>tests</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.rarefiedredis.redis</groupId>
 			<artifactId>redis-java</artifactId>
 			<version>0.0.17</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.curator</groupId>
+			<artifactId>curator-test</artifactId>
+			<version>2.6.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

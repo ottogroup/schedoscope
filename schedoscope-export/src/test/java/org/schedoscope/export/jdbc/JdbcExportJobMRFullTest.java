@@ -25,8 +25,8 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import org.apache.hadoop.io.LongWritable;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +67,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(JdbcExportMapper.class);
-		job.setReducerClass(JdbcExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(NUM_PARTITIONS);
 
 		Schema outputSchema = SchemaFactory.getSchema(CONNECTION_STRING,
@@ -87,8 +87,8 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(JdbcOutputWritable.class);
-		job.setOutputKeyClass(JdbcOutputWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(LongWritable.class);
+		job.setOutputValueClass(JdbcOutputWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
 		JdbcOutputFormat.finalizeOutput(job.getConfiguration());
@@ -119,7 +119,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(JdbcExportMapper.class);
-		job.setReducerClass(JdbcExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(NUM_PARTITIONS);
 
 		Schema outputSchema = SchemaFactory.getSchema(CONNECTION_STRING,
@@ -139,8 +139,8 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(JdbcOutputWritable.class);
-		job.setOutputKeyClass(JdbcOutputWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(LongWritable.class);
+		job.setOutputValueClass(JdbcOutputWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
 		JdbcOutputFormat.finalizeOutput(job.getConfiguration());
@@ -172,7 +172,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(JdbcExportMapper.class);
-		job.setReducerClass(JdbcExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(NUM_PARTITIONS);
 
 		Schema outputSchema = SchemaFactory.getSchema(CONNECTION_STRING,
@@ -192,8 +192,8 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 
 		job.setMapOutputKeyClass(LongWritable.class);
 		job.setMapOutputValueClass(JdbcOutputWritable.class);
-		job.setOutputKeyClass(JdbcOutputWritable.class);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(LongWritable.class);
+		job.setOutputValueClass(JdbcOutputWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
 		JdbcOutputFormat.finalizeOutput(job.getConfiguration());

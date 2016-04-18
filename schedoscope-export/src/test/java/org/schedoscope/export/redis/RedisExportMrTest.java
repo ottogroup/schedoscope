@@ -22,9 +22,9 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.Before;
 import org.junit.Test;
@@ -76,15 +76,15 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(RedisExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(OutputClazz);
-		job.setOutputKeyClass(OutputClazz);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(OutputClazz);
 
 		assertTrue(job.waitForCompletion(true));
 
@@ -117,15 +117,15 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(RedisExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(OutputClazz);
-		job.setOutputKeyClass(OutputClazz);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(OutputClazz);
 
 		assertTrue(job.waitForCompletion(true));
 		assertEquals("3", jedisAdapter.hget(
@@ -153,15 +153,15 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(RedisExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(OutputClazz);
-		job.setOutputKeyClass(OutputClazz);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(OutputClazz);
 
 		assertTrue(job.waitForCompletion(true));
 		assertEquals(
@@ -189,15 +189,15 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		Job job = Job.getInstance(conf);
 
 		job.setMapperClass(RedisExportMapper.class);
-		job.setReducerClass(RedisExportReducer.class);
+		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(1);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(RedisOutputFormat.class);
 
 		job.setMapOutputKeyClass(Text.class);
 		job.setMapOutputValueClass(OutputClazz);
-		job.setOutputKeyClass(OutputClazz);
-		job.setOutputValueClass(NullWritable.class);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(OutputClazz);
 
 		assertTrue(job.waitForCompletion(true));
 		assertEquals(

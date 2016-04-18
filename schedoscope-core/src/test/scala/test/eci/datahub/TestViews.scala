@@ -88,7 +88,7 @@ case class ProductBrand(
     HiveTransformation(insertInto(
       this,
       s"""
-         SELECT 
+         SELECT
       				p.${product().id.n} AS ${this.productId.n},
           		b.${brand().name.n} AS ${this.brandName.n},
           		p.${product().occurredAt.n} AS ${this.occurredAt.n}
@@ -265,6 +265,28 @@ case class ClickOfEC0101WithRedisExport(
             WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
 
   exportTo(() => Redis(this, "localhost", id))
+
+}
+
+case class ClickOfEC0101WithKafkaExport(
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+    with Id
+    with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this, s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+
+  exportTo(() => Kafka(this, id, "localhost:9092", "localhost:2182"))
 
 }
 

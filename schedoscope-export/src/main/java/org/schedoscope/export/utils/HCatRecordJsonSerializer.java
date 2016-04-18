@@ -27,12 +27,13 @@ import org.apache.hive.hcatalog.data.JsonSerDe;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * The CustomHCatSerializer serializes complex HCatalog types into Json.
  */
-public class CustomHCatRecordSerializer {
+public class HCatRecordJsonSerializer {
 
 	private ObjectMapper jsonMapper;
 
@@ -46,7 +47,7 @@ public class CustomHCatRecordSerializer {
 	 * @param schema
 	 *            The HCatalog Schema
 	 */
-	public CustomHCatRecordSerializer(Configuration conf, HCatSchema schema) {
+	public HCatRecordJsonSerializer(Configuration conf, HCatSchema schema) {
 
 		jsonMapper = new ObjectMapper();
 
@@ -65,10 +66,8 @@ public class CustomHCatRecordSerializer {
 		}
 
 		Properties tblProps = new Properties();
-		tblProps.setProperty(serdeConstants.LIST_COLUMNS,
-				columnNameProperty.toString());
-		tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES,
-				columnTypeProperty.toString());
+		tblProps.setProperty(serdeConstants.LIST_COLUMNS, columnNameProperty.toString());
+		tblProps.setProperty(serdeConstants.LIST_COLUMN_TYPES, columnTypeProperty.toString());
 		try {
 			serde.initialize(conf, tblProps);
 		} catch (SerDeException e) {
@@ -87,16 +86,34 @@ public class CustomHCatRecordSerializer {
 	 * @throws IOException
 	 *             Is thrown if an error occurs.
 	 */
-	public String getJsonComplexType(HCatRecord value, String fieldName)
-			throws IOException {
+	public String getFieldAsJson(HCatRecord value, String fieldName) throws IOException {
 
 		String json = null;
 		try {
-			json = serde.serialize(value, serde.getObjectInspector())
-					.toString();
+			json = serde.serialize(value, serde.getObjectInspector()).toString();
 		} catch (SerDeException e) {
 			throw new IllegalArgumentException(e.getMessage());
 		}
 		return jsonMapper.readTree(json).get(fieldName).toString();
+	}
+
+	/**
+	 * Converts a HCatRecord to Json.
+	 *
+	 * @param value
+	 *            The HCatRecord
+	 * @return A JsonNode representing the complete HCatRecord.
+	 * @throws IOException
+	 *             Is thrown if an error occurs
+	 */
+	public JsonNode getRecordAsJson(HCatRecord value) throws IOException {
+
+		String json = null;
+		try {
+			json = serde.serialize(value, serde.getObjectInspector()).toString();
+		} catch (SerDeException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
+		return jsonMapper.readTree(json);
 	}
 }
