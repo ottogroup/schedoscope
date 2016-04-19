@@ -34,6 +34,7 @@ import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter;
+import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
@@ -68,7 +69,6 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "string_export");
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
-		// conf.setBoolean(RedisOutputFormat.REDIS_PIPELINE_MODE, true);
 
 		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
 				hcatInputSchema, VALUE);
@@ -94,6 +94,48 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 						.get("string_export_0000434c-aa04-449d-b6d5-319da5d94064"));
 		assertEquals(
 				"2016-02-09T12:21:24.581+01:00",
+				jedisAdapter
+						.get("string_export_00017475-db44-495f-a357-97cd277e9d5b"));
+	}
+
+	@Test
+	public void testRedisStringAnonymizedExport() throws Exception {
+
+		setUpHiveServer("src/test/resources/test_map_data.txt",
+				"src/test/resources/test_map.hql", "test_map");
+
+		final String KEY = "id";
+		final String VALUE = "created_at";
+
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "string_export");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
+		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[] {"created_at"});
+
+		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
+				hcatInputSchema, VALUE);
+
+		Job job = Job.getInstance(conf);
+
+		job.setMapperClass(RedisExportMapper.class);
+		job.setReducerClass(Reducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(RedisOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(OutputClazz);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(OutputClazz);
+
+		assertTrue(job.waitForCompletion(true));
+
+		assertEquals(
+				"e270fd6aca7534d80c5815d76565e3f4",
+				jedisAdapter
+						.get("string_export_0000434c-aa04-449d-b6d5-319da5d94064"));
+		assertEquals(
+				"e270fd6aca7534d80c5815d76565e3f4",
 				jedisAdapter
 						.get("string_export_00017475-db44-495f-a357-97cd277e9d5b"));
 	}

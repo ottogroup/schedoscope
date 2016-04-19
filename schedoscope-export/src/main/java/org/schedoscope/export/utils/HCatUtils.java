@@ -18,6 +18,8 @@ package org.schedoscope.export.utils;
 
 import java.io.IOException;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
@@ -25,6 +27,8 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
  * A utility class providing various checks for HCatSchemas and fields.
  */
 public class HCatUtils {
+
+	private static final String HASH_SALT = "vD75MqvaasIlCf7H";
 
 	/**
 	 * This function checks if the key type is a primitive type.
@@ -85,6 +89,15 @@ public class HCatUtils {
 				}
 			}
 
+		}
+	}
+
+	public static String getHashValueIfInList(String fieldName, String fieldValue, String[] anonFields) {
+
+		if (ArrayUtils.contains(anonFields, fieldName)) {
+			return DigestUtils.md5Hex(fieldValue + HASH_SALT);
+		} else {
+			return fieldValue;
 		}
 	}
 }

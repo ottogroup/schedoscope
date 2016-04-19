@@ -29,6 +29,7 @@ import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisListWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
@@ -53,6 +54,8 @@ public class RedisExportMapper extends
 
 	private String keyPrefix;
 
+	private String[] anonFields;
+
 	@Override
 	protected void setup(Context context) throws IOException,
 			InterruptedException {
@@ -70,6 +73,8 @@ public class RedisExportMapper extends
 		valueName = conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME);
 
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
+		anonFields = conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]);
+
 	}
 
 	@SuppressWarnings("unchecked")
@@ -103,6 +108,7 @@ public class RedisExportMapper extends
 			break;
 		case PRIMITIVE:
 			String valStr = value.getString(valueName, schema);
+			valStr = HCatUtils.getHashValueIfInList(valueName, valStr, anonFields);
 			if (valStr != null) {
 				redisValue = new RedisStringWritable(redisKey.toString(),
 						valStr);

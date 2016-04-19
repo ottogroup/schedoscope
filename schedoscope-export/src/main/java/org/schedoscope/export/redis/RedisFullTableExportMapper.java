@@ -26,6 +26,7 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.redis.outputformat.RedisHashWritable;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.HCatRecordJsonSerializer;
@@ -49,6 +50,8 @@ public class RedisFullTableExportMapper extends
 
 	private HCatRecordJsonSerializer serializer;
 
+	private String[] anonFields;
+
 	@Override
 	protected void setup(Context context) throws IOException,
 			InterruptedException {
@@ -64,6 +67,8 @@ public class RedisFullTableExportMapper extends
 
 		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
+
+		anonFields = conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]);
 	}
 
 	@Override
@@ -85,6 +90,7 @@ public class RedisFullTableExportMapper extends
 					jsonString = serializer.getFieldAsJson(value, f);
 				} else {
 					jsonString = obj.toString();
+					jsonString = HCatUtils.getHashValueIfInList(f, jsonString, anonFields);
 				}
 				redisValue.put(new Text(f), new Text(jsonString));
 				write = true;

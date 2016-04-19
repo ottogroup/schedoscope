@@ -20,11 +20,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.util.Tool;
+import org.kohsuke.args4j.Option;
 
 /**
  * Base class with common functions to configure Job objects.
  */
 public abstract class BaseExportJob extends Configured implements Tool {
+
+	public static final String EXPORT_ANON_FIELDS = "export.anon.fields";
+
+	@Option(name = "-a", usage = "a comma separated list of fields to anonymize")
+	protected String[] anonFields;
 
 	protected Configuration getConfiguration() {
 
@@ -63,6 +69,11 @@ public abstract class BaseExportJob extends Configured implements Tool {
 						System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
 			}
 		}
+		return conf;
+	}
+
+	protected Configuration configureAnonFields(Configuration conf) {
+		conf.setStrings(EXPORT_ANON_FIELDS, anonFields);
 		return conf;
 	}
 }
