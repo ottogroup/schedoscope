@@ -19,6 +19,7 @@ package org.schedoscope.export.jdbc.outputschema;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -79,5 +80,10 @@ public class DerbySchema extends AbstractSchema {
 	@Override
 	public Map<String, String> getPreparedStatementTypeMapping() {
 		return preparedStatementTypeMapping;
+	}
+
+	@Override
+	protected Properties getConnectionProperties() {
+		return new Properties();
 	}
 }
