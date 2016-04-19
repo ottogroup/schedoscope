@@ -22,8 +22,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import kafka.utils.ZKStringSerializer$;
-
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -50,6 +48,11 @@ import org.schedoscope.export.testsupport.SimpleTestKafkaConsumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.lambdanow.avro.schema.MemorySchemaRegistry;
+import com.lambdanow.avro.schema.SchemaRegistry;
+import com.lambdanow.avro.serde.FingerprintSerdeGeneric;
+
+import kafka.utils.ZKStringSerializer$;
 
 public class KafkaExportMRTest extends HiveUnitBaseTest {
 
