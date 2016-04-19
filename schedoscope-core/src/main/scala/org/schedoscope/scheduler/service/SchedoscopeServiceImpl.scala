@@ -34,6 +34,7 @@ import org.schedoscope.schema.ddl.HiveQl
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
+import java.util.regex.Pattern
 
 class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
 
@@ -48,6 +49,24 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   private def viewsFromUrl(viewUrlPath: String) =
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
+
+  private def checkFilter(filter: Option[String]) {
+    if (filter.isDefined)
+      try {
+        Pattern.compile(filter.get)
+      } catch {
+        case t: Throwable => throw new IllegalArgumentException(s"Invalid regular expression passed: ${filter.get}.", t)
+      }
+  }
+
+  private def checkViewUrlPath(viewUrlPath: Option[String]) {
+    if (viewUrlPath.isDefined)
+      try {
+        viewsFromUrl(viewUrlPath.get)
+      } catch {
+        case t: Throwable => throw new IllegalArgumentException(s"Invalid view URL pattern passed: ${viewUrlPath.get}.", t)
+      }
+  }
 
   private def getViews(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
     val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
@@ -216,6 +235,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
+    checkFilter(filter)
+    checkViewUrlPath(viewUrlPath)
+
     val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
 
     submitCommandInternal(viewActors, MaterializeView(
@@ -227,18 +249,27 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
+    checkFilter(filter)
+    checkViewUrlPath(viewUrlPath)
+
     val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map(v => v.actor)
 
     submitCommandInternal(viewActors, InvalidateView(), viewUrlPath, status, filter)
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
+    checkFilter(filter)
+    checkViewUrlPath(viewUrlPath)
+
     val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
 
     submitCommandInternal(viewActors, "newdata", viewUrlPath, status, filter)
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
+    checkFilter(filter)
+    checkViewUrlPath(viewUrlPath)
+
     val views = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false))
     val statusMap = views.map(v => (v.view.urlPath, v.status)).toMap // needed for status of dependencies in output
 
@@ -298,6 +329,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def transformations(status: Option[String], filter: Option[String]) = {
+
+    checkFilter(filter)
+
     val result = queryActor[TransformationStatusListResponse](transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
     val actions = result.transformationStatusList
       .map(a => parseActionStatus(a))
@@ -311,6 +345,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
+
+    checkFilter(filter)
+
     val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.schedulingCommandTimeout)
 
     val queues = result.transformationQueues
@@ -356,6 +393,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def commands(status: Option[String], filter: Option[String]) = {
+    checkFilter(filter)
+
     val running = runningCommands.keys.map { commandStatus(_) }.toList
 
     (running ++ doneCommands.values)
