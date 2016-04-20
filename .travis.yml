@@ -5,4 +5,4 @@ language:
 jdk:
   - oraclejdk8
 install: 
-  - travis_wait mvn -B install -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -DskipTests -Dmaven.javadoc.skip=true -DargLine="-Xmx1G -XX:MaxPermSize=512m" && travis_wait mvn test
+  - travis_wait MAVEN_OPTS='-Xmx1G -XX:MaxPermSize=512m' mvn -B install -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -DskipTests -Dmaven.javadoc.skip=true -DargLine="-Xmx1G -XX:MaxPermSize=512m" && travis_wait mvn test
