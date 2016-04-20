@@ -1,4 +1,6 @@
-language: java
+language: 
+  - java
 jdk:
   - oraclejdk7
-install: travis_wait mvn install -DXX:MaxPermSize=512m
+install: 
+  - travis_wait mvn install -DXmx1G -DXX:MaxPermSize=512m
