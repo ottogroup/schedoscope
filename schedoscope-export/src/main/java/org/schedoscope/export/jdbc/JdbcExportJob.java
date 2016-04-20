@@ -193,7 +193,8 @@ public class JdbcExportJob extends BaseExportJob {
 		Configuration conf = getConfiguration();
 		conf = configureHiveMetaStore(conf, metaStoreUris);
 		conf = configureKerberos(conf, isSecured, principal);
-
+		conf = configureAnonFields(conf);
+		
 		Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "."
 				+ inputTable);
 
