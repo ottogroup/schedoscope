@@ -106,9 +106,9 @@ trait rows extends View {
    * Deploys a local oozie workflow for oozie tests
    *
    */
-  def deployWorkflow(wf: OozieTransformation) = {
+  def deployWorkflow(wf: OozieTransformation) {
     val fs = resources().fileSystem
-    val dest = new Path(resources().namenode + new URI(wf.workflowAppPath).getPath)
+    val dest = new Path(resources().namenode + new URI(wf.workflowAppPath).getPath + "/")
 
     if (!fs.exists(dest))
       fs.mkdirs(dest)
@@ -129,23 +129,22 @@ trait rows extends View {
       fs.copyFromLocalFile(src, dest)
     })
 
-    val files = fs.listFiles(dest, true)
-
-    // create copy of workflow with adapted workflow app path
-    new OozieTransformation(wf.bundle, wf.workflow, dest.toString).configureWith(wf.configuration.toMap)
+    wf.workflowAppPath = dest.toString()
   }
 
   /**
    * Modifies a hivetransformation so that it will find locally deployed UDFS
    *
    */
-  def deployFunctions(ht: HiveTransformation) = {
-    ht.udfs.map(f => {
-      val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
-      val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
-      f.setResourceUris(List(jarResource))
-    })
-    ht
+  def deployFunctions(ht: HiveTransformation) {
+    ht.udfs.foreach {
+      f =>
+        {
+          val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
+          val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
+          f.setResourceUris(List(jarResource))
+        }
+    }
   }
 
   def deploySchema() {

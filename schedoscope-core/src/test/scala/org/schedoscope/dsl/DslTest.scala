@@ -35,9 +35,9 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "have a name which is based on its class name and partitioning suffixes" in {
-    val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+    val brandView = Brand(p("ec0106"))
 
-    productBrandView.n shouldEqual "product_brand_ec0106"
+    brandView.n shouldEqual "brand_ec0106"
   }
 
   it should "have a module name which is defined by its package" in {
@@ -61,19 +61,19 @@ class DslTest extends FlatSpec with Matchers {
   it should "be able to read the name of its Parameters" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrandView.ecShopCode.n shouldEqual "ec_shop_code"
+    productBrandView.shopCode.n shouldEqual "shop_code"
   }
 
   it should "be able to assign values to parameters" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrandView.ecNr.v shouldEqual (Some("ec0106"))
+    productBrandView.shopCode.v shouldEqual (Some("ec0106"))
   }
 
   it should "be able to read values from parameters explicitly" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    val ecShopCodeRead = productBrandView.ecNr.v.get
+    val ecShopCodeRead = productBrandView.shopCode.v.get
 
     ecShopCodeRead shouldBe "ec0106"
 
@@ -124,8 +124,8 @@ class DslTest extends FlatSpec with Matchers {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     val parameterTypes = productBrandView.parameters.map { f => (f.n, f.t) }
     val parameterValues = productBrandView.parameters.map { f => (f.n, f.v) }
-    parameterTypes should contain allOf (("ec_nr", manifest[String]), ("year", manifest[String]), ("month", manifest[String]), ("day", manifest[String]))
-    parameterValues should contain allOf (("ec_nr", Some("ec0106")), ("year", Some("2014")), ("month", Some("01")), ("day", Some("01")))
+    parameterTypes should contain allOf (("shop_code", manifest[String]), ("year", manifest[String]), ("month", manifest[String]), ("day", manifest[String]))
+    parameterValues should contain allOf (("shop_code", Some("ec0106")), ("year", Some("2014")), ("month", Some("01")), ("day", Some("01")))
   }
 
   "A view's field types" should "be accessible at both compile and runtime" in {
@@ -137,7 +137,7 @@ class DslTest extends FlatSpec with Matchers {
   "A view's parameter types" should "be accessible at both compile and runtime" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrandView.ecShopCode.t shouldBe manifest[String]
+    productBrandView.shopCode.t shouldBe manifest[String]
   }
 
   "A view's dependency types" should "be accessible at both compile and runtime" in {
@@ -167,33 +167,19 @@ class DslTest extends FlatSpec with Matchers {
   "A view's parameters" should "partition a view" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrand.isPartition(productBrand.ecNr) shouldBe true
+    productBrand.isPartition(productBrand.shopCode) shouldBe true
     productBrand.isPartition(productBrand.year) shouldBe true
     productBrand.isPartition(productBrand.month) shouldBe true
     productBrand.isPartition(productBrand.day) shouldBe true
   }
 
   "asSuffix" should "partition a view but as a suffix" in {
-    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+    val product = Product(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrand.isSuffixPartition(productBrand.ecNr) shouldBe true
-    productBrand.isSuffixPartition(productBrand.year) shouldBe false
-    productBrand.isSuffixPartition(productBrand.month) shouldBe false
-    productBrand.isSuffixPartition(productBrand.day) shouldBe false
-  }
-
-  "privacySensitive" should "make a field privacy sensitive" in {
-    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
-
-    productBrand.brandName.isPrivacySensitive shouldBe true
-    productBrand.productId.isPrivacySensitive shouldBe false
-  }
-
-  it should "also make partitions privacy sensitive" in {
-    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
-
-    productBrand.ecNr.isPrivacySensitive shouldBe true
-    productBrand.year.isPrivacySensitive shouldBe false
+    product.isSuffixPartition(product.shopCode) shouldBe true
+    product.isSuffixPartition(product.year) shouldBe false
+    product.isSuffixPartition(product.month) shouldBe false
+    product.isSuffixPartition(product.day) shouldBe false
   }
 
   "A view's storage format" should "be settable via storedAs" in {
@@ -216,7 +202,7 @@ class DslTest extends FlatSpec with Matchers {
     } should contain inOrder ("occurred_at", "product_id", "brand_name", "created_at", "created_by")
     productBrand.brand().fields.map {
       _.n
-    } should contain inOrder ("id", "brand_name", "ec_shop_code", "created_at", "created_by")
+    } should contain inOrder ("id", "brand_name", "created_at", "created_by")
     productBrand.product().fields.map {
       _.n
     } should contain inOrder ("id", "occurred_at", "name", "brand_id", "created_at", "created_by")
@@ -225,45 +211,40 @@ class DslTest extends FlatSpec with Matchers {
   it should "be able to have comments" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrand.brand().ecShopCode.comment shouldBe Some("Shop code, but field pushed to the right by weight.")
     productBrand.brand().name.comment shouldBe Some("The brand's name, but field name overriden")
-
-    productBrand.ecShopCode.comment shouldBe None
   }
 
   it should "be able to override weights" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrand.brand().ecShopCode.orderWeight shouldBe 99
     productBrand.brand().name.orderWeight shouldBe 100
   }
 
   it should "be able to override names" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrand.brand().ecShopCode.n shouldBe "ec_shop_code"
+    productBrand.brand().shopCode.n shouldBe "shop_code"
     productBrand.brand().name.n shouldBe "brand_name"
   }
 
   "A view" should "be transformable into DDL" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
-    val avro = AvroView(p("ec0106"), p("2014"), p("01"), p("01"))
+    val avro = AvroView(p("2014"), p("01"), p("01"))
     val edgeCases = EdgeCasesView()
 
     val ddlStatement = ddl(productBrand)
 
-    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_eci_datahub.product_brand_ec0106 (") shouldBe true
+    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_eci_datahub.product_brand (") shouldBe true
     ddlStatement.contains("occurred_at STRING,") shouldBe true
-    ddlStatement.contains("ec_shop_code STRING,") shouldBe true
     ddlStatement.contains("product_id STRING,") shouldBe true
     ddlStatement.contains("brand_name STRING,") shouldBe true
     ddlStatement.contains("created_at STRING,") shouldBe true
     ddlStatement.contains("created_by STRING") shouldBe true
     ddlStatement.contains(")") shouldBe true
     ddlStatement.contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
-    ddlStatement.contains("PARTITIONED BY (year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
+    ddlStatement.contains("PARTITIONED BY (shop_code STRING, year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
     ddlStatement.contains("STORED AS PARQUET") shouldBe true
-    ddlStatement.contains("LOCATION '/hdp/dev/test/eci/datahub/product_brand_ec0106'") shouldBe true
+    ddlStatement.contains("LOCATION '/hdp/dev/test/eci/datahub/product_brand'") shouldBe true
   }
 
   it should "be transformable into DDL for an env" in {
@@ -272,18 +253,17 @@ class DslTest extends FlatSpec with Matchers {
 
     val ddlStatement = ddl(productBrand)
 
-    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS prod_test_eci_datahub.product_brand_ec0106 (") shouldBe true
+    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS prod_test_eci_datahub.product_brand (") shouldBe true
     ddlStatement.contains("occurred_at STRING,") shouldBe true
-    ddlStatement.contains("ec_shop_code STRING,") shouldBe true
     ddlStatement.contains("product_id STRING,") shouldBe true
     ddlStatement.contains("brand_name STRING,") shouldBe true
     ddlStatement.contains("created_at STRING,") shouldBe true
     ddlStatement.contains("created_by STRING") shouldBe true
     ddlStatement.contains(")") shouldBe true
     ddlStatement.contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
-    ddlStatement.contains("PARTITIONED BY (year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
+    ddlStatement.contains("PARTITIONED BY (shop_code STRING, year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
     ddlStatement.contains("STORED AS PARQUET") shouldBe true
-    ddlStatement.contains("LOCATION '/hdp/prod/test/eci/datahub/product_brand_ec0106'") shouldBe true
+    ddlStatement.contains("LOCATION '/hdp/prod/test/eci/datahub/product_brand'") shouldBe true
 
   }
 
@@ -356,7 +336,7 @@ class DslTest extends FlatSpec with Matchers {
         val product = v.asInstanceOf[Product]
         val dateString = s"${product.year.v.get}${product.month.v.get}${product.day.v.get}"
 
-        product.ecNr.v.get should (equal("EC0106") or equal("EC0101"))
+        product.shopCode.v.get should (equal("EC0106") or equal("EC0101"))
         dateString should be <= "20140224"
         dateString should be >= "20131202"
     }

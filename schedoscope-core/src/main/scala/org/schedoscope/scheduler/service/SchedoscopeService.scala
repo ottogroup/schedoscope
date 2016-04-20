@@ -22,20 +22,19 @@ case class TransformationStatus(actor: String, typ: String, status: String, runS
 case class TransformationStatusList(overview: Map[String, Int], transformations: List[TransformationStatus])
 
 case class ViewStatus(
-    viewPath:String, 
-    viewTableName: Option[String], 
-    status: String, 
-    properties: Option[Map[String, String]], 
-    fields: Option[List[FieldStatus]], 
-    parameters: Option[List[FieldStatus]], 
-    dependencies: Option[Map[String, List[String]]], 
-    transformation: Option[ViewTransformationStatus], 
-    storageFormat: Option[String], 
-    external: Option[Boolean], 
-    materializeOnce: Option[Boolean], 
-    comment: Option[Option[String]], 
-    isTable: Option[Boolean])
-    
+  viewPath: String,
+  viewTableName: Option[String],
+  status: String,
+  properties: Option[Map[String, String]],
+  fields: Option[List[FieldStatus]],
+  parameters: Option[List[FieldStatus]],
+  dependencies: Option[Map[String, List[String]]],
+  transformation: Option[ViewTransformationStatus],
+  storageFormat: Option[String],
+  materializeOnce: Option[Boolean],
+  comment: Option[Option[String]],
+  isTable: Option[Boolean])
+
 case class FieldStatus(name: String, fieldtype: String, comment: Option[String])
 
 case class ViewTransformationStatus(name: String, properties: Option[Map[String, String]])
@@ -63,6 +62,8 @@ trait SchedoscopeService {
    * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
    *
    * Additionally, a MaterializeViewMode can be passed.
+   *
+   * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
    */
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SchedoscopeCommandStatus
 
@@ -71,6 +72,8 @@ trait SchedoscopeService {
    * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
    *
    * Additionally, it can also be specified whether children are to be invalidated as well.
+   *
+   * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
    */
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SchedoscopeCommandStatus
 
@@ -81,6 +84,9 @@ trait SchedoscopeService {
 
   /**
    * Return the states of previously issued scheduling commands, optionally filtering them by command status or regexp.
+   *
+   * Throws an InvalidArgumentException if an invalid regexp filter is passed.
+   *
    */
   def commands(status: Option[String], filter: Option[String]): List[SchedoscopeCommandStatus]
 
@@ -91,17 +97,23 @@ trait SchedoscopeService {
    * Additionally, it can also be specified whether view states should recursively carry the states of their dependendencies.
    *
    * Finally, there is the option to just return an overview count of views in states instead of returning the states themselves.
+   *
+   * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
    */
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): ViewStatusList
 
   /**
    * Return the states of the transformation drivers. Transformation driver info can be filtered by transformation state or a regexp
    * on the driver id.
+   *
+   * Throws an InvalidArgumentException if an invalid regexp filter is passed.
    */
   def transformations(status: Option[String], filter: Option[String]): TransformationStatusList
 
   /**
    * Returns the transformations waiting in queues. These can be filtered by transformation type or a regexp.
+   *
+   * Throws an InvalidArgumentException if an invalid regexp filter is passed.
    */
   def queues(typ: Option[String], filter: Option[String]): QueueStatusList
 

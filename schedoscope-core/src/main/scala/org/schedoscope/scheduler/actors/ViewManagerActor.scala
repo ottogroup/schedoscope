@@ -22,8 +22,9 @@ import org.schedoscope.AskPattern._
 import org.schedoscope.{ Schedoscope, SchedoscopeSettings }
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages._
-
 import scala.collection.mutable.{ HashMap, HashSet }
+import org.schedoscope.scheduler.states.{ CreatedByViewManager, ReadFromSchemaManager }
+import org.schedoscope.dsl.transformations.Checksum
 
 /**
  * The view manager actor is the factory and import org.schedoscope.scheduler.actors.ViewActor
@@ -128,7 +129,14 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
       viewsWithMetadataToCreate.foreach(
         _.metadata.foreach {
           case (view, (version, timestamp)) => {
-            val actorRef = actorOf(ViewActor.props(view, settings, self, actionsManagerActor, metadataLoggerActor, version, timestamp), ViewManagerActor.actorNameForView(view))
+
+            val initialState =
+              if ((version != Checksum.defaultDigest) || (timestamp > 0))
+                ReadFromSchemaManager(view, version, timestamp)
+              else
+                CreatedByViewManager(view)
+
+            val actorRef = actorOf(ViewActor.props(initialState, settings, self, actionsManagerActor, metadataLoggerActor), ViewManagerActor.actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
         })

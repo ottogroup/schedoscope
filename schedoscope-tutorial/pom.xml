@@ -1,17 +1,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-tutorial</artifactId>
-	<version>0.3.6-SNAPSHOT</version>
 	<name>Schedoscope Tutorial</name>
 	<description>An example Schedoscope project using Open Street Map data</description>
+
+	<parent>
+		<artifactId>schedoscope-suite</artifactId>
+		<groupId>schedoscope</groupId>
+		<version>0.4.0-SNAPSHOT</version>
+	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
-			<version>0.3.6-SNAPSHOT</version>
+			<version>0.4.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>schedoscope</groupId>
@@ -22,6 +27,11 @@
 			<groupId>ch.hsr</groupId>
 			<artifactId>geohash</artifactId>
 			<version>1.0.13</version>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.38</version>
 		</dependency>
 		<dependency>
 			<groupId>com.klout</groupId>
@@ -47,7 +57,7 @@
 				<exclusion>
 					<artifactId>hbase</artifactId>
 					<groupId>org.apache.hbase</groupId>
-				</exclusion>
+				</exclusion> 
 				<exclusion>
 					<artifactId>guava</artifactId>
 					<groupId>com.google.guava</groupId>
@@ -314,11 +324,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
-	<repositories>
-		<repository>
-			<id>otto-bintray</id>
-			<url>https://dl.bintray.com/ottogroup/maven</url>
-		</repository>
-	</repositories>
 </project> 

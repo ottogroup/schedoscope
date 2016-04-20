@@ -42,6 +42,12 @@ trait ViewDsl extends StructureDsl {
   def transformVia(ft: () => Transformation): Unit
 
   /**
+   * Registers an export transformation with the view. You need to provide an anonymous constructor function returning this transformation.
+   * This transformation is executed after the "real" transformation registered with transformVia() has executed successfully.
+   */
+  def exportTo(ft: () => Transformation): Unit
+
+  /**
    * Specifiy the storage format of the view, with TextFile being the default. One can optionally specify storage path prefixes and suffixes.
    */
   def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null): Unit

@@ -20,7 +20,7 @@ import org.scalatest.{ FlatSpec, Matchers }
 import org.schedoscope.{ DriverTests, OozieTests }
 import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.test.resources.OozieTestResources
-import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.driverRunCompletionHandlerCalled
+import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
 
 class OozieDriverTest extends FlatSpec with Matchers {
 
@@ -64,13 +64,13 @@ class OozieDriverTest extends FlatSpec with Matchers {
     driver.transformationName shouldBe "oozie"
   }
 
-  it should "execute oozie tranformations synchronously" taggedAs (DriverTests, OozieTests) in {
+  it should "execute oozie transformations synchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunState = driver.runAndWait(workingOozieTransformation)
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute oozie tranformations asynchronously" taggedAs (DriverTests, OozieTests) in {
+  it should "execute oozie transformations asynchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunHandle = driver.run(workingOozieTransformation)
 
     var runWasAsynchronous = false
@@ -82,13 +82,13 @@ class OozieDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute oozie tranformations and return errors while running synchronously" taggedAs (DriverTests, OozieTests) in {
+  it should "execute oozie transformations and return errors while running synchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunState = driver.runAndWait(failingOozieTransformation)
 
     driverRunState shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "execute oozie tranformations and return errors while running asynchronously" taggedAs (DriverTests, OozieTests) in {
+  it should "execute oozie transformations and return errors while running asynchronously" taggedAs (DriverTests, OozieTests) in {
     val driverRunHandle = driver.run(failingOozieTransformation)
 
     var runWasAsynchronous = false
@@ -112,13 +112,21 @@ class OozieDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "call its DriverRunCompletitionHandlers upon request" taggedAs (DriverTests) in {
+  it should "call its DriverRunCompletitionHandlers' driverRunCompleted upon request" taggedAs (DriverTests) in {
     val runHandle = driver.run(workingOozieTransformation)
 
     while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
 
     driver.driverRunCompleted(runHandle)
 
-    driverRunCompletionHandlerCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+    driverRunCompletedCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
+  }
+
+  it should "call its DriverRunCompletitionHandlers' driverRunStarted upon request" taggedAs (DriverTests) in {
+    val runHandle = driver.run(workingOozieTransformation)
+
+    driver.driverRunStarted(runHandle)
+
+    driverRunStartedCalled(runHandle) shouldBe true
   }
 }

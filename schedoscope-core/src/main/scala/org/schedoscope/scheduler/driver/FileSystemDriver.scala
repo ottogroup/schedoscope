@@ -33,9 +33,9 @@ import scala.concurrent.Future
 /**
  * Driver for executing file system transformations
  */
-class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val conf: Configuration) extends Driver[FilesystemTransformation] {
+class FileSystemDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val conf: Configuration) extends DriverOnBlockingApi[FilesystemTransformation] {
 
-  override def transformationName = "filesystem"
+  def transformationName = "filesystem"
 
   /**
    * Construct a future-based driver run handle

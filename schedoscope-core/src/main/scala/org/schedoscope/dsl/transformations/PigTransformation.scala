@@ -33,7 +33,7 @@ import parquet.pig.ParquetStorer
  */
 case class PigTransformation(latin: String, dirsToDelete: List[String] = List()) extends Transformation {
 
-  override def name = "pig"
+  def name = "pig"
 
   override def stringsToChecksum = List(latin)
 

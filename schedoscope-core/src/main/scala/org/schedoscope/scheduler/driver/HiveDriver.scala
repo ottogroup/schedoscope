@@ -40,12 +40,9 @@ import scala.concurrent.Future
 /**
  * Driver for executing Hive transformations
  */
-class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends Driver[HiveTransformation] {
+class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends DriverOnBlockingApi[HiveTransformation] {
 
-  /**
-   * Set transformation name to hive
-   */
-  override def transformationName = "hive"
+  def transformationName = "hive"
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
 
@@ -84,6 +81,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 
     queriesToExecute.foreach(
       q => try {
+        log.debug(s"Hive driver executing query ${q.trim()}")
         statement.execute(q.trim())
       } catch {
         case t: Throwable => {

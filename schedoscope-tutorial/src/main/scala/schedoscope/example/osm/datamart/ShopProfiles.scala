@@ -18,6 +18,7 @@ package schedoscope.example.osm.datamart
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.storageformats.Parquet
 import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.transformations.Export.Jdbc
 import org.schedoscope.dsl.transformations.HiveTransformation.{ insertInto, queryFromResource }
 import org.schedoscope.dsl.views.{ Id, JobMetadata }
 import schedoscope.example.osm.Globals._
@@ -50,4 +51,6 @@ case class ShopProfiles() extends View
   comment("Shop profiles showing number of nearby competitors, restaurants and trainstations for each shop")
 
   storedAs(Parquet())
+  
+  exportTo(() => Jdbc(this, "jdbc:mysql://localhost:3306/schedoscope_tutorial?createDatabaseIfNotExist=true", "root", "cloudera"))
 }

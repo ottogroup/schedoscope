@@ -70,7 +70,7 @@ object AskPattern {
   /**
    * Transform an actor selection to an actor ref via an ask pattern.
    */
-  def actorSelectionToRef(actorSelection: ActorSelection, timeoutDuration: FiniteDuration = Schedoscope.settings.viewManagerResponseTimeout): Option[ActorRef] = try {
+  def actorSelectionToRef(actorSelection: ActorSelection, timeoutDuration: FiniteDuration = Schedoscope.settings.schedulingCommandTimeout): Option[ActorRef] = try {
     val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
     val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
     Some(Await.result(actorSelection.resolveOne(askTimeOut.duration), waitTimeOut.duration))

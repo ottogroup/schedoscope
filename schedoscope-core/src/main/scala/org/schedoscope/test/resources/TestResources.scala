@@ -17,6 +17,7 @@ package org.schedoscope.test.resources
 
 import java.sql.{ Connection, DriverManager }
 import java.util.concurrent.ConcurrentHashMap
+import java.util.Collections
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
@@ -25,23 +26,36 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.dsl.storageformats.TextFile
 import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.scheduler.driver.{ DriverRunCompletionHandler, DriverRunHandle, DriverRunState, FileSystemDriver, HiveDriver, MapreduceDriver, MorphlineDriver, OozieDriver, PigDriver, ShellDriver }
+import org.schedoscope.scheduler.driver.{ Driver, DriverRunCompletionHandler, DriverRunHandle, DriverRunState, FileSystemDriver, HiveDriver, MapreduceDriver, OozieDriver, PigDriver, ShellDriver, SeqDriver }
 import org.schedoscope.schema.SchemaManager
 import org.schedoscope.test.Database
 
 object TestDriverRunCompletionHandlerCallCounter {
-  val calls = new ConcurrentHashMap[DriverRunHandle[_], DriverRunState[_]]()
+  val driverRunStartedCalls = Collections.newSetFromMap(new ConcurrentHashMap[DriverRunHandle[_], java.lang.Boolean]())
+  val driverRunCompletedCalls = new ConcurrentHashMap[DriverRunHandle[_], DriverRunState[_]]()
 
-  def countDriverRunCompletionHandlerCall(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) {
-    calls.put(run, stateOfCompletion)
+  def countDriverRunStartedHandlerCall(run: DriverRunHandle[_]) {
+    driverRunStartedCalls.add(run)
   }
 
-  def driverRunCompletionHandlerCalled(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) = calls.get(run) == stateOfCompletion
+  def countDriverRunCompletedHandlerCall(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) {
+    driverRunCompletedCalls.put(run, stateOfCompletion)
+  }
+
+  def driverRunStartedCalled(run: DriverRunHandle[_]) = driverRunStartedCalls.contains(run)
+
+  def driverRunCompletedCalled(run: DriverRunHandle[_], stateOfCompletion: DriverRunState[_]) = driverRunCompletedCalls.get(run) == stateOfCompletion
 }
 
 class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompletionHandler[T] {
+  import TestDriverRunCompletionHandlerCallCounter._
+
+  def driverRunStarted(run: DriverRunHandle[T]) {
+    countDriverRunStartedHandlerCall(run)
+  }
+
   def driverRunCompleted(stateOfCompletion: DriverRunState[T], run: DriverRunHandle[T]) {
-    TestDriverRunCompletionHandlerCallCounter.countDriverRunCompletionHandlerCall(run, stateOfCompletion)
+    countDriverRunCompletedHandlerCall(run, stateOfCompletion)
   }
 }
 
@@ -49,13 +63,18 @@ abstract class TestResources {
   val hiveConf: HiveConf
 
   val hiveWarehouseDir: String
+
   val hiveScratchDir: String
 
-  lazy val connection: Connection = {
-    val c = hiveConf
-    Class.forName(jdbcClass)
-    DriverManager.getConnection(jdbcUrl, "", "")
-  }
+  val metastoreUri: String
+
+  val fileSystem: FileSystem
+
+  val jdbcUrl: String
+
+  val remoteTestDirectory: String
+
+  val namenode: String
 
   lazy val ugi: UserGroupInformation = {
     UserGroupInformation.setConfiguration(hiveConf)
@@ -65,37 +84,49 @@ abstract class TestResources {
     ugi
   }
 
+  val jdbcClass: String = "org.apache.hive.jdbc.HiveDriver"
+
+  lazy val connection: Connection = {
+    val c = hiveConf
+    Class.forName(jdbcClass)
+    DriverManager.getConnection(jdbcUrl, "", "")
+  }
+
   lazy val metastoreClient: HiveMetaStoreClient = new HiveMetaStoreClient(hiveConf)
-
-  val jdbcClass: String
-
-  val jdbcUrl: String
 
   lazy val database = new Database(connection, jdbcUrl)
 
   lazy val crate: SchemaManager = SchemaManager(metastoreClient, connection)
 
-  lazy val hiveDriver: HiveDriver = new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, jdbcUrl, metastoreClient) {
-    override def JDBC_CLASS = jdbcClass
-  }
+  def driverFor(transformationName: String): Driver[Transformation] = (transformationName match {
 
-  val fileSystem: FileSystem
+    case "filesystem" => new FileSystemDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true))
 
-  lazy val fileSystemDriver: FileSystemDriver = new FileSystemDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true))
+    case "pig"        => new PigDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi)
 
-  lazy val oozieDriver: OozieDriver = null
+    case "mapreduce"  => new MapreduceDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new FileSystemDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true)))
 
-  lazy val pigDriver: PigDriver = new PigDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi)
+    case "shell"      => new ShellDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"))
 
-  lazy val mapreduceDriver: MapreduceDriver = new MapreduceDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, fileSystemDriver)
+    case "hive"       => new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, jdbcUrl, metastoreClient)
 
-  lazy val morphlineDriver = new MorphlineDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true))
+    case "seq"        => new SeqDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), driverFor)
 
-  lazy val shellDriver = new ShellDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"))
+  }).asInstanceOf[Driver[Transformation]]
 
-  val remoteTestDirectory: String
+  lazy val fileSystemDriver: FileSystemDriver = driverFor("filesystem").asInstanceOf[FileSystemDriver]
 
-  val namenode: String
+  lazy val oozieDriver: OozieDriver = driverFor("oozie").asInstanceOf[OozieDriver]
+
+  lazy val pigDriver: PigDriver = driverFor("pig").asInstanceOf[PigDriver]
+
+  lazy val hiveDriver: HiveDriver = driverFor("hive").asInstanceOf[HiveDriver]
+
+  lazy val mapreduceDriver: MapreduceDriver = driverFor("mapreduce").asInstanceOf[MapreduceDriver]
+
+  lazy val shellDriver: ShellDriver = driverFor("shell").asInstanceOf[ShellDriver]
+
+  lazy val seqDriver: SeqDriver = driverFor("seq").asInstanceOf[SeqDriver]
 
   lazy val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "\u0002", mapKeyTerminator = "\u0003")
 }

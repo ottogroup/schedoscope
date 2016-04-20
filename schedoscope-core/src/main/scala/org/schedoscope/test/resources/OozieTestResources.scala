@@ -20,29 +20,38 @@ import java.util.logging.{ Level, LogManager, Logger }
 import minioozie.MiniOozie
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.hive.conf.HiveConf
-import org.schedoscope.scheduler.driver.OozieDriver
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars._
+import org.schedoscope.scheduler.driver.{ OozieDriver, Driver }
+import org.schedoscope.dsl.transformations.Transformation
 import org.slf4j.bridge.SLF4JBridgeHandler
 
 class OozieTestResources extends TestResources {
   val mo = new MiniOozie()
 
-  override val jdbcClass = "org.apache.hive.jdbc.HiveDriver"
-
   override lazy val hiveConf: HiveConf = mo.getHiveServer2Conf
 
   override lazy val hiveWarehouseDir: String = mo.getFsTestCaseDir.toString
 
-  override lazy val hiveScratchDir: String = mo.getScratchDir().toString()
+  override lazy val hiveScratchDir: String = mo.getScratchDir().toString
+
+  override lazy val metastoreUri = hiveConf.get(METASTOREURIS.toString)
+
+  override lazy val fileSystem: FileSystem = mo.getFileSystem
 
   override lazy val jdbcUrl = mo.getHiveServer2JdbcURL
 
   override lazy val remoteTestDirectory: String = mo.getFsTestCaseDir.toString
 
-  override lazy val oozieDriver: OozieDriver = new OozieDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), mo.getClient)
-
-  override lazy val fileSystem: FileSystem = mo.getFileSystem
-
   override lazy val namenode = mo.getNameNodeUri
+
+  override def driverFor(transformationName: String): Driver[Transformation] = transformationName match {
+
+    case "oozie" => new OozieDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), mo.getClient).asInstanceOf[Driver[Transformation]]
+
+    case _       => super.driverFor(transformationName)
+
+  }
+
 }
 
 object OozieTestResources {

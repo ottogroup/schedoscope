@@ -20,8 +20,8 @@ import org.schedoscope.dsl.{ FieldLike, Structure, View }
 import org.schedoscope.dsl.transformations.{ FilesystemTransformation, HiveTransformation, MapreduceTransformation, OozieTransformation, PigTransformation, Transformation }
 import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.test.resources.OozieTestResources
-
 import scala.collection.mutable.ListBuffer
+import org.schedoscope.dsl.transformations.SeqTransformation
 
 trait TestableView extends FillableView {}
 
@@ -33,15 +33,15 @@ trait TestableView extends FillableView {}
 trait test extends TestableView {
   var rowIdx = 0
 
-  var driver: () => Driver[Transformation] = () => {
-    this.transformation() match {
+  var driver: () => Driver[Transformation] =
+    () => this.transformation() match {
+      case t: SeqTransformation[_, _]  => resources().seqDriver.asInstanceOf[Driver[Transformation]]
       case t: HiveTransformation       => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
       case t: OozieTransformation      => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
       case t: PigTransformation        => resources().pigDriver.asInstanceOf[Driver[Transformation]]
       case t: MapreduceTransformation  => resources().mapreduceDriver.asInstanceOf[Driver[Transformation]]
       case t: FilesystemTransformation => resources().fileSystemDriver.asInstanceOf[Driver[Transformation]]
     }
-  }
 
   val deps = ListBuffer[View with rows]()
 
@@ -63,19 +63,29 @@ trait test extends TestableView {
       d.write()
     })
 
-    val trans = this.transformation() match {
-      case ot: OozieTransformation => deployWorkflow(ot)
-      case ht: HiveTransformation  => deployFunctions(ht)
-      case t: Transformation       => t
-    }
-
-    val d = driver()
-    val rto = d.runTimeOut
-    d.runAndWait(trans)
-    // FIXME: some transformations may create the partition by themselves?
     if (this.isPartitioned()) {
       val part = resources().crate.createPartition(this)
     }
+
+    val t = registeredTransformation()
+
+    t match {
+      case ot: OozieTransformation => deployWorkflow(ot)
+      case ht: HiveTransformation  => deployFunctions(ht)
+      case _                       => Unit
+    }
+
+    this.registeredTransformation = () => t
+
+    //
+    // Patch export configurations to point to the test metastore with no kerberization.
+    //
+    configureExport("schedoscope.export.isKerberized", false)
+    configureExport("schedoscope.export.kerberosPrincipal", "")
+    configureExport("schedoscope.export.metastoreUri", resources().metastoreUri)
+
+    driver().runAndWait(this.transformation())
+
     populate(sortedBy)
   }
 

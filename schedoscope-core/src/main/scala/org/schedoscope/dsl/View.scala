@@ -17,15 +17,15 @@ package org.schedoscope.dsl
 
 import com.openpojo.reflection.impl.PojoClassFactory
 import org.schedoscope.dsl.storageformats._
-import org.schedoscope.dsl.transformations.{ ExternalTransformation, NoOp, Transformation }
+import org.schedoscope.dsl.transformations.{ NoOp, Transformation }
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.{ ParsedView, ParsedViewAugmentor }
 import org.schedoscope.test.rows
-
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.{ HashMap, HashSet, ListBuffer }
 import scala.language.{ existentials, implicitConversions }
+import org.schedoscope.dsl.transformations.SeqTransformation
 
 /**
  * Base class for all view definitions. Provides all features of structures and view DSLs.
@@ -253,7 +253,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     this.additionalStoragePathSuffix = if (additionalStoragePathSuffix != null) Some(additionalStoragePathSuffix) else None
   }
 
-  var transformation: () => Transformation = () => NoOp()
+  var registeredTransformation: () => Transformation = () => NoOp()
 
   /**
    * Set the transformation with which the view is created. Provide an anonymous function returning the transformation.
@@ -262,18 +262,54 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def transformVia(ft: () => Transformation) {
     ensureRegisteredParameters
 
-    transformation = ft
-  }
-
-  def configureTransformation(k: String, v: Any) {
-    val t = transformation()
-    transformVia(() => t.configureWith(Map((k, v))))
+    registeredTransformation = ft
   }
 
   /**
-   * Is the view computed using an external transformation.
+   * Postfactum configuration of the registered transformation. Useful to override transformation configs within a test.
    */
-  def isExternal = transformation().isInstanceOf[ExternalTransformation]
+  def configureTransformation(k: String, v: Any) {
+    ensureRegisteredParameters
+
+    val t = registeredTransformation()
+    transformVia(() => t.configureWith(Map((k, v))))
+  }
+
+  var registeredExports: List[() => Transformation] = List()
+
+  /**
+   * Registers an export transformation with the view. You need to provide an anonymous constructor function returning this transformation.
+   * This transformation is executed after the "real" transformation registered with transformVia() has executed successfully.
+   */
+  def exportTo(export: () => Transformation) {
+    ensureRegisteredParameters
+
+    registeredExports ::= export
+  }
+
+  /**
+   * Postfactum configuration of the registered exports. Useful to override export configs within a test.
+   */
+  def configureExport(k: String, v: Any) {
+    ensureRegisteredParameters
+
+    val reconfiguredExports = registeredExports.map { e => () => e().configureWith(Map((k, v))) }
+
+    registeredExports = reconfiguredExports
+  }
+
+  /**
+   * This method returns the final transformation constructor function, usually the one registered by transformVia().
+   * Registered exportTo() transformations will modify the resulting transformation.
+   */
+  def transformation = {
+    ensureRegisteredParameters
+
+    registeredExports
+      .foldRight(registeredTransformation) {
+        (export, transformationSoFar) => () => SeqTransformation(transformationSoFar(), export())
+      }
+  }
 
   var isMaterializeOnce = false
 
@@ -284,9 +320,10 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
    * Dumbly registed all parameters with the view.
    */
-  def ensureRegisteredParameters =
+  def ensureRegisteredParameters {
     for (p <- parameters)
       registerParameter(p)
+  }
 
   /**
    * Dumbly registed all parameters with the view after the constructor is done.
