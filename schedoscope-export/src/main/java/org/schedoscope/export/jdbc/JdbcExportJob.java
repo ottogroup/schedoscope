@@ -169,7 +169,7 @@ public class JdbcExportJob extends BaseExportJob {
 			String principal, String dbConnectionString, String dbUser,
 			String dbPassword, String inputDatabase, String inputTable,
 			String inputFilter, String storageEngine, String distributeBy,
-			int numReducer, int commitSize) throws Exception {
+			int numReducer, int commitSize, String[] anonFields) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -184,6 +184,7 @@ public class JdbcExportJob extends BaseExportJob {
 		this.distributeBy = distributeBy;
 		this.numReducer = numReducer;
 		this.commitSize = commitSize;
+		this.anonFields = anonFields;
 		return configure();
 	}
 

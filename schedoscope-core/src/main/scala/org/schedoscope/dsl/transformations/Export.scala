@@ -56,6 +56,7 @@ object Export {
     dbUser: String = null,
     dbPass: String = null,
     distributionKey: Field[_] = null,
+    anonFields: Array[String] = new Array[String](0),
     storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
     numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,
     commitSize: Int = Schedoscope.settings.jdbcExportBatchSize,
@@ -86,7 +87,8 @@ object Export {
           conf.get("schedoscope.export.storageEngine").get.asInstanceOf[String],
           distributionField,
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
-          conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int])
+          conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int],
+          anonFields)
 
       },
       jdbcPostCommit)
