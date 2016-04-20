@@ -141,15 +141,16 @@ public class RedisExportJob extends BaseExportJob {
 	 *            A flag to set the Redis client pipeline mode.
 	 * @param flush
 	 *            A flag indicating Redis key space should be flushed.
+	 * @param anonFields
+	 *            A list of fields to anonymize.
 	 * @return A configured job instance
 	 * @throws Exception
 	 *             is thrown if an error occurs.
 	 */
-	public Job configure(boolean isSecured, String metaStoreUris,
-			String principal, String redisHost, int redisPort, int redisDb,
-			String inputDatabase, String inputTable, String inputFilter,
-			String keyName, String valueName, String keyPrefix, int numReducer,
-			boolean replace, boolean pipeline, boolean flush) throws Exception {
+	public Job configure(boolean isSecured, String metaStoreUris, String principal, String redisHost, int redisPort,
+			int redisDb, String inputDatabase, String inputTable, String inputFilter, String keyName, String valueName,
+			String keyPrefix, int numReducer, boolean replace, boolean pipeline, boolean flush, String[] anonFields)
+			throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -167,6 +168,7 @@ public class RedisExportJob extends BaseExportJob {
 		this.replace = replace;
 		this.pipeline = pipeline;
 		this.flush = flush;
+		this.anonFields = anonFields;
 		return configure();
 	}
 
@@ -175,9 +177,9 @@ public class RedisExportJob extends BaseExportJob {
 		Configuration conf = getConfiguration();
 		conf = configureHiveMetaStore(conf, metaStoreUris);
 		conf = configureKerberos(conf, isSecured, principal);
+		conf = configureAnonFields(conf);
 
-		Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "."
-				+ inputTable);
+		Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(RedisExportJob.class);
 
@@ -185,34 +187,29 @@ public class RedisExportJob extends BaseExportJob {
 			HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
 		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable,
-					inputFilter);
+			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
 		}
 
-		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job
-				.getConfiguration());
+		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
 		Class<?> OutputClazz;
 
 		if (valueName == null) {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost,
-					redisPort, redisDb, keyName, keyPrefix, replace, pipeline);
+			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb, keyName, keyPrefix,
+					replace, pipeline);
 
 			job.setMapperClass(RedisFullTableExportMapper.class);
 			OutputClazz = RedisHashWritable.class;
 
 		} else {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost,
-					redisPort, redisDb, keyName, keyPrefix, valueName, replace,
-					pipeline);
+			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb, keyName, keyPrefix,
+					valueName, replace, pipeline);
 			job.setMapperClass(RedisExportMapper.class);
-			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema,
-					valueName);
+			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema, valueName);
 		}
 
 		if (flush) {
-			Jedis jedis = RedisMRJedisFactory.getJedisClient(job
-					.getConfiguration());
+			Jedis jedis = RedisMRJedisFactory.getJedisClient(job.getConfiguration());
 			jedis.flushDB();
 		}
 

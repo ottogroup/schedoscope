@@ -43,6 +43,7 @@ object Export {
    * @param dbUser The database user
    * @param dbPass the database password
    * @param distributionKey The distribution key (only relevant for exasol)
+   * @param anonFields A list of fields to anonymize
    * @param storageEngine The underlying storage engine (only relevant for MySQL)
    * @param numReducers The number of reducers, defines concurrency
    * @param commitSize The size of batches for JDBC inserts
@@ -56,7 +57,7 @@ object Export {
     dbUser: String = null,
     dbPass: String = null,
     distributionKey: Field[_] = null,
-    anonFields: Array[String] = new Array[String](0),
+    anonFields: Array[Field[_]] = null,
     storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
     numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,
     commitSize: Int = Schedoscope.settings.jdbcExportBatchSize,
@@ -74,6 +75,8 @@ object Export {
 
         val distributionField = if (distributionKey != null) distributionKey.n else null
 
+        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.toString() } .toArray
+
         new JdbcExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
           conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
@@ -88,7 +91,7 @@ object Export {
           distributionField,
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int],
-          anonFields)
+          anonFieldNames)
 
       },
       jdbcPostCommit)
@@ -141,6 +144,7 @@ object Export {
    * @param key The field to use as the Redis key
    * @param value An optional field to export. If null, all fields are attached to the key as a map. If not null, only that field's value is attached to the key.
    * @param keyPrefix An optional key prefix
+   * @param anonFields A list of fields to anonymize
    * @param replace A flag indicating of existing keys should be replaced (or extended)
    * @param flush A flag indicating if the key space should be flushed before writing data
    * @param redisPort The Redis port (default 6379)
@@ -157,6 +161,7 @@ object Export {
     key: Field[_],
     value: Field[_] = null,
     keyPrefix: String = "",
+    anonFields: Array[Field[_]] = null,
     replace: Boolean = false,
     flush: Boolean = false,
     redisPort: Int = 6379,
@@ -177,6 +182,8 @@ object Export {
 
         val valueFieldName = if (value != null) value.n else null
 
+        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.toString() } .toArray
+
         new RedisExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
           conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
@@ -193,7 +200,8 @@ object Export {
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           replace,
           conf.get("schedoscope.export.pipeline").get.asInstanceOf[Boolean],
-          flush)
+          flush,
+          anonFieldNames)
 
       })
 
