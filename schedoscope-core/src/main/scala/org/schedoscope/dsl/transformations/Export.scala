@@ -75,7 +75,7 @@ object Export {
 
         val distributionField = if (distributionKey != null) distributionKey.n else null
 
-        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.toString() } .toArray
+        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.n } .toArray
 
         new JdbcExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -182,7 +182,7 @@ object Export {
 
         val valueFieldName = if (value != null) value.n else null
 
-        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.toString() } .toArray
+        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.n } .toArray
 
         new RedisExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
