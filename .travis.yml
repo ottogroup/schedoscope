@@ -1,6 +1,4 @@
 language: java
 jdk:
   - oraclejdk7
-env:
-  - MAVEN_OPTS="-Xmx1G -XX:MaxPermSize=256m"
-
+install: travis_wait mvn install -DXX:MaxPermSize=512m
