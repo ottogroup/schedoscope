@@ -1,4 +1,8 @@
-language: java
+language: 
+  - java
 jdk:
-  - oraclejdk7
-install: travis_wait mvn install -DXX:MaxPermSize=512m
+  - oraclejdk8
+before_install: 
+  - echo "MAVEN_OPTS='-Xmx1G -XX:MaxPermSize=512m'" > ~/.mavenrc
+install: 
+  - travis_wait mvn -B install -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -Dmaven.javadoc.skip=true 
