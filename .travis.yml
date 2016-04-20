@@ -3,4 +3,4 @@ language:
 jdk:
   - oraclejdk8
 install: 
-  - travis_wait travis_retry mvn install -DskipTests -DXmx768m -DXX:MaxPermSize=512m && travis_wait mvn test
+  - travis_wait mvn install -DskipTests -DXmx512m -DXX:MaxPermSize=256m && travis_wait mvn test
