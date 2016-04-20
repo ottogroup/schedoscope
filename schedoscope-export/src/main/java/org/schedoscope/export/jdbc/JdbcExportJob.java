@@ -184,7 +184,7 @@ public class JdbcExportJob extends BaseExportJob {
 		this.distributeBy = distributeBy;
 		this.numReducer = numReducer;
 		this.commitSize = commitSize;
-		this.anonFields = anonFields;
+		this.anonFields = anonFields.clone();
 		return configure();
 	}
 

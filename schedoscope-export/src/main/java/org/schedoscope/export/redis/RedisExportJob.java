@@ -168,7 +168,7 @@ public class RedisExportJob extends BaseExportJob {
 		this.replace = replace;
 		this.pipeline = pipeline;
 		this.flush = flush;
-		this.anonFields = anonFields;
+		this.anonFields = anonFields.clone();
 		return configure();
 	}
 
