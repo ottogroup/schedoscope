@@ -10,8 +10,9 @@ With Schedoscope,
 * you specify Hive table structures (called "views"), partitioning schemes, storage formats, dependent views, as well as transformation logic in a concise Scala DSL;
 * you have a wide range of options for expressing data transformations - from file operations and MapReduce jobs to Pig scripts, Hive queries, and Oozie workflows;
 * you benefit from Scala's static type system and your IDE's code completion to make less typos that hit you late during deployment or runtime;
-* you can easily write unit tests for your transformation logic and run them quickly right out of your IDE;
+* you can easily write unit tests for your transformation logic in [ScalaTest](http://www.scalatest.org/) and run them quickly right out of your IDE;
 * you schedule jobs by expressing the views you need - Schedoscope takes care that all required dependencies - and only those-  are computed as well;
+* you can easily and efficiently export view data in parallel to external systems such as Redis caches, JDBC, or Kafka topics;
 * you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capacitity.
 
 ## Getting Started
