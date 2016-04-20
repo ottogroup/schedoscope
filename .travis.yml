@@ -3,4 +3,4 @@ language:
 jdk:
   - oraclejdk8
 install: 
-  - travis_wait mvn -B install -Dmaven.javadoc.skip=true -DskipTests=true -DXmx512m -DXX:MaxPermSize=256m && travis_wait mvn test -DXmx512m
+  - travis_wait mvn -B install -Dmaven.javadoc.skip=true -DskipTests=true -DXmx768m -DXX:MaxPermSize=256m && travis_wait mvn test -DXmx512m
