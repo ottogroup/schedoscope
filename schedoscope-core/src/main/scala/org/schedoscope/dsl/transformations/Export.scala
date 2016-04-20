@@ -209,6 +209,25 @@ object Export {
 
   }
 
+  /**
+   * This function creates a Kafka topic export MapreduceTransformation.
+   * 
+   * @param v The view to export
+   * @param key the field to serve as the topic's key
+   * @param kafkaHosts String list of Kafka hosts to communicate with
+   * @param zookeeperHosts String list of zookeeper hosts
+   * @param replicationFactor The replication factor, defaults to 1
+   * @param numPartitions The number of partitions in the topic. Defaults to 3
+   * @param producerType The type of producer to use, defaults to synchronous
+   * @param cleanupPolicy Default cleanup policy is delete
+   * @param compressionCodes Default compression codec is gzip
+   * @param encoding Defines, whether data is to be serialized as strings (one line JSONs) or Avro
+   * @param numReducers number of reducers to use (i.e., the parallelism)
+   * @param isKerberized Is the cluster kerberized?
+   * @param kerberosPrincipal The kerberos principal to use
+   * @param metastoreUri The thrift URI to the metastore
+   *
+   */
   def Kafka(
     v: View,
     key: Field[_],
