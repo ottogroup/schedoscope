@@ -4,6 +4,8 @@
 
 Schedoscope is a scheduling framework for painfree agile development, testing, (re)loading, and monitoring of your datahub, lake, or whatever you choose to call your Hadoop data warehouse these days.
 
+Schedoscope makes the headache go away you are certainly going to get when having to frequently rollout and retroactively apply changes to computation logic and data structures in your datahub with traditional ETL job schedulers such as Oozie.
+
 With Schedoscope,
 * you never have to create DDL and schema migration scripts;
 * you do not have to manually determine which data must be deleted and recomputed in face of retroactive changes to logic or data structures;
@@ -12,7 +14,7 @@ With Schedoscope,
 * you benefit from Scala's static type system and your IDE's code completion to make less typos that hit you late during deployment or runtime;
 * you can easily write unit tests for your transformation logic in [ScalaTest](http://www.scalatest.org/) and run them quickly right out of your IDE;
 * you schedule jobs by expressing the views you need - Schedoscope takes care that all required dependencies - and only those-  are computed as well;
-* you can easily and efficiently export view data in parallel to external systems such as Redis caches, JDBC, or Kafka topics;
+* you can easily  export view data in parallel to external systems such as Redis caches, JDBC, or Kafka topics;
 * you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capacitity.
 
 ## Getting Started
