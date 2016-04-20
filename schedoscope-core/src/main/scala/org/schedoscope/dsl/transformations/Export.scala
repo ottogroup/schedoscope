@@ -155,7 +155,7 @@ object Export {
     key: Field[_],
     value: Field[_] = null,
     keyPrefix: String = "",
-    replace: Boolean = false,
+    replace: Boolean = true,
     flush: Boolean = false,
     redisPort: Int = 6379,
     redisKeySpace: Int = 0,
