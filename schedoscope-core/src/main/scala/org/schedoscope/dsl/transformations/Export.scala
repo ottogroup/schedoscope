@@ -57,7 +57,7 @@ object Export {
     dbUser: String = null,
     dbPass: String = null,
     distributionKey: Field[_] = null,
-    anonFields: Array[Field[_]] = null,
+    anonFields: Seq[Field[_]] = null,
     storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
     numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,
     commitSize: Int = Schedoscope.settings.jdbcExportBatchSize,
@@ -161,7 +161,7 @@ object Export {
     key: Field[_],
     value: Field[_] = null,
     keyPrefix: String = "",
-    anonFields: Array[Field[_]] = null,
+    anonFields: Seq[Field[_]] = null,
     replace: Boolean = true,
     flush: Boolean = false,
     redisPort: Int = 6379,
@@ -221,7 +221,7 @@ object Export {
 
   /**
    * This function creates a Kafka topic export MapreduceTransformation.
-   * 
+   *
    * @param v The view to export
    * @param key the field to serve as the topic's key
    * @param kafkaHosts String list of Kafka hosts to communicate with
