@@ -205,7 +205,8 @@ public class KafkaExportJob extends BaseExportJob {
 
 		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList,
 				zookeeperHosts, producerType, cleanupPolicy, keyName,
-				inputTable, numPartitions, replicationFactor, codec, encoding);
+				inputTable, inputDatabase, numPartitions, replicationFactor,
+				codec, encoding);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);
