@@ -9,7 +9,7 @@
 	<parent>
 		<artifactId>schedoscope-suite</artifactId>
 		<groupId>schedoscope</groupId>
-		<version>0.4.0-SNAPSHOT</version>
+		<version>0.4.0</version>
 	</parent>
 
 	<dependencies>
@@ -275,7 +275,7 @@
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-export</artifactId>
-			<version>0.4.0-SNAPSHOT</version>
+			<version>0.4.0</version>
 			<classifier>jar-with-dependencies</classifier>
 		</dependency>
 		<dependency>
@@ -287,7 +287,7 @@
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-export</artifactId>
-			<version>0.4.0-SNAPSHOT</version>
+			<version>0.4.0</version>
 			<classifier>tests</classifier>
 			<scope>test</scope>
 		</dependency>
