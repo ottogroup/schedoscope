@@ -228,6 +228,7 @@ object Export {
    * @param zookeeperHosts String list of zookeeper hosts
    * @param replicationFactor The replication factor, defaults to 1
    * @param numPartitions The number of partitions in the topic. Defaults to 3
+   * @param anonFields A list of fields to anonymize
    * @param producerType The type of producer to use, defaults to synchronous
    * @param cleanupPolicy Default cleanup policy is delete
    * @param compressionCodes Default compression codec is gzip
@@ -245,6 +246,7 @@ object Export {
     zookeeperHosts: String,
     replicationFactor: Int = 1,
     numPartitons: Int = 3,
+    anonFields: Seq[Field[_]] = null,
     producerType: ProducerType = ProducerType.sync,
     cleanupPolicy: CleanupPolicy = CleanupPolicy.delete,
     compressionCodec: CompressionCodec = CompressionCodec.gzip,
@@ -262,6 +264,8 @@ object Export {
           .map { (p => s"${p.n} = '${p.v.get}'") }
           .mkString(" and ")
 
+        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.n } .toArray
+
         new KafkaExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
           conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
@@ -278,7 +282,8 @@ object Export {
           conf.get("schedoscope.export.replicationFactor").get.asInstanceOf[Int],
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           compressionCodec,
-          encoding)
+          encoding,
+          anonFieldNames)
       })
 
     t.directoriesToDelete = List()

@@ -156,7 +156,7 @@ public class KafkaExportJob extends BaseExportJob {
 			String zookeepers, ProducerType producerType,
 			CleanupPolicy cleanupPolicy, int numPartitions,
 			int replicationFactor, int numReducer, CompressionCodec codec,
-			OutputEncoding outputEncoding) throws Exception {
+			OutputEncoding outputEncoding, String[] anonFields) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -174,6 +174,7 @@ public class KafkaExportJob extends BaseExportJob {
 		this.numReducer = numReducer;
 		this.codec = codec;
 		this.encoding = outputEncoding;
+		this.anonFields = anonFields.clone();
 
 		return configure();
 	}

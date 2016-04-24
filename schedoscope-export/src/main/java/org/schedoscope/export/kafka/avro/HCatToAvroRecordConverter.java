@@ -19,9 +19,11 @@ package org.schedoscope.export.kafka.avro;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.avro.Schema;
 import org.apache.avro.Schema.Field;
@@ -29,6 +31,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.schedoscope.export.utils.HCatRecordJsonSerializer;
+import org.schedoscope.export.utils.HCatUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -41,9 +44,30 @@ public class HCatToAvroRecordConverter {
 
 	private HCatRecordJsonSerializer serializer;
 
+	private Set<String> anonFields;
+
+	/**
+	 * Create a new record converter instance, pass in a json serializer and
+	 * a list with field names to anonymize.
+	 *
+	 * @param serializer A Json serializer
+	 * @param anonFields A list with fields to anonymize
+	 */
+	public HCatToAvroRecordConverter(HCatRecordJsonSerializer serializer, Set<String> anonFields) {
+
+		this.serializer = serializer;
+		this.anonFields = anonFields;
+	}
+
+	/**
+	 * Create a new record converter instance, pass in a json serializer.
+	 *
+	 * @param serializer A Json serializer.
+	 */
 	public HCatToAvroRecordConverter(HCatRecordJsonSerializer serializer) {
 
 		this.serializer = serializer;
+		this.anonFields = new HashSet<String>(0);
 	}
 
 	/**
@@ -57,16 +81,14 @@ public class HCatToAvroRecordConverter {
 	 * @throws IOException
 	 *             Is thrown if an error occurs
 	 */
-	public GenericRecord convert(HCatRecord hcatRecord, Schema avroSchema)
-			throws IOException {
+	public GenericRecord convert(HCatRecord hcatRecord, Schema avroSchema) throws IOException {
 
 		JsonNode json = serializer.getRecordAsJson(hcatRecord);
 		GenericRecord avroRecord = convertRecord(json, avroSchema);
 		return avroRecord;
 	}
 
-	private GenericRecord convertRecord(JsonNode json, Schema schema)
-			throws IOException {
+	private GenericRecord convertRecord(JsonNode json, Schema schema) throws IOException {
 
 		GenericRecordBuilder builder = new GenericRecordBuilder(schema);
 		List<Field> fields = schema.getFields();
@@ -76,7 +98,8 @@ public class HCatToAvroRecordConverter {
 
 				for (Schema s : f.schema().getTypes()) {
 					if (s.getType().equals(Schema.Type.STRING)) {
-						builder.set(f.name(), json.get(f.name()).asText());
+						builder.set(f.name(),
+								HCatUtils.getHashValueIfInList(f.name(), json.get(f.name()).asText(), anonFields));
 					} else if (s.getType().equals(Schema.Type.INT)) {
 						builder.set(f.name(), json.get(f.name()).asInt());
 					} else if (s.getType().equals(Schema.Type.LONG)) {
@@ -88,11 +111,9 @@ public class HCatToAvroRecordConverter {
 					} else if (s.getType().equals(Schema.Type.FLOAT)) {
 						builder.set(f.name(), json.get(f.name()).asDouble());
 					} else if (s.getType().equals(Schema.Type.RECORD)) {
-						builder.set(f.name(),
-								convertRecord(json.get(f.name()), s));
+						builder.set(f.name(), convertRecord(json.get(f.name()), s));
 					} else if (s.getType().equals(Schema.Type.ARRAY)) {
-						builder.set(f.name(),
-								convertArray(json.get(f.name()), s));
+						builder.set(f.name(), convertArray(json.get(f.name()), s));
 					} else if (s.getType().equals(Schema.Type.MAP)) {
 						builder.set(f.name(), convertMap(json.get(f.name()), s));
 					}
@@ -102,8 +123,7 @@ public class HCatToAvroRecordConverter {
 		return builder.build();
 	}
 
-	private Map<String, Object> convertMap(JsonNode json, Schema schema)
-			throws IOException {
+	private Map<String, Object> convertMap(JsonNode json, Schema schema) throws IOException {
 
 		Map<String, Object> res = new HashMap<>();
 		Iterator<Map.Entry<String, JsonNode>> it = json.fields();
@@ -139,8 +159,7 @@ public class HCatToAvroRecordConverter {
 		return res;
 	}
 
-	private List<Object> convertArray(JsonNode json, Schema schema)
-			throws IOException {
+	private List<Object> convertArray(JsonNode json, Schema schema) throws IOException {
 
 		List<Object> res = new ArrayList<>();
 		Iterator<JsonNode> it = json.elements();
