@@ -4,22 +4,32 @@
 
 Schedoscope is a scheduling framework for painfree agile development, testing, (re)loading, and monitoring of your datahub, lake, or whatever you choose to call your Hadoop data warehouse these days.
 
+Schedoscope makes the headache go away you are certainly going to get when having to frequently rollout and retroactively apply changes to computation logic and data structures in your datahub with traditional ETL job schedulers such as Oozie.
+
 With Schedoscope,
 * you never have to create DDL and schema migration scripts;
 * you do not have to manually determine which data must be deleted and recomputed in face of retroactive changes to logic or data structures;
 * you specify Hive table structures (called "views"), partitioning schemes, storage formats, dependent views, as well as transformation logic in a concise Scala DSL;
 * you have a wide range of options for expressing data transformations - from file operations and MapReduce jobs to Pig scripts, Hive queries, and Oozie workflows;
 * you benefit from Scala's static type system and your IDE's code completion to make less typos that hit you late during deployment or runtime;
-* you can easily write unit tests for your transformation logic and run them quickly right out of your IDE;
+* you can easily write unit tests for your transformation logic in [ScalaTest](http://www.scalatest.org/) and run them quickly right out of your IDE;
 * you schedule jobs by expressing the views you need - Schedoscope takes care that all required dependencies - and only those-  are computed as well;
+* you can easily  export view data in parallel to external systems such as Redis caches, JDBC, or Kafka topics;
 * you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capacitity.
 
 ## Getting Started
 
 Get a glance at 
+
 - [Schedoscope's features](https://github.com/ottogroup/schedoscope/wiki/Schedoscope-at-a-Glance)
 
-Follow the Open Street Map tutorial to install, compile, and run Schedoscope in a standard Hadoop distribution image within minutes:
+Build it:
+
+     [~]$ git clone https://github.com/ottogroup/schedoscope.git
+     [~]$ cd schedoscope
+     [~/schedoscope]$  MAVEN_OPTS='-XX:MaxPermSize=512m' mvn clean install
+     
+Follow the Open Street Map tutorial to install and run Schedoscope in a standard Hadoop distribution image within minutes:
 
 - [Open Street Map Tutorial](https://github.com/ottogroup/schedoscope/wiki/Open%20Street%20Map%20Tutorial)
 
@@ -47,13 +57,25 @@ Schedoscope was conceived at the Business Intelligence department of [Otto Group
 
 The following people have contributed to the various parts of Schedoscope so far: 
 
-[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Dominik Benz](https://github.com/dominikbenz), [Annika Leveringhaus](https://github.com/aleveringhaus), [Kassem Tohme](https://github.com/ktohme)
+[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Dominik Benz](https://github.com/dominikbenz), [Christian Richter](https://github.com/christianrichter), [Martin Sänger](https://github.com/martinsaenger), [Annika Seidler](https://github.com/aleveringhaus), [Kassem Tohme](https://github.com/ktohme)
 
 We would love to get contributions from you as well. We haven't got a formalized submission process yet. If you have an idea for a contribution or even coded one already, get in touch with Utz or just send us your pull request. We will work it out from there.
 
 Please help making Schedoscope better!
 
 ## News
+
+###### 04/22/2016 - Release 0.4.0
+
+We have released Version 0.4.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom). 
+
+This is a big release including:
+
+* a complete overhaul of the scheduling state machine with significant improvement of test coverage
+
+* `exportTo` clause for simple, seamless, and parallel export of views to relational databases, Redis key-value stores, and Kafka topics (see [View DSL Primer](https://github.com/ottogroup/schedoscope/wiki/Schedoscope-View-DSL-Primer))
+
+* new materialization modes `SET_ONLY` and `TRANSFORMATION_ONLY` for more flexible ops (see [Scheduling Command Reference](https://github.com/ottogroup/schedoscope/wiki/Scheduling-Command-Reference)
 
 ###### 01/22/2016 - Release 0.3.5
 

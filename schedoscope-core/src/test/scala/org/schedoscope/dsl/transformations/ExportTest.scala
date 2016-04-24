@@ -155,7 +155,7 @@ class ExportTest extends FlatSpec with Matchers {
 
     }
 
-    val consumer = new SimpleTestKafkaConsumer(v.n, zkServer.getConnectString, 3)
+    val consumer = new SimpleTestKafkaConsumer(v.dbName + "_" + v.n, zkServer.getConnectString, 3)
     for (x <- consumer) (parse(new String(x)) \ "date_id").values shouldBe "20140101"
 
     kafkaServer.shutdown()

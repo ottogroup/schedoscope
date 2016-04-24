@@ -19,12 +19,6 @@ package org.schedoscope.export.kafka.outputformat;
 import java.io.IOException;
 import java.util.Properties;
 
-import kafka.admin.AdminUtils;
-import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
-import kafka.producer.ProducerConfig;
-import kafka.utils.ZKStringSerializer$;
-
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroValue;
@@ -41,6 +35,12 @@ import org.schedoscope.export.kafka.options.CleanupPolicy;
 import org.schedoscope.export.kafka.options.CompressionCodec;
 import org.schedoscope.export.kafka.options.OutputEncoding;
 import org.schedoscope.export.kafka.options.ProducerType;
+
+import kafka.admin.AdminUtils;
+import kafka.javaapi.producer.Producer;
+import kafka.producer.KeyedMessage;
+import kafka.producer.ProducerConfig;
+import kafka.utils.ZKStringSerializer$;
 
 /**
  * The Kafka output format is responsible to write data into Kafka, it
@@ -71,6 +71,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 	public static final String KAFKA_EXPORT_KEY_NAME = "kafka.export.key.name";
 
 	public static final String KAFKA_EXPORT_TABLE_NAME = "kafka.export.table.name";
+
+	public static final String KAFKA_EXPORT_DATABASE_NAME = "kafka.export.database.name";
 
 	public static final String KAFKA_EXPORT_OUTPUT_ENCODING = "kafka.export.output.encoding";
 
@@ -110,6 +112,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
 				conf.get(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS, "1"));
 
+		String topic = conf.get(KAFKA_EXPORT_DATABASE_NAME) + "_" + conf.get(KAFKA_EXPORT_TABLE_NAME);
+
 		if (conf.get(KAFKA_EXPORT_OUTPUT_ENCODING).equals(
 				OutputEncoding.avro.toString())) {
 
@@ -118,8 +122,7 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 			ProducerConfig config = new ProducerConfig(producerProps);
 			Producer<String, GenericRecord> producer = new Producer<String, GenericRecord>(
 					config);
-			return new KafkaAvroGenericRecordWriter(producer,
-					conf.get(KAFKA_EXPORT_TABLE_NAME));
+			return new KafkaAvroGenericRecordWriter(producer, topic);
 
 		} else {
 			producerProps.setProperty(KAFKA_EXPORT_SERIALIZER_CLASS,
@@ -127,8 +130,7 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 			ProducerConfig config = new ProducerConfig(producerProps);
 			Producer<String, String> producer = new Producer<String, String>(
 					config);
-			return new KafkaStringRecordWriter(producer,
-					conf.get(KAFKA_EXPORT_TABLE_NAME));
+			return new KafkaStringRecordWriter(producer, topic);
 		}
 	}
 
@@ -149,6 +151,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 	 *            The name of the key field.
 	 * @param tableName
 	 *            The name of the Hive table.
+	 * @param databaseName
+	 *            The name of the Hive database.
 	 * @param numPartitions
 	 *            The number of partitions for the given topic.
 	 * @param replicationFactor
@@ -161,14 +165,15 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 	public static void setOutput(Configuration conf, String brokerList,
 			String zookeeperHosts, ProducerType producerType,
 			CleanupPolicy cleanupPolicy, String keyName, String tableName,
-			int numPartitions, int replicationFactor, CompressionCodec codec,
-			OutputEncoding enc) {
+			String databaseName, int numPartitions, int replicationFactor,
+			CompressionCodec codec, OutputEncoding enc) {
 
 		conf.set(KAFKA_EXPORT_METADATA_BROKER_LIST, brokerList);
 		conf.set(KAFKA_EXPORT_PRODUCER_TYPE, producerType.toString());
 		conf.set(KAFKA_EXPORT_CLEANUP_POLICY, cleanupPolicy.toString());
 		conf.set(KAFKA_EXPORT_KEY_NAME, keyName);
 		conf.set(KAFKA_EXPORT_TABLE_NAME, tableName);
+		conf.set(KAFKA_EXPORT_DATABASE_NAME, databaseName);
 		conf.set(KAFKA_EXPORT_COMPRESSION_CODEC, codec.toString());
 		conf.set(KAFKA_EXPORT_OUTPUT_ENCODING, enc.toString());
 

@@ -64,7 +64,9 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
 	protected ZkClient zkClient;
 
-	private static final String TEST_TOPIC = "test_tpoic";
+	private static final String TEST_DATABASE = "default";
+
+	private static final String TEST_TABLE = "test_table";
 
 	private static final int TEST_SIZE = 10;
 
@@ -80,7 +82,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 				ZKStringSerializer$.MODULE$);
 
 		startKafkaServer();
-		kafkaConsumer = new SimpleTestKafkaConsumer(TEST_TOPIC,
+		kafkaConsumer = new SimpleTestKafkaConsumer(TEST_DATABASE + "_" + TEST_TABLE,
 				zkServer.getConnectString(), 10);
 	}
 
@@ -106,7 +108,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
 				zkServer.getConnectString(), ProducerType.sync,
-				CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1,
+				CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1,
 				CompressionCodec.gzip, OutputEncoding.string);
 
 		job.setMapperClass(KafkaExportMapper.class);
@@ -149,7 +151,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
 				zkServer.getConnectString(), ProducerType.sync,
-				CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1,
+				CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1,
 				CompressionCodec.gzip, OutputEncoding.avro);
 
 		job.setMapperClass(KafkaExportMapper.class);
@@ -194,7 +196,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
 				zkServer.getConnectString(), ProducerType.sync,
-				CleanupPolicy.delete, "id", TEST_TOPIC, 1, 1,
+				CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1,
 				CompressionCodec.gzip, OutputEncoding.avro);
 
 		job.setMapperClass(KafkaExportMapper.class);
