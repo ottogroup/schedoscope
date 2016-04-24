@@ -17,9 +17,9 @@
 package org.schedoscope.export.utils;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
@@ -88,13 +88,21 @@ public class HCatUtils {
 							"struct element type must be a primitive type");
 				}
 			}
-
 		}
 	}
 
-	public static String getHashValueIfInList(String fieldName, String fieldValue, String[] anonFields) {
+	/**
+	 * This function checks if a given fields should be anonymized
+	 * and computes the md5 if in a provided list.
+	 *
+	 * @param fieldName The name of the field, will be checked against a provided list
+	 * @param fieldValue The value for which to compute the md5 sum.
+	 * @param anonFields A list of fields for which to compute the md5.s
+	 * @return The md5 of the field value
+	 */
+	public static String getHashValueIfInList(String fieldName, String fieldValue, Set<String> anonFields) {
 
-		if (ArrayUtils.contains(anonFields, fieldName)) {
+		if (anonFields.contains(fieldName)) {
 			return DigestUtils.md5Hex(fieldValue + HASH_SALT);
 		} else {
 			return fieldValue;

@@ -17,6 +17,7 @@
 package org.schedoscope.export.redis;
 
 import java.io.IOException;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.MapWritable;
@@ -32,6 +33,8 @@ import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.HCatRecordJsonSerializer;
 import org.schedoscope.export.utils.HCatUtils;
 import org.schedoscope.export.utils.StatCounter;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * A mapper to read a full Hive table via HCatalog and emits a RedisWritable
@@ -50,7 +53,7 @@ public class RedisFullTableExportMapper extends
 
 	private HCatRecordJsonSerializer serializer;
 
-	private String[] anonFields;
+	private Set<String> anonFields;
 
 	@Override
 	protected void setup(Context context) throws IOException,
@@ -68,7 +71,7 @@ public class RedisFullTableExportMapper extends
 		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
 
-		anonFields = conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]);
+		anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
 	}
 
 	@Override

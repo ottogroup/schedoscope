@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.logging.Log;
@@ -38,6 +39,8 @@ import org.schedoscope.export.jdbc.outputschema.Schema;
 import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 import org.schedoscope.export.utils.HCatRecordJsonSerializer;
 import org.schedoscope.export.utils.HCatUtils;
+
+import com.google.common.collect.ImmutableSet;
 
 /**
  * A mapper that reads data from Hive via HCatalog and emits a JDBC writable..
@@ -58,7 +61,7 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 
 	private HCatRecordJsonSerializer serializer;
 
-	private String[] anonFields;
+	private Set<String> anonFields;
 
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
@@ -77,10 +80,9 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 
 		typeMapping = outputSchema.getPreparedStatementTypeMapping();
 
-		anonFields = conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]);
+		anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
 
 		LOG.info("Used Filter: " + inputFilter);
-
 	}
 
 	@Override

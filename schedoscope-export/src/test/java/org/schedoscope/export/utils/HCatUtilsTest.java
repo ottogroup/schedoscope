@@ -18,16 +18,27 @@ package org.schedoscope.export.utils;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Set;
+
 import org.junit.Test;
+
+import com.google.common.collect.ImmutableSet;
 
 public class HCatUtilsTest {
 
-	private String[] anonFields = new String[] { "name", "id"};
+	private Set<String> anonFields = ImmutableSet.copyOf(new String[] { "name", "id"});
+
+	private Set<String> anonFieldsEmpty = ImmutableSet.copyOf(new String[] { });
 
 	@Test
-	public void testHashifInList() {
+	public void testHashIfInList() {
 
 		assertEquals("cbcc359878fbe2238c064a6caa240370", HCatUtils.getHashValueIfInList("id", "abcd", anonFields));
 		assertEquals("not hashed", HCatUtils.getHashValueIfInList("no_id", "not hashed", anonFields));
+	}
+
+	@Test
+	public void testEmptyAnonFields() {
+		assertEquals("not hashed", HCatUtils.getHashValueIfInList("no_id", "not hashed", anonFieldsEmpty));
 	}
 }

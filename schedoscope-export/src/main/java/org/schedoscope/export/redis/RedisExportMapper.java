@@ -19,6 +19,7 @@ package org.schedoscope.export.redis;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.MapWritable;
@@ -38,6 +39,8 @@ import org.schedoscope.export.redis.outputformat.RedisWritable;
 import org.schedoscope.export.utils.HCatUtils;
 import org.schedoscope.export.utils.StatCounter;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * A mapper that reads from Hive tables and emits a RedisWritable.
  */
@@ -54,7 +57,7 @@ public class RedisExportMapper extends
 
 	private String keyPrefix;
 
-	private String[] anonFields;
+	private Set<String> anonFields;
 
 	@Override
 	protected void setup(Context context) throws IOException,
@@ -73,8 +76,7 @@ public class RedisExportMapper extends
 		valueName = conf.get(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME);
 
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
-		anonFields = conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]);
-
+		anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
 	}
 
 	@SuppressWarnings("unchecked")
