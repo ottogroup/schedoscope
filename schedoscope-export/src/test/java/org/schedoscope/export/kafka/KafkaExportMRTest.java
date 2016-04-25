@@ -35,6 +35,7 @@ import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.kafka.options.CleanupPolicy;
@@ -48,6 +49,7 @@ import org.schedoscope.export.testsupport.SimpleTestKafkaConsumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableSet;
 import com.lambdanow.avro.schema.MemorySchemaRegistry;
 import com.lambdanow.avro.schema.SchemaRegistry;
 import com.lambdanow.avro.serde.FingerprintSerdeGeneric;
@@ -228,6 +230,54 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 			JsonNode data = objMapper.readTree(record.toString());
 			assertEquals("value1", data.get("created_by").asText());
 		}
+		assertEquals(TEST_SIZE, counter);
+	}
+
+	@Test
+	public void testKafkaMapAnonymizedExport() throws Exception {
+
+		setUpHiveServer("src/test/resources/test_array_data.txt",
+				"src/test/resources/test_array.hql", "test_array");
+
+		String[] anonFields = new String[] {"month_id", "numcol1"};
+		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, anonFields);
+
+		Job job = Job.getInstance(conf);
+
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(ImmutableSet.copyOf(anonFields));
+		Schema schema = schemaConverter.convertSchema(
+				hcatInputSchema, "MyTable");
+		AvroJob.setMapOutputValueSchema(job, schema);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
+				zkServer.getConnectString(), ProducerType.sync,
+				CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1,
+				CompressionCodec.gzip, OutputEncoding.string);
+
+		job.setMapperClass(KafkaExportMapper.class);
+		job.setReducerClass(Reducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(KafkaOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(AvroValue.class);
+
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(AvroValue.class);
+
+		assertTrue(job.waitForCompletion(true));
+
+		ObjectMapper objMapper = new ObjectMapper();
+
+		int counter = 0;
+		for (byte[] message : kafkaConsumer) {
+			counter++;
+			String record = new String(message, Charsets.UTF_8);
+			JsonNode data = objMapper.readTree(record);
+			assertEquals("bc5a56c463b81d13bbf8bc519cc17eb2", data.get("numcol1").asText());
+			assertEquals(13, data.get("numcol2").asInt());
+		}
+
 		assertEquals(TEST_SIZE, counter);
 	}
 
