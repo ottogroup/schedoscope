@@ -39,6 +39,8 @@ import org.schedoscope.export.kafka.options.OutputEncoding;
 import org.schedoscope.export.kafka.options.ProducerType;
 import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * The MR driver to run the Hive to Kafka export. Depending on the cmdl params
  * it either runs in regular mode or in log compaction mode.
@@ -200,7 +202,8 @@ public class KafkaExportJob extends BaseExportJob {
 
 		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job
 				.getConfiguration());
-		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema,
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(ImmutableSet.copyOf(anonFields));
+		Schema avroSchema = schemaConverter.convertSchema(hcatSchema,
 				inputTable);
 		AvroJob.setMapOutputValueSchema(job, avroSchema);
 

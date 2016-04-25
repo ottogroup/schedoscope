@@ -69,7 +69,8 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatSchema);
 		converter = new HCatToAvroRecordConverter(serializer, anonFields);
 
-		avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema, tableName);
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(anonFields);
+		avroSchema = schemaConverter.convertSchema(hcatSchema, tableName);
 	}
 
 	@Override

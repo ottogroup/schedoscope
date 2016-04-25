@@ -78,8 +78,7 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		zkServer = new TestingServer(2182);
 		zkServer.start();
 		Thread.sleep(1000);
-		zkClient = new ZkClient(zkServer.getConnectString(), 30000, 30000,
-				ZKStringSerializer$.MODULE$);
+		zkClient = new ZkClient(zkServer.getConnectString(), 30000, 30000, ZKStringSerializer$.MODULE$);
 
 		startKafkaServer();
 		kafkaConsumer = new SimpleTestKafkaConsumer(TEST_DATABASE + "_" + TEST_TABLE,
@@ -103,7 +102,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
+		Schema schema = schemaConverter.convertSchema(
 				hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
@@ -146,7 +146,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
+		Schema schema = schemaConverter.convertSchema(
 				hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
@@ -191,7 +192,8 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 				"src/test/resources/test_arraystruct.hql", "test_arraystruct");
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
+		Schema schema = schemaConverter.convertSchema(
 				hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
 		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
