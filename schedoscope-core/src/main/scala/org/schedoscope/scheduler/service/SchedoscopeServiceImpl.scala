@@ -60,7 +60,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   private def checkViewUrlPath(viewUrlPath: Option[String]) {
-    if (viewUrlPath.isDefined)
+    if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty())
       try {
         viewsFromUrl(viewUrlPath.get)
       } catch {
