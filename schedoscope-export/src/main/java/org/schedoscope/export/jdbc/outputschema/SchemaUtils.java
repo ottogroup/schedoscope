@@ -18,6 +18,7 @@ package org.schedoscope.export.jdbc.outputschema;
 
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
@@ -73,7 +74,7 @@ public class SchemaUtils {
 	 *         important.
 	 */
 	public static String[] getColumnTypesFromHcatSchema(HCatSchema inputSchema,
-			Schema schema) {
+			Schema schema, Set<String> anonFields) {
 
 		Map<String, String> columnTypeMapping = schema.getColumnTypeMapping();
 
@@ -92,6 +93,10 @@ public class SchemaUtils {
 								.equals("null")) {
 
 					type = columnTypeMapping.get("tinyint");
+
+				} else if (anonFields.contains(inputSchema.get(i).getName())){
+					type = columnTypeMapping.get("string");
+
 				} else {
 					type = columnTypeMapping.get(inputSchema.get(i)
 							.getTypeString().toLowerCase(Locale.getDefault()));

@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.HashSet;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -39,6 +40,7 @@ import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 import org.schedoscope.export.jdbc.outputschema.SchemaUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableSet;
 
 public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 
@@ -77,7 +79,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(
 				hcatInputSchema, outputSchema);
 		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(
-				hcatInputSchema, outputSchema);
+				hcatInputSchema, outputSchema, new HashSet<String>(0));
 
 		JdbcOutputFormat.setOutput(job.getConfiguration(), CONNECTION_STRING,
 				null, null, "testing", null, NUM_PARTITIONS, 10000, null, null,
@@ -129,7 +131,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(
 				hcatInputSchema, outputSchema);
 		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(
-				hcatInputSchema, outputSchema);
+				hcatInputSchema, outputSchema, new HashSet<String>(0));
 
 		JdbcOutputFormat.setOutput(job.getConfiguration(), CONNECTION_STRING,
 				null, null, "testing", null, NUM_PARTITIONS, 10000, null, null,
@@ -170,7 +172,9 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		setUpHiveServer("src/test/resources/test_array_data.txt",
 				"src/test/resources/test_array.hql", "test_array");
 
-		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[] {"month_id"});
+		String[] anonFields = new String[] {"month_id", "numcol1"};
+
+		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, anonFields);
 
 		Job job = Job.getInstance(conf);
 
@@ -184,7 +188,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(
 				hcatInputSchema, outputSchema);
 		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(
-				hcatInputSchema, outputSchema);
+				hcatInputSchema, outputSchema, ImmutableSet.copyOf(anonFields));
 
 		JdbcOutputFormat.setOutput(job.getConfiguration(), CONNECTION_STRING,
 				null, null, "testing", null, NUM_PARTITIONS, 10000, null, null,
@@ -210,9 +214,11 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 
 		Statement stmt2 = conn.createStatement();
 		ResultSet rs2 = stmt2
-				.executeQuery("SELECT month_id FROM testing ORDER BY id");
+				.executeQuery("SELECT month_id, numcol1, numcol2 FROM testing ORDER BY id");
 		while (rs2.next()) {
 			assertEquals("5891c145610d1517d7c844fe0a2aac39", rs2.getString(1));
+			assertEquals("bc5a56c463b81d13bbf8bc519cc17eb2", rs2.getString(2));
+			assertEquals(13, rs2.getInt(3));
 		}
 	}
 
@@ -234,7 +240,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(
 				hcatInputSchema, outputSchema);
 		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(
-				hcatInputSchema, outputSchema);
+				hcatInputSchema, outputSchema, new HashSet<String>(0));
 
 		JdbcOutputFormat.setOutput(job.getConfiguration(), CONNECTION_STRING,
 				null, null, "testing", null, NUM_PARTITIONS, 10000, null, null,

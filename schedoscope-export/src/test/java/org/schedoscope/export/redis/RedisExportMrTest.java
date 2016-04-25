@@ -141,6 +141,47 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 	}
 
 	@Test
+	public void testRedisIntAsStringAnonymizedExport() throws Exception {
+
+		setUpHiveServer("src/test/resources/test_array_data.txt",
+				"src/test/resources/test_array.hql", "test_array");
+
+		final String KEY = "id";
+		final String VALUE = "numcol1";
+
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "string_export");
+		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
+		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
+		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[] {"numcol1"});
+
+		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
+				hcatInputSchema, VALUE);
+
+		Job job = Job.getInstance(conf);
+
+		job.setMapperClass(RedisExportMapper.class);
+		job.setReducerClass(Reducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(RedisOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(OutputClazz);
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(OutputClazz);
+
+		assertTrue(job.waitForCompletion(true));
+
+		assertEquals(
+				"bc5a56c463b81d13bbf8bc519cc17eb2",
+				jedisAdapter
+						.get("string_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000028"));
+		assertEquals(
+				"bc5a56c463b81d13bbf8bc519cc17eb2",
+				jedisAdapter
+						.get("string_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000034"));
+	}
+	@Test
 	public void testRedisMapExport() throws Exception {
 
 		setUpHiveServer("src/test/resources/test_map_data.txt",

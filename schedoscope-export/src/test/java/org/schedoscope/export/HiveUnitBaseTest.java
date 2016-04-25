@@ -37,7 +37,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.schedoscope.export.jdbc.outputschema.Schema;
 import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
-import org.schedoscope.export.jdbc.outputschema.SchemaUtils;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import com.inmobi.hive.test.HiveTestSuite;
@@ -99,8 +98,8 @@ public abstract class HiveUnitBaseTest {
 		// set up column type mapping
 		HCatInputFormat.setInput(conf, DEFAUlT_HIVE_DB, tableName);
 		hcatInputSchema = HCatInputFormat.getTableSchema(conf);
-		conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, SchemaUtils
-				.getColumnTypesFromHcatSchema(hcatInputSchema, schema));
+		// conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, SchemaUtils
+		// 		.getColumnTypesFromHcatSchema(hcatInputSchema, schema));
 
 		// set up hcatalog record reader
 		ReadEntity.Builder builder = new ReadEntity.Builder();

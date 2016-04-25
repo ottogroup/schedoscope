@@ -40,6 +40,8 @@ import org.schedoscope.export.jdbc.outputschema.Schema;
 import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 import org.schedoscope.export.jdbc.outputschema.SchemaUtils;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * The MR driver to run the Hive to database export, uses JDBC under the hood.
  */
@@ -213,7 +215,7 @@ public class JdbcExportJob extends BaseExportJob {
 		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
 		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(hcatInputSchema, outputSchema);
-		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema);
+		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema, ImmutableSet.copyOf(anonFields));
 
 		String outputTable = inputDatabase + "_" + inputTable;
 

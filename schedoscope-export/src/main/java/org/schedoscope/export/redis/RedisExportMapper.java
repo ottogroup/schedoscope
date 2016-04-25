@@ -109,7 +109,8 @@ public class RedisExportMapper extends
 			}
 			break;
 		case PRIMITIVE:
-			String valStr = value.getString(valueName, schema);
+			Object obj = value.get(valueName, schema);
+			String valStr = obj.toString();
 			valStr = HCatUtils.getHashValueIfInList(valueName, valStr, anonFields);
 			if (valStr != null) {
 				redisValue = new RedisStringWritable(redisKey.toString(),

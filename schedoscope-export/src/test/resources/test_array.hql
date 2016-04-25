@@ -1,6 +1,8 @@
 CREATE TABLE `test_array`(
   `id` string, 
-  `type` array<string>)
+  `type` array<string>,
+  `numcol1` int,
+  `numcol2` int)
 COMMENT 'a test table using array as complex type'
 PARTITIONED BY ( 
   `year` string, 
