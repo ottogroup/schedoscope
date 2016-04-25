@@ -28,7 +28,7 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
  */
 public class HCatUtils {
 
-	private static final String HASH_SALT = "vD75MqvaasIlCf7H";
+	// private static final String HASH_SALT = "vD75MqvaasIlCf7H";
 
 	/**
 	 * This function checks if the key type is a primitive type.
@@ -40,8 +40,7 @@ public class HCatUtils {
 	 * @throws IOException
 	 *             Is thrown in case of errors.
 	 */
-	public static void checkKeyType(HCatSchema schema, String fieldName)
-			throws IOException {
+	public static void checkKeyType(HCatSchema schema, String fieldName) throws IOException {
 
 		HCatFieldSchema keyType = schema.get(fieldName);
 		HCatFieldSchema.Category category = keyType.getCategory();
@@ -61,22 +60,19 @@ public class HCatUtils {
 	 * @throws IOException
 	 *             Is thrown in case of errors.
 	 */
-	public static void checkValueType(HCatSchema schema, String fieldName)
-			throws IOException {
+	public static void checkValueType(HCatSchema schema, String fieldName) throws IOException {
 
 		HCatFieldSchema valueType = schema.get(fieldName);
 
 		if (valueType.getCategory() == HCatFieldSchema.Category.MAP) {
 			if (valueType.getMapValueSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-				throw new IllegalArgumentException(
-						"map value type must be a primitive type");
+				throw new IllegalArgumentException("map value type must be a primitive type");
 			}
 		}
 
 		if (valueType.getCategory() == HCatFieldSchema.Category.ARRAY) {
 			if (valueType.getArrayElementSchema().get(0).getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-				throw new IllegalArgumentException(
-						"array element type must be a primitive type");
+				throw new IllegalArgumentException("array element type must be a primitive type");
 			}
 		}
 
@@ -84,26 +80,31 @@ public class HCatUtils {
 			HCatSchema structSchema = valueType.getStructSubSchema();
 			for (HCatFieldSchema f : structSchema.getFields()) {
 				if (f.getCategory() != HCatFieldSchema.Category.PRIMITIVE) {
-					throw new IllegalArgumentException(
-							"struct element type must be a primitive type");
+					throw new IllegalArgumentException("struct element type must be a primitive type");
 				}
 			}
 		}
 	}
 
 	/**
-	 * This function checks if a given fields should be anonymized
-	 * and computes the md5 if in a provided list.
+	 * This function checks if a given fields should be anonymized and computes
+	 * the md5 if in a provided list.
 	 *
-	 * @param fieldName The name of the field, will be checked against a provided list
-	 * @param fieldValue The value for which to compute the md5 sum.
-	 * @param anonFields A list of fields for which to compute the md5.s
+	 * @param fieldName
+	 *            The name of the field, will be checked against a provided list
+	 * @param fieldValue
+	 *            The value for which to compute the md5 sum.
+	 * @param anonFields
+	 *            A list of fields for which to compute the md5.
+	 * @param salt
+	 *            An optional salt to use when anonymizing fields.
 	 * @return The md5 of the field value
 	 */
-	public static String getHashValueIfInList(String fieldName, String fieldValue, Set<String> anonFields) {
+	public static String getHashValueIfInList(String fieldName, String fieldValue, Set<String> anonFields,
+			String salt) {
 
 		if (anonFields.contains(fieldName)) {
-			return DigestUtils.md5Hex(fieldValue + HASH_SALT);
+			return DigestUtils.md5Hex(fieldValue + salt);
 		} else {
 			return fieldValue;
 		}

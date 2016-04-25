@@ -46,28 +46,37 @@ public class HCatToAvroRecordConverter {
 
 	private Set<String> anonFields;
 
+	private String salt;
+
 	/**
-	 * Create a new record converter instance, pass in a json serializer and
-	 * a list with field names to anonymize.
+	 * Create a new record converter instance, pass in a json serializer and a
+	 * list with field names to anonymize.
 	 *
-	 * @param serializer A Json serializer
-	 * @param anonFields A list with fields to anonymize
+	 * @param serializer
+	 *            A Json serializer
+	 * @param anonFields
+	 *            A list with fields to anonymize
+	 * @param salt
+	 *            An optional salt to use when anonymizing fields
 	 */
-	public HCatToAvroRecordConverter(HCatRecordJsonSerializer serializer, Set<String> anonFields) {
+	public HCatToAvroRecordConverter(HCatRecordJsonSerializer serializer, Set<String> anonFields, String salt) {
 
 		this.serializer = serializer;
 		this.anonFields = anonFields;
+		this.salt = salt;
 	}
 
 	/**
 	 * Create a new record converter instance, pass in a json serializer.
 	 *
-	 * @param serializer A Json serializer.
+	 * @param serializer
+	 *            A Json serializer.
 	 */
 	public HCatToAvroRecordConverter(HCatRecordJsonSerializer serializer) {
 
 		this.serializer = serializer;
 		this.anonFields = new HashSet<String>(0);
+		this.salt = "";
 	}
 
 	/**
@@ -98,8 +107,8 @@ public class HCatToAvroRecordConverter {
 
 				for (Schema s : f.schema().getTypes()) {
 					if (s.getType().equals(Schema.Type.STRING)) {
-						builder.set(f.name(),
-								HCatUtils.getHashValueIfInList(f.name(), json.get(f.name()).asText(), anonFields));
+						builder.set(f.name(), HCatUtils.getHashValueIfInList(f.name(), json.get(f.name()).asText(),
+								anonFields, salt));
 					} else if (s.getType().equals(Schema.Type.INT)) {
 						builder.set(f.name(), json.get(f.name()).asInt());
 					} else if (s.getType().equals(Schema.Type.LONG)) {

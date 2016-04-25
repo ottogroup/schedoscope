@@ -26,19 +26,22 @@ import com.google.common.collect.ImmutableSet;
 
 public class HCatUtilsTest {
 
-	private Set<String> anonFields = ImmutableSet.copyOf(new String[] { "name", "id"});
+	private Set<String> anonFields = ImmutableSet.copyOf(new String[] { "name", "id" });
 
-	private Set<String> anonFieldsEmpty = ImmutableSet.copyOf(new String[] { });
+	private Set<String> anonFieldsEmpty = ImmutableSet.copyOf(new String[] {});
+
+	private String salt = "vD75MqvaasIlCf7H";
 
 	@Test
 	public void testHashIfInList() {
 
-		assertEquals("cbcc359878fbe2238c064a6caa240370", HCatUtils.getHashValueIfInList("id", "abcd", anonFields));
-		assertEquals("not hashed", HCatUtils.getHashValueIfInList("no_id", "not hashed", anonFields));
+		assertEquals("cbcc359878fbe2238c064a6caa240370",
+				HCatUtils.getHashValueIfInList("id", "abcd", anonFields, salt));
+		assertEquals("not hashed", HCatUtils.getHashValueIfInList("no_id", "not hashed", anonFields, salt));
 	}
 
 	@Test
 	public void testEmptyAnonFields() {
-		assertEquals("not hashed", HCatUtils.getHashValueIfInList("no_id", "not hashed", anonFieldsEmpty));
+		assertEquals("not hashed", HCatUtils.getHashValueIfInList("no_id", "not hashed", anonFieldsEmpty, salt));
 	}
 }

@@ -206,6 +206,11 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   lazy val metastoreReadBatchSize = config.getInt("schedoscope.metastore.readBatchSize")
 
   /**
+   * A salt to use when anonymizing fields during export
+   */
+  lazy val exportSalt = config.getString("schedoscope.export.salt")
+
+  /**
    * Number of reducers to use for JDBC export.
    */
   lazy val jdbcExportNumReducers = config.getInt("schedoscope.export.jdbc.numberOfReducers")

@@ -164,13 +164,15 @@ public class JdbcExportJob extends BaseExportJob {
 	 *            The batch size.
 	 * @param anonFields
 	 *            A list of fields to anonymize
+	 * @param exportSalt
+	 *            An optional salt when anonymizing fields
 	 * @return A configured job instance.
 	 * @throws Exception
 	 *             Is thrown if an error occurs.
 	 */
 	public Job configure(boolean isSecured, String metaStoreUris, String principal, String dbConnectionString,
 			String dbUser, String dbPassword, String inputDatabase, String inputTable, String inputFilter,
-			String storageEngine, String distributeBy, int numReducer, int commitSize, String[] anonFields)
+			String storageEngine, String distributeBy, int numReducer, int commitSize, String[] anonFields, String exportSalt)
 			throws Exception {
 
 		this.isSecured = isSecured;
@@ -187,6 +189,7 @@ public class JdbcExportJob extends BaseExportJob {
 		this.numReducer = numReducer;
 		this.commitSize = commitSize;
 		this.anonFields = anonFields.clone();
+		this.exportSalt = exportSalt;
 		return configure();
 	}
 

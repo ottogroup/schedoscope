@@ -29,8 +29,13 @@ public abstract class BaseExportJob extends Configured implements Tool {
 
 	public static final String EXPORT_ANON_FIELDS = "export.anon.fields";
 
+	public static final String EXPORT_ANON_SALT = "export.anon.salt";
+
 	@Option(name = "-a", usage = "a comma separated list of fields to anonymize")
 	protected String[] anonFields;
+
+	@Option(name = "-S", usage = "an optional salt used to anonymize fields")
+	protected String exportSalt = "";
 
 	protected Configuration getConfiguration() {
 
@@ -40,8 +45,7 @@ public abstract class BaseExportJob extends Configured implements Tool {
 		return getConf();
 	}
 
-	protected Configuration configureHiveMetaStore(Configuration conf,
-			String metaStoreUris) {
+	protected Configuration configureHiveMetaStore(Configuration conf, String metaStoreUris) {
 
 		if (metaStoreUris.startsWith("thrift://")) {
 			conf.set("hive.metastore.local", "false");
@@ -49,24 +53,19 @@ public abstract class BaseExportJob extends Configured implements Tool {
 		} else {
 			conf.set("hive.metastore.local", "true");
 			conf.unset(HiveConf.ConfVars.METASTOREURIS.varname);
-			conf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
-					metaStoreUris);
+			conf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname, metaStoreUris);
 		}
 		return conf;
 	}
 
-	protected Configuration configureKerberos(Configuration conf,
-			boolean isSecured, String principal) {
+	protected Configuration configureKerberos(Configuration conf, boolean isSecured, String principal) {
 
 		if (isSecured) {
-			conf.setBoolean(
-					HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
-					principal);
+			conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
 
 			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary",
-						System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+				conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
 			}
 		}
 		return conf;
@@ -74,6 +73,7 @@ public abstract class BaseExportJob extends Configured implements Tool {
 
 	protected Configuration configureAnonFields(Configuration conf) {
 		conf.setStrings(EXPORT_ANON_FIELDS, anonFields);
+		conf.set(EXPORT_ANON_SALT, exportSalt);
 		return conf;
 	}
 }

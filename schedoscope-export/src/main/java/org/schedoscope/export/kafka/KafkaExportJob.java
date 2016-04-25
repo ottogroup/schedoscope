@@ -148,17 +148,19 @@ public class KafkaExportJob extends BaseExportJob {
 	 *            The compression codec (gzip / snappy / none)
 	 * @param outputEncoding
 	 *            Output encoding (string / avro)
+	 * @param anonFields
+	 *            A list of fields to anonymize
+	 * @param exportSalt
+	 *            An optional salt when anonymizing fields
 	 * @return A configured Job instance
 	 * @throws Exception
 	 *             Is thrown if an error occurs
 	 */
-	public Job configure(boolean isSecured, String metaStoreUris,
-			String principal, String inputDatabase, String inputTable,
-			String inputFilter, String keyName, String brokers,
-			String zookeepers, ProducerType producerType,
-			CleanupPolicy cleanupPolicy, int numPartitions,
-			int replicationFactor, int numReducer, CompressionCodec codec,
-			OutputEncoding outputEncoding, String[] anonFields) throws Exception {
+	public Job configure(boolean isSecured, String metaStoreUris, String principal, String inputDatabase,
+			String inputTable, String inputFilter, String keyName, String brokers, String zookeepers,
+			ProducerType producerType, CleanupPolicy cleanupPolicy, int numPartitions, int replicationFactor,
+			int numReducer, CompressionCodec codec, OutputEncoding outputEncoding, String[] anonFields,
+			String exportSalt) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -177,7 +179,7 @@ public class KafkaExportJob extends BaseExportJob {
 		this.codec = codec;
 		this.encoding = outputEncoding;
 		this.anonFields = anonFields.clone();
-
+		this.exportSalt = exportSalt;
 		return configure();
 	}
 
@@ -187,8 +189,7 @@ public class KafkaExportJob extends BaseExportJob {
 		conf = configureHiveMetaStore(conf, metaStoreUris);
 		conf = configureKerberos(conf, isSecured, principal);
 
-		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "."
-				+ inputTable);
+		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(KafkaExportJob.class);
 
@@ -196,21 +197,16 @@ public class KafkaExportJob extends BaseExportJob {
 			HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
 		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable,
-					inputFilter);
+			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
 		}
 
-		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job
-				.getConfiguration());
+		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(ImmutableSet.copyOf(anonFields));
-		Schema avroSchema = schemaConverter.convertSchema(hcatSchema,
-				inputTable);
+		Schema avroSchema = schemaConverter.convertSchema(hcatSchema, inputTable);
 		AvroJob.setMapOutputValueSchema(job, avroSchema);
 
-		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList,
-				zookeeperHosts, producerType, cleanupPolicy, keyName,
-				inputTable, inputDatabase, numPartitions, replicationFactor,
-				codec, encoding);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList, zookeeperHosts, producerType, cleanupPolicy,
+				keyName, inputTable, inputDatabase, numPartitions, replicationFactor, codec, encoding);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);

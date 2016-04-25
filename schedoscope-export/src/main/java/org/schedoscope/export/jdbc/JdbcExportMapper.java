@@ -63,6 +63,8 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 
 	private Set<String> anonFields;
 
+	private String salt;
+
 	@Override
 	protected void setup(Context context) throws IOException, InterruptedException {
 
@@ -81,6 +83,8 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 		typeMapping = outputSchema.getPreparedStatementTypeMapping();
 
 		anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
+
+		salt = conf.get(BaseExportJob.EXPORT_ANON_SALT, "");
 
 		LOG.info("Used Filter: " + inputFilter);
 	}
@@ -103,7 +107,7 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 					fieldValue = serializer.getFieldAsJson(value, f);
 				} else {
 					fieldValue = obj.toString();
-					fieldValue = HCatUtils.getHashValueIfInList(f, fieldValue, anonFields);
+					fieldValue = HCatUtils.getHashValueIfInList(f, fieldValue, anonFields, salt);
 				}
 			}
 			record.add(Pair.of(fieldType, fieldValue));

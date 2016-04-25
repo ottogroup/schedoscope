@@ -143,13 +143,15 @@ public class RedisExportJob extends BaseExportJob {
 	 *            A flag indicating Redis key space should be flushed.
 	 * @param anonFields
 	 *            A list of fields to anonymize.
+	 * @param exportSalt
+	 *            An optional salt when anonymizing fields
 	 * @return A configured job instance
 	 * @throws Exception
 	 *             is thrown if an error occurs.
 	 */
 	public Job configure(boolean isSecured, String metaStoreUris, String principal, String redisHost, int redisPort,
 			int redisDb, String inputDatabase, String inputTable, String inputFilter, String keyName, String valueName,
-			String keyPrefix, int numReducer, boolean replace, boolean pipeline, boolean flush, String[] anonFields)
+			String keyPrefix, int numReducer, boolean replace, boolean pipeline, boolean flush, String[] anonFields, String exportSalt)
 			throws Exception {
 
 		this.isSecured = isSecured;
@@ -169,6 +171,7 @@ public class RedisExportJob extends BaseExportJob {
 		this.pipeline = pipeline;
 		this.flush = flush;
 		this.anonFields = anonFields.clone();
+		this.exportSalt = exportSalt;
 		return configure();
 	}
 

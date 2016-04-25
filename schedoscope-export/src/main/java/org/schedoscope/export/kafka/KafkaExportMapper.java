@@ -66,8 +66,9 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 		HCatUtils.checkKeyType(hcatSchema, keyName);
 
 		Set<String> anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
+		String salt = conf.get(BaseExportJob.EXPORT_ANON_SALT, "");
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatSchema);
-		converter = new HCatToAvroRecordConverter(serializer, anonFields);
+		converter = new HCatToAvroRecordConverter(serializer, anonFields, salt);
 
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(anonFields);
 		avroSchema = schemaConverter.convertSchema(hcatSchema, tableName);
