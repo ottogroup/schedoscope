@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-suite</artifactId>
-	<version>0.4.1</version>
+	<version>0.4.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Schedoscope Suite</name>
 	<description>A wrapper building all modules of the Schedoscope project</description>
