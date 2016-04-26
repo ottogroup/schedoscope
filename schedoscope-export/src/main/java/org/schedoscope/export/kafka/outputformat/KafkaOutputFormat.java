@@ -112,7 +112,7 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		producerProps.setProperty(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS,
 				conf.get(KAFKA_EXPORT_REQUEST_REQUIRED_ACKS, "1"));
 
-		String topic = conf.get(KAFKA_EXPORT_DATABASE_NAME) + "_" + conf.get(KAFKA_EXPORT_TABLE_NAME);
+		String topic = getTopicName(conf);
 
 		if (conf.get(KAFKA_EXPORT_OUTPUT_ENCODING).equals(
 				OutputEncoding.avro.toString())) {
@@ -177,24 +177,31 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		conf.set(KAFKA_EXPORT_COMPRESSION_CODEC, codec.toString());
 		conf.set(KAFKA_EXPORT_OUTPUT_ENCODING, enc.toString());
 
-		createOrUpdateTopic(zookeeperHosts, tableName, cleanupPolicy,
-				numPartitions, replicationFactor);
+		String topic = getTopicName(conf);
+		
+		createOrUpdateTopic(zookeeperHosts, topic,
+				cleanupPolicy, numPartitions, replicationFactor);
 	}
 
+	private static String getTopicName(Configuration conf) {
+		return conf.get(KAFKA_EXPORT_DATABASE_NAME) + "_" + conf.get(KAFKA_EXPORT_TABLE_NAME);
+	}
+	
 	private static void createOrUpdateTopic(String zookeeperHosts,
-			String tableName, CleanupPolicy cleanupPolicy, int numPartitions,
+			String topic, CleanupPolicy cleanupPolicy, int numPartitions,
 			int replicationFactor) {
 
 		Properties topicProps = new Properties();
 		topicProps.setProperty(KAFKA_EXPORT_CLEANUP_POLICY,
 				cleanupPolicy.toString());
 
+		
 		ZkClient zkClient = new ZkClient(zookeeperHosts, 30000, 30000,
 				ZKStringSerializer$.MODULE$);
-		if (AdminUtils.topicExists(zkClient, tableName)) {
-			AdminUtils.changeTopicConfig(zkClient, tableName, topicProps);
+		if (AdminUtils.topicExists(zkClient, topic)) {
+			AdminUtils.changeTopicConfig(zkClient, topic, topicProps);
 		} else {
-			AdminUtils.createTopic(zkClient, tableName, numPartitions,
+			AdminUtils.createTopic(zkClient, topic, numPartitions,
 					replicationFactor, topicProps);
 		}
 		zkClient.close();
