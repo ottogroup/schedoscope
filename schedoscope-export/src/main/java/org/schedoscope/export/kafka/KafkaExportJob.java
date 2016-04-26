@@ -188,7 +188,8 @@ public class KafkaExportJob extends BaseExportJob {
 		Configuration conf = getConfiguration();
 		conf = configureHiveMetaStore(conf, metaStoreUris);
 		conf = configureKerberos(conf, isSecured, principal);
-
+		conf = configureAnonFields(conf);
+		
 		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(KafkaExportJob.class);
@@ -201,6 +202,10 @@ public class KafkaExportJob extends BaseExportJob {
 		}
 
 		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
+		
+		for (String s : anonFields) {
+			LOG.info("anon fields: " + s);
+		}
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(ImmutableSet.copyOf(anonFields));
 		Schema avroSchema = schemaConverter.convertSchema(hcatSchema, inputTable);
 		AvroJob.setMapOutputValueSchema(job, avroSchema);
