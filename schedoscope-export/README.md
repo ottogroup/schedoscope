@@ -38,7 +38,7 @@ This Map/Reduce job moves data into a relational database via a JDBC connection.
 
  * -k batch size for JDBC inserts
 
- * -A a list of fields to anonymize
+ * -A a list of fields to anonymize separated by space, e.g. 'id visitor_id'
 
  * -S an optional salt to for anonymizing fields
 
@@ -97,7 +97,7 @@ This Map/Reduce job moves data into Redis, it supports to modes:
 
  * -f flush redis key space
 
- * -A a list of fields to anonymize
+ * -A a list of fields to anonymize separated by space, e.g. 'id visitor_id'
 
  * -S an optional salt to for anonymizing fields
 
@@ -155,7 +155,7 @@ This Map/Reduce job moves data into Kafka, using Avro schema underneath. The Avr
 
  * -o output encoding, either string or avro
 
- * -A a list of fields to anonymize
+ * -A a list of fields to anonymize separated by space, e.g. 'id visitor_id'
 
  * -S an optional salt to for anonymizing fields
 
