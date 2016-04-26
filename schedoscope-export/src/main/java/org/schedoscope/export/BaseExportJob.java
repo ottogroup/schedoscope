@@ -21,6 +21,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.util.Tool;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.StringArrayOptionHandler;
 
 /**
  * Base class with common functions to configure Job objects.
@@ -31,8 +32,8 @@ public abstract class BaseExportJob extends Configured implements Tool {
 
 	public static final String EXPORT_ANON_SALT = "export.anon.salt";
 
-	@Option(name = "-a", usage = "a comma separated list of fields to anonymize")
-	protected String[] anonFields;
+	@Option(name = "-a", handler = StringArrayOptionHandler.class, usage = "a space separated list of fields to anonymize")
+	protected String[] anonFields = new String[0];
 
 	@Option(name = "-S", usage = "an optional salt used to anonymize fields")
 	protected String exportSalt = "";
