@@ -49,7 +49,7 @@ export YARN_USER_CLASSPATH=/path/to/jdbc/jar/file/mysql-connector-java-5.1.38.ja
 After the classpath has been defined the JDBC export job can now be started:
 
 <pre>
-yarn jar target/schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.jdbc.JdbcExportJob -d crichter_app_eci_datahub -t webtrends_event_small   -s -p 'hive/_HOST@OTTOGROUP.COM' -m 'thrift://brentano.unbelievable-machine.net:9083'  -c 10 -j 'jdbc:mysql://alananderson/crichter' -k 1000  -u dev_crichter -w qweR1234
+yarn jar target/schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.jdbc.JdbcExportJob -d default -t my_table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10 -j 'jdbc:mysql://host/db' -k 1000  -u username -w mypassword
 </pre>
 
 ### Redis
@@ -97,13 +97,13 @@ This Map/Reduce job moves data into Redis, it supports to modes:
 
 ##### Run full table export
 <pre>
-yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d crichter_app_eci_datahub -t webtrends_event -h 'alananderson' -k id -s -p 'hive/_HOST@OTTOGROUP.COM' -m 'thrift://brentano.unbelievable-machine.net:9083'  -c 10
+yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10
 </pre>
 
 ##### Run custom column export
 
 <pre>
-yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d crichter_app_eci_datahub -t webtrends_event -h 'alananderson' -k id -v product_listing -s -p 'hive/_HOST@OTTOGROUP.COM' -m 'thrift://brentano.unbelievable-machine.net:9083'  -c 10
+yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -v products -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10
 </pre>
 
 ### Kafka
@@ -149,5 +149,5 @@ This Map/Reduce job moves data into Kafka, using Avro schema underneath. The Avr
 
 #### Run the Kafka export
 <pre>
-yarn jar target/schedoscope-export-0.4.0-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.kafka.KafkaExportJob -d crichter_app_eci_datahub -t visit_small   -s -p 'hive/_HOST@OTTOGROUP.COM' -m 'thrift://brentano.unbelievable-machine.net:9083'  -k id  -z akiyamatakashi.unbelievable-machine.net:2181 -b dongguan.unbelievable-machine.net:9092
+yarn jar target/schedoscope-export-0.4.0-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.kafka.KafkaExportJob -d default -t table   -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -k id  -z zookeeper:2181 -b broker:9092
 </pre>
