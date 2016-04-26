@@ -38,6 +38,10 @@ This Map/Reduce job moves data into a relational database via a JDBC connection.
 
  * -k batch size for JDBC inserts
 
+ * -a a list of fields to anonymize
+
+ * -S an optional salt to for anonymizing fields
+
 #### Run the JDBC export
 
 The schedoscope-export project doesn't bundle any JDBC driver. It's necessary to add a JDBC driver to the classpath, the export job will copy into HDFS / distributed cache and add the driver to the classpath:
@@ -93,6 +97,10 @@ This Map/Reduce job moves data into Redis, it supports to modes:
 
  * -f flush redis key space
 
+ * -a a list of fields to anonymize
+
+ * -S an optional salt to for anonymizing fields
+
 #### Run the Redis export
 
 ##### Run full table export
@@ -146,6 +154,10 @@ This Map/Reduce job moves data into Kafka, using Avro schema underneath. The Avr
  * -x compression codec, either gzip, snappy or none
 
  * -o output encoding, either string or avro
+
+ * -a a list of fields to anonymize
+
+ * -S an optional salt to for anonymizing fields
 
 #### Run the Kafka export
 <pre>
