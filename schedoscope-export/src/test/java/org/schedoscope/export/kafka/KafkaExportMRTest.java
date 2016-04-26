@@ -35,6 +35,7 @@ import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.kafka.options.CleanupPolicy;
@@ -48,6 +49,7 @@ import org.schedoscope.export.testsupport.SimpleTestKafkaConsumer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableSet;
 import com.lambdanow.avro.schema.MemorySchemaRegistry;
 import com.lambdanow.avro.schema.SchemaRegistry;
 import com.lambdanow.avro.serde.FingerprintSerdeGeneric;
@@ -78,12 +80,10 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		zkServer = new TestingServer(2182);
 		zkServer.start();
 		Thread.sleep(1000);
-		zkClient = new ZkClient(zkServer.getConnectString(), 30000, 30000,
-				ZKStringSerializer$.MODULE$);
+		zkClient = new ZkClient(zkServer.getConnectString(), 30000, 30000, ZKStringSerializer$.MODULE$);
 
 		startKafkaServer();
-		kafkaConsumer = new SimpleTestKafkaConsumer(TEST_DATABASE + "_" + TEST_TABLE,
-				zkServer.getConnectString(), 10);
+		kafkaConsumer = new SimpleTestKafkaConsumer(TEST_DATABASE + "_" + TEST_TABLE, zkServer.getConnectString(), 10);
 	}
 
 	@Override
@@ -98,18 +98,16 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Test
 	public void testKafkaMapExportString() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt",
-				"src/test/resources/test_map.hql", "test_map");
+		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(
-				hcatInputSchema, "MyTable");
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
-		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
-				zkServer.getConnectString(), ProducerType.sync,
-				CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1,
-				CompressionCodec.gzip, OutputEncoding.string);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
+				ProducerType.sync, CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1, CompressionCodec.gzip,
+				OutputEncoding.string);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -141,18 +139,16 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Test
 	public void testKafkaMapExportAvro() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt",
-				"src/test/resources/test_map.hql", "test_map");
+		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(
-				hcatInputSchema, "MyTable");
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
-		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
-				zkServer.getConnectString(), ProducerType.sync,
-				CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1,
-				CompressionCodec.gzip, OutputEncoding.avro);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
+				ProducerType.sync, CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1, CompressionCodec.gzip,
+				OutputEncoding.avro);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -187,17 +183,16 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 	@Test
 	public void testKafkaArrayStructExportAvro() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_arraystruct_data.txt",
-				"src/test/resources/test_arraystruct.hql", "test_arraystruct");
+		setUpHiveServer("src/test/resources/test_arraystruct_data.txt", "src/test/resources/test_arraystruct.hql",
+				"test_arraystruct");
 		Job job = Job.getInstance(conf);
 
-		Schema schema = HCatToAvroSchemaConverter.convertSchema(
-				hcatInputSchema, "MyTable");
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema, "MyTable");
 		AvroJob.setMapOutputValueSchema(job, schema);
-		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092",
-				zkServer.getConnectString(), ProducerType.sync,
-				CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1,
-				CompressionCodec.gzip, OutputEncoding.avro);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
+				ProducerType.sync, CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1, CompressionCodec.gzip,
+				OutputEncoding.avro);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -229,12 +224,57 @@ public class KafkaExportMRTest extends HiveUnitBaseTest {
 		assertEquals(TEST_SIZE, counter);
 	}
 
+	@Test
+	public void testKafkaMapAnonymizedExport() throws Exception {
+
+		setUpHiveServer("src/test/resources/test_array_data.txt", "src/test/resources/test_array.hql", "test_array");
+
+		String[] anonFields = new String[] { "month_id", "numcol1" };
+		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, anonFields);
+		conf.set(BaseExportJob.EXPORT_ANON_SALT, "vD75MqvaasIlCf7H");
+
+		Job job = Job.getInstance(conf);
+
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(ImmutableSet.copyOf(anonFields));
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema, "MyTable");
+		AvroJob.setMapOutputValueSchema(job, schema);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), "localhost:9092", zkServer.getConnectString(),
+				ProducerType.sync, CleanupPolicy.delete, "id", TEST_TABLE, TEST_DATABASE, 1, 1, CompressionCodec.gzip,
+				OutputEncoding.string);
+
+		job.setMapperClass(KafkaExportMapper.class);
+		job.setReducerClass(Reducer.class);
+		job.setNumReduceTasks(1);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(KafkaOutputFormat.class);
+
+		job.setMapOutputKeyClass(Text.class);
+		job.setMapOutputValueClass(AvroValue.class);
+
+		job.setOutputKeyClass(Text.class);
+		job.setOutputValueClass(AvroValue.class);
+
+		assertTrue(job.waitForCompletion(true));
+
+		ObjectMapper objMapper = new ObjectMapper();
+
+		int counter = 0;
+		for (byte[] message : kafkaConsumer) {
+			counter++;
+			String record = new String(message, Charsets.UTF_8);
+			JsonNode data = objMapper.readTree(record);
+			assertEquals("bc5a56c463b81d13bbf8bc519cc17eb2", data.get("numcol1").asText());
+			assertEquals(13, data.get("numcol2").asInt());
+		}
+
+		assertEquals(TEST_SIZE, counter);
+	}
+
 	private void startKafkaServer() throws Exception {
 
 		ArrayList<Integer> ports = new ArrayList<Integer>();
 		ports.add(9092);
-		kafka = new EmbeddedKafkaCluster(zkServer.getConnectString(),
-				new Properties(), ports);
+		kafka = new EmbeddedKafkaCluster(zkServer.getConnectString(), new Properties(), ports);
 		kafka.startup();
 		Thread.sleep(2000);
 	}

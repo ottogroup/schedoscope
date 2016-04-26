@@ -39,6 +39,8 @@ import org.schedoscope.export.kafka.options.OutputEncoding;
 import org.schedoscope.export.kafka.options.ProducerType;
 import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * The MR driver to run the Hive to Kafka export. Depending on the cmdl params
  * it either runs in regular mode or in log compaction mode.
@@ -46,24 +48,6 @@ import org.schedoscope.export.kafka.outputformat.KafkaOutputFormat;
 public class KafkaExportJob extends BaseExportJob {
 
 	private static final Log LOG = LogFactory.getLog(KafkaExportJob.class);
-
-	@Option(name = "-s", usage = "set to true if kerberos is enabled")
-	private boolean isSecured = false;
-
-	@Option(name = "-m", usage = "specify the metastore URI")
-	private String metaStoreUris;
-
-	@Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
-	private String principal;
-
-	@Option(name = "-d", usage = "input database", required = true)
-	private String inputDatabase;
-
-	@Option(name = "-t", usage = "input table", required = true)
-	private String inputTable;
-
-	@Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
-	private String inputFilter;
 
 	@Option(name = "-k", usage = "key column")
 	private String keyName;
@@ -85,9 +69,6 @@ public class KafkaExportJob extends BaseExportJob {
 
 	@Option(name = "-r", usage = "replication factor, defaults to 1")
 	private int replicationFactor = 1;
-
-	@Option(name = "-c", usage = "number of reducers, concurrency level")
-	private int numReducer = 2;
 
 	@Option(name = "-x", usage = "compression codec, either 'none', 'snappy' or 'gzip'")
 	private CompressionCodec codec = CompressionCodec.none;
@@ -146,17 +127,19 @@ public class KafkaExportJob extends BaseExportJob {
 	 *            The compression codec (gzip / snappy / none)
 	 * @param outputEncoding
 	 *            Output encoding (string / avro)
+	 * @param anonFields
+	 *            A list of fields to anonymize
+	 * @param exportSalt
+	 *            An optional salt when anonymizing fields
 	 * @return A configured Job instance
 	 * @throws Exception
 	 *             Is thrown if an error occurs
 	 */
-	public Job configure(boolean isSecured, String metaStoreUris,
-			String principal, String inputDatabase, String inputTable,
-			String inputFilter, String keyName, String brokers,
-			String zookeepers, ProducerType producerType,
-			CleanupPolicy cleanupPolicy, int numPartitions,
-			int replicationFactor, int numReducer, CompressionCodec codec,
-			OutputEncoding outputEncoding) throws Exception {
+	public Job configure(boolean isSecured, String metaStoreUris, String principal, String inputDatabase,
+			String inputTable, String inputFilter, String keyName, String brokers, String zookeepers,
+			ProducerType producerType, CleanupPolicy cleanupPolicy, int numPartitions, int replicationFactor,
+			int numReducer, CompressionCodec codec, OutputEncoding outputEncoding, String[] anonFields,
+			String exportSalt) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -174,18 +157,19 @@ public class KafkaExportJob extends BaseExportJob {
 		this.numReducer = numReducer;
 		this.codec = codec;
 		this.encoding = outputEncoding;
-
+		this.anonFields = anonFields.clone();
+		this.exportSalt = exportSalt;
 		return configure();
 	}
 
 	private Job configure() throws Exception {
 
 		Configuration conf = getConfiguration();
-		conf = configureHiveMetaStore(conf, metaStoreUris);
-		conf = configureKerberos(conf, isSecured, principal);
+		conf = configureHiveMetaStore(conf);
+		conf = configureKerberos(conf);
+		conf = configureAnonFields(conf);
 
-		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "."
-				+ inputTable);
+		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(KafkaExportJob.class);
 
@@ -193,20 +177,20 @@ public class KafkaExportJob extends BaseExportJob {
 			HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
 		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable,
-					inputFilter);
+			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
 		}
 
-		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job
-				.getConfiguration());
-		Schema avroSchema = HCatToAvroSchemaConverter.convertSchema(hcatSchema,
-				inputTable);
+		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
+
+		for (String s : anonFields) {
+			LOG.info("anon fields: " + s);
+		}
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(ImmutableSet.copyOf(anonFields));
+		Schema avroSchema = schemaConverter.convertSchema(hcatSchema, inputTable);
 		AvroJob.setMapOutputValueSchema(job, avroSchema);
 
-		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList,
-				zookeeperHosts, producerType, cleanupPolicy, keyName,
-				inputTable, inputDatabase, numPartitions, replicationFactor,
-				codec, encoding);
+		KafkaOutputFormat.setOutput(job.getConfiguration(), brokerList, zookeeperHosts, producerType, cleanupPolicy,
+				keyName, inputTable, inputDatabase, numPartitions, replicationFactor, codec, encoding);
 
 		job.setMapperClass(KafkaExportMapper.class);
 		job.setReducerClass(Reducer.class);

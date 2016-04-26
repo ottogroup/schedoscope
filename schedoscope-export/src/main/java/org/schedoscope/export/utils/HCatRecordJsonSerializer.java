@@ -27,6 +27,7 @@ import org.apache.hive.hcatalog.data.JsonSerDe;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -50,6 +51,7 @@ public class HCatRecordJsonSerializer {
 	public HCatRecordJsonSerializer(Configuration conf, HCatSchema schema) {
 
 		jsonMapper = new ObjectMapper();
+		jsonMapper.configure(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS, true);
 
 		StringBuilder columnNameProperty = new StringBuilder();
 		StringBuilder columnTypeProperty = new StringBuilder();

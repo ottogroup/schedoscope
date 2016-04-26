@@ -43,6 +43,7 @@ object Export {
    * @param dbUser The database user
    * @param dbPass the database password
    * @param distributionKey The distribution key (only relevant for exasol)
+   * @param exportSalt an optional salt when anonymizing fields
    * @param storageEngine The underlying storage engine (only relevant for MySQL)
    * @param numReducers The number of reducers, defines concurrency
    * @param commitSize The size of batches for JDBC inserts
@@ -56,6 +57,7 @@ object Export {
     dbUser: String = null,
     dbPass: String = null,
     distributionKey: Field[_] = null,
+    exportSalt: String = Schedoscope.settings.exportSalt,
     storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
     numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,
     commitSize: Int = Schedoscope.settings.jdbcExportBatchSize,
@@ -73,6 +75,9 @@ object Export {
 
         val distributionField = if (distributionKey != null) distributionKey.n else null
 
+        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+
         new JdbcExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
           conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
@@ -86,7 +91,9 @@ object Export {
           conf.get("schedoscope.export.storageEngine").get.asInstanceOf[String],
           distributionField,
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
-          conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int])
+          conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int],
+          anonFields ++ anonParameters,
+          conf.get("schedoscope.export.salt").get.asInstanceOf[String])
 
       },
       jdbcPostCommit)
@@ -100,6 +107,7 @@ object Export {
         "schedoscope.export.storageEngine" -> storageEngine,
         "schedoscope.export.numReducers" -> numReducers,
         "schedoscope.export.commitSize" -> commitSize,
+        "schedoscope.export.salt" -> exportSalt,
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
         "schedoscope.export.metastoreUri" -> metastoreUri))
@@ -139,6 +147,7 @@ object Export {
    * @param key The field to use as the Redis key
    * @param value An optional field to export. If null, all fields are attached to the key as a map. If not null, only that field's value is attached to the key.
    * @param keyPrefix An optional key prefix
+   * @param exportSalt an optional salt when anonymizing fields
    * @param replace A flag indicating of existing keys should be replaced (or extended)
    * @param flush A flag indicating if the key space should be flushed before writing data
    * @param redisPort The Redis port (default 6379)
@@ -155,6 +164,7 @@ object Export {
     key: Field[_],
     value: Field[_] = null,
     keyPrefix: String = "",
+    exportSalt: String = Schedoscope.settings.exportSalt,
     replace: Boolean = true,
     flush: Boolean = false,
     redisPort: Int = 6379,
@@ -175,6 +185,9 @@ object Export {
 
         val valueFieldName = if (value != null) value.n else null
 
+        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+
         new RedisExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
           conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
@@ -191,7 +204,9 @@ object Export {
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           replace,
           conf.get("schedoscope.export.pipeline").get.asInstanceOf[Boolean],
-          flush)
+          flush,
+          anonFields ++ anonParameters,
+          conf.get("schedoscope.export.salt").get.asInstanceOf[String])
 
       })
 
@@ -203,6 +218,7 @@ object Export {
         "schedoscope.export.redisKeySpace" -> redisKeySpace,
         "schedoscope.export.numReducers" -> numReducers,
         "schedoscope.export.pipeline" -> pipeline,
+        "schedoscope.export.salt" -> exportSalt,
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
         "schedoscope.export.metastoreUri" -> metastoreUri))
@@ -211,13 +227,14 @@ object Export {
 
   /**
    * This function creates a Kafka topic export MapreduceTransformation.
-   * 
+   *
    * @param v The view to export
    * @param key the field to serve as the topic's key
    * @param kafkaHosts String list of Kafka hosts to communicate with
    * @param zookeeperHosts String list of zookeeper hosts
    * @param replicationFactor The replication factor, defaults to 1
    * @param numPartitions The number of partitions in the topic. Defaults to 3
+   * @param exportSalt an optional salt when anonymizing fields
    * @param producerType The type of producer to use, defaults to synchronous
    * @param cleanupPolicy Default cleanup policy is delete
    * @param compressionCodes Default compression codec is gzip
@@ -235,6 +252,7 @@ object Export {
     zookeeperHosts: String,
     replicationFactor: Int = 1,
     numPartitons: Int = 3,
+    exportSalt: String = Schedoscope.settings.exportSalt,
     producerType: ProducerType = ProducerType.sync,
     cleanupPolicy: CleanupPolicy = CleanupPolicy.delete,
     compressionCodec: CompressionCodec = CompressionCodec.gzip,
@@ -252,6 +270,9 @@ object Export {
           .map { (p => s"${p.n} = '${p.v.get}'") }
           .mkString(" and ")
 
+        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+
         new KafkaExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
           conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
@@ -268,7 +289,9 @@ object Export {
           conf.get("schedoscope.export.replicationFactor").get.asInstanceOf[Int],
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           compressionCodec,
-          encoding)
+          encoding,
+          anonFields ++ anonParameters,
+          conf.get("schedoscope.export.salt").get.asInstanceOf[String])
       })
 
     t.directoriesToDelete = List()
@@ -279,6 +302,7 @@ object Export {
         "schedoscope.export.numPartitions" -> numPartitons,
         "schedoscope.export.replicationFactor" -> replicationFactor,
         "schedoscope.export.numReducers" -> numReducers,
+        "schedoscope.export.salt" -> exportSalt,
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
         "schedoscope.export.metastoreUri" -> metastoreUri))
