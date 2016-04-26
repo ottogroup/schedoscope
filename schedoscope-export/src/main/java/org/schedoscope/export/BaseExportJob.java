@@ -32,7 +32,7 @@ public abstract class BaseExportJob extends Configured implements Tool {
 
 	public static final String EXPORT_ANON_SALT = "export.anon.salt";
 
-	@Option(name = "-a", handler = StringArrayOptionHandler.class, usage = "a space separated list of fields to anonymize")
+	@Option(name = "-A", handler = StringArrayOptionHandler.class, usage = "a space separated list of fields to anonymize")
 	protected String[] anonFields = new String[0];
 
 	@Option(name = "-S", usage = "an optional salt used to anonymize fields")
