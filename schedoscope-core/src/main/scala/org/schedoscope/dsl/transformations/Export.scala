@@ -43,7 +43,6 @@ object Export {
    * @param dbUser The database user
    * @param dbPass the database password
    * @param distributionKey The distribution key (only relevant for exasol)
-   * @param anonFields A list of fields to anonymize
    * @param exportSalt an optional salt when anonymizing fields
    * @param storageEngine The underlying storage engine (only relevant for MySQL)
    * @param numReducers The number of reducers, defines concurrency
@@ -58,7 +57,6 @@ object Export {
     dbUser: String = null,
     dbPass: String = null,
     distributionKey: Field[_] = null,
-    anonFields: Seq[Field[_]] = null,
     exportSalt: String = Schedoscope.settings.exportSalt,
     storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
     numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,
@@ -77,7 +75,7 @@ object Export {
 
         val distributionField = if (distributionKey != null) distributionKey.n else null
 
-        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.n } .toArray
+        val anonFields = v.fields.filter { _.isPrivacySensitive} .map { _.n } .toArray
 
         new JdbcExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -93,7 +91,7 @@ object Export {
           distributionField,
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int],
-          anonFieldNames,
+          anonFields,
           conf.get("schedoscope.export.salt").get.asInstanceOf[String])
 
       },
@@ -148,7 +146,6 @@ object Export {
    * @param key The field to use as the Redis key
    * @param value An optional field to export. If null, all fields are attached to the key as a map. If not null, only that field's value is attached to the key.
    * @param keyPrefix An optional key prefix
-   * @param anonFields A list of fields to anonymize
    * @param exportSalt an optional salt when anonymizing fields
    * @param replace A flag indicating of existing keys should be replaced (or extended)
    * @param flush A flag indicating if the key space should be flushed before writing data
@@ -166,7 +163,6 @@ object Export {
     key: Field[_],
     value: Field[_] = null,
     keyPrefix: String = "",
-    anonFields: Seq[Field[_]] = null,
     exportSalt: String = Schedoscope.settings.exportSalt,
     replace: Boolean = true,
     flush: Boolean = false,
@@ -188,7 +184,7 @@ object Export {
 
         val valueFieldName = if (value != null) value.n else null
 
-        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.n } .toArray
+        val anonFields = v.fields.filter { _.isPrivacySensitive} .map { _.n } .toArray
 
         new RedisExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -207,7 +203,7 @@ object Export {
           replace,
           conf.get("schedoscope.export.pipeline").get.asInstanceOf[Boolean],
           flush,
-          anonFieldNames,
+          anonFields,
           conf.get("schedoscope.export.salt").get.asInstanceOf[String])
 
       })
@@ -236,7 +232,6 @@ object Export {
    * @param zookeeperHosts String list of zookeeper hosts
    * @param replicationFactor The replication factor, defaults to 1
    * @param numPartitions The number of partitions in the topic. Defaults to 3
-   * @param anonFields A list of fields to anonymize
    * @param exportSalt an optional salt when anonymizing fields
    * @param producerType The type of producer to use, defaults to synchronous
    * @param cleanupPolicy Default cleanup policy is delete
@@ -255,7 +250,6 @@ object Export {
     zookeeperHosts: String,
     replicationFactor: Int = 1,
     numPartitons: Int = 3,
-    anonFields: Seq[Field[_]] = null,
     exportSalt: String = Schedoscope.settings.exportSalt,
     producerType: ProducerType = ProducerType.sync,
     cleanupPolicy: CleanupPolicy = CleanupPolicy.delete,
@@ -274,7 +268,7 @@ object Export {
           .map { (p => s"${p.n} = '${p.v.get}'") }
           .mkString(" and ")
 
-        val anonFieldNames = if (anonFields == null) new Array[String](0) else anonFields.map { _.n } .toArray
+        val anonFields = v.fields.filter { _.isPrivacySensitive} .map { _.n } .toArray
 
         new KafkaExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -293,7 +287,7 @@ object Export {
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           compressionCodec,
           encoding,
-          anonFieldNames,
+          anonFields,
           conf.get("schedoscope.export.salt").get.asInstanceOf[String])
       })
 
