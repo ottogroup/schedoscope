@@ -39,15 +39,6 @@ import redis.clients.jedis.Jedis;
  */
 public class RedisExportJob extends BaseExportJob {
 
-	@Option(name = "-s", usage = "set to true if kerberos is enabled")
-	private boolean isSecured = false;
-
-	@Option(name = "-m", usage = "specify the metastore URIs", required = true)
-	private String metaStoreUris;
-
-	@Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
-	private String principal;
-
 	@Option(name = "-h", usage = "redis host")
 	private String redisHost = "localhost";
 
@@ -57,14 +48,6 @@ public class RedisExportJob extends BaseExportJob {
 	@Option(name = "-K", usage = "redis key space (default is 0)")
 	private int redisDb = 0;
 
-	@Option(name = "-d", usage = "input database", required = true)
-	private String inputDatabase;
-
-	@Option(name = "-t", usage = "input table", required = true)
-	private String inputTable;
-
-	@Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
-	private String inputFilter;
 
 	@Option(name = "-k", usage = "key column", required = true)
 	private String keyName;
@@ -74,9 +57,6 @@ public class RedisExportJob extends BaseExportJob {
 
 	@Option(name = "-r", usage = "optional key prefix for redis key")
 	private String keyPrefix = "";
-
-	@Option(name = "-c", usage = "number of reducers, concurrency level")
-	private int numReducer = 2;
 
 	@Option(name = "-a", usage = "append data to existing keys, only useful for native export of map/list types")
 	boolean replace = false;
@@ -178,8 +158,8 @@ public class RedisExportJob extends BaseExportJob {
 	private Job configure() throws Exception {
 
 		Configuration conf = getConfiguration();
-		conf = configureHiveMetaStore(conf, metaStoreUris);
-		conf = configureKerberos(conf, isSecured, principal);
+		conf = configureHiveMetaStore(conf);
+		conf = configureKerberos(conf);
 		conf = configureAnonFields(conf);
 
 		Job job = Job.getInstance(conf, "RedisExport: " + inputDatabase + "." + inputTable);

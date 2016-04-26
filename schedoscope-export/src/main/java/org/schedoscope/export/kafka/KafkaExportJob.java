@@ -49,24 +49,6 @@ public class KafkaExportJob extends BaseExportJob {
 
 	private static final Log LOG = LogFactory.getLog(KafkaExportJob.class);
 
-	@Option(name = "-s", usage = "set to true if kerberos is enabled")
-	private boolean isSecured = false;
-
-	@Option(name = "-m", usage = "specify the metastore URI")
-	private String metaStoreUris;
-
-	@Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
-	private String principal;
-
-	@Option(name = "-d", usage = "input database", required = true)
-	private String inputDatabase;
-
-	@Option(name = "-t", usage = "input table", required = true)
-	private String inputTable;
-
-	@Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
-	private String inputFilter;
-
 	@Option(name = "-k", usage = "key column")
 	private String keyName;
 
@@ -87,9 +69,6 @@ public class KafkaExportJob extends BaseExportJob {
 
 	@Option(name = "-r", usage = "replication factor, defaults to 1")
 	private int replicationFactor = 1;
-
-	@Option(name = "-c", usage = "number of reducers, concurrency level")
-	private int numReducer = 2;
 
 	@Option(name = "-x", usage = "compression codec, either 'none', 'snappy' or 'gzip'")
 	private CompressionCodec codec = CompressionCodec.none;
@@ -186,10 +165,10 @@ public class KafkaExportJob extends BaseExportJob {
 	private Job configure() throws Exception {
 
 		Configuration conf = getConfiguration();
-		conf = configureHiveMetaStore(conf, metaStoreUris);
-		conf = configureKerberos(conf, isSecured, principal);
+		conf = configureHiveMetaStore(conf);
+		conf = configureKerberos(conf);
 		conf = configureAnonFields(conf);
-		
+
 		Job job = Job.getInstance(conf, "KafkaExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(KafkaExportJob.class);
@@ -202,7 +181,7 @@ public class KafkaExportJob extends BaseExportJob {
 		}
 
 		HCatSchema hcatSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
-		
+
 		for (String s : anonFields) {
 			LOG.info("anon fields: " + s);
 		}

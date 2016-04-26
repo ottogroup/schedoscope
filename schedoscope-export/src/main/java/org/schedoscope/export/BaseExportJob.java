@@ -32,6 +32,27 @@ public abstract class BaseExportJob extends Configured implements Tool {
 
 	public static final String EXPORT_ANON_SALT = "export.anon.salt";
 
+	@Option(name = "-s", usage = "set to true if kerberos is enabled")
+	protected boolean isSecured = false;
+
+	@Option(name = "-m", usage = "specify the metastore URIs", required = true)
+	protected String metaStoreUris;
+
+	@Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
+	protected String principal;
+
+	@Option(name = "-d", usage = "input database", required = true)
+	protected String inputDatabase;
+
+	@Option(name = "-t", usage = "input table", required = true)
+	protected String inputTable;
+
+	@Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
+	protected String inputFilter;
+
+	@Option(name = "-c", usage = "number of reducers, concurrency level")
+	protected int numReducer = 2;
+
 	@Option(name = "-A", handler = StringArrayOptionHandler.class, usage = "a space separated list of fields to anonymize")
 	protected String[] anonFields = new String[0];
 
@@ -46,7 +67,7 @@ public abstract class BaseExportJob extends Configured implements Tool {
 		return getConf();
 	}
 
-	protected Configuration configureHiveMetaStore(Configuration conf, String metaStoreUris) {
+	protected Configuration configureHiveMetaStore(Configuration conf) {
 
 		if (metaStoreUris.startsWith("thrift://")) {
 			conf.set("hive.metastore.local", "false");
@@ -59,7 +80,7 @@ public abstract class BaseExportJob extends Configured implements Tool {
 		return conf;
 	}
 
-	protected Configuration configureKerberos(Configuration conf, boolean isSecured, String principal) {
+	protected Configuration configureKerberos(Configuration conf) {
 
 		if (isSecured) {
 			conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);

@@ -51,15 +51,6 @@ public class JdbcExportJob extends BaseExportJob {
 
 	private static final String LOCAL_PATH_PREFIX = "file://";
 
-	@Option(name = "-s", usage = "set to true if kerberos is enabled")
-	private boolean isSecured = false;
-
-	@Option(name = "-m", usage = "specify the metastore URI")
-	private String metaStoreUris;
-
-	@Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
-	private String principal;
-
 	@Option(name = "-j", usage = "the jdbc connection string, jdbc:mysql://remote-host:3306/schema", required = true)
 	private String dbConnectionString;
 
@@ -69,23 +60,11 @@ public class JdbcExportJob extends BaseExportJob {
 	@Option(name = "-w", usage = "the database password", depends = { "-u" })
 	private String dbPassword;
 
-	@Option(name = "-d", usage = "input database", required = true)
-	private String inputDatabase;
-
-	@Option(name = "-t", usage = "input table", required = true)
-	private String inputTable;
-
-	@Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
-	private String inputFilter;
-
 	@Option(name = "-e", usage = "storage engine, either 'InnoDB' or 'MyISAM', works only for MySQL")
 	private String storageEngine;
 
 	@Option(name = "-x", usage = "columns to use for the 'DISTRIBUTE BY' clause, only Exasol")
 	private String distributeBy;
-
-	@Option(name = "-c", usage = "number of reducers, concurrency level")
-	private int numReducer = 2;
 
 	@Option(name = "-k", usage = "batch size")
 	private int commitSize = 10000;
@@ -196,8 +175,8 @@ public class JdbcExportJob extends BaseExportJob {
 	private Job configure() throws Exception {
 
 		Configuration conf = getConfiguration();
-		conf = configureHiveMetaStore(conf, metaStoreUris);
-		conf = configureKerberos(conf, isSecured, principal);
+		conf = configureHiveMetaStore(conf);
+		conf = configureKerberos(conf);
 		conf = configureAnonFields(conf);
 
 		Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "." + inputTable);
