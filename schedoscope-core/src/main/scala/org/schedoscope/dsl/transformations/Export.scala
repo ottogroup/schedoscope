@@ -75,7 +75,8 @@ object Export {
 
         val distributionField = if (distributionKey != null) distributionKey.n else null
 
-        val anonFields = v.fields.filter { _.isPrivacySensitive} .map { _.n } .toArray
+        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
 
         new JdbcExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -91,7 +92,7 @@ object Export {
           distributionField,
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int],
-          anonFields,
+          anonFields ++ anonParameters,
           conf.get("schedoscope.export.salt").get.asInstanceOf[String])
 
       },
@@ -184,7 +185,8 @@ object Export {
 
         val valueFieldName = if (value != null) value.n else null
 
-        val anonFields = v.fields.filter { _.isPrivacySensitive} .map { _.n } .toArray
+        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
 
         new RedisExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -203,7 +205,7 @@ object Export {
           replace,
           conf.get("schedoscope.export.pipeline").get.asInstanceOf[Boolean],
           flush,
-          anonFields,
+          anonFields ++ anonParameters,
           conf.get("schedoscope.export.salt").get.asInstanceOf[String])
 
       })
@@ -268,7 +270,8 @@ object Export {
           .map { (p => s"${p.n} = '${p.v.get}'") }
           .mkString(" and ")
 
-        val anonFields = v.fields.filter { _.isPrivacySensitive} .map { _.n } .toArray
+        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
 
         new KafkaExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -287,7 +290,7 @@ object Export {
           conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
           compressionCodec,
           encoding,
-          anonFields,
+          anonFields ++ anonParameters,
           conf.get("schedoscope.export.salt").get.asInstanceOf[String])
       })
 
