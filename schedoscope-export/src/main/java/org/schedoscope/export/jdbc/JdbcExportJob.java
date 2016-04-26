@@ -40,6 +40,8 @@ import org.schedoscope.export.jdbc.outputschema.Schema;
 import org.schedoscope.export.jdbc.outputschema.SchemaFactory;
 import org.schedoscope.export.jdbc.outputschema.SchemaUtils;
 
+import com.google.common.collect.ImmutableSet;
+
 /**
  * The MR driver to run the Hive to database export, uses JDBC under the hood.
  */
@@ -48,15 +50,6 @@ public class JdbcExportJob extends BaseExportJob {
 	private static final Log LOG = LogFactory.getLog(JdbcExportJob.class);
 
 	private static final String LOCAL_PATH_PREFIX = "file://";
-
-	@Option(name = "-s", usage = "set to true if kerberos is enabled")
-	private boolean isSecured = false;
-
-	@Option(name = "-m", usage = "specify the metastore URI")
-	private String metaStoreUris;
-
-	@Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
-	private String principal;
 
 	@Option(name = "-j", usage = "the jdbc connection string, jdbc:mysql://remote-host:3306/schema", required = true)
 	private String dbConnectionString;
@@ -67,23 +60,11 @@ public class JdbcExportJob extends BaseExportJob {
 	@Option(name = "-w", usage = "the database password", depends = { "-u" })
 	private String dbPassword;
 
-	@Option(name = "-d", usage = "input database", required = true)
-	private String inputDatabase;
-
-	@Option(name = "-t", usage = "input table", required = true)
-	private String inputTable;
-
-	@Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
-	private String inputFilter;
-
 	@Option(name = "-e", usage = "storage engine, either 'InnoDB' or 'MyISAM', works only for MySQL")
 	private String storageEngine;
 
 	@Option(name = "-x", usage = "columns to use for the 'DISTRIBUTE BY' clause, only Exasol")
 	private String distributeBy;
-
-	@Option(name = "-c", usage = "number of reducers, concurrency level")
-	private int numReducer = 2;
 
 	@Option(name = "-k", usage = "batch size")
 	private int commitSize = 10000;
@@ -121,8 +102,7 @@ public class JdbcExportJob extends BaseExportJob {
 	 * @throws UnrecoverableException
 	 *             Is thrown if JDBC driver issue occurs.
 	 */
-	public void postCommit(boolean jobSuccessful, Configuration conf)
-			throws RetryException, UnrecoverableException {
+	public void postCommit(boolean jobSuccessful, Configuration conf) throws RetryException, UnrecoverableException {
 
 		if (jobSuccessful) {
 			JdbcOutputFormat.finalizeOutput(conf);
@@ -161,15 +141,18 @@ public class JdbcExportJob extends BaseExportJob {
 	 *            Number of reducers / partitions
 	 * @param commitSize
 	 *            The batch size.
+	 * @param anonFields
+	 *            A list of fields to anonymize
+	 * @param exportSalt
+	 *            An optional salt when anonymizing fields
 	 * @return A configured job instance.
 	 * @throws Exception
 	 *             Is thrown if an error occurs.
 	 */
-	public Job configure(boolean isSecured, String metaStoreUris,
-			String principal, String dbConnectionString, String dbUser,
-			String dbPassword, String inputDatabase, String inputTable,
-			String inputFilter, String storageEngine, String distributeBy,
-			int numReducer, int commitSize) throws Exception {
+	public Job configure(boolean isSecured, String metaStoreUris, String principal, String dbConnectionString,
+			String dbUser, String dbPassword, String inputDatabase, String inputTable, String inputFilter,
+			String storageEngine, String distributeBy, int numReducer, int commitSize, String[] anonFields, String exportSalt)
+			throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -184,17 +167,19 @@ public class JdbcExportJob extends BaseExportJob {
 		this.distributeBy = distributeBy;
 		this.numReducer = numReducer;
 		this.commitSize = commitSize;
+		this.anonFields = anonFields.clone();
+		this.exportSalt = exportSalt;
 		return configure();
 	}
 
 	private Job configure() throws Exception {
 
 		Configuration conf = getConfiguration();
-		conf = configureHiveMetaStore(conf, metaStoreUris);
-		conf = configureKerberos(conf, isSecured, principal);
+		conf = configureHiveMetaStore(conf);
+		conf = configureKerberos(conf);
+		conf = configureAnonFields(conf);
 
-		Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "."
-				+ inputTable);
+		Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "." + inputTable);
 
 		job.setJarByClass(JdbcExportJob.class);
 		job.setMapperClass(JdbcExportMapper.class);
@@ -205,26 +190,19 @@ public class JdbcExportJob extends BaseExportJob {
 			HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
 		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable,
-					inputFilter);
+			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
 		}
 
-		Schema outputSchema = SchemaFactory.getSchema(dbConnectionString,
-				job.getConfiguration());
-		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job
-				.getConfiguration());
+		Schema outputSchema = SchemaFactory.getSchema(dbConnectionString, job.getConfiguration());
+		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 
-		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(
-				hcatInputSchema, outputSchema);
-		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(
-				hcatInputSchema, outputSchema);
+		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(hcatInputSchema, outputSchema);
+		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema, ImmutableSet.copyOf(anonFields));
 
 		String outputTable = inputDatabase + "_" + inputTable;
 
-		JdbcOutputFormat.setOutput(job.getConfiguration(), dbConnectionString,
-				dbUser, dbPassword, outputTable, inputFilter, numReducer,
-				commitSize, storageEngine, distributeBy, columnNames,
-				columnTypes);
+		JdbcOutputFormat.setOutput(job.getConfiguration(), dbConnectionString, dbUser, dbPassword, outputTable,
+				inputFilter, numReducer, commitSize, storageEngine, distributeBy, columnNames, columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(JdbcOutputFormat.class);
@@ -242,11 +220,9 @@ public class JdbcExportJob extends BaseExportJob {
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
 		Path hdfsDir = new Path(tmpDir + "/" + new Path(jarFile).getName());
 
-		if (jarFile != null && jarSelf != null && tmpDir != null
-				&& !jarFile.equals(jarSelf)) {
+		if (jarFile != null && jarSelf != null && tmpDir != null && !jarFile.equals(jarSelf)) {
 			LOG.info("copy " + LOCAL_PATH_PREFIX + jarFile + " to " + tmpDir);
-			fs.copyFromLocalFile(false, true, new Path(LOCAL_PATH_PREFIX
-					+ jarFile), hdfsDir);
+			fs.copyFromLocalFile(false, true, new Path(LOCAL_PATH_PREFIX + jarFile), hdfsDir);
 			LOG.info("add " + tmpDir + "/" + jarFile + " to distributed cache");
 			job.addArchiveToClassPath(hdfsDir);
 		}
