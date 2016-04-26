@@ -36,7 +36,7 @@ public abstract class BaseExportJob extends Configured implements Tool {
 	protected boolean isSecured = false;
 
 	@Option(name = "-m", usage = "specify the metastore URIs", required = true)
-	protected String metaStoreUris;
+	protected String metaStoreUris = "";
 
 	@Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
 	protected String principal;
