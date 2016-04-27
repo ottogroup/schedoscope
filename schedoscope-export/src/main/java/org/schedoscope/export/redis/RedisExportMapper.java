@@ -106,9 +106,9 @@ public class RedisExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 			break;
 		case PRIMITIVE:
 			Object obj = value.get(valueName, schema);
-			String valStr = obj.toString();
-			valStr = HCatUtils.getHashValueIfInList(valueName, valStr, anonFields, salt);
-			if (valStr != null) {
+			if (obj != null) {
+				String valStr = obj.toString();
+				valStr = HCatUtils.getHashValueIfInList(valueName, valStr, anonFields, salt);
 				redisValue = new RedisStringWritable(redisKey.toString(), valStr);
 				write = true;
 			}
