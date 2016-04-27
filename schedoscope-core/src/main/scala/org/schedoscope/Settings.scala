@@ -21,7 +21,9 @@ import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ ActorSystem, ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider }
+
 import com.typesafe.config.Config
+
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
@@ -49,7 +51,7 @@ import scala.concurrent.duration.Duration
 class SchedoscopeSettings(val config: Config) extends Extension {
 
   private val driverSettings: HashMap[String, DriverSettings] = HashMap[String, DriverSettings]()
-
+  
   /**
    * The configured Schedoscope environment
    */
@@ -146,6 +148,11 @@ class SchedoscopeSettings(val config: Config) extends Extension {
    * The configured HDFS namenode. The Hadoop default takes precendence.
    */
   lazy val nameNode = hadoopConf.get("fs.defaultFS")
+  
+  /**
+   * The URI of the HDFS.
+   */
+  lazy val hdfs = config.getString("schedoscope.hadoop.hdfs")
 
   /**
    * Configuration trigger whether versioning transformation is enabled.
@@ -239,6 +246,86 @@ class SchedoscopeSettings(val config: Config) extends Extension {
    * Number of reducers to use for Redis export.
    */
   lazy val kafkaExportNumReducers = config.getInt("schedoscope.export.kafka.numberOfReducers")
+  
+  /**
+   * Port of Metascope web service.
+   */
+  lazy val metascopePort = config.getInt("metascope.port")
+  
+  /**
+   * 
+   */
+  lazy val metascopeAuthMethod = config.getString("metascope.auth.authentication")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLdapUrl = config.getString("metascope.auth.ldap.url")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLdapManagerDn = config.getString("metascope.auth.ldap.managerDn")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLdapManagerPw= config.getString("metascope.auth.ldap.managerPassword")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLdapUserDn = config.getString("metascope.auth.ldap.userDnPattern")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLdapGroupSearchBase = config.getString("metascope.auth.ldap.groupSearchBase")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLdapAllowedGroups = config.getString("metascope.auth.ldap.allowedGroups")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLdapAdminGroups = config.getString("metascope.auth.ldap.adminGroups")
+  
+  /**
+   * 
+   */
+  lazy val metascopeRepositoryUrl = config.getString("metascope.repository.url")
+  
+  /**
+   * 
+   */
+  lazy val metascopeRepositoryUser = config.getString("metascope.repository.user")
+  
+  /**
+   * 
+   */
+  lazy val metascopeRepositoryPw = config.getString("metascope.repository.password")
+  
+  /**
+   * 
+   */
+  lazy val metascopeRepositoryDialect = config.getString("metascope.repository.dialect")
+  
+  /**
+   * 
+   */
+  lazy val metascopeSolrUrl = config.getString("metascope.solr.url")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLoggingFile = config.getString("metascope.logging.logfile")
+  
+  /**
+   * 
+   */
+  lazy val metascopeLoggingLevel = config.getString("metascope.logging.loglevel")
 
   /**
    * A user group information object ready to use for kerberized interactions.
@@ -298,7 +385,7 @@ class SchedoscopeSettings(val config: Config) extends Extension {
     val confName = s"schedoscope.transformations.${transformationName}.transformation.${n}"
     config.getString(confName)
   }
-
+  
 }
 
 /**

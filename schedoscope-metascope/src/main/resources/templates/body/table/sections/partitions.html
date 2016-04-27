@@ -1,0 +1,46 @@
+<div class="tab-pane" id="partitionsContent" data-th-fragment="partitions(table,util)">
+  <div th:with="totalPages=${(partitionCount/20) + 1}">
+    <div id="loadingViewsLabel">
+      <em th:utext="'Loading partitions ...'"></em>
+    </div>
+    <div id="partitionSection" style="display: none;">
+	  <div th:with="to=${(partitionPage-1) * 20 + 20}">
+	    <em th:text="'Showing ' + ${(partitionPage-1) * 20 + 1} + ' to ' + ${to > partitionCount ? partitionCount : to} + ' of ' + ${partitionCount} + ' results'"></em>
+	   </div>
+	   <table class="table table-bordered table-striped tablesorter-default" id="partitionsTable">
+	     <thead>
+	      <tr class="info">
+	        <th data-th-each="parameter:${table.parameters}" data-th-text="${parameter.name}"></th>
+	        <td data-th-if="${table.parameters.size() == 0}"></td>
+	        <th data-th-if="${table.dependencies.size() > 0}">Based On</th>
+	        <th data-th-if="${successors.size() > 0}">Used By</th> 
+	        <th>Status</th>
+	        <th>Last Transformation</th>
+	        <th>Transformation time (hh:mm:ss)</th>
+	      </tr>
+	    </thead>
+	    <tbody id="partitionsBody"></tbody>
+	  </table>
+	  <div class="text-center" th:with="indexToHighlight=${((partitionPage%5)+4)%5}">
+	    <ul class="pagination">
+	      <li data-th-if="${(partitionPage - indexToHighlight - 1) > 0}">
+            <a th:href="'table?fqdn=' + ${table.fqdn} + '&amp;partitionPage=1#partitionsContent'" data-th-text="'&laquo;&laquo;'"></a>
+          </li>
+          <li data-th-if="${(partitionPage - indexToHighlight - 1) > 0}">
+            <a th:href="'table?fqdn=' + ${table.fqdn} + '&amp;partitionPage=' + ${(partitionPage - indexToHighlight - 1)} + '#partitionsContent'" data-th-text="'&laquo;'"></a>
+          </li>
+          <li th:each="i : ${#numbers.sequence(0, 4)}" th:class="${indexToHighlight == i} ? 'active' : ''" th:with="page=${partitionPage - indexToHighlight + i}">
+            <a data-th-if="${page &lt;= totalPages}" th:href="${indexToHighlight == i} ? '#' : 'table?fqdn=' + ${table.fqdn} + '&amp;partitionPage=' + ${page} + '#partitionsContent'"
+               data-th-text="${page}"></a>
+          </li>
+          <li data-th-if="${(partitionPage - indexToHighlight + 4) &lt; totalPages}">
+            <a th:href="'table?fqdn=' + ${table.fqdn} + '&amp;partitionPage=' + ${(partitionPage - indexToHighlight + 5)} + '#partitionsContent'" data-th-text="'&raquo;'"></a>
+          </li>
+          <li data-th-if="${(partitionPage - indexToHighlight + 4) &lt; totalPages}">
+            <a th:href="'table?fqdn=' + ${table.fqdn} + '&amp;partitionPage=' + ${totalPages} + '#partitionsContent'" data-th-text="'&raquo;&raquo;'"></a>
+          </li>
+        </ul>
+      </div>
+	</div>
+  </div>
+</div>

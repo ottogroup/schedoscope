@@ -1,0 +1,14 @@
+<div class="tab-pane" id="transformationContent" data-th-fragment="transformation(table,util)">
+  <div style="overflow: auto;">
+    <table class="table table-reflow">
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td><b>Transformation</b></td>
+        <td data-th-text="${table.transformationType}"></td>
+      </tr>
+      <tr data-th-each="transformationEntity : ${table.transformationProperties}" style="border-bottom: 1px solid lightgrey;">
+        <td><b data-th-text="${transformationEntity.transformationKey}"></b></td>
+        <td data-th-text="${transformationEntity.transformationValue}" style="white-space: pre;"></td>
+      </tr>
+    </table>
+  </div>
+</div>

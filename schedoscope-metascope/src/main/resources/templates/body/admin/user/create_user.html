@@ -1,0 +1,75 @@
+<div class="modal fade" id="userAdd" aria-hidden="true" data-th-fragment="create_user_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/user/create}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Create User'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="username">Username</label>
+              <div class="controls">
+                <input id="username" name="username" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="email">Email</label>
+              <div class="controls">
+                <input id="email" name="email" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="fullname">Full Name</label>
+              <div class="controls">
+                <input id="fullname" name="fullname" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="password">Password</label>
+              <div class="controls">
+                <input type="password" id="password" name="password" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="passwordRepeat">Repeat Password</label>
+              <div class="controls">
+                <input type="password" id="passwordRepeat" name="passwordRepeat" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="group">User Role</label>
+              <div class="controls">
+                <select class="form-control" name="group" id="group" style="width: 100%;">
+                  <option value="BUSINESS_USER">Business User</option>
+                  <option value="TECHNICAL_USER">Technical User</option>
+                  <option value="OPS_USER">Operations User</option>
+                </select>
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <div class="checkbox">
+                <label>
+                  <input name="admin" type="checkbox"> Admin </input>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Create</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

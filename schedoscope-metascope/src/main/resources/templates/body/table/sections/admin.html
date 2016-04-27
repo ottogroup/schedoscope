@@ -1,0 +1,34 @@
+<div class="tab-pane" id="adminContent" data-th-fragment="admin(table,util)">
+  Options
+  <hr style="margin-top: 5px;"/>
+  <div class="row">
+    <div class="col-md-8">
+      <form data-th-action="@{/admin/table}" method="post">
+        <div class="row" style="padding-bottom: 10px;">
+          <div class="form-group">
+            <label for="dataTimestampField" class="col-md-3 control-label" style="margin-top: 8px;">Data Timestamp field: </label>
+            <div class="col-md-3">
+              <select class="form-control" name="dataTimestampField">
+                <option style="display: none" selected="selected" th:value="null">Select field ...</option>
+                <option th:selected="${table.timestampField != null and table.timestampField.equals(field.name)}"
+                  data-th-each="field : ${table.fields}"
+                  data-th-text="${field.name}" th:value="${field.name}"></option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="padding-bottom: 10px;">
+        	<div class="col-md-3">
+        	  <label for="dataTimestampFieldFormat" class="control-label" style="margin-top: 8px;">Date Format: </label>
+        	</div>
+        	<div class="col-md-3">
+            <input name="dataTimestampFieldFormat" class="form-control" th:with="value=${table.timestampFieldFormat}" th:value="${value != null ? value : ''}"/>
+          </div>
+        </div>
+        <hr/>
+        <input type="hidden" name="fqdn" th:value="${table.fqdn}"></input>
+        <button type="submit" class="btn btn-success">Save</button>
+      </form>
+    </div>
+  </div>
+</div>

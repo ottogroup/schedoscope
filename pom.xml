@@ -36,10 +36,19 @@
 		<module>schedoscope-core</module>
 		<module>schedoscope-export</module>
 		<module>schedoscope-tutorial</module>
+		<module>schedoscope-metascope</module>
 	</modules>
-	
-	
+
+
 	<repositories>
+		<repository>
+			<id>maven-restlet</id>
+			<name>Public online Restlet repository</name>
+			<url>http://maven.restlet.com</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+		</repository>
 		<repository>
 			<id>cloudera</id>
 			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>

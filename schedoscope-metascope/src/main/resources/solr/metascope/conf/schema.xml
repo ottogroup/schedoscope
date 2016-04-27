@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+<schema name="example-data-driven-schema" version="1.5">
+    <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
+    <field name="_version_" type="long" indexed="true" stored="true"/>
+    <field name="_root_" type="string" indexed="true" stored="false"/>
+    <field name="text" type="text_multi" indexed="true" stored="false" multiValued="true"/>
+    <field name="type" type="text_general" indexed="true" stored="true"/>
+    <field name="databaseName" type="text_general" indexed="true" stored="true"/>
+    <field name="tableName" type="text_general" indexed="true" stored="true"/>
+    <field name="fields" type="text_multi" indexed="true" stored="true" multiValued="true"/>
+    <field name="transformation" type="text_multi" indexed="true" stored="true"/>
+    <field name="storageFormat" type="text_general" indexed="true" stored="true"/>
+    <field name="materializeOnce" type="boolean" indexed="true" stored="true"/>
+    <field name="external" type="boolean" indexed="true" stored="true"/>
+    <field name="createdAt" type="long" indexed="true" stored="true"/>
+    <field name="transformationTimestamp" type="long" indexed="true" stored="true"/>
+    <field name="owner" type="string" indexed="true" stored="true"/>
+    <field name="description" type="text_general" indexed="true" stored="true"/>
+    <field name="categories" type="text_multi" indexed="true" stored="true" multiValued="true"/>
+    <field name="bos" type="text_multi" indexed="true" stored="true" multiValued="true"/>
+    <field name="tags" type="text_multi" indexed="true" stored="true" multiValued="true"/>
+    <field name="documentation" type="text_general" indexed="true" stored="true"/>
+    <field name="comments" type="text_general" indexed="true" stored="true"/>
+    <field name="status" type="text_general" indexed="true" stored="true"/>
+    <field name="parameterString" type="text_general" indexed="true" stored="true"/>
+    <field name="fqdn" type="text_general" indexed="true" stored="true"/>
+    <field name="name" type="text_general" indexed="true" stored="true"/>
+    <field name="commentId" type="text_general" indexed="true" stored="true"/>
+    <field name="commentText" type="text_general" indexed="true" stored="true"/>
+
+    <copyField source="tableName" dest="text"/>
+    <copyField source="databaseName" dest="text"/>
+    <copyField source="fields" dest="text"/>
+    <copyField source="transformation" dest="text"/>
+    <copyField source="storageFormat" dest="text"/>
+    <copyField source="owner" dest="text"/>
+    <copyField source="description" dest="text"/>
+    <copyField source="categories" dest="text"/>
+    <copyField source="bos" dest="text"/>
+    <copyField source="tags" dest="text"/>
+    <copyField source="documentation" dest="text"/>
+    <copyField source="comments" dest="text"/>
+    <copyField source="status" dest="text"/>
+    <copyField source="parameterString" dest="text"/>
+    <copyField source="name" dest="text"/>
+    <copyField source="commentText" dest="text"/>
+   
+    <dynamicField name="*_s"  type="string"  indexed="true"  stored="true" />
+
+    <uniqueKey>id</uniqueKey>
+ 
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+    <fieldType name="strings" class="solr.StrField" sortMissingLast="true" multiValued="true"/>
+    <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
+    <fieldType name="booleans" class="solr.BoolField" sortMissingLast="true" multiValued="true"/>
+    <fieldType name="int" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="float" class="solr.TrieFloatField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="double" class="solr.TrieDoubleField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="ints" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="floats" class="solr.TrieFloatField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="longs" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="doubles" class="solr.TrieDoubleField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="tint" class="solr.TrieIntField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tfloat" class="solr.TrieFloatField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tlong" class="solr.TrieLongField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" positionIncrementGap="0"/>
+    <fieldType name="tints" class="solr.TrieIntField" precisionStep="8" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="tfloats" class="solr.TrieFloatField" precisionStep="8" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="tlongs" class="solr.TrieLongField" precisionStep="8" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="tdoubles" class="solr.TrieDoubleField" precisionStep="8" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="date" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0"/>
+    <fieldType name="dates" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="tdate" class="solr.TrieDateField" precisionStep="6" positionIncrementGap="0"/>
+    <fieldType name="tdates" class="solr.TrieDateField" precisionStep="6" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="binary" class="solr.BinaryField"/>
+    <fieldType name="random" class="solr.RandomSortField" indexed="true" />
+
+    <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100" multiValued="true">
+      <analyzer type="index">
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+      <analyzer type="query">
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+    
+    <fieldType name="text_multi" class="solr.TextField" positionIncrementGap="100" multiValued="true">
+      <analyzer type="index">
+        <tokenizer class="solr.KeywordTokenizerFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+      <analyzer type="query">
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+   
+</schema>

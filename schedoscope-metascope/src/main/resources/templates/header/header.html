@@ -1,0 +1,31 @@
+<nav class="navbar navbar-default navbar-fixed-top" data-th-fragment="navigation">
+  <div class="navbar-header">
+    <a style="color: #E23322;" class="navbar-brand" data-th-href="@{/}">Metascope</a>
+  </div>
+  <div class="container">
+    <div class="collapse navbar-collapse" id="navbar">
+      <ul class="nav navbar-nav navbar-right">
+        <li class="divider-vertical"></li>
+        <li class="dropdown" data-th-if="${userEntityService != null and userEntityService.isAuthenticated()}">
+          <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            <span class="glyphicon glyphicon-user"></span>
+            <span style="padding-left: 2px;" data-th-text="${userEntityService.getUser().username}"></span>
+            <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu">
+            <li data-th-if="${admin}" class="dropdown-header">Admin</li>
+            <li data-th-if="${admin and userMgmnt}"><a href="#" data-toggle="modal" data-target="#userManagement">User Management</a></li>
+            <li data-th-if="${admin}"><a href="#" data-toggle="modal" data-target="#taxonomyModal">Taxonomies</a></li>
+            <li data-th-if="${admin}" role="separator" class="divider"></li>
+            <li class="dropdown-header">Actions</li>
+            <li>
+              <form style="margin-bottom: 0px;" data-th-action="@{/logout}" method="post">
+                <button class="btn btn-link btn-logout" style="color: #262626" type="submit">Logout</button>
+              </form>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
