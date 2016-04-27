@@ -250,82 +250,82 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   /**
    * Port of Metascope web service.
    */
-  lazy val metascopePort = config.getInt("metascope.port")
+  lazy val metascopePort = config.getInt("schedoscope.metascope.port")
   
   /**
-   * 
+   * Authentication method used for Metascope. Possible options: ['simple', 'ldap']
    */
-  lazy val metascopeAuthMethod = config.getString("metascope.auth.authentication")
+  lazy val metascopeAuthMethod = config.getString("schedoscope.metascope.auth.authentication")
   
   /**
-   * 
+   * LDAP URL used for LDAP Authentication
    */
-  lazy val metascopeLdapUrl = config.getString("metascope.auth.ldap.url")
+  lazy val metascopeLdapUrl = config.getString("schedoscope.metascope.auth.ldap.url")
   
   /**
-   * 
+   * LDAP manager distinguished name
    */
-  lazy val metascopeLdapManagerDn = config.getString("metascope.auth.ldap.managerDn")
+  lazy val metascopeLdapManagerDn = config.getString("schedoscope.metascope.auth.ldap.managerDn")
   
   /**
-   * 
+   * LDAP manager password
    */
-  lazy val metascopeLdapManagerPw= config.getString("metascope.auth.ldap.managerPassword")
+  lazy val metascopeLdapManagerPw= config.getString("schedoscope.metascope.auth.ldap.managerPassword")
   
   /**
-   * 
+   * LDAP user distinguished name
    */
-  lazy val metascopeLdapUserDn = config.getString("metascope.auth.ldap.userDnPattern")
+  lazy val metascopeLdapUserDn = config.getString("schedoscope.metascope.auth.ldap.userDnPattern")
   
   /**
-   * 
+   * LDAP group search base string
    */
-  lazy val metascopeLdapGroupSearchBase = config.getString("metascope.auth.ldap.groupSearchBase")
+  lazy val metascopeLdapGroupSearchBase = config.getString("schedoscope.metascope.auth.ldap.groupSearchBase")
   
   /**
-   * 
+   * Allowed LDAP groups (users) which can access Metascope
    */
-  lazy val metascopeLdapAllowedGroups = config.getString("metascope.auth.ldap.allowedGroups")
+  lazy val metascopeLdapAllowedGroups = config.getString("schedoscope.metascope.auth.ldap.allowedGroups")
   
   /**
-   * 
+   * User in the specified admin groups have Metascope admin permissions
    */
-  lazy val metascopeLdapAdminGroups = config.getString("metascope.auth.ldap.adminGroups")
+  lazy val metascopeLdapAdminGroups = config.getString("schedoscope.metascope.auth.ldap.adminGroups")
   
   /**
-   * 
+   * URL to metadata repository
    */
-  lazy val metascopeRepositoryUrl = config.getString("metascope.repository.url")
+  lazy val metascopeRepositoryUrl = config.getString("schedoscope.metascope.repository.url")
   
   /**
-   * 
+   * User to access the metadata repository
    */
-  lazy val metascopeRepositoryUser = config.getString("metascope.repository.user")
+  lazy val metascopeRepositoryUser = config.getString("schedoscope.metascope.repository.user")
   
   /**
-   * 
+   * Password for the user used to access the metadata repository
    */
-  lazy val metascopeRepositoryPw = config.getString("metascope.repository.password")
+  lazy val metascopeRepositoryPw = config.getString("schedoscope.metascope.repository.password")
   
   /**
-   * 
+   * SQL Dialect for the specified database
    */
-  lazy val metascopeRepositoryDialect = config.getString("metascope.repository.dialect")
+  lazy val metascopeRepositoryDialect = config.getString("schedoscope.metascope.repository.dialect")
   
   /**
-   * 
+   * URL to Solr instance
    */
-  lazy val metascopeSolrUrl = config.getString("metascope.solr.url")
+  lazy val metascopeSolrUrl = config.getString("schedoscope.metascope.solr.url")
   
   /**
-   * 
+   * Location of the Metascope log file
    */
-  lazy val metascopeLoggingFile = config.getString("metascope.logging.logfile")
+  lazy val metascopeLoggingFile = config.getString("schedoscope.metascope.logging.logfile")
   
   /**
-   * 
+   * Logging level of Metascope
    */
-  lazy val metascopeLoggingLevel = config.getString("metascope.logging.loglevel")
+  lazy val metascopeLoggingLevel = config.getString("schedoscope.metascope.logging.loglevel")
 
   /**
    * A user group information object ready to use for kerberized interactions.
