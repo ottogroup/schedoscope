@@ -1,0 +1,55 @@
+<div class="modal fade" id="taxonomyModal" aria-hidden="true" data-th-fragment="taxonomy_modal" tabindex='-1'>
+  <div class="modal-dialog" style="width:90%;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 data-th-text="'Taxonomies'" class="modal-title"></h4>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-4">
+            <table id="categoryTable" class="table table-striped">
+              <tr class="info">
+                <th>Category</th>
+                <th>Actions<button onclick="createCategory()" class="btn pull-right">Add category</button></th>
+              </tr>
+              <tr data-th-each="c : ${categories}">
+                <td><a data-th-text="${c.categoryName}" th:href="'javascript:showBusinessObjects(\'' + ${c.categoryName} + '\')'"></a></td>
+                <td id="categoryActions">
+                  <button th:onclick="'deleteCategory(\'' + ${c.categoryName} + '\')'" style="padding-left: 10px;" class="btn btn-danger">Delete</button>
+                </td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-md-8">
+            <input type="hidden" id="activeCategory"/>
+            <div data-th-each="c : ${categories}">
+              <div style="display: none;" th:id="${c.categoryName}">
+                <table class="table table-striped">
+                  <tr class="info">
+                    <th>Business Object</th>
+                    <th>Description</th>
+                    <th>Actions<button th:onclick="'createBusinessObject(\'' + ${c.categoryName} + '\')'" class="btn pull-right">Add business object</button></th>
+                  </tr>
+                  <tr data-th-each="bo : ${c.businessObjects}">
+                    <td style="width:15%;" data-th-text="${bo.name}" />
+                    <td data-th-text="${bo.description}" />
+                    <td style="width:30%;" id="categoryActions">
+                      <button th:onclick="'editBusinessObject(\'' + ${c.categoryName} + '\', \'' + ${bo.name} + '\', \'' + ${bo.description} + '\')'" class="btn btn-default">Edit</button>
+                      <button th:onclick="'deleteBusinessObject(\'' + ${c.categoryName} + '\', \'' + ${bo.name} + '\')'" style="padding-left: 10px;" class="btn btn-danger">Delete</button>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

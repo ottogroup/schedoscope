@@ -1,0 +1,133 @@
+<div data-th-fragment="index">
+  <script th:inline="javascript">
+  /*<![CDATA[*/
+    var setupFilter = function() {
+      var filterNames = [[${solrQuery.filters}]];
+      filterNames.push({name: "type"});
+      filterNames.push({name: "favourite"});
+      
+      for (var i in filterNames) {
+        var filterName = filterNames[i].name + "Toggle";
+        var filterStatus = $.cookie(filterName);
+        if (filterStatus == 'open') {
+          $('#' + filterName).addClass("in");
+          $('#' + filterName + 'Label').children().eq(1).replaceWith('<span class="dropup"><span class="caret"></span></span>');
+        } else if (filterStatus == 'closed') {
+          $('#' + filterName).removeClass("in");
+          $('#' + filterName + 'Label').children().eq(1).replaceWith('<span class="caret"></span>');
+        }
+      }
+    }
+  /*]]>*/
+  </script>
+</div>
+
+<div data-th-fragment="table">
+  <script th:inline="javascript">
+  /*<![CDATA[*/
+    $('#myTabs a').click(function (e) {
+      e.preventDefault()
+      $(this).tab('show')
+    });
+  
+    $("#taxonomySubmitButton").on('click', function() {
+      var objects = "";
+      $("#bosDiv").find("span").each(function() {
+        objects += $(this).text() + ",";
+      })
+      $("#bosDiv").find("a").each(function() {
+        objects += $(this).text() + ",";
+      })
+      $("#businessObjects").val(objects);
+    });
+  
+    var fqdn = [[${table.fqdn}]];
+    var first = [[${firstParam}]];
+    var viewPage = [[${partitionPage}]];
+    
+    setTimeout(function() {
+      getSample(fqdn);
+      getViews(fqdn, viewPage);
+      getParameterValue(fqdn, first);
+      var bos = [[${table.businessObjects}]];
+      for (var i = 0; i < bos.length; i++) {
+        var bo = bos[i];
+        $("#bosDiv").find("span").eq(i).replaceWith('<a id="' + bo.categoryName + '' + bo.name + '" style="margin-right: 6px;" data-toggle="popover" class="tag label label-info" data-original-title="' + bo.name + ' (Category: ' + bo.categoryName + ')" data-placement="bottom" data-content="' + bo.description + '\n\n" href="#">' + bo.name + '<span data-role="remove"></span></a>');
+  	  }
+  		
+      $('[data-toggle="tooltip"]').tooltip()
+      $('[data-toggle="popover"]').popover({ trigger: "hover" })
+      $("#manualInputTag").prop('disabled', true);
+      $("#bosDiv").find("span").on('click', function() {
+        var text = $(this).parent().text();
+        $(this).parent().remove();
+        $('[role="tooltip"]').remove();
+      });
+  	}, 1000);
+  
+    var _comment = [[${table.comment}]];
+    var comment = "";
+    
+    if (_comment != null) {
+      comment = _comment.text;
+    }
+     
+    $(document).ready(function() {
+      $('#tableEditor').summernote({
+        height: 300,
+        minHeight: null,
+        maxHeight: null,
+        focus: true,
+        toolbar: [
+          ['style', ['style']],
+          ['font', ['bold', 'italic', 'underline', 'clear']],
+          ['fontname', ['fontname']],
+          ['fontsize', ['fontsize']],
+          ['color', ['color']],
+          ['para', ['ul', 'ol', 'paragraph']],
+          ['height', ['height']],
+          ['table', ['table']],
+          ['insert', ['link', 'hr']],
+          ['view', ['codeview']],
+          ['help', ['help']]
+        ],
+      });
+      
+      $('#tableCommentEditor').summernote({
+        height: 75,
+        minHeight: null,
+        maxHeight: null,
+        focus: true,
+        toolbar: [
+          ['font', ['bold', 'italic', 'underline', 'clear']],
+          ['fontname', ['fontname']],
+          ['color', ['color']],
+          ['para', ['ul', 'ol', 'paragraph']],
+          ['insert', ['link']],
+        ],
+      });
+      
+      $('#tableEditor').code(comment);
+      $('#tableEditor').on('summernote.change', function(customEvent, contents, $editable) {
+        $('#tableDocumentationInput').val($('#tableEditor').code());
+      });
+
+      $('#tableCommentEditor').on('summernote.change', function(customEvent, contents, $editable) {
+        $('#tableCommentInput').val($('#tableCommentEditor').code());
+      });
+      
+      var tagsinput = $('#categoryTags').next();
+      tagsinput.removeClass('bootstrap-tagsinput');
+      tagsinput.find("input").remove();
+      tagsinput.css("padding-bottom", "15px");
+    });
+    
+    var users = [[${owner}]];
+    $('#personResponsibleField').autocomplete({
+    	source: users,
+    	minLength: 0
+    });
+
+  /*]]>*/
+</script>
+</div>

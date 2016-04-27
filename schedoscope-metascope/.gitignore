@@ -1,0 +1,8 @@
+/repository
+solr/metascope/data
+derby.log
+target
+.classpath
+.settings
+.project
+/target/
