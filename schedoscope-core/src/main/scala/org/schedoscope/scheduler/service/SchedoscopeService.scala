@@ -30,6 +30,7 @@ case class ViewStatus(
   parameters: Option[List[FieldStatus]],
   dependencies: Option[Map[String, List[String]]],
   transformation: Option[ViewTransformationStatus],
+  export: Option[List[ViewTransformationStatus]],
   storageFormat: Option[String],
   materializeOnce: Option[Boolean],
   comment: Option[Option[String]],
