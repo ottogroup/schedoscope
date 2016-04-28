@@ -13,7 +13,7 @@
 	        <th data-th-each="parameter:${table.parameters}" data-th-text="${parameter.name}"></th>
 	        <td data-th-if="${table.parameters.size() == 0}"></td>
 	        <th data-th-if="${table.dependencies.size() > 0}">Based On</th>
-	        <th data-th-if="${successors != null and successors.size() > 0}">Used By</th> 
+	        <th data-th-if="${(successors != null and successors.size() > 0) or (transitiveSuccessors != null and transitiveSuccessors.size() > 0)}">Used By</th>  
 	        <th>Status</th>
 	        <th>Last Transformation</th>
 	        <th>Transformation time (hh:mm:ss)</th>
