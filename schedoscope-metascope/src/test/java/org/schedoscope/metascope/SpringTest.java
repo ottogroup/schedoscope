@@ -54,11 +54,13 @@ import org.schedoscope.metascope.service.TaxonomyService;
 import org.schedoscope.metascope.service.URLService;
 import org.schedoscope.metascope.service.UserEntityService;
 import org.schedoscope.metascope.tasks.repository.RepositoryDAO;
+import org.schedoscope.metascope.util.HiveQueryResult;
 import org.springframework.aop.framework.Advised;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.SpringApplicationContextLoader;
 import org.springframework.context.support.StaticApplicationContext;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -66,6 +68,7 @@ import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.WebApplicationContext;
 
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterators;
 
 @ActiveProfiles("test")
@@ -144,6 +147,9 @@ public class SpringTest {
   protected RepositoryDAO repo;
   @Autowired
   protected DataSource dataSource;
+  
+  @Autowired 
+  protected MockHttpServletRequest request;
 
   @Before
   public void setup() {
@@ -156,7 +162,10 @@ public class SpringTest {
     when(userEntityServiceMock.getAllUser()).thenReturn(new ArrayList<UserEntity>());
     when(userEntityServiceMock.isAdmin()).thenReturn(true);
     when(userEntityServiceMock.isFavourite(any(TableEntity.class))).thenReturn(true);
+    LoadingCache<String, HiveQueryResult> sampleCacheMock = getSampleCacheMock();
+    when(sampleCacheMock.getUnchecked(any(String.class))).thenReturn(new HiveQueryResult("test"));
     mockField(tableEntityService, "userEntityService", userEntityServiceMock);
+    mockField(tableEntityService, "sampleCache", sampleCacheMock);
     mockField(taxonomyService, "userEntityService", userEntityServiceMock);
     mockField(tableEntityController, "userEntityService", userEntityServiceMock);
 
@@ -165,6 +174,11 @@ public class SpringTest {
     mockField(tableEntityService, "solr", solrFacadeMock);
     mockField(documentationService, "solr", solrFacadeMock);
     mockField(taxonomyService, "solr", solrFacadeMock);
+  }
+
+  @SuppressWarnings("unchecked")
+  private LoadingCache<String, HiveQueryResult> getSampleCacheMock() {
+    return mock(LoadingCache.class);
   }
 
   protected void mockField(Class<?> clazz, String name, Object mock) {

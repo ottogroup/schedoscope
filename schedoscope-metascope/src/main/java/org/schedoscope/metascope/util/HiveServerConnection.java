@@ -45,7 +45,7 @@ public class HiveServerConnection {
     try {
       this.connection = DriverManager.getConnection(config.getHiveServerUrl());
     } catch (SQLException e) {
-      LOG.error("Could not connect to hive server", e);
+      LOG.warn("Could not connect to hive server", e);
     }
     return this;
   }

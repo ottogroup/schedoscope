@@ -363,6 +363,8 @@ public class TableEntityController extends ViewController {
       return null;
     }
 
+    params.remove("fqdn");
+    
     Future<HiveQueryResult> future = tableEntityService.getSample(fqdn, params);
     HiveQueryResult sample;
     try {
