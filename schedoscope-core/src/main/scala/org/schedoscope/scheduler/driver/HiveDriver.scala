@@ -54,6 +54,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
       t.udfs.foreach(this.registerFunction(_))
 
       executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
+      
     })
 
   /**
