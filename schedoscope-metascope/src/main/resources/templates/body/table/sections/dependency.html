@@ -10,7 +10,7 @@
       <td><a data-th-href="'table?fqdn=' + ${d.dependencyFqdn}" data-th-text="${d.dependencyFqdn}"></a></td>
     </tr>
   </table>
-  <table class="table table-bordered table-striped" data-th-if="${successors.size() > 0}">
+  <table class="table table-bordered table-striped" data-th-if="${(successors != null and successors.size() > 0) or (transitiveSuccessors != null and transitiveSuccessors.size() > 0)}">
     <tr class="info">
       <th>Used by</th>
     </tr>
