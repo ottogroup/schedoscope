@@ -17,9 +17,7 @@ package org.schedoscope.metascope.tasks.repository.mysql.impl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -32,32 +30,6 @@ import org.slf4j.LoggerFactory;
 public class ViewDependencyEntityMySQLRepository implements MySQLRepository<ViewDependencyEntity> {
 
   private static final Logger LOG = LoggerFactory.getLogger(ViewDependencyEntityMySQLRepository.class);
-
-  @Override
-  public List<ViewDependencyEntity> get(Connection connection) {
-    List<ViewDependencyEntity> list = new ArrayList<ViewDependencyEntity>();
-    PreparedStatement stmt = null;
-    ResultSet rs = null;
-    try {
-      stmt = connection.prepareStatement("select " + JDBCUtil.getDatabaseColumnsForClass(ViewDependencyEntity.class)
-          + " from view_dependency_entity");
-      rs = stmt.executeQuery();
-      while (rs.next()) {
-        ViewDependencyEntity dependencyEntity = new ViewDependencyEntity();
-        dependencyEntity.setUrlPath(rs.getString(ViewDependencyEntity.URL_PATH));
-        dependencyEntity.setDependencyUrlPath(rs.getString(ViewDependencyEntity.DEPENDENCY_URL_PATH));
-        dependencyEntity.setDependencyFqdn(rs.getString(ViewDependencyEntity.DEPENDENCY_FQDN));
-        dependencyEntity.setInternalViewId(rs.getString(ViewDependencyEntity.INTERNAL_VIEW_ID));
-        list.add(dependencyEntity);
-      }
-    } catch (SQLException e) {
-      LOG.error("Could not query view dependencies", e);
-    } finally {
-      DbUtils.closeQuietly(rs);
-      DbUtils.closeQuietly(stmt);
-    }
-    return list;
-  }
 
   @Override
   public void insertOrUpdate(Connection connection, ViewDependencyEntity viewDependencyEntity) {
@@ -80,6 +52,7 @@ public class ViewDependencyEntityMySQLRepository implements MySQLRepository<View
     }
   }
 
+  @Override
   public void insertOrUpdate(Connection connection, List<ViewDependencyEntity> dependencies) {
     String insertDependencySql = "insert into view_dependency_entity ("
         + JDBCUtil.getDatabaseColumnsForClass(ViewDependencyEntity.class) + ") values ("

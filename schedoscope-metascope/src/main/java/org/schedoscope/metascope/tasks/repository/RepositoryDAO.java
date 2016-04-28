@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.util.List;
 import java.util.Set;
 
+import org.schedoscope.metascope.model.ExportEntity;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.Metadata;
 import org.schedoscope.metascope.model.ParameterValueEntity;
@@ -74,6 +75,8 @@ public interface RepositoryDAO {
   public void insertOrUpdateSuccessors(Connection connection, List<SuccessorEntity> successors);
 
   public void insertOrUpdateTableDependencies(Connection connection, List<TableDependencyEntity> tableDependencies);
+  
+	public void insertOrUpdateExportPartial(Connection connection, List<ExportEntity> exports);
 
   public void updateTableStatus(Connection connection, TableEntity tableEntity, Long lastTransformation);
 

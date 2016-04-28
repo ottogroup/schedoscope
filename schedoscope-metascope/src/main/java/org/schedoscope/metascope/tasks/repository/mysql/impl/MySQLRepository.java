@@ -20,8 +20,8 @@ import java.util.List;
 
 public interface MySQLRepository<T> {
 
-  public List<T> get(Connection connection);
-
   public void insertOrUpdate(Connection connection, T entity);
+  
+  public void insertOrUpdate(Connection connection, List<T> entities);
 
 }

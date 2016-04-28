@@ -39,6 +39,7 @@ public class View {
   private List<ViewField> parameters;
   private Map<String, List<String>> dependencies;
   private ViewTransformation transformation;
+  private List<ViewTransformation> export;
   private String storageFormat;
   private boolean external;
   private boolean materializeOnce;
@@ -143,6 +144,14 @@ public class View {
 
   public void setTransformation(ViewTransformation transformation) {
     this.transformation = transformation;
+  }
+  
+  public List<ViewTransformation> getExport() {
+	  return export;
+  }
+  
+  public void setExport(List<ViewTransformation> export) {
+	  this.export = export;
   }
 
   public String getStorageFormat() {

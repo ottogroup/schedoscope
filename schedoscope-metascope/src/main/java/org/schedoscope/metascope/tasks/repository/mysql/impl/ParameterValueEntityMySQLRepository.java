@@ -17,9 +17,7 @@ package org.schedoscope.metascope.tasks.repository.mysql.impl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -32,32 +30,6 @@ import org.slf4j.LoggerFactory;
 public class ParameterValueEntityMySQLRepository implements MySQLRepository<ParameterValueEntity> {
 
   private static final Logger LOG = LoggerFactory.getLogger(ParameterValueEntityMySQLRepository.class);
-
-  @Override
-  public List<ParameterValueEntity> get(Connection connection) {
-    List<ParameterValueEntity> list = new ArrayList<ParameterValueEntity>();
-    PreparedStatement stmt = null;
-    ResultSet rs = null;
-    try {
-      stmt = connection.prepareStatement("select " + JDBCUtil.getDatabaseColumnsForClass(ParameterValueEntity.class)
-          + " from parameter_value_entity");
-      rs = stmt.executeQuery();
-      while (rs.next()) {
-        ParameterValueEntity parameterValueEntity = new ParameterValueEntity();
-        parameterValueEntity.setUrlPath(rs.getString(ParameterValueEntity.URL_PATH));
-        parameterValueEntity.setKey(rs.getString(ParameterValueEntity.KEY));
-        parameterValueEntity.setValue(rs.getString(ParameterValueEntity.VALUE));
-        parameterValueEntity.setTableFqdn(rs.getString(ParameterValueEntity.TABLE_FQDN));
-        list.add(parameterValueEntity);
-      }
-    } catch (SQLException e) {
-      LOG.error("Could not query parameter values", e);
-    } finally {
-      DbUtils.closeQuietly(rs);
-      DbUtils.closeQuietly(stmt);
-    }
-    return list;
-  }
 
   @Override
   public void insertOrUpdate(Connection connection, ParameterValueEntity parameterValueEntity) {
@@ -80,6 +52,7 @@ public class ParameterValueEntityMySQLRepository implements MySQLRepository<Para
     }
   }
 
+  @Override
   public void insertOrUpdate(Connection connection, List<ParameterValueEntity> parameterValues) {
     String insertParameterSql = "insert into parameter_value_entity ("
         + JDBCUtil.getDatabaseColumnsForClass(ParameterValueEntity.class) + ") values ("

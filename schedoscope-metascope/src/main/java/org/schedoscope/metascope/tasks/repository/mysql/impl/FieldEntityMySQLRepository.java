@@ -17,9 +17,7 @@ package org.schedoscope.metascope.tasks.repository.mysql.impl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -32,34 +30,6 @@ import org.slf4j.LoggerFactory;
 public class FieldEntityMySQLRepository implements MySQLRepository<FieldEntity> {
 
   private static final Logger LOG = LoggerFactory.getLogger(FieldEntityMySQLRepository.class);
-
-  @Override
-  public List<FieldEntity> get(Connection connection) {
-    List<FieldEntity> list = new ArrayList<FieldEntity>();
-    PreparedStatement stmt = null;
-    ResultSet rs = null;
-    try {
-      stmt = connection.prepareStatement("select " + JDBCUtil.getDatabaseColumnsForClass(FieldEntity.class)
-          + " from field_entity");
-      rs = stmt.executeQuery();
-      while (rs.next()) {
-        FieldEntity fieldEntity = new FieldEntity();
-        fieldEntity.setFqdn(rs.getString(FieldEntity.FQDN));
-        fieldEntity.setName(rs.getString(FieldEntity.NAME));
-        fieldEntity.setDescription(rs.getString(FieldEntity.DESCRIPTION));
-        fieldEntity.setFieldOrder(rs.getInt(FieldEntity.FIELD_ORDER));
-        fieldEntity.setParameterField(rs.getBoolean(FieldEntity.PARAMETER_FIELD));
-        fieldEntity.setType(rs.getString(FieldEntity.TYPE));
-        list.add(fieldEntity);
-      }
-    } catch (SQLException e) {
-      LOG.error("Could not query fields", e);
-    } finally {
-      DbUtils.closeQuietly(rs);
-      DbUtils.closeQuietly(stmt);
-    }
-    return list;
-  }
 
   @Override
   public void insertOrUpdate(Connection connection, FieldEntity fieldEntity) {
@@ -84,6 +54,7 @@ public class FieldEntityMySQLRepository implements MySQLRepository<FieldEntity> 
     }
   }
 
+  @Override
   public void insertOrUpdate(Connection connection, List<FieldEntity> fields) {
     String insertFieldSql = "insert into field_entity (" + JDBCUtil.getDatabaseColumnsForClass(FieldEntity.class)
         + ") values (" + JDBCUtil.getValuesCountForClass(FieldEntity.class) + ") " + "on duplicate key update "

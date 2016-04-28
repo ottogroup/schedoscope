@@ -19,7 +19,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -32,32 +31,6 @@ import org.slf4j.LoggerFactory;
 public class SuccessorEntityMySQLRepository implements MySQLRepository<SuccessorEntity> {
 
   private static final Logger LOG = LoggerFactory.getLogger(SuccessorEntityMySQLRepository.class);
-
-  @Override
-  public List<SuccessorEntity> get(Connection connection) {
-    List<SuccessorEntity> list = new ArrayList<SuccessorEntity>();
-    PreparedStatement stmt = null;
-    ResultSet rs = null;
-    try {
-      stmt = connection.prepareStatement("select " + JDBCUtil.getDatabaseColumnsForClass(SuccessorEntity.class)
-          + " from successor_entity");
-      rs = stmt.executeQuery();
-      while (rs.next()) {
-        SuccessorEntity successorEntity = new SuccessorEntity();
-        successorEntity.setUrlPath(rs.getString(SuccessorEntity.URL_PATH));
-        successorEntity.setSuccessorUrlPath(rs.getString(SuccessorEntity.SUCCESSOR_URL_PATH));
-        successorEntity.setSuccessorFqdn(rs.getString(SuccessorEntity.SUCCESSOR_FQDN));
-        successorEntity.setInternalViewId(rs.getString(SuccessorEntity.INTERNAL_VIEW_ID));
-        list.add(successorEntity);
-      }
-    } catch (SQLException e) {
-      LOG.error("Could not query successors", e);
-    } finally {
-      DbUtils.closeQuietly(rs);
-      DbUtils.closeQuietly(stmt);
-    }
-    return list;
-  }
 
   public SuccessorEntity get(Connection connection, SuccessorEntity successorEntity) {
     PreparedStatement stmt = null;
@@ -99,6 +72,7 @@ public class SuccessorEntityMySQLRepository implements MySQLRepository<Successor
     }
   }
 
+  @Override
   public void insertOrUpdate(Connection connection, List<SuccessorEntity> successors) {
     String insertSuccessorSql = "insert into successor_entity ("
         + JDBCUtil.getDatabaseColumnsForClass(SuccessorEntity.class) + ") values ("

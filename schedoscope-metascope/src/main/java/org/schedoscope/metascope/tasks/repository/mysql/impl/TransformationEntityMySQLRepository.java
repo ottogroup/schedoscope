@@ -17,9 +17,7 @@ package org.schedoscope.metascope.tasks.repository.mysql.impl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -32,31 +30,6 @@ import org.slf4j.LoggerFactory;
 public class TransformationEntityMySQLRepository implements MySQLRepository<TransformationEntity> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransformationEntityMySQLRepository.class);
-
-  @Override
-  public List<TransformationEntity> get(Connection connection) {
-    List<TransformationEntity> list = new ArrayList<TransformationEntity>();
-    PreparedStatement stmt = null;
-    ResultSet rs = null;
-    try {
-      stmt = connection.prepareStatement("select " + JDBCUtil.getDatabaseColumnsForClass(TransformationEntity.class)
-          + " from transformation_entity");
-      rs = stmt.executeQuery();
-      while (rs.next()) {
-        TransformationEntity transformationEntity = new TransformationEntity();
-        transformationEntity.setFqdn(rs.getString(TransformationEntity.FQDN));
-        transformationEntity.setTransformationKey(rs.getString(TransformationEntity.KEY));
-        transformationEntity.setTransformationValue(rs.getString(TransformationEntity.VALUE));
-        list.add(transformationEntity);
-      }
-    } catch (SQLException e) {
-      LOG.error("Could not query transformation properties", e);
-    } finally {
-      DbUtils.closeQuietly(rs);
-      DbUtils.closeQuietly(stmt);
-    }
-    return list;
-  }
 
   @Override
   public void insertOrUpdate(Connection connection, TransformationEntity te) {
@@ -79,6 +52,7 @@ public class TransformationEntityMySQLRepository implements MySQLRepository<Tran
     }
   }
 
+  @Override
   public void insertOrUpdate(Connection connection, List<TransformationEntity> tes) {
     String insertTeSql = "insert into transformation_entity ("
         + JDBCUtil.getDatabaseColumnsForClass(TransformationEntity.class) + ") values ("

@@ -17,9 +17,7 @@ package org.schedoscope.metascope.tasks.repository.mysql.impl;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.dbutils.DbUtils;
@@ -32,30 +30,6 @@ import org.slf4j.LoggerFactory;
 public class TableDependencyEntityMySQLRepository implements MySQLRepository<TableDependencyEntity> {
 
   private static final Logger LOG = LoggerFactory.getLogger(TableDependencyEntityMySQLRepository.class);
-
-  @Override
-  public List<TableDependencyEntity> get(Connection connection) {
-    List<TableDependencyEntity> list = new ArrayList<TableDependencyEntity>();
-    PreparedStatement stmt = null;
-    ResultSet rs = null;
-    try {
-      stmt = connection.prepareStatement("select " + JDBCUtil.getDatabaseColumnsForClass(TableDependencyEntity.class)
-          + " from table_dependency_entity");
-      rs = stmt.executeQuery();
-      while (rs.next()) {
-        TableDependencyEntity dependencyEntity = new TableDependencyEntity();
-        dependencyEntity.setFqdn(rs.getString(TableDependencyEntity.FQDN));
-        dependencyEntity.setDependencyFqdn(rs.getString(TableDependencyEntity.DEPENDENCY_FQDN));
-        list.add(dependencyEntity);
-      }
-    } catch (SQLException e) {
-      LOG.error("Could not query table dependencies", e);
-    } finally {
-      DbUtils.closeQuietly(rs);
-      DbUtils.closeQuietly(stmt);
-    }
-    return list;
-  }
 
   @Override
   public void insertOrUpdate(Connection connection, TableDependencyEntity dependency) {
@@ -76,6 +50,7 @@ public class TableDependencyEntityMySQLRepository implements MySQLRepository<Tab
     }
   }
 
+  @Override
   public void insertOrUpdate(Connection connection, List<TableDependencyEntity> tableDependencies) {
     String insertDependencySql = "insert into table_dependency_entity ("
         + JDBCUtil.getDatabaseColumnsForClass(TableDependencyEntity.class) + ") values ("

@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.schedoscope.metascope.model.ExportEntity;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.Metadata;
 import org.schedoscope.metascope.model.ParameterValueEntity;
@@ -32,6 +33,7 @@ import org.schedoscope.metascope.model.TransformationEntity;
 import org.schedoscope.metascope.model.ViewDependencyEntity;
 import org.schedoscope.metascope.model.ViewEntity;
 import org.schedoscope.metascope.tasks.repository.RepositoryDAO;
+import org.schedoscope.metascope.tasks.repository.jdbc.impl.ExportEntityJdbcRepository;
 import org.schedoscope.metascope.tasks.repository.jdbc.impl.FieldEntityJdbcRepository;
 import org.schedoscope.metascope.tasks.repository.jdbc.impl.MetadataJdbcRepository;
 import org.schedoscope.metascope.tasks.repository.jdbc.impl.ParameterValueEntityJdbcRepository;
@@ -57,6 +59,7 @@ public class NativeSqlRepository implements RepositoryDAO {
   private ParameterValueEntityJdbcRepository parameterValueEntityJdbcRepository;
   private TableDependencyEntityJdbcRepository tableDependencyEntityJdbcRepository;
   private MetadataJdbcRepository metadataJdbcRepository;
+	private ExportEntityJdbcRepository exportEntityJdbcRepository;
 
   public NativeSqlRepository() {
     this.tableEntityJdbcRepository = new TableEntityJdbcRepository();
@@ -68,6 +71,7 @@ public class NativeSqlRepository implements RepositoryDAO {
     this.parameterValueEntityJdbcRepository = new ParameterValueEntityJdbcRepository();
     this.tableDependencyEntityJdbcRepository = new TableDependencyEntityJdbcRepository();
     this.metadataJdbcRepository = new MetadataJdbcRepository();
+    this.exportEntityJdbcRepository = new ExportEntityJdbcRepository();
   }
 
   @Override
@@ -194,6 +198,10 @@ public class NativeSqlRepository implements RepositoryDAO {
       tableDependencyEntityJdbcRepository.update(connection, dependency);
     }
   }
+  
+  private void insertOrUpdate(Connection connection, ExportEntity exportEntity) {
+    exportEntityJdbcRepository.save(connection, exportEntity);
+  }
 
   @Override
   public void insertOrUpdate(Connection connection, Metadata metadata) {
@@ -260,8 +268,15 @@ public class NativeSqlRepository implements RepositoryDAO {
       insertOrUpdate(connection, tableDependencyEntity);
     }
   }
+  
+	@Override
+  public void insertOrUpdateExportPartial(Connection connection, List<ExportEntity> exports) {
+	  for (ExportEntity exportEntity : exports) {
+	    insertOrUpdate(connection, exportEntity);
+    }
+  }
 
-  @Override
+	@Override
   public void updateTableStatus(Connection connection, Set<TableEntity> tables) {
     for (TableEntity tableEntity : tables) {
       updateTableStatus(connection, tableEntity, tableEntity.getLastTransformation());
