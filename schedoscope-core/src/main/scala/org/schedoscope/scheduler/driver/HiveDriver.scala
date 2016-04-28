@@ -29,7 +29,6 @@ import org.joda.time.LocalDateTime
 import org.schedoscope.{ DriverSettings, Schedoscope }
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
-import org.schedoscope.scheduler.driver.HiveDriver.currentConnection
 import org.slf4j.LoggerFactory
 
 import scala.Array.canBuildFrom
@@ -46,57 +45,23 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
 
-  def isConnectionProblem(t: Throwable): Boolean = {
-    val result = t.isInstanceOf[TException] || t.isInstanceOf[ConnectException]
-
-    if (!result && t.getCause() != null) {
-      isConnectionProblem(t.getCause())
-    } else result
-  }
-
   /**
    * Construct a future-based driver run handle
    */
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
+
       t.udfs.foreach(this.registerFunction(_))
+
       executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
+      
     })
 
   /**
-   * Actually perform the given query and return a run state after completion.
+   * Register UDFs with Metastore.
    */
-  def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
-    val queryStack = Stack[String]("")
-
-    sql.split(";").map(el => {
-      if (StringUtils.endsWith(queryStack.head, "\\")) {
-        queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + el)
-      } else {
-        queryStack.push(el)
-      }
-    })
-
-    val queriesToExecute = queryStack.reverse.filter(q => !StringUtils.isBlank(q))
-
-    queriesToExecute.foreach(
-      q => try {
-        log.debug(s"Hive driver executing query ${q.trim()}")
-        statement.execute(q.trim())
-      } catch {
-        case t: Throwable => {
-          cleanupResources
-          if (isConnectionProblem(t))
-            throw RetryableDriverException(s"Hive driver encountered connection problem while executing hive query ${q}", t)
-          else
-            return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${q}. Failing run.", t)
-        }
-      })
-
-    DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
-  }
-
   def registerFunction(f: Function) {
+
     val existing = try {
       metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
     } catch {
@@ -112,74 +77,115 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
   }
 
   /**
-   * We need to handle connections and statements as ThreadLocals because the Hive JDBC driver
-   * binds sessions to threads :-(
+   * Actually perform the given query and return a run state after completion.
    */
-  private def connection = {
-    if (currentConnection.get.isEmpty) {
-      log.info("HIVE-DRIVER: Establishing connection to HiveServer")
-      Class.forName(JDBC_CLASS)
-      ugi.reloginFromTicketCache()
-      currentConnection.set(Some(ugi.doAs(new PrivilegedAction[Connection]() {
-        def run(): Connection = {
-          DriverManager.getConnection(connectionUrl)
+  def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
+
+    val queriesToExecute = splitQueryIntoStatements(sql)
+
+    var hiveConnection: Connection = null
+
+    try {
+
+      hiveConnection = this.connection
+
+      var hive: Statement = null
+
+      try {
+
+        hive = hiveConnection.createStatement()
+
+        queriesToExecute.foreach { q =>
+
+          log.debug(s"Hive driver executing query ${q.trim}")
+
+          try {
+
+            hive.execute(q.trim)
+
+          } catch {
+            case t: Throwable => if (isConnectionProblem(t)) {
+
+              throw RetryableDriverException(s"Hive driver encountered connection problem while executing hive query ${q}", t)
+
+            } else {
+
+              return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${q}. Failing run.", t)
+
+            }
+          }
+
         }
-      })))
-    }
 
-    currentConnection.get.get
-  }
+      } finally {
 
-  private val currentStatement = new ThreadLocal[Option[Statement]]() {
-    override def initialValue() = None
-  }
-
-  private def statement = {
-    if (currentStatement.get.isEmpty) {
-      log.info("HIVE-DRIVER: Creating statement on HiveServer")
-      currentStatement.set(Some(connection.createStatement()))
-    }
-    currentStatement.get.get
-  }
-
-  /**
-   * We need to cleanup  connections and statements and their ThreadLocals because the Hive JDBC driver
-   * binds sessions to threads :-(
-   */
-  private def cleanupResources() {
-    try {
-      if (currentStatement.get.isDefined) {
-        log.warn("HIVE-DRIVER: Closing statement on HiveServer")
-        currentStatement.get.get.close()
+        try {
+          hive.close()
+        } catch {
+          case _: Throwable =>
+        }
       }
-    } catch {
-      case _: Throwable =>
+
     } finally {
-      currentStatement.set(None)
+
+      try {
+        hiveConnection.close()
+      } catch {
+        case _: Throwable =>
+      }
+
     }
 
-    try {
-      if (currentConnection.get.isDefined) {
-        log.warn("HIVE-DRIVER: Closing connection to HiveServer")
-        currentConnection.get.get.close()
+    DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
+  }
+
+  private def splitQueryIntoStatements(sql: String) = {
+    val queryStack = Stack[String]("")
+
+    sql
+      .split(";")
+      .foreach { statement =>
+        {
+          if (StringUtils.endsWith(queryStack.head, "\\")) {
+            queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + statement)
+          } else {
+            queryStack.push(statement)
+          }
+        }
       }
-    } catch {
-      case _: Throwable =>
-    } finally {
-      currentConnection.set(None)
-    }
+
+    queryStack.reverse.filter { !StringUtils.isBlank(_) }
+  }
+
+  private def connection = {
+    log.info("HIVE-DRIVER: Establishing connection to HiveServer")
+
+    Class.forName(JDBC_CLASS)
+    ugi.reloginFromTicketCache()
+
+    ugi.doAs(new PrivilegedAction[Connection]() {
+      def run(): Connection = {
+        DriverManager.getConnection(connectionUrl)
+      }
+    })
+  }
+
+  def isConnectionProblem(t: Throwable): Boolean = {
+    val result = t.isInstanceOf[TException] || t.isInstanceOf[ConnectException]
+
+    if (!result && t.getCause() != null) {
+      isConnectionProblem(t.getCause())
+    } else result
   }
 
   def JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
+
 }
 
 /**
  * Factory methods for Hive drivers
  */
 object HiveDriver {
-  val currentConnection = new ThreadLocal[Option[Connection]]() {
-    override def initialValue() = None
-  }
 
   def apply(ds: DriverSettings) = {
     val ugi = Schedoscope.settings.userGroupInformation
