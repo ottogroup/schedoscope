@@ -17,7 +17,7 @@
                    style="font-size:1.5em; margin-right: 5px;" type="submit"></button>
                 <a data-th-if="${!table.isPartitioned()}" href="javascript:void(0)" data-th-text="${table.databaseName} + ' :: ' + ${table.tableName}"></a> 
                 <a data-th-if="${table.isPartitioned()}" href="javascript:void(0)" data-th-text="${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')'"></a> 
-                <button id="minimizeButton" style="padding: 0px; width: 30px;" class="btn btn-link pull-right">
+                <button type='button' id="minimizeButton" style="padding: 0px; width: 30px;" class="btn btn-link pull-right">
                   <span id="minimizeButtonCaret" class="glyphicon glyphicon-triangle-top"></span>
                 </button>
               </div>

@@ -57,7 +57,7 @@
   		
       $('[data-toggle="tooltip"]').tooltip()
       $('[data-toggle="popover"]').popover({ trigger: "hover" })
-      $("#manualInputTag").prop('disabled', true);
+      $("#bosDiv").find(".bootstrap-tagsinput").find("input").prop("readonly", true);
       $("#bosDiv").find("span").on('click', function() {
         var text = $(this).parent().text();
         $(this).parent().remove();

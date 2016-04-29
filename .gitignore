@@ -17,3 +17,4 @@ test-classes
 *.log
 .DS_Store
 build/
+.fbExcludeFilterFile

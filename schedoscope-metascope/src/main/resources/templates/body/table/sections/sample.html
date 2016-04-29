@@ -1,7 +1,7 @@
 <div class="tab-pane" id="sampleContent" data-th-fragment="sample(table,util)">
   <div class="row">
-    <div th:attr="class=${table.isPartitioned() ? 'col-md-10' : 'col-md-12'}" style="overflow: auto;">
-      <div id="samples">
+    <div th:attr="class=${table.isPartitioned() ? 'col-md-10' : 'col-md-12'}">
+      <div id="samples" style="overflow: auto;">
         <em th:utext="'Loading sample ...'"></em>
       </div>
     </div>
