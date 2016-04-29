@@ -54,7 +54,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
       t.udfs.foreach(this.registerFunction(_))
 
       executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
-      
+
     })
 
   /**
@@ -83,17 +83,17 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 
     val queriesToExecute = splitQueryIntoStatements(sql)
 
-    var hiveConnection: Connection = null
+    var hiveServer: Connection = null
 
     try {
 
-      hiveConnection = this.connection
+      hiveServer = hiveJdbcConnection
 
       var hive: Statement = null
 
       try {
 
-        hive = hiveConnection.createStatement()
+        hive = hiveServer.createStatement()
 
         queriesToExecute.foreach { q =>
 
@@ -120,7 +120,13 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
       } finally {
 
         try {
+
+          log.info("HIVE-DRIVER: Closing statement on HiveServer")
+
           hive.close()
+
+          log.info("HIVE-DRIVER: Closed statement on HiveServer")
+
         } catch {
           case _: Throwable =>
         }
@@ -129,7 +135,13 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     } finally {
 
       try {
-        hiveConnection.close()
+
+        log.info("HIVE-DRIVER: Closing connection to HiveServer")
+
+        hiveServer.close()
+
+        log.info("HIVE-DRIVER: Closed connection to HiveServer")
+
       } catch {
         case _: Throwable =>
       }
@@ -157,7 +169,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     queryStack.reverse.filter { !StringUtils.isBlank(_) }
   }
 
-  private def connection = {
+  private def hiveJdbcConnection = {
     log.info("HIVE-DRIVER: Establishing connection to HiveServer")
 
     Class.forName(JDBC_CLASS)
@@ -170,7 +182,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     })
   }
 
-  def isConnectionProblem(t: Throwable): Boolean = {
+  private def isConnectionProblem(t: Throwable): Boolean = {
     val result = t.isInstanceOf[TException] || t.isInstanceOf[ConnectException]
 
     if (!result && t.getCause() != null) {
@@ -178,7 +190,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     } else result
   }
 
-  def JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
+  private val JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
 
 }
 
