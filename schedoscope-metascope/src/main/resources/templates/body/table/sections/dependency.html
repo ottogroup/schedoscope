@@ -1,0 +1,68 @@
+<div class="tab-pane" id="dependencyContent" data-th-fragment="dependency(table,util)">
+  <table class="table table-bordered table-striped" data-th-if="${table.dependencies.size() > 0}">
+    <tr class="info">
+      <th>Depends on</th>
+    </tr>
+    <tr data-th-if="${transitiveDependencies == null}" data-th-each="d : ${table.dependencies}">
+      <td><a data-th-href="'table?fqdn=' + ${d.dependencyFqdn}" data-th-text="${d.dependencyFqdn}"></a></td>
+    </tr>
+    <tr data-th-if="${transitiveDependencies != null}" data-th-each="d : ${transitiveDependencies}">
+      <td><a data-th-href="'table?fqdn=' + ${d.dependencyFqdn}" data-th-text="${d.dependencyFqdn}"></a></td>
+    </tr>
+  </table>
+  <table class="table table-bordered table-striped" data-th-if="${(successors != null and successors.size() > 0) or (transitiveSuccessors != null and transitiveSuccessors.size() > 0)}">
+    <tr class="info">
+      <th>Used by</th>
+    </tr>
+    <tr data-th-if="${transitiveSuccessors == null}" data-th-each="s : ${successors}">
+      <td><a data-th-href="'table?fqdn=' + ${s.fqdn}" data-th-text="${s.fqdn}"></a></td>
+    </tr>
+    <tr data-th-if="${transitiveSuccessors != null}" data-th-each="s : ${transitiveSuccessors}">
+      <td><a data-th-href="'table?fqdn=' + ${s.fqdn}" data-th-text="${s.fqdn}"></a></td>
+    </tr>
+  </table>
+  <div class="row" style="padding-left: 15px;">
+  	<div class="col-md-3" data-th-if="${transitiveSuccessors == null and transitiveDependencies == null}">
+  	  <a class="btn btn-info" th:href="'table?fqdn=' + ${table.fqdn} + '&amp;transitive=true#dependencyContent'">Show transitive dependencies</a>
+  	</div>
+  	  	<div class="col-md-3" data-th-if="${transitiveSuccessors != null and transitiveDependencies != null}">
+  	  <a class="btn btn-info" th:href="'table?fqdn=' + ${table.fqdn} + '#dependencyContent'">Show direct dependencies</a>
+  	</div>
+  	<div class="col-md-3">
+  	<form id="lineageForm">
+        <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
+        <button class="pull-right btn btn-info" data-toggle="modal" data-target="#lineage" type="button">Show Lineage Graph</button>
+      </form>
+  	</div>
+  </div>
+
+  <div class="modal fade" id="lineage" aria-hidden="true" data-th-fragment="table_lineage_modal" tabindex="-1">
+    <div class="modal-dialog" style="width: 90%;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Linage Graph: ' + ${table.tableName}" class="modal-title"></h4>
+        </div>
+        <form id="lineageForm" style="margin-bottom: 0px;">
+          <input type="hidden" id="lineageFqdn" name="fqdn" th:value="${table.fqdn}"/>
+        </form>
+        <div class="modal-body" style="margin-right: 0 !important; padding: 0px;">
+          <div class="row" style="margin-right: 5px;">
+            <div class="col-md-9" style="border-right: #cdcdcd medium solid;">
+              <div id="mynetworkFA"></div>
+            </div>
+            <div class="col-md-3" style="padding: 5px;">
+              <div id="lineageDetail" style="padding-top: 10px; overflow: auto; max-height: 600px;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" style="margin-top: 0px;">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

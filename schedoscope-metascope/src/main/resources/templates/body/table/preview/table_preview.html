@@ -1,0 +1,50 @@
+<div data-th-fragment="table(table)">
+  <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
+    <div class="panel-heading">
+      <div class="row">
+        <form data-th-action="@{/table/favourite}" method="POST">
+          <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
+          <div class="col-md-12">
+            <button th:attr="class=${favs.contains(table.fqdn) ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}" 
+                    style="font-size:1.5em; margin-right: 5px;" type="submit"></button>
+            <a th:href="'table?fqdn=' + ${table.fqdn}"
+               th:text="${table.isPartitioned()} ? 
+               ${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')' :
+               ${table.databaseName} + ' :: ' + ${table.tableName}" th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a>
+            <span class="pull-right" data-th-text="${table.status}"></span>
+          </div>
+        </form>
+      </div>
+    </div>
+    <table id="identityTable" class="table table-reflow">
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Database</b></td>
+        <td width="80%" data-th-text="${table.databaseName}"></td>
+      </tr>
+      <tr data-th-if="${table.isPartitioned()}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Partition</b></td>
+        <td width="80%" data-th-text="${table.parameterString}"></td>
+      </tr>
+      <tr data-th-if="${table.tableDescription != null and !table.tableDescription.isEmpty()}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Description</b></td>
+        <td width="80%" data-th-text="${table.tableDescription}"></td>
+      </tr>
+      <tr data-th-if="${table.getLastTransformation() != 0}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Last Transformation</b></td>
+        <td width="80%" data-th-text="${util.getTime(table.getLastTransformation())}"></td>
+      </tr>
+      <tr data-th-if="${table.getLastData() != null}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Last Data from</b></td>
+        <td width="80%" th:with="value=${util.getTime(table.lastData, table.timestampFieldFormat)}" data-th-text="${value == null} ? '-' : ${value}"></td>
+      </tr>
+      <tr data-th-if="${table.isPartitioned() and table.lastPartitionCreated > 0}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Last Partition created</b></td>
+        <td width="80%" th:with="value=${util.getTime(table.lastPartitionCreated)}" data-th-text="${value == null} ? '-' : ${value}"></td>
+      </tr>
+      <tr data-th-if="${table.lastSchemaChange > 0}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Last Schema change</b></td>
+        <td width="80%" th:with="value=${util.getTime(table.lastSchemaChange)}" data-th-text="${value == null} ? '-' : ${value}"></td>
+      </tr>
+    </table>
+  </div>
+</div>

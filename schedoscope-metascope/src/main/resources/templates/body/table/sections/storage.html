@@ -1,0 +1,54 @@
+<div class="tab-pane" id="storageContent" data-th-fragment="storage(table,util)">
+  <div style="overflow: auto;">
+    <table class="table table-reflow">
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td><b>Owner</b></td>
+        <td data-th-text="${table.tableOwner}"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td><b>Data location</b></td>
+        <td data-th-text="${table.dataPath}"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td><b>Storage format</b></td>
+        <td data-th-text="${table.storageFormat}"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid lightgrey;"> 
+        <td><b>Input format</b></td>
+        <td data-th-text="${table.inputFormat}"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td><b>Output format</b></td>
+        <td data-th-text="${table.outputFormat}"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td><b>Data size</b></td>
+        <td data-th-text="${util.getSize(table.dataSize)}"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td><b>Partitions</b></td>
+        <td data-th-text="${partitionCount}"></td>
+      </tr>
+      <tr style="border-bottom: 1px solid lightgrey;">
+        <td><b>Table created</b></td>
+        <td data-th-text="${util.getTime(table.createdAt)}"></td>
+      </tr>
+      <tr data-th-if="${table.getLastTransformation() != 0}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Last Transformation</b></td>
+        <td width="80%" data-th-text="${util.getTime(table.getLastTransformation())}"></td>
+      </tr>
+      <tr data-th-if="${table.getLastData() != null}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Last Data from</b></td>
+        <td width="80%" th:with="value=${util.getTime(table.lastData, table.timestampFieldFormat)}" data-th-text="${value == null} ? '-' : ${value}"></td>
+      </tr>
+      <tr data-th-if="${table.isPartitioned() and table.lastPartitionCreated > 0}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Last Partition created</b></td>
+        <td width="80%" th:with="value=${util.getTime(table.lastPartitionCreated)}" data-th-text="${value == null} ? '-' : ${value}"></td>
+      </tr>
+      <tr data-th-if="${table.lastSchemaChange > 0}" style="border-bottom: 1px solid lightgrey;">
+        <td width="20%"><b>Last Schema change</b></td>
+        <td width="80%" th:with="value=${util.getTime(table.lastSchemaChange)}" data-th-text="${value == null} ? '-' : ${value}"></td>
+      </tr>
+    </table>
+  </div>
+</div>

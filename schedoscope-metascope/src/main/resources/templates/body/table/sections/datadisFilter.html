@@ -1,0 +1,24 @@
+<div class="row">
+ <div th:id="'dd' + ${parameter}" class="col-md-12 datadis" th:attr="data-nr=${parameterOrder}">
+  <div class="control-group">
+   <label class="control-label" th:for="${parameter}" data-th-text="${parameter}"></label>
+   <div class="controls">
+    <div class="row">
+     <div class="col-md-9" style="padding-right: 0px;">
+      <input style="width: 100%;" th:id="${parameterOrder} + 'DDFilter'" th:name="${parameter}" type="text" />
+     </div>
+     <div class="col-md-3" style="padding-top: 1px; padding-left: 0px;">
+      <a class="btn btn-primary dropdown-toggle" style="height: 25px; padding-top: 10px;" data-toggle="dropdown" href="#"> <span class="caret"
+       style=""></span>
+      </a>
+      <ul class="dropdown-menu" style="left: auto; right: 65%; max-height: 300px; overflow: auto;">
+       <li><a data-th-each="val : ${parameterValues}" href="javascript:void(0)" data-th-text="${val}"
+         th:onclick="'setDataDisFilter(\'' + ${parameterOrder} + 'DDFilter\', \'' + ${val} + '\', \'' + ${next} + '\', \'' + ${table.fqdn} + '\')'"
+         ></a></li>
+      </ul>
+     </div>
+    </div>
+   </div>
+  </div>
+ </div>
+</div>

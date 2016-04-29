@@ -233,6 +233,41 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       case t => ViewTransformationStatus(t.name, None)
     }
   }
+  
+  private def viewExportStatus(exports: List[Transformation]): List[ViewTransformationStatus] = {
+    exports.map(e =>
+      if (e.configuration.contains("schedoscope.export.jdbcConnection")) {
+        ViewTransformationStatus("JDBC", Some(Map(
+            "JDBC Url" -> e.configuration.get("schedoscope.export.jdbcConnection").get.toString(),
+            "User" -> e.configuration.get("schedoscope.export.dbUser").get.toString(),
+            "Storage Engine" -> e.configuration.get("schedoscope.export.storageEngine").get.toString(),
+            "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString(),
+            "Batch Size" -> e.configuration.get("schedoscope.export.commitSize").get.toString()
+          ))
+        )
+      } else if (e.configuration.contains("schedoscope.export.redisHost")) {
+        ViewTransformationStatus("Redis", Some(Map(
+            "Host" -> e.configuration.get("schedoscope.export.redisHost").get.toString(),
+            "Port" -> e.configuration.get("schedoscope.export.redisPort").get.toString(),
+            "Key Space" -> e.configuration.get("schedoscope.export.redisKeySpace").get.toString(),
+            "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString(),
+            "Pipeline" -> e.configuration.get("schedoscope.export.pipeline").get.toString()
+          ))
+        )
+      } else if (e.configuration.contains("schedoscope.export.kafkaHosts")) {
+        ViewTransformationStatus("Kafka", Some(Map(
+            "Hosts" -> e.configuration.get("schedoscope.export.kafkaHosts").get.toString(),
+            "Zookeeper" -> e.configuration.get("schedoscope.export.zookeeperHosts").get.toString(),
+            "Partitions" -> e.configuration.get("schedoscope.export.numPartitions").get.toString(),
+            "Replication Factor" -> e.configuration.get("schedoscope.export.replicationFactor").get.toString(),
+            "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString()
+          ))
+        )
+      } else {
+        ViewTransformationStatus(e.name, None)
+      }
+    )
+  }
 
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     checkFilter(filter)
@@ -290,6 +325,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           else
             None,
           transformation = None,
+          export = None,
           storageFormat = None,
           materializeOnce = None,
           comment = None,
@@ -314,7 +350,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           else
             None,
           dependencies = None,
-          transformation = Option(viewTransformationStatus(v.view.transformation())),
+          transformation = Option(viewTransformationStatus(v.view.registeredTransformation())),
+          export = Option(viewExportStatus(v.view.registeredExports.map(e => e.apply()))),
           storageFormat = Option(v.view.storageFormat.getClass.getSimpleName),
           materializeOnce = Option(v.view.isMaterializeOnce),
           comment = Option(v.view.comment),
