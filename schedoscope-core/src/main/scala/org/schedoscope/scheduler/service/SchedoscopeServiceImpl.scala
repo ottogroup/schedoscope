@@ -255,7 +255,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           ))
         )
       } else if (e.configuration.contains("schedoscope.export.kafkaHosts")) {
-        ViewTransformationStatus("Redis", Some(Map(
+        ViewTransformationStatus("Kafka", Some(Map(
             "Hosts" -> e.configuration.get("schedoscope.export.kafkaHosts").get.toString(),
             "Zookeeper" -> e.configuration.get("schedoscope.export.zookeeperHosts").get.toString(),
             "Partitions" -> e.configuration.get("schedoscope.export.numPartitions").get.toString(),
