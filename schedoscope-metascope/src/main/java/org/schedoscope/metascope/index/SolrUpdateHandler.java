@@ -40,6 +40,7 @@ public class SolrUpdateHandler {
   public static final String BUSINESS_OBJECTS = "bos";
   public static final String STORAGE_FORMAT = "storageFormat";
   public static final String TRANSFORMATION = "transformation";
+  public static final String EXPORTS = "exports";
   public static final String TRANSFORMATIONTIMESTAMP = "transformationTimestamp";
   public static final String MATERIALIZE_ONCE = "materializeOnce";
   public static final String EXTERNAL = "external";
@@ -76,6 +77,7 @@ public class SolrUpdateHandler {
     doc.setField(TABLE_NAME, tableEntity.getTableName());
     doc.setField(FIELDS, tableEntity.getFieldNames());
     doc.setField(TRANSFORMATION, tableEntity.getTransformationType().split(" -> ")[0]);
+    doc.setField(EXPORTS, tableEntity.getExportNames());
     doc.setField(STORAGE_FORMAT, tableEntity.getStorageFormat());
     doc.setField(MATERIALIZE_ONCE, tableEntity.isMaterializeOnce());
     doc.setField(EXTERNAL, tableEntity.isExternalTable());
@@ -141,6 +143,9 @@ public class SolrUpdateHandler {
       doc.setField(FIELDS, tableEntity.getFieldNames());
     }
     doc.setField(TRANSFORMATION, tableEntity.getTransformationType().split(" -> ")[0]);
+    if (tableEntity.getExports() != null) {
+      doc.setField(EXPORTS, tableEntity.getExportNames());
+    }
     doc.setField(STORAGE_FORMAT, tableEntity.getStorageFormat());
     doc.setField(MATERIALIZE_ONCE, tableEntity.isMaterializeOnce());
     doc.setField(EXTERNAL, tableEntity.isExternalTable());

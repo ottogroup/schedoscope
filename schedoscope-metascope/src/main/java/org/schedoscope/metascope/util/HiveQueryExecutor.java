@@ -68,7 +68,12 @@ public class HiveQueryExecutor {
     List<List<String>> rows = new ArrayList<List<String>>();
 
     HiveServerConnection hiveConn = new HiveServerConnection(config);
+    
     hiveConn.connect();
+    
+    if (hiveConn.getConnection() == null) {
+      return new HiveQueryResult("Could not connect to HiveServer2");
+    }
 
     String where = "";
     List<String> values = new ArrayList<String>();

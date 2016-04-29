@@ -30,6 +30,7 @@ import org.apache.commons.dbutils.DbUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.schedoscope.metascope.conf.MetascopeConfig;
 import org.schedoscope.metascope.index.SolrFacade;
+import org.schedoscope.metascope.model.ExportEntity;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.ParameterValueEntity;
 import org.schedoscope.metascope.model.SuccessorEntity;
@@ -41,6 +42,7 @@ import org.schedoscope.metascope.model.ViewEntity;
 import org.schedoscope.metascope.schedoscope.model.View;
 import org.schedoscope.metascope.schedoscope.model.ViewField;
 import org.schedoscope.metascope.schedoscope.model.ViewStatus;
+import org.schedoscope.metascope.schedoscope.model.ViewTransformation;
 import org.schedoscope.metascope.tasks.repository.RepositoryDAO;
 import org.schedoscope.metascope.util.SchedoscopeUtil;
 import org.slf4j.Logger;
@@ -80,15 +82,15 @@ public class SchedoscopeSyncTask extends Task {
     List<FieldEntity> fields = new ArrayList<FieldEntity>();
     List<TransformationEntity> tes = new ArrayList<TransformationEntity>();
     Map<String, List<ViewEntity>> views = new HashMap<String, List<ViewEntity>>();
+    List<ExportEntity> exports = new ArrayList<ExportEntity>();
     List<ParameterValueEntity> parameterValues = new ArrayList<ParameterValueEntity>();
     List<ViewDependencyEntity> dependencies = new ArrayList<ViewDependencyEntity>();
     List<SuccessorEntity> successors = new ArrayList<SuccessorEntity>();
     List<TableDependencyEntity> tableDependencies = new ArrayList<TableDependencyEntity>();
     List<String> customSql = new ArrayList<String>();
-
     for (View view : viewStatus.getViews()) {
       if (view.isTable()) {
-        tables.add(crudTable(view, start, fields, tes, customSql));
+        tables.add(crudTable(view, start, fields, tes, exports, customSql));
       } else {
         TableEntity tableEntity = getTable(view.getFqdn(), tables);
         ViewEntity viewEntity = crudView(view, tableEntity, dependencies, successors, tableDependencies, start,
@@ -127,7 +129,7 @@ public class SchedoscopeSyncTask extends Task {
     connection = createConnection();
     repo.insertOrUpdateViewsPartial(connection, Lists.newArrayList(Iterables.concat(views.values())));
     closeConnection(connection);
-
+    
     LOG.info("Updating view values ...");
     connection = createConnection();
     repo.insertOrUpdateParameterValues(connection, parameterValues);
@@ -146,6 +148,14 @@ public class SchedoscopeSyncTask extends Task {
     LOG.info("Updating table dependencies ...");
     connection = createConnection();
     repo.insertOrUpdateTableDependencies(connection, tableDependencies);
+    closeConnection(connection);
+    
+    LOG.info("Updating exports ...");
+    connection = createConnection();
+    /* drop exports */
+    repo.execute(connection, "delete from export_entity_properties");
+    repo.execute(connection, "delete from export_entity");
+    repo.insertOrUpdateExportPartial(connection, exports);
     closeConnection(connection);
 
     LOG.info("Updating solr views index");
@@ -197,7 +207,7 @@ public class SchedoscopeSyncTask extends Task {
   }
 
   private TableEntity crudTable(View view, long start, List<FieldEntity> fields, List<TransformationEntity> tes,
-      List<String> customSql) {
+      List<ExportEntity> exports, List<String> customSql) {
     boolean newTable = false;
     TableEntity tableEntity = new TableEntity();
     tableEntity.setFqdn(view.getFqdn());
@@ -224,6 +234,7 @@ public class SchedoscopeSyncTask extends Task {
       }
     }
 
+    crudExports(view, tableEntity, exports);
     crudParameters(view, tableEntity, fields);
     crudTransformationProperties(view, tes);
     boolean schemaChanged = crudFields(view, tableEntity, fields);
@@ -242,7 +253,22 @@ public class SchedoscopeSyncTask extends Task {
     return tableEntity;
   }
 
-  private void crudParameters(View view, TableEntity tableEntity, List<FieldEntity> fields) {
+  private void crudExports(View view, TableEntity tableEntity, List<ExportEntity> exports) {
+    int i = 0;
+    if (view.getExport() != null) {
+      for (ViewTransformation export : view.getExport()) {
+        ExportEntity exportEntity = new ExportEntity();
+        exportEntity.setExportId(tableEntity.getFqdn() + "_" + (i++));
+        exportEntity.setFqdn(tableEntity.getFqdn());
+        exportEntity.setType(export.getName());
+        exportEntity.setProperties(export.getProperties());
+        exports.add(exportEntity);
+        tableEntity.addToExports(exportEntity);
+      }
+    }
+  }
+
+	private void crudParameters(View view, TableEntity tableEntity, List<FieldEntity> fields) {
     int i = 0;
     for (ViewField viewField : view.getParameters()) {
       FieldEntity parameter = new FieldEntity();

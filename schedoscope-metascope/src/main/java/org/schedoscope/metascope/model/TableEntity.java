@@ -117,6 +117,9 @@ public class TableEntity extends Documentable {
 
   @OneToMany(mappedBy = "table", fetch = FetchType.LAZY)
   private List<ViewEntity> views;
+  
+  @OneToMany(mappedBy = "fqdn", fetch = FetchType.EAGER)
+  private List<ExportEntity> exports;
 
   @OneToMany(mappedBy = "key.fqdn", fetch = FetchType.LAZY)
   private List<TableDependencyEntity> dependencies;
@@ -312,6 +315,14 @@ public class TableEntity extends Documentable {
     this.views = views;
   }
 
+  public List<ExportEntity> getExports() {
+	  return exports;
+  }
+  
+  public void setExports(List<ExportEntity> exports) {
+	  this.exports = exports;
+  }
+  
   public List<TransformationEntity> getTransformationProperties() {
     return transformationProperties;
   }
@@ -387,6 +398,17 @@ public class TableEntity extends Documentable {
     }
     for (FieldEntity field : fields) {
       result.add(field.getName());
+    }
+    return result;
+  }
+  
+	public Object getExportNames() {
+	  List<String> result  = new ArrayList<String>();
+    if (exports == null) {
+      return result;
+    }
+    for (ExportEntity exportEntity : exports) {
+      result.add(exportEntity.getType());
     }
     return result;
   }
@@ -549,6 +571,13 @@ public class TableEntity extends Documentable {
 
   public void setLastPartitionCreated(long lastPartitionCreated) {
     this.lastPartitionCreated = lastPartitionCreated;
+  }
+
+	public void addToExports(ExportEntity exportEntity) {
+		if (this.exports == null) {
+      this.exports = new ArrayList<ExportEntity>();
+    }
+    this.exports.add(exportEntity);
   }
 
 }

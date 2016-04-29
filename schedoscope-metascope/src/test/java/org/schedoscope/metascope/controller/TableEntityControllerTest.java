@@ -76,7 +76,7 @@ public class TableEntityControllerTest extends SpringTest {
         .andExpect(view().name("body/table/table")).andExpect(model().attribute("table", notNullValue()))
         .andExpect(model().attribute("categories", hasSize(1)));
   }
-
+  
   @Test
   @Transactional
   public void tableController_02_addFavourite() throws Exception {
@@ -105,5 +105,93 @@ public class TableEntityControllerTest extends SpringTest {
 
     mockMvc.perform(get("/table/view/lineage").param("fqdn", getTestTable().getFqdn())).andExpect(status().isOk());
   }
+  
+  @Test
+  @Transactional
+  public void tableController_05_setOwner() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
 
+    mockMvc.perform(post("/table/owner")
+      .param("fqdn", getTestTable().getFqdn())
+      .param("person", getTestUser().getFullname())).andExpect(status().isFound());
+  }
+  
+  @Test
+  @Transactional
+  public void tableController_06_setTableProperties() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
+
+    mockMvc.perform(post("/admin/table")
+      .param("fqdn", getTestTable().getFqdn())
+      .param("dataTimestampField", "ts")
+      .param("dataTimestampFieldFormat", "yyyy-MM-dd''T''HH:mm:ss.SSS''Z''")).andExpect(status().isFound());
+  }
+  
+  @Test
+  @Transactional
+  public void tableController_07_increaseViewCount() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
+
+    mockMvc.perform(post("/table/viewcount")
+      .param("fqdn", getTestTable().getFqdn())).andExpect(status().isOk());
+  }
+  
+  @Test
+  @Transactional
+  public void tableController_08_getLineageDetail() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
+
+    mockMvc.perform(get("/table/view/lineage/detail")
+      .param("fqdn", getTestTable().getFqdn())
+      .param("type", "Table")).andExpect(status().isOk());
+  }
+  
+  @Test
+  @Transactional
+  public void tableController_09_getSample() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
+
+    mockMvc.perform(get("/table/view/sample")
+      .param("fqdn", getTestTable().getFqdn())).andExpect(status().isOk());
+  }
+  
+  @Test
+  @Transactional
+  public void tableController_10_getPartition() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
+
+    mockMvc.perform(get("/table/view/views")
+      .param("fqdn", getTestTable().getFqdn())
+      .param("partitionPage", "1")).andExpect(status().isOk());
+  }
+  
+  @Test
+  @Transactional
+  public void tableController_11_getSampleFilter() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
+
+    mockMvc.perform(get("/table/view/samplefilter")
+      .param("fqdn", getTestTable().getFqdn())).andExpect(status().isOk());
+  }
+  
+  @Test
+  @Transactional
+  public void tableController_12_getParameterValues() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
+
+    mockMvc.perform(get("/table/view/parametervalues").param("fqdn", getTestTable().getFqdn()))
+      .andExpect(status().isOk());
+  }
+  
+  @Test
+  @Transactional
+  public void tableController_13_getTransitivDependencies() throws Exception {
+    mockField(tableEntityController, "tableEntityService", tableEntityService);
+
+    mockMvc.perform(get("/table").param("fqdn", getTestTable().getFqdn()).param("transitive", "true")).andExpect(status().isOk())
+        .andExpect(view().name("body/table/table")).andExpect(model().attribute("table", notNullValue()))
+        .andExpect(model().attribute("categories", hasSize(1)));
+  }
+ 
+  
 }

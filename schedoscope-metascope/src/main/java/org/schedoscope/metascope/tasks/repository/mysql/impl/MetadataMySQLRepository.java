@@ -30,11 +30,6 @@ public class MetadataMySQLRepository implements MySQLRepository<Metadata> {
 
   private static final Logger LOG = LoggerFactory.getLogger(MetadataMySQLRepository.class);
 
-  @Override
-  public List<Metadata> get(Connection connection) {
-    return null;
-  }
-
   public Metadata get(Connection connection, String key) {
     PreparedStatement stmt = null;
     ResultSet rs = null;
@@ -70,6 +65,11 @@ public class MetadataMySQLRepository implements MySQLRepository<Metadata> {
     } finally {
       DbUtils.closeQuietly(stmt);
     }
+  }
+
+	@Override
+  public void insertOrUpdate(Connection connection, List<Metadata> entities) {
+	  throw new UnsupportedOperationException("Not implemented");
   }
 
 }

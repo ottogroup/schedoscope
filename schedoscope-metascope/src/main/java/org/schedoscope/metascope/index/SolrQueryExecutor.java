@@ -57,6 +57,7 @@ public class SolrQueryExecutor {
   public static final String BUSINESS_OBJECTS = "bos";
   public static final String STORAGE_FORMAT = "storageFormat";
   public static final String TRANSFORMATION = "transformation";
+  public static final String EXPORTS = "exports";
   public static final String TRANSFORMATIONTIMESTAMP = "transformationTimestamp";
   public static final String CREATED_AT = "createdAt";
   public static final String TAGS = "tags";
@@ -68,6 +69,7 @@ public class SolrQueryExecutor {
   public static final String FILTER_TABLE = "Table";
   public static final String FILTER_STATUS = "Status";
   public static final String FILTER_TRANSFORMATION = "Transformation";
+  public static final String FILTER_EXPORT = "Export";
   public static final String FILTER_STORAGEFORMAT = "Storage Format";
   public static final String FILTER_CATEGORIES = "Category";
   public static final String FILTER_BUSINESS_OBJECT = "Business Object";
@@ -92,6 +94,8 @@ public class SolrQueryExecutor {
     this.facetFields.add(new SolrQueryParameter(FILTER_TABLE, TABLE_NAME, false, FilterType.AND, FacetSort.COUNT));
     this.facetFields.add(new SolrQueryParameter(FILTER_STATUS, STATUS, true, FilterType.EXCLUSIVE, FacetSort.COUNT));
     this.facetFields.add(new SolrQueryParameter(FILTER_TRANSFORMATION, TRANSFORMATION, true, FilterType.EXCLUSIVE,
+        FacetSort.COUNT));
+    this.facetFields.add(new SolrQueryParameter(FILTER_EXPORT, EXPORTS, true, FilterType.EXCLUSIVE,
         FacetSort.COUNT));
     this.facetFields.add(new SolrQueryParameter(FILTER_STORAGEFORMAT, STORAGE_FORMAT, true, FilterType.EXCLUSIVE,
         FacetSort.COUNT));

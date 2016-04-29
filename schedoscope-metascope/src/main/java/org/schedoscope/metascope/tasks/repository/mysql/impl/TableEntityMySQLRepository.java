@@ -34,7 +34,6 @@ public class TableEntityMySQLRepository implements MySQLRepository<TableEntity> 
 
   private static final Logger LOG = LoggerFactory.getLogger(TableEntityMySQLRepository.class);
 
-  @Override
   public List<TableEntity> get(Connection connection) {
     List<TableEntity> list = new ArrayList<TableEntity>();
     PreparedStatement stmt = null;
@@ -238,6 +237,11 @@ public class TableEntityMySQLRepository implements MySQLRepository<TableEntity> 
     } finally {
       DbUtils.closeQuietly(updateStatusStmt);
     }
+  }
+
+	@Override
+  public void insertOrUpdate(Connection connection, List<TableEntity> entities) {
+	  throw new UnsupportedOperationException("Not implemented");
   }
 
 }

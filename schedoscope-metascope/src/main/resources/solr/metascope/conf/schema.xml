@@ -35,6 +35,7 @@
     <field name="categories" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="bos" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="tags" type="text_multi" indexed="true" stored="true" multiValued="true"/>
+    <field name="exports" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="documentation" type="text_general" indexed="true" stored="true"/>
     <field name="comments" type="text_general" indexed="true" stored="true"/>
     <field name="status" type="text_general" indexed="true" stored="true"/>

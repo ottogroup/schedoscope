@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.dbutils.DbUtils;
+import org.schedoscope.metascope.model.ExportEntity;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.Metadata;
 import org.schedoscope.metascope.model.ParameterValueEntity;
@@ -32,6 +33,7 @@ import org.schedoscope.metascope.model.TransformationEntity;
 import org.schedoscope.metascope.model.ViewDependencyEntity;
 import org.schedoscope.metascope.model.ViewEntity;
 import org.schedoscope.metascope.tasks.repository.RepositoryDAO;
+import org.schedoscope.metascope.tasks.repository.mysql.impl.ExportEntityMySQLRepository;
 import org.schedoscope.metascope.tasks.repository.mysql.impl.FieldEntityMySQLRepository;
 import org.schedoscope.metascope.tasks.repository.mysql.impl.MetadataMySQLRepository;
 import org.schedoscope.metascope.tasks.repository.mysql.impl.ParameterValueEntityMySQLRepository;
@@ -57,6 +59,7 @@ public class MySQLRepository implements RepositoryDAO {
   private TableDependencyEntityMySQLRepository tableDependencyEntityMySQLRepository;
   private TransformationEntityMySQLRepository transformationEntityMySQLRepository;
   private ViewDependencyEntityMySQLRepository viewDependencyEntityMySQLRepository;
+	private ExportEntityMySQLRepository exportEntityMySQLRepository;
 
   public MySQLRepository() {
     this.tableEntityMySQLRepository = new TableEntityMySQLRepository();
@@ -68,6 +71,7 @@ public class MySQLRepository implements RepositoryDAO {
     this.tableDependencyEntityMySQLRepository = new TableDependencyEntityMySQLRepository();
     this.transformationEntityMySQLRepository = new TransformationEntityMySQLRepository();
     this.viewDependencyEntityMySQLRepository = new ViewDependencyEntityMySQLRepository();
+    this.exportEntityMySQLRepository = new ExportEntityMySQLRepository();
   }
 
   @Override
@@ -178,6 +182,11 @@ public class MySQLRepository implements RepositoryDAO {
   @Override
   public void insertOrUpdateTableDependencies(Connection connection, List<TableDependencyEntity> tableDependencies) {
     tableDependencyEntityMySQLRepository.insertOrUpdate(connection, tableDependencies);
+  }
+  
+	@Override
+  public void insertOrUpdateExportPartial(Connection connection, List<ExportEntity> exports) {
+	  exportEntityMySQLRepository.insertOrUpdate(connection, exports);
   }
 
   @Override

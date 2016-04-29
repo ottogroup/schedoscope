@@ -243,6 +243,16 @@
         "sql": "SET parquet.compression=GZIP;\nINSERT OVERWRITE TABLE demo_schedoscope_example_osm_datamart.shop_profiles\nSELECT \n  s.id,\n  s.shop_name,\n  s.shop_type,\n  s.area,\n  COALESCE(nearby_competitors,0) AS nearby_competitors,\n  COALESCE(nearby_restaurants,0) AS nearby_restaurants,\n  COALESCE(nearby_trainstations,0) AS nearby_trainstations,\n  '${workflow_time}' AS created_at,\n  '${workflow_name}' AS created_by\nFROM ${env}_schedoscope_example_osm_datahub.shops s\nLEFT OUTER JOIN (\n  SELECT \n  COUNT(id)-1 AS nearby_competitors, -- don't count the shop itself\n  area\n  FROM ${env}_schedoscope_example_osm_datahub.shops\n  GROUP BY area\n) shops \nON s.area = shops.area\nLEFT OUTER JOIN (\n  SELECT \n  COUNT(id) AS nearby_restaurants,\n  area\n  FROM ${env}_schedoscope_example_osm_datahub.restaurants\n  GROUP BY area\n) restaurants\nON s.area = restaurants.area\nLEFT OUTER JOIN (\n  SELECT \n  COUNT(id) AS nearby_trainstations,\n  area\n  FROM ${env}_schedoscope_example_osm_datahub.trainstations\n  GROUP BY area\n) trainstations\nON s.area = trainstations.area\n"
       }
     },
+    "export": [{
+      "name": "JDBC",
+      "properties": {
+        "Reducers": "2",
+        "JDBC Url": "jdbc:mysql://localhost:3306/schedoscope_tutorial?createDatabaseIfNotExist=true",
+        "Storage Engine": "InnoDB",
+        "User": "root",
+        "Batch Size": "1000"
+      }
+    }],
     "external": false,
     "status": "materialized",
     "fields": [{
