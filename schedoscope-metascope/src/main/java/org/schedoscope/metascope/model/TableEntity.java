@@ -118,7 +118,7 @@ public class TableEntity extends Documentable {
   @OneToMany(mappedBy = "table", fetch = FetchType.LAZY)
   private List<ViewEntity> views;
   
-  @OneToMany(mappedBy = "fqdn", fetch = FetchType.LAZY)
+  @OneToMany(mappedBy = "fqdn", fetch = FetchType.EAGER)
   private List<ExportEntity> exports;
 
   @OneToMany(mappedBy = "key.fqdn", fetch = FetchType.LAZY)

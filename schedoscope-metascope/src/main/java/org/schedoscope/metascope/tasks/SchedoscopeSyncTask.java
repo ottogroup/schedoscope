@@ -254,16 +254,18 @@ public class SchedoscopeSyncTask extends Task {
   }
 
   private void crudExports(View view, TableEntity tableEntity, List<ExportEntity> exports) {
-  	int i = 0;
-  	for (ViewTransformation export : view.getExport()) {
-	  	ExportEntity exportEntity = new ExportEntity();
-	  	exportEntity.setExportId(tableEntity.getFqdn() + "_" + (i++));
-	  	exportEntity.setFqdn(tableEntity.getFqdn());
-	  	exportEntity.setType(export.getName());
-	  	exportEntity.setProperties(export.getProperties());
-	  	exports.add(exportEntity);
-	  	tableEntity.addToExports(exportEntity);
-	  }
+    int i = 0;
+    if (view.getExport() != null) {
+      for (ViewTransformation export : view.getExport()) {
+        ExportEntity exportEntity = new ExportEntity();
+        exportEntity.setExportId(tableEntity.getFqdn() + "_" + (i++));
+        exportEntity.setFqdn(tableEntity.getFqdn());
+        exportEntity.setType(export.getName());
+        exportEntity.setProperties(export.getProperties());
+        exports.add(exportEntity);
+        tableEntity.addToExports(exportEntity);
+      }
+    }
   }
 
 	private void crudParameters(View view, TableEntity tableEntity, List<FieldEntity> fields) {
