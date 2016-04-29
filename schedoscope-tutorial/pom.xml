@@ -250,6 +250,10 @@
 										<groupId>ch.hsr</groupId>
 										<artifactId>geohash</artifactId>
 									</inclusion>
+									<inclusion>
+										<groupId>org.scala-lang</groupId>
+										<artifactId>scala-library</artifactId>
+									</inclusion>
 								</inclusions>
 							</assembly>
 						</configuration>
