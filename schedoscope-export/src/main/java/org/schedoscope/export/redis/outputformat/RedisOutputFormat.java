@@ -53,6 +53,8 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 
 	public static final String REDIS_PIPELINE_MODE = "redis.export.pipeline.mode";
 
+	public static final String REDIS_EXPORT_COMMIT_SIZE = "redis.export.commit.size";
+
 	public static final String REDIS_EXPORT_KEY_NAME = "redis.export.key.name";
 
 	public static final String REDIS_EXPORT_VALUE_NAME = "redis.export.value.name";
@@ -88,8 +90,9 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 		boolean replace = conf.getBoolean(REDIS_EXPORT_VALUE_REPLACE, true);
 
 		if (conf.getBoolean(REDIS_PIPELINE_MODE, false)) {
+			int commitSize = conf.getInt(REDIS_EXPORT_COMMIT_SIZE, 10000);
 			Pipeline pipelinedJedis = jedis.pipelined();
-			return new PipelinedRedisRecordWriter(pipelinedJedis, replace);
+			return new PipelinedRedisRecordWriter(pipelinedJedis, replace, commitSize);
 		} else {
 			return new RedisRecordWriter(jedis, replace);
 		}
@@ -133,10 +136,12 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 	 *            A flag indicating if existing data should be replaced
 	 * @param pipeline
 	 *            A flag to use the Redis pipeline mode.
+	 * @param commitSize
+	 *            The number of records to write before syncing.
 	 */
 	public static void setOutput(Configuration conf, String redisHost,
 			int redisPort, int redisDb, String keyName, String keyPrefix,
-			String valueName, boolean replace, boolean pipeline) {
+			String valueName, boolean replace, boolean pipeline, int commitSize) {
 
 		conf.set(REDIS_EXPORT_SERVER_HOST, redisHost);
 		conf.setInt(REDIS_EXPORT_SERVER_PORT, redisPort);
@@ -146,14 +151,15 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 		conf.set(REDIS_EXPORT_VALUE_NAME, valueName);
 		conf.setBoolean(REDIS_EXPORT_VALUE_REPLACE, replace);
 		conf.setBoolean(REDIS_PIPELINE_MODE, pipeline);
+		conf.setInt(REDIS_EXPORT_COMMIT_SIZE, commitSize);
 	}
 
 	public static void setOutput(Configuration conf, String redisHost,
 			int redisPort, int redisDb, String keyName, String keyPrefix,
-			boolean replace, boolean pipeline) {
+			boolean replace, boolean pipeline, int commitSize) {
 
 		setOutput(conf, redisHost, redisPort, redisDb, keyName, keyPrefix, "",
-				replace, pipeline);
+				replace, pipeline, commitSize);
 	}
 
 	/**
@@ -240,6 +246,10 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 
 		private boolean replace;
 
+		private int commitSize;
+
+		private int written;
+
 		/**
 		 * The constructor to initialize the pipelined writer.
 		 *
@@ -247,17 +257,25 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 		 *            The pipelined Redis client.
 		 * @param replace
 		 *            A flag to enable replace mode.
+		 * @param commitSize
+		 *            The number of records between a sync.
 		 */
-		public PipelinedRedisRecordWriter(Pipeline jedis, boolean replace) {
+		public PipelinedRedisRecordWriter(Pipeline jedis, boolean replace, int commitSize) {
 
 			this.jedis = jedis;
 			this.replace = replace;
+			this.commitSize = commitSize;
+			this.written = 0;
 		}
 
 		@Override
 		public void write(K key, V value) {
 
 			value.write(jedis, replace);
+			written++;
+			if ((written % commitSize) == 0) {
+				jedis.sync();
+			}
 		}
 
 		@Override

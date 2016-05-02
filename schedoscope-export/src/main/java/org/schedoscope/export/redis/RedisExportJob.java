@@ -48,7 +48,6 @@ public class RedisExportJob extends BaseExportJob {
 	@Option(name = "-K", usage = "redis key space (default is 0)")
 	private int redisDb = 0;
 
-
 	@Option(name = "-k", usage = "key column", required = true)
 	private String keyName;
 
@@ -59,13 +58,16 @@ public class RedisExportJob extends BaseExportJob {
 	private String keyPrefix = "";
 
 	@Option(name = "-a", usage = "append data to existing keys, only useful for native export of map/list types")
-	boolean replace = false;
+	private boolean replace = false;
 
 	@Option(name = "-l", usage = "pipeline mode for redis client")
-	boolean pipeline = false;
+	private boolean pipeline = false;
 
 	@Option(name = "-f", usage = "flush redis key space")
-	boolean flush = false;
+	private boolean flush = false;
+
+	@Option(name = "-x", usage = "commit size for pipeline mode", depends = { "-l" })
+	private int commitSize = 10000;
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -131,8 +133,8 @@ public class RedisExportJob extends BaseExportJob {
 	 */
 	public Job configure(boolean isSecured, String metaStoreUris, String principal, String redisHost, int redisPort,
 			int redisDb, String inputDatabase, String inputTable, String inputFilter, String keyName, String valueName,
-			String keyPrefix, int numReducer, boolean replace, boolean pipeline, boolean flush, String[] anonFields, String exportSalt)
-			throws Exception {
+			String keyPrefix, int numReducer, boolean replace, boolean pipeline, boolean flush, int commitSize,
+			String[] anonFields, String exportSalt) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -150,6 +152,7 @@ public class RedisExportJob extends BaseExportJob {
 		this.replace = replace;
 		this.pipeline = pipeline;
 		this.flush = flush;
+		this.commitSize = commitSize;
 		this.anonFields = anonFields.clone();
 		this.exportSalt = exportSalt;
 		return configure();
@@ -179,14 +182,14 @@ public class RedisExportJob extends BaseExportJob {
 
 		if (valueName == null) {
 			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb, keyName, keyPrefix,
-					replace, pipeline);
+					replace, pipeline, commitSize);
 
 			job.setMapperClass(RedisFullTableExportMapper.class);
 			OutputClazz = RedisHashWritable.class;
 
 		} else {
 			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb, keyName, keyPrefix,
-					valueName, replace, pipeline);
+					valueName, replace, pipeline, commitSize);
 			job.setMapperClass(RedisExportMapper.class);
 			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema, valueName);
 		}
