@@ -1,4 +1,4 @@
-# ![Schedoscope](https://github.com/ottogroup/schedoscope/blob/master/schedoscope-tutorial/docs/pictures/schedoscope_logo.jpg)
+# ![Schedoscope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/schedoscope_logo.jpg)
 
 ## Introduction
 
