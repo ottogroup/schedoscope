@@ -170,7 +170,7 @@ object Export {
     flush: Boolean = false,
     redisPort: Int = 6379,
     redisKeySpace: Int = 0,
-    commitSize: Int = 10000,
+    commitSize: Int = Schedoscope.settings.redisExportBatchSize,
     numReducers: Int = Schedoscope.settings.redisExportNumReducers,
     pipeline: Boolean = Schedoscope.settings.redisExportUsesPipelineMode,
     isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
@@ -207,7 +207,7 @@ object Export {
           replace,
           conf.get("schedoscope.export.pipeline").get.asInstanceOf[Boolean],
           flush,
-          commitSize,
+          conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int],
           anonFields ++ anonParameters,
           conf.get("schedoscope.export.salt").get.asInstanceOf[String])
 
@@ -221,6 +221,7 @@ object Export {
         "schedoscope.export.redisKeySpace" -> redisKeySpace,
         "schedoscope.export.numReducers" -> numReducers,
         "schedoscope.export.pipeline" -> pipeline,
+        "schedoscope.export.commitSize" -> commitSize,
         "schedoscope.export.salt" -> exportSalt,
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,

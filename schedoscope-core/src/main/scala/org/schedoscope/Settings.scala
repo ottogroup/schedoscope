@@ -243,6 +243,11 @@ class SchedoscopeSettings(val config: Config) extends Extension {
   lazy val redisExportUsesPipelineMode = config.getBoolean("schedoscope.export.redis.usePipelineMode")
 
   /**
+   * Size of insert batches for Redis export (only pipeline mode)
+   */
+  lazy val redisExportBatchSize = config.getInt("schedoscope.export.redis.insertBatchSize")
+
+  /**
    * Number of reducers to use for Redis export.
    */
   lazy val kafkaExportNumReducers = config.getInt("schedoscope.export.kafka.numberOfReducers")

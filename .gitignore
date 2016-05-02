@@ -18,3 +18,4 @@ test-classes
 .DS_Store
 build/
 .fbExcludeFilterFile
+.java-version
