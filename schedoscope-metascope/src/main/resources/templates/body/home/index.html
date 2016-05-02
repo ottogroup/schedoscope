@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head data-th-replace="includes/head :: head('Otto Group BI')"></head>
+<body>
+
+  <nav data-th-replace="header/header :: navigation"></nav>
+
+  <div class="container" data-th-if="${schedoscopeTimestamp == null}">
+    <div class="card card-container" style="text-align: center;">
+      <em style="color: red; margin-left: auto; margin-right: auto;">Please wait while Metascope sets up the metadata repository ...</em>
+    </div>
+  </div>
+
+  <div class="container" data-th-if="${!userEntityService.isAuthenticated() and schedoscopeTimestamp != null}">
+    <div class="card card-container">
+      <form class="form-signin" method="post" data-th-action="@{/}" accept-charset="UTF-8">
+        <span id="reauth-email" class="reauth-email"></span> <input name="username" type="text" id="inputUsername" class="form-control"
+          placeholder="Username" /> <input name="password" type="password" id="inputPassword" class="form-control" placeholder="Password" />
+       <!-- <div id="remember" class="checkbox">
+          <label> 
+            <input type="checkbox" value="remember-me"> Remember me </input>
+          </label>
+        </div>-->
+        <div data-th-if="${error}" style="text-align: center;">
+          <span style="color: red">Wrong username or password</span>
+          <br/>
+          <br/>
+        </div>
+        <button class="btn btn-lg btn-primary btn-block btn-signin" type="submit">Sign in</button>
+      </form>
+      <!-- <a href="#" class="forgot-password"> Forgot the password? </a>  -->
+    </div>
+  </div>
+  
+ 
+  <div data-th-if="${userEntityService.isAuthenticated() and schedoscopeTimestamp != null}">
+    <div id="mainContent">
+      <div class="row" style="margin-right: 0px;">
+        <div class="col-md-12">
+          <div class="col-md-3">
+            <div id="filterPlaceholder">
+              <div data-th-replace="body/home/filter :: filters"></div> 
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="row">
+              <div class="jumbotron well" style="background: #fafafa;">
+                <div data-th-if="${solrQuery.getStart() &lt;= solrQuery.totalResults}">
+                  <em
+                    th:text="'Showing ' + ${solrQuery.getStart()} + ' to ' + ${solrQuery.getEnd()} + 
+                        ' of ' + ${solrQuery.totalResults} + ' results - '"></em>
+                  <label>Show</label> 
+                  <select form="filterForm" style="display: inline;" id="elementsSelect" name="e"
+                    onchange="preSubmitFilterForm(); this.form.submit()" class="form-control">
+                    <option th:selected="${solrQuery.elements == 5}" value="5">5</option>
+                    <option th:selected="${solrQuery.elements == 10}" value="10">10</option>
+                    <option th:selected="${solrQuery.elements == 20}" value="20">20</option>
+                    <option th:selected="${solrQuery.elements == 50}" value="50">50</option>
+                  </select>
+                  <div data-th-if="${solrQuery.hasActiveFilters()}">
+                    <br />
+                    <div data-th-each="entry : ${solrQuery.activeFilterValues.entrySet()}">
+                      <div data-th-if="${entry.value.size() > 0}">
+                        <a data-th-each="filter : ${entry.value}" class="tag label label-otto" 
+                           th:href="${urlService.getFilterURL(#httpServletRequest, entry.key, filter)}"
+                           style="margin-left: 5px;">
+                        <em data-th-text="${filter}"></em>
+                        <span style="padding-left: 5px;">x</span>
+                      </a>
+                      </div>
+                    </div>
+                  </div>
+                  <hr />
+                  <div data-th-if="${solrQuery.resultType.equals('Table') and !solrQuery.hasSearchQuery()}" data-th-each="obj : ${solrQuery.resultEntities}">
+                    <div data-th-replace="body/table/preview/table_preview :: table(${obj.resultEntity})"></div>
+                  </div>
+                  <div data-th-if="${solrQuery.resultType.equals('Partition') and !solrQuery.hasSearchQuery()}" data-th-each="obj : ${solrQuery.resultEntities}">
+                    <div data-th-replace="body/table/preview/partition_preview :: partition(${obj.resultEntity})"></div>
+                  </div>
+                  <div data-th-if="${solrQuery.resultType.equals('Table') and solrQuery.hasSearchQuery()}" data-th-each="obj : ${solrQuery.resultEntities}">
+                    <div data-th-replace="body/table/preview/table_search_preview :: table(${obj})"></div>
+                  </div>
+                  <div data-th-if="${solrQuery.resultType.equals('Partition') and solrQuery.hasSearchQuery()}" data-th-each="obj : ${solrQuery.resultEntities}">
+                    <div data-th-if="${obj.getSize() > 0}" data-th-replace="body/table/preview/partition_search_preview :: partition(${obj})"></div>
+                  </div>
+                  <div style="clear: both"></div>
+                </div>
+                <div data-th-if="${solrQuery.getStart() &gt; solrQuery.totalResults}">
+                  <em th:text="'No results'"></em>
+                  <div data-th-if="${solrQuery.hasActiveFilters()}">
+                    <br />
+                    <div data-th-each="entry : ${solrQuery.activeFilterValues.entrySet()}">
+                      <div data-th-if="${entry.value.size() > 0}">
+                        <a data-th-each="filter : ${entry.value}" class="tag label label-otto" 
+                           th:href="${urlService.getFilterURL(#httpServletRequest, entry.key, filter)}"
+                           style="margin-left: 5px;">
+                        <em data-th-text="${filter}"></em>
+                        <span style="padding-left: 5px;">x</span>
+                      </a>
+                      </div>
+                    </div>
+                  </div>
+                  <hr />
+                </div>
+                <div class="text-center" th:with="indexToHighlight=${((solrQuery.page%5)+4)%5}">
+                  <ul class="pagination">
+                    <li data-th-if="${(solrQuery.page - indexToHighlight - 1) > 0}">
+                      <a th:href="${urlService.getPaginationURL(#httpServletRequest, 1, solrQuery.elements)}" data-th-text="'&laquo;&laquo;'"></a>
+                    </li>
+                  	<li data-th-if="${(solrQuery.page - indexToHighlight - 1) > 0}">
+                  	  <a th:href="${urlService.getPaginationURL(#httpServletRequest, (solrQuery.page - indexToHighlight - 1), solrQuery.elements)}" data-th-text="'&laquo;'"></a>
+                  	</li>
+                	<li th:each="i : ${#numbers.sequence(0, 4)}" th:class="${indexToHighlight == i} ? 'active' : ''" th:with="page=${solrQuery.page - indexToHighlight + i}">
+                	  <a data-th-if="${page &lt;= solrQuery.totalPages}" th:href="${indexToHighlight == i} ? '#' : ${urlService.getPaginationURL(#httpServletRequest, page, solrQuery.elements)}" 
+                	     data-th-text="${page}"></a>
+                	</li>
+                	<li data-th-if="${(solrQuery.page - indexToHighlight + 4) &lt; solrQuery.totalPages}">
+                	  <a th:href="${urlService.getPaginationURL(#httpServletRequest, (solrQuery.page - indexToHighlight + 5), solrQuery.elements)}" data-th-text="'&raquo;'"></a>
+                	</li>
+                	<li data-th-if="${(solrQuery.page - indexToHighlight + 4) &lt; solrQuery.totalPages}">
+                      <a th:href="${urlService.getPaginationURL(#httpServletRequest, solrQuery.totalPages, solrQuery.elements)}" data-th-text="'&raquo;&raquo;'"></a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+          	<div class="row" style="padding-left: 15px;" data-th-if="${userEntityService.getUser().getFavourites().size() != 0}">
+          	<div class="well" style="background: #fafafa; padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
+          	  <div class="row">
+			  	<div class="panel-group" style="margin-bottom: 1px;" >
+					<div class="panel panel-default" style="border-color: lightgray; border-radius: 0px;">
+					  <div class="panel-heading" style="background-color: white; background-image: none;">
+					    <h4 class="panel-title">
+					      <a class="accordion-toggle filter-heading" id="favouriteToggleLabel" data-toggle="collapse" href="#favouriteToggle"
+					         onclick="setFilterStatus(this, 'favouriteToggle')" text="Type">
+					        <span data-th-text="'My Favourites (' + ${userEntityService.getUser().getFavourites().size()} + ')'"></span>
+					        <span id="favouriteToggleCaret" class="dropup"><span class="caret"></span></span>
+					      </a> 
+					    </h4>
+					  </div>
+					  <div class="panel-collapse collapse in" id="favouriteToggle">
+					    <div class="list-group">
+					      <a data-th-each="table : ${userEntityService.getUser().getFavourites()}" class="list-group-item cleafix"
+					         th:href="${'table?fqdn=' + table}">
+					        <em data-th-text="${table}" style="margin-left: 10px"></em>
+					        </a>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+              </div>
+          	</div>
+          </div>
+                    	<div class="row" style="padding-left: 15px">
+          	<div class="well" style="background: #fafafa; padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
+                        <div class="row">
+			  	<div class="panel-group" style="margin-bottom: 1px;">
+					<div class="panel panel-default" style="border-color: lightgray; border-radius: 0px;">
+					  <div class="panel-heading" style="background-color: white; background-image: none;">
+					    <h4 class="panel-title">
+					      <a class="accordion-toggle filter-heading" id="top5ToggleLabel" data-toggle="collapse" href="#top5Toggle"
+					         onclick="setFilterStatus(this, 'favouriteToggle')" text="Type">
+					        <span data-th-text="'Most Viewed'"></span>
+					        <span id="top5ToggleCaret" class="dropup"><span class="caret"></span></span>
+					      </a> 
+					    </h4>
+					  </div>
+					  <div class="panel-collapse collapse in" id="top5Toggle">
+					    <div class="list-group">
+					      <a data-th-each="table : ${topFive}" class="list-group-item cleafix"
+					         th:href="${'table?fqdn=' + table.fqdn}" th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'">
+					        <em data-th-text="${table.tableName}" style="margin-left: 10px"></em>
+					        </a>
+					      </div>
+					    </div>
+					  </div>
+					</div>
+              </div>
+              </div>
+              </div>
+              <div class="row" style="padding-left: 15px">
+          	<div class="well" style="background: #fafafa; padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
+				<h4>Recent activities</h4>
+				<div data-th-if="${activities.size() == 0}">
+					<em>No activites</em>
+				</div>
+				<div data-th-each="activity : ${activities}" class="row">
+				  <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('UPDATE_DOCUMENTATION')}">
+				  	<div class="col-md-1">
+				  	  <span class="glyphicon glyphicon-file"></span>
+				  	</div>
+				  	<div class="col-md-11">
+				  		<div class="row">
+				  		  <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
+				  		</div>
+				  		<div class="row">
+				  		  <em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; documentation updated by ' + ${activity.user.fullname}"></em>
+				  		</div>
+				  	</div>
+				  </div>
+				  <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('NEW_COMMENT')}">
+				  	<div class="col-md-1">
+				  	  <span class="glyphicon glyphicon-comment"></span>
+				  	</div>
+				  	<div class="col-md-11">
+				  		<div class="row">
+				  		  <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
+				  		</div>
+				  		<div class="row">
+				  		  <em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; new comment by ' + ${activity.user.fullname}"></em>
+				  		</div>
+				  	</div>
+				  </div>
+				  <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('UPDATE_TAGS')}">
+				  	<div class="col-md-1">
+				  	  <span class="glyphicon glyphicon-tags"></span>
+				  	</div>
+				  	<div class="col-md-11">
+				  		<div class="row">
+				  		  <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
+				  		</div>
+				  		<div class="row">
+				  		  <em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; taxonomy updated by ' + ${activity.user.fullname}"></em>
+				  		</div>
+				  	</div>
+				  </div>
+				</div>
+              </div>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <nav data-th-replace="footer/footer :: footer"></nav>
+  
+  <div data-th-if="${userEntityService.isAuthenticated()}">
+    <div data-th-replace="body/admin/user/create_user :: create_user_modal"></div>
+    <div data-th-replace="body/admin/user/edit_user :: edit_user_modal"></div>
+    <div data-th-replace="body/admin/user/delete_user :: delete_user_modal"></div>
+    <div data-th-replace="body/admin/user/user_management :: user_management_modal"></div>
+    <div data-th-replace="body/admin/taxonomy/taxonomy :: taxonomy_modal"></div>
+    <div data-th-replace="body/admin/taxonomy/create_category :: create_category_modal"></div>
+    <div data-th-replace="body/admin/taxonomy/create_businessobject :: create_bo_modal"></div>
+    <div data-th-replace="body/admin/taxonomy/delete_category :: delete_category_modal"></div>
+    <div data-th-replace="body/admin/taxonomy/delete_businessobject :: delete_bo_modal"></div>
+    <div data-th-replace="body/admin/taxonomy/edit_businessobject :: edit_bo_modal"></div>
+  </div>
+
+  <div data-th-replace="includes/scripts :: global"></div>
+  <div data-th-replace="includes/scripts :: index"></div>
+
+  <div id="javascript-thymleaf" th:inline="javascript" th:remove="tag" data-th-if="${userEntityService.isAuthenticated()}">
+    <div data-th-replace="includes/thymeleaf-js :: index"></div>
+  </div>
+  
+</body>
+</html>

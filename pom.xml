@@ -36,9 +36,10 @@
 		<module>schedoscope-core</module>
 		<module>schedoscope-export</module>
 		<module>schedoscope-tutorial</module>
+		<module>schedoscope-metascope</module>
 	</modules>
-	
-	
+
+
 	<repositories>
 		<repository>
 			<id>cloudera</id>

@@ -1,0 +1,115 @@
+<div data-th-fragment="table(obj)">
+  <div th:with="table=${obj.resultEntity}">
+    <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
+      <div class="panel-heading">
+        <div class="row">
+          <form data-th-action="@{/table/favourite}" method="POST">
+            <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
+            <div class="col-md-12">
+              <button th:attr="class=${favs.contains(table.fqdn) ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}" 
+                      style="font-size:1.5em; margin-right: 5px;" type="submit"></button>
+              <a th:href="'table?fqdn=' + ${table.fqdn}"
+                 th:text="${table.isPartitioned()} ? 
+                 ${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')' :
+                 ${table.databaseName} + ' :: ' + ${table.tableName}" th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a>
+              <span style="padding-left: 10px;" data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span>
+              <span class="pull-right" data-th-text="${table.status}"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+      <table id="identityTable" class="table table-reflow">
+     	<div th:with="e=${obj.highlightings.get('tableName')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Table'"></b></td>
+            <td width="80%"><span th:utext="${e.get(0)}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('databaseName')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Database'"></b></td>
+            <td width="80%"><span th:utext="${e.get(0)}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('fields')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Fields'"></b></td>
+            <td width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('description')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Description'"></b></td>
+            <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
+            <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('documentation')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Documentation'"></b></td>
+            <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
+            <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('comments')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Comments'"></b></td>
+            <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
+            <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('parameterString')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Parameters'"></b></td>
+            <td width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('categories')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Category'"></b></td>
+            <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
+            <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('bos')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Business Object'"></b></td>
+            <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
+            <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('tags')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Tag'"></b></td>
+            <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
+            <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('transformation')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Transformation'"></b></td>
+            <td width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('storageFormat')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'StorageFormat'"></b></td>
+            <td width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('owner')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Owner'"></b></td>
+            <td width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+        <div th:with="e=${obj.highlightings.get('status')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Status'"></b></td>
+            <td width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
+      </table>
+    </div>
+  </div>
+</div>
