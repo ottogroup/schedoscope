@@ -18,7 +18,7 @@ package org.schedoscope.metascope.conf;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.schedoscope.Schedoscope;
+import org.schedoscope.conf.BaseSettings;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.service.UserEntityService;
 import org.schedoscope.metascope.tasks.repository.RepositoryDAO;
@@ -42,6 +42,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
+
+import com.typesafe.config.ConfigFactory;
 
 /**
  * Configuration to secure the application (login)
@@ -132,7 +134,7 @@ public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter 
   
   @Bean
   public MetascopeConfig metascopeConfig() {
-    return new MetascopeConfig(Schedoscope.settings());
+    return new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
   }
   
   @Bean

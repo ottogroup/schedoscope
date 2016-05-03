@@ -18,7 +18,6 @@ package org.schedoscope.scheduler.driver
 import java.sql.{ Connection, DriverManager, SQLException, Statement }
 import java.net.ConnectException
 import java.security.PrivilegedAction
-
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
@@ -26,15 +25,16 @@ import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.thrift.TException
 import org.joda.time.LocalDateTime
-import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.Schedoscope
+import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
-
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.Stack
 import scala.concurrent.Future
+import org.schedoscope.Schedoscope
 
 /**
  * Driver for executing Hive transformations

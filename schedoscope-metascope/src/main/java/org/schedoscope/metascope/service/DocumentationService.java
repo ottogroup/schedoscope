@@ -15,8 +15,6 @@
  */
 package org.schedoscope.metascope.service;
 
-import javax.jdo.annotations.Transactional;
-
 import org.jsoup.Jsoup;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.CommentEntity;
@@ -30,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DocumentationService {

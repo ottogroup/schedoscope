@@ -25,7 +25,8 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{ FileStatus, FileSystem, FileUtil, Path }
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
-import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.Schedoscope
+import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.{ Copy, CopyFrom, Delete, FilesystemTransformation, IfExists, IfNotExists, MkDir, Move, StoreFrom, Touch }
 
 import scala.concurrent.Future

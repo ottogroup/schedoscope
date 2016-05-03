@@ -30,6 +30,8 @@ import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.CommentEntity;
 import org.schedoscope.metascope.model.TableEntity;
 import org.schedoscope.metascope.service.UserEntityService;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DocumentationServiceTest extends SpringTest {
@@ -56,6 +58,8 @@ public class DocumentationServiceTest extends SpringTest {
   }
 
   @Test
+  @Transactional
+  @Rollback(false)
   public void documentationService_01_updateDocumentation_createTableDocumenation() {
     TableEntity tableEntity = getTestTable();
 
@@ -69,6 +73,8 @@ public class DocumentationServiceTest extends SpringTest {
   }
 
   @Test
+  @Transactional
+  @Rollback(false)
   public void documentationService_02_updateDocumentation_updateTableDocumenation() {
     TableEntity tableEntity = getTestTable();
 
@@ -83,6 +89,8 @@ public class DocumentationServiceTest extends SpringTest {
   }
 
   @Test
+  @Transactional
+  @Rollback(false)
   public void documentationService_03_addComment() {
     TableEntity tableEntity = getTestTable();
 
@@ -100,6 +108,8 @@ public class DocumentationServiceTest extends SpringTest {
   }
 
   @Test
+  @Transactional
+  @Rollback(false)
   public void documentationService_04_deleteComment() {
     TableEntity tableEntity = getTestTable();
     List<CommentEntity> comments = tableEntity.getComments();

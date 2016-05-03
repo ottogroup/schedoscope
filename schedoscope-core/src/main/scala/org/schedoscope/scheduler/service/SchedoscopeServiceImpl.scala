@@ -24,7 +24,7 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import org.schedoscope.AskPattern._
-import org.schedoscope.SchedoscopeSettings
+import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.{ Named, View }
 import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.actors.ViewManagerActor

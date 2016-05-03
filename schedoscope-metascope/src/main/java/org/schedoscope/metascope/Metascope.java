@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
-import org.schedoscope.Schedoscope;
+import org.schedoscope.conf.BaseSettings;
 import org.schedoscope.metascope.conf.MetascopeConfig;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.tasks.MetascopeTask;
@@ -34,6 +34,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import com.typesafe.config.ConfigFactory;
+
 @SpringBootApplication
 public class Metascope {
 
@@ -41,7 +43,7 @@ public class Metascope {
 
   public static void main(String[] args) {
     /* set some mandatory configs before application start */
-    MetascopeConfig config = new MetascopeConfig(Schedoscope.settings());
+    MetascopeConfig config = new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
     System.setProperty("server.port", String.valueOf(config.getPort()));
     System.setProperty("spring.jpa.database-platform", config.getRepositoryDialect());
     System.setProperty("logging.level.org.schedoscope", config.getLogLevel());

@@ -19,7 +19,8 @@ import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props, actorRef2Scala }
 import akka.event.{ Logging, LoggingReceive }
 import org.schedoscope.AskPattern._
-import org.schedoscope.{ Schedoscope, SchedoscopeSettings }
+import org.schedoscope.Schedoscope
+import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages._
 import scala.collection.mutable.{ HashMap, HashSet }
