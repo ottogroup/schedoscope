@@ -41,7 +41,10 @@ public class Metascope {
 
   private static final Logger LOG = LoggerFactory.getLogger(Metascope.class);
 
-  public static void main(String[] args) {
+  private ConfigurableApplicationContext applicationContext;
+  private ScheduledThreadPoolExecutor executor;
+
+	public void start(String[] args) {
     /* set some mandatory configs before application start */
     MetascopeConfig config = new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
     System.setProperty("server.port", String.valueOf(config.getPort()));
@@ -51,7 +54,7 @@ public class Metascope {
     System.setProperty("spring.profiles.active", "production");
 
     /* start metascope spring boot application */
-    ConfigurableApplicationContext applicationContext = SpringApplication.run(Metascope.class, args);
+    this.applicationContext = SpringApplication.run(Metascope.class, args);
 
     SolrFacade solr = applicationContext.getBean(SolrFacade.class);
     RepositoryDAO repo = applicationContext.getBean(RepositoryDAO.class);
@@ -62,7 +65,7 @@ public class Metascope {
     MetascopeTask metascopeTask = new MetascopeTask(repo, dataSource, solr, config, schedoscopeUtil);
     SchedoscopeStatusTask statusTask = new SchedoscopeStatusTask(repo, dataSource, solr, schedoscopeUtil);
 
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    this.executor = new ScheduledThreadPoolExecutor(1);
     ScheduledFuture<?> metascopeTaskFuture = executor.schedule(metascopeTask, 5, TimeUnit.SECONDS);
     ScheduledFuture<?> statusTaskFuture = executor.scheduleAtFixedRate(statusTask, 5, 5, TimeUnit.SECONDS);
 
@@ -75,6 +78,15 @@ public class Metascope {
     } catch (Throwable t) {
       LOG.error("Exception in future tasks", t);
     }
+  }
+
+	public void stop() throws InterruptedException {
+		 this.applicationContext.stop();
+		 this.executor.awaitTermination(5, TimeUnit.SECONDS);
+  }
+	
+  public static void main(String[] args) {
+  	new Metascope().start(args);
   }
 
 }
