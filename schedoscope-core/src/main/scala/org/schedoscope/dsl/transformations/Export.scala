@@ -169,6 +169,7 @@ object Export {
     replace: Boolean = true,
     flush: Boolean = false,
     redisPort: Int = 6379,
+    redisPassword: String = null,
     redisKeySpace: Int = 0,
     commitSize: Int = Schedoscope.settings.redisExportBatchSize,
     numReducers: Int = Schedoscope.settings.redisExportNumReducers,
@@ -196,6 +197,7 @@ object Export {
           conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
           conf.get("schedoscope.export.redisHost").get.asInstanceOf[String],
           conf.get("schedoscope.export.redisPort").get.asInstanceOf[Int],
+          conf.get("schedoscope.export.redisPassword").get.asInstanceOf[String],
           conf.get("schedoscope.export.redisKeySpace").get.asInstanceOf[Int],
           v.dbName,
           v.n,
@@ -218,6 +220,7 @@ object Export {
       Map(
         "schedoscope.export.redisHost" -> redisHost,
         "schedoscope.export.redisPort" -> redisPort,
+        "schedoscope.export.redisPassword" -> redisPassword,
         "schedoscope.export.redisKeySpace" -> redisKeySpace,
         "schedoscope.export.numReducers" -> numReducers,
         "schedoscope.export.pipeline" -> pipeline,
