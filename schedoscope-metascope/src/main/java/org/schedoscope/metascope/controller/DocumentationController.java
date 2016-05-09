@@ -23,6 +23,7 @@ import org.schedoscope.metascope.model.TableEntity;
 import org.schedoscope.metascope.service.DocumentationService;
 import org.schedoscope.metascope.service.FieldEntityService;
 import org.schedoscope.metascope.service.TableEntityService;
+import org.schedoscope.metascope.service.UserEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,18 +38,20 @@ public class DocumentationController {
   private TableEntityService tableEntityService;
   @Autowired
   private FieldEntityService fieldEntityService;
+  @Autowired
+  private UserEntityService userEntityService;
 
   @RequestMapping(value = "/table/documentation", method = RequestMethod.POST)
   public String updateDocumentation(HttpServletRequest request, String fqdn, String documentation) {
     TableEntity tableEntity = tableEntityService.findByFqdn(fqdn);
-    documentationService.updateDocumentation(tableEntity, documentation);
+    documentationService.updateDocumentation(tableEntity, documentation, userEntityService.getUser());
     return "redirect:" + request.getHeader("Referer");
   }
 
   @RequestMapping(value = "/table/documentation/comment/add", method = RequestMethod.POST)
   public String addComment(HttpServletRequest request, String fqdn, String comment) {
     TableEntity tableEntity = tableEntityService.findByFqdn(fqdn);
-    documentationService.addComment(tableEntity, comment);
+    documentationService.addComment(tableEntity, comment, userEntityService.getUser());
     return "redirect:" + request.getHeader("Referer");
   }
 
@@ -56,7 +59,7 @@ public class DocumentationController {
   public String deleteComment(HttpServletRequest request, String commentID) {
     CommentEntity commentEntity = documentationService.findById(commentID);
     TableEntity tableEntity = tableEntityService.findByComment(commentEntity);
-    documentationService.deleteComment(tableEntity, commentEntity);
+    documentationService.deleteComment(tableEntity, commentEntity, userEntityService.getUser());
     return "redirect:" + request.getHeader("Referer");
   }
 
@@ -64,14 +67,14 @@ public class DocumentationController {
   public String updateDocumentation(HttpServletRequest request, String fqdn, String fieldname, boolean parameter,
       String documentation) {
     FieldEntity fieldEntity = fieldEntityService.findByFqdnAndName(fqdn, fieldname);
-    documentationService.updateDocumentation(fieldEntity, documentation);
+    documentationService.updateDocumentation(fieldEntity, documentation, userEntityService.getUser());
     return getReferer(request, fieldname, parameter);
   }
 
   @RequestMapping(value = "/field/documentation/comment/add", method = RequestMethod.POST)
   public String addComment(HttpServletRequest request, String fqdn, String fieldname, boolean parameter, String comment) {
     FieldEntity fieldEntity = fieldEntityService.findByFqdnAndName(fqdn, fieldname);
-    documentationService.addComment(fieldEntity, comment);
+    documentationService.addComment(fieldEntity, comment, userEntityService.getUser());
     return getReferer(request, fieldname, parameter);
   }
 
@@ -79,7 +82,7 @@ public class DocumentationController {
   public String deleteComment(HttpServletRequest request, String fieldname, boolean parameter, String commentID) {
     CommentEntity commentEntity = documentationService.findById(commentID);
     FieldEntity fieldEntity = fieldEntityService.findByComment(commentEntity);
-    documentationService.deleteComment(fieldEntity, commentEntity);
+    documentationService.deleteComment(fieldEntity, commentEntity, userEntityService.getUser());
     return getReferer(request, fieldname, parameter);
   }
 

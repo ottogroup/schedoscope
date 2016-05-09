@@ -23,15 +23,4 @@ $(function() {
 
   /* make table header collapsable */
   $('#expandComments').on('click', expandFunction);
-  
-  /* setup the usermanagement and taxonomy modals */
-  $('#boAdd').on('hide.bs.modal', showTaxonomyModal);
-  $('#categoryAdd').on('hide.bs.modal', showTaxonomyModal);
-  $('#boEdit').on('hide.bs.modal', showTaxonomyModal);
-  $('#categoryEdit').on('hide.bs.modal', showTaxonomyModal);
-  $('#boDelete').on('hide.bs.modal', showTaxonomyModal);
-  $('#categoryDelete').on('hide.bs.modal', showTaxonomyModal);
-  $('#userAdd').on('hide.bs.modal', showUserModal);
-  $('#userEdit').on('hide.bs.modal', showUserModal);
-  $('#userDelete').on('hide.bs.modal', showUserModal);
 });

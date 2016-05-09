@@ -129,7 +129,7 @@ public class SolrFacadeTest extends SpringTest {
     String testCategory = (String) tableDocument.getFieldValue(SolrUpdateHandler.CATEGORIES);
     String transformation = (String) tableDocument.getFieldValue(SolrUpdateHandler.TRANSFORMATION);
 
-    assertEquals(testCategory, TEST_CATEGORY);
+    assertEquals(testCategory, TEST_CATEGORY_NAME);
     assertEquals(transformation, HIVE_TRANSFORMATION_TYPE);
 
     TableEntity tableEntity = getTestTable();

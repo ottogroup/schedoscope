@@ -36,8 +36,9 @@ public class SolrUpdateHandler {
   public static final String DATABASE_NAME = "databaseName";
   public static final String TABLE_NAME = "tableName";
   public static final String FIELDS = "fields";
+  public static final String TAXONOMIES = "taxonomies";
   public static final String CATEGORIES = "categories";
-  public static final String BUSINESS_OBJECTS = "bos";
+  public static final String CATEGORIE_OBJECTSS = "categoryObjects";
   public static final String STORAGE_FORMAT = "storageFormat";
   public static final String TRANSFORMATION = "transformation";
   public static final String EXPORTS = "exports";
@@ -84,8 +85,9 @@ public class SolrUpdateHandler {
     doc.setField(CREATED_AT, tableEntity.getCreatedAt());
     doc.setField(OWNER, tableEntity.getTableOwner());
     doc.setField(DESCRIPTION, tableEntity.getTableDescription());
+    doc.setField(TAXONOMIES, tableEntity.getTaxonomyNames());
     doc.setField(CATEGORIES, tableEntity.getCategoryNames());
-    doc.setField(BUSINESS_OBJECTS, tableEntity.getBusinessObjectNames());
+    doc.setField(CATEGORIE_OBJECTSS, tableEntity.getCategoryObjectNames());
     doc.setField(TAGS, tableEntity.getTags());
     doc.setField(STATUS, tableEntity.getStatus());
     if (tableEntity.getComment() != null) {

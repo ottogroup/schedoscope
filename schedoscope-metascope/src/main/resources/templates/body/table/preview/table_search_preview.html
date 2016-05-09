@@ -64,6 +64,13 @@
             <td width="80%"><span th:utext="${e}"></span></td>
           </tr>
         </div>
+        <div th:with="e=${obj.highlightings.get('taxonomies')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Taxonomy'"></b></td>
+            <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
+            <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
         <div th:with="e=${obj.highlightings.get('categories')}">
           <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
             <td width="20%"><b data-th-text="'Category'"></b></td>
@@ -71,9 +78,9 @@
             <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
           </tr>
         </div>
-        <div th:with="e=${obj.highlightings.get('bos')}">
+        <div th:with="e=${obj.highlightings.get('categoryObjects')}">
           <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
-            <td width="20%"><b data-th-text="'Business Object'"></b></td>
+            <td width="20%"><b data-th-text="'Category Object'"></b></td>
             <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
             <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
           </tr>

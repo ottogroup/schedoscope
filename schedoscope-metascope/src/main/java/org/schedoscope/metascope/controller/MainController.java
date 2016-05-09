@@ -136,7 +136,7 @@ public class MainController extends ViewController {
         mav.addObject("users", userEntityService.getAllUser());
 
         /* taxonomy management */
-        mav.addObject("categories", taxonomyService.getAllCategories());
+        mav.addObject("taxonomies", taxonomyService.getTaxonomies());
       }
 
     }

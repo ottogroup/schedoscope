@@ -2,6 +2,11 @@
   <div class="navbar-header">
     <a style="color: #E23322;" class="navbar-brand" data-th-href="@{/}">Metascope</a>
   </div>
+  <ul class="nav navbar-nav" data-th-if="${userEntityService.isAuthenticated()}">
+    <li th:class="${#httpServletRequest.requestURI.equals('/home') ? 'active' : ''}"><a data-th-if="${admin}" data-th-href="@{/home}">Views</a></li>
+    <li th:class="${#httpServletRequest.requestURI.equals('/admin/taxonomies') ? 'active' : ''}"><a data-th-if="${admin}" data-th-href="@{/admin/taxonomies}">Taxonomies</a></li>
+    <li th:class="${#httpServletRequest.requestURI.equals('/admin/users') ? 'active' : ''}"><a data-th-if="${admin and userMgmnt}" data-th-href="@{/admin/users}">User Management</a></li>
+  </ul>
   <div class="container">
     <div class="collapse navbar-collapse" id="navbar">
       <ul class="nav navbar-nav navbar-right">
@@ -14,8 +19,8 @@
           </a>
           <ul class="dropdown-menu">
             <li data-th-if="${admin}" class="dropdown-header">Admin</li>
-            <li data-th-if="${admin and userMgmnt}"><a href="#" data-toggle="modal" data-target="#userManagement">User Management</a></li>
-            <li data-th-if="${admin}"><a href="#" data-toggle="modal" data-target="#taxonomyModal">Taxonomies</a></li>
+            <li data-th-if="${admin and userMgmnt}"><a th:href="@{'/admin/users'}">User Management</a></li>
+            <li data-th-if="${admin}"><a th:href="@{'/admin/taxonomies'}">Taxonomies</a></li>
             <li data-th-if="${admin}" role="separator" class="divider"></li>
             <li class="dropdown-header">Actions</li>
             <li>

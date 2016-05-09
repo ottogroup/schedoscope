@@ -18,6 +18,9 @@ package org.schedoscope.metascope.controller;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.validator.routines.EmailValidator;
+import org.schedoscope.metascope.conf.MetascopeConfig;
+import org.schedoscope.metascope.model.UserEntity;
+import org.schedoscope.metascope.service.MetadataEntityService;
 import org.schedoscope.metascope.service.UserEntityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.session.SessionRegistry;
@@ -30,13 +33,35 @@ import org.springframework.web.servlet.view.RedirectView;
 @Controller
 public class UserEntityController extends ViewController {
 
-  private static final String ADMIN_TEMPLATE = "body/admin";
+  private static final String ADMIN_TEMPLATE = "body/admin/user";
 
   @Autowired
   private UserEntityService userEntityService;
   @Autowired
   private SessionRegistry sessionRegistry;
-
+	@Autowired
+	private MetadataEntityService metadataEntityService;
+  @Autowired
+  private MetascopeConfig config;
+  
+  @RequestMapping(value = "/admin/users", method = RequestMethod.GET)
+  public ModelAndView getUserManagement(HttpServletRequest request) {
+  	ModelAndView mav = createView("user_management");
+  	
+		boolean admin = userEntityService.isAdmin();
+		boolean withUserManagement = config.withUserManagement();
+		String schedoscopeTimestamp = metadataEntityService.getMetadataValue("timestamp");
+		Iterable<UserEntity> users = userEntityService.getAllUser();
+		
+		mav.addObject("schedoscopeTimestamp", schedoscopeTimestamp);
+		mav.addObject("userEntityService", userEntityService);
+		mav.addObject("admin", admin);
+    mav.addObject("userMgmnt", withUserManagement);
+    mav.addObject("users", users);
+    
+  	return mav;
+  }
+  
   @RequestMapping(value = "/admin/user/create", method = RequestMethod.POST)
   public ModelAndView createUser(HttpServletRequest request, String username, String email, String fullname,
       String password, boolean admin, String group) {

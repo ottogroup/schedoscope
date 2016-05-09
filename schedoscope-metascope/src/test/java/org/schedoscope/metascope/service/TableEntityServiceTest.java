@@ -163,16 +163,16 @@ public class TableEntityServiceTest extends SpringTest {
   public void tableService_09_addBusinessObject() {
     TableEntity tableEntity = getTestTable();
 
-    assertEquals(tableEntity.getBusinessObjects().size(), 0);
+    assertEquals(tableEntity.getCategoryObjects().size(), 0);
     assertEquals(tableEntity.getCategoryNames().size(), 0);
 
     tableEntityService.setBusinessObjects(tableEntity.getFqdn(), TEST_BUSINESS_OBJECT);
 
     tableEntity = getTestTable();
     assertEquals(tableEntity.getCategoryNames().size(), 1);
-    assertEquals(tableEntity.getCategoryNames().get(0), TEST_CATEGORY);
-    assertEquals(tableEntity.getBusinessObjects().size(), 1);
-    assertEquals(tableEntity.getBusinessObjects().get(0).getName(), TEST_BUSINESS_OBJECT);
+    assertEquals(tableEntity.getCategoryNames().get(0), TEST_CATEGORY_NAME);
+    assertEquals(tableEntity.getCategoryObjects().size(), 1);
+    assertEquals(tableEntity.getCategoryObjects().get(0).getName(), TEST_BUSINESS_OBJECT);
   }
 
   @Test
@@ -181,14 +181,14 @@ public class TableEntityServiceTest extends SpringTest {
   public void tableService_10_removeBusinessObject() {
     TableEntity tableEntity = getTestTable();
 
-    assertEquals(tableEntity.getBusinessObjects().size(), 1);
+    assertEquals(tableEntity.getCategoryObjects().size(), 1);
     assertEquals(tableEntity.getCategoryNames().size(), 1);
 
     tableEntityService.setBusinessObjects(tableEntity.getFqdn(), null);
 
     tableEntity = getTestTable();
     assertEquals(tableEntity.getCategoryNames().size(), 0);
-    assertEquals(tableEntity.getBusinessObjects().size(), 0);
+    assertEquals(tableEntity.getCategoryObjects().size(), 0);
 
     tableService_09_addBusinessObject();
   }

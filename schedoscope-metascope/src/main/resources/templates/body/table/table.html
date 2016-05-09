@@ -82,19 +82,6 @@
 
 <nav data-th-replace="footer/footer :: footer"></nav>
 
-<div data-th-if="${userEntityService.isAuthenticated()}">
-  <div data-th-replace="body/admin/user/create_user :: create_user_modal"></div>
-  <div data-th-replace="body/admin/user/edit_user :: edit_user_modal"></div>
-  <div data-th-replace="body/admin/user/delete_user :: delete_user_modal"></div>
-  <div data-th-replace="body/admin/user/user_management :: user_management_modal"></div>
-  <div data-th-replace="body/admin/taxonomy/taxonomy :: taxonomy_modal"></div>
-  <div data-th-replace="body/admin/taxonomy/create_category :: create_category_modal"></div>
-  <div data-th-replace="body/admin/taxonomy/create_businessobject :: create_bo_modal"></div>
-  <div data-th-replace="body/admin/taxonomy/delete_category :: delete_category_modal"></div>
-  <div data-th-replace="body/admin/taxonomy/delete_businessobject :: delete_bo_modal"></div>
-  <div data-th-replace="body/admin/taxonomy/edit_businessobject :: edit_bo_modal"></div>
-</div>
-
 <div data-th-if="${local == false}" data-th-include="includes/scripts :: global"></div>
 <div data-th-if="${local == false}" data-th-include="includes/scripts :: table"></div>
 

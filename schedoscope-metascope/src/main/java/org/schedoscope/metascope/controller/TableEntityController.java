@@ -15,6 +15,7 @@
  */
 package org.schedoscope.metascope.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -26,10 +27,11 @@ import java.util.concurrent.TimeoutException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.schedoscope.metascope.conf.MetascopeConfig;
-import org.schedoscope.metascope.model.CategoryEntity;
+import org.schedoscope.metascope.model.CategoryMap;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.TableDependencyEntity;
 import org.schedoscope.metascope.model.TableEntity;
+import org.schedoscope.metascope.model.TaxonomyEntity;
 import org.schedoscope.metascope.model.UserEntity;
 import org.schedoscope.metascope.model.ViewEntity;
 import org.schedoscope.metascope.service.DataDistributionService;
@@ -118,8 +120,14 @@ public class TableEntityController extends ViewController {
       partitionPage = 1;
     }
 
-    /* get all categories */
-    Iterable<CategoryEntity> categories = taxonomyService.getAllCategories();
+    /* get all taxonomies */
+    Iterable<TaxonomyEntity> taxonomies = taxonomyService.getTaxonomies();
+    List<String> taxonomyNames = new ArrayList<String>();
+    for (TaxonomyEntity taxonomyEntity : taxonomies) {
+    	taxonomyNames.add(taxonomyEntity.getName());
+    }
+    
+    Map<String, CategoryMap> tableTaxonomies = tableEntityService.getTableTaxonomies(tableEntity);
 
     /* get all users for user management and owner auto completion */
     Iterable<UserEntity> users = userEntityService.getAllUser();
@@ -170,7 +178,6 @@ public class TableEntityController extends ViewController {
     /* make objects accessible for thymeleaf to render final view */
     mav.addObject("table", tableEntity);
     mav.addObject("userEntityService", userEntityService);
-    mav.addObject("categories", categories);
     mav.addObject("util", htmlUtil);
     mav.addObject("local", local);
     mav.addObject("partitionPage", partitionPage);
@@ -178,7 +185,9 @@ public class TableEntityController extends ViewController {
     mav.addObject("selectedPartition", selectedViewEntity);
     mav.addObject("users", users);
     mav.addObject("owner", owner);
-    mav.addObject("categories", categories);
+    mav.addObject("taxonomies", taxonomies);
+    mav.addObject("taxonomyNames", taxonomyNames);
+    mav.addObject("tableTaxonomies", tableTaxonomies);
     mav.addObject("admin", isAdmin);
     mav.addObject("isFavourite", isFavourite);
     mav.addObject("userMgmnt", config.withUserManagement());
@@ -214,11 +223,25 @@ public class TableEntityController extends ViewController {
    *          The new tags of the table
    * @return the same view the user request came from
    */
-  @RequestMapping(value = "/table/businessobjects", method = RequestMethod.POST)
-  public String addBusinessObject(HttpServletRequest request, String fqdn, String businessObjects, String tags) {
-    tableEntityService.setBusinessObjects(fqdn, businessObjects);
-    tableEntityService.setTags(fqdn, tags);
-    return "redirect:" + request.getHeader("Referer");
+  @RequestMapping(value = "/table/categoryobjects", method = RequestMethod.POST)
+  public String addCategoryObject(HttpServletRequest request) {
+  	Map<String, String[]> parameterMap = request.getParameterMap();
+  	String[] fqdnArr = parameterMap.get("fqdn");
+  	String[] tagArr = parameterMap.get("tags");
+  	String fqdn = null;
+  	String tags = null;
+  	if (fqdnArr != null && fqdnArr.length > 0) {
+  		fqdn = fqdnArr[0];
+  	}
+  	if (tagArr != null && tagArr.length > 0) {
+  		tags = tagArr[0];
+  	}
+  	
+  	if (fqdn != null) {
+  		tableEntityService.setCategoryObjects(fqdn, parameterMap);
+  		tableEntityService.setTags(fqdn, tags);
+  	}
+    return "redirect:" + request.getHeader("Referer") + "#taxonomyContent";
   }
 
   /**
@@ -255,7 +278,7 @@ public class TableEntityController extends ViewController {
   public String admin(HttpServletRequest request, String fqdn, String dataTimestampField,
       String dataTimestampFieldFormat) {
     tableEntityService.setTimestampField(fqdn, dataTimestampField, dataTimestampFieldFormat);
-    return "redirect:" + request.getHeader("Referer");
+    return "redirect:" + request.getHeader("Referer") + "#adminContent";
   }
 
   /**
