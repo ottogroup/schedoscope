@@ -45,6 +45,9 @@ public class RedisExportJob extends BaseExportJob {
 	@Option(name = "-P", usage = "redis port")
 	private int redisPort = 6379;
 
+	@Option(name = "-w", usage = "password to authenticate")
+	private String password;
+
 	@Option(name = "-K", usage = "redis key space (default is 0)")
 	private int redisDb = 0;
 
@@ -101,6 +104,8 @@ public class RedisExportJob extends BaseExportJob {
 	 *            The Redis host.
 	 * @param redisPort
 	 *            The Redis port.
+	 * @param password
+	 *            The password to authenticate
 	 * @param redisDb
 	 *            The Redis key space / database.
 	 * @param inputDatabase
@@ -132,15 +137,16 @@ public class RedisExportJob extends BaseExportJob {
 	 *             is thrown if an error occurs.
 	 */
 	public Job configure(boolean isSecured, String metaStoreUris, String principal, String redisHost, int redisPort,
-			int redisDb, String inputDatabase, String inputTable, String inputFilter, String keyName, String valueName,
-			String keyPrefix, int numReducer, boolean replace, boolean pipeline, boolean flush, int commitSize,
-			String[] anonFields, String exportSalt) throws Exception {
+			String password, int redisDb, String inputDatabase, String inputTable, String inputFilter, String keyName,
+			String valueName, String keyPrefix, int numReducer, boolean replace, boolean pipeline, boolean flush,
+			int commitSize, String[] anonFields, String exportSalt) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
 		this.principal = principal;
 		this.redisHost = redisHost;
 		this.redisPort = redisPort;
+		this.password = password;
 		this.redisDb = redisDb;
 		this.inputDatabase = inputDatabase;
 		this.inputTable = inputTable;
@@ -181,15 +187,15 @@ public class RedisExportJob extends BaseExportJob {
 		Class<?> OutputClazz;
 
 		if (valueName == null) {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb, keyName, keyPrefix,
-					replace, pipeline, commitSize);
+			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, password, redisDb, keyName,
+					keyPrefix, replace, pipeline, commitSize);
 
 			job.setMapperClass(RedisFullTableExportMapper.class);
 			OutputClazz = RedisHashWritable.class;
 
 		} else {
-			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, redisDb, keyName, keyPrefix,
-					valueName, replace, pipeline, commitSize);
+			RedisOutputFormat.setOutput(job.getConfiguration(), redisHost, redisPort, password, redisDb, keyName,
+					keyPrefix, valueName, replace, pipeline, commitSize);
 			job.setMapperClass(RedisExportMapper.class);
 			OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatSchema, valueName);
 		}

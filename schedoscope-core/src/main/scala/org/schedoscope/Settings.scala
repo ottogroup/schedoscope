@@ -15,28 +15,13 @@
  */
 package org.schedoscope
 
-import java.net.URLClassLoader
-import java.nio.file.Paths
-import java.util.Calendar
-import java.util.concurrent.TimeUnit
-import akka.actor.{ ActorSystem, ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProvider }
-import com.typesafe.config.Config
-import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.hadoop.yarn.conf.YarnConfiguration
-import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.dsl.views.DateParameterizationUtils
-import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
-import org.schedoscope.scheduler.driver.Driver
-import org.schedoscope.scheduler.driver.FileSystemDriver.fileSystem
-import scala.Array.canBuildFrom
-import scala.collection.JavaConversions._
-import scala.collection.mutable.HashMap
-import scala.concurrent.duration.Duration
 import org.schedoscope.conf.SchedoscopeSettings
- 
+
+import akka.actor.ActorSystem
+import akka.actor.ExtendedActorSystem
+import akka.actor.ExtensionId
+import akka.actor.ExtensionIdProvider
+
 /**
  * Companion object for settings
  */

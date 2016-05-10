@@ -6,7 +6,7 @@
 		</encoder>
 	</appender>
 
-	<logger name="org.schedoscope" level="WARN" />
+	<logger name="org.schedoscope" level="ERROR" />
 
 	<logger name="org.apache.hadoop.hive.ql.Driver" level="ERROR"/>
 	
