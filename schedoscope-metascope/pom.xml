@@ -186,7 +186,7 @@
 				<version>2.6</version>
 				<configuration>
 					<finalName>metascope</finalName>
-					<outputDirectory>${project.build.directory}</outputDirectory>
+					<outputDirectory>${project.build.directory}/metascope-deployment/</outputDirectory>
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
@@ -205,7 +205,7 @@
 							<goal>copy-dependencies</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.directory}/lib</outputDirectory>
+							<outputDirectory>${project.build.directory}/metascope-deployment/lib</outputDirectory>
 						</configuration>
 					</execution>
 				</executions>
@@ -222,11 +222,31 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
-							<outputDirectory>${project.build.directory}/solr</outputDirectory>
+							<outputDirectory>${project.build.directory}/metascope-deployment/solr</outputDirectory>
 							<resources>
 								<resource>
 									<directory>src/main/resources/solr</directory>
 									<filtering>true</filtering>
+								</resource>
+							</resources>
+							<includeEmptyDirs>true</includeEmptyDirs>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-script</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/metascope-deployment</outputDirectory>
+							<resources>
+								<resource>
+									<directory>src/main/resources/</directory>
+									<filtering>true</filtering>
+									<includes>
+										<include>start-metascope.sh</include>
+									</includes>
 								</resource>
 							</resources>
 							<includeEmptyDirs>true</includeEmptyDirs>
