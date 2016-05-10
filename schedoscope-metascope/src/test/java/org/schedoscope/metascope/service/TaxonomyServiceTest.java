@@ -15,148 +15,214 @@
  */
 package org.schedoscope.metascope.service;
 
+import static org.junit.Assert.*;
+
 import org.junit.FixMethodOrder;
+import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.schedoscope.metascope.SpringTest;
+import org.schedoscope.metascope.model.CategoryEntity;
+import org.schedoscope.metascope.model.CategoryObjectEntity;
+import org.schedoscope.metascope.model.TaxonomyEntity;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TaxonomyServiceTest extends SpringTest {
 
-	private static final String TEST_BUSINESS_OBJECT_DESC_1 = "Business Object description";
-	private static final String TEST_BUSINESS_OBJECT_DESC_2 = "some other Business Object description";
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_01_createTaxonomy() {
+		int taxonomies = size(taxonomyEntityRepository.findAll());
 
-//	@Test
-//	@Transactional
-//	@Rollback(false)
-//	public void taxonomyService_01_createCategory() {
-//		int categories = size(categoryEntityRepository.findAll());
-//
-//		assertEquals(categories, 0);
-//
-//		taxonomyService.createCategory(TEST_CATEGORY_TYPE, TEST_CATEGORY_NAME);
-//
-//		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository
-//		    .findAll();
-//
-//		assertEquals(size(categoryEntities), 1);
-//
-//		CategoryEntity categoryEntity = categoryEntities.iterator().next();
-//
-//		assertEquals(categoryEntity.getCategoryType(), TEST_CATEGORY_TYPE);
-//		assertEquals(categoryEntity.getCategoryName(), TEST_CATEGORY_NAME);
-//		assertEquals(categoryEntity.getCategoryObjects().size(), 0);
-//	}
-//
-//	@Test
-//	@Transactional
-//	@Rollback(false)
-//	public void taxonomyService_02_createCategoryToBeDeleted() {
-//		int categories = size(categoryEntityRepository.findAll());
-//
-//		assertEquals(categories, 1);
-//
-//		taxonomyService.createCategory(TEST_CATEGORY_TYPE, TO_BE_DELETED);
-//
-//		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository
-//		    .findAll();
-//
-//		assertEquals(size(categoryEntities), 2);
-//	}
-//
-//	@Test
-//	@Transactional
-//	@Rollback(false)
-//	public void taxonomyService_03_createBusinessObject() {
-//		int bos = size(boEntityRepository.findAll());
-//
-//		assertEquals(bos, 0);
-//
-//		taxonomyService.createBusinessObject(TEST_CATEGORY_TYPE,
-//		    TEST_CATEGORY_NAME, TEST_BUSINESS_OBJECT, TEST_BUSINESS_OBJECT_DESC_1);
-//
-//		Iterable<BusinessObjectEntity> boEntites = boEntityRepository.findAll();
-//
-//		assertEquals(size(boEntites), 1);
-//
-//		BusinessObjectEntity boEntity = boEntites.iterator().next();
-//
-//		assertEquals(boEntity.getName(), TEST_BUSINESS_OBJECT);
-//
-//		for (CategoryEntity categoryEntity : categoryEntityRepository.findAll()) {
-//			if (categoryEntity.getCategoryName().equals(TEST_CATEGORY_NAME)) {
-//				List<BusinessObjectEntity> boEntities = categoryEntity
-//				    .getBusinessObjects();
-//				assertEquals(boEntities.size(), 1);
-//				assertEquals(boEntites.iterator().next().getName(),
-//				    TEST_BUSINESS_OBJECT);
-//			}
-//		}
-//	}
-//
-//	@Test
-//	@Transactional
-//	@Rollback(false)
-//	public void taxonomyService_04_createBusinessObjectToBeDeleted() {
-//		int bos = size(boEntityRepository.findAll());
-//
-//		assertEquals(bos, 1);
-//
-//		taxonomyService.createBusinessObject(TEST_CATEGORY_TYPE, TO_BE_DELETED,
-//		    TO_BE_DELETED, TEST_BUSINESS_OBJECT_DESC_1);
-//
-//		Iterable<BusinessObjectEntity> boEntites = boEntityRepository.findAll();
-//
-//		assertEquals(size(boEntites), 2);
-//	}
-//
-//	@Test
-//	@Transactional
-//	@Rollback(false)
-//	public void taxonomyService_05_editBusinessObject() {
-//		BusinessObjectEntity boEntity = boEntityRepository
-//		    .findByCategoryNameAndName(TO_BE_DELETED, TO_BE_DELETED);
-//
-//		assertEquals(boEntity.getDescription(), TEST_BUSINESS_OBJECT_DESC_1);
-//
-//		taxonomyService.editBusinessObject(TEST_CATEGORY_TYPE, TO_BE_DELETED,
-//		    TO_BE_DELETED, TO_BE_DELETED, TO_BE_DELETED,
-//		    TEST_BUSINESS_OBJECT_DESC_2);
-//
-//		boEntity = boEntityRepository.findByCategoryNameAndName(TO_BE_DELETED,
-//		    TO_BE_DELETED);
-//
-//		assertEquals(boEntity.getDescription(), TEST_BUSINESS_OBJECT_DESC_2);
-//	}
-//
-//	@Test
-//	@Transactional
-//	@Rollback(false)
-//	public void taxonomyService_06_deleteBusinessObject() {
-//		int bos = size(boEntityRepository.findAll());
-//
-//		assertEquals(bos, 2);
-//
-//		taxonomyService.deleteBusinessObject(TEST_CATEGORY_TYPE, TO_BE_DELETED, TO_BE_DELETED);
-//
-//		Iterable<BusinessObjectEntity> boEntites = boEntityRepository.findAll();
-//
-//		assertEquals(size(boEntites), 1);
-//	}
-//
-//	@Test
-//	@Transactional
-//	@Rollback(false)
-//	public void taxonomyService_07_deleteCategory() {
-//		int categories = size(categoryEntityRepository.findAll());
-//
-//		assertEquals(categories, 2);
-//
-//		taxonomyService.deleteCategory(TEST_CATEGORY_TYPE, TO_BE_DELETED);
-//
-//		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository
-//		    .findAll();
-//
-//		assertEquals(size(categoryEntities), 1);
-//	}
+		assertEquals(taxonomies, 0);
+
+		taxonomyService.createTaxonomy(TEST_TAXONOMY);
+
+		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
+
+		assertEquals(size(taxonomyEntities), 1);
+
+		TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
+
+		assertEquals(taxonomyEntity.getName(), TEST_TAXONOMY);
+		assertEquals(taxonomyEntity.getCategories().size(), 0);
+	}
+
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_02_createCategory() {
+		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
+		int categories = size(categoryEntityRepository.findAll());
+
+		assertEquals(categories, 0);
+
+		taxonomyService.createCategory(taxonomyEntities.iterator().next().getTaxonomyId(), TEST_CATEGORY_NAME);
+
+		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
+
+		assertEquals(size(categoryEntities), 1);
+	}
+
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_03_createCategoryObject() {
+		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
+		int cos = size(coEntityRepository.findAll());
+
+		assertEquals(cos, 0);
+
+		taxonomyService.createCategoryObject(categoryEntities.iterator().next().getCategoryId(), TEST_CATEGORY_OBJECT_NAME, TEST_CATEGORY_OBJECT_DESC);
+
+		Iterable<CategoryObjectEntity> coEntites = coEntityRepository.findAll();
+
+		assertEquals(size(coEntites), 1);
+
+		CategoryObjectEntity coEntity = coEntites.iterator().next();
+
+		assertEquals(coEntity.getName(), TEST_CATEGORY_OBJECT_NAME);
+		assertEquals(coEntity.getDescription(), TEST_CATEGORY_OBJECT_DESC);
+		assertTrue(coEntity.getCategory() != null);
+	}
+	
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_04_editTaxonomy() {
+		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
+		TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
+		
+		assertEquals(taxonomyEntity.getName(), TEST_TAXONOMY);
+		
+		taxonomyService.editTaxonomy(taxonomyEntity.getTaxonomyId(), "NewTaxonomyName");
+
+		taxonomyEntities = taxonomyEntityRepository.findAll();
+
+		taxonomyEntity = taxonomyEntities.iterator().next();
+
+		assertEquals(taxonomyEntity.getName(), "NewTaxonomyName");
+		
+		taxonomyService.editTaxonomy(taxonomyEntity.getTaxonomyId(), TEST_TAXONOMY);
+	}
+	
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_05_editCategory() {
+		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
+		CategoryEntity categoryEntity = categoryEntities.iterator().next();
+		
+		assertEquals(categoryEntity.getName(), TEST_CATEGORY_NAME);
+		
+		taxonomyService.editCategory(categoryEntity.getCategoryId(), "NewCategoryName");
+
+		categoryEntities = categoryEntityRepository.findAll();
+
+		categoryEntity = categoryEntities.iterator().next();
+
+		assertEquals(categoryEntity.getName(), "NewCategoryName");
+		
+		taxonomyService.editCategory(categoryEntity.getCategoryId(), TEST_CATEGORY_NAME);
+	}
+	
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_06_editCategoryObject() {
+		Iterable<CategoryObjectEntity> categoryObjectEntities = coEntityRepository.findAll();
+		CategoryObjectEntity categoryObjectEntity = categoryObjectEntities.iterator().next();
+		
+		assertEquals(categoryObjectEntity.getName(), TEST_CATEGORY_OBJECT_NAME);		
+		assertEquals(categoryObjectEntity.getDescription(), TEST_CATEGORY_OBJECT_DESC);
+		
+		taxonomyService.editCategoryObject(categoryObjectEntity.getCategoryObjectId(), "NewCategoryObjectName", "NewCategoryObjectDesc");
+
+		categoryObjectEntities = coEntityRepository.findAll();
+
+		categoryObjectEntity = categoryObjectEntities.iterator().next();
+
+		assertEquals(categoryObjectEntity.getName(), "NewCategoryObjectName");
+		assertEquals(categoryObjectEntity.getDescription(), "NewCategoryObjectDesc");
+		
+		taxonomyService.editCategoryObject(categoryObjectEntity.getCategoryObjectId(), TEST_CATEGORY_OBJECT_NAME, TEST_CATEGORY_OBJECT_DESC);				
+	}
+	
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_07_deleteCategoryObject() {
+		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
+		CategoryEntity categoryEntity = categoryEntities.iterator().next();
+		
+		CategoryObjectEntity categoryObjectEntity = new CategoryObjectEntity();
+		categoryObjectEntity.setName(TO_BE_DELETED);
+		categoryObjectEntity.setDescription(TO_BE_DELETED);
+		categoryObjectEntity.setCategory(categoryEntity);
+		
+		categoryObjectEntity = coEntityRepository.save(categoryObjectEntity);
+		
+		Iterable<CategoryObjectEntity> categoryObjectEntities = coEntityRepository.findAll();
+		
+		int categoryObjects = size(categoryObjectEntities);
+		assertEquals(categoryObjects, 2);
+		
+		taxonomyService.deleteCategoryObject(categoryObjectEntity.getCategoryObjectId());
+		
+		categoryObjectEntities = coEntityRepository.findAll();
+		
+		categoryObjects = size(categoryObjectEntities);
+		assertEquals(categoryObjects, 1);
+	}
+	
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_08_deleteCategory() {
+		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
+		TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
+		
+		CategoryEntity categoryEntity = new CategoryEntity();
+		categoryEntity.setName(TO_BE_DELETED);
+		categoryEntity.setTaxonomy(taxonomyEntity);
+		
+		categoryEntity = categoryEntityRepository.save(categoryEntity);
+		
+		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
+		
+		int categories = size(categoryEntities);
+		assertEquals(categories, 2);
+		
+		taxonomyService.deleteCategory(categoryEntity.getCategoryId());
+		
+		categoryEntities = categoryEntityRepository.findAll();
+		
+		categories = size(categoryEntities);
+		assertEquals(categories, 1);
+	}
+	
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void taxonomyService_09_deleteTaxonomy() {
+		TaxonomyEntity taxonomyEntity = new TaxonomyEntity();
+		taxonomyEntity.setName(TO_BE_DELETED);
+		
+		taxonomyEntity = taxonomyEntityRepository.save(taxonomyEntity);
+		
+		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
+		
+		int taxonomies = size(taxonomyEntities);
+		assertEquals(taxonomies, 2);
+		
+		taxonomyService.deleteTaxonomy(taxonomyEntity.getTaxonomyId());
+		
+		taxonomyEntities = taxonomyEntityRepository.findAll();
+		
+		taxonomies = size(taxonomyEntities);
+		assertEquals(taxonomies, 1);
+	}
 
 }

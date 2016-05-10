@@ -74,7 +74,7 @@ public class TableEntityControllerTest extends SpringTest {
 
     mockMvc.perform(get("/table").param("fqdn", getTestTable().getFqdn())).andExpect(status().isOk())
         .andExpect(view().name("body/table/table")).andExpect(model().attribute("table", notNullValue()))
-        .andExpect(model().attribute("categories", hasSize(1)));
+        .andExpect(model().attribute("taxonomies", hasSize(1)));
   }
   
   @Test
@@ -93,9 +93,9 @@ public class TableEntityControllerTest extends SpringTest {
 
     mockMvc
         .perform(
-            post("/table/businessobjects").header("Referer", "taxonomy").param("fqdn", getTestTable().getFqdn())
-                .param("businessObjects", TEST_BUSINESS_OBJECT).param("tags", TEST_TAG)).andExpect(status().isFound())
-        .andExpect(view().name("redirect:taxonomy"));
+            post("/table/categoryobjects").header("Referer", "taxonomy").param("fqdn", getTestTable().getFqdn())
+                .param("SomeCategoryObjects", "101").param("tags", TEST_TAG)).andExpect(status().isFound())
+        .andExpect(view().name("redirect:taxonomy#taxonomyContent"));
   }
 
   @Test
@@ -189,9 +189,7 @@ public class TableEntityControllerTest extends SpringTest {
     mockField(tableEntityController, "tableEntityService", tableEntityService);
 
     mockMvc.perform(get("/table").param("fqdn", getTestTable().getFqdn()).param("transitive", "true")).andExpect(status().isOk())
-        .andExpect(view().name("body/table/table")).andExpect(model().attribute("table", notNullValue()))
-        .andExpect(model().attribute("categories", hasSize(1)));
+        .andExpect(view().name("body/table/table")).andExpect(model().attribute("table", notNullValue()));
   }
- 
   
 }

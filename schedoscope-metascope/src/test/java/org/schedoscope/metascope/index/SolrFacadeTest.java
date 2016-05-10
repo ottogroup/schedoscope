@@ -126,10 +126,8 @@ public class SolrFacadeTest extends SpringTest {
 
     assertTrue(tableDocument != null);
 
-    String testCategory = (String) tableDocument.getFieldValue(SolrUpdateHandler.CATEGORIES);
     String transformation = (String) tableDocument.getFieldValue(SolrUpdateHandler.TRANSFORMATION);
 
-    assertEquals(testCategory, TEST_CATEGORY_NAME);
     assertEquals(transformation, HIVE_TRANSFORMATION_TYPE);
 
     TableEntity tableEntity = getTestTable();
@@ -139,10 +137,8 @@ public class SolrFacadeTest extends SpringTest {
 
     tableDocument = solr.getById(tableEntity.getFqdn());
 
-    String newTestCategory = (String) tableDocument.getFieldValue(SolrUpdateHandler.CATEGORIES);
     String newTransformation = (String) tableDocument.getFieldValue(SolrUpdateHandler.TRANSFORMATION);
 
-    assertEquals(testCategory, newTestCategory);
     assertEquals(newTransformation, PIG_TRANSFORMATION_TYPE);
   }
 

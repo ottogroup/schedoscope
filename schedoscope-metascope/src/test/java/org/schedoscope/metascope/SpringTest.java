@@ -41,6 +41,7 @@ import org.schedoscope.metascope.repository.ParameterValueEntityRepository;
 import org.schedoscope.metascope.repository.SuccessorEntityRepository;
 import org.schedoscope.metascope.repository.TableDependencyEntityRepository;
 import org.schedoscope.metascope.repository.TableEntityRepository;
+import org.schedoscope.metascope.repository.TaxonomyEntityRepository;
 import org.schedoscope.metascope.repository.TransformationEntityRepository;
 import org.schedoscope.metascope.repository.UserEntityRepository;
 import org.schedoscope.metascope.repository.ViewDependencyEntityRepository;
@@ -82,9 +83,10 @@ public class SpringTest {
   protected static final String NON_EXIST_USER_FULLNAME = "Not Exists";
   protected static final String TEST_ADMIN_USER = "admin";
   protected static final String LOGGED_IN_USER = "anonymous";
-  protected static final String TEST_CATEGORY_TYPE = "Business Objects";
+  protected static final String TEST_TAXONOMY = "TestTaxonomy";
   protected static final String TEST_CATEGORY_NAME = "TestCategory";
-  protected static final String TEST_BUSINESS_OBJECT = "TestBusinessObject";
+  protected static final String TEST_CATEGORY_OBJECT_NAME = "TestCategoryObject";
+  protected static final String TEST_CATEGORY_OBJECT_DESC = "TestCategoryObjectDesc";
   protected static final String TEST_TAG = "TestTag";
   protected static final String TO_BE_DELETED = "TO_BE_DELETED";
 
@@ -137,6 +139,8 @@ public class SpringTest {
   protected SuccessorEntityRepository successorEntityRepository;
   @Autowired
   protected ActivityEntityRepository activityEntityRepository;
+  @Autowired
+  protected TaxonomyEntityRepository taxonomyEntityRepository;
   @Autowired
   protected CategoryEntityRepository categoryEntityRepository;
   @Autowired
