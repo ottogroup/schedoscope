@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -33,6 +34,7 @@ public class TaxonomyEntity {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private long taxonomyId;
 	
+  @Column(columnDefinition = "varchar(32672)")
 	private String name;
 
 	@OneToMany(mappedBy = "taxonomy", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)

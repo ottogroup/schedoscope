@@ -15,6 +15,7 @@
  */
 package org.schedoscope.metascope.model;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -31,8 +32,10 @@ public class CategoryObjectEntity {
 	@ManyToOne
 	private CategoryEntity category;
 	
+  @Column(columnDefinition = "varchar(32672)")
 	private String name;
 	
+  @Column(columnDefinition = "varchar(32672)")
 	private String description;
 
 	public long getCategoryObjectId() {
