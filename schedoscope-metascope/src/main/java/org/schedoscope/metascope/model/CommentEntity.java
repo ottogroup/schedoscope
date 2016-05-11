@@ -19,8 +19,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 
 @Entity
 public class CommentEntity {
@@ -32,9 +30,7 @@ public class CommentEntity {
   private String text;
   @Column(columnDefinition = "varchar(32629)")
   private String plainText;
-  @ManyToOne
-  @JoinColumn(name = "username")
-  private UserEntity user;
+  private String username;
   private long lastEdit;
 
   public Long getId() {
@@ -57,13 +53,13 @@ public class CommentEntity {
     this.plainText = plainText;
   }
 
-  public UserEntity getUser() {
-    return user;
-  }
-
-  public void setUser(UserEntity user) {
-    this.user = user;
-  }
+	public String getUsername() {
+		return username;
+	}
+	
+	public void setUsername(String username) {
+		this.username = username;
+	}
 
   public long getLastEdit() {
     return lastEdit;

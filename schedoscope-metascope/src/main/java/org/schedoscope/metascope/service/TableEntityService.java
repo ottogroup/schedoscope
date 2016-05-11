@@ -121,13 +121,13 @@ public class TableEntityService {
           tableEntityRepository.save(tableEntity);
           LOG.info("User '{}' changed responsible person for table '{}' to '{}'", userEntityService.getUser()
               .getUsername(), fqdn, fullname);
-          activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntityService.getUser());
+          activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntityService.getUser().getUsername());
         } else if (!fullname.isEmpty()) {
           tableEntity.setPersonResponsible(fullname);
           tableEntityRepository.save(tableEntity);
           LOG.info("User '{}' changed responsible person for table '{}' to '{}'", userEntityService.getUser()
               .getUsername(), fqdn, fullname);
-          activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntityService.getUser());
+          activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntityService.getUser().getUsername());
         }
       }
     }
@@ -145,7 +145,7 @@ public class TableEntityService {
       tableEntityRepository.save(tableEntity);
       LOG.info("User '{}' changed timestamp field for table '{}' to '{}' with format '{}'", userEntityService.getUser()
           .getUsername(), fqdn, dataTimestampField, dataTimestampFieldFormat);
-      activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntityService.getUser());
+      activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntityService.getUser().getUsername());
       if (oldTimestampField != dataTimestampField) {
         jobSchedulerService.updateLastDataForTable(tableEntity);
       }
@@ -212,7 +212,7 @@ public class TableEntityService {
 	  solr.updateTableEntityAsync(tableEntity, true);
 	  LOG.info("User '{}' changed category objects for table '{}' to '{}'", userEntityService.getUser().getUsername(),
 	      fqdn, categoryObjectList);
-	  activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntityService.getUser());
+	  activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntityService.getUser().getUsername());
   }
 
   @Transactional
@@ -238,7 +238,7 @@ public class TableEntityService {
     solr.updateTableEntityAsync(tableEntity, true);
     LOG.info("User '{}' changed tags for table '{}' to '{}'", userEntityService.getUser().getUsername(), fqdn,
         tagsCommaDelimited);
-    activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntityService.getUser());
+    activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntityService.getUser().getUsername());
   }
 
   public TableEntity findByFqdn(String tablefqdn) {
