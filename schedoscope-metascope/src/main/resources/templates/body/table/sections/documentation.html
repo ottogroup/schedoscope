@@ -50,7 +50,11 @@
       <div class="control-group">
         <div style="display: flex;">
           <label class="control-label" for="categories">Documentation</label>
-          <p data-th-if="${table.hasDocumentation()}" style="padding-left: 10px; flex: 1;" data-th-text="'last edit: ' +  ${util.getTime(table.comment.lastEdit)} + ' by ' + ${table.comment.user.fullname}"></p>
+          <div data-th-if="${table.hasDocumentation()}" th:with="userEntity=${userEntityService.findByUsername(table.comment.username)}">
+            <div th:with="username=${userEntity != null ? userEntity.fullname : table.comment.username}">
+              <p data-th-if="${table.hasDocumentation()}" style="padding-left: 10px; flex: 1;" data-th-text="'last edit: ' +  ${util.getTime(table.comment.lastEdit)} + ' by ' + ${username}"></p>
+            </div>
+          </div>
         </div>
         <br/>
       </div>
@@ -92,17 +96,22 @@
           <div style="margin-top: 10px;" class="well">
             <p th:remove="tag" th:utext="${comment.text}"></p>
             <hr style="margin: 2px; border-color: lightgrey"/>
-            <a data-th-text="${comment.user.fullname} + ','" th:href="'mailto:' + ${comment.user.email}"></a>
-            <span data-th-text="${util.getTime(comment.lastEdit)}"></span>
-            <div data-th-if="${comment.user.equals(userEntityService.getUser())}" style="display: inline">
-	            <span style="padding-left:2px; padding-right:2px;">-</span>
-	            <form style="display: inline">
-	              <a><span class="glyphicon glyphicon-pencil"></span></a>
-	            </form>
-	            <form class="form" data-th-action="@{/table/documentation/comment/delete}" method="post" style="display: inline">
-	              <input type="hidden" name="commentID" th:value="${comment.id}"/> 
-	              <a href="javascript:void()" onclick="$(this).closest('form').submit()"><span class="glyphicon glyphicon-trash"></span></a>
-	            </form>
+            <div th:with="userEntity=${userEntityService.findByUsername(comment.username)}">
+              <div th:with="username=${userEntity != null ? userEntity.fullname : comment.username}">
+                <a data-th-if="${userEntity != null}" data-th-text="${username} + ','" th:href="'mailto:' + ${userEntity.email}"></a>
+                <span data-th-if="${userEntity == null}" data-th-text="${username} + ','"></span>
+                <span data-th-text="${util.getTime(comment.lastEdit)}"></span>
+                <div data-th-if="${userEntity != null and userEntity.equals(userEntityService.getUser())}" style="display: inline">
+	              <span style="padding-left:2px; padding-right:2px;">-</span>
+	              <form style="display: inline">
+	                <a><span class="glyphicon glyphicon-pencil"></span></a>
+	              </form>
+	              <form class="form" data-th-action="@{/table/documentation/comment/delete}" method="post" style="display: inline">
+	                <input type="hidden" name="commentID" th:value="${comment.id}"/> 
+	                <a href="javascript:void()" onclick="$(this).closest('form').submit()"><span class="glyphicon glyphicon-trash"></span></a>
+	              </form>
+                </div>
+              </div>
             </div>
           </div>
         </div>

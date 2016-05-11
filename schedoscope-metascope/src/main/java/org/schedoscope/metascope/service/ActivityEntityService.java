@@ -18,9 +18,8 @@ package org.schedoscope.metascope.service;
 import java.util.List;
 
 import org.schedoscope.metascope.model.ActivityEntity;
-import org.schedoscope.metascope.model.TableEntity;
-import org.schedoscope.metascope.model.UserEntity;
 import org.schedoscope.metascope.model.ActivityEntity.ActivityType;
+import org.schedoscope.metascope.model.TableEntity;
 import org.schedoscope.metascope.model.key.ActivityEntityKey;
 import org.schedoscope.metascope.repository.ActivityEntityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,32 +37,32 @@ public class ActivityEntityService {
   }
 
   @Transactional
-  public void createUpdateDocumentActivity(TableEntity tableEntity, UserEntity userEntity) {
-    createAndSave(ActivityType.UPDATE_DOCUMENTATION, tableEntity, userEntity);
+  public void createUpdateDocumentActivity(TableEntity tableEntity, String username) {
+    createAndSave(ActivityType.UPDATE_DOCUMENTATION, tableEntity, username);
   }
 
   @Transactional
-  public void createNewCommentActivity(TableEntity tableEntity, UserEntity userEntity) {
-    createAndSave(ActivityType.NEW_COMMENT, tableEntity, userEntity);
+  public void createNewCommentActivity(TableEntity tableEntity, String username) {
+    createAndSave(ActivityType.NEW_COMMENT, tableEntity, username);
   }
 
   @Transactional
-  public void createUpdateTaxonomyActivity(TableEntity tableEntity, UserEntity userEntity) {
-    createAndSave(ActivityType.UPDATE_TAGS, tableEntity, userEntity);
+  public void createUpdateTaxonomyActivity(TableEntity tableEntity, String username) {
+    createAndSave(ActivityType.UPDATE_TAGS, tableEntity, username);
   }
 
   @Transactional
-  public void createUpdateTableMetadataActivity(TableEntity tableEntity, UserEntity userEntity) {
-    createAndSave(ActivityType.UPDATE_TABLE_METADATA, tableEntity, userEntity);
+  public void createUpdateTableMetadataActivity(TableEntity tableEntity, String username) {
+    createAndSave(ActivityType.UPDATE_TABLE_METADATA, tableEntity, username);
   }
 
-  private void createAndSave(ActivityType activityType, TableEntity tableEntity, UserEntity userEntity) {
-    ActivityEntityKey key = new ActivityEntityKey(activityType, userEntity, tableEntity);
+  private void createAndSave(ActivityType activityType, TableEntity tableEntity, String username) {
+    ActivityEntityKey key = new ActivityEntityKey(activityType, username, tableEntity);
     ActivityEntity activityEntity = activityEntityRepository.findOne(key);
     if (activityEntity == null) {
       activityEntity = new ActivityEntity();
       activityEntity.setType(activityType);
-      activityEntity.setUser(userEntity);
+      activityEntity.setUsername(username);
       activityEntity.setTable(tableEntity);
     }
     activityEntity.setTimestamp(System.currentTimeMillis());

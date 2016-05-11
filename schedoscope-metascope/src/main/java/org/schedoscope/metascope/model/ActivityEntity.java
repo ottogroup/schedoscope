@@ -43,12 +43,12 @@ public class ActivityEntity {
     this.key.setType(type);
   }
 
-  public UserEntity getUser() {
-    return key.getUser();
+  public String getUsername() {
+    return key.getUsername();
   }
 
-  public void setUser(UserEntity user) {
-    this.key.setUser(user);
+  public void setUsername(String username) {
+    this.key.setUsername(username);
   }
 
   public TableEntity getTable() {
