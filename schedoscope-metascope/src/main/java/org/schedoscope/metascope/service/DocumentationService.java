@@ -68,7 +68,7 @@ public class DocumentationService {
 
       comment.setText(documentText);
       comment.setPlainText(Jsoup.parse(documentText).body().text());
-      comment.setUser(userEntity);
+      comment.setUsername(userEntity.getUsername());
       comment.setLastEdit(System.currentTimeMillis());
       commentEntityRepository.save(comment);
       documentable.setComment(comment);
@@ -77,10 +77,10 @@ public class DocumentationService {
     saveEntity(documentable, userEntity);
 
     if (documentable instanceof TableEntity) {
-      activityEntityService.createUpdateDocumentActivity(((TableEntity) documentable), userEntityService.getUser());
+      activityEntityService.createUpdateDocumentActivity(((TableEntity) documentable), userEntityService.getUser().getUsername());
     } else if (documentable instanceof FieldEntity) {
       TableEntity tableEntity = tableEntityRepository.findByFqdn(((FieldEntity) documentable).getFqdn());
-      activityEntityService.createUpdateDocumentActivity(tableEntity, userEntityService.getUser());
+      activityEntityService.createUpdateDocumentActivity(tableEntity, userEntityService.getUser().getUsername());
     }
   }
 
@@ -94,7 +94,7 @@ public class DocumentationService {
       CommentEntity comment = new CommentEntity();
       comment.setText(commentText);
       comment.setPlainText(Jsoup.parse(commentText).body().text());
-      comment.setUser(userEntity);
+      comment.setUsername(userEntity.getUsername());
       comment.setLastEdit(System.currentTimeMillis());
       commentEntityRepository.save(comment);
       documentable.getComments().add(comment);
@@ -102,10 +102,10 @@ public class DocumentationService {
     saveEntity(documentable, userEntity);
 
     if (documentable instanceof TableEntity) {
-      activityEntityService.createNewCommentActivity((TableEntity) documentable, userEntityService.getUser());
+      activityEntityService.createNewCommentActivity((TableEntity) documentable, userEntityService.getUser().getUsername());
     } else if (documentable instanceof FieldEntity) {
       TableEntity tableEntity = tableEntityRepository.findByFqdn(((FieldEntity) documentable).getFqdn());
-      activityEntityService.createNewCommentActivity(tableEntity, userEntityService.getUser());
+      activityEntityService.createNewCommentActivity(tableEntity, userEntityService.getUser().getUsername());
     }
   }
 

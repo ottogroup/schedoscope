@@ -52,24 +52,17 @@ public class ErrorController extends ViewController {
 
   @RequestMapping("/accessdenied")
   public ModelAndView accessdenied(HttpServletRequest request) {
-    ModelAndView mav = createView("accessdenied");
-    if (userEntityService.isAuthenticated()) {
-      mav.addObject("userEntityService", userEntityService);
-      mav.addObject("admin", userEntityService.isAdmin());
-      mav.addObject("userMgmnt", config.withUserManagement());
-    }
-    return mav;
+  	return showErrorView("accessdenied");
   }
 
   @RequestMapping("/notfound")
   public ModelAndView notfound(HttpServletRequest request) {
-    ModelAndView mav = createView("notfound");
-    if (userEntityService.isAuthenticated()) {
-      mav.addObject("userEntityService", userEntityService);
-      mav.addObject("admin", userEntityService.isAdmin());
-      mav.addObject("userMgmnt", config.withUserManagement());
-    }
-    return mav;
+  	return showErrorView("notfound");
+  }
+  
+  @RequestMapping("/expired")
+  public ModelAndView expired(HttpServletRequest request) {
+  	return showErrorView("expired");
   }
 
   @Override
@@ -77,4 +70,13 @@ public class ErrorController extends ViewController {
     return TEMPLATE_ERROR;
   }
 
+  private ModelAndView showErrorView(String view) {
+    ModelAndView mav = createView(view);
+    mav.addObject("userEntityService", userEntityService);
+    if (userEntityService.isAuthenticated()) {
+      mav.addObject("admin", userEntityService.isAdmin());
+      mav.addObject("userMgmnt", config.withUserManagement());
+    }
+    return mav;
+  }
 }

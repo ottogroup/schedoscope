@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */ 
- 
+
+.well {
+  background: #fafafa;	
+}
+table.bordered td, th {
+  border: 1px solid #DDD;
+}
 .dropdown-menu {
   min-width: 180px;
 }
@@ -267,7 +273,6 @@ nav.sidebar, .main {
   margin: 0px;
   padding: 10px;
   width: 100%;
-  background: #fafafa;
 }
  
 @media (min-width: 765px) {

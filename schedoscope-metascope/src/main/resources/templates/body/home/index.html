@@ -60,7 +60,7 @@
           </div>
           <div class="col-md-6">
             <div class="row">
-              <div class="jumbotron well" style="background: #fafafa;">
+              <div class="jumbotron well">
                 <div data-th-if="${solrQuery.getStart() &lt;= solrQuery.totalResults}">
                   <em
                     th:text="'Showing ' + ${solrQuery.getStart()} + ' to ' + ${solrQuery.getEnd()} + 
@@ -143,7 +143,7 @@
           </div>
           <div class="col-md-3">
           	<div class="row" style="padding-left: 15px;" data-th-if="${userEntityService.getUser().getFavourites().size() != 0}">
-          	<div class="well" style="background: #fafafa; padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
+          	<div class="well" style="padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
           	  <div class="row">
 			  	<div class="panel-group" style="margin-bottom: 1px;" >
 					<div class="panel panel-default" style="border-color: lightgray; border-radius: 0px;">
@@ -170,7 +170,7 @@
           	</div>
           </div>
                     	<div class="row" style="padding-left: 15px">
-          	<div class="well" style="background: #fafafa; padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
+          	<div class="well" style="padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
                         <div class="row">
 			  	<div class="panel-group" style="margin-bottom: 1px;">
 					<div class="panel panel-default" style="border-color: lightgray; border-radius: 0px;">
@@ -197,54 +197,58 @@
               </div>
               </div>
               <div class="row" style="padding-left: 15px">
-          	<div class="well" style="background: #fafafa; padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
+          	<div class="well" style="padding-bottom: 5px; padding-top: 5px; margin-bottom: 5px;">
 				<h4>Recent activities</h4>
 				<div data-th-if="${activities.size() == 0}">
 					<em>No activites</em>
 				</div>
 				<div data-th-each="activity : ${activities}" class="row">
-				  <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('UPDATE_DOCUMENTATION')}">
-				  	<div class="col-md-1">
-				  	  <span class="glyphicon glyphicon-file"></span>
-				  	</div>
-				  	<div class="col-md-11">
-				  		<div class="row">
-				  		  <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
-				  		</div>
-				  		<div class="row">
-				  		  <em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; documentation updated by ' + ${activity.user.fullname}"></em>
-				  		</div>
-				  	</div>
-				  </div>
-				  <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('NEW_COMMENT')}">
-				  	<div class="col-md-1">
-				  	  <span class="glyphicon glyphicon-comment"></span>
-				  	</div>
-				  	<div class="col-md-11">
-				  		<div class="row">
-				  		  <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
-				  		</div>
-				  		<div class="row">
-				  		  <em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; new comment by ' + ${activity.user.fullname}"></em>
-				  		</div>
-				  	</div>
-				  </div>
-				  <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('UPDATE_TAGS')}">
-				  	<div class="col-md-1">
-				  	  <span class="glyphicon glyphicon-tags"></span>
-				  	</div>
-				  	<div class="col-md-11">
-				  		<div class="row">
-				  		  <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
-				  		</div>
-				  		<div class="row">
-				  		  <em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; taxonomy updated by ' + ${activity.user.fullname}"></em>
-				  		</div>
-				  	</div>
+				  <div th:with="user=${userEntityService.findByUsername(activity.username)}">
+				    <div th:with="username=${user != null ? user.getFullname() : activity.username}">
+				      <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('UPDATE_DOCUMENTATION')}">
+				  	    <div class="col-md-1">
+				  	      <span class="glyphicon glyphicon-file"></span>
+				  	    </div>
+				  	    <div class="col-md-11">
+				  		  <div class="row">
+				  		    <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
+				  		  </div>
+				  		  <div class="row">
+				  		    <em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; documentation updated by ' + ${username}"></em>
+				  		  </div>
+				  	    </div>
+				      </div>
+				      <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('NEW_COMMENT')}">
+				      	<div class="col-md-1">
+				  	      <span class="glyphicon glyphicon-comment"></span>
+				  	    </div>
+				      	<div class="col-md-11">
+				      		<div class="row">
+				  	    	  <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
+				  	    	</div>
+				  	    	<div class="row">
+				  		      <em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; new comment by ' + ${username}"></em>
+				  	    	</div>
+				      	</div>
+				      </div>
+				      <div class="col-md-12" style="padding-left: 0px; padding-right: 2px;" data-th-if="${activity.type.toString().equals('UPDATE_TAGS')}">
+				  	    <div class="col-md-1">
+				  	      <span class="glyphicon glyphicon-tags"></span>
+				  	    </div>
+				  	    <div class="col-md-11">
+				  		  <div class="row">
+				  		    <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
+				  	      </div>
+				  	      <div class="row">
+				  	    	<em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; taxonomy updated by ' + ${username}"></em>
+				  	      </div>
+				  	    </div>
+				      </div>
+				    </div>
 				  </div>
 				</div>
               </div>
-              </div>
+            </div>
           </div>
         </div>
       </div>

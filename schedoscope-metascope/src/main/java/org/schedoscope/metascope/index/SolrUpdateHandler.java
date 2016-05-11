@@ -97,7 +97,7 @@ public class SolrUpdateHandler {
         if (!comments.isEmpty()) {
           comments += "     ";
         }
-        comments += comment.getUser().getFullname() + ": " + comment.getPlainText();
+        comments += comment.getUsername() + ": " + comment.getPlainText();
       }
       if (!comments.isEmpty()) {
         doc.setField(COMMENTS, comments);

@@ -38,13 +38,13 @@ public class ActivityEntityServiceTest extends SpringTest {
 
     assertEquals(size(activityEntityRepository.findAll()), 0);
 
-    activityEntityService.createUpdateDocumentActivity(tableEntity, userEntity);
+    activityEntityService.createUpdateDocumentActivity(tableEntity, userEntity.getUsername());
 
     Iterable<ActivityEntity> allActivites = activityEntityRepository.findAll();
     assertEquals(size(allActivites), 1);
 
     ActivityEntity activityEntity = allActivites.iterator().next();
-    assertEquals(activityEntity.getUser().getUsername(), userEntity.getUsername());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
     assertEquals(activityEntity.getTable().getFqdn(), tableEntity.getFqdn());
     assertEquals(activityEntity.getType(), ActivityType.UPDATE_DOCUMENTATION);
   }
@@ -56,13 +56,13 @@ public class ActivityEntityServiceTest extends SpringTest {
 
     assertEquals(size(activityEntityRepository.findAll()), 1);
 
-    activityEntityService.createUpdateDocumentActivity(tableEntity, userEntity);
+    activityEntityService.createUpdateDocumentActivity(tableEntity, userEntity.getUsername());
 
     Iterable<ActivityEntity> allActivites = activityEntityRepository.findAll();
     assertEquals(size(allActivites), 1);
 
     ActivityEntity activityEntity = allActivites.iterator().next();
-    assertEquals(activityEntity.getUser().getUsername(), userEntity.getUsername());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
     assertEquals(activityEntity.getTable().getFqdn(), tableEntity.getFqdn());
     assertEquals(activityEntity.getType(), ActivityType.UPDATE_DOCUMENTATION);
   }
@@ -76,13 +76,13 @@ public class ActivityEntityServiceTest extends SpringTest {
 
     assertEquals(size(activityEntityRepository.findAll()), 0);
 
-    activityEntityService.createNewCommentActivity(tableEntity, userEntity);
+    activityEntityService.createNewCommentActivity(tableEntity, userEntity.getUsername());
 
     Iterable<ActivityEntity> allActivites = activityEntityRepository.findAll();
     assertEquals(size(allActivites), 1);
 
     ActivityEntity activityEntity = allActivites.iterator().next();
-    assertEquals(activityEntity.getUser().getUsername(), userEntity.getUsername());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
     assertEquals(activityEntity.getTable().getFqdn(), tableEntity.getFqdn());
     assertEquals(activityEntity.getType(), ActivityType.NEW_COMMENT);
   }
@@ -94,13 +94,13 @@ public class ActivityEntityServiceTest extends SpringTest {
 
     assertEquals(size(activityEntityRepository.findAll()), 1);
 
-    activityEntityService.createNewCommentActivity(tableEntity, userEntity);
+    activityEntityService.createNewCommentActivity(tableEntity, userEntity.getUsername());
 
     Iterable<ActivityEntity> allActivites = activityEntityRepository.findAll();
     assertEquals(size(allActivites), 1);
 
     ActivityEntity activityEntity = allActivites.iterator().next();
-    assertEquals(activityEntity.getUser().getUsername(), userEntity.getUsername());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
     assertEquals(activityEntity.getTable().getFqdn(), tableEntity.getFqdn());
     assertEquals(activityEntity.getType(), ActivityType.NEW_COMMENT);
   }
@@ -114,13 +114,13 @@ public class ActivityEntityServiceTest extends SpringTest {
 
     assertEquals(size(activityEntityRepository.findAll()), 0);
 
-    activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntity);
+    activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntity.getUsername());
 
     Iterable<ActivityEntity> allActivites = activityEntityRepository.findAll();
     assertEquals(size(allActivites), 1);
 
     ActivityEntity activityEntity = allActivites.iterator().next();
-    assertEquals(activityEntity.getUser().getUsername(), userEntity.getUsername());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
     assertEquals(activityEntity.getTable().getFqdn(), tableEntity.getFqdn());
     assertEquals(activityEntity.getType(), ActivityType.UPDATE_TAGS);
   }
@@ -132,13 +132,13 @@ public class ActivityEntityServiceTest extends SpringTest {
 
     assertEquals(size(activityEntityRepository.findAll()), 1);
 
-    activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntity);
+    activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntity.getUsername());
 
     Iterable<ActivityEntity> allActivites = activityEntityRepository.findAll();
     assertEquals(size(allActivites), 1);
 
     ActivityEntity activityEntity = allActivites.iterator().next();
-    assertEquals(activityEntity.getUser().getUsername(), userEntity.getUsername());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
     assertEquals(activityEntity.getTable().getFqdn(), tableEntity.getFqdn());
     assertEquals(activityEntity.getType(), ActivityType.UPDATE_TAGS);
   }
@@ -152,13 +152,13 @@ public class ActivityEntityServiceTest extends SpringTest {
 
     assertEquals(size(activityEntityRepository.findAll()), 0);
 
-    activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntity);
+    activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntity.getUsername());
 
     Iterable<ActivityEntity> allActivites = activityEntityRepository.findAll();
     assertEquals(size(allActivites), 1);
 
     ActivityEntity activityEntity = allActivites.iterator().next();
-    assertEquals(activityEntity.getUser().getUsername(), userEntity.getUsername());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
     assertEquals(activityEntity.getTable().getFqdn(), tableEntity.getFqdn());
     assertEquals(activityEntity.getType(), ActivityType.UPDATE_TABLE_METADATA);
   }
@@ -170,14 +170,14 @@ public class ActivityEntityServiceTest extends SpringTest {
 
     assertEquals(size(activityEntityRepository.findAll()), 1);
 
-    activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntity);
+    activityEntityService.createUpdateTableMetadataActivity(tableEntity, userEntity.getUsername());
 
     Iterable<ActivityEntity> allActivites = activityEntityRepository.findAll();
     assertEquals(size(allActivites), 1);
 
     ActivityEntity activityEntity = allActivites.iterator().next();
-    assertEquals(activityEntity.getUser().getUsername(), userEntity.getUsername());
-    assertEquals(activityEntity.getTable().getFqdn(), tableEntity.getFqdn());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
+    assertEquals(activityEntity.getUsername(), userEntity.getUsername());
     assertEquals(activityEntity.getType(), ActivityType.UPDATE_TABLE_METADATA);
   }
 

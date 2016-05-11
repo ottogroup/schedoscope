@@ -15,7 +15,7 @@
  */  -->
  
 <div class="modal fade" id="createUserModal" aria-hidden="true" data-th-fragment="create_user_modal" tabindex='-1'>
-  <form class="form-inline" data-th-action="@{/admin/user/create}" method="post">
+  <form class="form-inline" data-th-action="@{/admin/user/create}" method="post" autocomplete="off">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -26,24 +26,16 @@
         </div>
         <div class="modal-body">
           <div>
+            <div style="display: none">
+               <input type="text"/>
+               <input type="password"/>
+               <input type="password"/>
+               <input type="password"/>
+            </div>
             <div class="control-group">
               <label class="control-label" for="username">Username</label>
               <div class="controls">
                 <input id="username" name="username" type="text" style="width: 100%;" />
-              </div>
-            </div>
-            <br />
-            <div class="control-group">
-              <label class="control-label" for="email">Email</label>
-              <div class="controls">
-                <input id="email" name="email" type="text" style="width: 100%;" />
-              </div>
-            </div>
-            <br />
-            <div class="control-group">
-              <label class="control-label" for="fullname">Full Name</label>
-              <div class="controls">
-                <input id="fullname" name="fullname" type="text" style="width: 100%;" />
               </div>
             </div>
             <br />
@@ -58,6 +50,20 @@
               <label class="control-label" for="passwordRepeat">Repeat Password</label>
               <div class="controls">
                 <input type="password" id="passwordRepeat" name="passwordRepeat" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="email">Email</label>
+              <div class="controls">
+                <input id="email" name="email" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="fullname">Full Name</label>
+              <div class="controls">
+                <input id="fullname" name="fullname" type="text" style="width: 100%;" />
               </div>
             </div>
             <br />
@@ -91,7 +97,7 @@
 </div>
 
 <div class="modal fade" id="editUserModal" aria-hidden="true" data-th-fragment="edit_user_modal" tabindex='-1'>
-  <form class="form-inline" data-th-action="@{/admin/user/edit}" method="post">
+  <form class="form-inline" data-th-action="@{/admin/user/edit}" method="post" autocomplete="off">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
@@ -102,24 +108,16 @@
         </div>
         <div class="modal-body">
           <div>
+            <div style="display: none">
+               <input type="text"/>
+               <input type="password"/>
+               <input type="password"/>
+               <input type="password"/>
+            </div>
             <div class="control-group">
               <label class="control-label" for="username">Username</label>
               <div class="controls">
                 <input id="editUsername" name="username" type="text" style="width: 100%;" readonly="readonly" />
-              </div>
-            </div>
-            <br />
-            <div class="control-group">
-              <label class="control-label" for="email">Email</label>
-              <div class="controls">
-                <input id="editEmail" name="email" type="text" style="width: 100%;" readonly="readonly"/>
-              </div>
-            </div>
-            <br />
-            <div class="control-group">
-              <label class="control-label" for="fullname">Full Name</label>
-              <div class="controls">
-                <input id="editFullname" name="fullname" type="text" style="width: 100%;" />
               </div>
             </div>
             <br />
@@ -134,6 +132,20 @@
               <label class="control-label" for="passwordRepeat">Repeat new Password</label>
               <div class="controls">
                 <input type="password" id="passwordRepeat" name="passwordRepeat" style="width: 100%;" />
+              </div>
+            </div>
+            <br/>
+            <div class="control-group">
+              <label class="control-label" for="email">Email</label>
+              <div class="controls">
+                <input id="editEmail" name="email" type="text" style="width: 100%;" readonly="readonly"/>
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="fullname">Full Name</label>
+              <div class="controls">
+                <input id="editFullname" name="fullname" type="text" style="width: 100%;" />
               </div>
             </div>
             <br />
