@@ -87,6 +87,10 @@ public class SchedoscopeStatusTask implements Runnable {
     Set<ViewEntity> viewStatusChanged = new HashSet<ViewEntity>();
     for (ViewEntity currentView : currentViews.values()) {
       ViewEntity viewEntity = repositoryViews.get(currentView.getUrlPath());
+      if (viewEntity == null) {
+      	continue;
+      }
+      
       /* view status changed */
       if (!currentView.getStatus().equals(viewEntity.getStatus())) {
         /*

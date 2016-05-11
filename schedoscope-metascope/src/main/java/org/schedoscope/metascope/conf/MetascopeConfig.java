@@ -18,7 +18,7 @@ package org.schedoscope.metascope.conf;
 import java.io.File;
 import java.net.URISyntaxException;
 
-import org.schedoscope.SchedoscopeSettings;
+import org.schedoscope.conf.BaseSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -73,7 +73,7 @@ public class MetascopeConfig {
   private String logfilePath;
   private String logLevel;
 
-  public MetascopeConfig(SchedoscopeSettings config) {
+  public MetascopeConfig(BaseSettings config) {
     try {
       this.jarLocation = new File(MetascopeConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI()
           .getPath()).getAbsolutePath();

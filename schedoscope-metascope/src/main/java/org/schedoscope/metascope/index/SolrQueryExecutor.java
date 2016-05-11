@@ -53,8 +53,9 @@ public class SolrQueryExecutor {
   public static final String TYPE = "type";
   public static final String DATABASE_NAME = "databaseName";
   public static final String TABLE_NAME = "tableName";
+  public static final String TAXONOMIES = "taxonomies";
   public static final String CATEGORIES = "categories";
-  public static final String BUSINESS_OBJECTS = "bos";
+  public static final String CATEGORY_OBJECTS = "categoryObjects";
   public static final String STORAGE_FORMAT = "storageFormat";
   public static final String TRANSFORMATION = "transformation";
   public static final String EXPORTS = "exports";
@@ -71,8 +72,9 @@ public class SolrQueryExecutor {
   public static final String FILTER_TRANSFORMATION = "Transformation";
   public static final String FILTER_EXPORT = "Export";
   public static final String FILTER_STORAGEFORMAT = "Storage Format";
+  public static final String FILTER_TAXONOMY = "Taxonomy";
   public static final String FILTER_CATEGORIES = "Category";
-  public static final String FILTER_BUSINESS_OBJECT = "Business Object";
+  public static final String FILTER_CATEGORY_OBJECT = "Category Object";
   public static final String FILTER_TAGS = "Tags";
 
   private SolrClient solrClient;
@@ -99,8 +101,10 @@ public class SolrQueryExecutor {
         FacetSort.COUNT));
     this.facetFields.add(new SolrQueryParameter(FILTER_STORAGEFORMAT, STORAGE_FORMAT, true, FilterType.EXCLUSIVE,
         FacetSort.COUNT));
+    this.facetFields.add(new SolrQueryParameter(FILTER_TAXONOMY, TAXONOMIES, false, FilterType.AND,
+        FacetSort.COUNT));
     this.facetFields.add(new SolrQueryParameter(FILTER_CATEGORIES, CATEGORIES, false, FilterType.AND, FacetSort.COUNT));
-    this.facetFields.add(new SolrQueryParameter(FILTER_BUSINESS_OBJECT, BUSINESS_OBJECTS, false, FilterType.AND,
+    this.facetFields.add(new SolrQueryParameter(FILTER_CATEGORY_OBJECT, CATEGORY_OBJECTS, false, FilterType.AND,
         FacetSort.COUNT));
     this.facetFields.add(new SolrQueryParameter(FILTER_TAGS, TAGS, false, FilterType.AND, FacetSort.COUNT));
     this.facetQueries.add(new SolrFacetQuery("Creation Time", CREATED_AT)

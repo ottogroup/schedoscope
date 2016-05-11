@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
-import org.schedoscope.Schedoscope;
+import org.schedoscope.conf.BaseSettings;
 import org.schedoscope.metascope.conf.MetascopeConfig;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.tasks.MetascopeTask;
@@ -34,14 +34,19 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import com.typesafe.config.ConfigFactory;
+
 @SpringBootApplication
 public class Metascope {
 
   private static final Logger LOG = LoggerFactory.getLogger(Metascope.class);
 
-  public static void main(String[] args) {
+  private ConfigurableApplicationContext applicationContext;
+  private ScheduledThreadPoolExecutor executor;
+
+	public void start(String[] args) {
     /* set some mandatory configs before application start */
-    MetascopeConfig config = new MetascopeConfig(Schedoscope.settings());
+    MetascopeConfig config = new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
     System.setProperty("server.port", String.valueOf(config.getPort()));
     System.setProperty("spring.jpa.database-platform", config.getRepositoryDialect());
     System.setProperty("logging.level.org.schedoscope", config.getLogLevel());
@@ -49,7 +54,7 @@ public class Metascope {
     System.setProperty("spring.profiles.active", "production");
 
     /* start metascope spring boot application */
-    ConfigurableApplicationContext applicationContext = SpringApplication.run(Metascope.class, args);
+    this.applicationContext = SpringApplication.run(Metascope.class, args);
 
     SolrFacade solr = applicationContext.getBean(SolrFacade.class);
     RepositoryDAO repo = applicationContext.getBean(RepositoryDAO.class);
@@ -60,7 +65,7 @@ public class Metascope {
     MetascopeTask metascopeTask = new MetascopeTask(repo, dataSource, solr, config, schedoscopeUtil);
     SchedoscopeStatusTask statusTask = new SchedoscopeStatusTask(repo, dataSource, solr, schedoscopeUtil);
 
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    this.executor = new ScheduledThreadPoolExecutor(1);
     ScheduledFuture<?> metascopeTaskFuture = executor.schedule(metascopeTask, 5, TimeUnit.SECONDS);
     ScheduledFuture<?> statusTaskFuture = executor.scheduleAtFixedRate(statusTask, 5, 5, TimeUnit.SECONDS);
 
@@ -73,6 +78,15 @@ public class Metascope {
     } catch (Throwable t) {
       LOG.error("Exception in future tasks", t);
     }
+  }
+
+	public void stop() throws InterruptedException {
+		 this.applicationContext.stop();
+		 this.executor.awaitTermination(5, TimeUnit.SECONDS);
+  }
+	
+  public static void main(String[] args) {
+  	new Metascope().start(args);
   }
 
 }

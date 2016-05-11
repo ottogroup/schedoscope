@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -29,6 +30,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.schedoscope.metascope.SpringTest;
+import org.schedoscope.metascope.model.CategoryObjectEntity;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.TableDependencyEntity;
 import org.schedoscope.metascope.model.TableEntity;
@@ -160,37 +162,39 @@ public class TableEntityServiceTest extends SpringTest {
   @Test
   @Transactional
   @Rollback(false)
-  public void tableService_09_addBusinessObject() {
+  public void tableService_09_addCategoryObject() {
     TableEntity tableEntity = getTestTable();
 
-    assertEquals(tableEntity.getBusinessObjects().size(), 0);
+    assertEquals(tableEntity.getCategoryObjects().size(), 0);
     assertEquals(tableEntity.getCategoryNames().size(), 0);
+    
+    Iterable<CategoryObjectEntity> coEntites = coEntityRepository.findAll();
 
-    tableEntityService.setBusinessObjects(tableEntity.getFqdn(), TEST_BUSINESS_OBJECT);
+    Map<String, String[]> parameterMap = new HashMap<String, String[]>();
+    parameterMap.put("SomeCategoryObjects", new String[]{"" + coEntites.iterator().next().getCategoryObjectId()});
+    tableEntityService.setCategoryObjects(tableEntity.getFqdn(), parameterMap);
 
     tableEntity = getTestTable();
     assertEquals(tableEntity.getCategoryNames().size(), 1);
-    assertEquals(tableEntity.getCategoryNames().get(0), TEST_CATEGORY);
-    assertEquals(tableEntity.getBusinessObjects().size(), 1);
-    assertEquals(tableEntity.getBusinessObjects().get(0).getName(), TEST_BUSINESS_OBJECT);
+    assertEquals(tableEntity.getCategoryNames().get(0), TEST_CATEGORY_NAME);
+    assertEquals(tableEntity.getCategoryObjects().size(), 1);
+    assertEquals(tableEntity.getCategoryObjects().get(0).getName(), TEST_CATEGORY_OBJECT_NAME);
   }
 
   @Test
   @Transactional
   @Rollback(false)
-  public void tableService_10_removeBusinessObject() {
+  public void tableService_10_removeCategoryObject() {
     TableEntity tableEntity = getTestTable();
 
-    assertEquals(tableEntity.getBusinessObjects().size(), 1);
+    assertEquals(tableEntity.getCategoryObjects().size(), 1);
     assertEquals(tableEntity.getCategoryNames().size(), 1);
 
-    tableEntityService.setBusinessObjects(tableEntity.getFqdn(), null);
+    tableEntityService.setCategoryObjects(tableEntity.getFqdn(), null);
 
     tableEntity = getTestTable();
     assertEquals(tableEntity.getCategoryNames().size(), 0);
-    assertEquals(tableEntity.getBusinessObjects().size(), 0);
-
-    tableService_09_addBusinessObject();
+    assertEquals(tableEntity.getCategoryObjects().size(), 0);
   }
 
   @Test

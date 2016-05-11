@@ -12,6 +12,7 @@
 	<properties>
 		<akka.version>2.3.14</akka.version>
 		<scala.version>2.11</scala.version>
+		<scalarelease.version>2.11.7</scalarelease.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
@@ -34,6 +35,7 @@
 
 	<modules>
 		<module>schedoscope-core</module>
+		<module>schedoscope-conf</module>
 		<module>schedoscope-export</module>
 		<module>schedoscope-tutorial</module>
 		<module>schedoscope-metascope</module>

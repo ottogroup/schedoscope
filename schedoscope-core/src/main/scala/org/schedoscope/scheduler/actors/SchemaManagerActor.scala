@@ -19,7 +19,7 @@ import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props }
 import akka.actor.SupervisorStrategy.{ Restart, Escalate }
 import akka.event.Logging
 import akka.routing.RoundRobinPool
-import org.schedoscope.SchedoscopeSettings
+import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.schema.RetryableSchemaManagerException
 import akka.actor.ActorInitializationException

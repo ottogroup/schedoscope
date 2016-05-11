@@ -3,7 +3,7 @@ package org.schedoscope.scheduler.driver
 import java.io.{ File, FileWriter }
 
 import org.joda.time.LocalDateTime
-import org.schedoscope.DriverSettings
+import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.ShellTransformation
 import org.slf4j.LoggerFactory
 

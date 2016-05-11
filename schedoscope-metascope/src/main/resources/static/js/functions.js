@@ -1,8 +1,18 @@
-/*!
- * metascope
- * https://github.com/ottogroup/schedoscope
- * Copyright 2016 Otto Group and other contributors; Licensed MIT
- */
+/**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */ 
 
 var initializeFieldEditor = function(fieldname) {
   var fieldEditor = "#" + fieldname + "Editor";
@@ -124,141 +134,88 @@ var getQueryParameter = function() {
   return query_string;
 }
 
-/**
- * Opens the 'user management' modal
- */
-var showUserModal = function() {
-  $('#userManagement').modal('show');
+var createCategory = function(taxonomyId) {
+  $('#taxonomyId').val(taxonomyId);
+  $('#createCategoryModal').modal('show');
 }
 
-/**
- * Opens 'the taxonomy' modal
- */
-var showTaxonomyModal = function() {
-  $('#taxonomyModal').modal('show');
+var createCategoryObject = function(categoryId) {
+  $('#createCategoryObjectCategoryId').val(categoryId);
+  $('#createCategoryObjectModal').modal('show');
 }
 
-/**
- * Opens the 'create user' modal
- */
-var createUser = function() {
-  $('#userManagement').modal('hide');
+var editTaxonomy = function(taxonomyId, taxonomyName) {
+  $('#editTaxonomyId').val(taxonomyId);
+  $('#editTaxonomyName').val(taxonomyName);
+  $('#editTaxonomyModal').modal('show');
 }
 
-/**
- * Opens the 'edit user' modal
- */
+var editCategory = function(categoryId, categoryName) {
+  $('#editCategoryId').val(categoryId);
+  $('#editCategoryName').val(categoryName);
+  $('#editCategoryModal').modal('show');
+}
+
+var editCategoryObject = function(categoryObjectId, categoryObjectName, categoryDescription) {
+  $('#editCategoryObjectId').val(categoryObjectId);
+  $('#editCategoryObjectName').val(categoryObjectName);
+  $('#editCategoryObjectDescription').val(categoryDescription);
+  $('#editCategoryObjectModal').modal('show');
+}
+
+var deleteTaxonomy = function(taxonomyId) {
+  $('#deleteTaxonomyTaxonomyId').val(taxonomyId);
+  $('#deleteTaxonomyModal').modal('show');
+}
+
+var deleteCategory = function(categoryId) {
+  $('#deleteCategoryCategoryId').val(categoryId);
+  $('#deleteCategoryModal').modal('show');
+}
+
+var deleteCategoryObject = function(categoryObjectId) {
+  $('#deleteCategoryObjectCategoryObjectId').val(categoryObjectId);
+  $('#deleteCategoryObjectModal').modal('show');
+}
+
+var showCategoryObjects = function(taxonomyId, categoryId) {
+  $(".coTable" + taxonomyId).css("display", "none");
+  $("#categoryObjects" + categoryId).css("display", "inline");
+} 
+
 var editUser = function(username, email, fullname, admin, group) {
-  $('#userManagement').modal('hide');
-  $('#userEdit').modal('show');
   $('#editUsername').val(username);
   $('#editEmail').val(email);
   $('#editFullname').val(fullname);
   $('#adminCheckbox').prop('checked', admin);
   $("#editUserGroup").val(group);
+  $("#editUserModal").modal('show');
 }
 
 /**
  * Opens the 'delete user' modal
  */
 var deleteUser = function(username) {
-  $('#userManagement').modal('hide');
-  $('#userDelete').modal('show');
   $('#confirmLabel').text(
       "Do you realy want to delete the user '" + username + "' ?");
   $('#delUsername').val(username);
-}
-
-/**
- * Opens the 'create category' modal
- */
-var createCategory = function() {
-  $('#taxonomyModal').modal('hide');
-  $('#categoryAdd').modal('show');
-}
-
-/**
- * Opens the 'edit category' modal
- */
-var editCategory = function(category) {
-  $('#taxonomyModal').modal('hide');
-  $('#categoryEdit').modal('show');
-  $('#editCategory').val(category);
-  $('#oldCategory').val(category);
-}
-
-/**
- * Opens the 'delete category' modal
- */
-var deleteCategory = function(category) {
-  $('#taxonomyModal').modal('hide');
-  $('#categoryDelete').modal('show');
-  $('#categoryConfirmLabel').text(
-      "Do you realy want to delete the category '" + category
-          + "' and all its business objects?");
-  $('#delCategory').val(category);
-}
-
-/**
- * Shows the business objects for a category
- */
-var showBusinessObjects = function(categoryName) {
-  var current = $('#activeCategory').val();
-  $("[id='" + current + "']").css("display", "none");
-  $("[id='" + categoryName + "']").css("display", "block");
-  $('#activeCategory').val(categoryName);
-}
-
-/**
- * Opens the 'create business object' modal
- */
-var createBusinessObject = function(categoryName) {
-  $('#taxonomyModal').modal('hide');
-  $('#boAdd').modal('show');
-  $('#categoryForBo').val(categoryName);
-}
-
-/**
- * Opens the 'edit business object' modal
- */
-var editBusinessObject = function(categoryName, oldBoName, description) {
-  $('#taxonomyModal').modal('hide');
-  $('#boEdit').modal('show');
-  $('#editCategoryForBo').val(categoryName);
-  $('#oldCategoryForBo').val(categoryName);
-  $('#oldBo').val(oldBoName);
-  $('#editBoName').val(oldBoName);
-  $('#editBoDescription').val(description);
-
-}
-
-/**
- * Opens the 'delete business object' modal
- */
-var deleteBusinessObject = function(category, bo) {
-  $('#taxonomyModal').modal('hide');
-  $('#boDelete').modal('show');
-  $('#boConfirmLabel').text(
-      "Do you realy want to delete the business object '" + bo
-          + "' from category '" + category + "' ?");
-  $('#delBoCategory').val(category);
-  $('#delBo').val(bo);
+  $("#deleteUserModal").modal('show');
 }
 
 /**
  * Adds a business object tag
  */
-var addBo = function(name, description, category) {
-  if ( $("[id='" + category + "" + name + "']").length == 0) {
-    var div = $("#bosDiv").find(".bootstrap-tagsinput");
+var addCo = function(taxonomy, name, description, category, id) {
+  if ( $("[id='" + taxonomy + category + name + "']").length == 0) {
+    var div = $("[id='" + taxonomy + "Div']").find(".bootstrap-tagsinput");
     var tag = $('<a id="'
+        + taxonomy
         + category
-        + ''
         + name
         + '" style="margin-right: 6px;" data-toggle="popover" class="tag label label-info" data-original-title="'
         + name + ' (Category: ' + category
         + ')" data-placement="bottom" data-content="' + description
-        + '\n\n" href="#">' + name
+        + '\n\n" data-coid="' + id + '">' + name
         + '<span data-role="remove"></span></a></div>');
     div.prepend(tag);
     tag.after(' ');
@@ -266,9 +223,8 @@ var addBo = function(name, description, category) {
     $('[data-toggle="popover"]').popover({
       trigger : "hover"
     })
-    $("#bosDiv").find("span").on('click', function() {
+    $("[id='" + taxonomy + "Div']").find("span").on('click', function() {
       var text = $(this).parent().text();
-      console.log(text);
       $(this).parent().remove();
       $('[role="tooltip"]').remove();
     });

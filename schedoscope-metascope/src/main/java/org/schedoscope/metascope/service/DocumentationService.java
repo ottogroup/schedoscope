@@ -15,14 +15,13 @@
  */
 package org.schedoscope.metascope.service;
 
-import javax.jdo.annotations.Transactional;
-
 import org.jsoup.Jsoup;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.CommentEntity;
 import org.schedoscope.metascope.model.Documentable;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.TableEntity;
+import org.schedoscope.metascope.model.UserEntity;
 import org.schedoscope.metascope.repository.CommentEntityRepository;
 import org.schedoscope.metascope.repository.FieldEntityRepository;
 import org.schedoscope.metascope.repository.TableEntityRepository;
@@ -30,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DocumentationService {
@@ -54,7 +54,7 @@ public class DocumentationService {
   }
 
   @Transactional
-  public void updateDocumentation(Documentable documentable, String documentText) {
+  public void updateDocumentation(Documentable documentable, String documentText, UserEntity userEntity) {
     if (documentable == null) {
       return;
     }
@@ -68,13 +68,13 @@ public class DocumentationService {
 
       comment.setText(documentText);
       comment.setPlainText(Jsoup.parse(documentText).body().text());
-      comment.setUser(userEntityService.getUser());
+      comment.setUser(userEntity);
       comment.setLastEdit(System.currentTimeMillis());
       commentEntityRepository.save(comment);
       documentable.setComment(comment);
     }
 
-    saveEntity(documentable);
+    saveEntity(documentable, userEntity);
 
     if (documentable instanceof TableEntity) {
       activityEntityService.createUpdateDocumentActivity(((TableEntity) documentable), userEntityService.getUser());
@@ -85,7 +85,7 @@ public class DocumentationService {
   }
 
   @Transactional
-  public void addComment(Documentable documentable, String commentText) {
+  public void addComment(Documentable documentable, String commentText, UserEntity userEntity) {
     if (documentable == null) {
       return;
     }
@@ -94,12 +94,12 @@ public class DocumentationService {
       CommentEntity comment = new CommentEntity();
       comment.setText(commentText);
       comment.setPlainText(Jsoup.parse(commentText).body().text());
-      comment.setUser(userEntityService.getUser());
+      comment.setUser(userEntity);
       comment.setLastEdit(System.currentTimeMillis());
       commentEntityRepository.save(comment);
       documentable.getComments().add(comment);
     }
-    saveEntity(documentable);
+    saveEntity(documentable, userEntity);
 
     if (documentable instanceof TableEntity) {
       activityEntityService.createNewCommentActivity((TableEntity) documentable, userEntityService.getUser());
@@ -109,23 +109,23 @@ public class DocumentationService {
     }
   }
 
-  public void deleteComment(Documentable documentable, CommentEntity commentEntity) {
+  public void deleteComment(Documentable documentable, CommentEntity commentEntity, UserEntity userEntity) {
     if (documentable == null) {
       return;
     }
 
     if (commentEntity != null) {
       documentable.getComments().remove(commentEntity);
-      saveEntity(documentable);
+      saveEntity(documentable, userEntity);
       commentEntityRepository.delete(commentEntity);
     }
   }
 
-  private void saveEntity(Documentable documentable) {
+  private void saveEntity(Documentable documentable, UserEntity userEntity) {
     if (documentable instanceof TableEntity) {
       TableEntity tableEntity = (TableEntity) documentable;
       tableEntityRepository.save(tableEntity);
-      LOG.info("User '{}' modified comment for table '{}'", userEntityService.getUser().getUsername(),
+      LOG.info("User '{}' modified comment for table '{}'", userEntity.getUsername(),
           tableEntity.getFqdn());
       solr.updateTableEntityAsync(tableEntity, true);
     } else if (documentable instanceof FieldEntity) {

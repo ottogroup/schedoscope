@@ -18,37 +18,64 @@ package org.schedoscope.metascope.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 
 @Entity
 public class CategoryEntity {
 
-  @Id
-  private String categoryName;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private long categoryId;
 
-  @OneToMany(mappedBy = "categoryName")
-  private List<BusinessObjectEntity> businessObjects;
+	@ManyToOne
+	private TaxonomyEntity taxonomy;
 
-  public CategoryEntity() {
-    this.businessObjects = new ArrayList<BusinessObjectEntity>();
-  }
+	private String name;
 
-  public String getCategoryName() {
-    return categoryName;
-  }
+	@OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<CategoryObjectEntity> categoryObjects;
 
-  public void setCategoryName(String categoryName) {
-    this.categoryName = categoryName;
-  }
+	public CategoryEntity() {
+		this.categoryObjects = new ArrayList<CategoryObjectEntity>();
+	}
 
-  public List<BusinessObjectEntity> getBusinessObjects() {
-    return businessObjects;
-  }
+	public long getCategoryId() {
+		return categoryId;
+	}
 
-  public void setBusinessObjects(List<BusinessObjectEntity> businessObjects) {
-    this.businessObjects = businessObjects;
-  }
+	public void setCategoryId(long categoryId) {
+		this.categoryId = categoryId;
+	}
+
+	public TaxonomyEntity getTaxonomy() {
+		return taxonomy;
+	}
+
+	public void setTaxonomy(TaxonomyEntity taxonomy) {
+		this.taxonomy = taxonomy;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public List<CategoryObjectEntity> getCategoryObjects() {
+		return categoryObjects;
+	}
+
+	public void setCategoryObjects(List<CategoryObjectEntity> categoryObjects) {
+		this.categoryObjects = categoryObjects;
+	}
 
 }

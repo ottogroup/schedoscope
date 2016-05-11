@@ -1,47 +1,78 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+ 
 <div class="tab-pane" id="taxonomyContent" data-th-fragment="taxonomy(table, util)">
-  <div class="control-group">
-    <label class="control-label" for="categories">Categories</label>
-    <div class="controls" th:with="categories=${table.getCategoriesCommaDelimited()}">
-      <input data-th-if="${!categories.isEmpty()}" id="categoryTags" disabled="disabled" data-role="tagsinput" th:value="${categories}" name="categories" type="text"
-        style="width: 100%;" />
-      <em data-th-if="${categories.isEmpty()}">No business objects added yet</em>
-    </div>
-  </div>
-  <br/>
-  <form class="form" data-th-action="@{/table/businessobjects}" method="post">
-    <div class="control-group">
-      <label class="control-label" for="businessObjects">Business Objects</label>
+  <form class="form" data-th-action="@{/table/categoryobjects}" method="post">
+    <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> 
+    <div class="row control-group" data-th-each="taxonomy : ${taxonomies}">
+      <div class="col-md-12">
+      <label class="control-label" data-th-text="${taxonomy.name}"></label>
       <div class="controls">
         <div class="row">
-          <div class="col-md-5" id="bosDiv">
-            <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> 
-            <input id="businessObjects" type="hidden" name="businessObjects" /> 
-            <input data-role="tagsinput" th:value="${table.getBusinessObjectsCommaDelimited()}" type="text" style="width: 100%;" />
+          <div class="col-md-5" th:id="${taxonomy.name} + 'Div'">
+            <input th:id="${taxonomy.name} + 'CategoryObjects'" type="hidden" th:name="${taxonomy.name} + 'CategoryObjects'" /> 
+            <input data-role="tagsinput" type="text" style="width: 100%;"/>
+            <div data-th-if="${tableTaxonomies.get(taxonomy.name) != null}">
+              <a data-th-each="co : ${tableTaxonomies.get(taxonomy.name).categoryObjects}" th:id="${taxonomy.name + co.category.name + co.name}" 
+               style="margin-right: 6px;" data-toggle="popover" class="tag label label-info" data-placement="bottom" 
+               data-th-attr="data-original-title=${co.name + ' (Category: ' + co.category.name + ')'},data-content=${co.description},data-coid=${co.categoryObjectId}" 
+               th:inline="text">[[${co.name}]] <span data-role="remove"></span>
+              </a>
+            </div>
           </div>
-          <div class="col-md-7">
+          <div class="col-md-1">
             <div class="btn-group">
               <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Add <span class="caret"></span>
+                + <span class="caret"></span>
               </button>
               <ul class="dropdown-menu multi-level" role="menu" aria-labelledby="dropdownMenu">
-                <li class="dropdown-submenu" data-th-each="category : ${categories}"><a tabindex="-1" href="#"
-                  data-th-if="${category.businessObjects.size() > 0}" data-th-text="${category.categoryName}"></a>
+                <li class="dropdown-submenu" data-th-each="category : ${taxonomy.categories}">
+                <a tabindex="-1" href="#" data-th-if="${category.categoryObjects.size() > 0}" data-th-text="${category.name}"></a>
                   <ul class="dropdown-menu">
-                    <li data-th-each="bo : ${category.businessObjects}"><a
-                      th:onclick="'addBo(\'' + ${bo.name} + '\', \'' + ${bo.description} + '\', \'' + ${bo.categoryName} + '\')'"
-                      href="javascript:void(0)" data-th-attr="data-original-title=${bo.name}, data-content=${bo.description}" data-placement="right"
-                      data-th-text="${bo.name}" data-toggle="popover" data-content="${bo.description}"></a></li>
+                    <li data-th-each="co : ${category.categoryObjects}"><a
+                      th:onclick="'addCo(\'' + ${taxonomy.name.trim()} + '\', \'' + ${co.name.trim()} + '\', \'' + ${co.description.trim()} + '\', \'' + ${category.name.trim()} + '\', \'' + ${co.categoryObjectId} + '\')'"
+                      href="javascript:void(0)" data-th-attr="data-original-title=${co.name}, data-content=${co.description}" 
+                      data-placement="right" data-th-text="${co.name}" data-toggle="popover" data-content="${co.description}"></a></li>
                   </ul>
                 </li>
-                <li data-th-if="${categories.size() == 0}" data-th-text="'No categories and business objects defined yet'" 
+                <li data-th-if="${taxonomy.categories.size() == 0}" data-th-text="'No categories defined yet'" 
                 style="white-space: nowrap; color: red; padding-left: 10px; padding-right: 10px;"></li>
               </ul>
             </div>
           </div>
+          <div class="col-md-6">
+            <div class="control-group">
+              <label class="control-label" data-th-text="'Categories'"></label>
+              <div class="controls" th:with="categories=${table.getCategoriesCommaDelimited()}">
+                <div data-th-if="${tableTaxonomies.get(taxonomy.name) == null}">
+                  <em data-th-text="${'No category objects has been added to ' + taxonomy.name + ' yet'}"></em>
+                </div>
+                <div data-th-if="${tableTaxonomies.get(taxonomy.name) != null}">
+                  <a data-th-each="co : ${tableTaxonomies.get(taxonomy.name).categories}"
+                     style="margin-right: 6px;" class="tag label label-info" th:inline="text">[[${co.name}]]
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      <hr/>
+      </div>
     </div>
-    <hr />
     <div class="row">
       <div class="col-md-12">
         <div class="control-group">

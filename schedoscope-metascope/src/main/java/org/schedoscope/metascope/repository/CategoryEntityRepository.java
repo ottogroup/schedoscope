@@ -18,8 +18,6 @@ package org.schedoscope.metascope.repository;
 import org.schedoscope.metascope.model.CategoryEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface CategoryEntityRepository extends CrudRepository<CategoryEntity, String> {
-
-  public CategoryEntity findByCategoryName(String categoryName);
-
+public interface CategoryEntityRepository extends CrudRepository<CategoryEntity, Long> {
+	
 }

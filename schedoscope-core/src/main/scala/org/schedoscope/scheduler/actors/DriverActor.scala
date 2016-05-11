@@ -18,7 +18,7 @@ package org.schedoscope.scheduler.actors
 import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
 import akka.event.{ Logging, LoggingReceive }
 import org.apache.commons.lang.exception.ExceptionUtils
-import org.schedoscope.{ DriverSettings, SchedoscopeSettings }
+import org.schedoscope.conf.{ DriverSettings, SchedoscopeSettings }
 import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.driver.{ Driver, RetryableDriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FileSystemDriver, HiveDriver, MapreduceDriver, OozieDriver, PigDriver, ShellDriver }
 import org.schedoscope.scheduler.messages._

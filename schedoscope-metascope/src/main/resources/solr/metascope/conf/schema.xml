@@ -32,8 +32,9 @@
     <field name="transformationTimestamp" type="long" indexed="true" stored="true"/>
     <field name="owner" type="string" indexed="true" stored="true"/>
     <field name="description" type="text_general" indexed="true" stored="true"/>
+    <field name="taxonomies" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="categories" type="text_multi" indexed="true" stored="true" multiValued="true"/>
-    <field name="bos" type="text_multi" indexed="true" stored="true" multiValued="true"/>
+    <field name="categoryObjects" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="tags" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="exports" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="documentation" type="text_general" indexed="true" stored="true"/>
@@ -52,8 +53,9 @@
     <copyField source="storageFormat" dest="text"/>
     <copyField source="owner" dest="text"/>
     <copyField source="description" dest="text"/>
+    <copyField source="taxonomies" dest="text"/>
     <copyField source="categories" dest="text"/>
-    <copyField source="bos" dest="text"/>
+    <copyField source="categoryObjects" dest="text"/>
     <copyField source="tags" dest="text"/>
     <copyField source="documentation" dest="text"/>
     <copyField source="comments" dest="text"/>

@@ -15,11 +15,9 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.BusinessObjectEntity;
+import org.schedoscope.metascope.model.CategoryObjectEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface BusinessObjectEntityRepository extends CrudRepository<BusinessObjectEntity, Long> {
-
-  public BusinessObjectEntity findByCategoryNameAndName(String toBeDeleted, String toBeDeleted2);
+public interface CategoryObjectEntityRepository extends CrudRepository<CategoryObjectEntity, Long> {
 
 }

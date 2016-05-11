@@ -17,9 +17,11 @@ package org.schedoscope.metascope.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -27,7 +29,8 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.PostConstruct;
 
 import org.schedoscope.metascope.index.SolrFacade;
-import org.schedoscope.metascope.model.BusinessObjectEntity;
+import org.schedoscope.metascope.model.CategoryMap;
+import org.schedoscope.metascope.model.CategoryObjectEntity;
 import org.schedoscope.metascope.model.CommentEntity;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.ParameterValueEntity;
@@ -35,7 +38,7 @@ import org.schedoscope.metascope.model.TableDependencyEntity;
 import org.schedoscope.metascope.model.TableEntity;
 import org.schedoscope.metascope.model.UserEntity;
 import org.schedoscope.metascope.model.ViewEntity;
-import org.schedoscope.metascope.repository.BusinessObjectEntityRepository;
+import org.schedoscope.metascope.repository.CategoryObjectEntityRepository;
 import org.schedoscope.metascope.repository.ParameterValueEntityRepository;
 import org.schedoscope.metascope.repository.TableDependencyEntityRepository;
 import org.schedoscope.metascope.repository.TableEntityRepository;
@@ -80,7 +83,7 @@ public class TableEntityService {
   @Autowired
   private UserEntityRepository userEntityRepository;
   @Autowired
-  private BusinessObjectEntityRepository businessObjectEntityRepository;
+  private CategoryObjectEntityRepository categoryObjectEntityRepository;
   @Autowired
   private ViewEntityRepository viewEntityRepository;
   @Autowired
@@ -168,39 +171,48 @@ public class TableEntityService {
     tableEntity.setViewCount(tableEntity.getViewCount() + 1);
     tableEntityRepository.save(tableEntity);
   }
-
+  
   @Transactional
-  public void setBusinessObjects(String fqdn, String businessObjectsCommaDelimited) {
-    TableEntity tableEntity = tableEntityRepository.findByFqdn(fqdn);
-
-    if (tableEntity == null) {
-      return;
-    }
-
-    if (businessObjectsCommaDelimited == null) {
-      businessObjectsCommaDelimited = "";
-    }
-
-    String[] businessObjects = businessObjectsCommaDelimited.split(",");
-
-    Iterable<BusinessObjectEntity> repositoryBos = businessObjectEntityRepository.findAll();
-    tableEntity.getBusinessObjects().clear();
-
-    for (String bo : businessObjects) {
-      for (BusinessObjectEntity repoBo : repositoryBos) {
-        if (bo.equals(repoBo.getName())) {
-          if (!tableEntity.getBusinessObjects().contains(repoBo)) {
-            tableEntity.getBusinessObjects().add(repoBo);
-          }
-        }
-      }
-    }
-
-    tableEntityRepository.save(tableEntity);
-    solr.updateTableEntityAsync(tableEntity, true);
-    LOG.info("User '{}' changed business objects for table '{}' to '{}'", userEntityService.getUser().getUsername(),
-        fqdn, businessObjectsCommaDelimited);
-    activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntityService.getUser());
+	public void setCategoryObjects(String fqdn, Map<String, String[]> parameterMap) {
+	  TableEntity tableEntity = tableEntityRepository.findByFqdn(fqdn);
+	
+	  if (tableEntity == null) {
+	    return;
+	  }
+	  
+	  tableEntity.getCategoryObjects().clear();
+	  
+	  String categoryObjectList = "";
+	  if (parameterMap != null) {
+		  for (Entry<String, String[]> e : parameterMap.entrySet()) {
+		  	if (!e.getKey().endsWith("CategoryObjects")) {
+		  		continue;
+		  	}
+		  	
+		  	String categoryObjectIds = e.getValue()[0];
+		    String[] categoryObjects = categoryObjectIds.split(",");
+		    for (String categoryObjectId : categoryObjects) {
+		    	if (categoryObjectId.isEmpty()) {
+		    		continue;
+		    	}
+		    	
+			    CategoryObjectEntity categoryObjectEntity = categoryObjectEntityRepository.findOne(Long.parseLong(categoryObjectId));
+			    if (categoryObjectEntity != null) {
+			    	tableEntity.getCategoryObjects().add(categoryObjectEntity);
+			    	if (!categoryObjectList.isEmpty()) {
+			    		categoryObjectList += ", ";
+			    	}
+			    	categoryObjectList += categoryObjectEntity.getName();
+			    }
+	      }
+	    }
+	  }
+	  
+	  tableEntityRepository.save(tableEntity);
+	  solr.updateTableEntityAsync(tableEntity, true);
+	  LOG.info("User '{}' changed category objects for table '{}' to '{}'", userEntityService.getUser().getUsername(),
+	      fqdn, categoryObjectList);
+	  activityEntityService.createUpdateTaxonomyActivity(tableEntity, userEntityService.getUser());
   }
 
   @Transactional
@@ -398,6 +410,23 @@ public class TableEntityService {
 
   public Set<String> getAllOwner() {
     return tableEntityRepository.getAllOwner();
+  }
+
+	public Map<String, CategoryMap> getTableTaxonomies(TableEntity tableEntity) {
+		Map<String, CategoryMap> taxonomies = new LinkedHashMap<String, CategoryMap>();
+		
+		for (CategoryObjectEntity categoryObjectEntity : tableEntity.getCategoryObjects()) {
+	    String taxonomyName = categoryObjectEntity.getCategory().getTaxonomy().getName();
+	    CategoryMap categoryMap = taxonomies.get(taxonomyName);
+	    if (categoryMap == null) {
+	    	categoryMap = new CategoryMap();
+	    }
+	    categoryMap.addToCategories(categoryObjectEntity.getCategory());
+	    categoryMap.addToCategoryObjects(categoryObjectEntity);
+	    taxonomies.put(taxonomyName, categoryMap);
+	  }
+
+		return taxonomies;
   }
 
 }

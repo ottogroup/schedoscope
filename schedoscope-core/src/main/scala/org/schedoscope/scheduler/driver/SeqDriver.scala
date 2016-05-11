@@ -16,7 +16,8 @@
 package org.schedoscope.scheduler.driver
 
 import scala.language.existentials
-import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.Schedoscope
+import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.{ Transformation, SeqTransformation }
 import org.joda.time.LocalDateTime
 

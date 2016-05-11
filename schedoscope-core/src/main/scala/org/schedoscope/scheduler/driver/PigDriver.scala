@@ -21,7 +21,8 @@ import java.util.Properties
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.pig.{ ExecType, PigException, PigServer }
 import org.joda.time.LocalDateTime
-import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.Schedoscope
+import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.PigTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.slf4j.LoggerFactory

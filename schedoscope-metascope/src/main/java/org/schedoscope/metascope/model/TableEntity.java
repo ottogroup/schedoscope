@@ -128,7 +128,7 @@ public class TableEntity extends Documentable {
   private List<TransformationEntity> transformationProperties;
 
   @ManyToMany(fetch = FetchType.EAGER)
-  private List<BusinessObjectEntity> businessObjects;
+  private List<CategoryObjectEntity> categoryObjects;
 
   @ElementCollection(fetch = FetchType.EAGER)
   @CollectionTable(name = "table_tags", joinColumns = @JoinColumn(name = "fqdn"))
@@ -139,7 +139,7 @@ public class TableEntity extends Documentable {
     this.views = new ArrayList<ViewEntity>();
     this.dependencies = new ArrayList<TableDependencyEntity>();
     this.transformationProperties = new ArrayList<TransformationEntity>();
-    this.businessObjects = new ArrayList<BusinessObjectEntity>();
+    this.categoryObjects = new ArrayList<CategoryObjectEntity>();
     this.tags = new ArrayList<String>();
   }
 
@@ -331,14 +331,14 @@ public class TableEntity extends Documentable {
     this.transformationProperties = transformationProperties;
   }
 
-  public List<BusinessObjectEntity> getBusinessObjects() {
-    return businessObjects;
+  public List<CategoryObjectEntity> getCategoryObjects() {
+	  return categoryObjects;
   }
-
-  public void setBusinessObjects(List<BusinessObjectEntity> businessObjects) {
-    this.businessObjects = businessObjects;
+  
+  public void setCategoryObjects(List<CategoryObjectEntity> categoryObjects) {
+	  this.categoryObjects = categoryObjects;
   }
-
+  
   public List<String> getTags() {
     return tags;
   }
@@ -412,27 +412,43 @@ public class TableEntity extends Documentable {
     }
     return result;
   }
+	
+  public List<String> getTaxonomyNames() {
+    List<String> taxonomies = new ArrayList<String>();
+    List<CategoryObjectEntity> cos = getCategoryObjects();
+    if (cos != null) {
+      for (CategoryObjectEntity categoryObjectEntity : cos) {
+      	TaxonomyEntity taxonomy = categoryObjectEntity.getCategory().getTaxonomy();
+      	String taxonomyName = taxonomy.getName();
+        if (!taxonomies.contains(taxonomyName)) {
+        	taxonomies.add(taxonomyName);
+        }
+      }
+    }
+    return taxonomies;
+  }
 
   public List<String> getCategoryNames() {
     List<String> categories = new ArrayList<String>();
-    List<BusinessObjectEntity> bos = getBusinessObjects();
-    if (bos != null) {
-      for (BusinessObjectEntity businessObjectEntity : bos) {
-        if (!categories.contains(businessObjectEntity.getCategoryName())) {
-          categories.add(businessObjectEntity.getCategoryName());
+    List<CategoryObjectEntity> cos = getCategoryObjects();
+    if (cos != null) {
+      for (CategoryObjectEntity categoryObjectEntity : cos) {
+      	String categoryName = categoryObjectEntity.getCategory().getName();
+        if (!categories.contains(categoryName)) {
+          categories.add(categoryName);
         }
       }
     }
     return categories;
   }
 
-  public List<String> getBusinessObjectNames() {
+  public List<String> getCategoryObjectNames() {
     List<String> result = new ArrayList<String>();
-    if (businessObjects == null) {
+    if (categoryObjects == null) {
       return result;
     }
-    for (BusinessObjectEntity boEntity : businessObjects) {
-      result.add(boEntity.getName());
+    for (CategoryObjectEntity coEntity : categoryObjects) {
+      result.add(coEntity.getName());
     }
     return result;
   }
@@ -464,6 +480,20 @@ public class TableEntity extends Documentable {
     }
     return result;
   }
+  
+  public String getTaxonomiesCommaDelimited() {
+    String result = "";
+    List<String> taxonomyNames = getTaxonomyNames();
+    if (taxonomyNames != null) {
+      for (String taxonomyName : taxonomyNames) {
+        if (!result.isEmpty()) {
+          result += ",";
+        }
+        result += taxonomyName;
+      }
+    }
+    return result;
+  }
 
   public String getCategoriesCommaDelimited() {
     String result = "";
@@ -479,15 +509,15 @@ public class TableEntity extends Documentable {
     return result;
   }
 
-  public String getBusinessObjectsCommaDelimited() {
+  public String getCategoryObjectsCommaDelimited() {
     String result = "";
-    List<BusinessObjectEntity> bos = getBusinessObjects();
-    if (bos != null) {
-      for (BusinessObjectEntity businessObject : bos) {
+    List<CategoryObjectEntity> cos = getCategoryObjects();
+    if (cos != null) {
+      for (CategoryObjectEntity categoryObject : cos) {
         if (!result.isEmpty()) {
           result += ",";
         }
-        result += businessObject.getName();
+        result += categoryObject.getName();
       }
     }
     return result;
@@ -580,4 +610,16 @@ public class TableEntity extends Documentable {
     this.exports.add(exportEntity);
   }
 
+	public void removeCategoryObjectById(long categoryObjectId) {
+		CategoryObjectEntity toRemove = null;
+	  for (CategoryObjectEntity categoryObjectEntity : categoryObjects) {
+	    if (categoryObjectEntity.getCategoryObjectId() == categoryObjectId) {
+	    	toRemove = categoryObjectEntity;
+	    }
+    }
+	  if (toRemove != null) {
+	  	categoryObjects.remove(toRemove);
+	  }
+  }
+	
 }

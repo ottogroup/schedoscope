@@ -29,7 +29,10 @@ import org.schedoscope.metascope.SpringTest;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.CommentEntity;
 import org.schedoscope.metascope.model.TableEntity;
+import org.schedoscope.metascope.model.UserEntity;
 import org.schedoscope.metascope.service.UserEntityService;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DocumentationServiceTest extends SpringTest {
@@ -56,12 +59,15 @@ public class DocumentationServiceTest extends SpringTest {
   }
 
   @Test
+  @Transactional
+  @Rollback(false)
   public void documentationService_01_updateDocumentation_createTableDocumenation() {
     TableEntity tableEntity = getTestTable();
+    UserEntity userEntity = getLoggedInUser();
 
     assertTrue(tableEntity.getComment() == null);
 
-    documentationService.updateDocumentation(tableEntity, DOCUMENATION_1);
+    documentationService.updateDocumentation(tableEntity, DOCUMENATION_1, userEntity);
 
     tableEntity = getTestTable();
     assertTrue(tableEntity.getComment() != null);
@@ -69,13 +75,16 @@ public class DocumentationServiceTest extends SpringTest {
   }
 
   @Test
+  @Transactional
+  @Rollback(false)
   public void documentationService_02_updateDocumentation_updateTableDocumenation() {
     TableEntity tableEntity = getTestTable();
+    UserEntity userEntity = getLoggedInUser();
 
     assertTrue(tableEntity.getComment() != null);
     assertEquals(tableEntity.getComment().getPlainText(), DOCUMENATION_1);
 
-    documentationService.updateDocumentation(tableEntity, DOCUMENTATION_2);
+    documentationService.updateDocumentation(tableEntity, DOCUMENTATION_2, userEntity);
 
     tableEntity = getTestTable();
     assertTrue(tableEntity.getComment() != null);
@@ -83,14 +92,17 @@ public class DocumentationServiceTest extends SpringTest {
   }
 
   @Test
+  @Transactional
+  @Rollback(false)
   public void documentationService_03_addComment() {
     TableEntity tableEntity = getTestTable();
+    UserEntity userEntity = getLoggedInUser();
 
     assertTrue(tableEntity.getComment() != null);
     assertEquals(tableEntity.getComment().getPlainText(), DOCUMENTATION_2);
     assertEquals(tableEntity.getComments().size(), 0);
 
-    documentationService.addComment(tableEntity, COMMENT);
+    documentationService.addComment(tableEntity, COMMENT, userEntity);
 
     tableEntity = getTestTable();
     List<CommentEntity> comments = tableEntity.getComments();
@@ -100,7 +112,10 @@ public class DocumentationServiceTest extends SpringTest {
   }
 
   @Test
+  @Transactional
+  @Rollback(false)
   public void documentationService_04_deleteComment() {
+  	UserEntity userEntity = getLoggedInUser();
     TableEntity tableEntity = getTestTable();
     List<CommentEntity> comments = tableEntity.getComments();
     CommentEntity commentEntity = comments.get(0);
@@ -108,7 +123,7 @@ public class DocumentationServiceTest extends SpringTest {
     assertEquals(comments.size(), 1);
     assertEquals(commentEntity.getPlainText(), COMMENT);
 
-    documentationService.deleteComment(tableEntity, commentEntity);
+    documentationService.deleteComment(tableEntity, commentEntity, userEntity);
 
     comments = getTestTable().getComments();
 

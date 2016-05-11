@@ -18,7 +18,7 @@ package org.schedoscope.metascope.repository;
 import java.util.List;
 import java.util.Set;
 
-import org.schedoscope.metascope.model.BusinessObjectEntity;
+import org.schedoscope.metascope.model.CategoryObjectEntity;
 import org.schedoscope.metascope.model.CommentEntity;
 import org.schedoscope.metascope.model.TableEntity;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -32,8 +32,8 @@ public interface TableEntityRepository extends CrudRepository<TableEntity, Strin
   @Query("SELECT t FROM TableEntity t WHERE :commentEntity MEMBER OF t.comments")
   public TableEntity findByComment(@Param(value = "commentEntity") CommentEntity commentEntity);
 
-  @Query("SELECT t FROM TableEntity t WHERE :bo MEMBER OF t.businessObjects")
-  public List<TableEntity> findByBusinessObject(@Param(value = "bo") BusinessObjectEntity bo);
+  @Query("SELECT t FROM TableEntity t WHERE :co MEMBER OF t.categoryObjects")
+  public List<TableEntity> findByCategoryObject(@Param(value = "co") CategoryObjectEntity co);
 
   @Query("SELECT distinct(t.personResponsible) FROM TableEntity t where t.tableOwner is not null")
   public Set<String> getAllOwner();

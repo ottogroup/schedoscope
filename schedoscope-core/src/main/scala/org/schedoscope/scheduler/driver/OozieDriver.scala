@@ -22,7 +22,7 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.apache.oozie.client.OozieClient
 import org.apache.oozie.client.WorkflowJob.Status.{ PREP, RUNNING, SUCCEEDED, SUSPENDED }
 import org.joda.time.LocalDateTime
-import org.schedoscope.DriverSettings
+import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.OozieTransformation
 
 import scala.collection.JavaConversions.asScalaSet
