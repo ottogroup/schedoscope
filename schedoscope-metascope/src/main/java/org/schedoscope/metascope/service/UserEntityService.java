@@ -38,6 +38,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.session.SessionInformation;
 import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.ldap.userdetails.LdapUserDetailsImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -277,8 +278,10 @@ public class UserEntityService {
       return;
     }
 
+    String thisUser = getUser().getUsername();
     userEntityRepository.delete(user);
-    LOG.info("User '{}' has deleted the user '{}'", getUser().getUsername(), username);
+    
+    LOG.info("User '{}' has deleted the user '{}'", thisUser, username);
   }
 
   public List<String> getFavourites() {
@@ -328,8 +331,8 @@ public class UserEntityService {
   public void logoutUser(SessionRegistry sessionRegistry, String username) {
     final List<Object> allPrincipals = sessionRegistry.getAllPrincipals();
     for (final Object principal : allPrincipals) {
-      if (principal instanceof UserEntity) {
-        UserEntity springUserDetails = (UserEntity) principal;
+      if (principal instanceof User) {
+      	User springUserDetails = (User) principal;
         if (springUserDetails.getUsername().equals(username)) {
           for (SessionInformation sessionInformation : sessionRegistry.getAllSessions(principal, true)) {
             sessionInformation.expireNow();
