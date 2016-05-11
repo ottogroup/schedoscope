@@ -63,7 +63,7 @@ public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter 
       String[] allgroups = appendRolePrefix(config.getAllowedGroups(), config.getAdminGroups());
       String[] adminGroups = appendRolePrefix(config.getAdminGroups());
       http.authorizeRequests()
-      .antMatchers("/", "/?error=cred", "/status/*", "/log").permitAll()
+      .antMatchers("/", "/?error=cred", "/status/*", "/expired").permitAll()
       .antMatchers("/**").hasAnyAuthority(allgroups)
       .antMatchers("/admin**").hasAnyAuthority(adminGroups)
       .antMatchers("/admin/").hasAnyAuthority(adminGroups)
@@ -75,7 +75,7 @@ public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter 
       .and().exceptionHandling().accessDeniedPage("/accessdenied");
     } else {
       http.authorizeRequests()
-      .antMatchers("/", "/?error=cred", "/status/*", "/log").permitAll()
+      .antMatchers("/", "/?error=cred", "/status/*", "/expired").permitAll()
       .antMatchers("/admin**").hasAuthority("ROLE_ADMIN")
       .antMatchers("/admin/").hasAuthority("ROLE_ADMIN")
       .antMatchers("/admin/**").hasAuthority("ROLE_ADMIN").anyRequest()
@@ -84,7 +84,7 @@ public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter 
       .and().rememberMe()
       .and().exceptionHandling().accessDeniedPage("/accessdenied");
     }
-    http.sessionManagement().maximumSessions(1).sessionRegistry(sessionRegistry());
+    http.sessionManagement().maximumSessions(1).expiredUrl("/expired").sessionRegistry(sessionRegistry());
   }
   
   @Override
@@ -121,7 +121,7 @@ public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter 
   public LdapTemplate ldapTemplate() {
     return new LdapTemplate(ldapContextSource());
   }
-
+  
   @Bean
   public SessionRegistry sessionRegistry() {
     return new SessionRegistryImpl();
