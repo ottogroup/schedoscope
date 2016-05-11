@@ -15,7 +15,6 @@
  */
 package org.schedoscope.metascope.conf;
 
-import java.io.File;
 import java.net.URISyntaxException;
 
 import org.schedoscope.conf.BaseSettings;
@@ -29,7 +28,8 @@ public class MetascopeConfig {
   private static final Logger LOG = LoggerFactory.getLogger(MetascopeConfig.class);
 
   private static final String METASCOPE_JAR_LOCATION = "{metascope.dir}";
-  private String jarLocation;
+  
+  private String classLocations;
 
   private int port;
 
@@ -74,15 +74,8 @@ public class MetascopeConfig {
   private String logLevel;
 
   public MetascopeConfig(BaseSettings config) {
-    try {
-      this.jarLocation = new File(MetascopeConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-          .getPath()).getAbsolutePath();
-      this.jarLocation = this.jarLocation.substring(0, jarLocation.lastIndexOf("/"));
-    } catch (URISyntaxException e) {
-      LOG.warn("Could not get path of metascope.jar; '" + METASCOPE_JAR_LOCATION
-          + "' is set to current working directory.");
-      this.jarLocation = ".";
-    }
+  	String location = getExecutionLocation();
+    this.classLocations = location.substring(0, location.lastIndexOf("/"));
 
     this.port = config.metascopePort();
 
@@ -118,8 +111,8 @@ public class MetascopeConfig {
     this.logLevel = getString(config.metascopeLoggingLevel());
   }
 
-  private String getString(String value) {
-    return value.replace(METASCOPE_JAR_LOCATION, jarLocation).trim();
+	private String getString(String value) {
+    return value.replace(METASCOPE_JAR_LOCATION, classLocations).trim();
   }
 
   public int getPort() {
@@ -216,6 +209,26 @@ public class MetascopeConfig {
 
   public boolean withUserManagement() {
     return !getAuthenticationMethod().equalsIgnoreCase("ldap");
+  }
+  
+  private String getExecutionLocation() {
+  	String execLocation = null;
+  	try {
+  		execLocation = MetascopeConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+    } catch (URISyntaxException e) {
+      LOG.warn("Could not get path of metascope.jar; '" + METASCOPE_JAR_LOCATION
+          + "' is set to current working directory.");
+      execLocation = ".";
+    }
+  	
+  	//TODO	hotfix to determine folder to create solr index and repository.
+  	//			path should be determined in another dynamic way
+  	if (execLocation.endsWith("/target/classes/")) {
+  	  //executed from classes e.g. eclipse, mvn exec:java, ...
+  		execLocation += "../metascope-deployment/";
+  	}
+  	
+  	return execLocation;
   }
 
 }
