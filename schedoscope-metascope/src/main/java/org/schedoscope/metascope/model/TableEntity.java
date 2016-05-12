@@ -47,6 +47,7 @@ public class TableEntity extends Documentable {
   public static final String TABLE_OWNER = "table_owner";
   public static final String DATA_PATH = "data_path";
   public static final String DATA_SIZE = "data_size";
+  public static final String PERMISSIONS = "permissions";
   public static final String ROWCOUNT = "rowcount";
   public static final String TRANSFORMATION_TYPE = "transformation_type";
   public static final String LAST_DATA = "last_data";
@@ -88,6 +89,8 @@ public class TableEntity extends Documentable {
   private String dataPath;
   @Column(name = DATA_SIZE, columnDefinition = "bigint default 0")
   private long dataSize;
+  @Column(name = PERMISSIONS)
+  private String permissions;
   @Column(name = ROWCOUNT, columnDefinition = "bigint default 0")
   private long rowcount;
   @Column(name = TRANSFORMATION_TYPE)
@@ -261,6 +264,14 @@ public class TableEntity extends Documentable {
 
   public void setDataSize(long dataSize) {
     this.dataSize = dataSize;
+  }
+  
+  public String getPermissions() {
+	  return permissions;
+  }
+  
+  public void setPermissions(String permissions) {
+	  this.permissions = permissions;
   }
 
   public long getRowcount() {
@@ -621,5 +632,5 @@ public class TableEntity extends Documentable {
 	  	categoryObjects.remove(toRemove);
 	  }
   }
-	
+
 }

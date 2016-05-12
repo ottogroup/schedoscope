@@ -77,6 +77,14 @@ public class MetastoreSyncTask extends Task {
       LOG.info("[MetastoreSyncTask] FAILED: Could not connect to hive metastore", e);
       return false;
     }
+    
+    FileSystem fs;
+    try {
+	    fs = FileSystem.get(hadoopConfig);
+    } catch (IOException e) {
+    	LOG.info("[MetastoreSyncTask] FAILED: Could not connect to HDFS", e);
+	    return false;
+    }
 
     Connection connection;
     try {
@@ -105,7 +113,8 @@ public class MetastoreSyncTask extends Task {
       tableEntity.setInputFormat(mTable.getSd().getInputFormat());
       tableEntity.setOutputFormat(mTable.getSd().getOutputFormat());
       tableEntity.setDataPath(mTable.getSd().getLocation());
-      tableEntity.setDataSize(getDirectorySize(tableEntity.getDataPath()));
+      tableEntity.setDataSize(getDirectorySize(fs, tableEntity.getDataPath()));
+      tableEntity.setPermissions(getPermission(fs, tableEntity.getDataPath()));
       List<ViewEntity> views = getViews(tableEntity.getFqdn(), allViews);
       if (views.size() == 1) {
         ViewEntity viewEntity = views.get(0);
@@ -149,7 +158,7 @@ public class MetastoreSyncTask extends Task {
     return true;
   }
 
-  private void setTransformationTimestamp(String schedoscopeTimestamp, TableEntity tableEntity, ViewEntity viewEntity,
+	private void setTransformationTimestamp(String schedoscopeTimestamp, TableEntity tableEntity, ViewEntity viewEntity,
       Long createdAt, Connection connection) {
     try {
       if (schedoscopeTimestamp != null) {
@@ -177,19 +186,27 @@ public class MetastoreSyncTask extends Task {
     }
   }
 
-  private Long getDirectorySize(String path) {
-    FileSystem fs;
-    try {
-      fs = FileSystem.get(hadoopConfig);
-      return fs.getContentSummary(new Path(path)).getSpaceConsumed();
-    } catch (FileNotFoundException e) {
-      LOG.warn("Directory '{}' does not exists", path);
-      return 0L;
-    } catch (IOException e) {
-      LOG.error("Error retrieving size for directory '{}'", path, e);
-      return 0L;
+  private Long getDirectorySize(FileSystem fs, String path) {
+     try {
+       return fs.getContentSummary(new Path(path)).getSpaceConsumed();
+     } catch (FileNotFoundException e) {
+       LOG.warn("Directory '{}' does not exists", path);
+       return 0L;
+     } catch (IOException e) {
+       LOG.error("Error retrieving size for directory '{}'", path, e);
+       return 0L;
+     }
+  }
+  
+  private String getPermission(FileSystem fs, String path) {
+	  try {
+	    return fs.getFileStatus(new Path(path)).getPermission().toString();
+    } catch (IllegalArgumentException | IOException e) {
+    	LOG.error("Error retrieving permissions for directory '{}'", path, e);
+	    return "-";
     }
   }
+
 
   private List<ViewEntity> getViews(String fqdn, List<ViewEntity> views) {
     List<ViewEntity> list = new ArrayList<ViewEntity>();
