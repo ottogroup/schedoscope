@@ -41,7 +41,7 @@ More documentation can be found here:
 * [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
 
 Check out Metascope! It's a meta data management and data discovery tool which serves as an add-on to Schedoscope.
-- [Metascope Primer](Metascope Primer)
+- [Metascope Primer](https://github.com/ottogroup/schedoscope/wiki/Metascope%20Primer)
 
 ![Metascope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/lineage.png)
 
