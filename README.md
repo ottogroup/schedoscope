@@ -40,6 +40,10 @@ Take a look at the View DSL Primer to get more information about the capabilitie
 More documentation can be found here:
 * [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
 
+Check out [Metascope](Metascope Primer)! It's a meta data management and data discovery tool which serves as an add-on to Schedoscope.
+
+![Metascope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/lineage.png)
+
 ## When is Schedoscope not for you?
 
 Schedoscope is based on the following assumptions:
