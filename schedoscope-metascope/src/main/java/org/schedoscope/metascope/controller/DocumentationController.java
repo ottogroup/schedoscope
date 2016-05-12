@@ -54,6 +54,13 @@ public class DocumentationController {
     documentationService.addComment(tableEntity, comment, userEntityService.getUser());
     return "redirect:" + request.getHeader("Referer");
   }
+  
+  @RequestMapping(value = "/table/documentation/comment/edit", method = RequestMethod.POST)
+  public String editComment(HttpServletRequest request, String commentID, String commentText) {
+    CommentEntity commentEntity = documentationService.findById(commentID);
+    documentationService.editComment(commentEntity, commentText, userEntityService.getUser());
+    return "redirect:" + request.getHeader("Referer");
+  }
 
   @RequestMapping(value = "/table/documentation/comment/delete", method = RequestMethod.POST)
   public String deleteComment(HttpServletRequest request, String commentID) {
@@ -77,6 +84,13 @@ public class DocumentationController {
     documentationService.addComment(fieldEntity, comment, userEntityService.getUser());
     return getReferer(request, fieldname, parameter);
   }
+  
+  @RequestMapping(value = "/field/documentation/comment/edit", method = RequestMethod.POST)
+  public String editFieldComment(HttpServletRequest request, String fieldname, boolean parameter, String commentID, String commentText) {
+    CommentEntity commentEntity = documentationService.findById(commentID);
+    documentationService.editComment(commentEntity, commentText, userEntityService.getUser());
+    return getReferer(request, fieldname, parameter);
+  }
 
   @RequestMapping(value = "/field/documentation/comment/delete", method = RequestMethod.POST)
   public String deleteComment(HttpServletRequest request, String fieldname, boolean parameter, String commentID) {
@@ -85,7 +99,7 @@ public class DocumentationController {
     documentationService.deleteComment(fieldEntity, commentEntity, userEntityService.getUser());
     return getReferer(request, fieldname, parameter);
   }
-
+  
   private String getReferer(HttpServletRequest request, String fieldname, boolean parameter) {
     String refererString = "redirect:" + request.getHeader("Referer");
     if (parameter) {

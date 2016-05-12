@@ -61,9 +61,23 @@
   <div data-th-if="${field.hasDocumentation()}">
     <div class="row">
       <div class="col-md-12" style="padding-left: 50px;">
+        <hr/>
         <div data-th-each="comment : ${field.comments}">
-          <div style="margin-top: 10px;" class="well">
-            <p th:remove="tag" th:utext="${comment.text}"></p>
+          <div th:id="'comment' + ${comment.id} + 'editEditorSection'" style="display: none">
+            <div th:id="'comment' + ${comment.id} + 'editEditor'"></div>
+            <form class="form" data-th-action="@{/field/documentation/comment/edit}" method="post" style="display: inline">
+              <input type="hidden" name="commentID" th:value="${comment.id}"/> 
+	          <input type="hidden" name="fieldname" th:value="${field.name}"/>
+	          <input type="hidden" name="parameter" th:value="${field.parameterField}"/>
+              <input type="hidden" name="commentText" th:id="'comment' + ${comment.id} + 'text'"/> 
+              <button class="btn btn-success">Save</button>
+              <button type="button" class="btn btn-default" th:onclick="'editComment(\'comment' + ${comment.id} + '\')'">Cancel</button>
+            </form>
+          </div>
+          <div style="margin-top: 10px;" class="well" th:id="'comment' + ${comment.id}">
+            <div>
+              <p th:remove="tag" th:utext="${comment.text}"></p>
+            </div>
             <hr style="margin: 2px; border-color: lightgrey"/>
             <div th:with="userEntity=${userEntityService.findByUsername(comment.username)}">
               <div th:with="username=${userEntity != null ? userEntity.fullname : comment.username}">
@@ -72,11 +86,11 @@
                 <span data-th-text="${util.getTime(comment.lastEdit)}"></span>
                 <div data-th-if="${userEntity != null and userEntity.equals(userEntityService.getUser())}" style="display: inline">
 	              <span style="padding-left:2px; padding-right:2px;">-</span>
-	              <form style="display: inline">
-	                <a><span class="glyphicon glyphicon-pencil"></span></a>
-	              </form>
-	              <form class="form" data-th-action="@{/table/documentation/comment/delete}" method="post" style="display: inline">
+	              <a href="javascript:void()" th:onclick="'editComment(\'comment' + ${comment.id} + '\')'"><span class="glyphicon glyphicon-pencil"></span></a>
+	              <form class="form" data-th-action="@{/field/documentation/comment/delete}" method="post" style="display: inline">
 	                <input type="hidden" name="commentID" th:value="${comment.id}"/> 
+	                <input type="hidden" name="fieldname" th:value="${field.name}"/>
+	                <input type="hidden" name="parameter" th:value="${field.parameterField}"/>
 	                <a href="javascript:void()" onclick="$(this).closest('form').submit()"><span class="glyphicon glyphicon-trash"></span></a>
 	              </form>
                 </div>
