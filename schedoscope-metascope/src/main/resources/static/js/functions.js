@@ -401,6 +401,36 @@ var expandFunction = function(id) {
 }
 
 /**
+ * Edit comment
+ */
+var editComment = function(commentDiv) {
+  var div =  $("#" + commentDiv);
+  div.toggle();
+  var html = div.children().first().html();
+  
+  var editor = "#" + commentDiv + "editEditor";
+  $(editor).summernote({
+    height : 75,
+    minHeight : null,
+    maxHeight : null,
+    focus : true,
+    toolbar : [ [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ],
+              [ 'fontname', [ 'fontname' ] ], [ 'color', [ 'color' ] ],
+              [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
+              [ 'insert', [ 'link' ] ], ],
+  });
+
+  $(editor).on('summernote.change', function(customEvent, contents, $editable) {
+    $('#' + commentDiv + 'text').val($(editor).code());
+  });
+  
+  $(editor).code(html);
+  
+  var editorSection = "#" + commentDiv + "editEditorSection";
+  $(editorSection).toggle();
+}
+
+/**
  * Shows the 'Create Documentation' editor and hides the current documentation
  */
 var toggleEditDocu = function(id, hideTextWrapper) {

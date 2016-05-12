@@ -108,6 +108,20 @@ public class DocumentationService {
       activityEntityService.createNewCommentActivity(tableEntity, userEntityService.getUser().getUsername());
     }
   }
+  
+	public void editComment(CommentEntity commentEntity, String commentText, UserEntity userEntity) {
+		if (commentEntity == null) {
+      return;
+    }
+
+    if (commentText != null && !commentText.isEmpty()) {
+    	commentEntity.setText(commentText);
+    	commentEntity.setPlainText(Jsoup.parse(commentText).body().text());
+    	commentEntity.setUsername(userEntity.getUsername());
+    	commentEntity.setLastEdit(System.currentTimeMillis());
+      commentEntityRepository.save(commentEntity);
+    }
+  }
 
   public void deleteComment(Documentable documentable, CommentEntity commentEntity, UserEntity userEntity) {
     if (documentable == null) {
