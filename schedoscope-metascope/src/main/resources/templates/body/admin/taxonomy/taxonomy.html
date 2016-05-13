@@ -70,12 +70,10 @@
 							<table th:id="'categories' + ${taxonomy.taxonomyId}" class="table table-striped">
 								<tr class="info">
 									<th>Categories</th>
-									<th><button class="btn pull-right"
-											th:onclick="'createCategory(' + ${taxonomy.taxonomyId} + ')'">Create
-											new category</button></th>
+									<th></th>
 								</tr>
 								<tr data-th-each="c : ${taxonomy.categories}">
-									<td><a data-th-text="${c.name} + ' (' + ${c.categoryObjects.size() + ')'}" href="javascript:void(0)"
+									<td style="vertical-align:middle;"><a data-th-text="${c.name} + ' (' + ${c.categoryObjects.size() + ')'}" href="javascript:void(0)"
 										th:onclick="${'showCategoryObjects(' + taxonomy.taxonomyId + ', ' + c.categoryId + ')'}"></a></td>
 									<td id="categoryActions">
 										<div class="pull-right">
@@ -94,6 +92,14 @@
 										</div>
 									</td>
 								</tr>
+								<tr>
+								  <td style="vertical-align:middle;">
+								    <em data-th-if="${taxonomy.categories.size() == 0}">No categories created yet</em>
+								  </td>
+								  <td>
+								    <button class="btn btn-default pull-right" th:onclick="'createCategory(' + ${taxonomy.taxonomyId} + ')'">Create new category</button>
+								  </td>
+								</tr>
 							</table>
 						</div>
 						<div class="col-md-8">
@@ -102,14 +108,13 @@
 									th:class="'coTable' +  ${taxonomy.taxonomyId}" style="display: none">
 									<table class="table table-striped">
 										<tr class="info">
-											<th>Category Object</th>
+											<th data-th-text="${c.name} + ': Category Object'"></th>
 											<th>Description</th>
-											<th><button class="btn pull-right" th:onclick="'createCategoryObject(' + ${c.categoryId} + ')'">Add new
-													category object</button></th>
+											<th></th>
 										</tr>
 										<tr data-th-each="co : ${c.categoryObjects}">
-											<td style="width: 15%;" data-th-text="${co.name}" />
-											<td data-th-text="${co.description}" />
+											<td style="width: 15%; vertical-align:middle;" data-th-text="${co.name}" />
+											<td style="vertical-align:middle;" data-th-text="${co.description}" />
 											<td style="width: 30%;">
 												<div class="pull-right">
 													<div class="btn-group">
@@ -128,6 +133,15 @@
 												</div>
 											</td>
 										</tr>
+										<tr>
+								          <td style="vertical-align:middle;">
+								            <em data-th-if="${c.categoryObjects.size() == 0}">No category objects created yet</em>
+								          </td>
+								          <td></td>
+								          <td>
+								            <button class="btn btn-default pull-right" th:onclick="'createCategoryObject(' + ${c.categoryId} + ')'">Add new category object</button>
+								          </td>
+								        </tr>
 									</table>
 								</div>
 							</div>
