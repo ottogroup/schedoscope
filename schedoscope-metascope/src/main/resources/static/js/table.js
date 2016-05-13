@@ -88,4 +88,5 @@ $(function() {
   $('#tags').tagsinput({
     confirmKeys : [ 13, 32, 188 ]
   });
+  
 });

@@ -237,7 +237,7 @@
 				  	    </div>
 				  	    <div class="col-md-11">
 				  		  <div class="row">
-				  		    <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn}"></a>
+				  		    <a data-th-text="${activity.table.tableName}" th:href="'table?fqdn=' + ${activity.table.fqdn} + '#taxonomyContent'"></a>
 				  	      </div>
 				  	      <div class="row">
 				  	    	<em style="font-size: 12px;" data-th-text="${util.getAboutTime(activity.timestamp)} + ' &bull; taxonomy updated by ' + ${username}"></em>

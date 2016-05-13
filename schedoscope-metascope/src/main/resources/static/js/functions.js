@@ -445,6 +445,20 @@ var toggleEditDocu = function(id, hideTextWrapper) {
   }
 }
 
+var successToast = function(title, message) {
+  $.toast({
+    text: message, // Text that is to be shown in the toast
+    heading: title, // Optional heading to be shown on the toast
+    icon: 'success', // Type of toast icon
+    showHideTransition: 'fade', // fade, slide or plain
+    allowToastClose: true, // Boolean value true or false
+    hideAfter: 2500, // false to make it sticky or number representing the miliseconds as time after which toast needs to be hidden
+    position: 'top-center', // bottom-left or bottom-right or bottom-center or top-left or top-right or top-center or mid-center or an object representing the left, right, top, bottom values
+    textAlign: 'left',  // Text alignment i.e. left, right or center
+    loader: false  // Whether to show loader or not. True by default
+  });
+}
+
 /**
  * Draws a VisJS network graph respresenting the data lineage of an entity
  */
