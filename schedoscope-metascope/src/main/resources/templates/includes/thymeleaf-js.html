@@ -46,6 +46,10 @@
     var first = [[${firstParam}]];
     var viewPage = [[${partitionPage}]];
     var taxonomies = [[${taxonomyNames}]];  
+    var personResponsibleToast = [[${personResponsible}]]; 
+    var documentationToast = [[${documentation}]];
+    var commentToast = [[${comment}]];
+    var taxonomyToast = [[${taxonomy}]]; 
     var _comment = [[${table.comment}]];
     var comment = "";
     if (_comment != null) {
@@ -146,6 +150,22 @@
     	source: users,
     	minLength: 0
     });
+    
+    if (personResponsibleToast) {
+      successToast("Person responsible", "The responsible person has been changed to " + personResponsibleToast);
+    }
+    
+    if (documentationToast) {
+      successToast("Documentation", "The documentation has been changed successfuly");
+    }
+    
+    if (commentToast) {
+      successToast("Comment", "The comment has been " + commentToast);
+    }
+    
+    if (taxonomyToast) {
+      successToast("Taxonomy", "The taxonomy has been changed successfuly");
+    }
 
   /*]]>*/
 </script>

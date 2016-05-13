@@ -17,9 +17,11 @@
 .well {
   background: #fafafa;	
 }
+
 table.bordered td, th {
   border: 1px solid #DDD;
 }
+
 .dropdown-menu {
   min-width: 180px;
 }

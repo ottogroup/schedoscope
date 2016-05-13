@@ -41,6 +41,7 @@ import org.schedoscope.metascope.service.UserEntityService;
 import org.schedoscope.metascope.service.ViewEntityService;
 import org.schedoscope.metascope.util.HTMLUtil;
 import org.schedoscope.metascope.util.HiveQueryResult;
+import org.schedoscope.metascope.util.ParseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.support.RequestContextUtils;
 
 @Controller
 public class TableEntityController extends ViewController {
@@ -88,36 +90,27 @@ public class TableEntityController extends ViewController {
    * 
    * @param request
    *          the HTTPServletRequest from the client
-   * @param fqdn
-   *          the fqdn (fully qualified domain name) of the table to display
-   * @param selectedPartition
-   *          the partition which has been selected in 'Data Distribution'
-   *          section
-   * @param partitionPage
-   *          the partition page the user requested in the 'Partitions' section
-   * @param transitive
-   *          show transitive dependencies in the 'Dependency'section
-   * @param local
-   *          Indicator if the request comes from Metascope or a third party
-   *          application. If false, the css information will be included in the
-   *          view
    * @return the table detail view
    */
   @RequestMapping(value = "/table", method = RequestMethod.GET)
-  public ModelAndView getTable(HttpServletRequest request, String fqdn, String selectedPartition,
-      Integer partitionPage, boolean transitive, boolean local) {
-    ModelAndView mav = createView("table");
-
+  public ModelAndView getTable(HttpServletRequest request) {
+  	ModelAndView mav = createView("table");
+  	
     /* load table from repository */
+    String fqdn = getParameter(request, "fqdn");
     TableEntity tableEntity = tableEntityService.findByFqdn(fqdn);
-
     if (tableEntity == null) {
       return notFound();
     }
 
-    /* partition page defaults to 1 */
-    if (partitionPage == null || partitionPage < 1) {
-      partitionPage = 1;
+    /* retrieve requested page for partitions section */
+    String partitionPageParameter = getParameter(request, "partitionPage");
+    int partitionPage = 1;
+    if (partitionPageParameter != null) {
+      Integer p = ParseUtil.tryParse(partitionPageParameter);
+      if (p != null && p > 0) {
+      	partitionPage = p;
+      }
     }
 
     /* get all taxonomies */
@@ -145,8 +138,8 @@ public class TableEntityController extends ViewController {
     int partitionCount = viewEntityService.getPartitionCount(tableEntity);
 
     /* get viewentity for data distribution, if selected */
-    ViewEntity selectedViewEntity = tableEntityService.runDataDistribution(tableEntity, selectedPartition,
-        partitionCount);
+    String selectedPartition = getParameter(request, "selectedPartition");
+    ViewEntity selectedViewEntity = tableEntityService.runDataDistribution(tableEntity, selectedPartition, partitionCount);
 
     /* check if this user is an admin */
     boolean isAdmin = userEntityService.isAdmin();
@@ -154,6 +147,7 @@ public class TableEntityController extends ViewController {
     /* check if this table is favourised */
     boolean isFavourite = userEntityService.isFavourite(tableEntity);
 
+    boolean transitive = getParameter(request, "transitive") != null;
     if (transitive) {
       /* get transitive dependencies and successors */
       List<TableDependencyEntity> transitiveDependencies = tableEntityService.getTransitiveDependencies(tableEntity);
@@ -175,6 +169,25 @@ public class TableEntityController extends ViewController {
       mav.addObject("firstParam", parameters.get(0).getName());
     }
 
+    /* check if the responsible person has been changed */
+    String personResponsible = getParameter(request, "personResponsible");
+    
+    /* check if the docuemntation has been changed */
+    String documentation = getParameter(request, "documentation");
+    
+    /* check if a comment has been created/edited/deleted */
+    String comment = getParameter(request, "comment");
+    
+    /* check if the taxonomy has been changed */
+    String taxonomy = getParameter(request, "taxonomy");
+    
+    /* 
+     * local parameter indicates if the css and javascript should be containted
+     * in the html. this can be useful when displaying views in third party sites
+     * and apps
+     */
+    boolean local = getParameter(request, "local") != null;
+    
     /* make objects accessible for thymeleaf to render final view */
     mav.addObject("table", tableEntity);
     mav.addObject("userEntityService", userEntityService);
@@ -190,12 +203,16 @@ public class TableEntityController extends ViewController {
     mav.addObject("tableTaxonomies", tableTaxonomies);
     mav.addObject("admin", isAdmin);
     mav.addObject("isFavourite", isFavourite);
+    mav.addObject("personResponsible", personResponsible);
+    mav.addObject("documentation", documentation);
+    mav.addObject("comment", comment);
+    mav.addObject("taxonomy", taxonomy);
     mav.addObject("userMgmnt", config.withUserManagement());
 
     return mav;
   }
 
-  /**
+	/**
    * Adds or removes a table from users favourites
    * 
    * @param request
@@ -224,7 +241,7 @@ public class TableEntityController extends ViewController {
    * @return the same view the user request came from
    */
   @RequestMapping(value = "/table/categoryobjects", method = RequestMethod.POST)
-  public String addCategoryObject(HttpServletRequest request) {
+  public String addCategoryObject(HttpServletRequest request, RedirectAttributes redirAttr) {
   	Map<String, String[]> parameterMap = request.getParameterMap();
   	String[] fqdnArr = parameterMap.get("fqdn");
   	String[] tagArr = parameterMap.get("tags");
@@ -241,6 +258,7 @@ public class TableEntityController extends ViewController {
   		tableEntityService.setCategoryObjects(fqdn, parameterMap);
   		tableEntityService.setTags(fqdn, tags);
   	}
+  	redirAttr.addFlashAttribute("taxonomy", true);
     return "redirect:" + request.getHeader("Referer") + "#taxonomyContent";
   }
 
@@ -256,8 +274,9 @@ public class TableEntityController extends ViewController {
    * @return the same view the user request came from
    */
   @RequestMapping(value = "/table/owner", method = RequestMethod.POST)
-  public String changeOwner(HttpServletRequest request, String fqdn, String person) {
+  public String changeOwner(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn, String person) {
     tableEntityService.setPersonResponsible(fqdn, person);
+    redirAttr.addFlashAttribute("personResponsible", person);
     return "redirect:" + request.getHeader("Referer");
   }
 
@@ -516,4 +535,19 @@ public class TableEntityController extends ViewController {
     return mav;
   }
 
+  private String getParameter(HttpServletRequest request, String parameterKey) {
+  	Map<String, ?> inputFlashMap = RequestContextUtils.getInputFlashMap(request);
+  	String[] parameterValues = request.getParameterMap().get(parameterKey);
+  	if (parameterValues != null && parameterValues.length > 0) {
+  		return parameterValues[0];
+  	}
+  	if (inputFlashMap != null) {
+    	Object val = inputFlashMap.get(parameterKey);
+    	if (val != null) {
+    		return String.valueOf(val);
+    	}
+  	}
+	  return null;
+  }
+  
 }
