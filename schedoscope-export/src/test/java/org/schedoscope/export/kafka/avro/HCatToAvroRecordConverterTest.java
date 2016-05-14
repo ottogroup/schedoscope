@@ -46,8 +46,8 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
 				conf, hcatInputSchema);
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
-		Schema schema = schemaConverter.convertSchema(
-				hcatInputSchema, "MyRecord");
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema,
+				"MyRecord");
 		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
 				serializer);
 
@@ -69,8 +69,8 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
 				conf, hcatInputSchema);
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
-		Schema schema = schemaConverter.convertSchema(
-				hcatInputSchema, "MyRecord");
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema,
+				"MyRecord");
 		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
 				serializer);
 
@@ -92,8 +92,8 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
 				conf, hcatInputSchema);
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
-		Schema schema = schemaConverter.convertSchema(
-				hcatInputSchema, "MyRecord");
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema,
+				"MyRecord");
 		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
 				serializer);
 
@@ -115,8 +115,8 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
 				conf, hcatInputSchema);
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
-		Schema schema = schemaConverter.convertSchema(
-				hcatInputSchema, "MyRecord");
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema,
+				"MyRecord");
 		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
 				serializer);
 
@@ -138,8 +138,8 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
 				conf, hcatInputSchema);
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
-		Schema schema = schemaConverter.convertSchema(
-				hcatInputSchema, "MyRecord");
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema,
+				"MyRecord");
 		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
 				serializer);
 
@@ -160,8 +160,8 @@ public class HCatToAvroRecordConverterTest extends HiveUnitBaseTest {
 		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
 				conf, hcatInputSchema);
 		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
-		Schema schema = schemaConverter.convertSchema(
-				hcatInputSchema, "MyRecord");
+		Schema schema = schemaConverter.convertSchema(hcatInputSchema,
+				"MyRecord");
 		HCatToAvroRecordConverter conv = new HCatToAvroRecordConverter(
 				serializer);
 

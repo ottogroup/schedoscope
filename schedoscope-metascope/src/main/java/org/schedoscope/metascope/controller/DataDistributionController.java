@@ -32,34 +32,36 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class DataDistributionController {
 
-  @Autowired
-  private TableEntityService tableEntityService;
-  @Autowired
-  private DataDistributionService dataDistributionService;
+	@Autowired
+	private TableEntityService tableEntityService;
+	@Autowired
+	private DataDistributionService dataDistributionService;
 
-  @RequestMapping("/process/view")
-  @ResponseBody
-  @Transactional
-  public String startJobsForView(HttpServletRequest request, String urlpath) {
-    boolean jobsStarted = dataDistributionService.calculateDistributionForView(urlpath);
-    if (jobsStarted) {
-      return "Scheduled jobs for view " + urlpath;
-    } else {
-      return "View " + urlpath + " not found.";
-    }
-  }
+	@RequestMapping("/process/view")
+	@ResponseBody
+	@Transactional
+	public String startJobsForView(HttpServletRequest request, String urlpath) {
+		boolean jobsStarted = dataDistributionService
+				.calculateDistributionForView(urlpath);
+		if (jobsStarted) {
+			return "Scheduled jobs for view " + urlpath;
+		} else {
+			return "View " + urlpath + " not found.";
+		}
+	}
 
-  @RequestMapping("/process/table")
-  @ResponseBody
-  @Transactional
-  public String startJobsForTable(HttpServletRequest request, String fqdn) {
-    TableEntity tableEntity = tableEntityService.findByFqdn(fqdn);
-    List<ViewEntity> views = tableEntity.getViews();
-    for (ViewEntity viewEntity : views) {
-      String view = viewEntity.getUrlPath();
-      dataDistributionService.calculateDistributionForView(view);
-    }
-    return "Scheduled jobs for " + views.size() + " views from table " + fqdn;
-  }
+	@RequestMapping("/process/table")
+	@ResponseBody
+	@Transactional
+	public String startJobsForTable(HttpServletRequest request, String fqdn) {
+		TableEntity tableEntity = tableEntityService.findByFqdn(fqdn);
+		List<ViewEntity> views = tableEntity.getViews();
+		for (ViewEntity viewEntity : views) {
+			String view = viewEntity.getUrlPath();
+			dataDistributionService.calculateDistributionForView(view);
+		}
+		return "Scheduled jobs for " + views.size() + " views from table "
+				+ fqdn;
+	}
 
 }

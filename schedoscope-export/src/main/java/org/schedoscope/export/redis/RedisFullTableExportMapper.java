@@ -40,7 +40,8 @@ import com.google.common.collect.ImmutableSet;
  * A mapper to read a full Hive table via HCatalog and emits a RedisWritable
  * containing all columns and values as pairs.
  */
-public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, RedisHashWritable> {
+public class RedisFullTableExportMapper extends
+		Mapper<WritableComparable<?>, HCatRecord, Text, RedisHashWritable> {
 
 	private Configuration conf;
 
@@ -57,7 +58,8 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 	private String salt;
 
 	@Override
-	protected void setup(Context context) throws IOException, InterruptedException {
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
 		super.setup(context);
 		conf = context.getConfiguration();
@@ -65,18 +67,20 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 
 		serializer = new HCatRecordJsonSerializer(conf, schema);
 
-		HCatUtils.checkKeyType(schema, conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
+		HCatUtils.checkKeyType(schema,
+				conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME));
 
 		keyName = conf.get(RedisOutputFormat.REDIS_EXPORT_KEY_NAME);
 		keyPrefix = RedisOutputFormat.getExportKeyPrefix(conf);
 
-		anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
+		anonFields = ImmutableSet.copyOf(conf.getStrings(
+				BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
 		salt = conf.get(BaseExportJob.EXPORT_ANON_SALT, "");
 	}
 
 	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
-			throws IOException, InterruptedException {
+	protected void map(WritableComparable<?> key, HCatRecord value,
+			Context context) throws IOException, InterruptedException {
 
 		Text redisKey = new Text(keyPrefix + value.getString(keyName, schema));
 
@@ -93,7 +97,8 @@ public class RedisFullTableExportMapper extends Mapper<WritableComparable<?>, HC
 					jsonString = serializer.getFieldAsJson(value, f);
 				} else {
 					jsonString = obj.toString();
-					jsonString = HCatUtils.getHashValueIfInList(f, jsonString, anonFields, salt);
+					jsonString = HCatUtils.getHashValueIfInList(f, jsonString,
+							anonFields, salt);
 				}
 				redisValue.put(new Text(f), new Text(jsonString));
 				write = true;

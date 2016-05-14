@@ -25,66 +25,66 @@ import org.schedoscope.metascope.model.TransformationEntity;
 @Embeddable
 public class TransformationEntityKey implements Serializable {
 
-  private static final long serialVersionUID = 8650002554712200504L;
+	private static final long serialVersionUID = 8650002554712200504L;
 
-  @Column(name = TransformationEntity.FQDN)
-  private String fqdn;
-  @Column(name = TransformationEntity.KEY)
-  private String tKey;
+	@Column(name = TransformationEntity.FQDN)
+	private String fqdn;
+	@Column(name = TransformationEntity.KEY)
+	private String tKey;
 
-  public TransformationEntityKey() {
-  }
+	public TransformationEntityKey() {
+	}
 
-  public TransformationEntityKey(String fqdn, String key) {
-    this.fqdn = fqdn;
-    this.tKey = key;
-  }
+	public TransformationEntityKey(String fqdn, String key) {
+		this.fqdn = fqdn;
+		this.tKey = key;
+	}
 
-  public String getFqdn() {
-    return fqdn;
-  }
+	public String getFqdn() {
+		return fqdn;
+	}
 
-  public void setFqdn(String fqdn) {
-    this.fqdn = fqdn;
-  }
+	public void setFqdn(String fqdn) {
+		this.fqdn = fqdn;
+	}
 
-  public String getTransformationKey() {
-    return tKey;
-  }
+	public String getTransformationKey() {
+		return tKey;
+	}
 
-  public void setTransformationKey(String transformationKey) {
-    this.tKey = transformationKey;
-  }
+	public void setTransformationKey(String transformationKey) {
+		this.tKey = transformationKey;
+	}
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((fqdn == null) ? 0 : fqdn.hashCode());
-    result = prime * result + ((tKey == null) ? 0 : tKey.hashCode());
-    return result;
-  }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((fqdn == null) ? 0 : fqdn.hashCode());
+		result = prime * result + ((tKey == null) ? 0 : tKey.hashCode());
+		return result;
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    TransformationEntityKey other = (TransformationEntityKey) obj;
-    if (fqdn == null) {
-      if (other.fqdn != null)
-        return false;
-    } else if (!fqdn.equals(other.fqdn))
-      return false;
-    if (tKey == null) {
-      if (other.tKey != null)
-        return false;
-    } else if (!tKey.equals(other.tKey))
-      return false;
-    return true;
-  }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		TransformationEntityKey other = (TransformationEntityKey) obj;
+		if (fqdn == null) {
+			if (other.fqdn != null)
+				return false;
+		} else if (!fqdn.equals(other.fqdn))
+			return false;
+		if (tKey == null) {
+			if (other.tKey != null)
+				return false;
+		} else if (!tKey.equals(other.tKey))
+			return false;
+		return true;
+	}
 
 }

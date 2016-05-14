@@ -33,8 +33,8 @@ public class TaxonomyEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private long taxonomyId;
-	
-  @Column(columnDefinition = "varchar(32672)")
+
+	@Column(columnDefinition = "varchar(32672)")
 	private String name;
 
 	@OneToMany(mappedBy = "taxonomy", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -45,13 +45,13 @@ public class TaxonomyEntity {
 	}
 
 	public long getTaxonomyId() {
-	  return taxonomyId;
-  }
-	
+		return taxonomyId;
+	}
+
 	public void setTaxonomyId(long taxonomyId) {
-	  this.taxonomyId = taxonomyId;
-  }
-	
+		this.taxonomyId = taxonomyId;
+	}
+
 	public String getName() {
 		return name;
 	}
