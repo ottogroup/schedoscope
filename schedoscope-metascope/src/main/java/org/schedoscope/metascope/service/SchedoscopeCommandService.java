@@ -26,25 +26,25 @@ import com.sun.jersey.api.client.WebResource;
 @Service
 public class SchedoscopeCommandService {
 
-  public static final String INVALIDATE_COMMAND = "invalidate";
-  public static final String MATERIALIZE_COMMAND = "materialize";
+	public static final String INVALIDATE_COMMAND = "invalidate";
+	public static final String MATERIALIZE_COMMAND = "materialize";
 
-  @Autowired
-  private MetascopeConfig config;
+	@Autowired
+	private MetascopeConfig config;
 
-  public void invalidateView(String urlPath) {
-    schedoscopeRESTCall(INVALIDATE_COMMAND, urlPath);
-  }
+	public void invalidateView(String urlPath) {
+		schedoscopeRESTCall(INVALIDATE_COMMAND, urlPath);
+	}
 
-  public void materializeView(String urlPath) {
-    schedoscopeRESTCall(MATERIALIZE_COMMAND, urlPath);
-  }
+	public void materializeView(String urlPath) {
+		schedoscopeRESTCall(MATERIALIZE_COMMAND, urlPath);
+	}
 
-  private void schedoscopeRESTCall(String action, String urlPath) {
-    String url = "http://" + config.getSchedoscopeHost() + ":" + config.getSchedoscopePort() + "/" + action + "/"
-        + urlPath;
-    WebResource webResource = Client.create().resource(url);
-    webResource.accept("application/json").get(ClientResponse.class);
-  }
+	private void schedoscopeRESTCall(String action, String urlPath) {
+		String url = "http://" + config.getSchedoscopeHost() + ":"
+				+ config.getSchedoscopePort() + "/" + action + "/" + urlPath;
+		WebResource webResource = Client.create().resource(url);
+		webResource.accept("application/json").get(ClientResponse.class);
+	}
 
 }

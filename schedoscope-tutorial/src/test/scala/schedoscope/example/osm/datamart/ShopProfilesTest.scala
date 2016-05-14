@@ -92,9 +92,9 @@ case class ShopProfilesTest() extends FlatSpec
       configureExport("schedoscope.export.dbPass", null)
 
       basedOn(shops, restaurants, trainstations)
-      
+
       then()
-      
+
       numRows shouldBe 3
     }
 

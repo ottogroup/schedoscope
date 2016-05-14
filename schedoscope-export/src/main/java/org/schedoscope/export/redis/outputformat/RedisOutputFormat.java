@@ -94,7 +94,8 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 		if (conf.getBoolean(REDIS_EXPORT_PIPELINE_MODE, false)) {
 			int commitSize = conf.getInt(REDIS_EXPORT_COMMIT_SIZE, 10000);
 			Pipeline pipelinedJedis = jedis.pipelined();
-			return new PipelinedRedisRecordWriter(pipelinedJedis, replace, commitSize);
+			return new PipelinedRedisRecordWriter(pipelinedJedis, replace,
+					commitSize);
 		} else {
 			return new RedisRecordWriter(jedis, replace);
 		}
@@ -144,8 +145,9 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 	 *            The number of records to write before syncing.
 	 */
 	public static void setOutput(Configuration conf, String redisHost,
-			int redisPort, String password, int redisDb, String keyName, String keyPrefix,
-			String valueName, boolean replace, boolean pipeline, int commitSize) {
+			int redisPort, String password, int redisDb, String keyName,
+			String keyPrefix, String valueName, boolean replace,
+			boolean pipeline, int commitSize) {
 
 		if (password != null && !password.equals("")) {
 			conf.set(REDIS_EXPORT_AUTH_PASSWORD, password);
@@ -163,11 +165,11 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 	}
 
 	public static void setOutput(Configuration conf, String redisHost,
-			int redisPort, String password, int redisDb, String keyName, String keyPrefix,
-			boolean replace, boolean pipeline, int commitSize) {
+			int redisPort, String password, int redisDb, String keyName,
+			String keyPrefix, boolean replace, boolean pipeline, int commitSize) {
 
-		setOutput(conf, redisHost, redisPort, password, redisDb, keyName, keyPrefix, "",
-				replace, pipeline, commitSize);
+		setOutput(conf, redisHost, redisPort, password, redisDb, keyName,
+				keyPrefix, "", replace, pipeline, commitSize);
 	}
 
 	/**
@@ -268,7 +270,8 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
 		 * @param commitSize
 		 *            The number of records between a sync.
 		 */
-		public PipelinedRedisRecordWriter(Pipeline jedis, boolean replace, int commitSize) {
+		public PipelinedRedisRecordWriter(Pipeline jedis, boolean replace,
+				int commitSize) {
 
 			this.jedis = jedis;
 			this.replace = replace;

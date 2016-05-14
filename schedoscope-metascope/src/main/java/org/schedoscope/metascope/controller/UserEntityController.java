@@ -33,72 +33,80 @@ import org.springframework.web.servlet.view.RedirectView;
 @Controller
 public class UserEntityController extends ViewController {
 
-  private static final String ADMIN_TEMPLATE = "body/admin/user";
+	private static final String ADMIN_TEMPLATE = "body/admin/user";
 
-  @Autowired
-  private UserEntityService userEntityService;
-  @Autowired
-  private SessionRegistry sessionRegistry;
+	@Autowired
+	private UserEntityService userEntityService;
+	@Autowired
+	private SessionRegistry sessionRegistry;
 	@Autowired
 	private MetadataEntityService metadataEntityService;
-  @Autowired
-  private MetascopeConfig config;
-  
-  @RequestMapping(value = "/admin/users", method = RequestMethod.GET)
-  public ModelAndView getUserManagement(HttpServletRequest request) {
-  	ModelAndView mav = createView("user_management");
-  	
+	@Autowired
+	private MetascopeConfig config;
+
+	@RequestMapping(value = "/admin/users", method = RequestMethod.GET)
+	public ModelAndView getUserManagement(HttpServletRequest request) {
+		ModelAndView mav = createView("user_management");
+
 		boolean admin = userEntityService.isAdmin();
 		boolean withUserManagement = config.withUserManagement();
-		String schedoscopeTimestamp = metadataEntityService.getMetadataValue("timestamp");
+		String schedoscopeTimestamp = metadataEntityService
+				.getMetadataValue("timestamp");
 		Iterable<UserEntity> users = userEntityService.getAllUser();
-		
+
 		mav.addObject("schedoscopeTimestamp", schedoscopeTimestamp);
 		mav.addObject("userEntityService", userEntityService);
 		mav.addObject("admin", admin);
-    mav.addObject("userMgmnt", withUserManagement);
-    mav.addObject("users", users);
-    
-  	return mav;
-  }
-  
-  @RequestMapping(value = "/admin/user/create", method = RequestMethod.POST)
-  public ModelAndView createUser(HttpServletRequest request, String username, String email, String fullname,
-      String password, boolean admin, String group) {
-    ModelAndView mav = createView("index");
+		mav.addObject("userMgmnt", withUserManagement);
+		mav.addObject("users", users);
 
-    if (email != null && !EmailValidator.getInstance().isValid(email)) {
-      return mav.addObject("invalidEmail", true).addObject("service", userEntityService);
-    }
+		return mav;
+	}
 
-    if (userEntityService.userExists(username)) {
-      return mav.addObject("userExists", true).addObject("service", userEntityService);
-    } else if (userEntityService.emailExists(email)) {
-      return mav.addObject("emailExists", true).addObject("service", userEntityService);
-    }
+	@RequestMapping(value = "/admin/user/create", method = RequestMethod.POST)
+	public ModelAndView createUser(HttpServletRequest request, String username,
+			String email, String fullname, String password, boolean admin,
+			String group) {
+		ModelAndView mav = createView("index");
 
-    this.userEntityService.createUser(username, email, fullname, password, admin, group);
-    return new ModelAndView(new RedirectView(request.getHeader("Referer")));
-  }
+		if (email != null && !EmailValidator.getInstance().isValid(email)) {
+			return mav.addObject("invalidEmail", true).addObject("service",
+					userEntityService);
+		}
 
-  @RequestMapping(value = "/admin/user/edit", method = RequestMethod.POST)
-  public ModelAndView editUser(HttpServletRequest request, String username, String email, String fullname,
-      String password, boolean admin, String group) {
-    this.userEntityService.editUser(username, email, fullname, password, admin, group);
-    this.userEntityService.logoutUser(sessionRegistry, username);
-    return new ModelAndView(new RedirectView(request.getHeader("Referer")));
-  }
+		if (userEntityService.userExists(username)) {
+			return mav.addObject("userExists", true).addObject("service",
+					userEntityService);
+		} else if (userEntityService.emailExists(email)) {
+			return mav.addObject("emailExists", true).addObject("service",
+					userEntityService);
+		}
 
-  @RequestMapping(value = "/admin/user/delete", method = RequestMethod.POST)
-  public ModelAndView deleteUser(HttpServletRequest request, String username) {
-    this.userEntityService.deleteUser(username);
-    this.userEntityService.logoutUser(sessionRegistry, username);
-    return new ModelAndView(new RedirectView(request.getHeader("Referer")));
-  }
+		this.userEntityService.createUser(username, email, fullname, password,
+				admin, group);
+		return new ModelAndView(new RedirectView(request.getHeader("Referer")));
+	}
 
-  @Override
-  protected String getTemplateUri() {
-    return ADMIN_TEMPLATE;
-  }
+	@RequestMapping(value = "/admin/user/edit", method = RequestMethod.POST)
+	public ModelAndView editUser(HttpServletRequest request, String username,
+			String email, String fullname, String password, boolean admin,
+			String group) {
+		this.userEntityService.editUser(username, email, fullname, password,
+				admin, group);
+		this.userEntityService.logoutUser(sessionRegistry, username);
+		return new ModelAndView(new RedirectView(request.getHeader("Referer")));
+	}
+
+	@RequestMapping(value = "/admin/user/delete", method = RequestMethod.POST)
+	public ModelAndView deleteUser(HttpServletRequest request, String username) {
+		this.userEntityService.deleteUser(username);
+		this.userEntityService.logoutUser(sessionRegistry, username);
+		return new ModelAndView(new RedirectView(request.getHeader("Referer")));
+	}
+
+	@Override
+	protected String getTemplateUri() {
+		return ADMIN_TEMPLATE;
+	}
 
 }

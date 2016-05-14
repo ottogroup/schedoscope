@@ -35,7 +35,6 @@ import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.TableDependencyEntity;
 import org.schedoscope.metascope.model.TableEntity;
 import org.schedoscope.metascope.model.UserEntity;
-import org.schedoscope.metascope.service.JobSchedulerService;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,250 +43,273 @@ import com.google.common.collect.Iterators;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TableEntityServiceTest extends SpringTest {
 
-  private static final String TIMESTAMP_FIELD = "occurred_at";
-  private static final String TIMESTAMP_FIELD_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
-  private static final String EMPTY_STRING = "";
+	private static final String TIMESTAMP_FIELD = "occurred_at";
+	private static final String TIMESTAMP_FIELD_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+	private static final String EMPTY_STRING = "";
 
-  @Before
-  public void setupLocal() {
-    JobSchedulerService jobSchedulerService = mock(JobSchedulerService.class);
-    mockField(tableEntityService, "jobSchedulerService", jobSchedulerService);
-  }
+	@Before
+	public void setupLocal() {
+		JobSchedulerService jobSchedulerService = mock(JobSchedulerService.class);
+		mockField(tableEntityService, "jobSchedulerService",
+				jobSchedulerService);
+	}
 
-  @Test
-  public void tableService_01_setPersonResponsibleTableNotExists() {
-    int nrOfActivitesBefore = Iterators.size(activityEntityRepository.findAll().iterator());
+	@Test
+	public void tableService_01_setPersonResponsibleTableNotExists() {
+		int nrOfActivitesBefore = Iterators.size(activityEntityRepository
+				.findAll().iterator());
 
-    tableEntityService.setPersonResponsible(NON_EXIST_TABLE, getTestUser().getUsername());
+		tableEntityService.setPersonResponsible(NON_EXIST_TABLE, getTestUser()
+				.getUsername());
 
-    int nrOfActivitesAfter = Iterators.size(activityEntityRepository.findAll().iterator());
+		int nrOfActivitesAfter = Iterators.size(activityEntityRepository
+				.findAll().iterator());
 
-    assertEquals(nrOfActivitesBefore, nrOfActivitesAfter);
-  }
+		assertEquals(nrOfActivitesBefore, nrOfActivitesAfter);
+	}
 
-  @Test
-  public void tableService_02_setPersonResponsibleUserNotExists() {
-    TableEntity tableEntity = getTestTable();
+	@Test
+	public void tableService_02_setPersonResponsibleUserNotExists() {
+		TableEntity tableEntity = getTestTable();
 
-    assertEquals(tableEntity.getPersonResponsible(), null);
+		assertEquals(tableEntity.getPersonResponsible(), null);
 
-    tableEntityService.setPersonResponsible(tableEntity.getFqdn(), NON_EXIST_USER_FULLNAME);
+		tableEntityService.setPersonResponsible(tableEntity.getFqdn(),
+				NON_EXIST_USER_FULLNAME);
 
-    tableEntity = getTestTable();
+		tableEntity = getTestTable();
 
-    assertEquals(tableEntity.getPersonResponsible(), NON_EXIST_USER_FULLNAME);
-  }
+		assertEquals(tableEntity.getPersonResponsible(),
+				NON_EXIST_USER_FULLNAME);
+	}
 
-  @Test
-  public void tableService_03_setPersonResponsible() {
-    TableEntity tableEntity = getTestTable();
-    UserEntity userEntity = getTestUser();
+	@Test
+	public void tableService_03_setPersonResponsible() {
+		TableEntity tableEntity = getTestTable();
+		UserEntity userEntity = getTestUser();
 
-    assertEquals(tableEntity.getPersonResponsible(), NON_EXIST_USER_FULLNAME);
+		assertEquals(tableEntity.getPersonResponsible(),
+				NON_EXIST_USER_FULLNAME);
 
-    tableEntityService.setPersonResponsible(tableEntity.getFqdn(), userEntity.getFullname());
+		tableEntityService.setPersonResponsible(tableEntity.getFqdn(),
+				userEntity.getFullname());
 
-    tableEntity = getTestTable();
+		tableEntity = getTestTable();
 
-    UserEntity respPerson = userEntityService.findByFullname(userEntity.getFullname());
-    assertEquals(tableEntity.getPersonResponsible(), userEntity.getFullname());
-    assertEquals(respPerson.getUsername(), userEntity.getUsername());
-  }
+		UserEntity respPerson = userEntityService.findByFullname(userEntity
+				.getFullname());
+		assertEquals(tableEntity.getPersonResponsible(),
+				userEntity.getFullname());
+		assertEquals(respPerson.getUsername(), userEntity.getUsername());
+	}
 
-  @Test
-  public void tableService_04_setTimestampFieldFieldNotExist() {
-    TableEntity tableEntity = getTestTable();
+	@Test
+	public void tableService_04_setTimestampFieldFieldNotExist() {
+		TableEntity tableEntity = getTestTable();
 
-    String currentTimeStampField = tableEntity.getTimestampField();
-    String currentTimestampFieldFormat = tableEntity.getTimestampFieldFormat();
+		String currentTimeStampField = tableEntity.getTimestampField();
+		String currentTimestampFieldFormat = tableEntity
+				.getTimestampFieldFormat();
 
-    tableEntityService.setTimestampField(tableEntity.getFqdn(), EMPTY_STRING, EMPTY_STRING);
+		tableEntityService.setTimestampField(tableEntity.getFqdn(),
+				EMPTY_STRING, EMPTY_STRING);
 
-    tableEntity = getTestTable();
+		tableEntity = getTestTable();
 
-    assertEquals(tableEntity.getTimestampField(), currentTimeStampField);
-    assertEquals(tableEntity.getTimestampFieldFormat(), currentTimestampFieldFormat);
-  }
+		assertEquals(tableEntity.getTimestampField(), currentTimeStampField);
+		assertEquals(tableEntity.getTimestampFieldFormat(),
+				currentTimestampFieldFormat);
+	}
 
-  @Test
-  public void tableService_05_setTimestampField() {
-    TableEntity tableEntity = getTestTable();
+	@Test
+	public void tableService_05_setTimestampField() {
+		TableEntity tableEntity = getTestTable();
 
-    tableEntityService.setTimestampField(tableEntity.getFqdn(), TIMESTAMP_FIELD, TIMESTAMP_FIELD_FORMAT);
+		tableEntityService.setTimestampField(tableEntity.getFqdn(),
+				TIMESTAMP_FIELD, TIMESTAMP_FIELD_FORMAT);
 
-    tableEntity = getTestTable();
+		tableEntity = getTestTable();
 
-    assertEquals(tableEntity.getTimestampField(), TIMESTAMP_FIELD);
-    assertEquals(tableEntity.getTimestampFieldFormat(), TIMESTAMP_FIELD_FORMAT);
-  }
+		assertEquals(tableEntity.getTimestampField(), TIMESTAMP_FIELD);
+		assertEquals(tableEntity.getTimestampFieldFormat(),
+				TIMESTAMP_FIELD_FORMAT);
+	}
 
-  @Test
-  @Transactional
-  public void tableService_06_addFavourite() {
-    TableEntity tableEntity = getTestTable();
+	@Test
+	@Transactional
+	public void tableService_06_addFavourite() {
+		TableEntity tableEntity = getTestTable();
 
-    tableEntityService.addOrRemoveFavourite(tableEntity.getFqdn());
+		tableEntityService.addOrRemoveFavourite(tableEntity.getFqdn());
 
-    UserEntity userEntity = getLoggedInUser();
+		UserEntity userEntity = getLoggedInUser();
 
-    assertEquals(userEntity.getFavourites().size(), 1);
-    assertEquals(userEntity.getFavourites().get(0), tableEntity.getFqdn());
-  }
+		assertEquals(userEntity.getFavourites().size(), 1);
+		assertEquals(userEntity.getFavourites().get(0), tableEntity.getFqdn());
+	}
 
-  @Test
-  @Transactional
-  public void tableService_07_removeFavourite() {
-    TableEntity tableEntity = getTestTable();
+	@Test
+	@Transactional
+	public void tableService_07_removeFavourite() {
+		TableEntity tableEntity = getTestTable();
 
-    tableEntityService.addOrRemoveFavourite(tableEntity.getFqdn());
+		tableEntityService.addOrRemoveFavourite(tableEntity.getFqdn());
 
-    UserEntity userEntity = getLoggedInUser();
+		UserEntity userEntity = getLoggedInUser();
 
-    assertEquals(userEntity.getFavourites().size(), 1);
-    assertEquals(userEntity.getFavourites().get(0), tableEntity.getFqdn());
-  }
+		assertEquals(userEntity.getFavourites().size(), 1);
+		assertEquals(userEntity.getFavourites().get(0), tableEntity.getFqdn());
+	}
 
-  @Test
-  public void tableService_08_increaseViewCount() {
-    TableEntity tableEntity = getTestTable();
-
-    assertEquals(tableEntity.getViewCount(), 0);
+	@Test
+	public void tableService_08_increaseViewCount() {
+		TableEntity tableEntity = getTestTable();
 
-    tableEntityService.increaseViewCount(tableEntity.getFqdn());
+		assertEquals(tableEntity.getViewCount(), 0);
 
-    tableEntity = getTestTable();
-    assertEquals(tableEntity.getViewCount(), 1);
-  }
+		tableEntityService.increaseViewCount(tableEntity.getFqdn());
 
-  @Test
-  @Transactional
-  @Rollback(false)
-  public void tableService_09_addCategoryObject() {
-    TableEntity tableEntity = getTestTable();
+		tableEntity = getTestTable();
+		assertEquals(tableEntity.getViewCount(), 1);
+	}
 
-    assertEquals(tableEntity.getCategoryObjects().size(), 0);
-    assertEquals(tableEntity.getCategoryNames().size(), 0);
-    
-    Iterable<CategoryObjectEntity> coEntites = coEntityRepository.findAll();
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void tableService_09_addCategoryObject() {
+		TableEntity tableEntity = getTestTable();
 
-    Map<String, String[]> parameterMap = new HashMap<String, String[]>();
-    parameterMap.put("SomeCategoryObjects", new String[]{"" + coEntites.iterator().next().getCategoryObjectId()});
-    tableEntityService.setCategoryObjects(tableEntity.getFqdn(), parameterMap);
+		assertEquals(tableEntity.getCategoryObjects().size(), 0);
+		assertEquals(tableEntity.getCategoryNames().size(), 0);
 
-    tableEntity = getTestTable();
-    assertEquals(tableEntity.getCategoryNames().size(), 1);
-    assertEquals(tableEntity.getCategoryNames().get(0), TEST_CATEGORY_NAME);
-    assertEquals(tableEntity.getCategoryObjects().size(), 1);
-    assertEquals(tableEntity.getCategoryObjects().get(0).getName(), TEST_CATEGORY_OBJECT_NAME);
-  }
+		Iterable<CategoryObjectEntity> coEntites = coEntityRepository.findAll();
 
-  @Test
-  @Transactional
-  @Rollback(false)
-  public void tableService_10_removeCategoryObject() {
-    TableEntity tableEntity = getTestTable();
+		Map<String, String[]> parameterMap = new HashMap<String, String[]>();
+		parameterMap.put("SomeCategoryObjects", new String[] { ""
+				+ coEntites.iterator().next().getCategoryObjectId() });
+		tableEntityService.setCategoryObjects(tableEntity.getFqdn(),
+				parameterMap);
 
-    assertEquals(tableEntity.getCategoryObjects().size(), 1);
-    assertEquals(tableEntity.getCategoryNames().size(), 1);
+		tableEntity = getTestTable();
+		assertEquals(tableEntity.getCategoryNames().size(), 1);
+		assertEquals(tableEntity.getCategoryNames().get(0), TEST_CATEGORY_NAME);
+		assertEquals(tableEntity.getCategoryObjects().size(), 1);
+		assertEquals(tableEntity.getCategoryObjects().get(0).getName(),
+				TEST_CATEGORY_OBJECT_NAME);
+	}
 
-    tableEntityService.setCategoryObjects(tableEntity.getFqdn(), null);
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void tableService_10_removeCategoryObject() {
+		TableEntity tableEntity = getTestTable();
 
-    tableEntity = getTestTable();
-    assertEquals(tableEntity.getCategoryNames().size(), 0);
-    assertEquals(tableEntity.getCategoryObjects().size(), 0);
-  }
+		assertEquals(tableEntity.getCategoryObjects().size(), 1);
+		assertEquals(tableEntity.getCategoryNames().size(), 1);
 
-  @Test
-  @Transactional
-  @Rollback(false)
-  public void tableService_11_addTag() {
-    TableEntity tableEntity = getTestTable();
+		tableEntityService.setCategoryObjects(tableEntity.getFqdn(), null);
 
-    assertEquals(tableEntity.getTags().size(), 0);
+		tableEntity = getTestTable();
+		assertEquals(tableEntity.getCategoryNames().size(), 0);
+		assertEquals(tableEntity.getCategoryObjects().size(), 0);
+	}
 
-    tableEntityService.setTags(tableEntity.getFqdn(), TEST_TAG);
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void tableService_11_addTag() {
+		TableEntity tableEntity = getTestTable();
 
-    tableEntity = getTestTable();
-    assertEquals(tableEntity.getTags().size(), 1);
-    assertEquals(tableEntity.getTags().get(0), TEST_TAG);
-  }
+		assertEquals(tableEntity.getTags().size(), 0);
 
-  @Test
-  @Transactional
-  @Rollback(false)
-  public void tableService_12_removeTag() {
-    TableEntity tableEntity = getTestTable();
+		tableEntityService.setTags(tableEntity.getFqdn(), TEST_TAG);
 
-    assertEquals(tableEntity.getTags().size(), 1);
+		tableEntity = getTestTable();
+		assertEquals(tableEntity.getTags().size(), 1);
+		assertEquals(tableEntity.getTags().get(0), TEST_TAG);
+	}
 
-    tableEntityService.setTags(tableEntity.getFqdn(), null);
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void tableService_12_removeTag() {
+		TableEntity tableEntity = getTestTable();
 
-    tableEntity = getTestTable();
-    assertEquals(tableEntity.getTags().size(), 0);
-  }
+		assertEquals(tableEntity.getTags().size(), 1);
 
-  @Test
-  @Transactional
-  public void tableService_13_getParameterValues() {
-    TableEntity tableEntity = getTestTable();
+		tableEntityService.setTags(tableEntity.getFqdn(), null);
 
-    Map<String, List<String>> parameterValues = tableEntityService.getParameterValues(tableEntity);
+		tableEntity = getTestTable();
+		assertEquals(tableEntity.getTags().size(), 0);
+	}
 
-    assertTrue(parameterValues != null);
+	@Test
+	@Transactional
+	public void tableService_13_getParameterValues() {
+		TableEntity tableEntity = getTestTable();
 
-    Set<Entry<String, List<String>>> entrySet = parameterValues.entrySet();
-    assertEquals(entrySet.size(), 3);
+		Map<String, List<String>> parameterValues = tableEntityService
+				.getParameterValues(tableEntity);
 
-    int count = 0;
-    for (Entry<String, List<String>> entry : entrySet) {
-      count += entry.getValue().size();
-    }
-    assertEquals(count, 44);
-  }
+		assertTrue(parameterValues != null);
 
-  @Test
-  @Transactional
-  public void tableService_14_getRandomParameterValueForExistingParameter() {
-    TableEntity tableEntity = getTestTable();
-    FieldEntity existingYearParameter = tableEntity.getParameters().get(0);
+		Set<Entry<String, List<String>>> entrySet = parameterValues.entrySet();
+		assertEquals(entrySet.size(), 3);
 
-    String parameterValue = tableEntityService.getRandomParameterValue(tableEntity, existingYearParameter);
+		int count = 0;
+		for (Entry<String, List<String>> entry : entrySet) {
+			count += entry.getValue().size();
+		}
+		assertEquals(count, 44);
+	}
 
-    assertTrue(parameterValue != null);
-    assertTrue(!parameterValue.isEmpty());
-  }
+	@Test
+	@Transactional
+	public void tableService_14_getRandomParameterValueForExistingParameter() {
+		TableEntity tableEntity = getTestTable();
+		FieldEntity existingYearParameter = tableEntity.getParameters().get(0);
 
-  @Test
-  @Transactional
-  public void tableService_15_getRandomParameterValueForNonExistingParameter() {
-    TableEntity tableEntity = getTestTable();
-    FieldEntity nonExistingParameter = getNonExistParameter();
+		String parameterValue = tableEntityService.getRandomParameterValue(
+				tableEntity, existingYearParameter);
 
-    String parameterValue = tableEntityService.getRandomParameterValue(tableEntity, nonExistingParameter);
+		assertTrue(parameterValue != null);
+		assertTrue(!parameterValue.isEmpty());
+	}
 
-    assertTrue(parameterValue == null);
-  }
+	@Test
+	@Transactional
+	public void tableService_15_getRandomParameterValueForNonExistingParameter() {
+		TableEntity tableEntity = getTestTable();
+		FieldEntity nonExistingParameter = getNonExistParameter();
 
-  @Test
-  @Transactional
-  public void tableService_16_getTransitiveDependencies() {
-    TableEntity tableEntity = getTestTable();
+		String parameterValue = tableEntityService.getRandomParameterValue(
+				tableEntity, nonExistingParameter);
 
-    List<TableDependencyEntity> tableDependencies = tableEntityService.getTransitiveDependencies(tableEntity);
+		assertTrue(parameterValue == null);
+	}
 
-    assertTrue(tableDependencies != null);
-    assertEquals(tableDependencies.size(), 3);
-  }
+	@Test
+	@Transactional
+	public void tableService_16_getTransitiveDependencies() {
+		TableEntity tableEntity = getTestTable();
 
-  @Test
-  @Transactional
-  public void tableService_17_getTransitiveSuccessors() {
-    TableEntity tableEntity = getTestTable();
+		List<TableDependencyEntity> tableDependencies = tableEntityService
+				.getTransitiveDependencies(tableEntity);
 
-    List<TableDependencyEntity> tableSuccessors = tableEntityService.getTransitiveSuccessors(tableEntity);
+		assertTrue(tableDependencies != null);
+		assertEquals(tableDependencies.size(), 3);
+	}
 
-    assertTrue(tableSuccessors != null);
-    assertEquals(tableSuccessors.size(), 4);
-  }
+	@Test
+	@Transactional
+	public void tableService_17_getTransitiveSuccessors() {
+		TableEntity tableEntity = getTestTable();
+
+		List<TableDependencyEntity> tableSuccessors = tableEntityService
+				.getTransitiveSuccessors(tableEntity);
+
+		assertTrue(tableSuccessors != null);
+		assertEquals(tableSuccessors.size(), 4);
+	}
 
 }

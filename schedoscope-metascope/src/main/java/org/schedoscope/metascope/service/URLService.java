@@ -31,136 +31,147 @@ import org.springframework.stereotype.Service;
 @Service
 public class URLService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(URLService.class);
+	private static final Logger LOG = LoggerFactory.getLogger(URLService.class);
 
-  private static final String URL_PARAMS_DIVIDER = "?";
-  private static final String URL_PARAMS_AND = "&";
-  private static final String URL_PARAMS_EQUALS = "=";
-  private static final String COMMA = ",";
-  private static final String ENCODED_COMMA = "%2C";
+	private static final String URL_PARAMS_DIVIDER = "?";
+	private static final String URL_PARAMS_AND = "&";
+	private static final String URL_PARAMS_EQUALS = "=";
+	private static final String COMMA = ",";
+	private static final String ENCODED_COMMA = "%2C";
 
-  @Autowired
-  private ViewEntityRepository viewEntityRepository;
+	@Autowired
+	private ViewEntityRepository viewEntityRepository;
 
-  public String getPaginationURL(HttpServletRequest request, int page, int elements) {
-    String queryParams = "";
-    for (Entry<String, String[]> e : request.getParameterMap().entrySet()) {
-      if (!e.getKey().equals(URLUtil.PAGINATION_PAGE_PARAM) && !e.getKey().equals(URLUtil.PAGINATION_ELEMENTS_PARAM)) {
-        queryParams = addKey(queryParams, e.getKey(), e.getValue()[0]);
-      }
-    }
-    queryParams = addKey(queryParams, URLUtil.PAGINATION_PAGE_PARAM, "" + page);
-    queryParams = addKey(queryParams, URLUtil.PAGINATION_ELEMENTS_PARAM, "" + elements);
-    return request.getRequestURL() + URL_PARAMS_DIVIDER + queryParams;
-  }
+	public String getPaginationURL(HttpServletRequest request, int page,
+			int elements) {
+		String queryParams = "";
+		for (Entry<String, String[]> e : request.getParameterMap().entrySet()) {
+			if (!e.getKey().equals(URLUtil.PAGINATION_PAGE_PARAM)
+					&& !e.getKey().equals(URLUtil.PAGINATION_ELEMENTS_PARAM)) {
+				queryParams = addKey(queryParams, e.getKey(), e.getValue()[0]);
+			}
+		}
+		queryParams = addKey(queryParams, URLUtil.PAGINATION_PAGE_PARAM, ""
+				+ page);
+		queryParams = addKey(queryParams, URLUtil.PAGINATION_ELEMENTS_PARAM, ""
+				+ elements);
+		return request.getRequestURL() + URL_PARAMS_DIVIDER + queryParams;
+	}
 
-  public String getFilterURL(HttpServletRequest request, String key, String value) {
-    value = cleanseValue(value);
-    String queryParams = "";
-    boolean keyAlreadyExists = false;
-    for (Entry<String, String[]> e : request.getParameterMap().entrySet()) {
-      if (e.getKey().equals(URLUtil.PAGINATION_PAGE_PARAM)) {
-        queryParams = addKey(queryParams, e.getKey(), "1");
-      } else if (key.equals(e.getKey())) {
-        keyAlreadyExists = true;
-        String paramValue = cleanseValue(e.getValue()[0]);
-        if (!value.equals(paramValue)) {
-          boolean alreadyContainsValue = false;
-          for (String v : paramValue.split(ENCODED_COMMA)) {
-            if (value.equals(v)) {
-              queryParams = removeValueFromKey(queryParams, e.getKey(), paramValue, value);
-              alreadyContainsValue = true;
-            }
-          }
-          if (!alreadyContainsValue) {
-            queryParams = addKey(queryParams, e.getKey(), paramValue + COMMA + value);
-          }
-        }
-      } else {
-        queryParams = addKey(queryParams, e.getKey(), cleanseValue(e.getValue()[0]));
-      }
-    }
+	public String getFilterURL(HttpServletRequest request, String key,
+			String value) {
+		value = cleanseValue(value);
+		String queryParams = "";
+		boolean keyAlreadyExists = false;
+		for (Entry<String, String[]> e : request.getParameterMap().entrySet()) {
+			if (e.getKey().equals(URLUtil.PAGINATION_PAGE_PARAM)) {
+				queryParams = addKey(queryParams, e.getKey(), "1");
+			} else if (key.equals(e.getKey())) {
+				keyAlreadyExists = true;
+				String paramValue = cleanseValue(e.getValue()[0]);
+				if (!value.equals(paramValue)) {
+					boolean alreadyContainsValue = false;
+					for (String v : paramValue.split(ENCODED_COMMA)) {
+						if (value.equals(v)) {
+							queryParams = removeValueFromKey(queryParams,
+									e.getKey(), paramValue, value);
+							alreadyContainsValue = true;
+						}
+					}
+					if (!alreadyContainsValue) {
+						queryParams = addKey(queryParams, e.getKey(),
+								paramValue + COMMA + value);
+					}
+				}
+			} else {
+				queryParams = addKey(queryParams, e.getKey(),
+						cleanseValue(e.getValue()[0]));
+			}
+		}
 
-    if (!keyAlreadyExists) {
-      queryParams = addKey(queryParams, key, value);
-    }
+		if (!keyAlreadyExists) {
+			queryParams = addKey(queryParams, key, value);
+		}
 
-    return request.getRequestURL() + URL_PARAMS_DIVIDER + queryParams;
-  }
+		return request.getRequestURL() + URL_PARAMS_DIVIDER + queryParams;
+	}
 
-  public String getExclusiveFilterURL(HttpServletRequest request, String key, String value) {
-    value = cleanseValue(value);
-    String queryParams = "";
-    boolean doNotAdd = false;
-    for (Entry<String, String[]> e : request.getParameterMap().entrySet()) {
-      if (e.getKey().equals(URLUtil.PAGINATION_PAGE_PARAM)) {
-        queryParams = addKey(queryParams, e.getKey(), "1");
-      } else if (!e.getKey().equals(key)) {
-        queryParams = addKey(queryParams, e.getKey(), e.getValue()[0]);
-      } else {
-        if (value.equals(cleanseValue(e.getValue()[0]))) {
-          doNotAdd = true;
-        }
-      }
-    }
-    if (!doNotAdd) {
-      queryParams = addKey(queryParams, key, value);
-    }
-    return request.getRequestURL() + URL_PARAMS_DIVIDER + queryParams;
-  }
+	public String getExclusiveFilterURL(HttpServletRequest request, String key,
+			String value) {
+		value = cleanseValue(value);
+		String queryParams = "";
+		boolean doNotAdd = false;
+		for (Entry<String, String[]> e : request.getParameterMap().entrySet()) {
+			if (e.getKey().equals(URLUtil.PAGINATION_PAGE_PARAM)) {
+				queryParams = addKey(queryParams, e.getKey(), "1");
+			} else if (!e.getKey().equals(key)) {
+				queryParams = addKey(queryParams, e.getKey(), e.getValue()[0]);
+			} else {
+				if (value.equals(cleanseValue(e.getValue()[0]))) {
+					doNotAdd = true;
+				}
+			}
+		}
+		if (!doNotAdd) {
+			queryParams = addKey(queryParams, key, value);
+		}
+		return request.getRequestURL() + URL_PARAMS_DIVIDER + queryParams;
+	}
 
-  public String removeFromFilterURL(HttpServletRequest request, String key) {
-    String queryParams = "";
-    for (Entry<String, String[]> e : request.getParameterMap().entrySet()) {
-      if (!e.getKey().equals(key)) {
-        if (!queryParams.isEmpty()) {
-          queryParams += URL_PARAMS_AND;
-        }
-        queryParams += e.getKey() + URL_PARAMS_EQUALS + cleanseValue(e.getValue()[0]);
-      }
-    }
-    return request.getRequestURL() + URL_PARAMS_DIVIDER + queryParams;
-  }
+	public String removeFromFilterURL(HttpServletRequest request, String key) {
+		String queryParams = "";
+		for (Entry<String, String[]> e : request.getParameterMap().entrySet()) {
+			if (!e.getKey().equals(key)) {
+				if (!queryParams.isEmpty()) {
+					queryParams += URL_PARAMS_AND;
+				}
+				queryParams += e.getKey() + URL_PARAMS_EQUALS
+						+ cleanseValue(e.getValue()[0]);
+			}
+		}
+		return request.getRequestURL() + URL_PARAMS_DIVIDER + queryParams;
+	}
 
-  public int getPartitionPage(String fqdn, String viewId) {
-    int position = viewEntityRepository.getPartitionPosition(fqdn, viewId);
-    return (position / 20) + 1;
-  }
+	public int getPartitionPage(String fqdn, String viewId) {
+		int position = viewEntityRepository.getPartitionPosition(fqdn, viewId);
+		return (position / 20) + 1;
+	}
 
-  private String addKey(String queryParams, String key, String value) {
-    if (!queryParams.isEmpty()) {
-      queryParams += URL_PARAMS_AND;
-    }
-    return queryParams += key + URL_PARAMS_EQUALS + value;
-  }
+	private String addKey(String queryParams, String key, String value) {
+		if (!queryParams.isEmpty()) {
+			queryParams += URL_PARAMS_AND;
+		}
+		return queryParams += key + URL_PARAMS_EQUALS + value;
+	}
 
-  private String removeValueFromKey(String queryParams, String key, String values, String value) {
-    String[] split = values.split(ENCODED_COMMA);
-    String queryVals = "";
-    for (String v : split) {
-      if (!v.equals(value)) {
-        if (!queryVals.isEmpty()) {
-          queryVals += COMMA;
-        }
-        queryVals += v;
-      }
-    }
-    if (!queryVals.isEmpty()) {
-      if (!queryParams.endsWith(URL_PARAMS_AND)) {
-        queryParams += URL_PARAMS_AND;
-      }
-      queryParams += key + URL_PARAMS_EQUALS + queryVals;
-    }
-    return queryParams;
-  }
+	private String removeValueFromKey(String queryParams, String key,
+			String values, String value) {
+		String[] split = values.split(ENCODED_COMMA);
+		String queryVals = "";
+		for (String v : split) {
+			if (!v.equals(value)) {
+				if (!queryVals.isEmpty()) {
+					queryVals += COMMA;
+				}
+				queryVals += v;
+			}
+		}
+		if (!queryVals.isEmpty()) {
+			if (!queryParams.endsWith(URL_PARAMS_AND)) {
+				queryParams += URL_PARAMS_AND;
+			}
+			queryParams += key + URL_PARAMS_EQUALS + queryVals;
+		}
+		return queryParams;
+	}
 
-  private String cleanseValue(String value) {
-    try {
-      return URLEncoder.encode(value, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      LOG.warn("Could not url encode parameter value", e);
-    }
-    return value;
-  }
+	private String cleanseValue(String value) {
+		try {
+			return URLEncoder.encode(value, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			LOG.warn("Could not url encode parameter value", e);
+		}
+		return value;
+	}
 
 }

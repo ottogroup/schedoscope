@@ -28,14 +28,14 @@ public class CategoryObjectEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private long categoryObjectId;
-	
+
 	@ManyToOne
 	private CategoryEntity category;
-	
-  @Column(columnDefinition = "varchar(32672)")
+
+	@Column(columnDefinition = "varchar(32672)")
 	private String name;
-	
-  @Column(columnDefinition = "varchar(32672)")
+
+	@Column(columnDefinition = "varchar(32672)")
 	private String description;
 
 	public long getCategoryObjectId() {
@@ -69,5 +69,5 @@ public class CategoryObjectEntity {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	
+
 }

@@ -24,64 +24,66 @@ import org.schedoscope.metascope.model.key.DependencyEntityKey;
 @Entity
 public class ViewDependencyEntity {
 
-  public static final String URL_PATH = "url_path";
-  public static final String DEPENDENCY_URL_PATH = "dependency_url_path";
-  public static final String DEPENDENCY_FQDN = "dependency_fqdn";
-  public static final String INTERNAL_VIEW_ID = "internal_view_id";
+	public static final String URL_PATH = "url_path";
+	public static final String DEPENDENCY_URL_PATH = "dependency_url_path";
+	public static final String DEPENDENCY_FQDN = "dependency_fqdn";
+	public static final String INTERNAL_VIEW_ID = "internal_view_id";
 
-  @EmbeddedId
-  private DependencyEntityKey key;
-  @Column(name = INTERNAL_VIEW_ID)
-  private String internalViewId;
+	@EmbeddedId
+	private DependencyEntityKey key;
+	@Column(name = INTERNAL_VIEW_ID)
+	private String internalViewId;
 
-  public ViewDependencyEntity() {
-    this.key = new DependencyEntityKey();
-  }
+	public ViewDependencyEntity() {
+		this.key = new DependencyEntityKey();
+	}
 
-  public ViewDependencyEntity(String urlPath, String dependencyUrlPath, String depdencyFqdn) {
-    if (key == null) {
-      this.key = new DependencyEntityKey(urlPath, dependencyUrlPath, depdencyFqdn);
-    } else {
-      setUrlPath(urlPath);
-      setDependencyUrlPath(dependencyUrlPath);
-      setDependencyFqdn(depdencyFqdn);
-    }
-  }
+	public ViewDependencyEntity(String urlPath, String dependencyUrlPath,
+			String depdencyFqdn) {
+		if (key == null) {
+			this.key = new DependencyEntityKey(urlPath, dependencyUrlPath,
+					depdencyFqdn);
+		} else {
+			setUrlPath(urlPath);
+			setDependencyUrlPath(dependencyUrlPath);
+			setDependencyFqdn(depdencyFqdn);
+		}
+	}
 
-  public DependencyEntityKey getEntityKey() {
-    return key;
-  }
+	public DependencyEntityKey getEntityKey() {
+		return key;
+	}
 
-  public String getUrlPath() {
-    return this.key.getUrlPath();
-  }
+	public String getUrlPath() {
+		return this.key.getUrlPath();
+	}
 
-  public void setUrlPath(String urlPath) {
-    this.key.setUrlPath(urlPath);
-  }
+	public void setUrlPath(String urlPath) {
+		this.key.setUrlPath(urlPath);
+	}
 
-  public String getDependencyUrlPath() {
-    return this.key.getDependencyUrlPath();
-  }
+	public String getDependencyUrlPath() {
+		return this.key.getDependencyUrlPath();
+	}
 
-  public void setDependencyUrlPath(String dependencyUrlPath) {
-    this.key.setDependencyUrlPath(dependencyUrlPath);
-  }
+	public void setDependencyUrlPath(String dependencyUrlPath) {
+		this.key.setDependencyUrlPath(dependencyUrlPath);
+	}
 
-  public String getDependencyFqdn() {
-    return this.key.getDependencyFqdn();
-  }
+	public String getDependencyFqdn() {
+		return this.key.getDependencyFqdn();
+	}
 
-  public void setDependencyFqdn(String fqdn) {
-    this.key.setDependencyFqdn(fqdn);
-  }
+	public void setDependencyFqdn(String fqdn) {
+		this.key.setDependencyFqdn(fqdn);
+	}
 
-  public String getInternalViewId() {
-    return internalViewId;
-  }
+	public String getInternalViewId() {
+		return internalViewId;
+	}
 
-  public void setInternalViewId(String internalViewId) {
-    this.internalViewId = internalViewId;
-  }
+	public void setInternalViewId(String internalViewId) {
+		this.internalViewId = internalViewId;
+	}
 
 }

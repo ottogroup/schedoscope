@@ -40,107 +40,111 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class HiveQueryExecutor {
 
-  private static final Logger LOG = LoggerFactory.getLogger(HiveQueryExecutor.class);
+	private static final Logger LOG = LoggerFactory
+			.getLogger(HiveQueryExecutor.class);
 
-  @Autowired
-  private MetascopeConfig config;
+	@Autowired
+	private MetascopeConfig config;
 
-  @PostConstruct
-  private void init() {
-    Configuration conf = new Configuration();
-    String principal = config.getKerberosPrincipal();
-    if (principal != null && !principal.isEmpty()) {
-      conf.set("hive.metastore.sasl.enabled", "true");
-      conf.set("hive.metastore.kerberos.principal", principal);
-      conf.set("hadoop.security.authentication", "kerberos");
-      UserGroupInformation.setConfiguration(conf);
-    }
-    try {
-      Class.forName(config.getHiveJdbcDriver());
-    } catch (ClassNotFoundException e) {
-      LOG.error("Hive JDBC driver not found", e);
-    }
-  }
+	@PostConstruct
+	private void init() {
+		Configuration conf = new Configuration();
+		String principal = config.getKerberosPrincipal();
+		if (principal != null && !principal.isEmpty()) {
+			conf.set("hive.metastore.sasl.enabled", "true");
+			conf.set("hive.metastore.kerberos.principal", principal);
+			conf.set("hadoop.security.authentication", "kerberos");
+			UserGroupInformation.setConfiguration(conf);
+		}
+		try {
+			Class.forName(config.getHiveJdbcDriver());
+		} catch (ClassNotFoundException e) {
+			LOG.error("Hive JDBC driver not found", e);
+		}
+	}
 
-  @Transactional
-  public HiveQueryResult executeQuery(String fqdn, String fields, List<FieldEntity> parameters,
-      Map<String, String> params) {
-    List<List<String>> rows = new ArrayList<List<String>>();
+	@Transactional
+	public HiveQueryResult executeQuery(String fqdn, String fields,
+			List<FieldEntity> parameters, Map<String, String> params) {
+		List<List<String>> rows = new ArrayList<List<String>>();
 
-    HiveServerConnection hiveConn = new HiveServerConnection(config);
-    
-    hiveConn.connect();
-    
-    if (hiveConn.getConnection() == null) {
-      return new HiveQueryResult("Could not connect to HiveServer2");
-    }
+		HiveServerConnection hiveConn = new HiveServerConnection(config);
 
-    String where = "";
-    List<String> values = new ArrayList<String>();
-    if (params != null) {
-      for (Entry<String, String> param : params.entrySet()) {
-        if (param.getKey().equals("fqdn") || param.getKey().equals("_csrf")) {
-          continue;
-        }
-        if (!param.getValue().isEmpty()) {
-          boolean parameterExists = false;
-          for (FieldEntity parameter : parameters) {
-            if (parameter.getName().equals(param.getKey())) {
-              parameterExists = true;
-            }
-          }
-          if (!parameterExists) {
-            return new HiveQueryResult("Query not allowed");
-          }
+		hiveConn.connect();
 
-          if (!where.isEmpty()) {
-            where += " AND ";
-          }
-          where += param.getKey() + "=?";
-          values.add(param.getValue());
-        }
-      }
-    }
+		if (hiveConn.getConnection() == null) {
+			return new HiveQueryResult("Could not connect to HiveServer2");
+		}
 
-    String sql = " SELECT " + fields;
-    sql += " FROM " + fqdn;
-    sql += where.isEmpty() ? "" : " WHERE " + where;
-    sql += " LIMIT 10";
+		String where = "";
+		List<String> values = new ArrayList<String>();
+		if (params != null) {
+			for (Entry<String, String> param : params.entrySet()) {
+				if (param.getKey().equals("fqdn")
+						|| param.getKey().equals("_csrf")) {
+					continue;
+				}
+				if (!param.getValue().isEmpty()) {
+					boolean parameterExists = false;
+					for (FieldEntity parameter : parameters) {
+						if (parameter.getName().equals(param.getKey())) {
+							parameterExists = true;
+						}
+					}
+					if (!parameterExists) {
+						return new HiveQueryResult("Query not allowed");
+					}
 
-    List<String> header = new ArrayList<String>();
-    try {
-      PreparedStatement pstmt = hiveConn.getConnection().prepareStatement(sql);
-      for (int i = 1; i <= values.size(); i++) {
-        pstmt.setString(i, values.get(i - 1));
-      }
-      ResultSet rs = pstmt.executeQuery();
-      ResultSetMetaData rsmd = rs.getMetaData();
+					if (!where.isEmpty()) {
+						where += " AND ";
+					}
+					where += param.getKey() + "=?";
+					values.add(param.getValue());
+				}
+			}
+		}
 
-      for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-        header.add(rsmd.getColumnName(i));
-      }
+		String sql = " SELECT " + fields;
+		sql += " FROM " + fqdn;
+		sql += where.isEmpty() ? "" : " WHERE " + where;
+		sql += " LIMIT 10";
 
-      while (rs.next()) {
-        List<String> row = new ArrayList<String>();
-        for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-          int type = rsmd.getColumnType(i);
-          if (type == Types.VARCHAR || type == Types.CHAR || type == Types.JAVA_OBJECT) {
-            row.add(rs.getString(i));
-          } else if (type == Types.BOOLEAN) {
-            row.add("" + rs.getBoolean(i));
-          } else {
-            row.add("" + rs.getLong(i));
-          }
-        }
-        rows.add(row);
-      }
-    } catch (SQLException e) {
-      LOG.error("Could not execute query", e);
-      hiveConn.close();
-      return new HiveQueryResult(e.getMessage());
-    }
+		List<String> header = new ArrayList<String>();
+		try {
+			PreparedStatement pstmt = hiveConn.getConnection()
+					.prepareStatement(sql);
+			for (int i = 1; i <= values.size(); i++) {
+				pstmt.setString(i, values.get(i - 1));
+			}
+			ResultSet rs = pstmt.executeQuery();
+			ResultSetMetaData rsmd = rs.getMetaData();
 
-    hiveConn.close();
-    return new HiveQueryResult(header, rows);
-  }
+			for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+				header.add(rsmd.getColumnName(i));
+			}
+
+			while (rs.next()) {
+				List<String> row = new ArrayList<String>();
+				for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+					int type = rsmd.getColumnType(i);
+					if (type == Types.VARCHAR || type == Types.CHAR
+							|| type == Types.JAVA_OBJECT) {
+						row.add(rs.getString(i));
+					} else if (type == Types.BOOLEAN) {
+						row.add("" + rs.getBoolean(i));
+					} else {
+						row.add("" + rs.getLong(i));
+					}
+				}
+				rows.add(row);
+			}
+		} catch (SQLException e) {
+			LOG.error("Could not execute query", e);
+			hiveConn.close();
+			return new HiveQueryResult(e.getMessage());
+		}
+
+		hiveConn.close();
+		return new HiveQueryResult(header, rows);
+	}
 }

@@ -27,68 +27,68 @@ import org.schedoscope.metascope.model.key.TransformationEntityKey;
 @Entity
 public class TransformationEntity {
 
-  public static final String FQDN = "fqdn";
-  public static final String KEY = "t_key";
-  public static final String VALUE = "t_value";
-  public static final String TABLE_FQDN = "table_fqdn";
+	public static final String FQDN = "fqdn";
+	public static final String KEY = "t_key";
+	public static final String VALUE = "t_value";
+	public static final String TABLE_FQDN = "table_fqdn";
 
-  @EmbeddedId
-  private TransformationEntityKey key;
-  @Column(name = VALUE, columnDefinition = "varchar(32672)")
-  private String tValue;
+	@EmbeddedId
+	private TransformationEntityKey key;
+	@Column(name = VALUE, columnDefinition = "varchar(32672)")
+	private String tValue;
 
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn(name = TABLE_FQDN, nullable = false)
-  private TableEntity table;
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = TABLE_FQDN, nullable = false)
+	private TableEntity table;
 
-  public TransformationEntity() {
-    this.key = new TransformationEntityKey();
-  }
+	public TransformationEntity() {
+		this.key = new TransformationEntityKey();
+	}
 
-  public TransformationEntity(String fqdn, String key, String value) {
-    if (this.key == null) {
-      this.key = new TransformationEntityKey(fqdn, key);
-    } else {
-      setFqdn(fqdn);
-      setTransformationKey(key);
-    }
-    this.tValue = value;
-  }
+	public TransformationEntity(String fqdn, String key, String value) {
+		if (this.key == null) {
+			this.key = new TransformationEntityKey(fqdn, key);
+		} else {
+			setFqdn(fqdn);
+			setTransformationKey(key);
+		}
+		this.tValue = value;
+	}
 
-  public TransformationEntityKey getEntityKey() {
-    return key;
-  }
+	public TransformationEntityKey getEntityKey() {
+		return key;
+	}
 
-  public TableEntity getTable() {
-    return table;
-  }
+	public TableEntity getTable() {
+		return table;
+	}
 
-  public void setTable(TableEntity table) {
-    this.table = table;
-  }
+	public void setTable(TableEntity table) {
+		this.table = table;
+	}
 
-  public String getFqdn() {
-    return this.key.getFqdn();
-  }
+	public String getFqdn() {
+		return this.key.getFqdn();
+	}
 
-  public void setFqdn(String fqdn) {
-    this.key.setFqdn(fqdn);
-  }
+	public void setFqdn(String fqdn) {
+		this.key.setFqdn(fqdn);
+	}
 
-  public String getTransformationKey() {
-    return this.key.getTransformationKey();
-  }
+	public String getTransformationKey() {
+		return this.key.getTransformationKey();
+	}
 
-  public void setTransformationKey(String key) {
-    this.key.setTransformationKey(key);
-  }
+	public void setTransformationKey(String key) {
+		this.key.setTransformationKey(key);
+	}
 
-  public String getTransformationValue() {
-    return tValue;
-  }
+	public String getTransformationValue() {
+		return tValue;
+	}
 
-  public void setTransformationValue(String transformationValue) {
-    this.tValue = transformationValue;
-  }
+	public void setTransformationValue(String transformationValue) {
+		this.tValue = transformationValue;
+	}
 
 }

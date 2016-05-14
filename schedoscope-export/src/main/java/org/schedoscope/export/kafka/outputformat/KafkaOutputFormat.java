@@ -19,6 +19,12 @@ package org.schedoscope.export.kafka.outputformat;
 import java.io.IOException;
 import java.util.Properties;
 
+import kafka.admin.AdminUtils;
+import kafka.javaapi.producer.Producer;
+import kafka.producer.KeyedMessage;
+import kafka.producer.ProducerConfig;
+import kafka.utils.ZKStringSerializer$;
+
 import org.I0Itec.zkclient.ZkClient;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.mapred.AvroValue;
@@ -35,12 +41,6 @@ import org.schedoscope.export.kafka.options.CleanupPolicy;
 import org.schedoscope.export.kafka.options.CompressionCodec;
 import org.schedoscope.export.kafka.options.OutputEncoding;
 import org.schedoscope.export.kafka.options.ProducerType;
-
-import kafka.admin.AdminUtils;
-import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
-import kafka.producer.ProducerConfig;
-import kafka.utils.ZKStringSerializer$;
 
 /**
  * The Kafka output format is responsible to write data into Kafka, it
@@ -178,15 +178,16 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		conf.set(KAFKA_EXPORT_OUTPUT_ENCODING, enc.toString());
 
 		String topic = getTopicName(conf);
-		
-		createOrUpdateTopic(zookeeperHosts, topic,
-				cleanupPolicy, numPartitions, replicationFactor);
+
+		createOrUpdateTopic(zookeeperHosts, topic, cleanupPolicy,
+				numPartitions, replicationFactor);
 	}
 
 	private static String getTopicName(Configuration conf) {
-		return conf.get(KAFKA_EXPORT_DATABASE_NAME) + "_" + conf.get(KAFKA_EXPORT_TABLE_NAME);
+		return conf.get(KAFKA_EXPORT_DATABASE_NAME) + "_"
+				+ conf.get(KAFKA_EXPORT_TABLE_NAME);
 	}
-	
+
 	private static void createOrUpdateTopic(String zookeeperHosts,
 			String topic, CleanupPolicy cleanupPolicy, int numPartitions,
 			int replicationFactor) {
@@ -195,7 +196,6 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
 		topicProps.setProperty(KAFKA_EXPORT_CLEANUP_POLICY,
 				cleanupPolicy.toString());
 
-		
 		ZkClient zkClient = new ZkClient(zookeeperHosts, 30000, 30000,
 				ZKStringSerializer$.MODULE$);
 		if (AdminUtils.topicExists(zkClient, topic)) {

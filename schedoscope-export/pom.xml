@@ -310,7 +310,8 @@
 				<version>2.19.1</version>
 				<configuration>
 					<!-- <skipTests>false</skipTests> -->
-					<argLine>-XX:-UseSplitVerifier -XX:MaxPermSize=512m -XX:PermSize=512m</argLine>
+					<argLine>-XX:-UseSplitVerifier -XX:MaxPermSize=512m
+						-XX:PermSize=512m</argLine>
 				</configuration>
 			</plugin>
 			<plugin>

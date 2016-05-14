@@ -41,7 +41,9 @@ import com.google.common.collect.ImmutableSet;
 /**
  * A mapper that reads data from Hive tables and emits a GenericRecord.
  */
-public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord, Text, AvroValue<GenericRecord>> {
+public class KafkaExportMapper
+		extends
+		Mapper<WritableComparable<?>, HCatRecord, Text, AvroValue<GenericRecord>> {
 
 	private String tableName;
 
@@ -54,7 +56,8 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 	private Schema avroSchema;
 
 	@Override
-	protected void setup(Context context) throws IOException, InterruptedException {
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
 		super.setup(context);
 		Configuration conf = context.getConfiguration();
@@ -65,22 +68,26 @@ public class KafkaExportMapper extends Mapper<WritableComparable<?>, HCatRecord,
 
 		HCatUtils.checkKeyType(hcatSchema, keyName);
 
-		Set<String> anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
+		Set<String> anonFields = ImmutableSet.copyOf(conf.getStrings(
+				BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
 		String salt = conf.get(BaseExportJob.EXPORT_ANON_SALT, "");
-		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(conf, hcatSchema);
+		HCatRecordJsonSerializer serializer = new HCatRecordJsonSerializer(
+				conf, hcatSchema);
 		converter = new HCatToAvroRecordConverter(serializer, anonFields, salt);
 
-		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(anonFields);
+		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter(
+				anonFields);
 		avroSchema = schemaConverter.convertSchema(hcatSchema, tableName);
 	}
 
 	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
-			throws IOException, InterruptedException {
+	protected void map(WritableComparable<?> key, HCatRecord value,
+			Context context) throws IOException, InterruptedException {
 
 		Text kafkaKey = new Text(value.getString(keyName, hcatSchema));
 		GenericRecord record = converter.convert(value, avroSchema);
-		AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(record);
+		AvroValue<GenericRecord> recordWrapper = new AvroValue<GenericRecord>(
+				record);
 
 		context.write(kafkaKey, recordWrapper);
 	}

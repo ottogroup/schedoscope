@@ -42,41 +42,41 @@ import org.springframework.web.servlet.ModelAndView;
 @Controller
 public class ErrorController extends ViewController {
 
-  private static final String TEMPLATE_ERROR = "util";
+	private static final String TEMPLATE_ERROR = "util";
 
-  @Autowired
-  private UserEntityService userEntityService;
-  
-  @Autowired
-  private MetascopeConfig config;
+	@Autowired
+	private UserEntityService userEntityService;
 
-  @RequestMapping("/accessdenied")
-  public ModelAndView accessdenied(HttpServletRequest request) {
-  	return showErrorView("accessdenied");
-  }
+	@Autowired
+	private MetascopeConfig config;
 
-  @RequestMapping("/notfound")
-  public ModelAndView notfound(HttpServletRequest request) {
-  	return showErrorView("notfound");
-  }
-  
-  @RequestMapping("/expired")
-  public ModelAndView expired(HttpServletRequest request) {
-  	return showErrorView("expired");
-  }
+	@RequestMapping("/accessdenied")
+	public ModelAndView accessdenied(HttpServletRequest request) {
+		return showErrorView("accessdenied");
+	}
 
-  @Override
-  protected String getTemplateUri() {
-    return TEMPLATE_ERROR;
-  }
+	@RequestMapping("/notfound")
+	public ModelAndView notfound(HttpServletRequest request) {
+		return showErrorView("notfound");
+	}
 
-  private ModelAndView showErrorView(String view) {
-    ModelAndView mav = createView(view);
-    mav.addObject("userEntityService", userEntityService);
-    if (userEntityService.isAuthenticated()) {
-      mav.addObject("admin", userEntityService.isAdmin());
-      mav.addObject("userMgmnt", config.withUserManagement());
-    }
-    return mav;
-  }
+	@RequestMapping("/expired")
+	public ModelAndView expired(HttpServletRequest request) {
+		return showErrorView("expired");
+	}
+
+	@Override
+	protected String getTemplateUri() {
+		return TEMPLATE_ERROR;
+	}
+
+	private ModelAndView showErrorView(String view) {
+		ModelAndView mav = createView(view);
+		mav.addObject("userEntityService", userEntityService);
+		if (userEntityService.isAuthenticated()) {
+			mav.addObject("admin", userEntityService.isAdmin());
+			mav.addObject("userMgmnt", config.withUserManagement());
+		}
+		return mav;
+	}
 }

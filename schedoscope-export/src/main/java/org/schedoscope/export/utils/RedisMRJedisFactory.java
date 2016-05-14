@@ -59,7 +59,8 @@ public class RedisMRJedisFactory {
 							6379), 1800);
 		}
 
-		String password = conf.get(RedisOutputFormat.REDIS_EXPORT_AUTH_PASSWORD, "");
+		String password = conf.get(
+				RedisOutputFormat.REDIS_EXPORT_AUTH_PASSWORD, "");
 		if (!password.equals("")) {
 			jedis.auth(password);
 		}

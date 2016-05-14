@@ -38,7 +38,7 @@ public class CategoryEntity {
 	@ManyToOne
 	private TaxonomyEntity taxonomy;
 
-  @Column(columnDefinition = "varchar(32672)")
+	@Column(columnDefinition = "varchar(32672)")
 	private String name;
 
 	@OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
