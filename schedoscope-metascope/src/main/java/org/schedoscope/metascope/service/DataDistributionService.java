@@ -38,60 +38,70 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DataDistributionService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DataDistributionService.class);
+	private static final Logger LOG = LoggerFactory
+			.getLogger(DataDistributionService.class);
 
-  @Autowired
-  private TableEntityRepository tableEntityRepository;
-  @Autowired
-  private ViewEntityRepository viewEntityRepository;
-  @Autowired
-  private DataDistributionEntityRepository dataDistributionEntityRepository;
-  @Autowired
-  private JobMetadataEntityRepository jobMetadataEntityRepository;
-  @Autowired
-  @Qualifier("taskExecutor")
-  private TaskExecutor taskExecutor;
-  @Autowired
-  private MetascopeConfig config;
+	@Autowired
+	private TableEntityRepository tableEntityRepository;
+	@Autowired
+	private ViewEntityRepository viewEntityRepository;
+	@Autowired
+	private DataDistributionEntityRepository dataDistributionEntityRepository;
+	@Autowired
+	private JobMetadataEntityRepository jobMetadataEntityRepository;
+	@Autowired
+	@Qualifier("taskExecutor")
+	private TaskExecutor taskExecutor;
+	@Autowired
+	private MetascopeConfig config;
 
-  @Transactional
-  public boolean calculateDistributionForView(String urlPath) {
-    ViewEntity viewEntity = viewEntityRepository.findByUrlPath(urlPath);
+	@Transactional
+	public boolean calculateDistributionForView(String urlPath) {
+		ViewEntity viewEntity = viewEntityRepository.findByUrlPath(urlPath);
 
-    if (viewEntity != null) {
-      TableEntity tableEntity = tableEntityRepository.findByFqdn(viewEntity.getFqdn());
-      if (tableEntity != null) {
-        LOG.info("Scheduling RowCountJob for partition '{}'", viewEntity.getFqdn());
-        String rowJobMetadataKey = viewEntity.getUrlPath();
-        String rowJobMetadataField = "rowcount";
-        setJobMetadata(rowJobMetadataKey, rowJobMetadataField);
-        taskExecutor.execute(new RowCountJob(viewEntity, viewEntityRepository, jobMetadataEntityRepository, config,
-            rowJobMetadataKey, rowJobMetadataField));
+		if (viewEntity != null) {
+			TableEntity tableEntity = tableEntityRepository
+					.findByFqdn(viewEntity.getFqdn());
+			if (tableEntity != null) {
+				LOG.info("Scheduling RowCountJob for partition '{}'",
+						viewEntity.getFqdn());
+				String rowJobMetadataKey = viewEntity.getUrlPath();
+				String rowJobMetadataField = "rowcount";
+				setJobMetadata(rowJobMetadataKey, rowJobMetadataField);
+				taskExecutor.execute(new RowCountJob(viewEntity,
+						viewEntityRepository, jobMetadataEntityRepository,
+						config, rowJobMetadataKey, rowJobMetadataField));
 
-        for (FieldEntity fieldEntity : tableEntity.getFields()) {
-          LOG.info("Scheduling DataDistributionJob for partition '{}' and field '{}'", viewEntity.getFqdn(),
-              fieldEntity.getName());
-          String jobMetadataKey = viewEntity.getUrlPath();
-          String jobMetadataField = fieldEntity.getName();
-          setJobMetadata(jobMetadataKey, jobMetadataField);
-          taskExecutor.execute(new DataDistributionJob(tableEntity, viewEntity, fieldEntity,
-              dataDistributionEntityRepository, jobMetadataEntityRepository, config, jobMetadataKey, jobMetadataField));
-        }
-      }
-      return true;
-    }
-    return false;
-  }
+				for (FieldEntity fieldEntity : tableEntity.getFields()) {
+					LOG.info(
+							"Scheduling DataDistributionJob for partition '{}' and field '{}'",
+							viewEntity.getFqdn(), fieldEntity.getName());
+					String jobMetadataKey = viewEntity.getUrlPath();
+					String jobMetadataField = fieldEntity.getName();
+					setJobMetadata(jobMetadataKey, jobMetadataField);
+					taskExecutor.execute(new DataDistributionJob(tableEntity,
+							viewEntity, fieldEntity,
+							dataDistributionEntityRepository,
+							jobMetadataEntityRepository, config,
+							jobMetadataKey, jobMetadataField));
+				}
+			}
+			return true;
+		}
+		return false;
+	}
 
-  private void setJobMetadata(String jobMetadataKey, String jobMetadataField) {
-    JobMetadataEntity jobMetadata = jobMetadataEntityRepository.findOne(new JobMetadataEntityKey(jobMetadataKey,
-        jobMetadataField));
-    if (jobMetadata == null) {
-      jobMetadata = new JobMetadataEntity(jobMetadataKey, jobMetadataField, false);
-    } else {
-      jobMetadata.setFinished(false);
-    }
-    jobMetadataEntityRepository.save(jobMetadata);
-  }
+	private void setJobMetadata(String jobMetadataKey, String jobMetadataField) {
+		JobMetadataEntity jobMetadata = jobMetadataEntityRepository
+				.findOne(new JobMetadataEntityKey(jobMetadataKey,
+						jobMetadataField));
+		if (jobMetadata == null) {
+			jobMetadata = new JobMetadataEntity(jobMetadataKey,
+					jobMetadataField, false);
+		} else {
+			jobMetadata.setFinished(false);
+		}
+		jobMetadataEntityRepository.save(jobMetadata);
+	}
 
 }

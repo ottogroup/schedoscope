@@ -40,7 +40,8 @@ import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
 import org.schedoscope.export.utils.RedisMRJedisFactory;
 
 @RunWith(PowerMockRunner.class)
-@PowerMockIgnore({ "javax.*", "org.apache.*", "com.*", "org.mortbay.*", "org.xml.*", "org.w3c.*" })
+@PowerMockIgnore({ "javax.*", "org.apache.*", "com.*", "org.mortbay.*",
+		"org.xml.*", "org.w3c.*" })
 @PrepareForTest(RedisMRJedisFactory.class)
 public class RedisExportMrTest extends HiveUnitBaseTest {
 
@@ -52,13 +53,15 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		super.setUp();
 		jedisAdapter = new JedisAdapter();
 		PowerMockito.mockStatic(RedisMRJedisFactory.class);
-		when(RedisMRJedisFactory.getJedisClient(any(Configuration.class))).thenReturn(jedisAdapter);
+		when(RedisMRJedisFactory.getJedisClient(any(Configuration.class)))
+				.thenReturn(jedisAdapter);
 	}
 
 	@Test
 	public void testRedisStringExport() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+		setUpHiveServer("src/test/resources/test_map_data.txt",
+				"src/test/resources/test_map.hql", "test_map");
 
 		final String KEY = "id";
 		final String VALUE = "created_at";
@@ -67,7 +70,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
 
-		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
+		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
+				hcatInputSchema, VALUE);
 
 		Job job = Job.getInstance(conf);
 
@@ -84,16 +88,21 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 
 		assertTrue(job.waitForCompletion(true));
 
-		assertEquals("2016-02-09T12:21:24.581+01:00",
-				jedisAdapter.get("string_export_0000434c-aa04-449d-b6d5-319da5d94064"));
-		assertEquals("2016-02-09T12:21:24.581+01:00",
-				jedisAdapter.get("string_export_00017475-db44-495f-a357-97cd277e9d5b"));
+		assertEquals(
+				"2016-02-09T12:21:24.581+01:00",
+				jedisAdapter
+						.get("string_export_0000434c-aa04-449d-b6d5-319da5d94064"));
+		assertEquals(
+				"2016-02-09T12:21:24.581+01:00",
+				jedisAdapter
+						.get("string_export_00017475-db44-495f-a357-97cd277e9d5b"));
 	}
 
 	@Test
 	public void testRedisStringAnonymizedExport() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+		setUpHiveServer("src/test/resources/test_map_data.txt",
+				"src/test/resources/test_map.hql", "test_map");
 
 		final String KEY = "id";
 		final String VALUE = "created_at";
@@ -101,10 +110,12 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "string_export");
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
-		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[] { "created_at" });
+		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS,
+				new String[] { "created_at" });
 		conf.set(BaseExportJob.EXPORT_ANON_SALT, "vD75MqvaasIlCf7H");
 
-		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
+		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
+				hcatInputSchema, VALUE);
 
 		Job job = Job.getInstance(conf);
 
@@ -121,16 +132,21 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 
 		assertTrue(job.waitForCompletion(true));
 
-		assertEquals("e270fd6aca7534d80c5815d76565e3f4",
-				jedisAdapter.get("string_export_0000434c-aa04-449d-b6d5-319da5d94064"));
-		assertEquals("e270fd6aca7534d80c5815d76565e3f4",
-				jedisAdapter.get("string_export_00017475-db44-495f-a357-97cd277e9d5b"));
+		assertEquals(
+				"e270fd6aca7534d80c5815d76565e3f4",
+				jedisAdapter
+						.get("string_export_0000434c-aa04-449d-b6d5-319da5d94064"));
+		assertEquals(
+				"e270fd6aca7534d80c5815d76565e3f4",
+				jedisAdapter
+						.get("string_export_00017475-db44-495f-a357-97cd277e9d5b"));
 	}
 
 	@Test
 	public void testRedisIntAsStringAnonymizedExport() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_array_data.txt", "src/test/resources/test_array.hql", "test_array");
+		setUpHiveServer("src/test/resources/test_array_data.txt",
+				"src/test/resources/test_array.hql", "test_array");
 
 		final String KEY = "id";
 		final String VALUE = "numcol1";
@@ -138,10 +154,12 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_PREFIX, "string_export");
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
-		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[] { "numcol1" });
+		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS,
+				new String[] { "numcol1" });
 		conf.set(BaseExportJob.EXPORT_ANON_SALT, "vD75MqvaasIlCf7H");
 
-		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
+		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
+				hcatInputSchema, VALUE);
 
 		Job job = Job.getInstance(conf);
 
@@ -158,16 +176,21 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 
 		assertTrue(job.waitForCompletion(true));
 
-		assertEquals("bc5a56c463b81d13bbf8bc519cc17eb2",
-				jedisAdapter.get("string_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000028"));
-		assertEquals("bc5a56c463b81d13bbf8bc519cc17eb2",
-				jedisAdapter.get("string_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000034"));
+		assertEquals(
+				"bc5a56c463b81d13bbf8bc519cc17eb2",
+				jedisAdapter
+						.get("string_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000028"));
+		assertEquals(
+				"bc5a56c463b81d13bbf8bc519cc17eb2",
+				jedisAdapter
+						.get("string_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000034"));
 	}
 
 	@Test
 	public void testRedisMapExport() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+		setUpHiveServer("src/test/resources/test_map_data.txt",
+				"src/test/resources/test_map.hql", "test_map");
 
 		final String KEY = "id";
 		final String VALUE = "type";
@@ -176,7 +199,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
 
-		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
+		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
+				hcatInputSchema, VALUE);
 
 		Job job = Job.getInstance(conf);
 
@@ -192,14 +216,17 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(OutputClazz);
 
 		assertTrue(job.waitForCompletion(true));
-		assertEquals("3", jedisAdapter.hget("map_export_00017475-db44-495f-a357-97cd277e9d5b", "a55"));
-		assertEquals("2", jedisAdapter.hget("map_export_0000e5da-0c7f-43d4-ba63-c7cd74eca7f6", "a621"));
+		assertEquals("3", jedisAdapter.hget(
+				"map_export_00017475-db44-495f-a357-97cd277e9d5b", "a55"));
+		assertEquals("2", jedisAdapter.hget(
+				"map_export_0000e5da-0c7f-43d4-ba63-c7cd74eca7f6", "a621"));
 	}
 
 	@Test
 	public void testRedisListExport() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_array_data.txt", "src/test/resources/test_array.hql", "test_array");
+		setUpHiveServer("src/test/resources/test_array_data.txt",
+				"src/test/resources/test_array.hql", "test_array");
 
 		final String KEY = "id";
 		final String VALUE = "type";
@@ -208,7 +235,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
 
-		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
+		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
+				hcatInputSchema, VALUE);
 
 		Job job = Job.getInstance(conf);
 
@@ -224,14 +252,17 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(OutputClazz);
 
 		assertTrue(job.waitForCompletion(true));
-		assertEquals("value2",
-				jedisAdapter.lpop("list_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000036"));
+		assertEquals(
+				"value2",
+				jedisAdapter
+						.lpop("list_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000036"));
 	}
 
 	@Test
 	public void testRedisStructExport() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_struct_data.txt", "src/test/resources/test_struct.hql", "test_struct");
+		setUpHiveServer("src/test/resources/test_struct_data.txt",
+				"src/test/resources/test_struct.hql", "test_struct");
 
 		final String KEY = "id";
 		final String VALUE = "type";
@@ -240,7 +271,8 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		conf.set(RedisOutputFormat.REDIS_EXPORT_KEY_NAME, KEY);
 		conf.set(RedisOutputFormat.REDIS_EXPORT_VALUE_NAME, VALUE);
 
-		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(hcatInputSchema, VALUE);
+		Class<?> OutputClazz = RedisOutputFormat.getRedisWritableClazz(
+				hcatInputSchema, VALUE);
 
 		Job job = Job.getInstance(conf);
 
@@ -256,7 +288,10 @@ public class RedisExportMrTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(OutputClazz);
 
 		assertTrue(job.waitForCompletion(true));
-		assertEquals("value1", jedisAdapter
-				.hget("struct_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000030", "field1"));
+		assertEquals(
+				"value1",
+				jedisAdapter
+						.hget("struct_export_1438843758818ab9c238f-c715-4dcc-824f-26346233ccd5-2015-08-20-000030",
+								"field1"));
 	}
 }

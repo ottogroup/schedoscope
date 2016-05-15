@@ -17,29 +17,28 @@ package org.schedoscope.metascope.index.model;
 
 public class SolrHourRange {
 
-  private String name;
-  private long from;
-  
-  public SolrHourRange(String name, long from) {
-    this.name = name;
-    this.from = from;
-  }
+	private String name;
+	private long from;
 
-  public String getName() {
-    return name;
-  }
-  
-  public void setName(String name) {
-    this.name = name;
-  }
+	public SolrHourRange(String name, long from) {
+		this.name = name;
+		this.from = from;
+	}
 
-  public long getFrom() {
-    return from;
-  }
-  
-  public void setFrom(long from) {
-    this.from = from;
-  }
-  
-  
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public long getFrom() {
+		return from;
+	}
+
+	public void setFrom(long from) {
+		this.from = from;
+	}
+
 }

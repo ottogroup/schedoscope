@@ -28,35 +28,38 @@ import com.google.common.cache.CacheLoader;
 
 public class SampleCacheLoader extends CacheLoader<String, HiveQueryResult> {
 
-  private TableEntityService tableEntityService;
-  private HiveQueryExecutor hiveUtil;
+	private TableEntityService tableEntityService;
+	private HiveQueryExecutor hiveUtil;
 
-  public SampleCacheLoader(TableEntityService tableEntityService, HiveQueryExecutor hiveUtil) {
-    this.tableEntityService = tableEntityService;
-    this.hiveUtil = hiveUtil;
-  }
+	public SampleCacheLoader(TableEntityService tableEntityService,
+			HiveQueryExecutor hiveUtil) {
+		this.tableEntityService = tableEntityService;
+		this.hiveUtil = hiveUtil;
+	}
 
-  @Override
-  @Transactional
-  public HiveQueryResult load(String fqdn) throws Exception {
-    return getSample(fqdn);
-  }
+	@Override
+	@Transactional
+	public HiveQueryResult load(String fqdn) throws Exception {
+		return getSample(fqdn);
+	}
 
-  public HiveQueryResult getSample(String fqdn) {
-    TableEntity tableEntity = tableEntityService.findByFqdn(fqdn);
-    if (tableEntity == null) {
-      return new HiveQueryResult("Internal error");
-    }
-    Map<String, String> params = new HashMap<String, String>();
-    List<FieldEntity> parameters = tableEntity.getParameters();
-    if (parameters.size() > 0) {
-      FieldEntity parameter = parameters.get(0);
-      String parameterValue = tableEntityService.getRandomParameterValue(tableEntity, parameter);
-      params.put(parameter.getName(), parameterValue);
-    }
-    HiveQueryResult queryResult = hiveUtil.executeQuery(fqdn, tableEntity.getFieldsCommaDelimited(),
-        tableEntity.getParameters(), params);
-    return queryResult;
-  }
+	public HiveQueryResult getSample(String fqdn) {
+		TableEntity tableEntity = tableEntityService.findByFqdn(fqdn);
+		if (tableEntity == null) {
+			return new HiveQueryResult("Internal error");
+		}
+		Map<String, String> params = new HashMap<String, String>();
+		List<FieldEntity> parameters = tableEntity.getParameters();
+		if (parameters.size() > 0) {
+			FieldEntity parameter = parameters.get(0);
+			String parameterValue = tableEntityService.getRandomParameterValue(
+					tableEntity, parameter);
+			params.put(parameter.getName(), parameterValue);
+		}
+		HiveQueryResult queryResult = hiveUtil.executeQuery(fqdn,
+				tableEntity.getFieldsCommaDelimited(),
+				tableEntity.getParameters(), params);
+		return queryResult;
+	}
 
 }

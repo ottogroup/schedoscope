@@ -24,17 +24,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 public class SchedoscopeController {
-  
-  @Autowired private SchedoscopeCommandService schedoscopeCommandService;
 
-  @RequestMapping("/admin/schedoscope")
-  public String invalidate(HttpServletRequest request, String action, String urlPath) {
-    if (action.equals(SchedoscopeCommandService.INVALIDATE_COMMAND)) {
-      this.schedoscopeCommandService.invalidateView(urlPath);
-    } else if (action.equals(SchedoscopeCommandService.MATERIALIZE_COMMAND)) {
-      this.schedoscopeCommandService.materializeView(urlPath);
-    }
-    return "redirect:" + request.getHeader("Referer");
-  }
+	@Autowired
+	private SchedoscopeCommandService schedoscopeCommandService;
+
+	@RequestMapping("/admin/schedoscope")
+	public String invalidate(HttpServletRequest request, String action,
+			String urlPath) {
+		if (action.equals(SchedoscopeCommandService.INVALIDATE_COMMAND)) {
+			this.schedoscopeCommandService.invalidateView(urlPath);
+		} else if (action.equals(SchedoscopeCommandService.MATERIALIZE_COMMAND)) {
+			this.schedoscopeCommandService.materializeView(urlPath);
+		}
+		return "redirect:" + request.getHeader("Referer");
+	}
 
 }

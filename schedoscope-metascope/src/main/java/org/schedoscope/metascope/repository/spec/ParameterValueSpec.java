@@ -28,17 +28,21 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class ParameterValueSpec {
 
-  public static Specification<ParameterValueEntity> queryWithParams(final String fqdn, final String urlPathPrefix,
-      final String next) {
-    return new Specification<ParameterValueEntity>() {
-      @Override
-      public Predicate toPredicate(Root<ParameterValueEntity> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
-        List<Predicate> predicates = new ArrayList<Predicate>();
-        predicates.add(builder.equal(root.get("tableFqdn"), fqdn));
-        predicates.add(builder.equal(root.get("key").get("pKey"), next));
-        predicates.add(builder.like(root.get("key").<String> get("urlPath"), urlPathPrefix + "%"));
-        return builder.and(predicates.toArray(new Predicate[] {}));
-      }
-    };
-  }
+	public static Specification<ParameterValueEntity> queryWithParams(
+			final String fqdn, final String urlPathPrefix, final String next) {
+		return new Specification<ParameterValueEntity>() {
+			@Override
+			public Predicate toPredicate(Root<ParameterValueEntity> root,
+					CriteriaQuery<?> query, CriteriaBuilder builder) {
+				List<Predicate> predicates = new ArrayList<Predicate>();
+				predicates.add(builder.equal(root.get("tableFqdn"), fqdn));
+				predicates
+						.add(builder.equal(root.get("key").get("pKey"), next));
+				predicates.add(builder.like(
+						root.get("key").<String> get("urlPath"), urlPathPrefix
+								+ "%"));
+				return builder.and(predicates.toArray(new Predicate[] {}));
+			}
+		};
+	}
 }

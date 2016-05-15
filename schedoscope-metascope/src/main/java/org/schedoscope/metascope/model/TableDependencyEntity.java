@@ -23,43 +23,43 @@ import org.schedoscope.metascope.model.key.TableDependencyEntityKey;
 @Entity
 public class TableDependencyEntity {
 
-  public static final String FQDN = "fqdn";
-  public static final String DEPENDENCY_FQDN = "dependency_fqdn";
+	public static final String FQDN = "fqdn";
+	public static final String DEPENDENCY_FQDN = "dependency_fqdn";
 
-  @EmbeddedId
-  private TableDependencyEntityKey key;
+	@EmbeddedId
+	private TableDependencyEntityKey key;
 
-  public TableDependencyEntity() {
-    this.key = new TableDependencyEntityKey();
-  }
+	public TableDependencyEntity() {
+		this.key = new TableDependencyEntityKey();
+	}
 
-  public TableDependencyEntity(String fqdn, String depdencyFqdn) {
-    if (key == null) {
-      this.key = new TableDependencyEntityKey(fqdn, depdencyFqdn);
-    } else {
-      setFqdn(fqdn);
-      setDependencyFqdn(depdencyFqdn);
-    }
-  }
+	public TableDependencyEntity(String fqdn, String depdencyFqdn) {
+		if (key == null) {
+			this.key = new TableDependencyEntityKey(fqdn, depdencyFqdn);
+		} else {
+			setFqdn(fqdn);
+			setDependencyFqdn(depdencyFqdn);
+		}
+	}
 
-  public TableDependencyEntityKey getEntityKey() {
-    return key;
-  }
+	public TableDependencyEntityKey getEntityKey() {
+		return key;
+	}
 
-  public String getFqdn() {
-    return this.key.getFqdn();
-  }
+	public String getFqdn() {
+		return this.key.getFqdn();
+	}
 
-  public void setFqdn(String fqdn) {
-    this.key.setFqdn(fqdn);
-  }
+	public void setFqdn(String fqdn) {
+		this.key.setFqdn(fqdn);
+	}
 
-  public String getDependencyFqdn() {
-    return this.key.getDependencyFqdn();
-  }
+	public String getDependencyFqdn() {
+		return this.key.getDependencyFqdn();
+	}
 
-  public void setDependencyFqdn(String fqdn) {
-    this.key.setDependencyFqdn(fqdn);
-  }
+	public void setDependencyFqdn(String fqdn) {
+		this.key.setDependencyFqdn(fqdn);
+	}
 
 }

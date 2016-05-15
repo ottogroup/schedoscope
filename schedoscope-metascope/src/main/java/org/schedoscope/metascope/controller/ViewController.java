@@ -20,28 +20,28 @@ import org.springframework.web.servlet.view.RedirectView;
 
 public abstract class ViewController {
 
-  protected String templateURI;
+	protected String templateURI;
 
-  public ViewController() {
-    setup();
-  }
+	public ViewController() {
+		setup();
+	}
 
-  protected void setup() {
-    this.templateURI = getTemplateUri();
-  }
+	protected void setup() {
+		this.templateURI = getTemplateUri();
+	}
 
-  protected abstract String getTemplateUri();
+	protected abstract String getTemplateUri();
 
-  protected ModelAndView createView(String template) {
-    return new ModelAndView(templateURI + "/" + template);
-  }
+	protected ModelAndView createView(String template) {
+		return new ModelAndView(templateURI + "/" + template);
+	}
 
-  protected ModelAndView notFound() {
-    return new ModelAndView(new RedirectView("/notfound"));
-  }
+	protected ModelAndView notFound() {
+		return new ModelAndView(new RedirectView("/notfound"));
+	}
 
-  protected String failed() {
-    return "Failed to load resource";
-  }
+	protected String failed() {
+		return "Failed to load resource";
+	}
 
 }
