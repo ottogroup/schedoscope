@@ -17,10 +17,10 @@ package org.schedoscope.metascope.util;
 
 public class URLUtil {
 
-  public static final String SEARCH_QUERY_PARAM = "searchQuery";
-  public static final String PAGINATION_PAGE_PARAM = "p";
-  public static final String PAGINATION_ELEMENTS_PARAM = "e";
-  public static final int PAGINATION_PAGE_DEFAULT = 1;
-  public static final int PAGINATION_ELEMENTS_DEFAULT = 10;
+	public static final String SEARCH_QUERY_PARAM = "searchQuery";
+	public static final String PAGINATION_PAGE_PARAM = "p";
+	public static final String PAGINATION_ELEMENTS_PARAM = "e";
+	public static final int PAGINATION_PAGE_DEFAULT = 1;
+	public static final int PAGINATION_ELEMENTS_DEFAULT = 10;
 
 }

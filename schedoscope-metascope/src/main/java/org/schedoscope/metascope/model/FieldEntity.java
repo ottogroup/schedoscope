@@ -27,108 +27,108 @@ import org.schedoscope.metascope.model.key.FieldEntityKey;
 @Entity
 public class FieldEntity extends Documentable {
 
-  public static final String FQDN = "fqdn";
-  public static final String NAME = "name";
-  public static final String TYPE = "type";
-  public static final String DESCRIPTION = "description";
-  public static final String FIELD_ORDER = "field_order";
-  public static final String PARAMETER_FIELD = "parameter_field";
-  public static final String TABLE_FQDN = "table_fqdn";
+	public static final String FQDN = "fqdn";
+	public static final String NAME = "name";
+	public static final String TYPE = "type";
+	public static final String DESCRIPTION = "description";
+	public static final String FIELD_ORDER = "field_order";
+	public static final String PARAMETER_FIELD = "parameter_field";
+	public static final String TABLE_FQDN = "table_fqdn";
 
-  @EmbeddedId
-  private FieldEntityKey key;
-  @Column(name = TYPE)
-  private String type;
-  @Column(name = DESCRIPTION, columnDefinition = "varchar(32629)")
-  private String description;
-  @Column(name = FIELD_ORDER)
-  private int fieldOrder;
-  @Column(name = PARAMETER_FIELD)
-  private boolean parameterField;
+	@EmbeddedId
+	private FieldEntityKey key;
+	@Column(name = TYPE)
+	private String type;
+	@Column(name = DESCRIPTION, columnDefinition = "varchar(32629)")
+	private String description;
+	@Column(name = FIELD_ORDER)
+	private int fieldOrder;
+	@Column(name = PARAMETER_FIELD)
+	private boolean parameterField;
 
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn(name = TABLE_FQDN, nullable = false)
-  private TableEntity table;
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@JoinColumn(name = TABLE_FQDN, nullable = false)
+	private TableEntity table;
 
-  public FieldEntity() {
-    this.key = new FieldEntityKey();
-  }
+	public FieldEntity() {
+		this.key = new FieldEntityKey();
+	}
 
-  public FieldEntity(String fqdn, String name) {
-    if (key == null) {
-      key = new FieldEntityKey(fqdn, name);
-    } else {
-      setFqdn(fqdn);
-      setName(name);
-    }
-  }
+	public FieldEntity(String fqdn, String name) {
+		if (key == null) {
+			key = new FieldEntityKey(fqdn, name);
+		} else {
+			setFqdn(fqdn);
+			setName(name);
+		}
+	}
 
-  public FieldEntityKey getEntityKey() {
-    return key;
-  }
+	public FieldEntityKey getEntityKey() {
+		return key;
+	}
 
-  public TableEntity getTable() {
-    return table;
-  }
+	public TableEntity getTable() {
+		return table;
+	}
 
-  public void setTable(TableEntity table) {
-    this.table = table;
-  }
+	public void setTable(TableEntity table) {
+		this.table = table;
+	}
 
-  public String getFieldId() {
-    return getFqdn() + "." + getName();
-  }
+	public String getFieldId() {
+		return getFqdn() + "." + getName();
+	}
 
-  public String getFqdn() {
-    return this.key.getFqdn();
-  }
+	public String getFqdn() {
+		return this.key.getFqdn();
+	}
 
-  public void setFqdn(String fqdn) {
-    this.key.setFqdn(fqdn);
-    ;
-  }
+	public void setFqdn(String fqdn) {
+		this.key.setFqdn(fqdn);
+		;
+	}
 
-  public String getName() {
-    return this.key.getName();
-  }
+	public String getName() {
+		return this.key.getName();
+	}
 
-  public void setName(String name) {
-    this.key.setName(name);
-  }
+	public void setName(String name) {
+		this.key.setName(name);
+	}
 
-  public String getType() {
-    return type;
-  }
+	public String getType() {
+		return type;
+	}
 
-  public void setType(String type) {
-    this.type = type;
-  }
+	public void setType(String type) {
+		this.type = type;
+	}
 
-  public String getDescription() {
-    if (description == null) {
-      return "";
-    }
-    return description;
-  }
+	public String getDescription() {
+		if (description == null) {
+			return "";
+		}
+		return description;
+	}
 
-  public void setDescription(String description) {
-    this.description = description;
-  }
+	public void setDescription(String description) {
+		this.description = description;
+	}
 
-  public int getFieldOrder() {
-    return fieldOrder;
-  }
+	public int getFieldOrder() {
+		return fieldOrder;
+	}
 
-  public void setFieldOrder(int fieldOrder) {
-    this.fieldOrder = fieldOrder;
-  }
+	public void setFieldOrder(int fieldOrder) {
+		this.fieldOrder = fieldOrder;
+	}
 
-  public boolean isParameterField() {
-    return parameterField;
-  }
+	public boolean isParameterField() {
+		return parameterField;
+	}
 
-  public void setParameterField(boolean parameterField) {
-    this.parameterField = parameterField;
-  }
+	public void setParameterField(boolean parameterField) {
+		this.parameterField = parameterField;
+	}
 
 }

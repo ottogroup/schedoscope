@@ -75,7 +75,8 @@ public abstract class BaseExportJob extends Configured implements Tool {
 		} else {
 			conf.set("hive.metastore.local", "true");
 			conf.unset(HiveConf.ConfVars.METASTOREURIS.varname);
-			conf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname, metaStoreUris);
+			conf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
+					metaStoreUris);
 		}
 		return conf;
 	}
@@ -83,11 +84,14 @@ public abstract class BaseExportJob extends Configured implements Tool {
 	protected Configuration configureKerberos(Configuration conf) {
 
 		if (isSecured) {
-			conf.setBoolean(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname, principal);
+			conf.setBoolean(
+					HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
+					principal);
 
 			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary", System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+				conf.set("mapreduce.job.credentials.binary",
+						System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
 			}
 		}
 		return conf;

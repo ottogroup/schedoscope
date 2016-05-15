@@ -23,66 +23,67 @@ import javax.persistence.Embeddable;
 @Embeddable
 public class JobMetadataEntityKey implements Serializable {
 
-  private static final long serialVersionUID = 3005056897508298198L;
+	private static final long serialVersionUID = 3005056897508298198L;
 
-  @Column
-  private String urlPath;
-  @Column
-  private String fieldName;
+	@Column
+	private String urlPath;
+	@Column
+	private String fieldName;
 
-  public JobMetadataEntityKey() {
-  }
+	public JobMetadataEntityKey() {
+	}
 
-  public JobMetadataEntityKey(String urlPath, String fieldName) {
-    this.urlPath = urlPath;
-    this.fieldName = fieldName;
-  }
+	public JobMetadataEntityKey(String urlPath, String fieldName) {
+		this.urlPath = urlPath;
+		this.fieldName = fieldName;
+	}
 
-  public String getUrlPath() {
-    return urlPath;
-  }
+	public String getUrlPath() {
+		return urlPath;
+	}
 
-  public void setUrlPath(String urlPath) {
-    this.urlPath = urlPath;
-  }
+	public void setUrlPath(String urlPath) {
+		this.urlPath = urlPath;
+	}
 
-  public String getFieldName() {
-    return fieldName;
-  }
+	public String getFieldName() {
+		return fieldName;
+	}
 
-  public void setFieldName(String fieldName) {
-    this.fieldName = fieldName;
-  }
+	public void setFieldName(String fieldName) {
+		this.fieldName = fieldName;
+	}
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
-    result = prime * result + ((urlPath == null) ? 0 : urlPath.hashCode());
-    return result;
-  }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((fieldName == null) ? 0 : fieldName.hashCode());
+		result = prime * result + ((urlPath == null) ? 0 : urlPath.hashCode());
+		return result;
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    JobMetadataEntityKey other = (JobMetadataEntityKey) obj;
-    if (fieldName == null) {
-      if (other.fieldName != null)
-        return false;
-    } else if (!fieldName.equals(other.fieldName))
-      return false;
-    if (urlPath == null) {
-      if (other.urlPath != null)
-        return false;
-    } else if (!urlPath.equals(other.urlPath))
-      return false;
-    return true;
-  }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JobMetadataEntityKey other = (JobMetadataEntityKey) obj;
+		if (fieldName == null) {
+			if (other.fieldName != null)
+				return false;
+		} else if (!fieldName.equals(other.fieldName))
+			return false;
+		if (urlPath == null) {
+			if (other.urlPath != null)
+				return false;
+		} else if (!urlPath.equals(other.urlPath))
+			return false;
+		return true;
+	}
 
 }

@@ -23,15 +23,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class MetadataEntityService {
 
-  @Autowired
-  private MetadataEntityRepository metadataEntityRepository;
+	@Autowired
+	private MetadataEntityRepository metadataEntityRepository;
 
-  public String getMetadataValue(String key) {
-    Metadata metadata = metadataEntityRepository.findOne(key);
-    if (metadata == null) {
-      return null;
-    }
-    return metadata.getMetadataValue();
-  }
+	public String getMetadataValue(String key) {
+		Metadata metadata = metadataEntityRepository.findOne(key);
+		if (metadata == null) {
+			return null;
+		}
+		return metadata.getMetadataValue();
+	}
 
 }

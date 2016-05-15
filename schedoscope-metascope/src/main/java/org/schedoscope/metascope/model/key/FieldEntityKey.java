@@ -25,66 +25,66 @@ import org.schedoscope.metascope.model.FieldEntity;
 @Embeddable
 public class FieldEntityKey implements Serializable {
 
-  private static final long serialVersionUID = 6389851840855124146L;
+	private static final long serialVersionUID = 6389851840855124146L;
 
-  @Column(name = FieldEntity.FQDN)
-  private String fqdn;
-  @Column(name = FieldEntity.NAME)
-  private String name;
+	@Column(name = FieldEntity.FQDN)
+	private String fqdn;
+	@Column(name = FieldEntity.NAME)
+	private String name;
 
-  public FieldEntityKey() {
-  }
+	public FieldEntityKey() {
+	}
 
-  public FieldEntityKey(String fqdn, String name) {
-    this.fqdn = fqdn;
-    this.name = name;
-  }
+	public FieldEntityKey(String fqdn, String name) {
+		this.fqdn = fqdn;
+		this.name = name;
+	}
 
-  public String getFqdn() {
-    return fqdn;
-  }
+	public String getFqdn() {
+		return fqdn;
+	}
 
-  public void setFqdn(String fqdn) {
-    this.fqdn = fqdn;
-  }
+	public void setFqdn(String fqdn) {
+		this.fqdn = fqdn;
+	}
 
-  public String getName() {
-    return name;
-  }
+	public String getName() {
+		return name;
+	}
 
-  public void setName(String name) {
-    this.name = name;
-  }
+	public void setName(String name) {
+		this.name = name;
+	}
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((fqdn == null) ? 0 : fqdn.hashCode());
-    result = prime * result + ((name == null) ? 0 : name.hashCode());
-    return result;
-  }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((fqdn == null) ? 0 : fqdn.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    FieldEntityKey other = (FieldEntityKey) obj;
-    if (fqdn == null) {
-      if (other.fqdn != null)
-        return false;
-    } else if (!fqdn.equals(other.fqdn))
-      return false;
-    if (name == null) {
-      if (other.name != null)
-        return false;
-    } else if (!name.equals(other.name))
-      return false;
-    return true;
-  }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		FieldEntityKey other = (FieldEntityKey) obj;
+		if (fqdn == null) {
+			if (other.fqdn != null)
+				return false;
+		} else if (!fqdn.equals(other.fqdn))
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
+	}
 
 }
