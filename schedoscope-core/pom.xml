@@ -214,34 +214,7 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>parquet-pig-bundle</artifactId>
-			<version>1.5.0-cdh5.5.0</version>
-		</dependency>
-		<dependency>
-			<groupId>minioozie</groupId>
-			<artifactId>minioozie</artifactId>
-			<version>0.1.12</version>
-			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>jersey-server</artifactId>
-					<groupId>com.sun.jersey</groupId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.cloudera.logredactor</groupId>
-					<artifactId>logredactor</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-minicluster</artifactId>
-			<version>${hadoop.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>slf4j-log4j12</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
+			<version>1.5.0-cdh5.5.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive.hcatalog</groupId>
@@ -284,6 +257,33 @@
 			<classifier>jar-with-dependencies</classifier>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-minicluster</artifactId>
+			<version>${hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>minioozie</groupId>
+			<artifactId>minioozie</artifactId>
+			<version>0.1.12</version>
+			<scope>provided</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>jersey-server</artifactId>
+					<groupId>com.sun.jersey</groupId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.cloudera.logredactor</groupId>
+					<artifactId>logredactor</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
 			<groupId>org.scalatest</groupId>
 			<artifactId>scalatest_${scala.version}</artifactId>
 			<version>2.2.5</version>
@@ -292,7 +292,7 @@
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-export</artifactId>
-			<version>0.4.0</version>
+			<version>0.4.4-SNAPSHOT</version>
 			<classifier>tests</classifier>
 			<scope>test</scope>
 		</dependency>
