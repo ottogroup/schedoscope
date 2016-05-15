@@ -102,7 +102,8 @@ public class JdbcExportJob extends BaseExportJob {
 	 * @throws UnrecoverableException
 	 *             Is thrown if JDBC driver issue occurs.
 	 */
-	public void postCommit(boolean jobSuccessful, Configuration conf) throws RetryException, UnrecoverableException {
+	public void postCommit(boolean jobSuccessful, Configuration conf)
+			throws RetryException, UnrecoverableException {
 
 		if (jobSuccessful) {
 			JdbcOutputFormat.finalizeOutput(conf);
@@ -149,10 +150,12 @@ public class JdbcExportJob extends BaseExportJob {
 	 * @throws Exception
 	 *             Is thrown if an error occurs.
 	 */
-	public Job configure(boolean isSecured, String metaStoreUris, String principal, String dbConnectionString,
-			String dbUser, String dbPassword, String inputDatabase, String inputTable, String inputFilter,
-			String storageEngine, String distributeBy, int numReducer, int commitSize, String[] anonFields, String exportSalt)
-			throws Exception {
+	public Job configure(boolean isSecured, String metaStoreUris,
+			String principal, String dbConnectionString, String dbUser,
+			String dbPassword, String inputDatabase, String inputTable,
+			String inputFilter, String storageEngine, String distributeBy,
+			int numReducer, int commitSize, String[] anonFields,
+			String exportSalt) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -179,7 +182,8 @@ public class JdbcExportJob extends BaseExportJob {
 		conf = configureKerberos(conf);
 		conf = configureAnonFields(conf);
 
-		Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "." + inputTable);
+		Job job = Job.getInstance(conf, "JDBCExport: " + inputDatabase + "."
+				+ inputTable);
 
 		job.setJarByClass(JdbcExportJob.class);
 		job.setMapperClass(JdbcExportMapper.class);
@@ -190,19 +194,26 @@ public class JdbcExportJob extends BaseExportJob {
 			HCatInputFormat.setInput(job, inputDatabase, inputTable);
 
 		} else {
-			HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
+			HCatInputFormat.setInput(job, inputDatabase, inputTable,
+					inputFilter);
 		}
 
-		Schema outputSchema = SchemaFactory.getSchema(dbConnectionString, job.getConfiguration());
-		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
+		Schema outputSchema = SchemaFactory.getSchema(dbConnectionString,
+				job.getConfiguration());
+		HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job
+				.getConfiguration());
 
-		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(hcatInputSchema, outputSchema);
-		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(hcatInputSchema, outputSchema, ImmutableSet.copyOf(anonFields));
+		String[] columnNames = SchemaUtils.getColumnNamesFromHcatSchema(
+				hcatInputSchema, outputSchema);
+		String[] columnTypes = SchemaUtils.getColumnTypesFromHcatSchema(
+				hcatInputSchema, outputSchema, ImmutableSet.copyOf(anonFields));
 
 		String outputTable = inputDatabase + "_" + inputTable;
 
-		JdbcOutputFormat.setOutput(job.getConfiguration(), dbConnectionString, dbUser, dbPassword, outputTable,
-				inputFilter, numReducer, commitSize, storageEngine, distributeBy, columnNames, columnTypes);
+		JdbcOutputFormat.setOutput(job.getConfiguration(), dbConnectionString,
+				dbUser, dbPassword, outputTable, inputFilter, numReducer,
+				commitSize, storageEngine, distributeBy, columnNames,
+				columnTypes);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(JdbcOutputFormat.class);
@@ -220,9 +231,11 @@ public class JdbcExportJob extends BaseExportJob {
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
 		Path hdfsDir = new Path(tmpDir + "/" + new Path(jarFile).getName());
 
-		if (jarFile != null && jarSelf != null && tmpDir != null && !jarFile.equals(jarSelf)) {
+		if (jarFile != null && jarSelf != null && tmpDir != null
+				&& !jarFile.equals(jarSelf)) {
 			LOG.info("copy " + LOCAL_PATH_PREFIX + jarFile + " to " + tmpDir);
-			fs.copyFromLocalFile(false, true, new Path(LOCAL_PATH_PREFIX + jarFile), hdfsDir);
+			fs.copyFromLocalFile(false, true, new Path(LOCAL_PATH_PREFIX
+					+ jarFile), hdfsDir);
 			LOG.info("add " + tmpDir + "/" + jarFile + " to distributed cache");
 			job.addArchiveToClassPath(hdfsDir);
 		}

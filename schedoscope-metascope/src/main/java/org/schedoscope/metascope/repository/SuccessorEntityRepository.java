@@ -19,6 +19,7 @@ import org.schedoscope.metascope.model.SuccessorEntity;
 import org.schedoscope.metascope.model.key.SuccessorEntityKey;
 import org.springframework.data.repository.CrudRepository;
 
-public interface SuccessorEntityRepository extends CrudRepository<SuccessorEntity, SuccessorEntityKey> {
+public interface SuccessorEntityRepository extends
+		CrudRepository<SuccessorEntity, SuccessorEntityKey> {
 
 }

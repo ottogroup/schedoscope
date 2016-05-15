@@ -19,6 +19,7 @@ import org.schedoscope.metascope.model.JobMetadataEntity;
 import org.schedoscope.metascope.model.key.JobMetadataEntityKey;
 import org.springframework.data.repository.CrudRepository;
 
-public interface JobMetadataEntityRepository extends CrudRepository<JobMetadataEntity, JobMetadataEntityKey> {
+public interface JobMetadataEntityRepository extends
+		CrudRepository<JobMetadataEntity, JobMetadataEntityKey> {
 
 }

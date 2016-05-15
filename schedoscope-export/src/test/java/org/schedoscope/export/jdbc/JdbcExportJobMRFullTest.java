@@ -172,7 +172,7 @@ public class JdbcExportJobMRFullTest extends HiveUnitBaseTest {
 		setUpHiveServer("src/test/resources/test_array_data.txt",
 				"src/test/resources/test_array.hql", "test_array");
 
-		String[] anonFields = new String[] {"month_id", "numcol1"};
+		String[] anonFields = new String[] { "month_id", "numcol1" };
 
 		conf.setStrings(BaseExportJob.EXPORT_ANON_FIELDS, anonFields);
 		conf.set(BaseExportJob.EXPORT_ANON_SALT, "vD75MqvaasIlCf7H");

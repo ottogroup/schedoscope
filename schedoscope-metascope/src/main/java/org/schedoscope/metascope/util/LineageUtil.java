@@ -30,77 +30,86 @@ import org.springframework.stereotype.Component;
 @Component
 public class LineageUtil {
 
-  @Autowired
-  @Lazy
-  private TableEntityService service;
-  @Autowired
-  private HTMLUtil util;
+	@Autowired
+	@Lazy
+	private TableEntityService service;
+	@Autowired
+	private HTMLUtil util;
 
-  public String getLineage(TableEntity tableEntity) {
-    Set<TableEntity> lineageRoots = getLineageRoots(tableEntity, new HashSet<TableEntity>());
-    ArrayList<LineageNode> visited = new ArrayList<LineageNode>();
-    List<LineageNode> graph = new ArrayList<LineageNode>();
-    for (TableEntity t : lineageRoots) {
-      graph.addAll(wireDependencies(t, null, 0, visited));
-    }
-    return util.convertLineageGraphToVisJsNetwork(graph);
-  }
+	public String getLineage(TableEntity tableEntity) {
+		Set<TableEntity> lineageRoots = getLineageRoots(tableEntity,
+				new HashSet<TableEntity>());
+		ArrayList<LineageNode> visited = new ArrayList<LineageNode>();
+		List<LineageNode> graph = new ArrayList<LineageNode>();
+		for (TableEntity t : lineageRoots) {
+			graph.addAll(wireDependencies(t, null, 0, visited));
+		}
+		return util.convertLineageGraphToVisJsNetwork(graph);
+	}
 
-  private Set<TableEntity> getLineageRoots(TableEntity tableEntity, Set<TableEntity> visited) {
-    Set<TableEntity> rec = new HashSet<TableEntity>();
-    if (!visited.contains(tableEntity)) {
-      visited.add(tableEntity);
-      List<TableDependencyEntity> successors = service.getSuccessors(tableEntity);
-      if (successors == null || successors.size() == 0) {
-        rec.add(tableEntity);
-      } else {
-        for (TableDependencyEntity s : successors) {
-          rec.addAll(getLineageRoots(service.findByFqdn(s.getFqdn()), visited));
-        }
-      }
-    }
-    return rec;
-  }
+	private Set<TableEntity> getLineageRoots(TableEntity tableEntity,
+			Set<TableEntity> visited) {
+		Set<TableEntity> rec = new HashSet<TableEntity>();
+		if (!visited.contains(tableEntity)) {
+			visited.add(tableEntity);
+			List<TableDependencyEntity> successors = service
+					.getSuccessors(tableEntity);
+			if (successors == null || successors.size() == 0) {
+				rec.add(tableEntity);
+			} else {
+				for (TableDependencyEntity s : successors) {
+					rec.addAll(getLineageRoots(service.findByFqdn(s.getFqdn()),
+							visited));
+				}
+			}
+		}
+		return rec;
+	}
 
-  private List<LineageNode> wireDependencies(TableEntity tableEntity, LineageNode node, int level,
-      List<LineageNode> visited) {
-    List<LineageNode> nodes = new ArrayList<LineageNode>();
-    LineageNode tableNode;
-    String fqdn = tableEntity.getFqdn();
-    if (node != null) {
-      tableNode = node;
-      level++;
-    } else {
-      tableNode = new LineageNode(fqdn, level++, "tables", fqdn);
-    }
-    LineageNode transformationNode = new LineageNode(tableEntity.getTransformationType(), level++, "transformations",
-        fqdn);
-    tableNode.isWiredTo(transformationNode);
-    nodes.add(tableNode);
-    nodes.add(transformationNode);
-    for (TableDependencyEntity dependencyEntity : tableEntity.getDependencies()) {
-      LineageNode dependencyNode = getNode(dependencyEntity, visited);
-      if (dependencyNode == null) {
-        fqdn = dependencyEntity.getDependencyFqdn();
-        dependencyNode = new LineageNode(fqdn, level, "tables", fqdn);
-      }
-      transformationNode.isWiredTo(dependencyNode);
-      if (!visited.contains(dependencyNode)) {
-        visited.add(dependencyNode);
-        nodes.addAll(wireDependencies(service.findByFqdn(dependencyEntity.getDependencyFqdn()), dependencyNode, level,
-            visited));
-      }
-    }
-    return nodes;
-  }
+	private List<LineageNode> wireDependencies(TableEntity tableEntity,
+			LineageNode node, int level, List<LineageNode> visited) {
+		List<LineageNode> nodes = new ArrayList<LineageNode>();
+		LineageNode tableNode;
+		String fqdn = tableEntity.getFqdn();
+		if (node != null) {
+			tableNode = node;
+			level++;
+		} else {
+			tableNode = new LineageNode(fqdn, level++, "tables", fqdn);
+		}
+		LineageNode transformationNode = new LineageNode(
+				tableEntity.getTransformationType(), level++,
+				"transformations", fqdn);
+		tableNode.isWiredTo(transformationNode);
+		nodes.add(tableNode);
+		nodes.add(transformationNode);
+		for (TableDependencyEntity dependencyEntity : tableEntity
+				.getDependencies()) {
+			LineageNode dependencyNode = getNode(dependencyEntity, visited);
+			if (dependencyNode == null) {
+				fqdn = dependencyEntity.getDependencyFqdn();
+				dependencyNode = new LineageNode(fqdn, level, "tables", fqdn);
+			}
+			transformationNode.isWiredTo(dependencyNode);
+			if (!visited.contains(dependencyNode)) {
+				visited.add(dependencyNode);
+				nodes.addAll(wireDependencies(service
+						.findByFqdn(dependencyEntity.getDependencyFqdn()),
+						dependencyNode, level, visited));
+			}
+		}
+		return nodes;
+	}
 
-  private LineageNode getNode(TableDependencyEntity dependencyEntity, List<LineageNode> visited) {
-    for (LineageNode lineageNode : visited) {
-      if (lineageNode.getLabel().equals(dependencyEntity.getDependencyFqdn())) {
-        return lineageNode;
-      }
-    }
-    return null;
-  }
+	private LineageNode getNode(TableDependencyEntity dependencyEntity,
+			List<LineageNode> visited) {
+		for (LineageNode lineageNode : visited) {
+			if (lineageNode.getLabel().equals(
+					dependencyEntity.getDependencyFqdn())) {
+				return lineageNode;
+			}
+		}
+		return null;
+	}
 
 }

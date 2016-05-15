@@ -29,44 +29,50 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ActivityEntityService {
 
-  @Autowired
-  private ActivityEntityRepository activityEntityRepository;
+	@Autowired
+	private ActivityEntityRepository activityEntityRepository;
 
-  public List<ActivityEntity> getActivities() {
-    return activityEntityRepository.findFirst10ByOrderByTimestampDesc();
-  }
+	public List<ActivityEntity> getActivities() {
+		return activityEntityRepository.findFirst10ByOrderByTimestampDesc();
+	}
 
-  @Transactional
-  public void createUpdateDocumentActivity(TableEntity tableEntity, String username) {
-    createAndSave(ActivityType.UPDATE_DOCUMENTATION, tableEntity, username);
-  }
+	@Transactional
+	public void createUpdateDocumentActivity(TableEntity tableEntity,
+			String username) {
+		createAndSave(ActivityType.UPDATE_DOCUMENTATION, tableEntity, username);
+	}
 
-  @Transactional
-  public void createNewCommentActivity(TableEntity tableEntity, String username) {
-    createAndSave(ActivityType.NEW_COMMENT, tableEntity, username);
-  }
+	@Transactional
+	public void createNewCommentActivity(TableEntity tableEntity,
+			String username) {
+		createAndSave(ActivityType.NEW_COMMENT, tableEntity, username);
+	}
 
-  @Transactional
-  public void createUpdateTaxonomyActivity(TableEntity tableEntity, String username) {
-    createAndSave(ActivityType.UPDATE_TAGS, tableEntity, username);
-  }
+	@Transactional
+	public void createUpdateTaxonomyActivity(TableEntity tableEntity,
+			String username) {
+		createAndSave(ActivityType.UPDATE_TAGS, tableEntity, username);
+	}
 
-  @Transactional
-  public void createUpdateTableMetadataActivity(TableEntity tableEntity, String username) {
-    createAndSave(ActivityType.UPDATE_TABLE_METADATA, tableEntity, username);
-  }
+	@Transactional
+	public void createUpdateTableMetadataActivity(TableEntity tableEntity,
+			String username) {
+		createAndSave(ActivityType.UPDATE_TABLE_METADATA, tableEntity, username);
+	}
 
-  private void createAndSave(ActivityType activityType, TableEntity tableEntity, String username) {
-    ActivityEntityKey key = new ActivityEntityKey(activityType, username, tableEntity);
-    ActivityEntity activityEntity = activityEntityRepository.findOne(key);
-    if (activityEntity == null) {
-      activityEntity = new ActivityEntity();
-      activityEntity.setType(activityType);
-      activityEntity.setUsername(username);
-      activityEntity.setTable(tableEntity);
-    }
-    activityEntity.setTimestamp(System.currentTimeMillis());
-    activityEntityRepository.save(activityEntity);
-  }
+	private void createAndSave(ActivityType activityType,
+			TableEntity tableEntity, String username) {
+		ActivityEntityKey key = new ActivityEntityKey(activityType, username,
+				tableEntity);
+		ActivityEntity activityEntity = activityEntityRepository.findOne(key);
+		if (activityEntity == null) {
+			activityEntity = new ActivityEntity();
+			activityEntity.setType(activityType);
+			activityEntity.setUsername(username);
+			activityEntity.setTable(tableEntity);
+		}
+		activityEntity.setTimestamp(System.currentTimeMillis());
+		activityEntityRepository.save(activityEntity);
+	}
 
 }

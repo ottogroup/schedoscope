@@ -28,21 +28,23 @@ import org.schedoscope.metascope.SpringTest;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class FieldEntityServiceTest extends SpringTest {
 
-  private static final String PARAMETER_YEAR = "year";
-  private static final String PARAMETER_MONTH = "month";
-  private static final String PARAMETER_MONTH_ID = "month_id";
+	private static final String PARAMETER_YEAR = "year";
+	private static final String PARAMETER_MONTH = "month";
+	private static final String PARAMETER_MONTH_ID = "month_id";
 
-  @Test
-  public void fieldEntityService_01_findDistinctParameters() {
-    List<String> distinctParameter = fieldEntityService.findDistinctParameters();
+	@Test
+	public void fieldEntityService_01_findDistinctParameters() {
+		List<String> distinctParameter = fieldEntityService
+				.findDistinctParameters();
 
-    assertTrue(distinctParameter != null);
-    assertEquals(distinctParameter.size(), 3);
+		assertTrue(distinctParameter != null);
+		assertEquals(distinctParameter.size(), 3);
 
-    for (String parameter : distinctParameter) {
-      assertTrue(parameter.equals(PARAMETER_YEAR) || parameter.equals(PARAMETER_MONTH)
-          || parameter.equals(PARAMETER_MONTH_ID));
-    }
-  }
+		for (String parameter : distinctParameter) {
+			assertTrue(parameter.equals(PARAMETER_YEAR)
+					|| parameter.equals(PARAMETER_MONTH)
+					|| parameter.equals(PARAMETER_MONTH_ID));
+		}
+	}
 
 }
