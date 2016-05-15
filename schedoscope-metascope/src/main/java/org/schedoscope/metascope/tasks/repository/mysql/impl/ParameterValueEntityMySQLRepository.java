@@ -27,61 +27,71 @@ import org.schedoscope.metascope.util.MySQLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ParameterValueEntityMySQLRepository implements MySQLRepository<ParameterValueEntity> {
+public class ParameterValueEntityMySQLRepository implements
+		MySQLRepository<ParameterValueEntity> {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ParameterValueEntityMySQLRepository.class);
+	private static final Logger LOG = LoggerFactory
+			.getLogger(ParameterValueEntityMySQLRepository.class);
 
-  @Override
-  public void insertOrUpdate(Connection connection, ParameterValueEntity parameterValueEntity) {
-    String insertParameterSql = "insert into parameter_value_entity ("
-        + JDBCUtil.getDatabaseColumnsForClass(ParameterValueEntity.class) + ") values ("
-        + JDBCUtil.getValuesCountForClass(ParameterValueEntity.class) + ") " + "on duplicate key update "
-        + MySQLUtil.getOnDuplicateKeyString(ParameterValueEntity.class);
-    PreparedStatement stmt = null;
-    try {
-      stmt = connection.prepareStatement(insertParameterSql);
-      stmt.setString(1, parameterValueEntity.getUrlPath());
-      stmt.setString(2, parameterValueEntity.getKey());
-      stmt.setString(3, parameterValueEntity.getValue());
-      stmt.setString(4, parameterValueEntity.getTableFqdn());
-      stmt.execute();
-    } catch (SQLException e) {
-      LOG.error("Could not save parameter value", e);
-    } finally {
-      DbUtils.closeQuietly(stmt);
-    }
-  }
+	@Override
+	public void insertOrUpdate(Connection connection,
+			ParameterValueEntity parameterValueEntity) {
+		String insertParameterSql = "insert into parameter_value_entity ("
+				+ JDBCUtil
+						.getDatabaseColumnsForClass(ParameterValueEntity.class)
+				+ ") values ("
+				+ JDBCUtil.getValuesCountForClass(ParameterValueEntity.class)
+				+ ") " + "on duplicate key update "
+				+ MySQLUtil.getOnDuplicateKeyString(ParameterValueEntity.class);
+		PreparedStatement stmt = null;
+		try {
+			stmt = connection.prepareStatement(insertParameterSql);
+			stmt.setString(1, parameterValueEntity.getUrlPath());
+			stmt.setString(2, parameterValueEntity.getKey());
+			stmt.setString(3, parameterValueEntity.getValue());
+			stmt.setString(4, parameterValueEntity.getTableFqdn());
+			stmt.execute();
+		} catch (SQLException e) {
+			LOG.error("Could not save parameter value", e);
+		} finally {
+			DbUtils.closeQuietly(stmt);
+		}
+	}
 
-  @Override
-  public void insertOrUpdate(Connection connection, List<ParameterValueEntity> parameterValues) {
-    String insertParameterSql = "insert into parameter_value_entity ("
-        + JDBCUtil.getDatabaseColumnsForClass(ParameterValueEntity.class) + ") values ("
-        + JDBCUtil.getValuesCountForClass(ParameterValueEntity.class) + ") " + "on duplicate key update "
-        + MySQLUtil.getOnDuplicateKeyString(ParameterValueEntity.class);
-    PreparedStatement stmt = null;
-    try {
-      int batch = 0;
-      connection.setAutoCommit(false);
-      stmt = connection.prepareStatement(insertParameterSql);
-      for (ParameterValueEntity parameterValueEntity : parameterValues) {
-        stmt.setString(1, parameterValueEntity.getUrlPath());
-        stmt.setString(2, parameterValueEntity.getKey());
-        stmt.setString(3, parameterValueEntity.getValue());
-        stmt.setString(4, parameterValueEntity.getTableFqdn());
-        stmt.addBatch();
-        batch++;
-        if (batch % 1024 == 0) {
-          stmt.executeBatch();
-        }
-      }
-      stmt.executeBatch();
-      connection.commit();
-      connection.setAutoCommit(true);
-    } catch (SQLException e) {
-      LOG.error("Could not save parameter value", e);
-    } finally {
-      DbUtils.closeQuietly(stmt);
-    }
-  }
+	@Override
+	public void insertOrUpdate(Connection connection,
+			List<ParameterValueEntity> parameterValues) {
+		String insertParameterSql = "insert into parameter_value_entity ("
+				+ JDBCUtil
+						.getDatabaseColumnsForClass(ParameterValueEntity.class)
+				+ ") values ("
+				+ JDBCUtil.getValuesCountForClass(ParameterValueEntity.class)
+				+ ") " + "on duplicate key update "
+				+ MySQLUtil.getOnDuplicateKeyString(ParameterValueEntity.class);
+		PreparedStatement stmt = null;
+		try {
+			int batch = 0;
+			connection.setAutoCommit(false);
+			stmt = connection.prepareStatement(insertParameterSql);
+			for (ParameterValueEntity parameterValueEntity : parameterValues) {
+				stmt.setString(1, parameterValueEntity.getUrlPath());
+				stmt.setString(2, parameterValueEntity.getKey());
+				stmt.setString(3, parameterValueEntity.getValue());
+				stmt.setString(4, parameterValueEntity.getTableFqdn());
+				stmt.addBatch();
+				batch++;
+				if (batch % 1024 == 0) {
+					stmt.executeBatch();
+				}
+			}
+			stmt.executeBatch();
+			connection.commit();
+			connection.setAutoCommit(true);
+		} catch (SQLException e) {
+			LOG.error("Could not save parameter value", e);
+		} finally {
+			DbUtils.closeQuietly(stmt);
+		}
+	}
 
 }

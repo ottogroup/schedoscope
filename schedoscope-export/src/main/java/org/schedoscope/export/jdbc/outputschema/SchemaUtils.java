@@ -40,7 +40,8 @@ public class SchemaUtils {
 	 * @return An array of string containing the names of the columns, order is
 	 *         important.
 	 */
-	public static String[] getColumnNamesFromHcatSchema(HCatSchema inputSchema, Schema schema) {
+	public static String[] getColumnNamesFromHcatSchema(HCatSchema inputSchema,
+			Schema schema) {
 
 		Map<String, String> columnNameMapping = schema.getColumnNameMapping();
 
@@ -74,7 +75,8 @@ public class SchemaUtils {
 	 * @return An array of string containing the column types, order is
 	 *         important.
 	 */
-	public static String[] getColumnTypesFromHcatSchema(HCatSchema inputSchema, Schema schema, Set<String> anonFields) {
+	public static String[] getColumnTypesFromHcatSchema(HCatSchema inputSchema,
+			Schema schema, Set<String> anonFields) {
 
 		Map<String, String> columnTypeMapping = schema.getColumnTypeMapping();
 
@@ -86,8 +88,11 @@ public class SchemaUtils {
 
 			if (!inputSchema.get(i).isComplex()) {
 
-				if (inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()) == null
-						|| inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()).equals("null")) {
+				if (inputSchema.get(i).getTypeString()
+						.toLowerCase(Locale.getDefault()) == null
+						|| inputSchema.get(i).getTypeString()
+								.toLowerCase(Locale.getDefault())
+								.equals("null")) {
 
 					type = columnTypeMapping.get("tinyint");
 
@@ -95,13 +100,15 @@ public class SchemaUtils {
 					type = columnTypeMapping.get("string");
 
 				} else {
-					type = columnTypeMapping.get(inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()));
+					type = columnTypeMapping.get(inputSchema.get(i)
+							.getTypeString().toLowerCase(Locale.getDefault()));
 				}
 			}
 			fieldTypes[i] = type;
 		}
 
-		fieldTypes[inputSchema.getFieldNames().size()] = columnTypeMapping.get("string");
+		fieldTypes[inputSchema.getFieldNames().size()] = columnTypeMapping
+				.get("string");
 		return fieldTypes;
 	}
 }

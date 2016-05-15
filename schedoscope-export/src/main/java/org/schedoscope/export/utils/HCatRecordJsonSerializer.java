@@ -51,7 +51,8 @@ public class HCatRecordJsonSerializer {
 	public HCatRecordJsonSerializer(Configuration conf, HCatSchema schema) {
 
 		jsonMapper = new ObjectMapper();
-		jsonMapper.configure(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS, true);
+		jsonMapper
+				.configure(JsonParser.Feature.ALLOW_NON_NUMERIC_NUMBERS, true);
 
 		StringBuilder columnNameProperty = new StringBuilder();
 		StringBuilder columnTypeProperty = new StringBuilder();

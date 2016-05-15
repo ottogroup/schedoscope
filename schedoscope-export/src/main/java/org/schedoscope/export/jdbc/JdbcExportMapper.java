@@ -45,7 +45,9 @@ import com.google.common.collect.ImmutableSet;
 /**
  * A mapper that reads data from Hive via HCatalog and emits a JDBC writable..
  */
-public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable> {
+public class JdbcExportMapper
+		extends
+		Mapper<WritableComparable<?>, HCatRecord, LongWritable, JdbcOutputWritable> {
 
 	private static final Log LOG = LogFactory.getLog(JdbcExportMapper.class);
 
@@ -66,15 +68,18 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 	private String salt;
 
 	@Override
-	protected void setup(Context context) throws IOException, InterruptedException {
+	protected void setup(Context context) throws IOException,
+			InterruptedException {
 
 		super.setup(context);
 		conf = context.getConfiguration();
-		inputSchema = HCatInputFormat.getTableSchema(context.getConfiguration());
+		inputSchema = HCatInputFormat
+				.getTableSchema(context.getConfiguration());
 
 		serializer = new HCatRecordJsonSerializer(conf, inputSchema);
 
-		Schema outputSchema = SchemaFactory.getSchema(context.getConfiguration());
+		Schema outputSchema = SchemaFactory.getSchema(context
+				.getConfiguration());
 
 		inputFilter = outputSchema.getFilter();
 
@@ -82,7 +87,8 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 
 		typeMapping = outputSchema.getPreparedStatementTypeMapping();
 
-		anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
+		anonFields = ImmutableSet.copyOf(conf.getStrings(
+				BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
 
 		salt = conf.get(BaseExportJob.EXPORT_ANON_SALT, "");
 
@@ -90,15 +96,16 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 	}
 
 	@Override
-	protected void map(WritableComparable<?> key, HCatRecord value, Context context)
-			throws IOException, InterruptedException {
+	protected void map(WritableComparable<?> key, HCatRecord value,
+			Context context) throws IOException, InterruptedException {
 
 		List<Pair<String, String>> record = new ArrayList<Pair<String, String>>();
 
 		for (String f : inputSchema.getFieldNames()) {
 
 			String fieldValue = "NULL";
-			String fieldType = typeMapping.get(columnTypes[inputSchema.getPosition(f)]);
+			String fieldType = typeMapping.get(columnTypes[inputSchema
+					.getPosition(f)]);
 
 			Object obj = value.get(f, inputSchema);
 			if (obj != null) {
@@ -107,20 +114,23 @@ public class JdbcExportMapper extends Mapper<WritableComparable<?>, HCatRecord, 
 					fieldValue = serializer.getFieldAsJson(value, f);
 				} else {
 					fieldValue = obj.toString();
-					fieldValue = HCatUtils.getHashValueIfInList(f, fieldValue, anonFields, salt);
+					fieldValue = HCatUtils.getHashValueIfInList(f, fieldValue,
+							anonFields, salt);
 				}
 			}
 			record.add(Pair.of(fieldType, fieldValue));
 		}
 
-		String filterType = typeMapping.get(columnTypes[columnTypes.length - 1]);
+		String filterType = typeMapping
+				.get(columnTypes[columnTypes.length - 1]);
 		if (inputFilter == null) {
 			record.add(Pair.of(filterType, "NULL"));
 		} else {
 			record.add(Pair.of(filterType, inputFilter));
 		}
 
-		LongWritable localKey = new LongWritable(context.getCounter(TaskCounter.MAP_INPUT_RECORDS).getValue());
+		LongWritable localKey = new LongWritable(context.getCounter(
+				TaskCounter.MAP_INPUT_RECORDS).getValue());
 		context.write(localKey, new JdbcOutputWritable(record));
 	}
 }

@@ -33,50 +33,50 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class StatusController {
 
-  @Autowired
-  private MetascopeConfig config;
+	@Autowired
+	private MetascopeConfig config;
 
-  @RequestMapping(value = "/status/activetransactions", method = RequestMethod.GET)
-  @ResponseBody
-  public boolean activeTransactions() {
-    return false;
-  }
+	@RequestMapping(value = "/status/activetransactions", method = RequestMethod.GET)
+	@ResponseBody
+	public boolean activeTransactions() {
+		return false;
+	}
 
-  @RequestMapping(value = "/log", method = RequestMethod.GET)
-  @ResponseBody
-  public String getLog() {
-    int lastLines = 100;
+	@RequestMapping(value = "/log", method = RequestMethod.GET)
+	@ResponseBody
+	public String getLog() {
+		int lastLines = 100;
 
-    String path = config.getLogfilePath();
-    File log = new File(path);
-    if (!log.exists()) {
-      return "Could not find logfile (" + path + ")";
-    }
+		String path = config.getLogfilePath();
+		File log = new File(path);
+		if (!log.exists()) {
+			return "Could not find logfile (" + path + ")";
+		}
 
-    BufferedReader bufferedReader;
-    try {
-      bufferedReader = new BufferedReader(new FileReader(log));
-    } catch (FileNotFoundException e) {
-      return e.getMessage();
-    }
+		BufferedReader bufferedReader;
+		try {
+			bufferedReader = new BufferedReader(new FileReader(log));
+		} catch (FileNotFoundException e) {
+			return e.getMessage();
+		}
 
-    List<String> lines = new ArrayList<String>();
-    String line = null;
-    try {
-      while ((line = bufferedReader.readLine()) != null) {
-        lines.add(line);
-      }
-      bufferedReader.close();
-    } catch (IOException e) {
-      return e.getMessage();
-    }
+		List<String> lines = new ArrayList<String>();
+		String line = null;
+		try {
+			while ((line = bufferedReader.readLine()) != null) {
+				lines.add(line);
+			}
+			bufferedReader.close();
+		} catch (IOException e) {
+			return e.getMessage();
+		}
 
-    String logcontent = "";
-    int size = lines.size();
-    for (int i = size - lastLines; i < size; i++) {
-      logcontent += lines.get(i) + "\n";
-    }
-    return logcontent;
-  }
+		String logcontent = "";
+		int size = lines.size();
+		for (int i = size - lastLines; i < size; i++) {
+			logcontent += lines.get(i) + "\n";
+		}
+		return logcontent;
+	}
 
 }

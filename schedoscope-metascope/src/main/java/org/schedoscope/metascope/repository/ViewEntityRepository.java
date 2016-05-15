@@ -22,20 +22,23 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
-public interface ViewEntityRepository extends CrudRepository<ViewEntity, String> {
+public interface ViewEntityRepository extends
+		CrudRepository<ViewEntity, String> {
 
-  @Query("SELECT count(*) FROM ViewEntity v WHERE v.fqdn = :fqdn")
-  public int getPartitionCountForFqdn(@Param(value = "fqdn") String fqdn);
+	@Query("SELECT count(*) FROM ViewEntity v WHERE v.fqdn = :fqdn")
+	public int getPartitionCountForFqdn(@Param(value = "fqdn") String fqdn);
 
-  @Query("SELECT count(*) FROM ViewEntity v WHERE v.fqdn = :fqdn AND v.internalViewId < :viewId")
-  public int getPartitionPosition(@Param(value = "fqdn") String fqdn, @Param(value = "viewId") String viewId);
+	@Query("SELECT count(*) FROM ViewEntity v WHERE v.fqdn = :fqdn AND v.internalViewId < :viewId")
+	public int getPartitionPosition(@Param(value = "fqdn") String fqdn,
+			@Param(value = "viewId") String viewId);
 
-  public Iterable<ViewEntity> findByStatus(String status);
+	public Iterable<ViewEntity> findByStatus(String status);
 
-  public ViewEntity findByUrlPath(String urlPath);
+	public ViewEntity findByUrlPath(String urlPath);
 
-  public Page<ViewEntity> findByFqdnOrderByInternalViewId(String fqdn, Pageable pageable);
+	public Page<ViewEntity> findByFqdnOrderByInternalViewId(String fqdn,
+			Pageable pageable);
 
-  public ViewEntity findFirstByFqdn(String fqdn);
+	public ViewEntity findFirstByFqdn(String fqdn);
 
 }

@@ -155,7 +155,7 @@ class BaseSettings(val config: Config) {
    * Use pipeline mode for writing to redis or not.
    */
   lazy val redisExportUsesPipelineMode = config.getBoolean("schedoscope.export.redis.usePipelineMode")
-  
+
   /**
    * Size of insert batches for Redis export (only pipeline mode)
    */

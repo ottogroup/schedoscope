@@ -21,33 +21,33 @@ import java.util.Map;
 
 public class ViewStatus {
 
-  private Map<String, String> overview;
-  private List<View> views;
+	private Map<String, String> overview;
+	private List<View> views;
 
-  public Map<String, String> getOverview() {
-    return overview;
-  }
+	public Map<String, String> getOverview() {
+		return overview;
+	}
 
-  public void setOverview(Map<String, String> overview) {
-    this.overview = overview;
-  }
+	public void setOverview(Map<String, String> overview) {
+		this.overview = overview;
+	}
 
-  public List<View> getViews() {
-    return views;
-  }
+	public List<View> getViews() {
+		return views;
+	}
 
-  public void setViews(List<View> views) {
-    this.views = views;
-  }
+	public void setViews(List<View> views) {
+		this.views = views;
+	}
 
-  public List<String> getTableNames() {
-    List<String> tableNames = new ArrayList<String>();
-    for (View view : views) {
-      if (!tableNames.contains(view.getFqdn())) {
-        tableNames.add(view.getFqdn());
-      }
-    }
-    return tableNames;
-  }
+	public List<String> getTableNames() {
+		List<String> tableNames = new ArrayList<String>();
+		for (View view : views) {
+			if (!tableNames.contains(view.getFqdn())) {
+				tableNames.add(view.getFqdn());
+			}
+		}
+		return tableNames;
+	}
 
 }
