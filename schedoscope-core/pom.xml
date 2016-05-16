@@ -29,11 +29,6 @@
 			<version>1.1.2</version>
 		</dependency>
 		<dependency>
-			<groupId>schedoscope</groupId>
-			<artifactId>schedoscope-conf</artifactId>
-			<version>0.4.4-SNAPSHOT</version>
-		</dependency>
-		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
@@ -214,7 +209,7 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>parquet-pig-bundle</artifactId>
-			<version>1.5.0-cdh5.5.2</version>
+			<version>${pig.parquet.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive.hcatalog</groupId>
@@ -252,8 +247,13 @@
 		</dependency>
 		<dependency>
 			<groupId>schedoscope</groupId>
+			<artifactId>schedoscope-conf</artifactId>
+			<version>${schedoscope.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-export</artifactId>
-			<version>0.4.4-SNAPSHOT</version>
+			<version>${schedoscope.version}</version>
 			<classifier>jar-with-dependencies</classifier>
 		</dependency>
 		<dependency>

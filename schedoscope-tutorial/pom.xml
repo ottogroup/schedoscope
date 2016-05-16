@@ -16,7 +16,7 @@
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
-			<version>0.4.4-SNAPSHOT</version>
+			<version>${schedoscope.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>schedoscope</groupId>
