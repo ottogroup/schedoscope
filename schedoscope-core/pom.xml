@@ -31,7 +31,7 @@
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-conf</artifactId>
-			<version>0.4.4-SNAPSHOT</version>
+			<version>${schedoscope.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -214,7 +214,7 @@
 		<dependency>
 			<groupId>com.twitter</groupId>
 			<artifactId>parquet-pig-bundle</artifactId>
-			<version>1.5.0-cdh5.5.2</version>
+			<version>${pig.parquet.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive.hcatalog</groupId>
@@ -251,12 +251,6 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>schedoscope</groupId>
-			<artifactId>schedoscope-export</artifactId>
-			<version>0.4.4-SNAPSHOT</version>
-			<classifier>jar-with-dependencies</classifier>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-minicluster</artifactId>
 			<version>${hadoop.version}</version>
@@ -266,6 +260,12 @@
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>schedoscope</groupId>
+			<artifactId>schedoscope-export</artifactId>
+			<version>${schedoscope.version}</version>
+			<classifier>jar-with-dependencies</classifier>
 		</dependency>
 		<dependency>
 			<groupId>minioozie</groupId>
@@ -292,7 +292,7 @@
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-export</artifactId>
-			<version>0.4.4-SNAPSHOT</version>
+			<version>${schedoscope.version}</version>
 			<classifier>tests</classifier>
 			<scope>test</scope>
 		</dependency>
