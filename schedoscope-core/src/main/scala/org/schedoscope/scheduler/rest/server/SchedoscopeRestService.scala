@@ -16,7 +16,6 @@
 package org.schedoscope.scheduler.rest.server
 
 import java.util.logging.{ Level, LogManager, Logger }
-
 import akka.actor.{ Actor, Props }
 import akka.io.IO
 import akka.pattern.ask
@@ -29,20 +28,38 @@ import org.schedoscope.scheduler.service.{ SchedoscopeService, SchedoscopeServic
 import org.slf4j.bridge.SLF4JBridgeHandler
 import spray.can.Http
 import spray.http.HttpHeaders.RawHeader
+import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
 import spray.routing.Directive.pimpApply
 import spray.routing.HttpService
-
+import spray.routing.ExceptionHandler
 import scala.language.postfixOps
+import spray.util.LoggingContext
 
 /**
  * Spray actor providing the Schedoscope REST service
  */
 class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor with HttpService {
+
   def actorRefFactory = context
 
   def receive = runRoute(route)
+
+  implicit def myExceptionHandler(implicit log: LoggingContext) =
+    ExceptionHandler {
+      case e: IllegalArgumentException =>
+        requestUri { uri =>
+          log.warning("Invalid scheduling request: {} Problem: {}", uri, e)
+          complete(BadRequest, e.getMessage)
+        }
+
+      case t: Throwable =>
+        requestUri { uri =>
+          log.warning("General exception caught while processing scheduling request: {} Problem: {}", uri, t)
+          complete(InternalServerError, s"Server encountered exception: ${t}")
+        }
+    }
 
   val route = get {
     respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
