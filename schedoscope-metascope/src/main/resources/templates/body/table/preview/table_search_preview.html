@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */  -->
- 
+
 <div data-th-fragment="table(obj)">
   <div th:with="table=${obj.resultEntity}">
     <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
@@ -22,20 +22,20 @@
           <form data-th-action="@{/table/favourite}" method="POST">
             <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
             <div class="col-md-12">
-              <button th:attr="class=${favs.contains(table.fqdn) ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}" 
-                      style="font-size:1.5em; margin-right: 5px;" type="submit"></button>
+              <button th:attr="class=${favs.contains(table.fqdn) ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}"
+                style="font-size: 1.5em; margin-right: 5px;" type="submit"></button>
               <a th:href="'table?fqdn=' + ${table.fqdn}"
-                 th:text="${table.isPartitioned()} ? 
+                th:text="${table.isPartitioned()} ? 
                  ${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')' :
-                 ${table.databaseName} + ' :: ' + ${table.tableName}" th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a>
-              <span style="padding-left: 10px;" data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span>
-              <span class="pull-right" data-th-text="${table.status}"></span>
+                 ${table.databaseName} + ' :: ' + ${table.tableName}"
+                th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a> <span style="padding-left: 10px;"
+                data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span> <span class="pull-right" data-th-text="${table.status}"></span>
             </div>
           </form>
         </div>
       </div>
       <table id="identityTable" class="table table-reflow">
-     	<div th:with="e=${obj.highlightings.get('tableName')}">
+        <div th:with="e=${obj.highlightings.get('tableName')}">
           <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
             <td width="20%"><b data-th-text="'Table'"></b></td>
             <td width="80%"><span th:utext="${e.get(0)}"></span></td>

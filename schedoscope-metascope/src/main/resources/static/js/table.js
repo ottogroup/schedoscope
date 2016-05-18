@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ 
+ */
 
 $(function() {
   $.fn.sort_select_box = function() {
@@ -57,7 +57,7 @@ $(function() {
     var section = urlPart.split('-')[0];
     if (section === 'schemaContent' || section === 'parameterContent') {
       var field = urlPart.split('-')[1];
-      initializeFieldEditor(field); 
+      initializeFieldEditor(field);
       showFieldDocu(section + "-" + field);
     }
   }
@@ -88,5 +88,5 @@ $(function() {
   $('#tags').tagsinput({
     confirmKeys : [ 13, 32, 188 ]
   });
-  
+
 });

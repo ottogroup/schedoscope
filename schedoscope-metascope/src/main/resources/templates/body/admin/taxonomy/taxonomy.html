@@ -13,159 +13,148 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */  -->
- 
+
 <!DOCTYPE html>
 <html>
-<head data-th-replace="includes/head :: head('Otto Group BI')"></head>
+<head data-th-replace="includes/head :: head('Metascope')"></head>
 <body>
 
-	<nav data-th-replace="header/header :: navigation"></nav>
+  <nav data-th-replace="header/header :: navigation"></nav>
 
-	<div id="mainContent">
-		<div class="row" style="margin-right: 0px;">
-			<div class="col-md-8 col-md-offset-2">
-				<div class="row">
-					<div class="col-md-12">
-						<div class="pull-right">
-							<button data-toggle="modal" data-target="#createTaxonomyModal" class="btn btn-default">Create new taxonomy ...</button>
-						</div>
-					</div>
-				</div>
-				<br/>
-				<div data-th-if="${taxonomies.size() == 0}">
-					<div class="jumbotron well" style="background: #fafafa;">
-					  <em>No taxonomies created yet</em>
-					</div>
-				</div>
-				<div data-th-each="taxonomy : ${taxonomies}"
-					th:id="'taxonomy' + ${taxonomy.taxonomyId}" class="jumbotron well"
-					style="background: #fafafa;">
-					<div class="row">
-						<div class="col-md-12">
-							<div class="col-md-3">
-								<h4>
-									<em data-th-text="${taxonomy.name}"></em>
-								</h4>
-							</div>
-							<div class="col-md-9">
-								<div class="pull-right">
-									<div class="btn-group">
-										<button type="button" class="btn btn-default dropdown-toggle"
-											data-toggle="dropdown" aria-haspopup="true"
-											aria-expanded="false">
-											Actions <span class="caret"></span>
-										</button>
-										<ul class="dropdown-menu">
-											<li><a href="javascript:void(0)" th:onclick="'editTaxonomy(' + ${taxonomy.taxonomyId} + ', \'' + ${taxonomy.name} + '\')'">Rename</a></li>
-											<li><a href="javascript:void(0)" th:onclick="'deleteTaxonomy(' + ${taxonomy.taxonomyId} + ')'">Delete</a></li>
-										</ul>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<hr />
-					<div class="row">
-						<div class="col-md-4">
-							<table th:id="'categories' + ${taxonomy.taxonomyId}" class="table table-striped">
-								<tr class="info">
-									<th>Categories</th>
-									<th></th>
-								</tr>
-								<tr data-th-each="c : ${taxonomy.categories}">
-									<td style="vertical-align:middle;"><a data-th-text="${c.name} + ' (' + ${c.categoryObjects.size() + ')'}" href="javascript:void(0)"
-										th:onclick="${'showCategoryObjects(' + taxonomy.taxonomyId + ', ' + c.categoryId + ')'}"></a></td>
-									<td id="categoryActions">
-										<div class="pull-right">
-											<div class="btn-group">
-												<button type="button"
-													class="btn btn-default dropdown-toggle"
-													data-toggle="dropdown" aria-haspopup="true"
-													aria-expanded="false">
-													Actions <span class="caret"></span>
-												</button>
-												<ul class="dropdown-menu">
-													<li><a href="javascript:void(0)" th:onclick="'editCategory(' + ${c.categoryId} + ', \'' + ${c.name} + '\')'">Rename</a></li>
-													<li><a href="javascript:void(0)" th:onclick="'deleteCategory(' + ${c.categoryId} + ')'">Delete</a></li>
-												</ul>
-											</div>
-										</div>
-									</td>
-								</tr>
-								<tr>
-								  <td style="vertical-align:middle;">
-								    <em data-th-if="${taxonomy.categories.size() == 0}">No categories created yet</em>
-								  </td>
-								  <td>
-								    <button class="btn btn-default pull-right" th:onclick="'createCategory(' + ${taxonomy.taxonomyId} + ')'">Create new category</button>
-								  </td>
-								</tr>
-							</table>
-						</div>
-						<div class="col-md-8">
-							<div data-th-each="c : ${taxonomy.categories}">
-								<div th:id="'categoryObjects' + ${c.categoryId}"
-									th:class="'coTable' +  ${taxonomy.taxonomyId}" style="display: none">
-									<table class="table table-striped">
-										<tr class="info">
-											<th data-th-text="${c.name} + ': Category Object'"></th>
-											<th>Description</th>
-											<th></th>
-										</tr>
-										<tr data-th-each="co : ${c.categoryObjects}">
-											<td style="width: 15%; vertical-align:middle;" data-th-text="${co.name}" />
-											<td style="vertical-align:middle;" data-th-text="${co.description}" />
-											<td style="width: 30%;">
-												<div class="pull-right">
-													<div class="btn-group">
-														<button type="button"
-															class="btn btn-default dropdown-toggle"
-															data-toggle="dropdown" aria-haspopup="true"
-															aria-expanded="false">
-															Actions <span class="caret"></span>
-														</button>
-														<ul class="dropdown-menu">
-															<li><a href="javascript:void(0)" 
-															  th:onclick="'editCategoryObject(' + ${co.categoryObjectId} + ', \'' + ${co.name} + '\', \'' + ${co.description} + '\')'">Edit</a></li>
-															<li><a href="javascript:void(0)" th:onclick="'deleteCategoryObject(' + ${co.categoryObjectId} + ')'">Delete</a></li>
-														</ul>
-													</div>
-												</div>
-											</td>
-										</tr>
-										<tr>
-								          <td style="vertical-align:middle;">
-								            <em data-th-if="${c.categoryObjects.size() == 0}">No category objects created yet</em>
-								          </td>
-								          <td></td>
-								          <td>
-								            <button class="btn btn-default pull-right" th:onclick="'createCategoryObject(' + ${c.categoryId} + ')'">Add new category object</button>
-								          </td>
-								        </tr>
-									</table>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+  <div id="mainContent">
+    <div class="row" style="margin-right: 0px;">
+      <div class="col-md-8 col-md-offset-2">
+        <div class="row">
+          <div class="col-md-12">
+            <div class="pull-right">
+              <button data-toggle="modal" data-target="#createTaxonomyModal" class="btn btn-default">Create new taxonomy ...</button>
+            </div>
+          </div>
+        </div>
+        <br />
+        <div data-th-if="${taxonomies.size() == 0}">
+          <div class="jumbotron well" style="background: #fafafa;">
+            <em>No taxonomies created yet</em>
+          </div>
+        </div>
+        <div data-th-each="taxonomy : ${taxonomies}" th:id="'taxonomy' + ${taxonomy.taxonomyId}" class="jumbotron well" style="background: #fafafa;">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="col-md-3">
+                <h4>
+                  <em data-th-text="${taxonomy.name}"></em>
+                </h4>
+              </div>
+              <div class="col-md-9">
+                <div class="pull-right">
+                  <div class="btn-group">
+                    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Actions <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><a href="javascript:void(0)" th:onclick="'editTaxonomy(' + ${taxonomy.taxonomyId} + ', \'' + ${taxonomy.name} + '\')'">Rename</a></li>
+                      <li><a href="javascript:void(0)" th:onclick="'deleteTaxonomy(' + ${taxonomy.taxonomyId} + ')'">Delete</a></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <hr />
+          <div class="row">
+            <div class="col-md-4">
+              <table th:id="'categories' + ${taxonomy.taxonomyId}" class="table table-striped">
+                <tr class="info">
+                  <th>Categories</th>
+                  <th></th>
+                </tr>
+                <tr data-th-each="c : ${taxonomy.categories}">
+                  <td style="vertical-align: middle;"><a data-th-text="${c.name} + ' (' + ${c.categoryObjects.size() + ')'}"
+                    href="javascript:void(0)" th:onclick="${'showCategoryObjects(' + taxonomy.taxonomyId + ', ' + c.categoryId + ')'}"></a></td>
+                  <td id="categoryActions">
+                    <div class="pull-right">
+                      <div class="btn-group">
+                        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                          aria-expanded="false">
+                          Actions <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                          <li><a href="javascript:void(0)" th:onclick="'editCategory(' + ${c.categoryId} + ', \'' + ${c.name} + '\')'">Rename</a></li>
+                          <li><a href="javascript:void(0)" th:onclick="'deleteCategory(' + ${c.categoryId} + ')'">Delete</a></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="vertical-align: middle;"><em data-th-if="${taxonomy.categories.size() == 0}">No categories created yet</em></td>
+                  <td>
+                    <button class="btn btn-default pull-right" th:onclick="'createCategory(' + ${taxonomy.taxonomyId} + ')'">Create new
+                      category</button>
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <div class="col-md-8">
+              <div data-th-each="c : ${taxonomy.categories}">
+                <div th:id="'categoryObjects' + ${c.categoryId}" th:class="'coTable' +  ${taxonomy.taxonomyId}" style="display: none">
+                  <table class="table table-striped">
+                    <tr class="info">
+                      <th data-th-text="${c.name} + ': Category Object'"></th>
+                      <th>Description</th>
+                      <th></th>
+                    </tr>
+                    <tr data-th-each="co : ${c.categoryObjects}">
+                      <td style="width: 15%; vertical-align: middle;" data-th-text="${co.name}" />
+                      <td style="vertical-align: middle;" data-th-text="${co.description}" />
+                      <td style="width: 30%;">
+                        <div class="pull-right">
+                          <div class="btn-group">
+                            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                              aria-expanded="false">
+                              Actions <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                              <li><a href="javascript:void(0)"
+                                th:onclick="'editCategoryObject(' + ${co.categoryObjectId} + ', \'' + ${co.name} + '\', \'' + ${co.description} + '\')'">Edit</a></li>
+                              <li><a href="javascript:void(0)" th:onclick="'deleteCategoryObject(' + ${co.categoryObjectId} + ')'">Delete</a></li>
+                            </ul>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="vertical-align: middle;"><em data-th-if="${c.categoryObjects.size() == 0}">No category objects created yet</em></td>
+                      <td></td>
+                      <td>
+                        <button class="btn btn-default pull-right" th:onclick="'createCategoryObject(' + ${c.categoryId} + ')'">Add new
+                          category object</button>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: create_taxonomy_modal"></div>
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: create_category_modal"></div>
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: create_category_object_modal"></div>
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: edit_taxonomy_modal"></div>
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: edit_category_modal"></div>
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: edit_category_object_modal"></div>
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: delete_taxonomy_modal"></div>
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: delete_category_modal"></div>
-	<div data-th-replace="body/admin/taxonomy/taxonomyModals :: delete_category_object_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: create_taxonomy_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: create_category_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: create_category_object_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: edit_taxonomy_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: edit_category_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: edit_category_object_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: delete_taxonomy_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: delete_category_modal"></div>
+  <div data-th-replace="body/admin/taxonomy/taxonomyModals :: delete_category_object_modal"></div>
 
-	<nav data-th-replace="footer/footer :: footer"></nav>
+  <nav data-th-replace="footer/footer :: footer"></nav>
 
-	<div data-th-replace="includes/scripts :: global"></div>
-	<div data-th-replace="includes/scripts :: taxonomy"></div>
+  <div data-th-replace="includes/scripts :: global"></div>
+  <div data-th-replace="includes/scripts :: taxonomy"></div>
 
 </body>
 </html>

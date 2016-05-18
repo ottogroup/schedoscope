@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */  -->
- 
+
 <div class="modal fade" id="createUserModal" aria-hidden="true" data-th-fragment="create_user_modal" tabindex='-1'>
   <form class="form-inline" data-th-action="@{/admin/user/create}" method="post" autocomplete="off">
     <div class="modal-dialog">
@@ -27,10 +27,7 @@
         <div class="modal-body">
           <div>
             <div style="display: none">
-               <input type="text"/>
-               <input type="password"/>
-               <input type="password"/>
-               <input type="password"/>
+              <input type="text" /> <input type="password" /> <input type="password" /> <input type="password" />
             </div>
             <div class="control-group">
               <label class="control-label" for="username">Username</label>
@@ -80,8 +77,7 @@
             <br />
             <div class="control-group">
               <div class="checkbox">
-                <label>
-                  <input name="admin" type="checkbox"> Admin </input>
+                <label> <input name="admin" type="checkbox"> Admin </input>
                 </label>
               </div>
             </div>
@@ -109,10 +105,7 @@
         <div class="modal-body">
           <div>
             <div style="display: none">
-               <input type="text"/>
-               <input type="password"/>
-               <input type="password"/>
-               <input type="password"/>
+              <input type="text" /> <input type="password" /> <input type="password" /> <input type="password" />
             </div>
             <div class="control-group">
               <label class="control-label" for="username">Username</label>
@@ -134,11 +127,11 @@
                 <input type="password" id="passwordRepeat" name="passwordRepeat" style="width: 100%;" />
               </div>
             </div>
-            <br/>
+            <br />
             <div class="control-group">
               <label class="control-label" for="email">Email</label>
               <div class="controls">
-                <input id="editEmail" name="email" type="text" style="width: 100%;" readonly="readonly"/>
+                <input id="editEmail" name="email" type="text" style="width: 100%;" readonly="readonly" />
               </div>
             </div>
             <br />
@@ -162,8 +155,7 @@
             <br />
             <div class="control-group">
               <div class="checkbox">
-                <label>
-                  <input name="admin" type="checkbox" id="adminCheckbox"> Admin </input>
+                <label> <input name="admin" type="checkbox" id="adminCheckbox"> Admin </input>
                 </label>
               </div>
             </div>
@@ -189,8 +181,7 @@
           <h4 data-th-text="'Delete User'" class="modal-title"></h4>
         </div>
         <div class="modal-body">
-          <label id="confirmLabel"></label>
-          <input id="delUsername" name="username" type="hidden"/>
+          <label id="confirmLabel"></label> <input id="delUsername" name="username" type="hidden" />
         </div>
         <div class="modal-footer">
           <button type="submit" class="btn btn-danger">OK</button>
