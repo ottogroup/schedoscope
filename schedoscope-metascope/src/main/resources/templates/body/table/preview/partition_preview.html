@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */  -->
- 
+
 <div data-th-fragment="partition(partition)">
 
   <div th:class="'panel panel-' + ${util.getColorForPanel(partition.status)}">
-      <div class="panel-heading">
+    <div class="panel-heading">
       <div class="row">
         <div class="col-md-12">
           <a
@@ -27,33 +27,24 @@
                ${partition.urlPath} + ' (' + ${partition.parameterString} + ')' :
                ${partition.urlPath}"></a>
           <div data-th-if="${admin}" class="dropdown pull-right">
-            <a class="btn-link dropdown-toggle" id="actions"
-              data-toggle="dropdown" aria-haspopup="true"
-              aria-expanded="true" style="color: inherit;"> <em
-              data-th-text="${partition.status}"
-              style="padding-right: 5px;"></em> <span class="caret"></span>
+            <a class="btn-link dropdown-toggle" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" style="color: inherit;">
+              <em data-th-text="${partition.status}" style="padding-right: 5px;"></em> <span class="caret"></span>
             </a>
             <ul class="dropdown-menu" aria-labelledby="actions">
               <li class="dropdown-header">Actions</li>
-              <li data-th-if="${!partition.status.equals('materialized') and !partition.status.equals('invalidated') }" class="dropdown-header">No actions available</li>
-              <li data-th-if="${partition.status.equals('materialized')}">
-                <a href="javascript:void(0)" onclick="$(this).next().submit();">Invalidate</a>
+              <li data-th-if="${!partition.status.equals('materialized') and !partition.status.equals('invalidated') }" class="dropdown-header">No
+                actions available</li>
+              <li data-th-if="${partition.status.equals('materialized')}"><a href="javascript:void(0)" onclick="$(this).next().submit();">Invalidate</a>
                 <form action="/admin/schedoscope" method="get">
-                  <input type="hidden" name="action" value="invalidate" />
-                  <input type="hidden" name="urlPath" th:value="${partition.urlPath}" /> 
-                </form>
-              </li>
-              <li data-th-if="${partition.status.equals('invalidated')}">
-                <a href="javascript:void(0)" onclick="$(this).next().submit();">Materialize</a>
+                  <input type="hidden" name="action" value="invalidate" /> <input type="hidden" name="urlPath" th:value="${partition.urlPath}" />
+                </form></li>
+              <li data-th-if="${partition.status.equals('invalidated')}"><a href="javascript:void(0)" onclick="$(this).next().submit();">Materialize</a>
                 <form action="/admin/schedoscope" method="get">
-                  <input type="hidden" name="action" value="materialize" />
-                  <input type="hidden" name="urlPath" th:value="${partition.urlPath}" /> 
-                </form>
-              </li>
+                  <input type="hidden" name="action" value="materialize" /> <input type="hidden" name="urlPath" th:value="${partition.urlPath}" />
+                </form></li>
             </ul>
           </div>
-          <span data-th-if="${!admin}" class="pull-right" style="color: inherit;" data-th-text="${partition.status}"> 
-          </span>
+          <span data-th-if="${!admin}" class="pull-right" style="color: inherit;" data-th-text="${partition.status}"> </span>
         </div>
       </div>
     </div>

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */  -->
- 
-<head data-th-if="${local == false}" data-th-include="includes/head :: head('Otto Group BI')"></head>
+
+<head data-th-if="${local == false}" data-th-include="includes/head :: head('Metascope')"></head>
 
 <div data-th-if="${local == false}">
   <nav data-th-replace="header/header :: navigation"></nav>
@@ -29,10 +29,11 @@
             <form data-th-action="@{/table/favourite}" method="POST">
               <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
               <div class="col-md-12">
-                <button th:attr="class=${isFavourite ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}" 
-                   style="font-size:1.5em; margin-right: 5px;" type="submit"></button>
-                <a data-th-if="${!table.isPartitioned()}" href="javascript:void(0)" data-th-text="${table.databaseName} + ' :: ' + ${table.tableName}"></a> 
-                <a data-th-if="${table.isPartitioned()}" href="javascript:void(0)" data-th-text="${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')'"></a> 
+                <button th:attr="class=${isFavourite ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}"
+                  style="font-size: 1.5em; margin-right: 5px;" type="submit"></button>
+                <a data-th-if="${!table.isPartitioned()}" href="javascript:void(0)" data-th-text="${table.databaseName} + ' :: ' + ${table.tableName}"></a>
+                <a data-th-if="${table.isPartitioned()}" href="javascript:void(0)"
+                  data-th-text="${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')'"></a>
                 <button type='button' id="minimizeButton" style="padding: 0px; width: 30px;" class="btn btn-link pull-right">
                   <span id="minimizeButtonCaret" class="glyphicon glyphicon-triangle-top"></span>
                 </button>
@@ -69,12 +70,12 @@
                 <li><a href="#storageContent">Storage</a></li>
                 <li><a href="#transformationContent">Transformation</a></li>
                 <li><a href="#dependencyContent">Dependency</a></li>
-                <li data-th-if="${admin}"><a href="#adminContent">Administration</a></li> 
+                <li data-th-if="${admin}"><a href="#adminContent">Administration</a></li>
               </ul>
             </div>
 
             <!-- Content -->
-           <div class="col-md-10" style="padding-left: 1px; padding-right: 0px;">
+            <div class="col-md-10" style="padding-left: 1px; padding-right: 0px;">
               <div class="tab-content" style="border: none;">
                 <div data-th-replace="body/table/sections/documentation :: documentation(${table}, ${util})"></div>
                 <div data-th-replace="body/table/sections/taxonomy :: taxonomy(${table}, ${util})"></div>

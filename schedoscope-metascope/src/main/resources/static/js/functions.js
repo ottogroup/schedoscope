@@ -1,18 +1,18 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */ 
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 
 var initializeFieldEditor = function(fieldname) {
   var fieldEditor = "#" + fieldname + "Editor";
@@ -22,37 +22,29 @@ var initializeFieldEditor = function(fieldname) {
         minHeight : null,
         maxHeight : null,
         focus : true,
-        toolbar : [ [ 'style', [ 'style' ] ],
-            [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ],
-            [ 'fontname', [ 'fontname' ] ], [ 'fontsize', [ 'fontsize' ] ],
-            [ 'color', [ 'color' ] ], [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
-            [ 'height', [ 'height' ] ], [ 'table', [ 'table' ] ],
-            [ 'insert', [ 'link', 'hr' ] ], [ 'view', [ 'codeview' ] ],
-            [ 'help', [ 'help' ] ] ],
+        toolbar : [ [ 'style', [ 'style' ] ], [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ],
+            [ 'fontname', [ 'fontname' ] ], [ 'fontsize', [ 'fontsize' ] ], [ 'color', [ 'color' ] ],
+            [ 'para', [ 'ul', 'ol', 'paragraph' ] ], [ 'height', [ 'height' ] ], [ 'table', [ 'table' ] ],
+            [ 'insert', [ 'link', 'hr' ] ], [ 'view', [ 'codeview' ] ], [ 'help', [ 'help' ] ] ],
       });
-  $(fieldEditor).on('summernote.change',
-      function(customEvent, contents, $editable) {
-        console.log($(fieldEditor).code());
-        $('#' + fieldname + 'Input').val($(fieldEditor).code());
-      });
+  $(fieldEditor).on('summernote.change', function(customEvent, contents, $editable) {
+    console.log($(fieldEditor).code());
+    $('#' + fieldname + 'Input').val($(fieldEditor).code());
+  });
 
   var fieldCommentEditor = "#" + fieldname + "CommentEditor";
-  $(fieldCommentEditor)
-      .summernote(
-          {
-            height : 75,
-            minHeight : null,
-            maxHeight : null,
-            focus : true,
-            toolbar : [ [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ],
-                [ 'fontname', [ 'fontname' ] ], [ 'color', [ 'color' ] ],
-                [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
-                [ 'insert', [ 'link' ] ], ],
-          });
-  $(fieldCommentEditor).on('summernote.change',
-      function(customEvent, contents, $editable) {
-        $('#' + fieldname + 'CommentInput').val($(fieldCommentEditor).code());
+  $(fieldCommentEditor).summernote(
+      {
+        height : 75,
+        minHeight : null,
+        maxHeight : null,
+        focus : true,
+        toolbar : [ [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ], [ 'fontname', [ 'fontname' ] ],
+            [ 'color', [ 'color' ] ], [ 'para', [ 'ul', 'ol', 'paragraph' ] ], [ 'insert', [ 'link' ] ], ],
       });
+  $(fieldCommentEditor).on('summernote.change', function(customEvent, contents, $editable) {
+    $('#' + fieldname + 'CommentInput').val($(fieldCommentEditor).code());
+  });
 }
 
 var initTablesorter = function() {
@@ -74,12 +66,10 @@ var setFilterStatus = function(e, filterName) {
   if (open) {
     $.cookie(filterName, "open");
     $('#' + e.id).children().eq(1).replaceWith(
-        '<span id="#' + filterName
-            + 'Caret" class="dropup"><span class="caret"></span></span>')
+        '<span id="#' + filterName + 'Caret" class="dropup"><span class="caret"></span></span>')
   } else {
     $.cookie(filterName, "closed");
-    $('#' + e.id).children().eq(1).replaceWith(
-        '<span id="#' + filterName + 'Caret" class="caret"></span>')
+    $('#' + e.id).children().eq(1).replaceWith('<span id="#' + filterName + 'Caret" class="caret"></span>')
   }
 }
 
@@ -94,10 +84,8 @@ var clearSearchField = function() {
 var preSubmitFilterForm = function() {
   var params = getQueryParameter();
   for ( var key in params) {
-    if (!(key === "searchQuery") && !(key === "e") && !(key === "p")
-        && !(key === "p")) {
-      $('<input />').attr('type', 'hidden').attr('name', key).attr('value',
-          params[key]).appendTo('#filterForm');
+    if (!(key === "searchQuery") && !(key === "e") && !(key === "p") && !(key === "p")) {
+      $('<input />').attr('type', 'hidden').attr('name', key).attr('value', params[key]).appendTo('#filterForm');
     }
   }
   return true;
@@ -181,7 +169,7 @@ var deleteCategoryObject = function(categoryObjectId) {
 var showCategoryObjects = function(taxonomyId, categoryId) {
   $(".coTable" + taxonomyId).css("display", "none");
   $("#categoryObjects" + categoryId).css("display", "inline");
-} 
+}
 
 var editUser = function(username, email, fullname, admin, group) {
   $('#editUsername').val(username);
@@ -196,8 +184,7 @@ var editUser = function(username, email, fullname, admin, group) {
  * Opens the 'delete user' modal
  */
 var deleteUser = function(username) {
-  $('#confirmLabel').text(
-      "Do you realy want to delete the user '" + username + "' ?");
+  $('#confirmLabel').text("Do you realy want to delete the user '" + username + "' ?");
   $('#delUsername').val(username);
   $("#deleteUserModal").modal('show');
 }
@@ -206,17 +193,12 @@ var deleteUser = function(username) {
  * Adds a business object tag
  */
 var addCo = function(taxonomy, name, description, category, id) {
-  if ( $("[id='" + taxonomy + category + name + "']").length == 0) {
+  if ($("[id='" + taxonomy + category + name + "']").length == 0) {
     var div = $("[id='" + taxonomy + "Div']").find(".bootstrap-tagsinput");
-    var tag = $('<a id="'
-        + taxonomy
-        + category
-        + name
+    var tag = $('<a id="' + taxonomy + category + name
         + '" style="margin-right: 6px;" data-toggle="popover" class="tag label label-info" data-original-title="'
-        + name + ' (Category: ' + category
-        + ')" data-placement="bottom" data-content="' + description
-        + '\n\n" data-coid="' + id + '">' + name
-        + '<span data-role="remove"></span></a></div>');
+        + name + ' (Category: ' + category + ')" data-placement="bottom" data-content="' + description
+        + '\n\n" data-coid="' + id + '">' + name + '<span data-role="remove"></span></a></div>');
     div.prepend(tag);
     tag.after(' ');
     $('[data-toggle="tooltip"]').tooltip()
@@ -339,7 +321,7 @@ var setViews = function(data) {
   $("#partitionsBody").html(data);
   $("#partitionSection").show();
   $("#loadingViewsLabel").hide();
-  
+
   $('.showFirst').click(function() {
     var link = $(this);
     var list = $(this).next().slideToggle(function() {
@@ -351,7 +333,7 @@ var setViews = function(data) {
     });
     $('.showFirst > li').not(this).find('ul').slideUp();
   });
-  
+
   var url = document.location.toString();
   if (url.match('#')) {
     var urlPart = url.split('#')[1];
@@ -361,7 +343,9 @@ var setViews = function(data) {
         $(this).css('background-color', 'rgba(153, 222, 255, 0.2)');
       })
       setTimeout(function() {
-        $('html,body').animate({scrollTop: row.offset().top - 70},'slow');
+        $('html,body').animate({
+          scrollTop : row.offset().top - 70
+        }, 'slow');
       }, 100);
     }
   }
@@ -404,28 +388,27 @@ var expandFunction = function(id) {
  * Edit comment
  */
 var editComment = function(commentDiv) {
-  var div =  $("#" + commentDiv);
+  var div = $("#" + commentDiv);
   div.toggle();
   var html = div.children().first().html();
-  
+
   var editor = "#" + commentDiv + "editEditor";
-  $(editor).summernote({
-    height : 75,
-    minHeight : null,
-    maxHeight : null,
-    focus : true,
-    toolbar : [ [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ],
-              [ 'fontname', [ 'fontname' ] ], [ 'color', [ 'color' ] ],
-              [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
-              [ 'insert', [ 'link' ] ], ],
-  });
+  $(editor).summernote(
+      {
+        height : 75,
+        minHeight : null,
+        maxHeight : null,
+        focus : true,
+        toolbar : [ [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ], [ 'fontname', [ 'fontname' ] ],
+            [ 'color', [ 'color' ] ], [ 'para', [ 'ul', 'ol', 'paragraph' ] ], [ 'insert', [ 'link' ] ], ],
+      });
 
   $(editor).on('summernote.change', function(customEvent, contents, $editable) {
     $('#' + commentDiv + 'text').val($(editor).code());
   });
-  
+
   $(editor).code(html);
-  
+
   var editorSection = "#" + commentDiv + "editEditorSection";
   $(editorSection).toggle();
 }
@@ -447,15 +430,15 @@ var toggleEditDocu = function(id, hideTextWrapper) {
 
 var successToast = function(title, message) {
   $.toast({
-    text: message, // Text that is to be shown in the toast
-    heading: title, // Optional heading to be shown on the toast
-    icon: 'success', // Type of toast icon
-    showHideTransition: 'fade', // fade, slide or plain
-    allowToastClose: true, // Boolean value true or false
-    hideAfter: 2500, // false to make it sticky or number representing the miliseconds as time after which toast needs to be hidden
-    position: 'top-center', // bottom-left or bottom-right or bottom-center or top-left or top-right or top-center or mid-center or an object representing the left, right, top, bottom values
-    textAlign: 'left',  // Text alignment i.e. left, right or center
-    loader: false  // Whether to show loader or not. True by default
+    text : message,
+    heading : title,
+    icon : 'success',
+    showHideTransition : 'fade',
+    allowToastClose : true,
+    hideAfter : 2500,
+    position : 'top-center',
+    textAlign : 'left',
+    loader : false
   });
 }
 

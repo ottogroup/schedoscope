@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ 
+ */
 
 $(function() {
   /** AJAX AND FORM SETUP **/
@@ -23,7 +23,7 @@ $(function() {
     var header = "X-CSRF-TOKEN";
     xhr.setRequestHeader(header, token);
   });
-  
+
   /* register pre-submit handler for the filter/search form */
   $("#filterForm").submit(preSubmitFilterForm);
 

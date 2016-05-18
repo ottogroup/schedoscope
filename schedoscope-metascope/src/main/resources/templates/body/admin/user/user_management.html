@@ -13,65 +13,61 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */  -->
- 
+
 <!DOCTYPE html>
 <html>
-<head data-th-replace="includes/head :: head('Otto Group BI')"></head>
+<head data-th-replace="includes/head :: head('Metascope')"></head>
 <body>
 
-	<nav data-th-replace="header/header :: navigation"></nav>
+  <nav data-th-replace="header/header :: navigation"></nav>
 
-	<div id="mainContent">
-		<div class="row" style="margin-right: 0px;">
-			<div class="col-md-8 col-md-offset-2">
-				<div class="row">
-					<div class="col-md-12">
-						<div style="margin: 20px;">
-							<table id="userTable" class="table table-striped">
-								<tr class="info">
-									<th>Username</th>
-									<th>Name</th>
-									<th>Email</th>
-									<th>Group</th>
-									<th>Role</th>
-									<th>
-										<button onclick="createUser()" class="btn pull-right"
-											data-toggle="modal" data-target="#createUserModal">Create
-											User</button>
-									</th>
-								</tr>
-								<tr data-th-each="user : ${users}">
-									<td data-th-text="${user.username}" />
-									<td data-th-text="${user.fullname}" />
-									<td data-th-text="${user.email}" />
-									<td data-th-text="${user.usergroup}" />
-									<td data-th-text="${user.userrole}" />
-									<td id="userActions">
-										<div class="pull-right">
-											<button
-												th:onclick="'editUser(\'' + ${user.username} + '\', \'' + ${user.email} + '\', \'' + ${user.fullname} + '\', ' + ${user.isAdmin()} + ', \'' + ${user.usergroup} + '\')'"
-												class="btn btn-default">Edit</button>
-											<button
-												th:onclick="'deleteUser(\'' + ${user.username} + '\')'"
-												style="padding-left: 10px;" class="btn btn-danger">Delete</button>
-										</div>
-									</td>
-								</tr>
-							</table>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+  <div id="mainContent">
+    <div class="row" style="margin-right: 0px;">
+      <div class="col-md-8 col-md-offset-2">
+        <div class="row">
+          <div class="col-md-12">
+            <div style="margin: 20px;">
+              <table id="userTable" class="table table-striped">
+                <tr class="info">
+                  <th>Username</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Group</th>
+                  <th>Role</th>
+                  <th>
+                    <button onclick="createUser()" class="btn pull-right" data-toggle="modal" data-target="#createUserModal">Create User</button>
+                  </th>
+                </tr>
+                <tr data-th-each="user : ${users}">
+                  <td data-th-text="${user.username}" />
+                  <td data-th-text="${user.fullname}" />
+                  <td data-th-text="${user.email}" />
+                  <td data-th-text="${user.usergroup}" />
+                  <td data-th-text="${user.userrole}" />
+                  <td id="userActions">
+                    <div class="pull-right">
+                      <button
+                        th:onclick="'editUser(\'' + ${user.username} + '\', \'' + ${user.email} + '\', \'' + ${user.fullname} + '\', ' + ${user.isAdmin()} + ', \'' + ${user.usergroup} + '\')'"
+                        class="btn btn-default">Edit</button>
+                      <button th:onclick="'deleteUser(\'' + ${user.username} + '\')'" style="padding-left: 10px;" class="btn btn-danger">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-	<div data-th-replace="body/admin/user/userModals :: create_user_modal"></div>
-	<div data-th-replace="body/admin/user/userModals :: edit_user_modal"></div>
-	<div data-th-replace="body/admin/user/userModals :: delete_user_modal"></div>
+  <div data-th-replace="body/admin/user/userModals :: create_user_modal"></div>
+  <div data-th-replace="body/admin/user/userModals :: edit_user_modal"></div>
+  <div data-th-replace="body/admin/user/userModals :: delete_user_modal"></div>
 
-	<nav data-th-replace="footer/footer :: footer"></nav>
+  <nav data-th-replace="footer/footer :: footer"></nav>
 
-	<div data-th-replace="includes/scripts :: global"></div>
+  <div data-th-replace="includes/scripts :: global"></div>
 
 </body>
 </html>

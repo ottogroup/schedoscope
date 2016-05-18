@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */  -->
- 
-<div th:attr="class=${selectedPartition == null ? 'tab-pane active' : 'tab-pane'}" id="documentationContent" data-th-fragment="documentation(table,util)">
+
+<div th:attr="class=${selectedPartition == null ? 'tab-pane active' : 'tab-pane'}" id="documentationContent"
+  data-th-fragment="documentation(table,util)">
   <form class="form" data-th-action="@{/table/owner}" method="post" th:with="user=${userEntityService.findByFullname(table.personResponsible)}">
-  	<div class="row" style="padding-bottom: 10px;">
+    <div class="row" style="padding-bottom: 10px;">
       <div class="form-group">
         <label for="person" class="col-md-2 control-label" style="margin-top: 8px;">Person responsible:</label>
         <div class="col-md-2" style="padding-top: 3px;">
-          <input data-th-if="${user == null}" th:value="${table.personResponsible}" name="person" id="personResponsibleField" 
-          		 onfocus="javascript:$(this).autocomplete('search','');"></input>
-          <input data-th-if="${user != null}" th:value="${user.fullname}" name="person" id="personResponsibleField" 
-          		 onfocus="javascript:$(this).autocomplete('search','');"></input>
-          <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> 
+          <input data-th-if="${user == null}" th:value="${table.personResponsible}" name="person" id="personResponsibleField"
+            onfocus="javascript:$(this).autocomplete('search','');"></input> <input data-th-if="${user != null}" th:value="${user.fullname}"
+            name="person" id="personResponsibleField" onfocus="javascript:$(this).autocomplete('search','');"></input> <input type="hidden"
+            name="fqdn" th:value="${table.fqdn}" />
         </div>
-        <div style="padding-right:20px;">
+        <div style="padding-right: 20px;">
           <button class="btn btn-success pull-right" type="submit">Save</button>
         </div>
       </div>
@@ -34,17 +34,17 @@
     <div class="row" data-th-if="${user != null}" style="padding-bottom: 5px;">
       <label type="text" for="person" class="col-md-offset-1 col-md-1 control-label" style="padding-top: 2px;">User</label>
       <div class="col-md-2">
-      	<input th:value="${user.username}" readonly="readonly"></input>
+        <input th:value="${user.username}" readonly="readonly"></input>
       </div>
     </div>
     <div class="row" data-th-if="${user != null}">
       <label type="text" for="person" class="col-md-offset-1 col-md-1 control-label" style="padding-top: 2px;">Email</label>
       <div class="col-md-2">
-      	<input th:value="${user.email}" readonly="readonly"></input>
+        <input th:value="${user.email}" readonly="readonly"></input>
       </div>
     </div>
   </form>
-  <hr/>
+  <hr />
   <div class="row">
     <div class="col-md-6">
       <div class="control-group">
@@ -52,19 +52,21 @@
           <label class="control-label" for="categories">Documentation</label>
           <div data-th-if="${table.hasDocumentation()}" th:with="userEntity=${userEntityService.findByUsername(table.comment.username)}">
             <div th:with="username=${userEntity != null ? userEntity.fullname : table.comment.username}">
-              <p data-th-if="${table.hasDocumentation()}" style="padding-left: 10px; flex: 1;" data-th-text="'last edit: ' +  ${util.getTime(table.comment.lastEdit)} + ' by ' + ${username}"></p>
+              <p data-th-if="${table.hasDocumentation()}" style="padding-left: 10px; flex: 1;"
+                data-th-text="'last edit: ' +  ${util.getTime(table.comment.lastEdit)} + ' by ' + ${username}"></p>
             </div>
           </div>
         </div>
-        <br/>
+        <br />
       </div>
     </div>
     <div class="pull-right" style="padding-right: 20px;">
       <form class="form" data-th-action="@{/table/documentation}" method="post">
-        <button id="tableDocuEditButton" type="button" onclick="toggleEditDocu('table')" data-th-if="${table.hasDocumentation()}" class="btn btn-default">Edit Documentation</button>
-        <button id="tableDocuEditButton" type="button" onclick="toggleEditDocu('table')" data-th-if="${!table.hasDocumentation()}" class="btn btn-success">Create Documentation</button>
-        <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> 
-        <input type="hidden" id="tableDocumentationInput" name="documentation" />
+        <button id="tableDocuEditButton" type="button" onclick="toggleEditDocu('table')" data-th-if="${table.hasDocumentation()}"
+          class="btn btn-default">Edit Documentation</button>
+        <button id="tableDocuEditButton" type="button" onclick="toggleEditDocu('table')" data-th-if="${!table.hasDocumentation()}"
+          class="btn btn-success">Create Documentation</button>
+        <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> <input type="hidden" id="tableDocumentationInput" name="documentation" />
         <button id="tableSubmitDocuButton" class="btn btn-success" type="submit" style="display: none;">Save</button>
         <button id="tableCancelDocuButton" onclick="toggleEditDocu('table')" class="btn btn-default" type="button" style="display: none;">Cancel</button>
       </form>
@@ -83,56 +85,53 @@
       </div>
     </div>
   </div>
-  <br/>
-  <div style="display: flex;"  data-th-if="${table.hasDocumentation()}">
+  <br />
+  <div style="display: flex;" data-th-if="${table.hasDocumentation()}">
     <p style="font-size: 14; margin: 0px; padding-right: 5px;" data-th-text="${table.comments.size()} + ' Comments &bull;'" />
     <a href="javascript:void(0)" onclick="expandFunction('table')" data-th-text="'Write a comment'"></a>
   </div>
   <div id="commentSection" data-th-if="${table.hasDocumentation()}">
     <div class="row">
       <div class="col-md-12" style="padding-left: 50px;">
-      	<hr/>
+        <hr />
         <div data-th-each="comment : ${table.comments}">
           <div th:id="'comment' + ${comment.id} + 'editEditorSection'" style="display: none">
             <div th:id="'comment' + ${comment.id} + 'editEditor'"></div>
             <form class="form" data-th-action="@{/table/documentation/comment/edit}" method="post" style="display: inline">
-              <input type="hidden" name="commentID" th:value="${comment.id}"/> 
-              <input type="hidden" name="commentText" th:id="'comment' + ${comment.id} + 'text'"/> 
+              <input type="hidden" name="commentID" th:value="${comment.id}" /> <input type="hidden" name="commentText"
+                th:id="'comment' + ${comment.id} + 'text'" />
               <button class="btn btn-success">Save</button>
               <button type="button" class="btn btn-default" th:onclick="'editComment(\'comment' + ${comment.id} + '\')'">Cancel</button>
             </form>
-            <br/>
-            <br/>
+            <br /> <br />
           </div>
           <div style="margin-top: 10px;" class="well" th:id="'comment' + ${comment.id}">
             <div>
               <p th:remove="tag" th:utext="${comment.text}"></p>
             </div>
-            <hr style="margin: 2px; border-color: lightgrey"/>
+            <hr style="margin: 2px; border-color: lightgrey" />
             <div th:with="userEntity=${userEntityService.findByUsername(comment.username)}">
               <div th:with="username=${userEntity != null ? userEntity.fullname : comment.username}">
-                <a data-th-if="${userEntity != null}" data-th-text="${username} + ','" th:href="'mailto:' + ${userEntity.email}"></a>
-                <span data-th-if="${userEntity == null}" data-th-text="${username} + ','"></span>
-                <span data-th-text="${util.getTime(comment.lastEdit)}"></span>
+                <a data-th-if="${userEntity != null}" data-th-text="${username} + ','" th:href="'mailto:' + ${userEntity.email}"></a> <span
+                  data-th-if="${userEntity == null}" data-th-text="${username} + ','"></span> <span data-th-text="${util.getTime(comment.lastEdit)}"></span>
                 <div data-th-if="${userEntity != null and userEntity.equals(userEntityService.getUser())}" style="display: inline">
-	              <span style="padding-left:2px; padding-right:2px;">-</span>
-	              <a href="javascript:void()" th:onclick="'editComment(\'comment' + ${comment.id} + '\')'"><span class="glyphicon glyphicon-pencil"></span></a>
-	              <form class="form" data-th-action="@{/table/documentation/comment/delete}" method="post" style="display: inline">
-	                <input type="hidden" name="commentID" th:value="${comment.id}"/> 
-	                <a href="javascript:void()" onclick="$(this).closest('form').submit()"><span class="glyphicon glyphicon-trash"></span></a>
-	              </form>
+                  <span style="padding-left: 2px; padding-right: 2px;">-</span> <a href="javascript:void()"
+                    th:onclick="'editComment(\'comment' + ${comment.id} + '\')'"><span class="glyphicon glyphicon-pencil"></span></a>
+                  <form class="form" data-th-action="@{/table/documentation/comment/delete}" method="post" style="display: inline">
+                    <input type="hidden" name="commentID" th:value="${comment.id}" /> <a href="javascript:void()"
+                      onclick="$(this).closest('form').submit()"><span class="glyphicon glyphicon-trash"></span></a>
+                  </form>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <br/>
+        <br />
         <div class="row">
           <div class="col-md-12" id="tableCommentEditorSection" style="display: none;">
             <div id="tableCommentEditor"></div>
             <form class="form" data-th-action="@{/table/documentation/comment/add}" method="post">
-              <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> 
-              <input type="hidden" id="tableCommentInput" name="comment" />
+              <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> <input type="hidden" id="tableCommentInput" name="comment" />
               <button id="createCommentButton" type="submit" class="btn btn-success pull-right">Create Comment</button>
             </form>
           </div>
