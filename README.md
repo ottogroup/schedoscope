@@ -62,7 +62,7 @@ Schedoscope was conceived at the Business Intelligence department of [Otto Group
 
 The following people have contributed to the various parts of Schedoscope so far: 
 
-[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Kassem Tohme](https://github.com/ktohme), [Christian Richter](https://github.com/christianrichter), [Dominik Benz](https://github.com/dominikbenz), [Martin Sänger](https://github.com/martinsaenger), [Annika Seidler](https://github.com/aleveringhaus).
+[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Kassem Tohme](https://github.com/ktohme), [Christian Richter](https://github.com/christianrichter), [Dominik Benz](https://github.com/dominikbenz), [Martin Sänger](https://github.com/martinsaenger), [Annika Seidler](https://github.com/aleveringhaus), [Alexander Kolb](https://github.com/lofifnc).
 
 We would love to get contributions from you as well. We haven't got a formalized submission process yet. If you have an idea for a contribution or even coded one already, get in touch with Utz or just send us your pull request. We will work it out from there.
 
