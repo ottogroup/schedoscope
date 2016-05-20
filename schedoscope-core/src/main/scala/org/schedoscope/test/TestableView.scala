@@ -64,7 +64,7 @@ trait test extends TestableView {
   def `then`(sortedBy: FieldLike[_] = null, disableDependencyCheck: Boolean = false) {
     if(!disableDependencyCheck) {
       if (!checkDependencies()) {
-        throw new UnsupportedOperationException("The input views to the test given by basedOn() do not cover all types of dependencies of the view under test.")
+        throw new IllegalArgumentException("The input views to the test given by basedOn() do not cover all types of dependencies of the view under test.")
       }
     }
     deploySchema()
