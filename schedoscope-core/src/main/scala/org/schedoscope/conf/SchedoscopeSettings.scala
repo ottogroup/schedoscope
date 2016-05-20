@@ -154,6 +154,17 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
     driverSettings(transformationName)
   }
 
+  /**
+    * Retrieve a setting  for a transformation type
+    *
+    * @param transformationName the name of the transformation type (e.g. mapreduce)
+    * @param n	the name of the setting for transformationName
+    * @return the setting's value as a string
+    */
+  def getTransformationSetting(transformationName: String, n: String) = {
+    val confName = s"schedoscope.transformations.${transformationName}.transformation.${n}"
+    config.getString(confName)
+  }
 }
 
 /**
