@@ -150,7 +150,7 @@ class TestableViewTest extends FlatSpec with Matchers {
   }
 
   it should "throw an exception for invalid dependencies (both duplicates one invalid)" in {
-    an[UnsupportedOperationException] should be thrownBy {
+    an[IllegalArgumentException] should be thrownBy {
       new View5 with test {
         basedOn(view2i1, view2i2, view3)
         then()
