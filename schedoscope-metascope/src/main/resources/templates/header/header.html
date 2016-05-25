@@ -1,21 +1,42 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
 <nav class="navbar navbar-default navbar-fixed-top" data-th-fragment="navigation">
   <div class="navbar-header">
     <a style="color: #E23322;" class="navbar-brand" data-th-href="@{/}">Metascope</a>
   </div>
+  <ul class="nav navbar-nav" data-th-if="${userEntityService.isAuthenticated()}">
+    <li th:class="${#httpServletRequest.requestURI.equals('/home') ? 'active' : ''}"><a data-th-if="${admin}" data-th-href="@{/home}">Views</a></li>
+    <li th:class="${#httpServletRequest.requestURI.equals('/admin/taxonomies') ? 'active' : ''}"><a data-th-if="${admin}"
+      data-th-href="@{/admin/taxonomies}">Taxonomies</a></li>
+    <li th:class="${#httpServletRequest.requestURI.equals('/admin/users') ? 'active' : ''}"><a data-th-if="${admin and userMgmnt}"
+      data-th-href="@{/admin/users}">User Management</a></li>
+  </ul>
   <div class="container">
     <div class="collapse navbar-collapse" id="navbar">
       <ul class="nav navbar-nav navbar-right">
         <li class="divider-vertical"></li>
-        <li class="dropdown" data-th-if="${userEntityService != null and userEntityService.isAuthenticated()}">
-          <a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
-            <span class="glyphicon glyphicon-user"></span>
-            <span style="padding-left: 2px;" data-th-text="${userEntityService.getUser().username}"></span>
-            <span class="caret"></span>
-          </a>
+        <li class="dropdown" data-th-if="${userEntityService != null and userEntityService.isAuthenticated()}"><a class="dropdown-toggle"
+          data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"> <span class="glyphicon glyphicon-user"></span> <span
+            style="padding-left: 2px;" data-th-text="${userEntityService.getUser().username}"></span> <span class="caret"></span>
+        </a>
           <ul class="dropdown-menu">
             <li data-th-if="${admin}" class="dropdown-header">Admin</li>
-            <li data-th-if="${admin and userMgmnt}"><a href="#" data-toggle="modal" data-target="#userManagement">User Management</a></li>
-            <li data-th-if="${admin}"><a href="#" data-toggle="modal" data-target="#taxonomyModal">Taxonomies</a></li>
+            <li data-th-if="${admin}"><a th:href="@{'/admin/taxonomies'}">Taxonomies</a></li>
+            <li data-th-if="${admin and userMgmnt}"><a th:href="@{'/admin/users'}">User Management</a></li>
             <li data-th-if="${admin}" role="separator" class="divider"></li>
             <li class="dropdown-header">Actions</li>
             <li>
@@ -23,8 +44,7 @@
                 <button class="btn btn-link btn-logout" style="color: #262626" type="submit">Logout</button>
               </form>
             </li>
-          </ul>
-        </li>
+          </ul></li>
       </ul>
     </div>
   </div>

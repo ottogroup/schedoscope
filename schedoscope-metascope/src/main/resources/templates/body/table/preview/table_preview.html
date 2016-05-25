@@ -1,3 +1,19 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
 <div data-th-fragment="table(table)">
   <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
     <div class="panel-heading">
@@ -5,13 +21,13 @@
         <form data-th-action="@{/table/favourite}" method="POST">
           <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
           <div class="col-md-12">
-            <button th:attr="class=${favs.contains(table.fqdn) ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}" 
-                    style="font-size:1.5em; margin-right: 5px;" type="submit"></button>
+            <button th:attr="class=${favs.contains(table.fqdn) ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}"
+              style="font-size: 1.5em; margin-right: 5px;" type="submit"></button>
             <a th:href="'table?fqdn=' + ${table.fqdn}"
-               th:text="${table.isPartitioned()} ? 
+              th:text="${table.isPartitioned()} ? 
                ${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')' :
-               ${table.databaseName} + ' :: ' + ${table.tableName}" th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a>
-            <span class="pull-right" data-th-text="${table.status}"></span>
+               ${table.databaseName} + ' :: ' + ${table.tableName}"
+              th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a> <span class="pull-right" data-th-text="${table.status}"></span>
           </div>
         </form>
       </div>

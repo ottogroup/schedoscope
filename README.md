@@ -1,4 +1,4 @@
-# ![Schedoscope](https://github.com/ottogroup/schedoscope/blob/master/schedoscope-tutorial/docs/pictures/schedoscope_logo.jpg)
+# ![Schedoscope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/schedoscope_logo.jpg)
 
 ## Introduction
 
@@ -38,7 +38,12 @@ Take a look at the View DSL Primer to get more information about the capabilitie
 - [Schedoscope View DSL Primer](https://github.com/ottogroup/schedoscope/wiki/Schedoscope%20View%20DSL%20Primer)
 
 More documentation can be found here:
-* [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
+- [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
+
+Check out Metascope! It's an add-on to Schedoscope for collaborative metadata management, data discovery and exploration, and data lineage tracing:
+- [Metascope Primer](https://github.com/ottogroup/schedoscope/wiki/Metascope%20Primer)
+
+![Metascope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/lineage.png)
 
 ## When is Schedoscope not for you?
 
@@ -57,13 +62,18 @@ Schedoscope was conceived at the Business Intelligence department of [Otto Group
 
 The following people have contributed to the various parts of Schedoscope so far: 
 
-[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Dominik Benz](https://github.com/dominikbenz), [Kassem Tohme](https://github.com/ktohme), [Christian Richter](https://github.com/christianrichter), [Martin Sänger](https://github.com/martinsaenger), [Annika Seidler](https://github.com/aleveringhaus).
+[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Kassem Tohme](https://github.com/ktohme), [Christian Richter](https://github.com/christianrichter), [Dominik Benz](https://github.com/dominikbenz), [Martin Sänger](https://github.com/martinsaenger), [Annika Seidler](https://github.com/aleveringhaus), [Alexander Kolb](https://github.com/lofifnc).
 
 We would love to get contributions from you as well. We haven't got a formalized submission process yet. If you have an idea for a contribution or even coded one already, get in touch with Utz or just send us your pull request. We will work it out from there.
 
 Please help making Schedoscope better!
 
 ## News
+
+###### 05/21/2016 - Release 0.5.0
+We have released Version 0.5.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom). 
+
+This is a biggie. We have added Metascope to our distribution. Metascope is a collaborative metadata management, documentation, exploration, and data lineage tracing tool that exploits the integrated specification of data structure, dependencies, and computation logic in Schedoscope views. See [the tutorial](https://github.com/ottogroup/schedoscope/wiki/Open%20Street%20Map%20Tutorial) and the [Metascope primer](https://github.com/ottogroup/schedoscope/wiki/Metascope%20Primer) for more information.
 
 ###### 04/26/2016 - Release 0.4.3
 
@@ -89,50 +99,7 @@ This is a big release including:
 
 * new materialization modes `SET_ONLY` and `TRANSFORMATION_ONLY` for more flexible ops (see [Scheduling Command Reference](https://github.com/ottogroup/schedoscope/wiki/Scheduling-Command-Reference))
 
-###### 01/22/2016 - Release 0.3.5
-
-We have released Version 0.3.5 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-This release migrates Schedoscope's Hadoop dependencies to CDH-5.5.1. Furthermore, the test framework has been ported to Hive 1.1.0. Finally, Schedoscope's resilience against Metastore failures has been improved. It is able to reconnect and resume work when the Metastore has become unavailable in more error cases.
-
-###### 11/21/2015 - Release 0.3.4
-
-We have released Version 0.3.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-This release fixes a bug in Schedoscope which led to not correctly instantiating ViewActors for newly appearing dependencies such as date changes. Moreover, checksum versioning code has been cleaned up. Note that checksumming is not backwards compatible; you might want to execute your next materializations with the -m RESET_TRANSFORMATION_CHECKSUMS option.
-
-###### 11/13/2015 - Release 0.3.3
-
-We have released Version 0.3.3 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-This release gets some order into the logging framework mess inherited from the various libraries used. It does so by routing Java util logging and Apache commons logging through SLF4J and SLF4J to logback. By muting log4j and setting an appropriate logback-test.xml test outputs are now a lot less chatty.
-
-###### 11/10/2015 - Release 0.3.2
-
-We have released Version 0.3.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-This fixes a nasty resource leak in the Touch FileSystemTransformation
-
-
-###### 11/09/2015 - Release 0.3.1
-
-We have released Version 0.3.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-Fields can now be given comments as well: `val id = fieldOf[String]("An ID.")` 
-
-###### 11/06/2015 - Release 0.3.0
-
-We have released Version 0.3.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-This is a _big_ release, with the following major changes:
-
-* Migration to Scala 2.11 and Akka 2.3.14
-* Support of Hive 1.1.0 in test framework
-* Significant code cleanup 
-* Significant round of Scaladoc documentation
-* Significant performance improvements when dealing with many views / partitions
-
-Please note that the cleanup incurred some breaking of the API. In particular, the storage format classes have been moved to a separate package `org.schedoscope.dsl.storageformats`. Moreover, the various path builders for views have been renamed in a more systematic way. See [Storage Paths](https://github.com/ottogroup/schedoscope/wiki/Storage-Formats#storage-paths).
+See [the news section in the wiki](https://github.com/ottogroup/schedoscope/wiki/News) for more news.
 
 ## Community / Forums
 

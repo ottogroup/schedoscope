@@ -21,7 +21,8 @@ import org.apache.hadoop.mapreduce.Job
 import org.apache.hadoop.mapreduce.JobStatus.State.{ FAILED, KILLED, PREP, RUNNING, SUCCEEDED }
 import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
-import org.schedoscope.{ DriverSettings, Schedoscope }
+import org.schedoscope.Schedoscope
+import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.MapreduceTransformation
 
 /**

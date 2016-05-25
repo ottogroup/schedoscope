@@ -31,19 +31,11 @@ import org.schedoscope.metascope.service.UserEntityServiceTest;
 import org.schedoscope.metascope.tasks.SchedoscopeSyncRepositoryTest;
 
 @RunWith(Suite.class)
-@SuiteClasses(
-    {
-      SchedoscopeSyncRepositoryTest.class,
-      UserEntityServiceTest.class,
-      TaxonomyServiceTest.class,
-      TableEntityServiceTest.class, 
-      ActivityEntityServiceTest.class,
-      DocumentationServiceTest.class,
-      FieldEntityServiceTest.class,
-      MetadataEntityServiceTest.class,
-      URLServiceTest.class,
-      SolrFacadeTest.class,
-      TableEntityControllerTest.class
-    }
-)
-public class MetascopeTestSuit { }
+@SuiteClasses({ SchedoscopeSyncRepositoryTest.class,
+		UserEntityServiceTest.class, TaxonomyServiceTest.class,
+		TableEntityServiceTest.class, ActivityEntityServiceTest.class,
+		DocumentationServiceTest.class, FieldEntityServiceTest.class,
+		MetadataEntityServiceTest.class, URLServiceTest.class,
+		SolrFacadeTest.class, TableEntityControllerTest.class })
+public class MetascopeTestSuit {
+}

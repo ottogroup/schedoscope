@@ -19,6 +19,7 @@ import org.schedoscope.metascope.model.ViewDependencyEntity;
 import org.schedoscope.metascope.model.key.DependencyEntityKey;
 import org.springframework.data.repository.CrudRepository;
 
-public interface ViewDependencyEntityRepository extends CrudRepository<ViewDependencyEntity, DependencyEntityKey> {
+public interface ViewDependencyEntityRepository extends
+		CrudRepository<ViewDependencyEntity, DependencyEntityKey> {
 
 }

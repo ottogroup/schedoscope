@@ -9,14 +9,14 @@
 	<parent>
 		<artifactId>schedoscope-suite</artifactId>
 		<groupId>schedoscope</groupId>
-		<version>0.4.4-SNAPSHOT</version>
+		<version>0.6.0-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-core</artifactId>
-			<version>0.4.4-SNAPSHOT</version>
+			<version>${schedoscope.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>schedoscope</groupId>
@@ -103,7 +103,7 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.11</version>
+			<version>0.1.12</version>
 			<scope>test</scope>
 			<exclusions>
 				<exclusion>

@@ -15,11 +15,11 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.BusinessObjectEntity;
+import org.schedoscope.metascope.model.TaxonomyEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface BusinessObjectEntityRepository extends CrudRepository<BusinessObjectEntity, Long> {
+public interface TaxonomyEntityRepository extends
+		CrudRepository<TaxonomyEntity, Long> {
 
-  public BusinessObjectEntity findByCategoryNameAndName(String toBeDeleted, String toBeDeleted2);
-
+	public TaxonomyEntity findByName(String name);
 }

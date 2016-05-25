@@ -15,9 +15,10 @@
  */
 package org.schedoscope.metascope.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -29,90 +30,108 @@ import org.schedoscope.metascope.SpringTest;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.CommentEntity;
 import org.schedoscope.metascope.model.TableEntity;
-import org.schedoscope.metascope.service.UserEntityService;
+import org.schedoscope.metascope.model.UserEntity;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class DocumentationServiceTest extends SpringTest {
 
-  private static final String DOCUMENATION_1 = "Some plain text";
-  private static final String DOCUMENTATION_2 = "Some other plain text";
-  private static final String COMMENT = "Some comment on a documenation";
+	private static final String DOCUMENATION_1 = "Some plain text";
+	private static final String DOCUMENTATION_2 = "Some other plain text";
+	private static final String COMMENT = "Some comment on a documenation";
 
-  @Before
-  public void setup() {
-    /* ### set up mocks ### */
+	@Before
+	public void setup() {
+		/* ### set up mocks ### */
 
-    /*
-     * mock UserEntityService getUser() method, which in production returns the
-     * logged in user
-     */
-    UserEntityService userEntityServiceMock = mock(UserEntityService.class);
-    when(userEntityServiceMock.getUser()).thenReturn(getLoggedInUser());
-    mockField(documentationService, "userEntityService", userEntityServiceMock);
+		/*
+		 * mock UserEntityService getUser() method, which in production returns
+		 * the logged in user
+		 */
+		UserEntityService userEntityServiceMock = mock(UserEntityService.class);
+		when(userEntityServiceMock.getUser()).thenReturn(getLoggedInUser());
+		mockField(documentationService, "userEntityService",
+				userEntityServiceMock);
 
-    /* mock the calls to solr (Solr is tested seperatly) */
-    SolrFacade solrFacadeMock = mock(SolrFacade.class);
-    mockField(tableEntityService, "solr", solrFacadeMock);
-  }
+		/* mock the calls to solr (Solr is tested seperatly) */
+		SolrFacade solrFacadeMock = mock(SolrFacade.class);
+		mockField(tableEntityService, "solr", solrFacadeMock);
+	}
 
-  @Test
-  public void documentationService_01_updateDocumentation_createTableDocumenation() {
-    TableEntity tableEntity = getTestTable();
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void documentationService_01_updateDocumentation_createTableDocumenation() {
+		TableEntity tableEntity = getTestTable();
+		UserEntity userEntity = getLoggedInUser();
 
-    assertTrue(tableEntity.getComment() == null);
+		assertTrue(tableEntity.getComment() == null);
 
-    documentationService.updateDocumentation(tableEntity, DOCUMENATION_1);
+		documentationService.updateDocumentation(tableEntity, DOCUMENATION_1,
+				userEntity);
 
-    tableEntity = getTestTable();
-    assertTrue(tableEntity.getComment() != null);
-    assertEquals(tableEntity.getComment().getPlainText(), DOCUMENATION_1);
-  }
+		tableEntity = getTestTable();
+		assertTrue(tableEntity.getComment() != null);
+		assertEquals(tableEntity.getComment().getPlainText(), DOCUMENATION_1);
+	}
 
-  @Test
-  public void documentationService_02_updateDocumentation_updateTableDocumenation() {
-    TableEntity tableEntity = getTestTable();
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void documentationService_02_updateDocumentation_updateTableDocumenation() {
+		TableEntity tableEntity = getTestTable();
+		UserEntity userEntity = getLoggedInUser();
 
-    assertTrue(tableEntity.getComment() != null);
-    assertEquals(tableEntity.getComment().getPlainText(), DOCUMENATION_1);
+		assertTrue(tableEntity.getComment() != null);
+		assertEquals(tableEntity.getComment().getPlainText(), DOCUMENATION_1);
 
-    documentationService.updateDocumentation(tableEntity, DOCUMENTATION_2);
+		documentationService.updateDocumentation(tableEntity, DOCUMENTATION_2,
+				userEntity);
 
-    tableEntity = getTestTable();
-    assertTrue(tableEntity.getComment() != null);
-    assertEquals(tableEntity.getComment().getPlainText(), DOCUMENTATION_2);
-  }
+		tableEntity = getTestTable();
+		assertTrue(tableEntity.getComment() != null);
+		assertEquals(tableEntity.getComment().getPlainText(), DOCUMENTATION_2);
+	}
 
-  @Test
-  public void documentationService_03_addComment() {
-    TableEntity tableEntity = getTestTable();
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void documentationService_03_addComment() {
+		TableEntity tableEntity = getTestTable();
+		UserEntity userEntity = getLoggedInUser();
 
-    assertTrue(tableEntity.getComment() != null);
-    assertEquals(tableEntity.getComment().getPlainText(), DOCUMENTATION_2);
-    assertEquals(tableEntity.getComments().size(), 0);
+		assertTrue(tableEntity.getComment() != null);
+		assertEquals(tableEntity.getComment().getPlainText(), DOCUMENTATION_2);
+		assertEquals(tableEntity.getComments().size(), 0);
 
-    documentationService.addComment(tableEntity, COMMENT);
+		documentationService.addComment(tableEntity, COMMENT, userEntity);
 
-    tableEntity = getTestTable();
-    List<CommentEntity> comments = tableEntity.getComments();
+		tableEntity = getTestTable();
+		List<CommentEntity> comments = tableEntity.getComments();
 
-    assertEquals(comments.size(), 1);
-    assertEquals(comments.get(0).getPlainText(), COMMENT);
-  }
+		assertEquals(comments.size(), 1);
+		assertEquals(comments.get(0).getPlainText(), COMMENT);
+	}
 
-  @Test
-  public void documentationService_04_deleteComment() {
-    TableEntity tableEntity = getTestTable();
-    List<CommentEntity> comments = tableEntity.getComments();
-    CommentEntity commentEntity = comments.get(0);
+	@Test
+	@Transactional
+	@Rollback(false)
+	public void documentationService_04_deleteComment() {
+		UserEntity userEntity = getLoggedInUser();
+		TableEntity tableEntity = getTestTable();
+		List<CommentEntity> comments = tableEntity.getComments();
+		CommentEntity commentEntity = comments.get(0);
 
-    assertEquals(comments.size(), 1);
-    assertEquals(commentEntity.getPlainText(), COMMENT);
+		assertEquals(comments.size(), 1);
+		assertEquals(commentEntity.getPlainText(), COMMENT);
 
-    documentationService.deleteComment(tableEntity, commentEntity);
+		documentationService.deleteComment(tableEntity, commentEntity,
+				userEntity);
 
-    comments = getTestTable().getComments();
+		comments = getTestTable().getComments();
 
-    assertEquals(comments.size(), 0);
-  }
+		assertEquals(comments.size(), 0);
+	}
 
 }

@@ -152,6 +152,7 @@ object Export {
    * @param flush A flag indicating if the key space should be flushed before writing data
    * @param redisPort The Redis port (default 6379)
    * @param redisKeySpace The Redis key space (default 0)
+   * @param commitSize The number of events to write before syncing the pipelined writer.
    * @param numReducers The number of reducers, defines concurrency
    * @param pipeline A flag indicating that the Redis pipeline mode should be used for writing data
    * @param isKerberized Is the cluster kerberized?
@@ -168,7 +169,9 @@ object Export {
     replace: Boolean = true,
     flush: Boolean = false,
     redisPort: Int = 6379,
+    redisPassword: String = null,
     redisKeySpace: Int = 0,
+    commitSize: Int = Schedoscope.settings.redisExportBatchSize,
     numReducers: Int = Schedoscope.settings.redisExportNumReducers,
     pipeline: Boolean = Schedoscope.settings.redisExportUsesPipelineMode,
     isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
@@ -194,6 +197,7 @@ object Export {
           conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
           conf.get("schedoscope.export.redisHost").get.asInstanceOf[String],
           conf.get("schedoscope.export.redisPort").get.asInstanceOf[Int],
+          conf.get("schedoscope.export.redisPassword").get.asInstanceOf[String],
           conf.get("schedoscope.export.redisKeySpace").get.asInstanceOf[Int],
           v.dbName,
           v.n,
@@ -205,6 +209,7 @@ object Export {
           replace,
           conf.get("schedoscope.export.pipeline").get.asInstanceOf[Boolean],
           flush,
+          conf.get("schedoscope.export.commitSize").get.asInstanceOf[Int],
           anonFields ++ anonParameters,
           conf.get("schedoscope.export.salt").get.asInstanceOf[String])
 
@@ -215,9 +220,11 @@ object Export {
       Map(
         "schedoscope.export.redisHost" -> redisHost,
         "schedoscope.export.redisPort" -> redisPort,
+        "schedoscope.export.redisPassword" -> redisPassword,
         "schedoscope.export.redisKeySpace" -> redisKeySpace,
         "schedoscope.export.numReducers" -> numReducers,
         "schedoscope.export.pipeline" -> pipeline,
+        "schedoscope.export.commitSize" -> commitSize,
         "schedoscope.export.salt" -> exportSalt,
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,

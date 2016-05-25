@@ -1,3 +1,19 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
 <div data-th-fragment="table(obj)">
   <div th:with="table=${obj.resultEntity}">
     <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
@@ -6,20 +22,20 @@
           <form data-th-action="@{/table/favourite}" method="POST">
             <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
             <div class="col-md-12">
-              <button th:attr="class=${favs.contains(table.fqdn) ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}" 
-                      style="font-size:1.5em; margin-right: 5px;" type="submit"></button>
+              <button th:attr="class=${favs.contains(table.fqdn) ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}"
+                style="font-size: 1.5em; margin-right: 5px;" type="submit"></button>
               <a th:href="'table?fqdn=' + ${table.fqdn}"
-                 th:text="${table.isPartitioned()} ? 
+                th:text="${table.isPartitioned()} ? 
                  ${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')' :
-                 ${table.databaseName} + ' :: ' + ${table.tableName}" th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a>
-              <span style="padding-left: 10px;" data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span>
-              <span class="pull-right" data-th-text="${table.status}"></span>
+                 ${table.databaseName} + ' :: ' + ${table.tableName}"
+                th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a> <span style="padding-left: 10px;"
+                data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span> <span class="pull-right" data-th-text="${table.status}"></span>
             </div>
           </form>
         </div>
       </div>
       <table id="identityTable" class="table table-reflow">
-     	<div th:with="e=${obj.highlightings.get('tableName')}">
+        <div th:with="e=${obj.highlightings.get('tableName')}">
           <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
             <td width="20%"><b data-th-text="'Table'"></b></td>
             <td width="80%"><span th:utext="${e.get(0)}"></span></td>
@@ -64,6 +80,13 @@
             <td width="80%"><span th:utext="${e}"></span></td>
           </tr>
         </div>
+        <div th:with="e=${obj.highlightings.get('taxonomies')}">
+          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+            <td width="20%"><b data-th-text="'Taxonomy'"></b></td>
+            <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
+            <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
+          </tr>
+        </div>
         <div th:with="e=${obj.highlightings.get('categories')}">
           <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
             <td width="20%"><b data-th-text="'Category'"></b></td>
@@ -71,9 +94,9 @@
             <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
           </tr>
         </div>
-        <div th:with="e=${obj.highlightings.get('bos')}">
+        <div th:with="e=${obj.highlightings.get('categoryObjects')}">
           <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
-            <td width="20%"><b data-th-text="'Business Object'"></b></td>
+            <td width="20%"><b data-th-text="'Category Object'"></b></td>
             <td data-th-if="${e.size() == 1}" width="80%"><span th:utext="${e.get(0)}"></span></td>
             <td data-th-if="${e.size() > 1}" width="80%"><span th:utext="${e}"></span></td>
           </tr>

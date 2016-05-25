@@ -17,14 +17,17 @@ package org.schedoscope.scheduler.driver
 
 import java.nio.file.Files
 
-import net.lingala.zip4j.core.ZipFile
-import org.apache.commons.io.FileUtils
-import org.schedoscope.{ DriverSettings, Schedoscope }
-import org.schedoscope.dsl.transformations.Transformation
-
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.concurrent.duration.Duration
 import scala.util.Random
+
+import org.apache.commons.io.FileUtils
+import org.schedoscope.Schedoscope
+import org.schedoscope.conf.DriverSettings
+import org.schedoscope.dsl.transformations.Transformation
+
+import net.lingala.zip4j.core.ZipFile
 
 /**
  * In Schedoscope, drivers are responsible for executing transformations.

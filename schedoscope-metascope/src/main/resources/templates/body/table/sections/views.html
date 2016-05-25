@@ -1,27 +1,41 @@
-<tr data-th-each="partition : ${views}" style="border-bottom: 1px solid lightgrey;" th:id="${partition.internalViewId}" >
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
+<tr data-th-each="partition : ${views}" style="border-bottom: 1px solid lightgrey;" th:id="${partition.internalViewId}">
   <td data-th-each="parameter:${table.parameters}" data-th-text="${partition.getValueForParameterName(parameter.name)}" />
   <td data-th-if="${table.parameters.size() == 0}">/</td>
   <td data-th-if="${partition.dependencies.size() > 0}">
     <div th:with="depdendencyMap=${partition.dependencyMap}">
       <div data-th-each="e : ${depdendencyMap.entrySet()}">
         <div data-th-if="${e.value.size() == 1}">
-          <a th:href="'table?fqdn=' + ${e.value.get(0).dependencyFqdn} + '#partitionsContent-' + ${e.value.get(0).internalViewId}" data-th-text="${e.value.get(0).dependencyUrlPath}"></a>
+          <a th:href="'table?fqdn=' + ${e.value.get(0).dependencyFqdn} + '#partitionsContent-' + ${e.value.get(0).internalViewId}"
+            data-th-text="${e.value.get(0).dependencyUrlPath}"></a>
         </div>
       </div>
-      <br/>
+      <br />
       <div data-th-each="e : ${depdendencyMap.entrySet()}">
-        <ul data-th-if="${e.value.size() > 1}"  style="padding-left: 0px;">
-          <li>
-            <a class="showFirst" href="javascript:void(0)">
-              <span data-th-text="${e.key} + ' (' + ${e.value.size()} + ')'"></span>
-              <span class="caret"></span>
-            </a>
+        <ul data-th-if="${e.value.size() > 1}" style="padding-left: 0px;">
+          <li><a class="showFirst" href="javascript:void(0)"> <span data-th-text="${e.key} + ' (' + ${e.value.size()} + ')'"></span> <span
+              class="caret"></span>
+          </a>
             <ul class="partitionList">
-              <li data-th-each="dep : ${e.value}">
-                <a th:href="'table?fqdn=' + ${dep.dependencyFqdn} + '#partitionsContent-' + ${dep.internalViewId}" data-th-text="${dep.dependencyUrlPath}"></a>
-              </li>
-            </ul>
-          </li>
+              <li data-th-each="dep : ${e.value}"><a
+                th:href="'table?fqdn=' + ${dep.dependencyFqdn} + '#partitionsContent-' + ${dep.internalViewId}"
+                data-th-text="${dep.dependencyUrlPath}"></a></li>
+            </ul></li>
         </ul>
       </div>
     </div>
@@ -29,18 +43,20 @@
   <td data-th-if="${partition.successors.size() > 0}">
     <div data-th-each="e : ${partition.successorMap}">
       <div data-th-if="${e.value.size() == 1}">
-        <a th:href="'table?fqdn=' + ${e.value.get(0).successorFqdn} + '#partitionsContent-' + ${e.value.get(0).internalViewId}" data-th-text="${e.value.get(0).successorUrlPath}"></a>
+        <a th:href="'table?fqdn=' + ${e.value.get(0).successorFqdn} + '#partitionsContent-' + ${e.value.get(0).internalViewId}"
+          data-th-text="${e.value.get(0).successorUrlPath}"></a>
       </div>
       <ul data-th-if="${e.value.size() > 1}">
-        <li><a class="showFirst" href="javascript:void(0)"><span data-th-text="${e.key} + ' (' + ${e.value.size()} + ')'"></span><span class="caret"></span></a>
+        <li><a class="showFirst" href="javascript:void(0)"><span data-th-text="${e.key} + ' (' + ${e.value.size()} + ')'"></span><span
+            class="caret"></span></a>
           <ul class="partitionList">
-            <li data-th-each="s : ${e.value}"><a th:href="'table?fqdn=' + ${s.successorFqdn} + '#partitionsContent-' + ${s.internalViewId}" data-th-text="${s.successorUrlPath}"></a></li>
-          </ul>
-        </li>
+            <li data-th-each="s : ${e.value}"><a th:href="'table?fqdn=' + ${s.successorFqdn} + '#partitionsContent-' + ${s.internalViewId}"
+              data-th-text="${s.successorUrlPath}"></a></li>
+          </ul></li>
       </ul>
     </div>
   </td>
-  <td data-th-text="${partition.status}"/>
-  <td data-th-text="${util.getTime(partition.transformationEnd)}"/>
-  <td data-th-text="${util.getDuration(partition.transformationStart, partition.transformationEnd)}"/>
+  <td data-th-text="${partition.status}" />
+  <td data-th-text="${util.getTime(partition.transformationEnd)}" />
+  <td data-th-text="${util.getDuration(partition.transformationStart, partition.transformationEnd)}" />
 </tr>

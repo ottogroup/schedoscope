@@ -21,8 +21,9 @@ import org.schedoscope.metascope.model.ActivityEntity;
 import org.schedoscope.metascope.model.key.ActivityEntityKey;
 import org.springframework.data.repository.CrudRepository;
 
-public interface ActivityEntityRepository extends CrudRepository<ActivityEntity, ActivityEntityKey> {
+public interface ActivityEntityRepository extends
+		CrudRepository<ActivityEntity, ActivityEntityKey> {
 
-  public List<ActivityEntity> findFirst10ByOrderByTimestampDesc();
+	public List<ActivityEntity> findFirst10ByOrderByTimestampDesc();
 
 }

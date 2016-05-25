@@ -39,129 +39,135 @@ import org.springframework.web.servlet.view.RedirectView;
 @Controller
 public class MainController extends ViewController {
 
-  private static final String TEMPLATE_HOME = "body/home";
+	private static final String TEMPLATE_HOME = "body/home";
 
-  @Autowired
-  private ActivityEntityService activityEntityService;
-  @Autowired
-  private UserEntityService userEntityService;
-  @Autowired
-  private TableEntityService tableEntityService;
-  @Autowired
-  private TaxonomyService taxonomyService;
-  @Autowired
-  private MetadataEntityService metadataEntityService;
-  @Autowired
-  private SolrFacade solrIndex;
-  @Autowired
-  private URLService urlService;
-  @Autowired
-  private MetascopeConfig config;
-  @Autowired
-  private HTMLUtil htmlUtil;
+	@Autowired
+	private ActivityEntityService activityEntityService;
+	@Autowired
+	private UserEntityService userEntityService;
+	@Autowired
+	private TableEntityService tableEntityService;
+	@Autowired
+	private TaxonomyService taxonomyService;
+	@Autowired
+	private MetadataEntityService metadataEntityService;
+	@Autowired
+	private SolrFacade solrIndex;
+	@Autowired
+	private URLService urlService;
+	@Autowired
+	private MetascopeConfig config;
+	@Autowired
+	private HTMLUtil htmlUtil;
 
-  @Override
-  protected String getTemplateUri() {
-    return TEMPLATE_HOME;
-  }
+	@Override
+	protected String getTemplateUri() {
+		return TEMPLATE_HOME;
+	}
 
-  /**
-   * Login page of Metascope
-   * 
-   * @param request
-   *          the HTTPServlet request
-   * @param params
-   *          params passed from the client
-   * @return the login view
-   */
-  @RequestMapping("/")
-  public ModelAndView index(HttpServletRequest request, @RequestParam Map<String, String> params) {
-    ModelAndView mav = createView("index");
+	/**
+	 * Login page of Metascope
+	 * 
+	 * @param request
+	 *            the HTTPServlet request
+	 * @param params
+	 *            params passed from the client
+	 * @return the login view
+	 */
+	@RequestMapping("/")
+	public ModelAndView index(HttpServletRequest request,
+			@RequestParam Map<String, String> params) {
+		ModelAndView mav = createView("index");
 
-    boolean authenticationFailure = params.containsKey("error");
-    setupView(mav, authenticationFailure);
+		boolean authenticationFailure = params.containsKey("error");
+		setupView(mav, authenticationFailure);
 
-    if (userEntityService.isAuthenticated()) {
-      return new ModelAndView(new RedirectView("/home"));
-    }
+		if (userEntityService.isAuthenticated()) {
+			return new ModelAndView(new RedirectView("/home"));
+		}
 
-    return mav;
-  }
+		return mav;
+	}
 
-  /**
-   * Landing page of Metascope
-   * 
-   * @param request
-   *          the HTTPServlet request
-   * @param params
-   *          params passed from the client
-   * @return the main view
-   */
-  @RequestMapping("/home")
-  public ModelAndView home(HttpServletRequest request, @RequestParam Map<String, String> params) {
-    ModelAndView mav = createView("index");
-    setupView(mav, false);
+	/**
+	 * Landing page of Metascope
+	 * 
+	 * @param request
+	 *            the HTTPServlet request
+	 * @param params
+	 *            params passed from the client
+	 * @return the main view
+	 */
+	@RequestMapping("/home")
+	public ModelAndView home(HttpServletRequest request,
+			@RequestParam Map<String, String> params) {
+		ModelAndView mav = createView("index");
+		setupView(mav, false);
 
-    if (userEntityService.isAuthenticated()) {
-      /* get solr information for search and facets and query results */
-      SolrQueryResult solrQueryResult = solrIndex.query(params);
+		if (userEntityService.isAuthenticated()) {
+			/* get solr information for search and facets and query results */
+			SolrQueryResult solrQueryResult = solrIndex.query(params);
 
-      /* solr query results (facets, filter and the actual entities to display */
-      mav.addObject("solrQuery", solrQueryResult);
+			/*
+			 * solr query results (facets, filter and the actual entities to
+			 * display
+			 */
+			mav.addObject("solrQuery", solrQueryResult);
 
-      /* reference to URLService to build the filter (facets) url's */
-      mav.addObject("urlService", urlService);
+			/* reference to URLService to build the filter (facets) url's */
+			mav.addObject("urlService", urlService);
 
-      /* most viewed tables */
-      mav.addObject("topFive", tableEntityService.getTopFiveTables());
+			/* most viewed tables */
+			mav.addObject("topFive", tableEntityService.getTopFiveTables());
 
-      /* last activities to display on landing page */
-      mav.addObject("activities", activityEntityService.getActivities());
+			/* last activities to display on landing page */
+			mav.addObject("activities", activityEntityService.getActivities());
 
-      /* check wether the user is an admin or not */
-      mav.addObject("admin", userEntityService.isAdmin());
+			/* check wether the user is an admin or not */
+			mav.addObject("admin", userEntityService.isAdmin());
 
-      /* favourited tables of this user */
-      mav.addObject("favs", userEntityService.getFavourites());
+			/* favourited tables of this user */
+			mav.addObject("favs", userEntityService.getFavourites());
 
-      /* utility for styling */
-      mav.addObject("util", htmlUtil);
+			/* utility for styling */
+			mav.addObject("util", htmlUtil);
 
-      /* user management enabled/disabled */
-      mav.addObject("userMgmnt", config.withUserManagement());
+			/* user management enabled/disabled */
+			mav.addObject("userMgmnt", config.withUserManagement());
 
-      /* objects needed for admin views */
-      if (userEntityService.getUser().isAdmin()) {
-        /* user management */
-        mav.addObject("users", userEntityService.getAllUser());
+			/* objects needed for admin views */
+			if (userEntityService.getUser().isAdmin()) {
+				/* user management */
+				mav.addObject("users", userEntityService.getAllUser());
 
-        /* taxonomy management */
-        mav.addObject("categories", taxonomyService.getAllCategories());
-      }
+				/* taxonomy management */
+				mav.addObject("taxonomies", taxonomyService.getTaxonomies());
+			}
 
-    }
+		}
 
-    return mav;
-  }
+		return mav;
+	}
 
-  /**
-   * Sets the mandatory objects for the main view
-   * 
-   * @param mav
-   *          the ModelAndView object to add objects to
-   * @param authenticationFailure
-   *          if user tried to login unsuccessfully
-   */
-  private void setupView(ModelAndView mav, boolean authenticationFailure) {
-    /* last schedoscope sync */
-    mav.addObject("schedoscopeTimestamp", metadataEntityService.getMetadataValue("timestamp"));
+	/**
+	 * Sets the mandatory objects for the main view
+	 * 
+	 * @param mav
+	 *            the ModelAndView object to add objects to
+	 * @param authenticationFailure
+	 *            if user tried to login unsuccessfully
+	 */
+	private void setupView(ModelAndView mav, boolean authenticationFailure) {
+		/* last schedoscope sync */
+		mav.addObject("schedoscopeTimestamp",
+				metadataEntityService.getMetadataValue("timestamp"));
 
-    /* reference to user entity service to check users groups on the fly */
-    mav.addObject("userEntityService", userEntityService);
+		/* reference to user entity service to check users groups on the fly */
+		mav.addObject("userEntityService", userEntityService);
 
-    if (authenticationFailure) {
-      mav.addObject("error", true);
-    }
-  }
+		if (authenticationFailure) {
+			mav.addObject("error", true);
+		}
+	}
 
 }

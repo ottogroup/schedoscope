@@ -15,14 +15,13 @@
  */
 package org.schedoscope.metascope.service;
 
-import javax.jdo.annotations.Transactional;
-
 import org.jsoup.Jsoup;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.CommentEntity;
 import org.schedoscope.metascope.model.Documentable;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.TableEntity;
+import org.schedoscope.metascope.model.UserEntity;
 import org.schedoscope.metascope.repository.CommentEntityRepository;
 import org.schedoscope.metascope.repository.FieldEntityRepository;
 import org.schedoscope.metascope.repository.TableEntityRepository;
@@ -30,110 +29,139 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DocumentationService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DocumentationService.class);
+	private static final Logger LOG = LoggerFactory
+			.getLogger(DocumentationService.class);
 
-  @Autowired
-  private UserEntityService userEntityService;
-  @Autowired
-  private ActivityEntityService activityEntityService;
-  @Autowired
-  private CommentEntityRepository commentEntityRepository;
-  @Autowired
-  private TableEntityRepository tableEntityRepository;
-  @Autowired
-  private FieldEntityRepository fieldEntityRepository;
-  @Autowired
-  private SolrFacade solr;
+	@Autowired
+	private UserEntityService userEntityService;
+	@Autowired
+	private ActivityEntityService activityEntityService;
+	@Autowired
+	private CommentEntityRepository commentEntityRepository;
+	@Autowired
+	private TableEntityRepository tableEntityRepository;
+	@Autowired
+	private FieldEntityRepository fieldEntityRepository;
+	@Autowired
+	private SolrFacade solr;
 
-  public CommentEntity findById(String commentID) {
-    return commentEntityRepository.findOne(Long.parseLong(commentID));
-  }
+	public CommentEntity findById(String commentID) {
+		return commentEntityRepository.findOne(Long.parseLong(commentID));
+	}
 
-  @Transactional
-  public void updateDocumentation(Documentable documentable, String documentText) {
-    if (documentable == null) {
-      return;
-    }
+	@Transactional
+	public void updateDocumentation(Documentable documentable,
+			String documentText, UserEntity userEntity) {
+		if (documentable == null) {
+			return;
+		}
 
-    if (documentText != null && !documentText.isEmpty()) {
-      CommentEntity comment = documentable.getComment();
-      if (comment == null) {
-        comment = new CommentEntity();
-        documentable.setComment(comment);
-      }
+		if (documentText != null && !documentText.isEmpty()) {
+			CommentEntity comment = documentable.getComment();
+			if (comment == null) {
+				comment = new CommentEntity();
+				documentable.setComment(comment);
+			}
 
-      comment.setText(documentText);
-      comment.setPlainText(Jsoup.parse(documentText).body().text());
-      comment.setUser(userEntityService.getUser());
-      comment.setLastEdit(System.currentTimeMillis());
-      commentEntityRepository.save(comment);
-      documentable.setComment(comment);
-    }
+			comment.setText(documentText);
+			comment.setPlainText(Jsoup.parse(documentText).body().text());
+			comment.setUsername(userEntity.getUsername());
+			comment.setLastEdit(System.currentTimeMillis());
+			commentEntityRepository.save(comment);
+			documentable.setComment(comment);
+		}
 
-    saveEntity(documentable);
+		saveEntity(documentable, userEntity);
 
-    if (documentable instanceof TableEntity) {
-      activityEntityService.createUpdateDocumentActivity(((TableEntity) documentable), userEntityService.getUser());
-    } else if (documentable instanceof FieldEntity) {
-      TableEntity tableEntity = tableEntityRepository.findByFqdn(((FieldEntity) documentable).getFqdn());
-      activityEntityService.createUpdateDocumentActivity(tableEntity, userEntityService.getUser());
-    }
-  }
+		if (documentable instanceof TableEntity) {
+			activityEntityService.createUpdateDocumentActivity(
+					((TableEntity) documentable), userEntityService.getUser()
+							.getUsername());
+		} else if (documentable instanceof FieldEntity) {
+			TableEntity tableEntity = tableEntityRepository
+					.findByFqdn(((FieldEntity) documentable).getFqdn());
+			activityEntityService.createUpdateDocumentActivity(tableEntity,
+					userEntityService.getUser().getUsername());
+		}
+	}
 
-  @Transactional
-  public void addComment(Documentable documentable, String commentText) {
-    if (documentable == null) {
-      return;
-    }
+	@Transactional
+	public void addComment(Documentable documentable, String commentText,
+			UserEntity userEntity) {
+		if (documentable == null) {
+			return;
+		}
 
-    if (commentText != null && !commentText.isEmpty()) {
-      CommentEntity comment = new CommentEntity();
-      comment.setText(commentText);
-      comment.setPlainText(Jsoup.parse(commentText).body().text());
-      comment.setUser(userEntityService.getUser());
-      comment.setLastEdit(System.currentTimeMillis());
-      commentEntityRepository.save(comment);
-      documentable.getComments().add(comment);
-    }
-    saveEntity(documentable);
+		if (commentText != null && !commentText.isEmpty()) {
+			CommentEntity comment = new CommentEntity();
+			comment.setText(commentText);
+			comment.setPlainText(Jsoup.parse(commentText).body().text());
+			comment.setUsername(userEntity.getUsername());
+			comment.setLastEdit(System.currentTimeMillis());
+			commentEntityRepository.save(comment);
+			documentable.getComments().add(comment);
+		}
+		saveEntity(documentable, userEntity);
 
-    if (documentable instanceof TableEntity) {
-      activityEntityService.createNewCommentActivity((TableEntity) documentable, userEntityService.getUser());
-    } else if (documentable instanceof FieldEntity) {
-      TableEntity tableEntity = tableEntityRepository.findByFqdn(((FieldEntity) documentable).getFqdn());
-      activityEntityService.createNewCommentActivity(tableEntity, userEntityService.getUser());
-    }
-  }
+		if (documentable instanceof TableEntity) {
+			activityEntityService.createNewCommentActivity(
+					(TableEntity) documentable, userEntityService.getUser()
+							.getUsername());
+		} else if (documentable instanceof FieldEntity) {
+			TableEntity tableEntity = tableEntityRepository
+					.findByFqdn(((FieldEntity) documentable).getFqdn());
+			activityEntityService.createNewCommentActivity(tableEntity,
+					userEntityService.getUser().getUsername());
+		}
+	}
 
-  public void deleteComment(Documentable documentable, CommentEntity commentEntity) {
-    if (documentable == null) {
-      return;
-    }
+	public void editComment(CommentEntity commentEntity, String commentText,
+			UserEntity userEntity) {
+		if (commentEntity == null) {
+			return;
+		}
 
-    if (commentEntity != null) {
-      documentable.getComments().remove(commentEntity);
-      saveEntity(documentable);
-      commentEntityRepository.delete(commentEntity);
-    }
-  }
+		if (commentText != null && !commentText.isEmpty()) {
+			commentEntity.setText(commentText);
+			commentEntity.setPlainText(Jsoup.parse(commentText).body().text());
+			commentEntity.setUsername(userEntity.getUsername());
+			commentEntity.setLastEdit(System.currentTimeMillis());
+			commentEntityRepository.save(commentEntity);
+		}
+	}
 
-  private void saveEntity(Documentable documentable) {
-    if (documentable instanceof TableEntity) {
-      TableEntity tableEntity = (TableEntity) documentable;
-      tableEntityRepository.save(tableEntity);
-      LOG.info("User '{}' modified comment for table '{}'", userEntityService.getUser().getUsername(),
-          tableEntity.getFqdn());
-      solr.updateTableEntityAsync(tableEntity, true);
-    } else if (documentable instanceof FieldEntity) {
-      FieldEntity fieldEntity = (FieldEntity) documentable;
-      fieldEntityRepository.save(fieldEntity);
-      LOG.info("User '{}' modified comment for field '{}' ({})", userEntityService.getUser().getUsername(),
-          fieldEntity.getName(), fieldEntity.getFqdn());
-    }
-  }
+	public void deleteComment(Documentable documentable,
+			CommentEntity commentEntity, UserEntity userEntity) {
+		if (documentable == null) {
+			return;
+		}
+
+		if (commentEntity != null) {
+			documentable.getComments().remove(commentEntity);
+			saveEntity(documentable, userEntity);
+			commentEntityRepository.delete(commentEntity);
+		}
+	}
+
+	private void saveEntity(Documentable documentable, UserEntity userEntity) {
+		if (documentable instanceof TableEntity) {
+			TableEntity tableEntity = (TableEntity) documentable;
+			tableEntityRepository.save(tableEntity);
+			LOG.info("User '{}' modified comment for table '{}'",
+					userEntity.getUsername(), tableEntity.getFqdn());
+			solr.updateTableEntityAsync(tableEntity, true);
+		} else if (documentable instanceof FieldEntity) {
+			FieldEntity fieldEntity = (FieldEntity) documentable;
+			fieldEntityRepository.save(fieldEntity);
+			LOG.info("User '{}' modified comment for field '{}' ({})",
+					userEntityService.getUser().getUsername(),
+					fieldEntity.getName(), fieldEntity.getFqdn());
+		}
+	}
 
 }

@@ -1,41 +1,57 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
 <form id="sampleForm" class="form-inline">
- <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
- <div class="col-md-2" style="border-left: 1px solid; border-color: lightgrey;" data-th-if="${table.isPartitioned()}">
-  <h5>
-   <b>Filter by partitions</b>
-  </h5>
-  <hr />
-  <div data-th-each="parameter : ${table.parameters}">
-   <div class="row">
-    <div class="col-md-12">
-     <div class="control-group">
-      <label class="control-label" th:for="${parameter.name}" data-th-text="${parameter.name}"></label>
-      <div class="controls">
-       <div class="row">
-        <div class="col-md-9" style="padding-right: 0px;">
-         <input style="width: 100%;" th:id="${parameter.name} + 'Filter'" th:name="${parameter.name}" type="text" />
-        </div>
-        <div class="col-md-3" style="padding-top: 1px; padding-left: 0px;">
-         <a class="btn btn-primary dropdown-toggle" style="height: 25px; padding-top: 10px;" data-toggle="dropdown" href="#"> <span class="caret"
-          style=""></span>
-         </a>
-         <ul class="dropdown-menu" style="left: auto; right: 65%; max-height: 300px; overflow: auto;">
-          <li data-th-each="val : ${parameterValues.get(parameter.name)}"><a href="javascript:void(0)"
-           th:onclick="'setSampleFilter(\'' + ${parameter.name} + 'Filter\',\'' + ${val} + '\')'" data-th-text="${val}"></a></li>
-         </ul>
-        </div>
-       </div>
-      </div>
-      <br />
-     </div>
-    </div>
+  <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
+  <div class="col-md-2" style="border-left: 1px solid; border-color: lightgrey;" data-th-if="${table.isPartitioned()}">
+    <h5>
+      <b>Filter by partitions</b>
+    </h5>
     <hr />
-   </div>
+    <div data-th-each="parameter : ${table.parameters}">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="control-group">
+            <label class="control-label" th:for="${parameter.name}" data-th-text="${parameter.name}"></label>
+            <div class="controls">
+              <div class="row">
+                <div class="col-md-9" style="padding-right: 0px;">
+                  <input style="width: 100%;" th:id="${parameter.name} + 'Filter'" th:name="${parameter.name}" type="text" />
+                </div>
+                <div class="col-md-3" style="padding-top: 1px; padding-left: 0px;">
+                  <a class="btn btn-primary dropdown-toggle" style="height: 25px; padding-top: 10px;" data-toggle="dropdown" href="#"> <span
+                    class="caret" style=""></span>
+                  </a>
+                  <ul class="dropdown-menu" style="left: auto; right: 65%; max-height: 300px; overflow: auto;">
+                    <li data-th-each="val : ${parameterValues.get(parameter.name)}"><a href="javascript:void(0)"
+                      th:onclick="'setSampleFilter(\'' + ${parameter.name} + 'Filter\',\'' + ${val} + '\')'" data-th-text="${val}"></a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <br />
+          </div>
+        </div>
+        <hr />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-offset-9">
+        <button onclick="filterSamples()" type="button" class="btn btn-default">OK</button>
+      </div>
+    </div>
   </div>
-  <div class="row">
-   <div class="col-md-offset-9">
-    <button onclick="filterSamples()" type="button" class="btn btn-default">OK</button>
-   </div>
-  </div>
- </div>
 </form>

@@ -20,86 +20,86 @@ import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.ManyToOne;
 
-import org.schedoscope.metascope.model.TableEntity;
-import org.schedoscope.metascope.model.UserEntity;
 import org.schedoscope.metascope.model.ActivityEntity.ActivityType;
+import org.schedoscope.metascope.model.TableEntity;
 
 public class ActivityEntityKey implements Serializable {
 
-  private static final long serialVersionUID = 7442974394555530660L;
+	private static final long serialVersionUID = 7442974394555530660L;
 
-  @Column
-  private ActivityType type;
-  @ManyToOne
-  private UserEntity user;
-  @ManyToOne
-  private TableEntity table;
+	@Column
+	private ActivityType type;
+	private String username;
+	@ManyToOne
+	private TableEntity table;
 
-  public ActivityEntityKey() {
-  }
+	public ActivityEntityKey() {
+	}
 
-  public ActivityEntityKey(ActivityType type, UserEntity user, TableEntity table) {
-    this.type = type;
-    this.user = user;
-    this.table = table;
-  }
+	public ActivityEntityKey(ActivityType type, String username,
+			TableEntity table) {
+		this.type = type;
+		this.username = username;
+		this.table = table;
+	}
 
-  public ActivityType getType() {
-    return type;
-  }
+	public ActivityType getType() {
+		return type;
+	}
 
-  public void setType(ActivityType type) {
-    this.type = type;
-  }
+	public void setType(ActivityType type) {
+		this.type = type;
+	}
 
-  public UserEntity getUser() {
-    return user;
-  }
+	public String getUsername() {
+		return username;
+	}
 
-  public void setUser(UserEntity user) {
-    this.user = user;
-  }
+	public void setUsername(String username) {
+		this.username = username;
+	}
 
-  public TableEntity getTable() {
-    return table;
-  }
+	public TableEntity getTable() {
+		return table;
+	}
 
-  public void setTable(TableEntity table) {
-    this.table = table;
-  }
+	public void setTable(TableEntity table) {
+		this.table = table;
+	}
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((table == null) ? 0 : table.hashCode());
-    result = prime * result + ((type == null) ? 0 : type.hashCode());
-    result = prime * result + ((user == null) ? 0 : user.hashCode());
-    return result;
-  }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((table == null) ? 0 : table.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result
+				+ ((username == null) ? 0 : username.hashCode());
+		return result;
+	}
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
-    ActivityEntityKey other = (ActivityEntityKey) obj;
-    if (table == null) {
-      if (other.table != null)
-        return false;
-    } else if (!table.equals(other.table))
-      return false;
-    if (type != other.type)
-      return false;
-    if (user == null) {
-      if (other.user != null)
-        return false;
-    } else if (!user.equals(other.user))
-      return false;
-    return true;
-  }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ActivityEntityKey other = (ActivityEntityKey) obj;
+		if (table == null) {
+			if (other.table != null)
+				return false;
+		} else if (!table.equals(other.table))
+			return false;
+		if (type != other.type)
+			return false;
+		if (username == null) {
+			if (other.username != null)
+				return false;
+		} else if (!username.equals(other.username))
+			return false;
+		return true;
+	}
 
 }

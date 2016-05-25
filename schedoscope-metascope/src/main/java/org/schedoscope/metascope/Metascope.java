@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 
 import javax.sql.DataSource;
 
-import org.schedoscope.Schedoscope;
+import org.schedoscope.conf.BaseSettings;
 import org.schedoscope.metascope.conf.MetascopeConfig;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.tasks.MetascopeTask;
@@ -34,45 +34,67 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
+import com.typesafe.config.ConfigFactory;
+
 @SpringBootApplication
 public class Metascope {
 
-  private static final Logger LOG = LoggerFactory.getLogger(Metascope.class);
+	private static final Logger LOG = LoggerFactory.getLogger(Metascope.class);
 
-  public static void main(String[] args) {
-    /* set some mandatory configs before application start */
-    MetascopeConfig config = new MetascopeConfig(Schedoscope.settings());
-    System.setProperty("server.port", String.valueOf(config.getPort()));
-    System.setProperty("spring.jpa.database-platform", config.getRepositoryDialect());
-    System.setProperty("logging.level.org.schedoscope", config.getLogLevel());
-    System.setProperty("logging.file", config.getLogfilePath());
-    System.setProperty("spring.profiles.active", "production");
+	private ConfigurableApplicationContext applicationContext;
+	private ScheduledThreadPoolExecutor executor;
 
-    /* start metascope spring boot application */
-    ConfigurableApplicationContext applicationContext = SpringApplication.run(Metascope.class, args);
+	public void start(String[] args) {
+		/* set some mandatory configs before application start */
+		MetascopeConfig config = new MetascopeConfig(new BaseSettings(
+				ConfigFactory.load()));
+		System.setProperty("server.port", String.valueOf(config.getPort()));
+		System.setProperty("spring.jpa.database-platform",
+				config.getRepositoryDialect());
+		System.setProperty("logging.level.org.schedoscope",
+				config.getLogLevel());
+		System.setProperty("logging.file", config.getLogfilePath());
+		System.setProperty("spring.profiles.active", "production");
 
-    SolrFacade solr = applicationContext.getBean(SolrFacade.class);
-    RepositoryDAO repo = applicationContext.getBean(RepositoryDAO.class);
-    DataSource dataSource = applicationContext.getBean(DataSource.class);
-    SchedoscopeUtil schedoscopeUtil = applicationContext.getBean(SchedoscopeUtil.class);
+		/* start metascope spring boot application */
+		this.applicationContext = SpringApplication.run(Metascope.class, args);
 
-    /* start metascope task */
-    MetascopeTask metascopeTask = new MetascopeTask(repo, dataSource, solr, config, schedoscopeUtil);
-    SchedoscopeStatusTask statusTask = new SchedoscopeStatusTask(repo, dataSource, solr, schedoscopeUtil);
+		SolrFacade solr = applicationContext.getBean(SolrFacade.class);
+		RepositoryDAO repo = applicationContext.getBean(RepositoryDAO.class);
+		DataSource dataSource = applicationContext.getBean(DataSource.class);
+		SchedoscopeUtil schedoscopeUtil = applicationContext
+				.getBean(SchedoscopeUtil.class);
 
-    ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-    ScheduledFuture<?> metascopeTaskFuture = executor.schedule(metascopeTask, 5, TimeUnit.SECONDS);
-    ScheduledFuture<?> statusTaskFuture = executor.scheduleAtFixedRate(statusTask, 5, 5, TimeUnit.SECONDS);
+		/* start metascope task */
+		MetascopeTask metascopeTask = new MetascopeTask(repo, dataSource, solr,
+				config, schedoscopeUtil);
+		SchedoscopeStatusTask statusTask = new SchedoscopeStatusTask(repo,
+				dataSource, solr, schedoscopeUtil);
 
-    /* MetascopeTask schedules itself dynamically */
-    metascopeTask.setExecutor(executor);
+		this.executor = new ScheduledThreadPoolExecutor(1);
+		ScheduledFuture<?> metascopeTaskFuture = executor.schedule(
+				metascopeTask, 5, TimeUnit.SECONDS);
+		ScheduledFuture<?> statusTaskFuture = executor.scheduleAtFixedRate(
+				statusTask, 5, 5, TimeUnit.SECONDS);
 
-    try {
-      metascopeTaskFuture.get();
-      statusTaskFuture.get();
-    } catch (Throwable t) {
-      LOG.error("Exception in future tasks", t);
-    }
-  }
+		/* MetascopeTask schedules itself dynamically */
+		metascopeTask.setExecutor(executor);
+
+		try {
+			metascopeTaskFuture.get();
+			statusTaskFuture.get();
+		} catch (Throwable t) {
+			LOG.error("Exception in future tasks", t);
+		}
+	}
+
+	public void stop() throws InterruptedException {
+		this.applicationContext.stop();
+		this.executor.awaitTermination(5, TimeUnit.SECONDS);
+	}
+
+	public static void main(String[] args) {
+		new Metascope().start(args);
+	}
 
 }

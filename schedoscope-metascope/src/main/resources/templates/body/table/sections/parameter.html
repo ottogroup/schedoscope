@@ -1,3 +1,19 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
 <div class="tab-pane" id="parameterContent" data-th-fragment="parameter(table,util)">
   <table class="table table-bordered table-striped">
     <tr class="info">
@@ -9,22 +25,22 @@
       <tr style="border-bottom: 1px solid lightgrey;">
         <td data-th-text="${parameter.name}"></td>
         <td data-th-text="${parameter.type}" />
-        <td data-th-if="${parameter.hasDocumentation()}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-          <a data-th-attr="href='#parameterContent-' + ${parameter.name}" th:utext="${parameter.comment.preview}" th:onclick="'initializeFieldEditor(\'' + ${parameter.name} + '\'); showFieldDocu(\'parameterContent-' + ${parameter.name} + '\')'"></a>
-        </td>
-        <td data-th-if="${!parameter.hasDocumentation()}" style="white-space: nowrap;overflow: hidden; text-overflow: ellipsis;">
-          <a class="pull-right" data-th-attr="href='#parameterContent-' + ${parameter.name}" th:onclick="'initializeFieldEditor(\'' + ${parameter.name} + '\'); showFieldDocu(\'parameterContent-' + ${parameter.name} + '\'); toggleEditDocu(\'' + ${parameter.name} + '\', true);'">
+        <td data-th-if="${parameter.hasDocumentation()}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><a
+          data-th-attr="href='#parameterContent-' + ${parameter.name}" th:utext="${parameter.comment.preview}"
+          th:onclick="'initializeFieldEditor(\'' + ${parameter.name} + '\'); showFieldDocu(\'parameterContent-' + ${parameter.name} + '\')'"></a></td>
+        <td data-th-if="${!parameter.hasDocumentation()}" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><a
+          class="pull-right" data-th-attr="href='#parameterContent-' + ${parameter.name}"
+          th:onclick="'initializeFieldEditor(\'' + ${parameter.name} + '\'); showFieldDocu(\'parameterContent-' + ${parameter.name} + '\'); toggleEditDocu(\'' + ${parameter.name} + '\', true);'">
             <span class="glyphicon glyphicon-pencil"></span>
-          </a>
-        </td>
+        </a></td>
       </tr>
     </div>
   </table>
-  
+
   <div data-th-each="parameter : ${table.parameters}">
     <div th:id="'parameterContent-' + ${parameter.name}" class="fieldDocumentation">
       <div data-th-replace="body/table/sections/documentation_field :: documentation(${parameter}, ${util})"></div>
     </div>
   </div>
-  
+
 </div>

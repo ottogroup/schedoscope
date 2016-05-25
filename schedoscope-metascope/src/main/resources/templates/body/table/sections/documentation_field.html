@@ -1,24 +1,49 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
 <div data-th-fragment="documentation(field,util)">
   <div class="row">
     <div class="col-md-6">
       <div class="control-group">
         <div style="display: flex;">
-          <label class="control-label" for="categories" data-th-text="'Documentation for ' + ${field.name}"></label>
-          <p data-th-if="${field.hasDocumentation()}" style="padding-left: 10px; flex: 1;" data-th-text="'last edit: ' +  ${util.getTime(field.comment.lastEdit)} + ' by ' + ${field.comment.user.fullname}"></p>
+          <p class="control-label" for="categories">
+            Documentation for <b data-th-text="${field.name}"></b>
+          </p>
+          <div data-th-if="${table.hasDocumentation()}" th:with="userEntity=${userEntityService.findByUsername(table.comment.username)}">
+            <div th:with="username=${userEntity != null ? userEntity.fullname : table.comment.username}">
+              <p data-th-if="${field.hasDocumentation()}" style="padding-left: 10px; flex: 1;"
+                data-th-text="'last edit: ' +  ${util.getTime(field.comment.lastEdit)} + ' by ' + ${username}"></p>
+            </div>
+          </div>
         </div>
-        <br/>
+        <br />
       </div>
     </div>
     <div class="pull-right" style="padding-right: 20px;">
       <form class="form" data-th-action="@{/field/documentation}" method="post">
-        <button th:id="${field.name} + 'DocuEditButton'" type="button" th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'" data-th-if="${field.hasDocumentation()}" class="btn btn-default show-elem">Edit Documentation</button>
-        <button th:id="${field.name} + 'DocuEditButton'" type="button" th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'" data-th-if="${!field.hasDocumentation()}" class="btn btn-default show-elem">Create Documentation</button>
-        <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> 
-        <input type="hidden" name="fieldname" th:value="${field.name}" />
-        <input type="hidden" name="parameter" th:value="${field.parameterField}" /> 
-        <input type="hidden" name="documentation" th:id="${field.name} + 'Input'" />
+        <button th:id="${field.name} + 'DocuEditButton'" type="button" th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'"
+          data-th-if="${field.hasDocumentation()}" class="btn btn-default show-elem">Edit Documentation</button>
+        <button th:id="${field.name} + 'DocuEditButton'" type="button" th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'"
+          data-th-if="${!field.hasDocumentation()}" class="btn btn-default show-elem">Create Documentation</button>
+        <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> <input type="hidden" name="fieldname" th:value="${field.name}" /> <input
+          type="hidden" name="parameter" th:value="${field.parameterField}" /> <input type="hidden" name="documentation"
+          th:id="${field.name} + 'Input'" />
         <button th:id="${field.name} + 'SubmitDocuButton'" class="btn btn-success hide-elem" type="submit" style="display: none;">Save</button>
-        <button th:id="${field.name} + 'CancelDocuButton'" th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'" class="btn btn-default hide-elem" type="button" style="display: none;">Cancel</button>
+        <button th:id="${field.name} + 'CancelDocuButton'" th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'" class="btn btn-default hide-elem"
+          type="button" style="display: none;">Cancel</button>
       </form>
     </div>
   </div>
@@ -32,44 +57,57 @@
       </div>
     </div>
   </div>
-  <br/>
-  <div style="display: flex;"  data-th-if="${field.hasDocumentation()}">
+  <br />
+  <div style="display: flex;" data-th-if="${field.hasDocumentation()}">
     <p style="font-size: 14; margin: 0px; padding-right: 5px;" data-th-text="${field.comments.size()} + ' Comments &bull;'" />
     <a href="javascript:void(0)" th:onclick="'expandFunction(\'' + ${field.name} + '\')'" data-th-text="'Write a comment'"></a>
   </div>
-  
+
   <div data-th-if="${field.hasDocumentation()}">
     <div class="row">
       <div class="col-md-12" style="padding-left: 50px;">
+        <hr />
         <div data-th-each="comment : ${field.comments}">
-		  <div style="margin-top: 10px;" class="well">
-            <p th:remove="tag" th:utext="${comment.text}"></p>
-            <hr style="margin: 2px; border-color: lightgrey"/>
-            <a data-th-text="${comment.user.fullname}" th:href="'mailto:' + ${comment.user.email}"></a>
-            <span data-th-text="' - ' + ${util.getTime(comment.lastEdit)}"></span>
-            <div data-th-if="${comment.user.equals(userEntityService.getUser())}" style="display: inline">
-	          <span style="padding-left:2px; padding-right:2px;">-</span>
-	          <form style="display: inline">
-	            <a><span class="glyphicon glyphicon-pencil"></span></a>
-	          </form>
-	          <form class="form" data-th-action="@{/field/documentation/comment/delete}" method="post" style="display: inline">
-	            <input type="hidden" name="commentID" th:value="${comment.id}"/> 
-              <input type="hidden" name="fieldname" th:value="${field.name}" />
-              <input type="hidden" name="parameter" th:value="${field.parameterField}" /> 
-	            <a href="javascript:void()" onclick="$(this).closest('form').submit()"><span class="glyphicon glyphicon-trash"></span></a>
-	          </form>
+          <div th:id="'comment' + ${comment.id} + 'editEditorSection'" style="display: none">
+            <div th:id="'comment' + ${comment.id} + 'editEditor'"></div>
+            <form class="form" data-th-action="@{/field/documentation/comment/edit}" method="post" style="display: inline">
+              <input type="hidden" name="commentID" th:value="${comment.id}" /> <input type="hidden" name="fieldname" th:value="${field.name}" /> <input
+                type="hidden" name="parameter" th:value="${field.parameterField}" /> <input type="hidden" name="commentText"
+                th:id="'comment' + ${comment.id} + 'text'" />
+              <button class="btn btn-success">Save</button>
+              <button type="button" class="btn btn-default" th:onclick="'editComment(\'comment' + ${comment.id} + '\')'">Cancel</button>
+            </form>
+          </div>
+          <div style="margin-top: 10px;" class="well" th:id="'comment' + ${comment.id}">
+            <div>
+              <p th:remove="tag" th:utext="${comment.text}"></p>
+            </div>
+            <hr style="margin: 2px; border-color: lightgrey" />
+            <div th:with="userEntity=${userEntityService.findByUsername(comment.username)}">
+              <div th:with="username=${userEntity != null ? userEntity.fullname : comment.username}">
+                <a data-th-if="${userEntity != null}" data-th-text="${username} + ','" th:href="'mailto:' + ${userEntity.email}"></a> <span
+                  data-th-if="${userEntity == null}" data-th-text="${username} + ','"></span> <span data-th-text="${util.getTime(comment.lastEdit)}"></span>
+                <div data-th-if="${userEntity != null and userEntity.equals(userEntityService.getUser())}" style="display: inline">
+                  <span style="padding-left: 2px; padding-right: 2px;">-</span> <a href="javascript:void()"
+                    th:onclick="'editComment(\'comment' + ${comment.id} + '\')'"><span class="glyphicon glyphicon-pencil"></span></a>
+                  <form class="form" data-th-action="@{/field/documentation/comment/delete}" method="post" style="display: inline">
+                    <input type="hidden" name="commentID" th:value="${comment.id}" /> <input type="hidden" name="fieldname" th:value="${field.name}" />
+                    <input type="hidden" name="parameter" th:value="${field.parameterField}" /> <a href="javascript:void()"
+                      onclick="$(this).closest('form').submit()"><span class="glyphicon glyphicon-trash"></span></a>
+                  </form>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <br/>
+        <br />
         <div class="row">
           <div class="col-md-12 hide-elem" th:id="${field.name} + 'CommentEditorSection'" style="display: none;">
             <div th:id="${field.name} + 'CommentEditor'" class="fieldCommentEditor" th:attr="data-fieldname=${field.name}"></div>
             <form class="form" data-th-action="@{/field/documentation/comment/add}" method="post">
-              <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> 
-              <input type="hidden" name="fieldname" th:value="${field.name}" />
-              <input type="hidden" name="parameter" th:value="${field.parameterField}" /> 
-              <input type="hidden" name="comment" th:id="${field.name} + 'CommentInput'" />
+              <input type="hidden" name="fqdn" th:value="${table.fqdn}" /> <input type="hidden" name="fieldname" th:value="${field.name}" /> <input
+                type="hidden" name="parameter" th:value="${field.parameterField}" /> <input type="hidden" name="comment"
+                th:id="${field.name} + 'CommentInput'" />
               <button id="createCommentButton" type="submit" class="btn btn-success pull-right">Create Comment</button>
             </form>
           </div>

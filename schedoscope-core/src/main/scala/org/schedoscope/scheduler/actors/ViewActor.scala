@@ -21,7 +21,7 @@ import akka.actor.ActorSelection.toScala
 import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
 import akka.event.{ Logging, LoggingReceive }
 import org.apache.hadoop.fs.{ FileStatus, FileSystem, Path, PathFilter }
-import org.schedoscope.SchedoscopeSettings
+import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{ NoOp, Touch }
 import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem

@@ -1,0 +1,193 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
+<div class="modal fade" id="createUserModal" aria-hidden="true" data-th-fragment="create_user_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/user/create}" method="post" autocomplete="off">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Create User'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div style="display: none">
+              <input type="text" /> <input type="password" /> <input type="password" /> <input type="password" />
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="username">Username</label>
+              <div class="controls">
+                <input id="username" name="username" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="password">Password</label>
+              <div class="controls">
+                <input type="password" id="password" name="password" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="passwordRepeat">Repeat Password</label>
+              <div class="controls">
+                <input type="password" id="passwordRepeat" name="passwordRepeat" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="email">Email</label>
+              <div class="controls">
+                <input id="email" name="email" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="fullname">Full Name</label>
+              <div class="controls">
+                <input id="fullname" name="fullname" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="group">User Role</label>
+              <div class="controls">
+                <select class="form-control" name="group" id="group" style="width: 100%;">
+                  <option value="BUSINESS_USER">Business User</option>
+                  <option value="TECHNICAL_USER">Technical User</option>
+                  <option value="OPS_USER">Operations User</option>
+                </select>
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <div class="checkbox">
+                <label> <input name="admin" type="checkbox"> Admin </input>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Create</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="editUserModal" aria-hidden="true" data-th-fragment="edit_user_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/user/edit}" method="post" autocomplete="off">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Edit User'" class="modal-title"></h4>
+        </div>
+        <div class="modal-body">
+          <div>
+            <div style="display: none">
+              <input type="text" /> <input type="password" /> <input type="password" /> <input type="password" />
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="username">Username</label>
+              <div class="controls">
+                <input id="editUsername" name="username" type="text" style="width: 100%;" readonly="readonly" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="password">New password</label>
+              <div class="controls">
+                <input type="password" id="password" name="password" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="passwordRepeat">Repeat new Password</label>
+              <div class="controls">
+                <input type="password" id="passwordRepeat" name="passwordRepeat" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="email">Email</label>
+              <div class="controls">
+                <input id="editEmail" name="email" type="text" style="width: 100%;" readonly="readonly" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="fullname">Full Name</label>
+              <div class="controls">
+                <input id="editFullname" name="fullname" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="editGroup">User Role</label>
+              <div class="controls">
+                <select class="form-control" name="group" id="editUserGroup" style="width: 100%;">
+                  <option value="BUSINESS_USER">Business User</option>
+                  <option value="TECHNICAL_USER">Technical User</option>
+                  <option value="OPS_USER">Operations User</option>
+                </select>
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <div class="checkbox">
+                <label> <input name="admin" type="checkbox" id="adminCheckbox"> Admin </input>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="deleteUserModal" aria-hidden="true" data-th-fragment="delete_user_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/user/delete}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Delete User'" class="modal-title"></h4>
+        </div>
+        <div class="modal-body">
+          <label id="confirmLabel"></label> <input id="delUsername" name="username" type="hidden" />
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">OK</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

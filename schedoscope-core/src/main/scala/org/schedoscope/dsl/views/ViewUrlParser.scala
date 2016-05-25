@@ -129,7 +129,7 @@ object ViewUrlParser {
       case _ => List(Class.forName(s"${pakkage}.${viewClassNames}").asInstanceOf[Class[View]])
     }
   } catch {
-    case cnf: ClassNotFoundException => throw new IllegalArgumentException("Error while instatiating view: " + cnf.getMessage)
+    case cnf: ClassNotFoundException => throw new IllegalArgumentException("No class for package and view: " + cnf.getMessage())
   }
 
   def parse(env: String, viewUrlPath: String): List[ParsedView] = try {
@@ -159,10 +159,14 @@ object ViewUrlParser {
   } catch {
 
     case e: Throwable => throw new IllegalArgumentException(
-      s"""
-Error while parsing view URL path: ${viewUrlPath}!
+      s"""${viewUrlPath}
 
-Path format: /{package}/{view}(/{view parameter value})*
+Problem: ${e.getMessage}
+
+Little path format guide
+========================
+
+/{package}/{view}(/{view parameter value})*
 
 View parameter value format:
   i(aNumber)                    => an integer
@@ -188,10 +192,8 @@ Ranges on view parameter values:
     erymd(yyyyMM-yyyyMM,yyyyMM-yyyyMM) => an enumeration of MonthlyParameterization ranges
 
 Quoting:
-  Use backslashes to escape the syntax given above. The following characters need quotation: \,(-)
-
-Reason for exception:  
-""", e)
+  Use backslashes to escape the syntax given above. The following characters need quotation: \\,(-)
+""")
   }
 
   def viewNames(viewUrlPath: String) = parse("dev", viewUrlPath).map(pv => pv.viewClass.getName)

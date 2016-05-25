@@ -1,3 +1,19 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
 <div data-th-fragment="index">
   <script th:inline="javascript">
   /*<![CDATA[*/
@@ -25,54 +41,62 @@
 <div data-th-fragment="table">
   <script th:inline="javascript">
   /*<![CDATA[*/
-    $('#myTabs a').click(function (e) {
-      e.preventDefault()
-      $(this).tab('show')
-    });
-  
-    $("#taxonomySubmitButton").on('click', function() {
-      var objects = "";
-      $("#bosDiv").find("span").each(function() {
-        objects += $(this).text() + ",";
-      })
-      $("#bosDiv").find("a").each(function() {
-        objects += $(this).text() + ",";
-      })
-      $("#businessObjects").val(objects);
-    });
-  
+    var users = [[${owner}]];
     var fqdn = [[${table.fqdn}]];
     var first = [[${firstParam}]];
     var viewPage = [[${partitionPage}]];
-    
-    setTimeout(function() {
-      getSample(fqdn);
-      getViews(fqdn, viewPage);
-      getParameterValue(fqdn, first);
-      var bos = [[${table.businessObjects}]];
-      for (var i = 0; i < bos.length; i++) {
-        var bo = bos[i];
-        $("#bosDiv").find("span").eq(i).replaceWith('<a id="' + bo.categoryName + '' + bo.name + '" style="margin-right: 6px;" data-toggle="popover" class="tag label label-info" data-original-title="' + bo.name + ' (Category: ' + bo.categoryName + ')" data-placement="bottom" data-content="' + bo.description + '\n\n" href="#">' + bo.name + '<span data-role="remove"></span></a>');
-  	  }
-  		
-      $('[data-toggle="tooltip"]').tooltip()
-      $('[data-toggle="popover"]').popover({ trigger: "hover" })
-      $("#bosDiv").find(".bootstrap-tagsinput").find("input").prop("readonly", true);
-      $("#bosDiv").find("span").on('click', function() {
-        var text = $(this).parent().text();
-        $(this).parent().remove();
-        $('[role="tooltip"]').remove();
-      });
-  	}, 1000);
-  
+    var taxonomies = [[${taxonomyNames}]];  
+    var personResponsibleToast = [[${personResponsible}]]; 
+    var documentationToast = [[${documentation}]];
+    var commentToast = [[${comment}]];
+    var taxonomyToast = [[${taxonomy}]]; 
     var _comment = [[${table.comment}]];
     var comment = "";
-    
     if (_comment != null) {
       comment = _comment.text;
     }
-     
+    
+    // when page has been rendered
     $(document).ready(function() {
+      // send ajax request for content
+      getSample(fqdn);
+      getViews(fqdn, viewPage);
+      getParameterValue(fqdn, first);
+      
+      // move tags into tagsinput
+      $('.bootstrap-tagsinput').each(function(i, t) {
+        var tagsinput = $(t);
+        var divWithTags = tagsinput.next();
+        divWithTags.children().each(function(i2, a) {
+          tagsinput.children().last().before(a);
+        })
+      });
+      
+      // some tagsinput (popover) configuration
+      $('[data-toggle="tooltip"]').tooltip()
+      $('[data-toggle="popover"]').popover({ trigger: "hover" })
+      for (var i = 0; i < taxonomies.length; i++) {
+        var taxonomy = taxonomies[i];
+        $("[id='" + taxonomy + "Div']").find(".bootstrap-tagsinput").find("input").prop("readonly", true);
+        $("[id='" + taxonomy + "Div']").find("span").on('click', function() {
+          var text = $(this).parent().text();
+          $(this).parent().remove();
+          $('[role="tooltip"]').remove();
+        });
+      }
+      
+      $("#taxonomySubmitButton").on('click', function() {
+        for (var i = 0; i < taxonomies.length; i++) {
+          var taxonomy = taxonomies[i];
+          var objects = "";
+          $("[id='" + taxonomy + "Div']").find("a").each(function() {
+            objects += $(this).data("coid") + ",";
+          })
+          $("[id='" + taxonomy + "CategoryObjects']").val(objects);
+        }
+      });
+      
+      //initialize editors
       $('#tableEditor').summernote({
         height: 300,
         minHeight: null,
@@ -115,19 +139,33 @@
       $('#tableCommentEditor').on('summernote.change', function(customEvent, contents, $editable) {
         $('#tableCommentInput').val($('#tableCommentEditor').code());
       });
-      
-      var tagsinput = $('#categoryTags').next();
-      tagsinput.removeClass('bootstrap-tagsinput');
-      tagsinput.find("input").remove();
-      tagsinput.css("padding-bottom", "15px");
+    })
+    
+    $('#myTabs a').click(function (e) {
+      e.preventDefault()
+      $(this).tab('show')
     });
     
-    var users = [[${owner}]];
     $('#personResponsibleField').autocomplete({
     	source: users,
     	minLength: 0
     });
-
+    
+    if (personResponsibleToast) {
+      successToast("Person responsible", "The responsible person has been changed to " + personResponsibleToast);
+    }
+    
+    if (documentationToast) {
+      successToast("Documentation", "The documentation has been changed successfuly");
+    }
+    
+    if (commentToast) {
+      successToast("Comment", "The comment has been " + commentToast);
+    }
+    
+    if (taxonomyToast) {
+      successToast("Taxonomy", "The taxonomy has been changed successfuly");
+    }
   /*]]>*/
 </script>
 </div>

@@ -35,7 +35,7 @@ class GeohashMapper extends Mapper[LongWritable, Text, NullWritable, Text] {
   @throws(classOf[InterruptedException])
   override def map(key: LongWritable, input: Text, context: Mapper[LongWritable, Text, NullWritable, Text]#Context): Unit = {
 
-    val inputRecord = input.toString().split("\t");
+    val inputRecord = input.toString().split("\t")
 
     val hash = geoHashStringWithCharacterPrecision(inputRecord(4).toDouble, inputRecord(5).toDouble, hashPrecision)
 

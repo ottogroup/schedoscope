@@ -1,0 +1,290 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
+<div class="modal fade" id="createTaxonomyModal" aria-hidden="true" data-th-fragment="create_taxonomy_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/taxonomy/create}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Create Taxonomy'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Name</label>
+              <div class="controls">
+                <input name="taxonomyName" type="text" style="width: 100%;" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Create</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="createCategoryModal" aria-hidden="true" data-th-fragment="create_category_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/category/create}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Create Category'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Name</label>
+              <div class="controls">
+                <input type="hidden" id="taxonomyId" name="taxonomyId" /> <input name="categoryName" type="text" style="width: 100%;" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Create</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="deleteTaxonomyModal" aria-hidden="true" data-th-fragment="delete_taxonomy_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/taxonomy/delete}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Delete Taxonomy'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Are you sure to delete taxonomy with its categories and category objects?</label> <input
+                type="hidden" id="deleteTaxonomyTaxonomyId" name="taxonomyId" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Delete</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="deleteCategoryModal" aria-hidden="true" data-th-fragment="delete_category_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/category/delete}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Delete Category'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Are you sure to delete category with its category objects?</label> <input type="hidden"
+                id="deleteCategoryCategoryId" name="categoryId" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Delete</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="deleteCategoryObjectModal" aria-hidden="true" data-th-fragment="delete_category_object_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/categoryobject/delete}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Delete Category Object'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Are you sure to delete this category object?</label> <input type="hidden"
+                id="deleteCategoryObjectCategoryObjectId" name="categoryObjectId" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-danger">Delete</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="createCategoryObjectModal" aria-hidden="true" data-th-fragment="create_category_object_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/categoryobject/create}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Create Category Object'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Name</label>
+              <div class="controls">
+                <input type="hidden" id="createCategoryObjectCategoryId" name="categoryId" /> <input name="categoryObjectName" type="text"
+                  style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="description">Description</label>
+              <div class="controls">
+                <textarea id="description" name="description" type="text" style="width: 100%;"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Create</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="editTaxonomyModal" aria-hidden="true" data-th-fragment="edit_taxonomy_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/taxonomy/edit}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Edit Taxonomy'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Name</label>
+              <div class="controls">
+                <input type="hidden" id="editTaxonomyId" name="taxonomyId" /> <input id="editTaxonomyName" name="taxonomyName" type="text"
+                  style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="editCategoryModal" aria-hidden="true" data-th-fragment="edit_category_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/category/edit}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Edit Category'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Name</label>
+              <div class="controls">
+                <input type="hidden" id="editCategoryId" name="categoryId" /> <input id="editCategoryName" name="categoryName" type="text"
+                  style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="modal fade" id="editCategoryObjectModal" aria-hidden="true" data-th-fragment="edit_category_object_modal" tabindex='-1'>
+  <form class="form-inline" data-th-action="@{/admin/categoryobject/edit}" method="post">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 data-th-text="'Edit Category Object'" class="modal-title" />
+        </div>
+        <div class="modal-body">
+          <div>
+            <div class="control-group">
+              <label class="control-label" for="category">Name</label>
+              <div class="controls">
+                <input type="hidden" id="editCategoryObjectId" name="categoryObjectId" /> <input id="editCategoryObjectName"
+                  name="categoryObjectName" type="text" style="width: 100%;" />
+              </div>
+            </div>
+            <br />
+            <div class="control-group">
+              <label class="control-label" for="description">Description</label>
+              <div class="controls">
+                <textarea id="editCategoryObjectDescription" name="description" type="text" style="width: 100%;"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-success">Save</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>

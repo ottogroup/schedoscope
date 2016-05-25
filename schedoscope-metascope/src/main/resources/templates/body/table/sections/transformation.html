@@ -1,28 +1,57 @@
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
+
 <div class="tab-pane" id="transformationContent" data-th-fragment="transformation(table,util)">
-  <div style="overflow: auto;">
-    <label>Transformation: </label> <em data-th-text="${table.transformationType}"></em> <br />
-    <table class="table table-reflow">
-      <tr data-th-each="transformationEntity : ${table.transformationProperties}" style="border-bottom: 1px solid lightgrey;">
-        <td><b data-th-text="${transformationEntity.transformationKey}"></b></td>
-        <td data-th-text="${transformationEntity.transformationValue}" style="white-space: pre;"></td>
-      </tr>
-    </table>
-    
-    <div data-th-if="${table.exports.size() > 0}">
-      <br/>
-      <label>Exports: </label> 
-      <div data-th-each="export : ${table.exports}">
-        <table class="table table-reflow">
-          <tr>
-            <td><b>Export:</b></td>
-            <td data-th-text="${export.getType()}" style="white-space: pre;"></td>
-          </tr>
-          <tr data-th-each="e : ${export.properties.entrySet()}" style="border-bottom: 1px solid lightgrey;">
-            <td><b data-th-text="${e.key}"></b></td>
-            <td data-th-text="${e.value}" style="white-space: pre;"></td>
-          </tr>
-        </table>
-        <hr/>
+  <div>
+    <div class="row">
+      <div class="col-md-12">
+        <div class="row">
+          <div class="col-md-6">
+            <div style="overflow: auto">
+              <table class="table bordered">
+                <tr>
+                  <th>Transformation</th>
+                </tr>
+                <tr>
+                  <td>Type</td>
+                  <td data-th-text="${table.transformationType}"></td>
+                </tr>
+                <tr data-th-each="transformationEntity : ${table.transformationProperties}">
+                  <td data-th-text="${transformationEntity.transformationKey}"></td>
+                  <td data-th-text="${transformationEntity.transformationValue}" style="white-space: pre;"></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div data-th-each="export : ${table.exports}">
+              <div style="overflow: auto">
+                <table class="table bordered">
+                  <tr>
+                    <th data-th-text="${export.getType()} + ' Export'"></th>
+                  </tr>
+                  <tr data-th-each="e : ${export.properties.entrySet()}">
+                    <td data-th-text="${e.key}"></td>
+                    <td data-th-text="${e.value}" style="white-space: pre;"></td>
+                  </tr>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

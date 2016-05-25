@@ -33,14 +33,15 @@ import org.schedoscope.metascope.model.TableEntity;
 import org.schedoscope.metascope.model.UserEntity;
 import org.schedoscope.metascope.model.ViewEntity;
 import org.schedoscope.metascope.repository.ActivityEntityRepository;
-import org.schedoscope.metascope.repository.BusinessObjectEntityRepository;
 import org.schedoscope.metascope.repository.CategoryEntityRepository;
+import org.schedoscope.metascope.repository.CategoryObjectEntityRepository;
 import org.schedoscope.metascope.repository.FieldEntityRepository;
 import org.schedoscope.metascope.repository.MetadataEntityRepository;
 import org.schedoscope.metascope.repository.ParameterValueEntityRepository;
 import org.schedoscope.metascope.repository.SuccessorEntityRepository;
 import org.schedoscope.metascope.repository.TableDependencyEntityRepository;
 import org.schedoscope.metascope.repository.TableEntityRepository;
+import org.schedoscope.metascope.repository.TaxonomyEntityRepository;
 import org.schedoscope.metascope.repository.TransformationEntityRepository;
 import org.schedoscope.metascope.repository.UserEntityRepository;
 import org.schedoscope.metascope.repository.ViewDependencyEntityRepository;
@@ -77,165 +78,176 @@ import com.google.common.collect.Iterators;
 @WebAppConfiguration
 public class SpringTest {
 
-  protected static final String NON_EXIST_TABLE = "org.schedoscope.metascope.NotExist";
-  protected static final String NON_EXIST_USER = "notexist";
-  protected static final String NON_EXIST_USER_FULLNAME = "Not Exists";
-  protected static final String TEST_ADMIN_USER = "admin";
-  protected static final String LOGGED_IN_USER = "anonymous";
-  protected static final String TEST_CATEGORY = "TestCategory";
-  protected static final String TEST_BUSINESS_OBJECT = "TestBusinessObject";
-  protected static final String TEST_TAG = "TestTag";
-  protected static final String TO_BE_DELETED = "TO_BE_DELETED";
+	protected static final String NON_EXIST_TABLE = "org.schedoscope.metascope.NotExist";
+	protected static final String NON_EXIST_USER = "notexist";
+	protected static final String NON_EXIST_USER_FULLNAME = "Not Exists";
+	protected static final String TEST_ADMIN_USER = "admin";
+	protected static final String LOGGED_IN_USER = "anonymous";
+	protected static final String TEST_TAXONOMY = "TestTaxonomy";
+	protected static final String TEST_CATEGORY_NAME = "TestCategory";
+	protected static final String TEST_CATEGORY_OBJECT_NAME = "TestCategoryObject";
+	protected static final String TEST_CATEGORY_OBJECT_DESC = "TestCategoryObjectDesc";
+	protected static final String TEST_TAG = "TestTag";
+	protected static final String TO_BE_DELETED = "TO_BE_DELETED";
 
-  private static final String NON_EXIST_PARAMETER = "day";
-  private static final String TEST_TABLE_PROCESSED_NODES = "demo_schedoscope_example_osm_processed.nodes";
-  private static final String TEST_VIEW_PROCESSED_NODES_201501 = "schedoscope.example.osm.processed/Nodes/2015/01/201501";
+	private static final String NON_EXIST_PARAMETER = "day";
+	private static final String TEST_TABLE_PROCESSED_NODES = "demo_schedoscope_example_osm_processed.nodes";
+	private static final String TEST_VIEW_PROCESSED_NODES_201501 = "schedoscope.example.osm.processed/Nodes/2015/01/201501";
 
-  @Autowired
-  protected WebApplicationContext wac;
+	@Autowired
+	protected WebApplicationContext wac;
 
-  @Autowired
-  protected TableEntityController tableEntityController;
+	@Autowired
+	protected TableEntityController tableEntityController;
 
-  @Autowired
-  protected TableEntityService tableEntityService;
-  @Autowired
-  protected ActivityEntityService activityEntityService;
-  @Autowired
-  protected DocumentationService documentationService;
-  @Autowired
-  protected FieldEntityService fieldEntityService;
-  @Autowired
-  protected MetadataEntityService metadataEntityService;
-  @Autowired
-  protected TaxonomyService taxonomyService;
-  @Autowired
-  protected UserEntityService userEntityService;
-  @Autowired
-  protected URLService urlService;
-  @Autowired
-  protected SolrFacade solr;
+	@Autowired
+	protected TableEntityService tableEntityService;
+	@Autowired
+	protected ActivityEntityService activityEntityService;
+	@Autowired
+	protected DocumentationService documentationService;
+	@Autowired
+	protected FieldEntityService fieldEntityService;
+	@Autowired
+	protected MetadataEntityService metadataEntityService;
+	@Autowired
+	protected TaxonomyService taxonomyService;
+	@Autowired
+	protected UserEntityService userEntityService;
+	@Autowired
+	protected URLService urlService;
+	@Autowired
+	protected SolrFacade solr;
 
-  @Autowired
-  protected TableEntityRepository tableEntityRepository;
-  @Autowired
-  protected ViewEntityRepository viewEntityRepository;
-  @Autowired
-  protected UserEntityRepository userEntityRepository;
-  @Autowired
-  protected FieldEntityRepository fieldEntityRepository;
-  @Autowired
-  protected TableDependencyEntityRepository tableDependencyEntityRepository;
-  @Autowired
-  protected TransformationEntityRepository transformationEntityRepository;
-  @Autowired
-  protected ParameterValueEntityRepository parameterValueEntityRepository;
-  @Autowired
-  protected ViewDependencyEntityRepository viewDependencyEntityRepository;
-  @Autowired
-  protected SuccessorEntityRepository successorEntityRepository;
-  @Autowired
-  protected ActivityEntityRepository activityEntityRepository;
-  @Autowired
-  protected CategoryEntityRepository categoryEntityRepository;
-  @Autowired
-  protected BusinessObjectEntityRepository boEntityRepository;
-  @Autowired
-  protected MetadataEntityRepository metadataEntityRepository;
+	@Autowired
+	protected TableEntityRepository tableEntityRepository;
+	@Autowired
+	protected ViewEntityRepository viewEntityRepository;
+	@Autowired
+	protected UserEntityRepository userEntityRepository;
+	@Autowired
+	protected FieldEntityRepository fieldEntityRepository;
+	@Autowired
+	protected TableDependencyEntityRepository tableDependencyEntityRepository;
+	@Autowired
+	protected TransformationEntityRepository transformationEntityRepository;
+	@Autowired
+	protected ParameterValueEntityRepository parameterValueEntityRepository;
+	@Autowired
+	protected ViewDependencyEntityRepository viewDependencyEntityRepository;
+	@Autowired
+	protected SuccessorEntityRepository successorEntityRepository;
+	@Autowired
+	protected ActivityEntityRepository activityEntityRepository;
+	@Autowired
+	protected TaxonomyEntityRepository taxonomyEntityRepository;
+	@Autowired
+	protected CategoryEntityRepository categoryEntityRepository;
+	@Autowired
+	protected CategoryObjectEntityRepository coEntityRepository;
+	@Autowired
+	protected MetadataEntityRepository metadataEntityRepository;
 
-  @Autowired
-  protected RepositoryDAO repo;
-  @Autowired
-  protected DataSource dataSource;
-  
-  @Autowired 
-  protected MockHttpServletRequest request;
+	@Autowired
+	protected RepositoryDAO repo;
+	@Autowired
+	protected DataSource dataSource;
 
-  @Before
-  public void setup() {
-    /*
-     * mock UserEntityService getUser() method, which in production returns the
-     * logged in user
-     */
-    UserEntityService userEntityServiceMock = mock(UserEntityService.class);
-    when(userEntityServiceMock.getUser()).thenReturn(getLoggedInUser());
-    when(userEntityServiceMock.getAllUser()).thenReturn(new ArrayList<UserEntity>());
-    when(userEntityServiceMock.isAdmin()).thenReturn(true);
-    when(userEntityServiceMock.isFavourite(any(TableEntity.class))).thenReturn(true);
-    LoadingCache<String, HiveQueryResult> sampleCacheMock = getSampleCacheMock();
-    when(sampleCacheMock.getUnchecked(any(String.class))).thenReturn(new HiveQueryResult("test"));
-    mockField(tableEntityService, "userEntityService", userEntityServiceMock);
-    mockField(tableEntityService, "sampleCache", sampleCacheMock);
-    mockField(taxonomyService, "userEntityService", userEntityServiceMock);
-    mockField(tableEntityController, "userEntityService", userEntityServiceMock);
+	@Autowired
+	protected MockHttpServletRequest request;
 
-    /* mock the calls to solr (Solr is tested seperatly) */
-    SolrFacade solrFacadeMock = mock(SolrFacade.class);
-    mockField(tableEntityService, "solr", solrFacadeMock);
-    mockField(documentationService, "solr", solrFacadeMock);
-    mockField(taxonomyService, "solr", solrFacadeMock);
-  }
+	@Before
+	public void setup() {
+		/*
+		 * mock UserEntityService getUser() method, which in production returns
+		 * the logged in user
+		 */
+		UserEntityService userEntityServiceMock = mock(UserEntityService.class);
+		when(userEntityServiceMock.getUser()).thenReturn(getLoggedInUser());
+		when(userEntityServiceMock.getAllUser()).thenReturn(
+				new ArrayList<UserEntity>());
+		when(userEntityServiceMock.isAdmin()).thenReturn(true);
+		when(userEntityServiceMock.isFavourite(any(TableEntity.class)))
+				.thenReturn(true);
+		LoadingCache<String, HiveQueryResult> sampleCacheMock = getSampleCacheMock();
+		when(sampleCacheMock.getUnchecked(any(String.class))).thenReturn(
+				new HiveQueryResult("test"));
+		mockField(tableEntityService, "userEntityService",
+				userEntityServiceMock);
+		mockField(tableEntityService, "sampleCache", sampleCacheMock);
+		mockField(taxonomyService, "userEntityService", userEntityServiceMock);
+		mockField(tableEntityController, "userEntityService",
+				userEntityServiceMock);
 
-  @SuppressWarnings("unchecked")
-  private LoadingCache<String, HiveQueryResult> getSampleCacheMock() {
-    return mock(LoadingCache.class);
-  }
+		/* mock the calls to solr (Solr is tested seperatly) */
+		SolrFacade solrFacadeMock = mock(SolrFacade.class);
+		mockField(tableEntityService, "solr", solrFacadeMock);
+		mockField(documentationService, "solr", solrFacadeMock);
+		mockField(taxonomyService, "solr", solrFacadeMock);
+	}
 
-  protected void mockField(Class<?> clazz, String name, Object mock) {
-    ReflectionTestUtils.setField(getSpringBean(clazz), name, mock);
-  }
+	@SuppressWarnings("unchecked")
+	private LoadingCache<String, HiveQueryResult> getSampleCacheMock() {
+		return mock(LoadingCache.class);
+	}
 
-  protected void mockField(Object target, String name, Object mock) {
-    ReflectionTestUtils.setField(getSpringBean(target.getClass()), name, mock);
-  }
+	protected void mockField(Class<?> clazz, String name, Object mock) {
+		ReflectionTestUtils.setField(getSpringBean(clazz), name, mock);
+	}
 
-  protected Object getSpringBean(Class<?> clazz) {
-    return unwrap(getBean(clazz));
-  }
+	protected void mockField(Object target, String name, Object mock) {
+		ReflectionTestUtils.setField(getSpringBean(target.getClass()), name,
+				mock);
+	}
 
-  private Object getBean(Class<?> clazz) {
-    StaticApplicationContext sac = new StaticApplicationContext(wac);
-    Object bean = sac.getBean(clazz);
-    sac.close();
-    return bean;
-  }
+	protected Object getSpringBean(Class<?> clazz) {
+		return unwrap(getBean(clazz));
+	}
 
-  private Object unwrap(Object bean) {
-    if (AopUtils.isAopProxy(bean) && bean instanceof Advised) {
-      Advised advised = (Advised) bean;
-      try {
-        bean = advised.getTargetSource().getTarget();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-    return bean;
-  }
+	private Object getBean(Class<?> clazz) {
+		StaticApplicationContext sac = new StaticApplicationContext(wac);
+		Object bean = sac.getBean(clazz);
+		sac.close();
+		return bean;
+	}
 
-  protected int size(Iterable<?> iterable) {
-    return Iterators.size(iterable.iterator());
-  }
+	private Object unwrap(Object bean) {
+		if (AopUtils.isAopProxy(bean) && bean instanceof Advised) {
+			Advised advised = (Advised) bean;
+			try {
+				bean = advised.getTargetSource().getTarget();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return bean;
+	}
 
-  protected TableEntity getTestTable() {
-    return tableEntityRepository.findByFqdn(TEST_TABLE_PROCESSED_NODES);
-  }
+	protected int size(Iterable<?> iterable) {
+		return Iterators.size(iterable.iterator());
+	}
 
-  protected ViewEntity getTestView() {
-    return viewEntityRepository.findByUrlPath(TEST_VIEW_PROCESSED_NODES_201501);
-  }
+	protected TableEntity getTestTable() {
+		return tableEntityRepository.findByFqdn(TEST_TABLE_PROCESSED_NODES);
+	}
 
-  protected UserEntity getLoggedInUser() {
-    return userEntityRepository.findByUsername(LOGGED_IN_USER);
-  }
+	protected ViewEntity getTestView() {
+		return viewEntityRepository
+				.findByUrlPath(TEST_VIEW_PROCESSED_NODES_201501);
+	}
 
-  protected UserEntity getTestUser() {
-    return userEntityRepository.findByUsername(TEST_ADMIN_USER);
-  }
+	protected UserEntity getLoggedInUser() {
+		return userEntityRepository.findByUsername(LOGGED_IN_USER);
+	}
 
-  protected FieldEntity getNonExistParameter() {
-    FieldEntity nonExistingParameter = new FieldEntity();
-    nonExistingParameter.setName(NON_EXIST_PARAMETER);
-    return nonExistingParameter;
-  }
+	protected UserEntity getTestUser() {
+		return userEntityRepository.findByUsername(TEST_ADMIN_USER);
+	}
+
+	protected FieldEntity getNonExistParameter() {
+		FieldEntity nonExistingParameter = new FieldEntity();
+		nonExistingParameter.setName(NON_EXIST_PARAMETER);
+		return nonExistingParameter;
+	}
 
 }

@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-suite</artifactId>
-	<version>0.4.4-SNAPSHOT</version>
+	<version>0.6.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Schedoscope Suite</name>
 	<description>A wrapper building all modules of the Schedoscope project</description>
@@ -12,29 +12,22 @@
 	<properties>
 		<akka.version>2.3.14</akka.version>
 		<scala.version>2.11</scala.version>
+		<scalarelease.version>2.11.7</scalarelease.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<mrunit.version>1.1.0</mrunit.version>
+		<schedoscope.version>0.6.0-SNAPSHOT</schedoscope.version>
+		<hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
+		<hive.version>1.1.0-cdh5.5.2</hive.version>
+		<oozie.version>4.1.0-cdh5.5.2</oozie.version>
+		<pig.version>0.12.0-cdh5.5.2</pig.version>
+		<pig.parquet.version>1.5.0-cdh5.5.2</pig.parquet.version>
 	</properties>
 
-	<profiles>
-		<profile>
-			<activation>
-				<activeByDefault>true</activeByDefault>
-			</activation>
-			<id>cloudera</id>
-			<properties>
-				<hadoop.version>2.6.0-cdh5.5.1</hadoop.version>
-				<hive.version>1.1.0-cdh5.5.1</hive.version>
-				<oozie.version>4.1.0-cdh5.5.1</oozie.version>
-				<pig.version>0.12.0-cdh5.5.1</pig.version>
-				<mrunit.version>1.1.0</mrunit.version>
-			</properties>
-		</profile>
-	</profiles>
-
 	<modules>
-		<module>schedoscope-core</module>
+		<module>schedoscope-conf</module>
 		<module>schedoscope-export</module>
+		<module>schedoscope-core</module>
 		<module>schedoscope-tutorial</module>
 		<module>schedoscope-metascope</module>
 	</modules>

@@ -1,7 +1,17 @@
-/*!
- * metascope
- * https://github.com/ottogroup/schedoscope
- * Copyright 2016 Otto Group and other contributors; Licensed MIT
+/**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 
 var initializeFieldEditor = function(fieldname) {
@@ -12,37 +22,29 @@ var initializeFieldEditor = function(fieldname) {
         minHeight : null,
         maxHeight : null,
         focus : true,
-        toolbar : [ [ 'style', [ 'style' ] ],
-            [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ],
-            [ 'fontname', [ 'fontname' ] ], [ 'fontsize', [ 'fontsize' ] ],
-            [ 'color', [ 'color' ] ], [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
-            [ 'height', [ 'height' ] ], [ 'table', [ 'table' ] ],
-            [ 'insert', [ 'link', 'hr' ] ], [ 'view', [ 'codeview' ] ],
-            [ 'help', [ 'help' ] ] ],
+        toolbar : [ [ 'style', [ 'style' ] ], [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ],
+            [ 'fontname', [ 'fontname' ] ], [ 'fontsize', [ 'fontsize' ] ], [ 'color', [ 'color' ] ],
+            [ 'para', [ 'ul', 'ol', 'paragraph' ] ], [ 'height', [ 'height' ] ], [ 'table', [ 'table' ] ],
+            [ 'insert', [ 'link', 'hr' ] ], [ 'view', [ 'codeview' ] ], [ 'help', [ 'help' ] ] ],
       });
-  $(fieldEditor).on('summernote.change',
-      function(customEvent, contents, $editable) {
-        console.log($(fieldEditor).code());
-        $('#' + fieldname + 'Input').val($(fieldEditor).code());
-      });
+  $(fieldEditor).on('summernote.change', function(customEvent, contents, $editable) {
+    console.log($(fieldEditor).code());
+    $('#' + fieldname + 'Input').val($(fieldEditor).code());
+  });
 
   var fieldCommentEditor = "#" + fieldname + "CommentEditor";
-  $(fieldCommentEditor)
-      .summernote(
-          {
-            height : 75,
-            minHeight : null,
-            maxHeight : null,
-            focus : true,
-            toolbar : [ [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ],
-                [ 'fontname', [ 'fontname' ] ], [ 'color', [ 'color' ] ],
-                [ 'para', [ 'ul', 'ol', 'paragraph' ] ],
-                [ 'insert', [ 'link' ] ], ],
-          });
-  $(fieldCommentEditor).on('summernote.change',
-      function(customEvent, contents, $editable) {
-        $('#' + fieldname + 'CommentInput').val($(fieldCommentEditor).code());
+  $(fieldCommentEditor).summernote(
+      {
+        height : 75,
+        minHeight : null,
+        maxHeight : null,
+        focus : true,
+        toolbar : [ [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ], [ 'fontname', [ 'fontname' ] ],
+            [ 'color', [ 'color' ] ], [ 'para', [ 'ul', 'ol', 'paragraph' ] ], [ 'insert', [ 'link' ] ], ],
       });
+  $(fieldCommentEditor).on('summernote.change', function(customEvent, contents, $editable) {
+    $('#' + fieldname + 'CommentInput').val($(fieldCommentEditor).code());
+  });
 }
 
 var initTablesorter = function() {
@@ -64,12 +66,10 @@ var setFilterStatus = function(e, filterName) {
   if (open) {
     $.cookie(filterName, "open");
     $('#' + e.id).children().eq(1).replaceWith(
-        '<span id="#' + filterName
-            + 'Caret" class="dropup"><span class="caret"></span></span>')
+        '<span id="#' + filterName + 'Caret" class="dropup"><span class="caret"></span></span>')
   } else {
     $.cookie(filterName, "closed");
-    $('#' + e.id).children().eq(1).replaceWith(
-        '<span id="#' + filterName + 'Caret" class="caret"></span>')
+    $('#' + e.id).children().eq(1).replaceWith('<span id="#' + filterName + 'Caret" class="caret"></span>')
   }
 }
 
@@ -84,10 +84,8 @@ var clearSearchField = function() {
 var preSubmitFilterForm = function() {
   var params = getQueryParameter();
   for ( var key in params) {
-    if (!(key === "searchQuery") && !(key === "e") && !(key === "p")
-        && !(key === "p")) {
-      $('<input />').attr('type', 'hidden').attr('name', key).attr('value',
-          params[key]).appendTo('#filterForm');
+    if (!(key === "searchQuery") && !(key === "e") && !(key === "p") && !(key === "p")) {
+      $('<input />').attr('type', 'hidden').attr('name', key).attr('value', params[key]).appendTo('#filterForm');
     }
   }
   return true;
@@ -124,151 +122,91 @@ var getQueryParameter = function() {
   return query_string;
 }
 
-/**
- * Opens the 'user management' modal
- */
-var showUserModal = function() {
-  $('#userManagement').modal('show');
+var createCategory = function(taxonomyId) {
+  $('#taxonomyId').val(taxonomyId);
+  $('#createCategoryModal').modal('show');
 }
 
-/**
- * Opens 'the taxonomy' modal
- */
-var showTaxonomyModal = function() {
-  $('#taxonomyModal').modal('show');
+var createCategoryObject = function(categoryId) {
+  $('#createCategoryObjectCategoryId').val(categoryId);
+  $('#createCategoryObjectModal').modal('show');
 }
 
-/**
- * Opens the 'create user' modal
- */
-var createUser = function() {
-  $('#userManagement').modal('hide');
+var editTaxonomy = function(taxonomyId, taxonomyName) {
+  $('#editTaxonomyId').val(taxonomyId);
+  $('#editTaxonomyName').val(taxonomyName);
+  $('#editTaxonomyModal').modal('show');
 }
 
-/**
- * Opens the 'edit user' modal
- */
+var editCategory = function(categoryId, categoryName) {
+  $('#editCategoryId').val(categoryId);
+  $('#editCategoryName').val(categoryName);
+  $('#editCategoryModal').modal('show');
+}
+
+var editCategoryObject = function(categoryObjectId, categoryObjectName, categoryDescription) {
+  $('#editCategoryObjectId').val(categoryObjectId);
+  $('#editCategoryObjectName').val(categoryObjectName);
+  $('#editCategoryObjectDescription').val(categoryDescription);
+  $('#editCategoryObjectModal').modal('show');
+}
+
+var deleteTaxonomy = function(taxonomyId) {
+  $('#deleteTaxonomyTaxonomyId').val(taxonomyId);
+  $('#deleteTaxonomyModal').modal('show');
+}
+
+var deleteCategory = function(categoryId) {
+  $('#deleteCategoryCategoryId').val(categoryId);
+  $('#deleteCategoryModal').modal('show');
+}
+
+var deleteCategoryObject = function(categoryObjectId) {
+  $('#deleteCategoryObjectCategoryObjectId').val(categoryObjectId);
+  $('#deleteCategoryObjectModal').modal('show');
+}
+
+var showCategoryObjects = function(taxonomyId, categoryId) {
+  $(".coTable" + taxonomyId).css("display", "none");
+  $("#categoryObjects" + categoryId).css("display", "inline");
+}
+
 var editUser = function(username, email, fullname, admin, group) {
-  $('#userManagement').modal('hide');
-  $('#userEdit').modal('show');
   $('#editUsername').val(username);
   $('#editEmail').val(email);
   $('#editFullname').val(fullname);
   $('#adminCheckbox').prop('checked', admin);
   $("#editUserGroup").val(group);
+  $("#editUserModal").modal('show');
 }
 
 /**
  * Opens the 'delete user' modal
  */
 var deleteUser = function(username) {
-  $('#userManagement').modal('hide');
-  $('#userDelete').modal('show');
-  $('#confirmLabel').text(
-      "Do you realy want to delete the user '" + username + "' ?");
+  $('#confirmLabel').text("Do you realy want to delete the user '" + username + "' ?");
   $('#delUsername').val(username);
-}
-
-/**
- * Opens the 'create category' modal
- */
-var createCategory = function() {
-  $('#taxonomyModal').modal('hide');
-  $('#categoryAdd').modal('show');
-}
-
-/**
- * Opens the 'edit category' modal
- */
-var editCategory = function(category) {
-  $('#taxonomyModal').modal('hide');
-  $('#categoryEdit').modal('show');
-  $('#editCategory').val(category);
-  $('#oldCategory').val(category);
-}
-
-/**
- * Opens the 'delete category' modal
- */
-var deleteCategory = function(category) {
-  $('#taxonomyModal').modal('hide');
-  $('#categoryDelete').modal('show');
-  $('#categoryConfirmLabel').text(
-      "Do you realy want to delete the category '" + category
-          + "' and all its business objects?");
-  $('#delCategory').val(category);
-}
-
-/**
- * Shows the business objects for a category
- */
-var showBusinessObjects = function(categoryName) {
-  var current = $('#activeCategory').val();
-  $("[id='" + current + "']").css("display", "none");
-  $("[id='" + categoryName + "']").css("display", "block");
-  $('#activeCategory').val(categoryName);
-}
-
-/**
- * Opens the 'create business object' modal
- */
-var createBusinessObject = function(categoryName) {
-  $('#taxonomyModal').modal('hide');
-  $('#boAdd').modal('show');
-  $('#categoryForBo').val(categoryName);
-}
-
-/**
- * Opens the 'edit business object' modal
- */
-var editBusinessObject = function(categoryName, oldBoName, description) {
-  $('#taxonomyModal').modal('hide');
-  $('#boEdit').modal('show');
-  $('#editCategoryForBo').val(categoryName);
-  $('#oldCategoryForBo').val(categoryName);
-  $('#oldBo').val(oldBoName);
-  $('#editBoName').val(oldBoName);
-  $('#editBoDescription').val(description);
-
-}
-
-/**
- * Opens the 'delete business object' modal
- */
-var deleteBusinessObject = function(category, bo) {
-  $('#taxonomyModal').modal('hide');
-  $('#boDelete').modal('show');
-  $('#boConfirmLabel').text(
-      "Do you realy want to delete the business object '" + bo
-          + "' from category '" + category + "' ?");
-  $('#delBoCategory').val(category);
-  $('#delBo').val(bo);
+  $("#deleteUserModal").modal('show');
 }
 
 /**
  * Adds a business object tag
  */
-var addBo = function(name, description, category) {
-  if ( $("[id='" + category + "" + name + "']").length == 0) {
-    var div = $("#bosDiv").find(".bootstrap-tagsinput");
-    var tag = $('<a id="'
-        + category
-        + ''
-        + name
+var addCo = function(taxonomy, name, description, category, id) {
+  if ($("[id='" + taxonomy + category + name + "']").length == 0) {
+    var div = $("[id='" + taxonomy + "Div']").find(".bootstrap-tagsinput");
+    var tag = $('<a id="' + taxonomy + category + name
         + '" style="margin-right: 6px;" data-toggle="popover" class="tag label label-info" data-original-title="'
-        + name + ' (Category: ' + category
-        + ')" data-placement="bottom" data-content="' + description
-        + '\n\n" href="#">' + name
-        + '<span data-role="remove"></span></a></div>');
+        + name + ' (Category: ' + category + ')" data-placement="bottom" data-content="' + description
+        + '\n\n" data-coid="' + id + '">' + name + '<span data-role="remove"></span></a></div>');
     div.prepend(tag);
     tag.after(' ');
     $('[data-toggle="tooltip"]').tooltip()
     $('[data-toggle="popover"]').popover({
       trigger : "hover"
     })
-    $("#bosDiv").find("span").on('click', function() {
+    $("[id='" + taxonomy + "Div']").find("span").on('click', function() {
       var text = $(this).parent().text();
-      console.log(text);
       $(this).parent().remove();
       $('[role="tooltip"]').remove();
     });
@@ -383,7 +321,7 @@ var setViews = function(data) {
   $("#partitionsBody").html(data);
   $("#partitionSection").show();
   $("#loadingViewsLabel").hide();
-  
+
   $('.showFirst').click(function() {
     var link = $(this);
     var list = $(this).next().slideToggle(function() {
@@ -395,7 +333,7 @@ var setViews = function(data) {
     });
     $('.showFirst > li').not(this).find('ul').slideUp();
   });
-  
+
   var url = document.location.toString();
   if (url.match('#')) {
     var urlPart = url.split('#')[1];
@@ -405,7 +343,9 @@ var setViews = function(data) {
         $(this).css('background-color', 'rgba(153, 222, 255, 0.2)');
       })
       setTimeout(function() {
-        $('html,body').animate({scrollTop: row.offset().top - 70},'slow');
+        $('html,body').animate({
+          scrollTop : row.offset().top - 70
+        }, 'slow');
       }, 100);
     }
   }
@@ -445,6 +385,35 @@ var expandFunction = function(id) {
 }
 
 /**
+ * Edit comment
+ */
+var editComment = function(commentDiv) {
+  var div = $("#" + commentDiv);
+  div.toggle();
+  var html = div.children().first().html();
+
+  var editor = "#" + commentDiv + "editEditor";
+  $(editor).summernote(
+      {
+        height : 75,
+        minHeight : null,
+        maxHeight : null,
+        focus : true,
+        toolbar : [ [ 'font', [ 'bold', 'italic', 'underline', 'clear' ] ], [ 'fontname', [ 'fontname' ] ],
+            [ 'color', [ 'color' ] ], [ 'para', [ 'ul', 'ol', 'paragraph' ] ], [ 'insert', [ 'link' ] ], ],
+      });
+
+  $(editor).on('summernote.change', function(customEvent, contents, $editable) {
+    $('#' + commentDiv + 'text').val($(editor).code());
+  });
+
+  $(editor).code(html);
+
+  var editorSection = "#" + commentDiv + "editEditorSection";
+  $(editorSection).toggle();
+}
+
+/**
  * Shows the 'Create Documentation' editor and hides the current documentation
  */
 var toggleEditDocu = function(id, hideTextWrapper) {
@@ -457,6 +426,20 @@ var toggleEditDocu = function(id, hideTextWrapper) {
   if (hideTextWrapper) {
     $('#' + id + 'TextWrapper').hide();
   }
+}
+
+var successToast = function(title, message) {
+  $.toast({
+    text : message,
+    heading : title,
+    icon : 'success',
+    showHideTransition : 'fade',
+    allowToastClose : true,
+    hideAfter : 2500,
+    position : 'top-center',
+    textAlign : 'left',
+    loader : false
+  });
 }
 
 /**

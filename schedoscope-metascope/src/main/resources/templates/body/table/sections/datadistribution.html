@@ -1,108 +1,123 @@
-<div th:attr="class=${selectedPartition != null ? 'tab-pane active' : 'tab-pane'}" id="datadistributionContent" data-th-fragment="data(table,util)">
- <div data-th-if="${partitionCount == 1}" th:with="partition=${table.views.get(0)}">
-  <div data-th-replace="body/table/sections/datadistribution :: dataDistributionTable(${partition})"></div>
- </div>
+<!-- /**
+ * Copyright 2015 Otto (GmbH & Co KG)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */  -->
 
- <div data-th-if="${partitionCount > 1}">
-  <div class="row">
-   <div class="col-md-12">
-    <div class="col-md-10">
-     <div data-th-if="${selectedPartition == null}">
-       <label>Select a partition.</label> <br /> 
-       <em>The data distribution of the selected partition will be displayed. If the data is not computed
-        yet, the appropriate compute jobs for the selected partition will be launched.</em>
-      </div>
-     <div data-th-if="${selectedPartition != null}" class="row" style="padding-top: 10px;">
-      <div class="col-md-12">
-       <div data-th-replace="body/table/sections/datadistribution :: dataDistributionTable(${selectedPartition})"></div>
-      </div>
-     </div>
-    </div>
-    <div class="col-md-2" style="border-left: 1px solid; border-color: lightgrey;">
-     <h5>
-      <b>Select partition</b>
-     </h5>
-     <hr />
-     <form id="datadisForm" class="form-inline" data-th-action="@{/table/datadistribution}" method="post">
-      <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
-      <div th:with="parameters=${table.parameters}">
-       <div data-th-each="i : ${#numbers.sequence( 0, parameters.size() - 1)}">
-        <div class="row" th:with="parameter=${parameters.get(i)}">
-         <div th:id="'dd' + ${parameter.name}" class="col-md-12 datadis" th:attr="data-nr=${i}"
-          th:style="${i == 0 ? '' : 'opacity: 0.4; pointer-events: none;'}">
-          <div class="control-group">
-           <label class="control-label" th:for="${parameter.name}" data-th-text="${parameter.name}"></label>
-           <div class="controls">
-            <div class="row">
-             <div class="col-md-9" style="padding-right: 0px;">
-              <input style="width: 100%;" th:id="${parameter.name} + 'DDFilter'" th:name="${parameter.name}" type="text" />
-             </div>
-             <div class="col-md-3" style="padding-top: 1px; padding-left: 0px;">
-              <a class="btn btn-primary dropdown-toggle" style="height: 25px; padding-top: 10px;" data-toggle="dropdown" href="#"> <span
-               class="caret" style=""></span>
-              </a>
-              <ul class="dropdown-menu" style="left: auto; right: 65%; max-height: 300px; overflow: auto;">
-              </ul>
-             </div>
-            </div>
-           </div>
-          </div>
-         </div>
-        </div>
-        <br />
-       </div>
-       <div class="row">
-        <div class="col-md-offset-9">
-         <button id="datadisButton" type="submit" class="btn btn-default" disabled="disabled">OK</button>
-        </div>
-       </div>
-      </div>
-     </form>
-    </div>
-   </div>
+<div th:attr="class=${selectedPartition != null ? 'tab-pane active' : 'tab-pane'}" id="datadistributionContent" data-th-fragment="data(table,util)">
+  <div data-th-if="${partitionCount == 1}" th:with="partition=${table.views.get(0)}">
+    <div data-th-replace="body/table/sections/datadistribution :: dataDistributionTable(${partition})"></div>
   </div>
- </div>
+
+  <div data-th-if="${partitionCount > 1}">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="col-md-10">
+          <div data-th-if="${selectedPartition == null}">
+            <label>Select a partition.</label> <br /> <em>The data distribution of the selected partition will be displayed. If the data is not
+              computed yet, the appropriate compute jobs for the selected partition will be launched.</em>
+          </div>
+          <div data-th-if="${selectedPartition != null}" class="row" style="padding-top: 10px;">
+            <div class="col-md-12">
+              <div data-th-replace="body/table/sections/datadistribution :: dataDistributionTable(${selectedPartition})"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-2" style="border-left: 1px solid; border-color: lightgrey;">
+          <h5>
+            <b>Select partition</b>
+          </h5>
+          <hr />
+          <form id="datadisForm" class="form-inline" data-th-action="@{/table/datadistribution}" method="post">
+            <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
+            <div th:with="parameters=${table.parameters}">
+              <div data-th-each="i : ${#numbers.sequence( 0, parameters.size() - 1)}">
+                <div class="row" th:with="parameter=${parameters.get(i)}">
+                  <div th:id="'dd' + ${parameter.name}" class="col-md-12 datadis" th:attr="data-nr=${i}"
+                    th:style="${i == 0 ? '' : 'opacity: 0.4; pointer-events: none;'}">
+                    <div class="control-group">
+                      <label class="control-label" th:for="${parameter.name}" data-th-text="${parameter.name}"></label>
+                      <div class="controls">
+                        <div class="row">
+                          <div class="col-md-9" style="padding-right: 0px;">
+                            <input style="width: 100%;" th:id="${parameter.name} + 'DDFilter'" th:name="${parameter.name}" type="text" />
+                          </div>
+                          <div class="col-md-3" style="padding-top: 1px; padding-left: 0px;">
+                            <a class="btn btn-primary dropdown-toggle" style="height: 25px; padding-top: 10px;" data-toggle="dropdown" href="#"> <span
+                              class="caret" style=""></span>
+                            </a>
+                            <ul class="dropdown-menu" style="left: auto; right: 65%; max-height: 300px; overflow: auto;">
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <br />
+              </div>
+              <div class="row">
+                <div class="col-md-offset-9">
+                  <button id="datadisButton" type="submit" class="btn btn-default" disabled="disabled">OK</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div data-th-fragment="dataDistributionTable(partition)">
- <div th:with="processed=${partition.processed}">
-  <label>Data Distribution for partition: </label> <label data-th-text="${partition.urlPath}"></label> <br />
-  <div data-th-if="${!processed}">
-   <em>Data distribution jobs are running and not finished yet. Please come back later when all jobs have finished. </em>
+  <div th:with="processed=${partition.processed}">
+    <label>Data Distribution for partition: </label> <label data-th-text="${partition.urlPath}"></label> <br />
+    <div data-th-if="${!processed}">
+      <em>Data distribution jobs are running and not finished yet. Please come back later when all jobs have finished. </em>
+    </div>
+    <div data-th-if="${processed}">
+      <em>Partition records: <span data-th-text="${partition.rows}"></span></em>
+      <div style="overflow: auto;">
+        <table class="table table-bordered table-striped">
+          <tr>
+            <th></th>
+            <th>Minimum</th>
+            <th>Maximum</th>
+            <th>Average</th>
+            <th>Standard Deviation</th>
+            <th>Sum</th>
+            <th>Enumeration</th>
+          </tr>
+          <tr data-th-each="field : ${table.fields}">
+            <td data-th-text="${field.name} + ' (' + ${field.type} + ')'"></td>
+            <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'min')}" data-th-text="${value == null} ? '-' : ${value}"></td>
+            <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'max')}" data-th-text="${value == null} ? '-' : ${value}"></td>
+            <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'avg')}" data-th-text="${value == null} ? '-' : ${value}"></td>
+            <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'stddev')}" data-th-text="${value == null} ? '-' : ${value}"></td>
+            <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'sum')}" data-th-text="${value == null} ? '-' : ${value}"></td>
+            <td th:with="enumeration=${partition.getDataDistributionForFieldAndKey(field.name, 'enum')}">
+              <ul data-th-if="${enumeration != null}" style="padding-left: 5px;">
+                <li th:with="enums=${enumeration.split('#')}"><a style="white-space: nowrap;" class="showFirst" href="javascript:void(0)"> <span
+                    data-th-text="${enums.length} + ' distinct value(s)'"></span> <span class="caret"></span>
+                </a>
+                  <ul>
+                    <li style="white-space: nowrap;" data-th-each="e : ${enums}"><span data-th-text="${e}"></span></li>
+                  </ul></li>
+              </ul> <span data-th-if="${enumeration == null}">-</span>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
   </div>
-  <div data-th-if="${processed}">
-   <em>Partition records: <span data-th-text="${partition.rows}"></span></em>
-   <div style="overflow: auto;">
-    <table class="table table-bordered table-striped">
-     <tr>
-      <th></th>
-      <th>Minimum</th>
-      <th>Maximum</th>
-      <th>Average</th>
-      <th>Standard Deviation</th>
-      <th>Sum</th>
-      <th>Enumeration</th>
-     </tr>
-     <tr data-th-each="field : ${table.fields}">
-      <td data-th-text="${field.name} + ' (' + ${field.type} + ')'"></td>
-      <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'min')}" data-th-text="${value == null} ? '-' : ${value}"></td>
-      <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'max')}" data-th-text="${value == null} ? '-' : ${value}"></td>
-      <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'avg')}" data-th-text="${value == null} ? '-' : ${value}"></td>
-      <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'stddev')}" data-th-text="${value == null} ? '-' : ${value}"></td>
-      <td th:with="value=${partition.getDataDistributionForFieldAndKey(field.name, 'sum')}" data-th-text="${value == null} ? '-' : ${value}"></td>
-      <td th:with="enumeration=${partition.getDataDistributionForFieldAndKey(field.name, 'enum')}">
-       <ul data-th-if="${enumeration != null}" style="padding-left: 5px;">
-        <li th:with="enums=${enumeration.split('#')}"><a style="white-space: nowrap;" class="showFirst" href="javascript:void(0)"> <span
-          data-th-text="${enums.length} + ' distinct value(s)'"></span> <span class="caret"></span>
-        </a>
-         <ul>
-          <li style="white-space: nowrap;" data-th-each="e : ${enums}"><span data-th-text="${e}"></span></li>
-         </ul></li>
-       </ul> <span data-th-if="${enumeration == null}">-</span>
-      </td>
-     </tr>
-    </table>
-   </div>
-  </div>
- </div>
 </div>
