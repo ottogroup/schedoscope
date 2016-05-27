@@ -193,6 +193,30 @@ AND anotherParam = 'Value'"""
       equal(HiveTransformation.normalizeQuery(qry2))
   }
 
+  it should "not normalize two different queries to be equal" in {
+    val qry1 = "SET memory=1024;\n" +
+      "SET date='20160412';\n" +
+      "\n" +
+      "SELECT \n" +
+      "  price \n" +
+      "FROM \n" +
+      "  transactions\n" +
+      "WHERE\n" +
+      "  date='${date}'"
+
+    val qry2 = "SET memory=2028;\n" +
+      "SET date='20160413';\n" +
+      "\n" +
+      "\n" +
+      "SELECT price \n" +
+      "FROM transactions\n" +
+    //use '<>' instead of '='
+      "WHERE date<>'${date}'"
+
+    HiveTransformation.normalizeQuery(qry1) should not
+      equal(HiveTransformation.normalizeQuery(qry2))
+  }
+
   "replace Whitespaces in quotes" should "do it's thing" in {
     val replaceDQ = HiveTransformation.replaceWhitespacesBetweenChars("\"") _
     replaceDQ("\"") shouldBe "\""
@@ -262,16 +286,16 @@ AND anotherParam = 'Value'"""
     val qry9 = "SELECT \"join\" on JOIN"
     val qry10 = "SELECT \\\"join\" on JOIN"
 
-    HiveTransformation.compareJoinsOns(qry1) shouldBe true
-    HiveTransformation.compareJoinsOns(qry2) shouldBe true
-    HiveTransformation.compareJoinsOns(qry3) shouldBe true
-    HiveTransformation.compareJoinsOns(qry4) shouldBe true
-    HiveTransformation.compareJoinsOns(qry5) shouldBe false
-    HiveTransformation.compareJoinsOns(qry6) shouldBe false
-    HiveTransformation.compareJoinsOns(qry7) shouldBe false
-    HiveTransformation.compareJoinsOns(qry8) shouldBe true
-    HiveTransformation.compareJoinsOns(qry9) shouldBe true
-    HiveTransformation.compareJoinsOns(qry10) shouldBe false
+    HiveTransformation.checkJoinsWithOns(qry1) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry2) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry3) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry4) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry5) shouldBe false
+    HiveTransformation.checkJoinsWithOns(qry6) shouldBe false
+    HiveTransformation.checkJoinsWithOns(qry7) shouldBe false
+    HiveTransformation.checkJoinsWithOns(qry8) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry9) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry10) shouldBe false
   }
 
 }

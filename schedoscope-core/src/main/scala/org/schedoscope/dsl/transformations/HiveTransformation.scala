@@ -44,7 +44,7 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
 
   @throws[InvalidTransformationException]
   override def validateTransformation() =
-    if (!compareJoinsOns(sql)) {
+    if (!checkJoinsWithOns(sql)) {
       throw new InvalidTransformationException("Uneven count of joins and ons in Hive query")
     }
 
@@ -137,15 +137,20 @@ object HiveTransformation {
       .append(selectStatement).toString()
   }
 
-  def compareJoinsOns(sql: String): Boolean = {
-    val cleanedSQl = " " + normalizeQuery(sql)
-      .replaceAll("((?<![\\\\])['\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1", "")
-      .replaceAll("('|\")", " ") + " "
+  def checkJoinsWithOns(sql: String): Boolean = {
+    val normalizedSQl = normalizeQuery(sql)
+    // The expression will delete the characters between two quotes:
+    // ((?<![\\])['"])  Match a single or double quote, as long as it's not preceded by \
+    // (['"]) store the matched quote
+    // (?:.(?!\1))*.? Continue matching ANY characters.. as long as they aren't followed by the same quote that was matched in #1...
+    val noStrings = normalizedSQl.replaceAll("((?<![\\\\])['\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1", "")
+    // replace any remaining quotes in the sql with a space and prepend/append spaces to make the count easier
+    val cleanedSQL = " " + noStrings.replaceAll("('|\")", " ") + " "
 
     val join = " [jJ][oO][iI][nN](?= )".r
     val on = " [oO][nN](?= )".r
-    val countJoins = join.findAllIn(cleanedSQl).length
-    val countOns = on.findAllIn(cleanedSQl).length
+    val countJoins = join.findAllIn(cleanedSQL).length
+    val countOns = on.findAllIn(cleanedSQL).length
 
     countJoins == countOns
   }
@@ -167,7 +172,11 @@ object HiveTransformation {
       _.trim().replaceAll("^--(.|\\w)+$", "")
     }.filter(_.nonEmpty).mkString(" ")
 
-    replaceWhitespace(noComments.replaceAll("( |^)[sS][eE][tT] (.|\\t)+?;", ""))
+    val noSets = noComments.replaceAll("( |^)[sS][eE][tT] (.|\\t)+?;", "")
+
+    //replace the whitespaces inside quotes with ;
+    replaceWhitespace(noSets)
+      // replace multiple whitespaces and tabs with a single space
       .replaceAll("\\s+", " ")
       .trim
   }
