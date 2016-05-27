@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-suite</artifactId>
-	<version>0.6.0</version>
+	<version>0.6.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Schedoscope Suite</name>
 	<description>A wrapper building all modules of the Schedoscope project</description>
@@ -16,7 +16,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<mrunit.version>1.1.0</mrunit.version>
-		<schedoscope.version>0.6.0</schedoscope.version>
+		<schedoscope.version>0.6.1-SNAPSHOT</schedoscope.version>
 		<hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
 		<hive.version>1.1.0-cdh5.5.2</hive.version>
 		<oozie.version>4.1.0-cdh5.5.2</oozie.version>
