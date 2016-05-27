@@ -31,12 +31,14 @@ import scala.collection.mutable.{HashMap, ListBuffer}
   */
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 
+  import HiveTransformation._
+
   def name = "hive"
 
   override def fileResourcesToChecksum =
     udfs.flatMap(udf => udf.getResourceUris.map(uri => uri.getUri))
 
-  override def stringsToChecksum = List(sql)
+  override def stringsToChecksum = List(normalizeQuery(sql))
 
   description = "[..]" + StringUtils.abbreviate(sql.replaceAll("\n", "").replaceAll("\t", "").replaceAll(".*SELECT", "SELECT").replaceAll("\\s+", " "), 60)
 
@@ -147,6 +149,7 @@ object HiveTransformation {
 
     replaceWhitespace(noComments.replaceAll("( |^)[sS][eE][tT] (.|\\t)+?;", ""))
       .replaceAll("\\s+", " ")
+      .trim
   }
 
   def replaceWhitespacesBetweenChars(quote: String)(string: String): String = {

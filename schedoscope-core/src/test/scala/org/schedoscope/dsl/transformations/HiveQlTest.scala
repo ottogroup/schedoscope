@@ -135,7 +135,7 @@ AND anotherParam = 'Value'"""
   "the normalize query function" should "delete comments" in {
     val qry = "-----23123-xcvo\tn .cvaotrsaooiarst9210132q56`]-[ taroistneaorsitdthdastrtsra\n" +
       "--a comment\n" +
-//      "--no comment\n" +
+      //      "--no comment\n" +
       "select * from coolstuff\n" +
       "LIMIT 10"
 
@@ -153,7 +153,7 @@ AND anotherParam = 'Value'"""
   it should "remove set commands" in {
     val qry = "NOSET key=value;\n" +
       "SET test=hello; \n" +
-    "SELECT;"
+      "SELECT;"
 
     HiveTransformation.normalizeQuery(qry) shouldBe "NOSET key=value; SELECT;"
   }
@@ -226,6 +226,28 @@ AND anotherParam = 'Value'"""
     replace("\" \' \" \'") shouldBe "\";';\";'"
     replace("\" \' \' \"") shouldBe "\";\';\';\""
     replace("\" \\' \" \\'") shouldBe "\";\\';\" \\'"
+  }
+
+  "Hivetransformation checksum" should "apply the normalize function" in {
+
+    val settings = Map(
+      "memory" -> "12",
+      "date" -> "20160102")
+
+    val orderAll = OrderAll(p(2014), p(10), p(12))
+
+    val hiveTransformation = new HiveTransformation(
+      HiveTransformation.insertInto(
+        orderAll,
+        "select * from\t\nprices  where id = '12  23'",
+        false,
+        settings)
+      , List()
+    )
+
+    hiveTransformation.stringsToChecksum shouldBe
+      List("INSERT OVERWRITE TABLE dev_org_schedoscope_dsl_transformations.order_all " +
+        "select * from prices where id = '12;;23'")
   }
 
 
