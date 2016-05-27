@@ -52,7 +52,9 @@ trait test extends TestableView {
     * Execute the hive query in test on previously specified test fixtures
     */
   def `then`() {
-    `then`(null, disableDependencyCheck = false)
+    `then`(null,
+      disableDependencyCheck = false,
+      disableTransformationValidation = false)
   }
 
   /**
@@ -61,12 +63,25 @@ trait test extends TestableView {
     * @param sortedBy sort the table by field
     * @param disableDependencyCheck disable dependency checks
     */
-  def `then`(sortedBy: FieldLike[_] = null, disableDependencyCheck: Boolean = false) {
+  def `then`(sortedBy: FieldLike[_] = null,
+             disableDependencyCheck: Boolean = false,
+             disableTransformationValidation: Boolean = false) {
+    //dependencyCheck
     if(!disableDependencyCheck) {
       if (!checkDependencies()) {
         throw new IllegalArgumentException("The input views to the test given by basedOn() do not cover all types of dependencies of the view under test.")
       }
     }
+
+    val t = registeredTransformation()
+
+    //transformation validation
+    if(!disableTransformationValidation) {
+      t.validateTransformation()
+    }
+
+
+
     deploySchema()
 
     deps.map(d => {
@@ -77,7 +92,7 @@ trait test extends TestableView {
       val part = resources().crate.createPartition(this)
     }
 
-    val t = registeredTransformation()
+
 
     t match {
       case ot: OozieTransformation => deployWorkflow(ot)
@@ -110,6 +125,7 @@ trait test extends TestableView {
   /**
     * Compares the dependencies of the tested view
     * and the added dependencies to the test
+    *
     * @return true if dependencies match
     */
   def checkDependencies(): Boolean = {

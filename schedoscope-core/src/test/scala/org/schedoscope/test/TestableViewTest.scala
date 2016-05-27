@@ -15,11 +15,12 @@
   */
 package org.schedoscope.test
 
+
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
+import org.schedoscope.dsl.transformations.{HiveTransformation, InvalidTransformationException}
 
 case class View1() extends View {
   val v1 = fieldOf[String]
@@ -48,6 +49,19 @@ case class View5() extends View {
 
   transformVia(() => HiveTransformation(
     insertInto(this, s"""SELECT * FROM test_org_schedoscope_test.view2"""))
+  )
+}
+
+case class IllegalJoinOnView() extends View {
+  val v1 = fieldOf[String]
+
+  val view = dependsOn(() => (1 until 10)
+    .map(_ => new View2))
+
+  dependsOn(() => View3())
+
+  transformVia(() => HiveTransformation(
+    insertInto(this, s"""SELECT * FROM test_org_schedoscope_test.view2 JOIN test_org_schedoscope_test.view2"""))
   )
 }
 
@@ -165,6 +179,21 @@ class TestableViewTest extends FlatSpec with Matchers {
     }
   }
 
+  it should "throw an exception for IllegalJoin" in {
+    an[InvalidTransformationException] should be thrownBy {
+      new IllegalJoinOnView with test {
+        basedOn(view2i1, view2i2, view3)
+        then()
+      }
+    }
+  }
+
+  it should "not throw an exception for IllegalJoin if check is disabled" in {
+    new IllegalJoinOnView with test {
+      basedOn(view2i1, view2i2, view3)
+      then(disableTransformationValidation = true)
+    }
+  }
 
 }
 

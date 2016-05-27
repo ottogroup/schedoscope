@@ -42,6 +42,13 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
 
   description = "[..]" + StringUtils.abbreviate(sql.replaceAll("\n", "").replaceAll("\t", "").replaceAll(".*SELECT", "SELECT").replaceAll("\\s+", " "), 60)
 
+  @throws[InvalidTransformationException]
+  override def validateTransformation() =
+    if (!compareJoinsOns(sql)) {
+      throw new InvalidTransformationException("Uneven count of joins and ons in Hive query")
+    }
+
+
 }
 
 object HiveTransformation {
@@ -97,7 +104,7 @@ object HiveTransformation {
     if (partition && view.partitionParameters.nonEmpty) {
       queryPrelude.append("\nPARTITION (")
       queryPrelude.append(view.partitionParameters.tail.foldLeft({
-        val first = view.partitionParameters.head;
+        val first = view.partitionParameters.head
         first.n + " = '" + first.v.get + "'"
       }) { (current, parameter) => current + ", " + parameter.n + " = '" + parameter.v.get + "'" })
       queryPrelude.append(")")
@@ -112,8 +119,8 @@ object HiveTransformation {
     val queryPrelude = new StringBuffer()
 
     val augmentedSettings = new HashMap[String, String]() ++ settings
-    augmentedSettings("hive.exec.dynamic.partition") = "true";
-    augmentedSettings("hive.exec.dynamic.partition.mode") = "nonstrict";
+    augmentedSettings("hive.exec.dynamic.partition") = "true"
+    augmentedSettings("hive.exec.dynamic.partition.mode") = "nonstrict"
 
     queryPrelude
       .append(settingStatements(augmentedSettings.toMap))
@@ -128,6 +135,19 @@ object HiveTransformation {
     queryPrelude
       .append("\n")
       .append(selectStatement).toString()
+  }
+
+  def compareJoinsOns(sql: String): Boolean = {
+    val cleanedSQl = " " + normalizeQuery(sql)
+      .replaceAll("((?<![\\\\])['\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1", "")
+      .replaceAll("('|\")", " ") + " "
+
+    val join = " [jJ][oO][iI][nN](?= )".r
+    val on = " [oO][nN](?= )".r
+    val countJoins = join.findAllIn(cleanedSQl).length
+    val countOns = on.findAllIn(cleanedSQl).length
+
+    countJoins == countOns
   }
 
   def queryFrom(inputStream: InputStream): String = scala.io.Source.fromInputStream(inputStream, "UTF-8").mkString
@@ -158,7 +178,7 @@ object HiveTransformation {
     val array = string
       .split("(?<!\\\\)" + quote)
 
-    if(array.length <= 1) {
+    if (array.length <= 1) {
       //no pair of characters nothing to do here
       return string
     }

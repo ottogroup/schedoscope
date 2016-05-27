@@ -250,5 +250,28 @@ AND anotherParam = 'Value'"""
         "select * from prices where id = '12;;23'")
   }
 
+  "Hivetransformation.validateQuery" should "find uneven amount of joins and ons" in {
+    val qry1 = "SELECT JOIN ON TEST"
+    val qry2 = "SELECT join on TEST"
+    val qry3 = "SELECT 'join' on JOIN"
+    val qry4 = "JOIN ON"
+    val qry5 = "ON"
+    val qry6 = "JOIN"
+    val qry7 = "JOIN ON ON"
+    val qry8 = "JOIN JOIN ON ON"
+    val qry9 = "SELECT \"join\" on JOIN"
+    val qry10 = "SELECT \\\"join\" on JOIN"
+
+    HiveTransformation.compareJoinsOns(qry1) shouldBe true
+    HiveTransformation.compareJoinsOns(qry2) shouldBe true
+    HiveTransformation.compareJoinsOns(qry3) shouldBe true
+    HiveTransformation.compareJoinsOns(qry4) shouldBe true
+    HiveTransformation.compareJoinsOns(qry5) shouldBe false
+    HiveTransformation.compareJoinsOns(qry6) shouldBe false
+    HiveTransformation.compareJoinsOns(qry7) shouldBe false
+    HiveTransformation.compareJoinsOns(qry8) shouldBe true
+    HiveTransformation.compareJoinsOns(qry9) shouldBe true
+    HiveTransformation.compareJoinsOns(qry10) shouldBe false
+  }
 
 }
