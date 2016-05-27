@@ -15,6 +15,7 @@ With Schedoscope,
 * you can easily write unit tests for your transformation logic in [ScalaTest](http://www.scalatest.org/) and run them quickly right out of your IDE;
 * you schedule jobs by expressing the views you need - Schedoscope takes care that all required dependencies - and only those-  are computed as well;
 * you can easily  export view data in parallel to external systems such as Redis caches, JDBC, or Kafka topics;
+* you have Metascope - a nice metadata management and data lineage tracing tool - at your disposal;
 * you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capacitity.
 
 ## Getting Started
