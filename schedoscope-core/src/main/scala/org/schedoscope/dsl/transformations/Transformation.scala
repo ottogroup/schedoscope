@@ -75,6 +75,12 @@ abstract class Transformation {
    */
   var description = this.toString
 
+  /**
+    * Used to validate the transformation during tests
+    */
+  @throws[InvalidTransformationException]
+  def validateTransformation() = {}
+
 }
 
 /**
@@ -96,3 +102,5 @@ object Transformation {
     }
   }
 }
+
+class InvalidTransformationException(msg: String) extends Throwable(msg)
