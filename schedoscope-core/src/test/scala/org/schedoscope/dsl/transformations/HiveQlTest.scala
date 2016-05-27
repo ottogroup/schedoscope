@@ -1,27 +1,27 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.dsl.transformations
 
 import java.util.Date
 
-import org.scalatest.{ BeforeAndAfter, FlatSpec, Matchers }
+import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.{ Parameter, Structure, View }
 import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
+import org.schedoscope.dsl.{Parameter, Structure, View}
 
 case class Article() extends Structure {
   val name = fieldOf[String]
@@ -131,4 +131,102 @@ FROM STUFF
 WHERE param = 2
 AND anotherParam = 'Value'"""
   }
+
+  "the normalize query function" should "delete comments" in {
+    val qry = "-----23123-xcvo\tn .cvaotrsaooiarst9210132q56`]-[ taroistneaorsitdthdastrtsra\n" +
+      "--a comment\n" +
+//      "--no comment\n" +
+      "select * from coolstuff\n" +
+      "LIMIT 10"
+
+    HiveTransformation.normalizeQuery(qry) shouldBe "select * from coolstuff LIMIT 10"
+  }
+
+  it should "remove whitespaces from the start and end of lines" in {
+    val qry = "   \t\t\t    test \t \n" +
+      "  \t \tte\tst    \n" +
+      "wh at\t   "
+
+    HiveTransformation.normalizeQuery(qry) shouldBe "test te st wh at"
+  }
+
+  it should "remove set commands" in {
+    val qry = "NOSET key=value;\n" +
+      "SET test=hello; \n" +
+    "SELECT;"
+
+    HiveTransformation.normalizeQuery(qry) shouldBe "NOSET key=value; SELECT;"
+  }
+
+  it should "remove duplicate whitespaces" in {
+    val qry1 = "\"this  is\"   a\ttest"
+    val qry2 = "'this  is'   a\ttest"
+    val qry3 = "'  '  '  ' "
+    val qry4 = "'  \\'  '  '  \\'  ' "
+
+    HiveTransformation.normalizeQuery(qry1) shouldBe "\"this;;is\" a test"
+    HiveTransformation.normalizeQuery(qry2) shouldBe "'this;;is' a test"
+    HiveTransformation.normalizeQuery(qry3) shouldBe "';;' ';;'"
+    HiveTransformation.normalizeQuery(qry4) shouldBe "';;\\';;' ';;\\';;'"
+  }
+
+  it should "normalize two queries to be equal" in {
+    val qry1 = "SET memory=1024;\n" +
+      "SET date='20160412';\n" +
+      "\n" +
+      "SELECT \n" +
+      "  price \n" +
+      "FROM \n" +
+      "  transactions\n" +
+      "WHERE\n" +
+      "  date='${date}'"
+
+    val qry2 = "SET memory=2028;\n" +
+      "SET date='20160413';\n" +
+      "\n" +
+      "\n" +
+      "SELECT price \n" +
+      "FROM transactions\n" +
+      "WHERE date='${date}'"
+
+    HiveTransformation.normalizeQuery(qry1) should
+      equal(HiveTransformation.normalizeQuery(qry2))
+  }
+
+  "replace Whitespaces in quotes" should "do it's thing" in {
+    val replaceDQ = HiveTransformation.replaceWhitespacesBetweenChars("\"") _
+    replaceDQ("\"") shouldBe "\""
+    replaceDQ("\"\"") shouldBe "\"\""
+    replaceDQ("test") shouldBe "test"
+    replaceDQ("te\"st") shouldBe "te\"st"
+    replaceDQ("\"  \"") shouldBe "\";;\""
+    replaceDQ("\"  \"\\\"") shouldBe "\";;\"\\\""
+    replaceDQ("\"  \" \" \"") shouldBe "\";;\" \";\""
+    replaceDQ("hi\"  \" \" \"") shouldBe "hi\";;\" \";\""
+    replaceDQ("hi\"  \" test \" \"hi") shouldBe "hi\";;\" test \";\"hi"
+    replaceDQ("\" te\\\"st \"") shouldBe "\";te\\\"st;\""
+    replaceDQ("\" te\\\"st\\\" \"") shouldBe "\";te\\\"st\\\";\""
+    replaceDQ("\" \\\"") shouldBe "\" \\\""
+    replaceDQ("\\\" \"") shouldBe "\\\" \""
+    replaceDQ("\" \\\"s") shouldBe "\" \\\"s"
+    replaceDQ("\\\" \"s") shouldBe "\\\" \"s"
+
+  }
+
+  it should "work when nested" in {
+    val replaceDQ = HiveTransformation.replaceWhitespacesBetweenChars("\"") _
+    val replaceSQ = HiveTransformation.replaceWhitespacesBetweenChars("'") _
+
+    val replace = (s: String) => replaceSQ(replaceDQ(s))
+
+    replace("\"  \"") shouldBe "\";;\""
+    replace("\"  \"\\\"") shouldBe "\";;\"\\\""
+    replace("\"  \" ' '") shouldBe "\";;\" ';'"
+    replace("hi\"  \" \" \"") shouldBe "hi\";;\" \";\""
+    replace("\" \' \" \'") shouldBe "\";';\";'"
+    replace("\" \' \' \"") shouldBe "\";\';\';\""
+    replace("\" \\' \" \\'") shouldBe "\";\\';\" \\'"
+  }
+
+
 }
