@@ -30,7 +30,7 @@ Build it:
      [~]$ cd schedoscope
      [~/schedoscope]$  MAVEN_OPTS='-XX:MaxPermSize=512m' mvn clean install
      
-Follow the Open Street Map tutorial to install and run Schedoscope in a standard Hadoop distribution image within minutes:
+Follow the Open Street Map tutorial to install and run Schedoscope in a standard Hadoop distribution image:
 
 - [Open Street Map Tutorial](https://github.com/ottogroup/schedoscope/wiki/Open%20Street%20Map%20Tutorial)
 
@@ -39,9 +39,11 @@ Take a look at the View DSL Primer to get more information about the capabilitie
 - [Schedoscope View DSL Primer](https://github.com/ottogroup/schedoscope/wiki/Schedoscope%20View%20DSL%20Primer)
 
 More documentation can be found here:
+
 - [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
 
 Check out Metascope! It's an add-on to Schedoscope for collaborative metadata management, data discovery and exploration, and data lineage tracing:
+
 - [Metascope Primer](https://github.com/ottogroup/schedoscope/wiki/Metascope%20Primer)
 
 ![Metascope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/lineage.png)
