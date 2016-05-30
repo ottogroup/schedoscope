@@ -110,6 +110,7 @@ SELECT * FROM STUFF"""
     replaceParameters("${a} ${a} ${b}", Map("a" -> "A", "b" -> Boolean.box(true))) shouldEqual ("A A true")
   }
 
+
   "HiveTransformation.queryFrom" should "read queries from external file" in {
     val orderAll = OrderAll(p(2014), p(10), p(12))
     HiveTransformation.insertInto(
@@ -135,11 +136,12 @@ AND anotherParam = 'Value'"""
   "the normalize query function" should "delete comments" in {
     val qry = "-----23123-xcvo\tn .cvaotrsaooiarst9210132q56`]-[ taroistneaorsitdthdastrtsra\n" +
       "--a comment\n" +
-      //      "--no comment\n" +
+      "\\--no comment\n" +
+      "--\n" +
       "select * from coolstuff\n" +
       "LIMIT 10"
 
-    HiveTransformation.normalizeQuery(qry) shouldBe "select * from coolstuff LIMIT 10"
+    HiveTransformation.normalizeQuery(qry) shouldBe "\\--no comment select * from coolstuff LIMIT 10"
   }
 
   it should "remove whitespaces from the start and end of lines" in {
@@ -234,6 +236,7 @@ AND anotherParam = 'Value'"""
     replaceDQ("\\\" \"") shouldBe "\\\" \""
     replaceDQ("\" \\\"s") shouldBe "\" \\\"s"
     replaceDQ("\\\" \"s") shouldBe "\\\" \"s"
+    replaceDQ("\"\" \" \"s") shouldBe "\"\" \";\"s"
 
   }
 
@@ -285,6 +288,8 @@ AND anotherParam = 'Value'"""
     val qry8 = "JOIN JOIN ON ON"
     val qry9 = "SELECT \"join\" on JOIN"
     val qry10 = "SELECT \\\"join\" on JOIN"
+    val qry11 = "SELECT * '' JOIN 'test' ON"
+    val qry12 = "SELECT * FROM joined JOIN onner ON stuff"
 
     HiveTransformation.checkJoinsWithOns(qry1) shouldBe true
     HiveTransformation.checkJoinsWithOns(qry2) shouldBe true
@@ -295,7 +300,9 @@ AND anotherParam = 'Value'"""
     HiveTransformation.checkJoinsWithOns(qry7) shouldBe false
     HiveTransformation.checkJoinsWithOns(qry8) shouldBe true
     HiveTransformation.checkJoinsWithOns(qry9) shouldBe true
-    HiveTransformation.checkJoinsWithOns(qry10) shouldBe false
+    HiveTransformation.checkJoinsWithOns(qry10) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry11) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry12) shouldBe true
   }
 
 }
