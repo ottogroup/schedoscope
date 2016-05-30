@@ -139,18 +139,20 @@ object HiveTransformation {
 
   def checkJoinsWithOns(sql: String): Boolean = {
     val normalizedSQl = normalizeQuery(sql)
+    // delete empty strings
+    val noEmptyStrings = normalizedSQl.replaceAll("(''|\"\")","")
     // The expression will delete the characters between two quotes:
     // ((?<![\\])['"])  Match a single or double quote, as long as it's not preceded by \
     // (['"]) store the matched quote
     // (?:.(?!\1))*.? Continue matching ANY characters.. as long as they aren't followed by the same quote that was matched in #1...
-    val noStrings = normalizedSQl.replaceAll("((?<![\\\\])['\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1", "")
-    // replace any remaining quotes in the sql with a space and prepend/append spaces to make the count easier
-    val cleanedSQL = " " + noStrings.replaceAll("('|\")", " ") + " "
+    val noStrings = noEmptyStrings.replaceAll("((?<![\\\\])['\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1", "")
+    // prepend/append spaces to make the count easier
+     val paddedSQL = " " + noStrings + " "
 
     val join = " [jJ][oO][iI][nN](?= )".r
     val on = " [oO][nN](?= )".r
-    val countJoins = join.findAllIn(cleanedSQL).length
-    val countOns = on.findAllIn(cleanedSQL).length
+    val countJoins = join.findAllIn(paddedSQL).length
+    val countOns = on.findAllIn(paddedSQL).length
 
     countJoins == countOns
   }
@@ -169,7 +171,7 @@ object HiveTransformation {
     val sqlLines = sql.split("\n")
 
     val noComments = sqlLines.map {
-      _.trim().replaceAll("^--(.|\\w)+$", "")
+      _.trim().replaceAll("^--(.|\\w)*$", "")
     }.filter(_.nonEmpty).mkString(" ")
 
     val noSets = noComments.replaceAll("( |^)[sS][eE][tT] (.|\\t)+?;", "")
