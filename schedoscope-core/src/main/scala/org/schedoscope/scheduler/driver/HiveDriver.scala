@@ -84,12 +84,11 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
 
       for (q <- splitQueryIntoStatements(sql)) {
 
-        val commandProcessor = CommandProcessorFactory.get(q.trim.split("\\s+"), conf)
-
-        val result = commandProcessor.run(q)
+        val result = CommandProcessorFactory.get(q.trim.split("\\s+"), conf).run(q)
 
         if (result.getResponseCode != 0)
           return DriverRunFailed(this, s"Hive returned error while executing Hive query ${q}. Response code: ${result.getResponseCode} SQL State: ${result.getSQLState}, Error message: ${result.getErrorMessage}", result.getException)
+
       }
 
     } catch {
