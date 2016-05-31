@@ -1,53 +1,50 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.driver
 
-import java.sql.{ Connection, DriverManager, SQLException, Statement }
-import java.net.ConnectException
-import java.security.PrivilegedAction
+
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.thrift.TException
+import org.apache.hadoop.hive.ql.processors.CommandProcessorFactory
+import org.apache.hadoop.hive.ql.session.SessionState
 import org.joda.time.LocalDateTime
 import org.schedoscope.Schedoscope
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
-import scala.Array.canBuildFrom
+
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.Stack
 import scala.concurrent.Future
-import org.schedoscope.Schedoscope
 
 /**
- * Driver for executing Hive transformations
- */
-class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends DriverOnBlockingApi[HiveTransformation] {
+  * Driver for executing Hive transformations
+  */
+class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val conf: HiveConf, val metastoreClient: HiveMetaStoreClient) extends DriverOnBlockingApi[HiveTransformation] {
 
   def transformationName = "hive"
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
 
   /**
-   * Construct a future-based driver run handle
-   */
+    * Construct a future-based driver run handle
+    */
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
 
@@ -58,8 +55,8 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
     })
 
   /**
-   * Register UDFs with Metastore.
-   */
+    * Register UDFs with Metastore.
+    */
   def registerFunction(f: Function) {
 
     val existing = try {
@@ -77,75 +74,33 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
   }
 
   /**
-   * Actually perform the given query and return a run state after completion.
-   */
+    * Actually perform the given query and return a run state after completion.
+    */
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
 
-    val queriesToExecute = splitQueryIntoStatements(sql)
-
-    var hiveServer: Connection = null
+    SessionState.start(conf)
 
     try {
 
-      hiveServer = hiveJdbcConnection
+      for (q <- splitQueryIntoStatements(sql)) {
 
-      var hive: Statement = null
+        val commandProcessor = CommandProcessorFactory.get(q.trim.split("\\s+"), conf)
 
-      try {
+        val result = commandProcessor.run(q)
 
-        hive = hiveServer.createStatement()
-
-        queriesToExecute.foreach { q =>
-
-          log.debug(s"Hive driver executing query ${q.trim}")
-
-          try {
-
-            hive.execute(q.trim)
-
-          } catch {
-            case t: Throwable => if (isConnectionProblem(t)) {
-
-              throw RetryableDriverException(s"Hive driver encountered connection problem while executing hive query ${q}", t)
-
-            } else {
-
-              return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${q}. Failing run.", t)
-
-            }
-          }
-
-        }
-
-      } finally {
-
-        try {
-
-          log.info("HIVE-DRIVER: Closing statement on HiveServer")
-
-          hive.close()
-
-          log.info("HIVE-DRIVER: Closed statement on HiveServer")
-
-        } catch {
-          case _: Throwable =>
-        }
+        if (result.getResponseCode != 0)
+          return DriverRunFailed(this, s"Hive returned error while executing Hive query ${q}. Response code: ${result.getResponseCode} SQL State: ${result.getSQLState}, Error message: ${result.getErrorMessage}", result.getException)
       }
 
+    } catch {
+      case t: Throwable =>
+        return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${sql}. Failing run.", t)
     } finally {
-
       try {
-
-        log.info("HIVE-DRIVER: Closing connection to HiveServer")
-
-        hiveServer.close()
-
-        log.info("HIVE-DRIVER: Closed connection to HiveServer")
-
+        SessionState.detachSession()
       } catch {
-        case _: Throwable =>
+        case t: Throwable =>
       }
-
     }
 
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
@@ -156,47 +111,24 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 
     sql
       .split(";")
-      .foreach { statement =>
-        {
-          if (StringUtils.endsWith(queryStack.head, "\\")) {
-            queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + statement)
-          } else {
-            queryStack.push(statement)
-          }
+      .foreach { statement => {
+        if (StringUtils.endsWith(queryStack.head, "\\")) {
+          queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + statement)
+        } else {
+          queryStack.push(statement)
         }
       }
-
-    queryStack.reverse.filter { !StringUtils.isBlank(_) }
-  }
-
-  private def hiveJdbcConnection = {
-    log.info("HIVE-DRIVER: Establishing connection to HiveServer")
-
-    Class.forName(JDBC_CLASS)
-    ugi.reloginFromTicketCache()
-
-    ugi.doAs(new PrivilegedAction[Connection]() {
-      def run(): Connection = {
-        DriverManager.getConnection(connectionUrl)
       }
-    })
+
+    queryStack.reverse.filter {
+      !StringUtils.isBlank(_)
+    }
   }
-
-  private def isConnectionProblem(t: Throwable): Boolean = {
-    val result = t.isInstanceOf[TException] || t.isInstanceOf[ConnectException]
-
-    if (!result && t.getCause() != null) {
-      isConnectionProblem(t.getCause())
-    } else result
-  }
-
-  private val JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
-
 }
 
 /**
- * Factory methods for Hive drivers
- */
+  * Factory methods for Hive drivers
+  */
 object HiveDriver {
 
   def apply(ds: DriverSettings) = {
@@ -215,7 +147,7 @@ object HiveDriver {
 
     val metastoreClient = new HiveMetaStoreClient(conf)
 
-    new HiveDriver(ds.driverRunCompletionHandlers, ugi, ds.url, metastoreClient)
+    new HiveDriver(ds.driverRunCompletionHandlers, conf, metastoreClient)
   }
 }
 
