@@ -155,9 +155,13 @@ AND anotherParam = 'Value'"""
   it should "remove set commands" in {
     val qry = "NOSET key=value;\n" +
       "SET test=hello; \n" +
+      "set test=hi; \n" +
+      "set settings=hi; \n" +
+      "SET test=key; SET hello=world;\n" +
+      "SET test=key; SET hello=world; hello\n" +
       "SELECT;"
 
-    HiveTransformation.normalizeQuery(qry) shouldBe "NOSET key=value; SELECT;"
+    HiveTransformation.normalizeQuery(qry) shouldBe "NOSET key=value; hello SELECT;"
   }
 
   it should "remove duplicate whitespaces" in {
@@ -250,9 +254,10 @@ AND anotherParam = 'Value'"""
     replace("\"  \"\\\"") shouldBe "\";;\"\\\""
     replace("\"  \" ' '") shouldBe "\";;\" ';'"
     replace("hi\"  \" \" \"") shouldBe "hi\";;\" \";\""
-    replace("\" \' \" \'") shouldBe "\";';\";'"
-    replace("\" \' \' \"") shouldBe "\";\';\';\""
-    replace("\" \\' \" \\'") shouldBe "\";\\';\" \\'"
+    replace("\" \' \" \'") shouldBe "\";\";\" '"
+    replace("\" \' \' \"") shouldBe "\";\";\";\""
+    replace("\" \\' \" \\'") shouldBe "\";\\\";\" \\'"
+    replace("\" ' \" '") shouldBe "\";\";\" '"
   }
 
   "Hivetransformation checksum" should "apply the normalize function" in {
@@ -290,6 +295,8 @@ AND anotherParam = 'Value'"""
     val qry10 = "SELECT \\\"join\" on JOIN"
     val qry11 = "SELECT * '' JOIN 'test' ON"
     val qry12 = "SELECT * FROM joined JOIN onner ON stuff"
+    val qry13 = "SELECT * FROM joined JOIN( SELECT ) x ON x.stuff"
+    val qry14 = "SELECT * FROM joined CROSS JOIN select!"
 
     HiveTransformation.checkJoinsWithOns(qry1) shouldBe true
     HiveTransformation.checkJoinsWithOns(qry2) shouldBe true
@@ -303,6 +310,8 @@ AND anotherParam = 'Value'"""
     HiveTransformation.checkJoinsWithOns(qry10) shouldBe true
     HiveTransformation.checkJoinsWithOns(qry11) shouldBe true
     HiveTransformation.checkJoinsWithOns(qry12) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry13) shouldBe true
+    HiveTransformation.checkJoinsWithOns(qry14) shouldBe true
   }
 
 }
