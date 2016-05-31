@@ -95,7 +95,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
       case t: Throwable =>
         return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${sql}. Failing run.", t)
     } finally {
-        SessionState.detachSession()
+      SessionState.detachSession()
     }
 
     DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
