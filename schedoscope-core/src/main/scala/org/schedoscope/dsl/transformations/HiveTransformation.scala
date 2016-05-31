@@ -147,10 +147,10 @@ object HiveTransformation {
     // (?:.(?!\1))*.? Continue matching ANY characters.. as long as they aren't followed by the same quote that was matched in #1...
     val noStrings = noEmptyStrings.replaceAll("((?<![\\\\])['\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1", "")
     // prepend/append spaces to make the count easier
-     val paddedSQL = " " + noStrings + " "
+    val paddedSQL = " " + noStrings.replaceAll("[(),]"," ") + " "
 
-    val join = " [jJ][oO][iI][nN](?= )".r
-    val on = " [oO][nN](?= )".r
+    val join = "(?i)(?<! cross) join(?= )".r
+    val on = "(?i) on(?= )".r
     val countJoins = join.findAllIn(paddedSQL).length
     val countOns = on.findAllIn(paddedSQL).length
 
@@ -174,7 +174,7 @@ object HiveTransformation {
       _.trim().replaceAll("^--(.|\\w)*$", "")
     }.filter(_.nonEmpty).mkString(" ")
 
-    val noSets = noComments.replaceAll("( |^)[sS][eE][tT] (.|\\t)+?;", "")
+    val noSets = noComments.replaceAll("(?i)( |^)SET [^;]+;","")
 
     //replace the whitespaces inside quotes with ;
     replaceWhitespace(noSets)
@@ -199,7 +199,8 @@ object HiveTransformation {
       .map { case (s, i) =>
         //make sure the char has a twin before replacing
         if (i % 2 == 1 && (i < array.length - 1 || endsWithQuote)) {
-          s.replaceAll("\\s", ";")
+          val nested = if(quote == "\"") s.replaceAll("'","\"") else s
+          nested.replaceAll("\\s", ";")
         } else {
           s
         }
