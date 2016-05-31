@@ -20,7 +20,7 @@ import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
-import org.apache.hadoop.hive.ql.processors.CommandProcessorFactory
+import org.apache.hadoop.hive.ql.processors.{CommandProcessor, CommandProcessorFactory}
 import org.apache.hadoop.hive.ql.session.SessionState
 import org.joda.time.LocalDateTime
 import org.schedoscope.Schedoscope
@@ -82,12 +82,20 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
 
     try {
 
-      for (q <- splitQueryIntoStatements(sql)) {
+      for (statement <- splitQueryIntoStatements(sql)) {
 
-        val result = CommandProcessorFactory.get(q.trim.split("\\s+"), conf).run(q)
+        val commandTokens = statement.trim.split("\\s+")
+        val commandType = commandTokens(0)
+        val remainingStatement = statement.trim.substring(commandType.length)
+
+        val result = CommandProcessorFactory.get(commandType) match {
+          case statementDriver: org.apache.hadoop.hive.ql.Driver => statementDriver.run(statement)
+
+          case otherProcessor: CommandProcessor => otherProcessor.run(remainingStatement)
+        }
 
         if (result.getResponseCode != 0)
-          return DriverRunFailed(this, s"Hive returned error while executing Hive query ${q}. Response code: ${result.getResponseCode} SQL State: ${result.getSQLState}, Error message: ${result.getErrorMessage}", result.getException)
+          return DriverRunFailed(this, s"Hive returned error while executing Hive query ${statement}. Response code: ${result.getResponseCode} SQL State: ${result.getSQLState}, Error message: ${result.getErrorMessage}", result.getException)
 
       }
 
