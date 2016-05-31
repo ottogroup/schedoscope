@@ -137,15 +137,16 @@ object HiveDriver {
   def apply(ds: DriverSettings) = {
     val ugi = Schedoscope.settings.userGroupInformation
 
-    val conf = new HiveConf()
-    conf.set("hive.metastore.local", "false");
-    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Schedoscope.settings.metastoreUri.trim());
+    val conf = new HiveConf(classOf[SessionState])
+
+    conf.set("hive.metastore.local", "false")
+    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Schedoscope.settings.metastoreUri.trim())
 
     if (Schedoscope.settings.kerberosPrincipal.trim() != "") {
       conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
-        true);
+        true)
       conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
-        Schedoscope.settings.kerberosPrincipal);
+        Schedoscope.settings.kerberosPrincipal)
     }
 
     val metastoreClient = new HiveMetaStoreClient(conf)
