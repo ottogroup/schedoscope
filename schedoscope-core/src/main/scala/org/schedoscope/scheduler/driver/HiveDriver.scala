@@ -20,7 +20,6 @@ import java.io.{OutputStream, PrintStream}
 
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.hive.ql.metadata.Hive
 import org.apache.hadoop.hive.ql.processors.{CommandProcessor, CommandProcessorFactory}
@@ -39,7 +38,7 @@ import scala.concurrent.Future
 /**
   * Driver for executing Hive transformations
   */
-class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val conf: HiveConf, val metastoreClient: HiveMetaStoreClient) extends DriverOnBlockingApi[HiveTransformation] {
+class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val conf: HiveConf) extends DriverOnBlockingApi[HiveTransformation] {
 
   def transformationName = "hive"
 
@@ -50,44 +49,41 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     */
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
-
-      t.udfs.foreach(this.registerFunction(_))
-
-      executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
-
+      executeHiveQuery(t.udfs, replaceParameters(t.sql, t.configuration.toMap))
     })
 
   /**
-    * Register UDFs with Metastore.
+    * Actually perform the given query - after registering required functions - and return a run state after completion.
     */
-  def registerFunction(f: Function) {
-
-    val existing = try {
-      metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
-    } catch {
-      case t: Throwable => throw RetryableDriverException(s"Runtime exception while executing registering function ${f}", t)
-    }
-
-    if (existing == null || existing.isEmpty()) {
-      val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
-      val createFunction = s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}"
-
-      this.executeHiveQuery(createFunction)
-    }
-  }
-
-  /**
-    * Actually perform the given query and return a run state after completion.
-    */
-  def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
+  def executeHiveQuery(functionsToRegister: List[Function], sql: String): DriverRunState[HiveTransformation] = {
 
     SessionState.start(conf)
     SessionState.get().out = muton
     SessionState.get().err = muton
     SessionState.get().info = muton
 
+    val sqlPlusCreateFunctions = functionsToRegister
+      .foldLeft(sql) {
+
+        case (sqlSoFar, f) =>
+
+          val existing = try {
+            Hive.get().getMSC.getFunctions(f.getDbName, f.getFunctionName)
+          } catch {
+            case t: Throwable =>
+              Hive.closeCurrent()
+              SessionState.get().close()
+              throw RetryableDriverException(s"Runtime exception while querying registered functions ${f}", t)
+          }
+
+          if (existing == null || existing.isEmpty)
+            s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")}; ${sqlSoFar}"
+          else
+            sqlSoFar
+      }
+
     try {
-      splitQueryIntoStatements(sql)
+      splitQueryIntoStatements(sqlPlusCreateFunctions)
         .foldLeft[DriverRunState[HiveTransformation]](
         DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
       ) {
@@ -165,9 +161,7 @@ object HiveDriver {
         Schedoscope.settings.kerberosPrincipal)
     }
 
-    val metastoreClient = new HiveMetaStoreClient(conf)
-
-    new HiveDriver(ds.driverRunCompletionHandlers, conf, metastoreClient)
+    new HiveDriver(ds.driverRunCompletionHandlers, conf)
   }
 }
 

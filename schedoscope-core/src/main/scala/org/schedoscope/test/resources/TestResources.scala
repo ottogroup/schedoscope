@@ -108,7 +108,7 @@ abstract class TestResources {
 
     case "shell"      => new ShellDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"))
 
-    case "hive"       => new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), hiveConf, metastoreClient)
+    case "hive"       => new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), hiveConf)
 
     case "seq"        => new SeqDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), driverFor)
 
