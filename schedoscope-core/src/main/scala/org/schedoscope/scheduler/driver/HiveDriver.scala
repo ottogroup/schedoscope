@@ -82,19 +82,9 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
 
     SessionState.start(conf)
-
-    // Mute STDOUT and STDERR
-    SessionState.get().out = new PrintStream(new OutputStream {
-      override def write(b: Int): Unit = {}
-    })
-
-    SessionState.get().err = new PrintStream(new OutputStream {
-      override def write(b: Int): Unit = {}
-    })
-
-    SessionState.get().info = new PrintStream(new OutputStream {
-      override def write(b: Int): Unit = {}
-    })
+    SessionState.get().out = muton
+    SessionState.get().err = muton
+    SessionState.get().info = muton
 
     try {
       splitQueryIntoStatements(sql)
@@ -126,6 +116,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
       case t: Throwable =>
         return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${sql}. Failing run.", t)
     } finally {
+      Hive.closeCurrent()
       SessionState.get().close()
     }
   }
@@ -148,6 +139,10 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
       !StringUtils.isBlank(_)
     }
   }
+
+  private def muton = new PrintStream(new OutputStream {
+    override def write(b: Int): Unit = {}
+  })
 }
 
 /**
