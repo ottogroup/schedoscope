@@ -57,10 +57,32 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     */
   def executeHiveQuery(functionsToRegister: List[Function], sql: String): DriverRunState[HiveTransformation] = {
 
-    SessionState.start(conf)
-    SessionState.get().out = muton
-    SessionState.get().err = muton
-    SessionState.get().info = muton
+    //
+    // Setup session state
+    //
+
+    try {
+      SessionState.start(conf)
+      SessionState.get().out = muton
+      SessionState.get().err = muton
+      SessionState.get().info = muton
+    } catch {
+      case t: Throwable =>
+
+        //
+        // Could not create session state but we should retry
+        //
+        // Cleanup
+        //
+
+        Hive.closeCurrent()
+        SessionState.get().close()
+        throw RetryableDriverException(s"Cannot create session state for query ${sql}", t)
+    }
+
+    //
+    // Enhance sql with any necessary create function statements
+    //
 
     val sqlPlusCreateFunctions = functionsToRegister
       .foldLeft(sql) {
@@ -71,9 +93,16 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
             Hive.get().getMSC.getFunctions(f.getDbName, f.getFunctionName)
           } catch {
             case t: Throwable =>
+
+              //
+              // Could not query Metastore for function, but we should retry
+              //
+              // Cleanup session state
+              //
+
               Hive.closeCurrent()
               SessionState.get().close()
-              throw RetryableDriverException(s"Runtime exception while querying registered functions ${f}", t)
+              throw RetryableDriverException(s"Runtime exception while querying registered function ${f}", t)
           }
 
           if (existing == null || existing.isEmpty)
@@ -81,6 +110,10 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
           else
             sqlSoFar
       }
+
+    //
+    // Execute query statements one by one
+    //
 
     try {
       splitQueryIntoStatements(sqlPlusCreateFunctions)
@@ -100,8 +133,15 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
             case otherProcessor: CommandProcessor => otherProcessor.run(remainingStatement)
           }
 
-          if (result.getResponseCode != 0)
+
+          if (result.getResponseCode != 0) {
+
+            //
+            // Unrecoverable error, we need to fail.
+            //
+
             DriverRunFailed(this, s"Hive returned error while executing Hive query ${statement}. Response code: ${result.getResponseCode} SQL State: ${result.getSQLState}, Error message: ${result.getErrorMessage}", result.getException)
+          }
           else
             noProblemSoFar
 
@@ -110,8 +150,19 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
       }
     } catch {
       case t: Throwable =>
+
+        //
+        // Unrecoverable error, we need to fail.
+        //
+
         return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${sql}. Failing run.", t)
+
     } finally {
+
+      //
+      // Cleanup session state in any case
+      //
+
       Hive.closeCurrent()
       SessionState.get().close()
     }
