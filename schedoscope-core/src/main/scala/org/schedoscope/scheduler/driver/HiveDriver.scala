@@ -79,8 +79,14 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     */
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
 
-    Hive.get(conf, true)
     SessionState.start(conf)
+
+    System.out.println("SessionState: "  + SessionState.get().toString)
+    System.out.println("Hive: "  + Hive.get().toString)
+    System.out.println("Hive Functions: "  + Hive.get().getAllFunctions)
+    Hive.get().reloadFunctions()
+    System.out.println("Hive Functions after reload: "  + Hive.get().getAllFunctions)
+
 
     try {
       splitQueryIntoStatements(sql)
