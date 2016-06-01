@@ -104,7 +104,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
             noProblemSoFar
 
 
-        case (failure: DriverRunFailed[HiveTransformation], _) => failure
+        case (failure, _) => failure
       }
     } catch {
       case t: Throwable =>
