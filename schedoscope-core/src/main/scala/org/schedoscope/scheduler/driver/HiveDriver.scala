@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
+import org.apache.hadoop.hive.ql.metadata.Hive
 import org.apache.hadoop.hive.ql.processors.{CommandProcessor, CommandProcessorFactory}
 import org.apache.hadoop.hive.ql.session.SessionState
 import org.joda.time.LocalDateTime
@@ -78,6 +79,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     */
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
 
+    Hive.get(conf, true)
     SessionState.start(conf)
 
     try {
