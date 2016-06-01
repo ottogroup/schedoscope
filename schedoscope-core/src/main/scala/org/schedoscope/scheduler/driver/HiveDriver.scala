@@ -17,11 +17,9 @@ package org.schedoscope.scheduler.driver
 
 
 import org.apache.commons.lang.StringUtils
-import org.apache.hadoop.hive.common.JavaUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
-import org.apache.hadoop.hive.ql.exec.Utilities
 import org.apache.hadoop.hive.ql.processors.{CommandProcessor, CommandProcessorFactory}
 import org.apache.hadoop.hive.ql.session.SessionState
 import org.joda.time.LocalDateTime
@@ -81,35 +79,39 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
   def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
 
     SessionState.start(conf)
-    SessionState.getSessionConf().setClassLoader(JavaUtils.getClassLoader)
 
     try {
+      splitQueryIntoStatements(sql)
+        .foldLeft[DriverRunState[HiveTransformation]](
+        DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
+      ) {
 
-      for (statement <- splitQueryIntoStatements(sql)) {
+        case (noProblemSoFar: DriverRunSucceeded[HiveTransformation], statement) =>
 
-        val commandTokens = statement.trim.split("\\s+")
-        val commandType = commandTokens(0)
-        val remainingStatement = statement.trim.substring(commandType.length)
+          val commandTokens = statement.trim.split("\\s+")
+          val commandType = commandTokens(0)
+          val remainingStatement = statement.trim.substring(commandType.length)
 
-        val result = CommandProcessorFactory.get(commandType) match {
-          case statementDriver: org.apache.hadoop.hive.ql.Driver => statementDriver.run(statement)
+          val result = CommandProcessorFactory.get(commandType) match {
+            case statementDriver: org.apache.hadoop.hive.ql.Driver => statementDriver.run(statement)
 
-          case otherProcessor: CommandProcessor => otherProcessor.run(remainingStatement)
-        }
+            case otherProcessor: CommandProcessor => otherProcessor.run(remainingStatement)
+          }
 
-        if (result.getResponseCode != 0)
-          return DriverRunFailed(this, s"Hive returned error while executing Hive query ${statement}. Response code: ${result.getResponseCode} SQL State: ${result.getSQLState}, Error message: ${result.getErrorMessage}", result.getException)
+          if (result.getResponseCode != 0)
+            DriverRunFailed(this, s"Hive returned error while executing Hive query ${statement}. Response code: ${result.getResponseCode} SQL State: ${result.getSQLState}, Error message: ${result.getErrorMessage}", result.getException)
+          else
+            noProblemSoFar
 
+
+        case (failure: DriverRunFailed[HiveTransformation], _) => failure
       }
-
     } catch {
       case t: Throwable =>
         return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${sql}. Failing run.", t)
     } finally {
       SessionState.detachSession()
     }
-
-    DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
 
   private def splitQueryIntoStatements(sql: String) = {
