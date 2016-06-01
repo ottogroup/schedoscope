@@ -16,6 +16,8 @@
 package org.schedoscope.scheduler.driver
 
 
+import java.io.{OutputStream, PrintStream}
+
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
@@ -81,12 +83,18 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
 
     SessionState.start(conf)
 
-    System.out.println("SessionState: "  + SessionState.get().toString)
-    System.out.println("Hive: "  + Hive.get().toString)
-    System.out.println("Hive Functions: "  + Hive.get().getAllFunctions)
-    Hive.get().reloadFunctions()
-    System.out.println("Hive Functions after reload: "  + Hive.get().getAllFunctions)
+    // Mute STDOUT and STDERR
+    SessionState.get().out = new PrintStream(new OutputStream {
+      override def write(b: Int): Unit = {}
+    })
 
+    SessionState.get().err = new PrintStream(new OutputStream {
+      override def write(b: Int): Unit = {}
+    })
+
+    SessionState.get().info = new PrintStream(new OutputStream {
+      override def write(b: Int): Unit = {}
+    })
 
     try {
       splitQueryIntoStatements(sql)
