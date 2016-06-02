@@ -203,6 +203,7 @@ object HiveDriver {
     val conf = new HiveConf(classOf[SessionState])
 
     conf.set("hive.metastore.local", "false")
+    conf.setBoolVar(HiveConf.ConfVars.HIVESESSIONSILENT, true)
     conf.setVar(HiveConf.ConfVars.METASTOREURIS, Schedoscope.settings.metastoreUri.trim())
 
     if (Schedoscope.settings.kerberosPrincipal.trim() != "") {
