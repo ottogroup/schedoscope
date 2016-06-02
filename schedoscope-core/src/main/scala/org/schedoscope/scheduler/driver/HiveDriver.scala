@@ -100,8 +100,18 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
               // Cleanup session state
               //
 
-              Hive.closeCurrent()
-              SessionState.get().close()
+              try {
+                Hive.closeCurrent()
+              } catch {
+                case _: Throwable =>
+              }
+
+              try {
+                SessionState.get().close()
+              } catch {
+                case _: Throwable =>
+              }
+
               throw RetryableDriverException(s"Runtime exception while querying registered function ${f}", t)
           }
 
@@ -163,8 +173,17 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
       // Cleanup session state in any case
       //
 
-      Hive.closeCurrent()
-      SessionState.get().close()
+      try {
+        Hive.closeCurrent()
+      } catch {
+        case _: Throwable =>
+      }
+
+      try {
+        SessionState.get().close()
+      } catch {
+        case _: Throwable =>
+      }
     }
   }
 
