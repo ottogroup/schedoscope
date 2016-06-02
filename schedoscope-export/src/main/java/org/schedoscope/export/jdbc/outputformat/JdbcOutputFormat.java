@@ -83,6 +83,7 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
 		private Connection connection;
 		private PreparedStatement statement;
 		private int rowsInBatch = 0;
+		private int rowsTotal = 0;
 		private int commitSize = 25000;
 
 		public JdbcRecordWriter() throws SQLException {
@@ -124,8 +125,15 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
 		public void close(TaskAttemptContext context) throws IOException {
 
 			try {
-				statement.executeBatch();
-				connection.commit();
+
+				if (rowsInBatch > 0) {
+					statement.executeBatch();
+				}
+
+				if (rowsTotal > 0) {
+					connection.commit();
+				}
+
 			} catch (SQLException e) {
 				try {
 					connection.rollback();
@@ -150,6 +158,7 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
 					rowsInBatch = 0;
 				} else {
 					rowsInBatch++;
+					rowsTotal++;
 				}
 			} catch (SQLException e) {
 				e.printStackTrace();
