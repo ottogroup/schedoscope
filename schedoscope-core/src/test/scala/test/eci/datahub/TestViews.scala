@@ -321,3 +321,14 @@ case class HDFSInputView() extends View with Id {
   storedAs(Parquet())
 }
 
+trait Shop {
+  val shopCode: Parameter[String]
+  require((shopCode.v.get).toUpperCase().equals(shopCode.v.get), "Put in upper case: "+ shopCode.v.get)
+}
+
+case class RequireView(shopCode: Parameter[String])
+  extends View with Shop {
+
+  val field1 = fieldOf[String]
+}
+
