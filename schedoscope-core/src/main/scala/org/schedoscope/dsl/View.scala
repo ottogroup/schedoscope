@@ -439,7 +439,12 @@ object View {
         }
         .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
     } catch {
-      case t: Throwable => throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
+      case t: Throwable =>
+        if(t.isInstanceOf[java.lang.reflect.InvocationTargetException]) {
+          throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getCause().getMessage}")
+        } else {
+          throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
+        }
     }
 
 }
