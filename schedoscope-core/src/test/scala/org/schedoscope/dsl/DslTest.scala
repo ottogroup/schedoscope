@@ -24,7 +24,7 @@ import org.schedoscope.dsl.storageformats.{ Parquet, TextFile }
 import org.schedoscope.dsl.transformations.{ HiveTransformation, NoOp }
 import org.schedoscope.dsl.views.{ DailyParameterization, JobMetadata, PointOccurrence }
 import org.schedoscope.schema.ddl.HiveQl.ddl
-import test.eci.datahub.{ AvroView, Brand, Click, ClickOfEC0101, ClickOfEC0101ViaOozie, EdgeCasesView, Product, ProductBrand, ViewWithDefaultParams }
+import test.eci.datahub._
 
 class DslTest extends FlatSpec with Matchers {
 
@@ -340,6 +340,11 @@ class DslTest extends FlatSpec with Matchers {
         dateString should be <= "20140224"
         dateString should be >= "20131202"
     }
+  }
+
+  it should "throw an exception during dynamic instantiation" in {
+    val thrown = the [java.lang.RuntimeException] thrownBy View.viewsFromUrl("dev", "/test.eci.datahub/RequireView/ec0106/")
+    thrown.getMessage() shouldBe "Error while parsing view(s) /test.eci.datahub/RequireView/ec0106/ : requirement failed: Put in upper case: ec0106"
   }
 
   it should "have the same urlPath as the one they were dynamically constructed with" in {
