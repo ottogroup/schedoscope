@@ -64,7 +64,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       try {
         viewsFromUrl(viewUrlPath.get)
       } catch {
-        case t: Throwable => throw new IllegalArgumentException(s"Invalid view URL pattern passed: ${viewUrlPath.get}.", t)
+        case t: Throwable => throw new IllegalArgumentException(s"Invalid view URL pattern passed: ${viewUrlPath.get}."
+          + {if(t.getMessage != null) s"\noriginal Message: ${t.getMessage}"},t)
       }
   }
 
@@ -75,7 +76,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   private def commandId(command: Any, args: Seq[Option[String]], start: Option[LocalDateTime] = None) = {
-    val format = DateTimeFormat.forPattern("YYYYMMddHHmmss");
+    val format = DateTimeFormat.forPattern("YYYYMMddHHmmss")
 
     val c = command match {
       case s: String => s
