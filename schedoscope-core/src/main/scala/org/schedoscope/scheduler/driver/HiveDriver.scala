@@ -62,10 +62,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     //
 
     try {
-      SessionState.start(conf)
-      SessionState.get().out = muton
-      SessionState.get().err = muton
-      SessionState.get().info = muton
+      setupSessionState()
     } catch {
       case t: Throwable =>
 
@@ -75,8 +72,8 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
         // Cleanup
         //
 
-        Hive.closeCurrent()
-        SessionState.get().close()
+        tearDownSessionState()
+
         throw RetryableDriverException(s"Cannot create session state for query ${sql}", t)
     }
 
@@ -100,17 +97,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
               // Cleanup session state
               //
 
-              try {
-                Hive.closeCurrent()
-              } catch {
-                case _: Throwable =>
-              }
-
-              try {
-                SessionState.get().close()
-              } catch {
-                case _: Throwable =>
-              }
+              tearDownSessionState()
 
               throw RetryableDriverException(s"Runtime exception while querying registered function ${f}", t)
           }
@@ -173,17 +160,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
       // Cleanup session state in any case
       //
 
-      try {
-        Hive.closeCurrent()
-      } catch {
-        case _: Throwable =>
-      }
-
-      try {
-        SessionState.get().close()
-      } catch {
-        case _: Throwable =>
-      }
+      tearDownSessionState()
     }
   }
 
@@ -203,6 +180,28 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
 
     queryStack.reverse.filter {
       !StringUtils.isBlank(_)
+    }
+  }
+
+  private def setupSessionState() = {
+    SessionState.start(conf)
+    SessionState.get().out = muton
+    SessionState.get().err = muton
+    SessionState.get().info = muton
+  }
+
+
+  private def tearDownSessionState() = {
+    try {
+      Hive.closeCurrent()
+    } catch {
+      case _: Throwable =>
+    }
+
+    try {
+      SessionState.get().close()
+    } catch {
+      case _: Throwable =>
     }
   }
 
