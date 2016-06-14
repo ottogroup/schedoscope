@@ -114,7 +114,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
               Set()
           })
 
-      else if (oneDependencyReturnedData)
+      else if (oneDependencyReturnedData) {
         if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
           if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
             ResultingViewSchedulingState(
@@ -172,7 +172,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
                 Set()
             })
 
-      else
+      } else
         ResultingViewSchedulingState(
           NoData(view),
           Set(
