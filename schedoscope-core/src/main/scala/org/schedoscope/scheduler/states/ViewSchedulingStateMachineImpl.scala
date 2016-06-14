@@ -58,7 +58,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
           oneDependencyReturnedData = true,
           withErrors = false,
           incomplete = false,
-          0l),
+          1l),
         setIncomplete = false,
         setError = false,
         currentTime)
