@@ -20,13 +20,11 @@ import java.nio.file.Files
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration.Duration
-import scala.util.Random
-
+import scala.util.{Failure, Random, Success}
 import org.apache.commons.io.FileUtils
 import org.schedoscope.Schedoscope
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.Transformation
-
 import net.lingala.zip4j.core.ZipFile
 
 /**
@@ -147,8 +145,12 @@ trait DriverOnBlockingApi[T <: Transformation] extends Driver[T] {
 
   def getDriverRunState(run: DriverRunHandle[T]): DriverRunState[T] = {
     val runState = run.stateHandle.asInstanceOf[Future[DriverRunState[T]]]
+
     if (runState.isCompleted)
-      runState.value.get.get
+      runState.value.get match {
+        case s: Success[DriverRunState[T]] => s.value
+        case f: Failure[DriverRunState[T]] => throw f.exception
+      }
     else
       DriverRunOngoing[T](this, run)
   }
