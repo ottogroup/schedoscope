@@ -1,18 +1,18 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.states
 
 import java.util.Date
@@ -82,16 +82,16 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def leaveWaitingState(currentState: Waiting, setIncomplete: Boolean, setError: Boolean, currentTime: Long) = currentState match {
     case Waiting(
-      view,
-      lastTransformationChecksum,
-      lastTransformationTimestamp,
-      dependenciesMaterializing,
-      listenersWaitingForMaterialize,
-      materializationMode,
-      oneDependencyReturnedData,
-      withErrors,
-      incomplete,
-      dependenciesFreshness) =>
+    view,
+    lastTransformationChecksum,
+    lastTransformationTimestamp,
+    dependenciesMaterializing,
+    listenersWaitingForMaterialize,
+    materializationMode,
+    oneDependencyReturnedData,
+    withErrors,
+    incomplete,
+    dependenciesFreshness) =>
 
       if (view.isMaterializeOnce && lastTransformationTimestamp > 0)
         ResultingViewSchedulingState(
@@ -108,14 +108,14 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
               lastTransformationTimestamp,
               withErrors,
               incomplete)) ++ {
-              if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
-                Set(WriteTransformationCheckum(view))
-              else
-                Set()
-            })
+            if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
+              Set(WriteTransformationCheckum(view))
+            else
+              Set()
+          })
 
       else if (oneDependencyReturnedData)
-        if (lastTransformationTimestamp <= dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
+        if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
           if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
             ResultingViewSchedulingState(
               Materialized(
@@ -148,7 +148,9 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
                 incomplete,
                 0),
               Set(Transform(view)))
-        } else
+        }
+
+        else
 
           ResultingViewSchedulingState(
             Materialized(
@@ -164,11 +166,11 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
                 lastTransformationTimestamp,
                 withErrors | setError,
                 incomplete | setIncomplete)) ++ {
-                if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
-                  Set(WriteTransformationCheckum(view))
-                else
-                  Set()
-              })
+              if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
+                Set(WriteTransformationCheckum(view))
+              else
+                Set()
+            })
 
       else
         ResultingViewSchedulingState(
@@ -178,10 +180,10 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
   }
 
   def materialize(
-    currentState: ViewSchedulingState,
-    listener: PartyInterestedInViewSchedulingStateChange,
-    materializationMode: MaterializeViewMode = DEFAULT,
-    currentTime: Long = new Date().getTime) = currentState match {
+                   currentState: ViewSchedulingState,
+                   listener: PartyInterestedInViewSchedulingStateChange,
+                   materializationMode: MaterializeViewMode = DEFAULT,
+                   currentTime: Long = new Date().getTime) = currentState match {
 
     case CreatedByViewManager(view) =>
       toWaitingTransformingOrMaterialize(view, defaultDigest, 0, listener, materializationMode, currentTime)
@@ -205,16 +207,16 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
         Set(ReportFailed(view, Set(listener))))
 
     case Waiting(
-      view,
-      lastTransformationChecksum,
-      lastTransformationTimestamp,
-      dependenciesMaterializing,
-      listenersWaitingForMaterialize,
-      currentMaterializationMode,
-      oneDependencyReturnedData,
-      withErrors,
-      incomplete,
-      dependenciesFreshness) =>
+    view,
+    lastTransformationChecksum,
+    lastTransformationTimestamp,
+    dependenciesMaterializing,
+    listenersWaitingForMaterialize,
+    currentMaterializationMode,
+    oneDependencyReturnedData,
+    withErrors,
+    incomplete,
+    dependenciesFreshness) =>
 
       ResultingViewSchedulingState(
         Waiting(
@@ -230,13 +232,13 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
           dependenciesFreshness), Set())
 
     case Retrying(
-      view,
-      lastTransformationChecksum,
-      listenersWaitingForMaterialize,
-      currentMaterializationMode,
-      withErrors,
-      incomplete,
-      retry) =>
+    view,
+    lastTransformationChecksum,
+    listenersWaitingForMaterialize,
+    currentMaterializationMode,
+    withErrors,
+    incomplete,
+    retry) =>
 
       ResultingViewSchedulingState(
         Retrying(
@@ -249,13 +251,13 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
           retry), Set())
 
     case Transforming(
-      view,
-      lastTransformationChecksum,
-      listenersWaitingForMaterialize,
-      currentMaterializationMode,
-      withErrors,
-      incomplete,
-      retry) =>
+    view,
+    lastTransformationChecksum,
+    listenersWaitingForMaterialize,
+    currentMaterializationMode,
+    withErrors,
+    incomplete,
+    retry) =>
 
       ResultingViewSchedulingState(
         Transforming(
@@ -270,13 +272,13 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def retry(currentState: Retrying) = currentState match {
     case Retrying(
-      view,
-      lastTransformationChecksum,
-      listenersWaitingForMaterialize,
-      currentMaterializationMode,
-      withErrors,
-      incomplete,
-      retry) =>
+    view,
+    lastTransformationChecksum,
+    listenersWaitingForMaterialize,
+    currentMaterializationMode,
+    withErrors,
+    incomplete,
+    retry) =>
 
       ResultingViewSchedulingState(
         Transforming(
@@ -290,9 +292,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
         Set(Transform(view)))
   }
 
-  def invalidate(
-    currentState: ViewSchedulingState,
-    issuer: PartyInterestedInViewSchedulingStateChange) = currentState match {
+  def invalidate(currentState: ViewSchedulingState, issuer: PartyInterestedInViewSchedulingStateChange) = currentState match {
 
     case waiting: Waiting => ResultingViewSchedulingState(
       waiting, Set(ReportNotInvalidated(waiting.view, Set(issuer))))
@@ -311,16 +311,16 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def noDataAvailable(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
-      view,
-      lastTransformationChecksum,
-      lastTransformationTimestamp,
-      dependenciesMaterializing,
-      listenersWaitingForMaterialize,
-      materializationMode,
-      oneDependencyReturnedData,
-      withErrors,
-      incomplete,
-      dependenciesFreshness) =>
+    view,
+    lastTransformationChecksum,
+    lastTransformationTimestamp,
+    dependenciesMaterializing,
+    listenersWaitingForMaterialize,
+    materializationMode,
+    oneDependencyReturnedData,
+    withErrors,
+    incomplete,
+    dependenciesFreshness) =>
 
       if (dependenciesMaterializing.size == 1 && dependenciesMaterializing.contains(reportingDependency))
         leaveWaitingState(currentState, setIncomplete = true, setError = false, currentTime)
@@ -341,16 +341,16 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def failed(currentState: Waiting, reportingDependency: View, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
-      view,
-      lastTransformationChecksum,
-      lastTransformationTimestamp,
-      dependenciesMaterializing,
-      listenersWaitingForMaterialize,
-      materializationMode,
-      oneDependencyReturnedData,
-      withErrors,
-      incomplete,
-      dependenciesFreshness) =>
+    view,
+    lastTransformationChecksum,
+    lastTransformationTimestamp,
+    dependenciesMaterializing,
+    listenersWaitingForMaterialize,
+    materializationMode,
+    oneDependencyReturnedData,
+    withErrors,
+    incomplete,
+    dependenciesFreshness) =>
 
       if (dependenciesMaterializing.size == 1 && dependenciesMaterializing.contains(reportingDependency))
         leaveWaitingState(currentState, setIncomplete = true, setError = true, currentTime)
@@ -371,16 +371,16 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def materialized(currentState: Waiting, reportingDependency: View, transformationTimestamp: Long, withErrors: Boolean, incomplete: Boolean, currentTime: Long = new Date().getTime) = currentState match {
     case Waiting(
-      view,
-      lastTransformationChecksum,
-      lastTransformationTimestamp,
-      dependenciesMaterializing,
-      listenersWaitingForMaterialize,
-      materializationMode,
-      oneDependencyReturnedData,
-      currentWithErrors,
-      currentIncomplete,
-      dependenciesFreshness) =>
+    view,
+    lastTransformationChecksum,
+    lastTransformationTimestamp,
+    dependenciesMaterializing,
+    listenersWaitingForMaterialize,
+    materializationMode,
+    oneDependencyReturnedData,
+    currentWithErrors,
+    currentIncomplete,
+    dependenciesFreshness) =>
 
       val updatedWaitingState = Waiting(
         view,
@@ -402,13 +402,13 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def transformationSucceeded(currentState: Transforming, folderEmpty: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
     case Transforming(
-      view,
-      lastTransformationChecksum,
-      listenersWaitingForMaterialize,
-      materializationMode,
-      withErrors,
-      incomplete,
-      retry) =>
+    view,
+    lastTransformationChecksum,
+    listenersWaitingForMaterialize,
+    materializationMode,
+    withErrors,
+    incomplete,
+    retry) =>
 
       if (!folderEmpty)
         ResultingViewSchedulingState(
@@ -441,13 +441,13 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
 
   def transformationFailed(currentState: Transforming, maxRetries: Int = Schedoscope.settings.retries, currentTime: Long = new Date().getTime) = currentState match {
     case Transforming(
-      view,
-      lastTransformationChecksum,
-      listenersWaitingForMaterialize,
-      materializationMode,
-      withErrors,
-      incomplete,
-      retry) =>
+    view,
+    lastTransformationChecksum,
+    listenersWaitingForMaterialize,
+    materializationMode,
+    withErrors,
+    incomplete,
+    retry) =>
 
       if (retry < maxRetries)
         ResultingViewSchedulingState(
