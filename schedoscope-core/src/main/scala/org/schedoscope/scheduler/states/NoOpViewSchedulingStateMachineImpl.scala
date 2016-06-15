@@ -75,7 +75,7 @@ class NoOpViewSchedulingStateMachineImpl(successFlagExists: () => Boolean) exten
                 Set()
             })
       else if (oneDependencyReturnedData) {
-        if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
+        if (lastTransformationTimestamp < dependenciesFreshness || (materializationMode != RESET_TRANSFORMATION_CHECKSUMS && lastTransformationChecksum != view.transformation().checksum)) {
           if (successFlagExists())
             ResultingViewSchedulingState(
               Materialized(

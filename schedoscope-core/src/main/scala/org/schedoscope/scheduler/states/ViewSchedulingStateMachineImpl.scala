@@ -115,7 +115,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
           })
 
       else if (oneDependencyReturnedData) {
-        if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum) {
+        if (lastTransformationTimestamp < dependenciesFreshness || (materializationMode != RESET_TRANSFORMATION_CHECKSUMS && lastTransformationChecksum != view.transformation().checksum)) {
           if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS)
             ResultingViewSchedulingState(
               Materialized(
