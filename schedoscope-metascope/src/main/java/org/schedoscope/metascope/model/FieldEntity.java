@@ -37,9 +37,9 @@ public class FieldEntity extends Documentable {
 
 	@EmbeddedId
 	private FieldEntityKey key;
-	@Column(name = TYPE, columnDefinition = "varchar(32629)")
+	@Column(name = TYPE, columnDefinition = "varchar(31000)")
 	private String type;
-	@Column(name = DESCRIPTION, columnDefinition = "varchar(32629)")
+	@Column(name = DESCRIPTION, columnDefinition = "varchar(31000)")
 	private String description;
 	@Column(name = FIELD_ORDER)
 	private int fieldOrder;
