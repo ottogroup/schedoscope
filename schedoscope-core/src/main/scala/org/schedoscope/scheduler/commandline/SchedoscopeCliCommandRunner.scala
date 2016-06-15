@@ -116,7 +116,7 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
           println("\nRESULTS\n=======")
           println(SchedoscopeCliFormat.serialize(res))
         } catch {
-          case t: Throwable => println(s"\nERROR: ${t.getMessage}\n"); t.printStackTrace()
+          case t: Throwable => println(s"\nERROR: ${t.getMessage}\n")
         }
       }
       case None => // usage information has already been displayed
