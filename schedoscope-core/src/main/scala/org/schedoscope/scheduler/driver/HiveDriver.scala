@@ -184,7 +184,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
   }
 
   private def setupSessionState() = {
-    SessionState.start(conf)
+    SessionState.start(new HiveConf(conf))
     SessionState.get().out = muton
     SessionState.get().err = muton
     SessionState.get().info = muton
