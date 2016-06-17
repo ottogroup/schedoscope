@@ -173,7 +173,7 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
 		Schema outputSchema = SchemaFactory.getSchema(context
 				.getConfiguration());
 
-		String tmpOutputTable = TMPDB + outputSchema.getTable() + "_"
+		String tmpOutputTable = getTablePrefix(outputSchema) + outputSchema.getTable() + "_"
 				+ context.getTaskAttemptID().getTaskID().getId();
 		String createTableQuery = outputSchema.getCreateTableQuery();
 
@@ -197,6 +197,15 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
 
 		} catch (Exception ex) {
 			throw new IOException(ex.getMessage());
+		}
+	}
+
+	private static String getTablePrefix(Schema outputSchema) {
+		if (outputSchema.getFilter() != null) {
+			String filter = outputSchema.getFilter().replace("=", "");
+			return TMPDB + filter + "_";
+		} else {
+			return TMPDB;
 		}
 	}
 
@@ -259,7 +268,7 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
 
 		Schema outputSchema = SchemaFactory.getSchema(conf);
 		String outputTable = outputSchema.getTable();
-		String tmpOutputTable = TMPDB + outputSchema.getTable();
+		String tmpOutputTable = getTablePrefix(outputSchema) + outputSchema.getTable();
 		String createTableStatement = outputSchema.getCreateTableQuery();
 		String inputFilter = outputSchema.getFilter();
 		int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
@@ -277,7 +286,7 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
 			}
 
 			JdbcQueryUtils.createTable(createTableStatement, connection);
-			JdbcQueryUtils.mergeOutput(outputTable, TMPDB,
+			JdbcQueryUtils.mergeOutput(outputTable, getTablePrefix(outputSchema),
 					outputNumberOfPartitions, connection);
 			JdbcQueryUtils.dropTemporaryOutputTables(tmpOutputTable,
 					outputNumberOfPartitions, connection);
@@ -307,7 +316,7 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
 			UnrecoverableException {
 
 		Schema outputSchema = SchemaFactory.getSchema(conf);
-		String tmpOutputTable = TMPDB + outputSchema.getTable();
+		String tmpOutputTable = getTablePrefix(outputSchema) + outputSchema.getTable();
 		int outputNumberOfPartitions = outputSchema.getNumberOfPartitions();
 
 		Connection connection = null;
