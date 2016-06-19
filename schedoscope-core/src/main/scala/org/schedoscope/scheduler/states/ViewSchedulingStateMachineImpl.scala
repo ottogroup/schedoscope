@@ -62,22 +62,23 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
         setIncomplete = false,
         setError = false,
         currentTime)
-    else
-
+    else {
+      val dependencies = view.dependencies.toSet
       ResultingViewSchedulingState(
         Waiting(view,
           lastTransformationChecksum,
           lastTransformationTimestamp,
-          view.dependencies.toSet,
+          dependencies,
           Set(listener),
           materializationMode,
           oneDependencyReturnedData = false,
           withErrors = false,
           incomplete = false,
           0l),
-        view.dependencies.map {
+        dependencies.map {
           Materialize(_, materializationMode)
         }.toSet)
+    }
   }
 
   def leaveWaitingState(currentState: Waiting, setIncomplete: Boolean, setError: Boolean, currentTime: Long) = currentState match {
