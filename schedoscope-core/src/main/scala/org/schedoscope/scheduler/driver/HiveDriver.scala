@@ -183,7 +183,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     }
   }
 
-  private def setupSessionState() = {
+  private def setupSessionState() {
     SessionState.start(new HiveConf(conf))
     SessionState.get().out = muton
     SessionState.get().err = muton
@@ -191,7 +191,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
   }
 
 
-  private def tearDownSessionState() = {
+  private def tearDownSessionState() {
     try {
       Hive.closeCurrent()
     } catch {
