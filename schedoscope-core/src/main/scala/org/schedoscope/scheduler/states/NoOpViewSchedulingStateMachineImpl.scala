@@ -32,7 +32,7 @@ class NoOpViewSchedulingStateMachineImpl(successFlagExists: () => Boolean) exten
           oneDependencyReturnedData = true,
           withErrors = false,
           incomplete = false,
-          0l),
+          1l),
         setIncomplete = false,
         setError = false,
         currentTime)
@@ -74,8 +74,8 @@ class NoOpViewSchedulingStateMachineImpl(successFlagExists: () => Boolean) exten
               else
                 Set()
             })
-      else if (oneDependencyReturnedData)
-        if (lastTransformationTimestamp < dependenciesFreshness || lastTransformationChecksum != view.transformation().checksum)
+      else if (oneDependencyReturnedData) {
+        if (lastTransformationTimestamp < dependenciesFreshness || (materializationMode != RESET_TRANSFORMATION_CHECKSUMS && lastTransformationChecksum != view.transformation().checksum)) {
           if (successFlagExists())
             ResultingViewSchedulingState(
               Materialized(
@@ -102,7 +102,7 @@ class NoOpViewSchedulingStateMachineImpl(successFlagExists: () => Boolean) exten
               NoData(view),
               Set(
                 ReportNoDataAvailable(view, listenersWaitingForMaterialize)))
-        else
+        } else
           ResultingViewSchedulingState(
             Materialized(
               view,
@@ -118,12 +118,12 @@ class NoOpViewSchedulingStateMachineImpl(successFlagExists: () => Boolean) exten
                 withErrors | setError,
                 incomplete | setIncomplete))
               ++ {
-                if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
-                  Set(WriteTransformationCheckum(view))
-                else
-                  Set()
-              })
-      else
+              if (materializationMode == RESET_TRANSFORMATION_CHECKSUMS)
+                Set(WriteTransformationCheckum(view))
+              else
+                Set()
+            })
+      } else
         ResultingViewSchedulingState(
           NoData(view),
           Set(

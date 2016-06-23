@@ -1,154 +1,167 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.driver
 
-import java.sql.{ Connection, DriverManager, SQLException, Statement }
-import java.net.ConnectException
-import java.security.PrivilegedAction
+
+import java.io.{OutputStream, PrintStream}
+
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.hive.metastore.api.Function
-import org.apache.hadoop.security.UserGroupInformation
-import org.apache.thrift.TException
+import org.apache.hadoop.hive.ql.metadata.Hive
+import org.apache.hadoop.hive.ql.processors.{CommandProcessor, CommandProcessorFactory}
+import org.apache.hadoop.hive.ql.session.SessionState
 import org.joda.time.LocalDateTime
 import org.schedoscope.Schedoscope
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.slf4j.LoggerFactory
-import scala.Array.canBuildFrom
+
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable.Stack
 import scala.concurrent.Future
-import org.schedoscope.Schedoscope
 
 /**
- * Driver for executing Hive transformations
- */
-class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val connectionUrl: String, val metastoreClient: HiveMetaStoreClient) extends DriverOnBlockingApi[HiveTransformation] {
+  * Driver for executing Hive transformations
+  */
+class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val conf: HiveConf) extends DriverOnBlockingApi[HiveTransformation] {
 
   def transformationName = "hive"
 
   val log = LoggerFactory.getLogger(classOf[HiveDriver])
 
   /**
-   * Construct a future-based driver run handle
-   */
+    * Construct a future-based driver run handle
+    */
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
-
-      t.udfs.foreach(this.registerFunction(_))
-
-      executeHiveQuery(replaceParameters(t.sql, t.configuration.toMap))
-
+      executeHiveQuery(t.udfs, replaceParameters(t.sql, t.configuration.toMap))
     })
 
   /**
-   * Register UDFs with Metastore.
-   */
-  def registerFunction(f: Function) {
+    * Actually perform the given query - after registering required functions - and return a run state after completion.
+    */
+  def executeHiveQuery(functionsToRegister: List[Function], sql: String): DriverRunState[HiveTransformation] = {
 
-    val existing = try {
-      metastoreClient.getFunctions(f.getDbName, f.getFunctionName)
-    } catch {
-      case t: Throwable => throw RetryableDriverException(s"Runtime exception while executing registering function ${f}", t)
-    }
-
-    if (existing == null || existing.isEmpty()) {
-      val resourceJars = f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")
-      val createFunction = s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${resourceJars}"
-
-      this.executeHiveQuery(createFunction)
-    }
-  }
-
-  /**
-   * Actually perform the given query and return a run state after completion.
-   */
-  def executeHiveQuery(sql: String): DriverRunState[HiveTransformation] = {
-
-    val queriesToExecute = splitQueryIntoStatements(sql)
-
-    var hiveServer: Connection = null
+    //
+    // Setup session state
+    //
 
     try {
+      setupSessionState()
+    } catch {
+      case t: Throwable =>
 
-      hiveServer = hiveJdbcConnection
+        //
+        // Could not create session state but we should retry
+        //
+        // Cleanup
+        //
 
-      var hive: Statement = null
+        tearDownSessionState()
 
-      try {
+        throw RetryableDriverException(s"Cannot create session state for query ${sql}", t)
+    }
 
-        hive = hiveServer.createStatement()
+    //
+    // Enhance sql with any necessary create function statements
+    //
 
-        queriesToExecute.foreach { q =>
+    val sqlPlusCreateFunctions = functionsToRegister
+      .foldLeft(sql) {
 
-          log.debug(s"Hive driver executing query ${q.trim}")
+        case (sqlSoFar, f) =>
 
-          try {
-
-            hive.execute(q.trim)
-
+          val existing = try {
+            Hive.get().getMSC.getFunctions(f.getDbName, f.getFunctionName)
           } catch {
-            case t: Throwable => if (isConnectionProblem(t)) {
+            case t: Throwable =>
 
-              throw RetryableDriverException(s"Hive driver encountered connection problem while executing hive query ${q}", t)
+              //
+              // Could not query Metastore for function, but we should retry
+              //
+              // Cleanup session state
+              //
 
-            } else {
+              tearDownSessionState()
 
-              return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${q}. Failing run.", t)
-
-            }
+              throw RetryableDriverException(s"Runtime exception while querying registered function ${f}", t)
           }
 
-        }
-
-      } finally {
-
-        try {
-
-          log.info("HIVE-DRIVER: Closing statement on HiveServer")
-
-          hive.close()
-
-          log.info("HIVE-DRIVER: Closed statement on HiveServer")
-
-        } catch {
-          case _: Throwable =>
-        }
+          if (existing == null || existing.isEmpty)
+            s"CREATE FUNCTION ${f.getDbName}.${f.getFunctionName} AS '${f.getClassName}' USING ${f.getResourceUris.map(jar => s"JAR '${jar.getUri}'").mkString(", ")}; ${sqlSoFar}"
+          else
+            sqlSoFar
       }
+
+    //
+    // Execute query statements one by one
+    //
+
+    try {
+      splitQueryIntoStatements(sqlPlusCreateFunctions)
+        .foldLeft[DriverRunState[HiveTransformation]](
+        DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
+      ) {
+
+        case (noProblemSoFar: DriverRunSucceeded[HiveTransformation], statement) =>
+
+          val commandTokens = statement.trim.split("\\s+")
+          val commandType = commandTokens(0)
+          val remainingStatement = statement.trim.substring(commandType.length)
+
+          val result = CommandProcessorFactory.get(commandType) match {
+            case statementDriver: org.apache.hadoop.hive.ql.Driver => statementDriver.run(statement)
+
+            case otherProcessor: CommandProcessor => otherProcessor.run(remainingStatement)
+          }
+
+
+          if (result.getResponseCode != 0) {
+
+            //
+            // Unrecoverable error, we need to fail.
+            //
+
+            DriverRunFailed(this, s"Hive returned error while executing Hive query ${statement}. Response code: ${result.getResponseCode} SQL State: ${result.getSQLState}, Error message: ${result.getErrorMessage}", result.getException)
+          }
+          else
+            noProblemSoFar
+
+
+        case (failure, _) => failure
+      }
+    } catch {
+      case t: Throwable =>
+
+        //
+        // Unrecoverable error, we need to fail.
+        //
+
+        return DriverRunFailed[HiveTransformation](this, s"Unknown exception caught while executing Hive query ${sql}. Failing run.", t)
 
     } finally {
 
-      try {
+      //
+      // Cleanup session state in any case
+      //
 
-        log.info("HIVE-DRIVER: Closing connection to HiveServer")
-
-        hiveServer.close()
-
-        log.info("HIVE-DRIVER: Closed connection to HiveServer")
-
-      } catch {
-        case _: Throwable =>
-      }
-
+      tearDownSessionState()
     }
-
-    DriverRunSucceeded[HiveTransformation](this, s"Hive query ${sql} executed")
   }
 
   private def splitQueryIntoStatements(sql: String) = {
@@ -156,66 +169,70 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi
 
     sql
       .split(";")
-      .foreach { statement =>
-        {
-          if (StringUtils.endsWith(queryStack.head, "\\")) {
-            queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + statement)
-          } else {
-            queryStack.push(statement)
-          }
+      .foreach { statement => {
+        if (StringUtils.endsWith(queryStack.head, "\\")) {
+          queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + statement)
+        } else {
+          queryStack.push(statement)
         }
       }
-
-    queryStack.reverse.filter { !StringUtils.isBlank(_) }
-  }
-
-  private def hiveJdbcConnection = {
-    log.info("HIVE-DRIVER: Establishing connection to HiveServer")
-
-    Class.forName(JDBC_CLASS)
-    ugi.reloginFromTicketCache()
-
-    ugi.doAs(new PrivilegedAction[Connection]() {
-      def run(): Connection = {
-        DriverManager.getConnection(connectionUrl)
       }
-    })
+
+    queryStack.reverse.filter {
+      !StringUtils.isBlank(_)
+    }
   }
 
-  private def isConnectionProblem(t: Throwable): Boolean = {
-    val result = t.isInstanceOf[TException] || t.isInstanceOf[ConnectException]
-
-    if (!result && t.getCause() != null) {
-      isConnectionProblem(t.getCause())
-    } else result
+  private def setupSessionState() {
+    SessionState.start(new HiveConf(conf))
+    SessionState.get().out = muton
+    SessionState.get().err = muton
+    SessionState.get().info = muton
   }
 
-  private val JDBC_CLASS = "org.apache.hive.jdbc.HiveDriver"
 
+  private def tearDownSessionState() {
+    try {
+      Hive.closeCurrent()
+    } catch {
+      case _: Throwable =>
+    }
+
+    try {
+      SessionState.get().close()
+    } catch {
+      case _: Throwable =>
+    }
+  }
+
+  private def muton = new PrintStream(new OutputStream {
+    override def write(b: Int): Unit = {}
+  })
 }
 
 /**
- * Factory methods for Hive drivers
- */
+  * Factory methods for Hive drivers
+  */
 object HiveDriver {
 
   def apply(ds: DriverSettings) = {
     val ugi = Schedoscope.settings.userGroupInformation
 
-    val conf = new HiveConf()
-    conf.set("hive.metastore.local", "false");
-    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Schedoscope.settings.metastoreUri.trim());
+    val conf = new HiveConf(classOf[SessionState])
+
+    conf.set("hive.metastore.local", "false")
+    conf.set("hive.auto.convert.join", "false")
+    conf.setBoolVar(HiveConf.ConfVars.HIVESESSIONSILENT, true)
+    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Schedoscope.settings.metastoreUri.trim())
 
     if (Schedoscope.settings.kerberosPrincipal.trim() != "") {
       conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
-        true);
+        true)
       conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
-        Schedoscope.settings.kerberosPrincipal);
+        Schedoscope.settings.kerberosPrincipal)
     }
 
-    val metastoreClient = new HiveMetaStoreClient(conf)
-
-    new HiveDriver(ds.driverRunCompletionHandlers, ugi, ds.url, metastoreClient)
+    new HiveDriver(ds.driverRunCompletionHandlers, conf)
   }
 }
 
