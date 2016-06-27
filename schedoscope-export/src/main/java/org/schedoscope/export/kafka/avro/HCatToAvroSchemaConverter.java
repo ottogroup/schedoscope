@@ -120,8 +120,13 @@ public class HCatToAvroSchemaConverter {
 				fields.add(primitiveField);
 			}
 		}
-		return Schema.createRecord(fieldName,
-				structSchema.getSchemaAsTypeString(), NAMESPACE, false, fields);
+		
+		Schema record =  Schema.createRecord(fieldName,
+				structSchema.getSchemaAsTypeString(), NAMESPACE, false);
+		
+		record.setFields(fields);
+		
+		return record;
 	}
 
 	private Schema getComplexAvroFieldSchema(HCatFieldSchema fieldSchema,

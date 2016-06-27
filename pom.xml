@@ -17,11 +17,11 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<mrunit.version>1.1.0</mrunit.version>
 		<schedoscope.version>0.6.2-SNAPSHOT</schedoscope.version>
-		<hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
-		<hive.version>1.1.0-cdh5.5.2</hive.version>
-		<oozie.version>4.1.0-cdh5.5.2</oozie.version>
-		<pig.version>0.12.0-cdh5.5.2</pig.version>
-		<pig.parquet.version>1.5.0-cdh5.5.2</pig.parquet.version>
+		<hadoop.version>2.6.0</hadoop.version>
+		<hive.version>1.1.0</hive.version>
+		<oozie.version>4.1.0</oozie.version>
+		<pig.version>0.12.0</pig.version>
+		<pig.parquet.version>1.5.0</pig.parquet.version>
 	</properties>
 
 	<modules>
@@ -34,10 +34,6 @@
 
 
 	<repositories>
-		<repository>
-			<id>cloudera</id>
-			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-		</repository>
 		<repository>
 			<id>conjars</id>
 			<url>http://conjars.org/repo</url>
