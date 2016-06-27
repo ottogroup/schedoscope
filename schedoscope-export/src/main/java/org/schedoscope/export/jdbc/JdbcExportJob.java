@@ -230,7 +230,7 @@ public class JdbcExportJob extends BaseExportJob {
 
 		FileSystem fs = FileSystem.get(job.getConfiguration());
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
-		Path hdfsDir = new Path(tmpDir + "/" + new Path(jarFile).getName() + RandomStringUtils.random(10));
+		Path hdfsDir = new Path(tmpDir + "/" + new Path(jarFile).getName() + "." + RandomStringUtils.randomNumeric(20));
 
 		if (jarFile != null && jarSelf != null && tmpDir != null
 				&& !jarFile.equals(jarSelf)) {
