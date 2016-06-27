@@ -16,6 +16,7 @@
 
 package org.schedoscope.export.jdbc;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -229,14 +230,14 @@ public class JdbcExportJob extends BaseExportJob {
 
 		FileSystem fs = FileSystem.get(job.getConfiguration());
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
-		Path hdfsDir = new Path(tmpDir + "/" + new Path(jarFile).getName());
+		Path hdfsDir = new Path(tmpDir + "/" + new Path(jarFile).getName() + RandomStringUtils.random(10));
 
 		if (jarFile != null && jarSelf != null && tmpDir != null
 				&& !jarFile.equals(jarSelf)) {
 			LOG.info("copy " + LOCAL_PATH_PREFIX + jarFile + " to " + tmpDir);
 			fs.copyFromLocalFile(false, true, new Path(LOCAL_PATH_PREFIX
 					+ jarFile), hdfsDir);
-			LOG.info("add " + tmpDir + "/" + jarFile + " to distributed cache");
+			LOG.info("add " + hdfsDir + " to distributed cache");
 			job.addArchiveToClassPath(hdfsDir);
 		}
 
