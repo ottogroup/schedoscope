@@ -68,13 +68,13 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
         Waiting(view,
           lastTransformationChecksum,
           lastTransformationTimestamp,
-          dependencies,
-          Set(listener),
-          materializationMode,
+          dependenciesMaterializing = dependencies,
+          listenersWaitingForMaterialize = Set(listener),
+          materializationMode = materializationMode,
           oneDependencyReturnedData = false,
           withErrors = false,
           incomplete = false,
-          0l),
+          dependenciesFreshness = 0l),
         dependencies.map {
           Materialize(_, materializationMode)
         }.toSet)

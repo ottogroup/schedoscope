@@ -184,7 +184,7 @@ case class TransformationStatusListResponse(val transformationStatusList: List[T
 /**
  * Response message of view manager actor with state of view actors
  *
- * @param viewStatuslist list of view metadata
+ * @param viewStatusList list of view metadata
  * @see ViewStatusResponse
  */
 case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends CommandResponse
@@ -195,7 +195,7 @@ case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) exte
  * @param message Textual description of state
  * @param actor Reference to the driver actor
  * @param driverRunHandle runHandle of a running transformation
- * @param driverRunState state of a running transformation
+ * @param driverRunStatus state of a running transformation
  */
 case class TransformationStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
 
@@ -224,7 +224,7 @@ case class ViewHasNoData(view: View) extends CommandResponse
  *
  * @param view View that has been changed
  * @param incomplete true of not all transitive dependencies had data available
- * @param transformationTimeStamp timestamp of the oldest? transformation in that dependency tree
+ * @param transformationTimestamp timestamp of the oldest? transformation in that dependency tree
  * @param errors true if some transformations in that subtree have been failing
  */
 case class ViewMaterialized(view: View, incomplete: Boolean, transformationTimestamp: Long, errors: Boolean) extends CommandResponse
