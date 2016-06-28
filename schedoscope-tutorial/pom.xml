@@ -99,7 +99,7 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.14-SNAPSHOT</version>
+			<version>0.1.14</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
