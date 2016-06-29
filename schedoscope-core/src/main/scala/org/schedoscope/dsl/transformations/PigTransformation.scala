@@ -22,7 +22,8 @@ import org.apache.hadoop.hive.metastore.api.HiveObjectPrivilege
 import org.apache.hadoop.hive.ql.udf.UDFLength
 import org.apache.hive.hcatalog.data.schema.HCatSchema
 import org.apache.hive.hcatalog.pig.HCatLoader
-import org.apache.parquet.pig.ParquetStorer
+import parquet.pig.ParquetStorer
+
 
 /**
  * Pig Transformation - Compute a view from a shell script.

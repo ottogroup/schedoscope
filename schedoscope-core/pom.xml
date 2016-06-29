@@ -186,6 +186,12 @@
 			<artifactId>schedoscope-export</artifactId>
 			<version>${schedoscope.version}</version>
 			<classifier>jar-with-dependencies</classifier>
+			<exclusions>
+				<exclusion>
+					<artifactId>hive-hcatalog-core</artifactId>
+					<groupId>org.apache.hive.hcatalog</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.pig</groupId>
@@ -200,14 +206,14 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.parquet</groupId>
+			<groupId>com.twitter</groupId>
 			<artifactId>parquet-pig-bundle</artifactId>
 			<version>${pig.parquet.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive.hcatalog</groupId>
 			<artifactId>hive-hcatalog-pig-adapter</artifactId>
-			<version>${hive.version}</version>
+			<version>${hive.hcatalog.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-log4j12</artifactId>
@@ -233,7 +239,7 @@
 		<dependency>
 			<groupId>minioozie</groupId>
 			<artifactId>minioozie</artifactId>
-			<version>0.1.14</version>
+			<version>${minioozie.version}</version>
 			<scope>provided</scope>
 			<exclusions>
 				<exclusion>
