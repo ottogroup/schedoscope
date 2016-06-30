@@ -83,7 +83,7 @@ public class SchedoscopeStatusTask implements Runnable {
       views = schedoscopeUtil.getViews(false);
     } catch (SchedoscopeConnectException e) {
       if (printException()) {
-        LOG.warn("Could not retrieve view status from Schedoscope", e);
+        LOG.warn("Could not retrieve view status from Schedoscope");
         this.lastExceptionPrinted = System.currentTimeMillis();
       }
       return;
