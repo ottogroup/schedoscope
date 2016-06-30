@@ -70,7 +70,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     }
 
     case v: View => {
-      sender ! initializeViewActors(List(v), false).headOption.get
+      sender ! initializeViewActors(List(v), false).head
     }
   })
 
@@ -174,9 +174,9 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 object ViewManagerActor {
   def props(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 
-  def actorNameForView(v: View) = v.urlPath.replaceAll("/", ":")
+  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
 
-  def actorForView(v: View) =
-    Schedoscope.actorSystem.actorSelection(Schedoscope.viewManagerActor.path.child(actorNameForView(v)))
+  def actorForView(view: View) =
+    Schedoscope.actorSystem.actorSelection(Schedoscope.viewManagerActor.path.child(actorNameForView(view)))
 
 }

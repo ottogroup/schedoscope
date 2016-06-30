@@ -22,6 +22,7 @@ import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
 import akka.event.{ Logging, LoggingReceive }
 import org.apache.hadoop.fs.{ FileStatus, FileSystem, Path, PathFilter }
 import org.schedoscope.conf.SchedoscopeSettings
+import org.schedoscope.AskPattern.queryActor
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{ NoOp, Touch }
 import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
@@ -33,6 +34,8 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   import context._
 
   val log = Logging(system, this)
+
+  var knownDependencies = currentState.view.dependencies.toSet
 
   def receive: Receive = LoggingReceive {
     {
@@ -156,7 +159,22 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
     log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
   }
 
-  def actorForView(view: View) = ViewManagerActor.actorForView(view)
+  def actorForView(view: View) = {
+
+    //
+    // New dependencies may appear at a start of a new day. These might not yet have corresponding
+    // actors created by the ViewManagerActor. Take care that a view actor is available before
+    // returning an actor selection for it, as messages might end up in nirvana otherwise.
+    //
+
+    if (!knownDependencies.contains(view)) {
+      queryActor[Any](viewManagerActor, view, settings.schedulingCommandTimeout)
+      knownDependencies += view
+    }
+
+    ViewManagerActor.actorForView(view)
+  }
+
 
   def folderEmpty(view: View) = settings
     .userGroupInformation.doAs(
