@@ -9,7 +9,7 @@
 	<parent>
 		<artifactId>schedoscope-suite</artifactId>
 		<groupId>schedoscope</groupId>
-		<version>0.6.2-SNAPSHOT</version>
+		<version>0.6.3-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
@@ -17,21 +17,49 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>jcl-over-slf4j</artifactId>
 			<version>1.7.13</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>jul-to-slf4j</artifactId>
 			<version>1.7.13</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
 			<version>1.1.2</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>schedoscope</groupId>
 			<artifactId>schedoscope-conf</artifactId>
 			<version>${schedoscope.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>joda-time</groupId>
+			<artifactId>joda-time</artifactId>
+			<version>2.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.joda</groupId>
+			<artifactId>joda-convert</artifactId>
+			<version>1.2</version>
 		</dependency>
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -87,12 +115,6 @@
 			<groupId>com.typesafe.akka</groupId>
 			<artifactId>akka-slf4j_${scala.version}</artifactId>
 			<version>${akka.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>slf4j-api</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.typesafe.akka</groupId>
@@ -126,8 +148,85 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-auth</artifactId>
+			<version>${hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-client</artifactId>
 			<version>${hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hadoop</groupId>
+			<artifactId>hadoop-minicluster</artifactId>
+			<version>${hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>schedoscope</groupId>
+			<artifactId>schedoscope-export</artifactId>
+			<version>${schedoscope.version}</version>
+			<classifier>jar-with-dependencies</classifier>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.pig</groupId>
+			<artifactId>pig</artifactId>
+			<version>${pig.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>parquet-pig-bundle</artifactId>
+			<version>${pig.parquet.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive.hcatalog</groupId>
+			<artifactId>hive-hcatalog-pig-adapter</artifactId>
+			<version>${hive.hcatalog.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-log4j12</artifactId>
@@ -155,58 +254,18 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.pig</groupId>
-			<artifactId>pig</artifactId>
-			<version>${pig.version}</version>
+			<groupId>minioozie</groupId>
+			<artifactId>minioozie</artifactId>
+			<version>${minioozie.version}</version>
+			<scope>provided</scope>
 			<exclusions>
-				<exclusion>
-					<groupId>org.apache.hadoop</groupId>
-					<artifactId>hadoop-core</artifactId>
-				</exclusion>
 				<exclusion>
 					<artifactId>slf4j-log4j12</artifactId>
 					<groupId>org.slf4j</groupId>
-				</exclusion>
-				<exclusion>
-					<groupId> org.cloudera.logredactor</groupId>
-					<artifactId>logredactor</artifactId>
 				</exclusion>
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
 					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.hadoop</groupId>
-			<artifactId>hadoop-minicluster</artifactId>
-			<version>${hadoop.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>slf4j-log4j12</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>schedoscope</groupId>
-			<artifactId>schedoscope-export</artifactId>
-			<version>${schedoscope.version}</version>
-			<classifier>jar-with-dependencies</classifier>
-		</dependency>
-		<dependency>
-			<groupId>minioozie</groupId>
-			<artifactId>minioozie</artifactId>
-			<version>0.1.12</version>
-			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>jersey-server</artifactId>
-					<groupId>com.sun.jersey</groupId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.cloudera.logredactor</groupId>
-					<artifactId>logredactor</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -234,6 +293,12 @@
 			<artifactId>curator-test</artifactId>
 			<version>2.6.0</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 	</dependencies>
 

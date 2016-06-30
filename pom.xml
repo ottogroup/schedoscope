@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-suite</artifactId>
-	<version>0.6.2-SNAPSHOT</version>
+	<version>0.6.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Schedoscope Suite</name>
 	<description>A wrapper building all modules of the Schedoscope project</description>
@@ -15,13 +15,16 @@
 		<scalarelease.version>2.11.7</scalarelease.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<hadoop.version>2.6.0-cdh5.7.1</hadoop.version>
+		<hive.version>1.1.0-cdh5.7.1</hive.version>
+		<hive.hcatalog.version>${hive.version}</hive.hcatalog.version>
+		<oozie.version>4.1.0-cdh5.7.1</oozie.version>
+		<pig.version>0.12.0-cdh5.7.1</pig.version>
+		<pig.parquet.version>1.6.0</pig.parquet.version>
 		<mrunit.version>1.1.0</mrunit.version>
-		<schedoscope.version>0.6.2-SNAPSHOT</schedoscope.version>
-		<hadoop.version>2.6.0-cdh5.5.2</hadoop.version>
-		<hive.version>1.1.0-cdh5.5.2</hive.version>
-		<oozie.version>4.1.0-cdh5.5.2</oozie.version>
-		<pig.version>0.12.0-cdh5.5.2</pig.version>
-		<pig.parquet.version>1.5.0-cdh5.5.2</pig.parquet.version>
+		<hiveunit.version>1.2.3</hiveunit.version>
+		<minioozie.version>1.2.1</minioozie.version>
+		<schedoscope.version>0.6.3-SNAPSHOT</schedoscope.version>
 	</properties>
 
 	<modules>
@@ -67,4 +70,5 @@
 			<url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
+
 </project> 

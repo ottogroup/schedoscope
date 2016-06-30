@@ -51,19 +51,15 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
   def executePigTransformation(latin: String, directoriesToDelete: List[String], libraries: List[String], conf: Map[String, Any], view: String): DriverRunState[PigTransformation] = {
     val actualLatin = replaceParameters(latin, conf)
 
-    val props = new Properties()
+    val props = new Properties()    
     conf.foreach(c => props.put(c._1, c._2.asInstanceOf[Object]))
 
     ugi.doAs(new PrivilegedAction[DriverRunState[PigTransformation]]() {
 
       def run(): DriverRunState[PigTransformation] = {
-
-        val ps = try {
-          new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "MAPREDUCE").toString), props)
-        } catch {
-          case t: Throwable => new PigServer(ExecType.valueOf(conf.getOrElse("exec.type", "mapreduce").toString), props)
-        }
-
+        
+        val ps =  new PigServer(ExecType.fromString(conf.getOrElse("exec.type", "MAPREDUCE").toString()), props)
+        
         try {
           ps.setJobName(view)
 

@@ -24,6 +24,7 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema
 import org.apache.hive.hcatalog.pig.HCatLoader
 import parquet.pig.ParquetStorer
 
+
 /**
  * Pig Transformation - Compute a view from a shell script.
  *

@@ -9,10 +9,20 @@
 	<parent>
 		<artifactId>schedoscope-suite</artifactId>
 		<groupId>schedoscope</groupId>
-		<version>0.6.2-SNAPSHOT</version>
+		<version>0.6.3-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.13</version>
+		</dependency>
+		<dependency>
+			<groupId>com.twitter</groupId>
+			<artifactId>parquet-hadoop-bundle</artifactId>
+			<version>${pig.parquet.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.hive</groupId>
 			<artifactId>hive-jdbc</artifactId>
@@ -26,20 +36,20 @@
 					<artifactId>slf4j-api</artifactId>
 					<groupId>org.slf4j</groupId>
 				</exclusion>
+				<exclusion>
+					<artifactId>hive-shims-0.20S</artifactId>
+					<groupId>org.apache.hive.shims</groupId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.hive.hcatalog</groupId>
-			<artifactId>hive-hcatalog-pig-adapter</artifactId>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-contrib</artifactId>
 			<version>${hive.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-log4j12</artifactId>
 					<groupId>org.slf4j</groupId>
-				</exclusion>
-				<exclusion>
-					<groupId> org.cloudera.logredactor</groupId>
-					<artifactId>logredactor</artifactId>
 				</exclusion>
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
@@ -48,9 +58,34 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>com.twitter</groupId>
-			<artifactId>parquet-pig-bundle</artifactId>
-			<version>${pig.parquet.version}</version>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-cli</artifactId>
+			<version>${hive.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.hive</groupId>
+			<artifactId>hive-exec</artifactId>
+			<version>${hive.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive.hcatalog</groupId>
@@ -62,27 +97,31 @@
 					<groupId>javax.jms</groupId>
 				</exclusion>
 				<exclusion>
+					<artifactId>hive-hcatalog-core</artifactId>
+					<groupId>org.apache.hive.hcatalog</groupId>
+				</exclusion>
+				<exclusion>
 					<artifactId>slf4j-log4j12</artifactId>
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 				<exclusion>
-					<groupId>org.cloudera.logredactor</groupId>
-					<artifactId>logredactor</artifactId>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hive.hcatalog</groupId>
 			<artifactId>hive-webhcat-java-client</artifactId>
-			<version>${hive.version}</version>
+			<version>${hive.hcatalog.version}</version>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-log4j12</artifactId>
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 				<exclusion>
-					<groupId>org.cloudera.logredactor</groupId>
-					<artifactId>logredactor</artifactId>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -123,16 +162,6 @@
 			<artifactId>hadoop-annotations</artifactId>
 			<version>${hadoop.version}</version>
 			<scope>provided</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>slf4j-log4j12</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>slf4j-api</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>args4j</groupId>
@@ -173,6 +202,12 @@
 			<groupId>org.apache.kafka</groupId>
 			<artifactId>kafka_2.11</artifactId>
 			<version>0.8.2.2</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>com.101tec</groupId>
@@ -185,11 +220,6 @@
 			<version>1.1.2.1</version>
 		</dependency>
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-			<version>1.7.13</version>
-		</dependency>
-		<dependency>
 			<groupId>com.lambdanow</groupId>
 			<artifactId>avro-serde</artifactId>
 			<version>0.0.1</version>
@@ -199,6 +229,12 @@
 			<artifactId>jul-to-slf4j</artifactId>
 			<version>1.7.13</version>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.derby</groupId>
@@ -225,35 +261,21 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-core</artifactId>
-			<version>1.5.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<version>1.9.5</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-api-mockito</artifactId>
-			<version>1.5.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-module-junit4</artifactId>
-			<version>1.5.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
 			<groupId>com.inmobi.hive.test</groupId>
 			<artifactId>hiveunit-mr2</artifactId>
-			<version>1.0.0</version>
+			<version>${hiveunit.version}</version>
 			<classifier>schedoscope</classifier>
 			<scope>test</scope>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.mrunit</groupId>
