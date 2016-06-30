@@ -26,23 +26,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
-public interface TableEntityRepository extends
-		CrudRepository<TableEntity, String>,
-		JpaSpecificationExecutor<TableEntity> {
+public interface TableEntityRepository extends CrudRepository<TableEntity, String>,
+    JpaSpecificationExecutor<TableEntity> {
 
-	@Query("SELECT t FROM TableEntity t WHERE :commentEntity MEMBER OF t.comments")
-	public TableEntity findByComment(
-			@Param(value = "commentEntity") CommentEntity commentEntity);
+  @Query("SELECT t FROM TableEntity t WHERE :commentEntity MEMBER OF t.comments")
+  public TableEntity findByComment(@Param(value = "commentEntity") CommentEntity commentEntity);
 
-	@Query("SELECT t FROM TableEntity t WHERE :co MEMBER OF t.categoryObjects")
-	public List<TableEntity> findByCategoryObject(
-			@Param(value = "co") CategoryObjectEntity co);
+  @Query("SELECT t FROM TableEntity t WHERE :co MEMBER OF t.categoryObjects")
+  public List<TableEntity> findByCategoryObject(@Param(value = "co") CategoryObjectEntity co);
 
-	@Query("SELECT distinct(t.personResponsible) FROM TableEntity t where t.tableOwner is not null")
-	public Set<String> getAllOwner();
+  @Query("SELECT distinct(t.personResponsible) FROM TableEntity t where t.tableOwner is not null")
+  public Set<String> getAllOwner();
 
-	public TableEntity findByFqdn(String fqdn);
+  public TableEntity findByFqdn(String fqdn);
 
-	public List<TableEntity> findTop5ByOrderByViewCountDesc();
+  public List<TableEntity> findTop5ByOrderByViewCountDesc();
 
 }

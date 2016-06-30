@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.schedoscope.metascope.repository;
+package org.schedoscope.metascope.util;
 
-import org.schedoscope.metascope.model.TransformationEntity;
-import org.schedoscope.metascope.model.key.TransformationEntityKey;
-import org.springframework.data.repository.CrudRepository;
+/**
+ * @author kassem
+ *
+ */
+public class SchedoscopeConnectException extends Exception {
 
-public interface TransformationEntityRepository extends CrudRepository<TransformationEntity, TransformationEntityKey> {
+  private static final long serialVersionUID = 853889137952803512L;
+
+  public SchedoscopeConnectException(String msg, Throwable e) {
+    super(msg, e);
+  }
 
 }

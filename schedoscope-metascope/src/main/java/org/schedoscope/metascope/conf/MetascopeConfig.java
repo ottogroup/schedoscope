@@ -25,213 +25,210 @@ import org.springframework.stereotype.Component;
 @Component
 public class MetascopeConfig {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(MetascopeConfig.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MetascopeConfig.class);
 
-	private static final String METASCOPE_JAR_LOCATION = "{metascope.dir}";
+  private static final String METASCOPE_JAR_LOCATION = "{metascope.dir}";
 
-	private String classLocations;
+  private String classLocations;
 
-	private int port;
+  private int port;
 
-	/* Schedoscope settings */
-	private String schedoscopeHost;
-	private int schedoscopePort;
+  /* Schedoscope settings */
+  private String schedoscopeHost;
+  private int schedoscopePort;
 
-	/* Authentication settings */
-	private String authenticationMethod;
-	private String ldapUrl;
-	private String managerDn;
-	private String managerPassword;
-	private String userDnPattern;
-	private String groupSearchBase;
-	private String allowedGroups;
-	private String adminGroups;
+  /* Authentication settings */
+  private String authenticationMethod;
+  private String ldapUrl;
+  private String managerDn;
+  private String managerPassword;
+  private String userDnPattern;
+  private String groupSearchBase;
+  private String allowedGroups;
+  private String adminGroups;
 
-	/* Hadoop settings */
-	private String hdfs;
+  /* Hadoop settings */
+  private String hdfs;
 
-	/* Kerberos settings */
-	private String kerberosPrincipal;
+  /* Kerberos settings */
+  private String kerberosPrincipal;
 
-	/* Metastore settings */
-	private String metastoreThriftUri;
+  /* Metastore settings */
+  private String metastoreThriftUri;
 
-	/* Hive settings */
-	private String hiveJdbcDriver;
-	private String hiveServerUrl;
+  /* Hive settings */
+  private String hiveJdbcDriver;
+  private String hiveServerUrl;
 
-	/* Repository settings */
-	private String repositoryUrl;
-	private String repositoryUser;
-	private String repositoryPassword;
-	private String repositoryDialect;
+  /* Repository settings */
+  private String repositoryUrl;
+  private String repositoryUser;
+  private String repositoryPassword;
+  private String repositoryDialect;
 
-	/* Solr settings */
-	private String solrUrl;
+  /* Solr settings */
+  private String solrUrl;
 
-	/* Logging settings */
-	private String logfilePath;
-	private String logLevel;
+  /* Logging settings */
+  private String logfilePath;
+  private String logLevel;
 
-	public MetascopeConfig(BaseSettings config) {
-		String location = getExecutionLocation();
-		this.classLocations = location.substring(0, location.lastIndexOf("/"));
+  public MetascopeConfig(BaseSettings config) {
+    String location = getExecutionLocation();
+    this.classLocations = location.substring(0, location.lastIndexOf("/"));
 
-		this.port = config.metascopePort();
+    this.port = config.metascopePort();
 
-		this.schedoscopeHost = "localhost";
-		this.schedoscopePort = config.port();
+    this.schedoscopeHost = "localhost";
+    this.schedoscopePort = config.port();
 
-		this.authenticationMethod = getString(config.metascopeAuthMethod());
-		this.ldapUrl = getString(config.metascopeLdapUrl());
-		this.managerDn = getString(config.metascopeLdapManagerDn());
-		this.managerPassword = getString(config.metascopeLdapManagerPw());
-		this.userDnPattern = getString(config.metascopeLdapUserDn());
-		this.groupSearchBase = getString(config.metascopeLdapGroupSearchBase());
-		this.allowedGroups = getString(config.metascopeLdapAllowedGroups());
-		this.adminGroups = getString(config.metascopeLdapAdminGroups());
+    this.authenticationMethod = getString(config.metascopeAuthMethod());
+    this.ldapUrl = getString(config.metascopeLdapUrl());
+    this.managerDn = getString(config.metascopeLdapManagerDn());
+    this.managerPassword = getString(config.metascopeLdapManagerPw());
+    this.userDnPattern = getString(config.metascopeLdapUserDn());
+    this.groupSearchBase = getString(config.metascopeLdapGroupSearchBase());
+    this.allowedGroups = getString(config.metascopeLdapAllowedGroups());
+    this.adminGroups = getString(config.metascopeLdapAdminGroups());
 
-		this.hdfs = getString(config.hdfs());
+    this.hdfs = getString(config.hdfs());
 
-		this.kerberosPrincipal = getString(config.kerberosPrincipal());
+    this.kerberosPrincipal = getString(config.kerberosPrincipal());
 
-		this.metastoreThriftUri = getString(config.metastoreUri());
+    this.metastoreThriftUri = getString(config.metastoreUri());
 
-		this.hiveJdbcDriver = getString("org.apache.hive.jdbc.HiveDriver");
-		this.hiveServerUrl = getString(config.jdbcUrl());
+    this.hiveJdbcDriver = getString("org.apache.hive.jdbc.HiveDriver");
+    this.hiveServerUrl = getString(config.jdbcUrl());
 
-		this.repositoryUrl = getString(config.metascopeRepositoryUrl());
-		this.repositoryUser = getString(config.metascopeRepositoryUser());
-		this.repositoryPassword = getString(config.metascopeRepositoryPw());
-		this.repositoryDialect = getString(config.metascopeRepositoryDialect());
+    this.repositoryUrl = getString(config.metascopeRepositoryUrl());
+    this.repositoryUser = getString(config.metascopeRepositoryUser());
+    this.repositoryPassword = getString(config.metascopeRepositoryPw());
+    this.repositoryDialect = getString(config.metascopeRepositoryDialect());
 
-		this.solrUrl = getString(config.metascopeSolrUrl());
+    this.solrUrl = getString(config.metascopeSolrUrl());
 
-		this.logfilePath = getString(config.metascopeLoggingFile());
-		this.logLevel = getString(config.metascopeLoggingLevel());
-	}
+    this.logfilePath = getString(config.metascopeLoggingFile());
+    this.logLevel = getString(config.metascopeLoggingLevel());
+  }
 
-	private String getString(String value) {
-		return value.replace(METASCOPE_JAR_LOCATION, classLocations).trim();
-	}
+  private String getString(String value) {
+    return value.replace(METASCOPE_JAR_LOCATION, classLocations).trim();
+  }
 
-	public int getPort() {
-		return port;
-	}
+  public int getPort() {
+    return port;
+  }
 
-	public String getSchedoscopeHost() {
-		return schedoscopeHost;
-	}
+  public String getSchedoscopeHost() {
+    return schedoscopeHost;
+  }
 
-	public int getSchedoscopePort() {
-		return schedoscopePort;
-	}
+  public int getSchedoscopePort() {
+    return schedoscopePort;
+  }
 
-	public String getAuthenticationMethod() {
-		return authenticationMethod;
-	}
+  public String getAuthenticationMethod() {
+    return authenticationMethod;
+  }
 
-	public String getLdapUrl() {
-		return ldapUrl;
-	}
+  public String getLdapUrl() {
+    return ldapUrl;
+  }
 
-	public String getManagerDn() {
-		return managerDn;
-	}
+  public String getManagerDn() {
+    return managerDn;
+  }
 
-	public String getManagerPassword() {
-		return managerPassword;
-	}
+  public String getManagerPassword() {
+    return managerPassword;
+  }
 
-	public String getUserDnPattern() {
-		return userDnPattern;
-	}
+  public String getUserDnPattern() {
+    return userDnPattern;
+  }
 
-	public String getGroupSearchBase() {
-		return groupSearchBase;
-	}
+  public String getGroupSearchBase() {
+    return groupSearchBase;
+  }
 
-	public String getAllowedGroups() {
-		return allowedGroups;
-	}
+  public String getAllowedGroups() {
+    return allowedGroups;
+  }
 
-	public String getAdminGroups() {
-		return adminGroups;
-	}
+  public String getAdminGroups() {
+    return adminGroups;
+  }
 
-	public String getHdfs() {
-		return hdfs;
-	}
+  public String getHdfs() {
+    return hdfs;
+  }
 
-	public String getKerberosPrincipal() {
-		return kerberosPrincipal;
-	}
+  public String getKerberosPrincipal() {
+    return kerberosPrincipal;
+  }
 
-	public String getRepositoryUrl() {
-		return repositoryUrl;
-	}
+  public String getRepositoryUrl() {
+    return repositoryUrl;
+  }
 
-	public String getRepositoryUser() {
-		return repositoryUser;
-	}
+  public String getRepositoryUser() {
+    return repositoryUser;
+  }
 
-	public String getRepositoryPassword() {
-		return repositoryPassword;
-	}
+  public String getRepositoryPassword() {
+    return repositoryPassword;
+  }
 
-	public String getRepositoryDialect() {
-		return repositoryDialect;
-	}
+  public String getRepositoryDialect() {
+    return repositoryDialect;
+  }
 
-	public String getLogfilePath() {
-		return logfilePath;
-	}
+  public String getLogfilePath() {
+    return logfilePath;
+  }
 
-	public String getMetastoreThriftUri() {
-		return metastoreThriftUri;
-	}
+  public String getMetastoreThriftUri() {
+    return metastoreThriftUri;
+  }
 
-	public String getHiveJdbcDriver() {
-		return hiveJdbcDriver;
-	}
+  public String getHiveJdbcDriver() {
+    return hiveJdbcDriver;
+  }
 
-	public String getHiveServerUrl() {
-		return hiveServerUrl;
-	}
+  public String getHiveServerUrl() {
+    return hiveServerUrl;
+  }
 
-	public String getSolrUrl() {
-		return solrUrl;
-	}
+  public String getSolrUrl() {
+    return solrUrl;
+  }
 
-	public String getLogLevel() {
-		return logLevel;
-	}
+  public String getLogLevel() {
+    return logLevel;
+  }
 
-	public boolean withUserManagement() {
-		return !getAuthenticationMethod().equalsIgnoreCase("ldap");
-	}
+  public boolean withUserManagement() {
+    return !getAuthenticationMethod().equalsIgnoreCase("ldap");
+  }
 
-	private String getExecutionLocation() {
-		String execLocation = null;
-		try {
-			execLocation = MetascopeConfig.class.getProtectionDomain()
-					.getCodeSource().getLocation().toURI().getPath();
-		} catch (URISyntaxException e) {
-			LOG.warn("Could not get path of metascope.jar; '"
-					+ METASCOPE_JAR_LOCATION
-					+ "' is set to current working directory.");
-			execLocation = ".";
-		}
+  private String getExecutionLocation() {
+    String execLocation = null;
+    try {
+      execLocation = MetascopeConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+    } catch (URISyntaxException e) {
+      LOG.warn("Could not get path of metascope.jar; '" + METASCOPE_JAR_LOCATION
+          + "' is set to current working directory.");
+      execLocation = ".";
+    }
 
-		// TODO hotfix to determine folder to create solr index and repository.
-		// path should be determined in another dynamic way
-		if (execLocation.endsWith("/target/classes/")) {
-			// executed from classes e.g. eclipse, mvn exec:java, ...
-			execLocation += "../metascope-deployment/";
-		}
+    // TODO hotfix to determine folder to create solr index and repository.
+    // path should be determined in another dynamic way
+    if (execLocation.endsWith("/target/classes/")) {
+      // executed from classes e.g. eclipse, mvn exec:java, ...
+      execLocation += "../metascope-deployment/";
+    }
 
-		return execLocation;
-	}
+    return execLocation;
+  }
 
 }

@@ -25,33 +25,33 @@ import javax.persistence.OneToOne;
 @MappedSuperclass
 public abstract class Documentable {
 
-	@OneToOne(fetch = FetchType.EAGER)
-	private CommentEntity comment;
-	@OneToMany(fetch = FetchType.EAGER)
-	private List<CommentEntity> comments;
+  @OneToOne(fetch = FetchType.EAGER)
+  private CommentEntity comment;
+  @OneToMany(fetch = FetchType.EAGER)
+  private List<CommentEntity> comments;
 
-	public CommentEntity getComment() {
-		return comment;
-	}
+  public CommentEntity getComment() {
+    return comment;
+  }
 
-	public void setComment(CommentEntity comment) {
-		this.comment = comment;
-	}
+  public void setComment(CommentEntity comment) {
+    this.comment = comment;
+  }
 
-	public List<CommentEntity> getComments() {
-		return comments;
-	}
+  public List<CommentEntity> getComments() {
+    return comments;
+  }
 
-	public void setComments(List<CommentEntity> comments) {
-		this.comments = comments;
-	}
+  public void setComments(List<CommentEntity> comments) {
+    this.comments = comments;
+  }
 
-	public boolean hasDocumentation() {
-		return comment != null;
-	}
+  public boolean hasDocumentation() {
+    return comment != null;
+  }
 
-	public boolean hasComments() {
-		return comments.size() > 0;
-	}
+  public boolean hasComments() {
+    return comments.size() > 0;
+  }
 
 }

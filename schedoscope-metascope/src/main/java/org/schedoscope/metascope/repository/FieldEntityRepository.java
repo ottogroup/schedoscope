@@ -24,16 +24,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
-public interface FieldEntityRepository extends
-		CrudRepository<FieldEntity, FieldEntityKey> {
+public interface FieldEntityRepository extends CrudRepository<FieldEntity, FieldEntityKey> {
 
-	@Query("SELECT f FROM FieldEntity f WHERE :commentEntity MEMBER OF f.comments")
-	public FieldEntity findByComment(
-			@Param(value = "commentEntity") CommentEntity commentEntity);
+  @Query("SELECT f FROM FieldEntity f WHERE :commentEntity MEMBER OF f.comments")
+  public FieldEntity findByComment(@Param(value = "commentEntity") CommentEntity commentEntity);
 
-	@Query("SELECT f.key.name, MAX(f.fieldOrder) FROM FieldEntity f WHERE f.parameterField = true GROUP BY f.key.name ORDER BY MAX(f.fieldOrder)")
-	public List<Object[]> findDistinctParameters();
+  @Query("SELECT f.key.name, MAX(f.fieldOrder) FROM FieldEntity f WHERE f.parameterField = true GROUP BY f.key.name ORDER BY MAX(f.fieldOrder)")
+  public List<Object[]> findDistinctParameters();
 
-	public FieldEntity findAllByKeyFqdnAndKeyName(String fqdn, String name);
+  public FieldEntity findAllByKeyFqdnAndKeyName(String fqdn, String name);
 
 }

@@ -24,14 +24,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
-public interface ParameterValueEntityRepository extends
-		CrudRepository<ParameterValueEntity, ParameterValueEntityKey>,
-		JpaSpecificationExecutor<ParameterValueEntity> {
+public interface ParameterValueEntityRepository extends CrudRepository<ParameterValueEntity, ParameterValueEntityKey>,
+    JpaSpecificationExecutor<ParameterValueEntity> {
 
-	public List<ParameterValueEntity> findByKeyUrlPath(String urlPath);
+  public List<ParameterValueEntity> findByKeyUrlPath(String urlPath);
 
-	@Query("SELECT distinct(key.pKey), value FROM ParameterValueEntity p WHERE p.tableFqdn = :tableFqdn")
-	public List<Object[]> findDistinctParameterValues(
-			@Param(value = "tableFqdn") String tableFqdn);
+  @Query("SELECT distinct(key.pKey), value FROM ParameterValueEntity p WHERE p.tableFqdn = :tableFqdn")
+  public List<Object[]> findDistinctParameterValues(@Param(value = "tableFqdn") String tableFqdn);
 
 }

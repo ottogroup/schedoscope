@@ -23,45 +23,45 @@ import org.schedoscope.metascope.model.key.JobMetadataEntityKey;
 @Entity
 public class JobMetadataEntity {
 
-	@EmbeddedId
-	private JobMetadataEntityKey key;
-	private boolean finished;
+  @EmbeddedId
+  private JobMetadataEntityKey key;
+  private boolean finished;
 
-	public JobMetadataEntity() {
-	}
+  public JobMetadataEntity() {
+  }
 
-	public JobMetadataEntity(String urlPath, String fieldName, boolean finished) {
-		if (key == null) {
-			key = new JobMetadataEntityKey(urlPath, fieldName);
-		} else {
-			setUrlPath(urlPath);
-			setFieldName(fieldName);
-		}
-		this.finished = finished;
-	}
+  public JobMetadataEntity(String urlPath, String fieldName, boolean finished) {
+    if (key == null) {
+      key = new JobMetadataEntityKey(urlPath, fieldName);
+    } else {
+      setUrlPath(urlPath);
+      setFieldName(fieldName);
+    }
+    this.finished = finished;
+  }
 
-	public String getUrlPath() {
-		return this.key.getUrlPath();
-	}
+  public String getUrlPath() {
+    return this.key.getUrlPath();
+  }
 
-	public void setUrlPath(String urlPath) {
-		this.key.setUrlPath(urlPath);
-	}
+  public void setUrlPath(String urlPath) {
+    this.key.setUrlPath(urlPath);
+  }
 
-	public String getFieldName() {
-		return this.key.getFieldName();
-	}
+  public String getFieldName() {
+    return this.key.getFieldName();
+  }
 
-	public void setFieldName(String fieldName) {
-		this.key.setFieldName(fieldName);
-	}
+  public void setFieldName(String fieldName) {
+    this.key.setFieldName(fieldName);
+  }
 
-	public boolean isFinished() {
-		return finished;
-	}
+  public boolean isFinished() {
+    return finished;
+  }
 
-	public void setFinished(boolean finished) {
-		this.finished = finished;
-	}
+  public void setFinished(boolean finished) {
+    this.finished = finished;
+  }
 
 }

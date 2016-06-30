@@ -27,23 +27,23 @@ import org.springframework.web.bind.annotation.ResponseBody;
 @Controller
 public class SolrController {
 
-	@Autowired
-	private SolrFacade solrIndex;
+  @Autowired
+  private SolrFacade solrIndex;
 
-	@RequestMapping(value = "/solr/suggest", method = RequestMethod.GET)
-	@ResponseBody
-	public String suggest(String userInput) {
-		String result = "[";
-		if (userInput != null && userInput.length() > 2) {
-			List<String> suggestions = solrIndex.suggest(userInput);
-			for (int i = 0; i < suggestions.size(); i++) {
-				result += "\"" + suggestions.get(i) + "\"";
-				if (i < suggestions.size() - 1) {
-					result += ", ";
-				}
-			}
-		}
-		return result + "]";
-	}
+  @RequestMapping(value = "/solr/suggest", method = RequestMethod.GET)
+  @ResponseBody
+  public String suggest(String userInput) {
+    String result = "[";
+    if (userInput != null && userInput.length() > 2) {
+      List<String> suggestions = solrIndex.suggest(userInput);
+      for (int i = 0; i < suggestions.size(); i++) {
+        result += "\"" + suggestions.get(i) + "\"";
+        if (i < suggestions.size() - 1) {
+          result += ", ";
+        }
+      }
+    }
+    return result + "]";
+  }
 
 }

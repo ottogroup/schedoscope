@@ -24,60 +24,59 @@ import org.apache.commons.lang.StringUtils;
 
 public class SolrQueryResultEntity implements Comparable<SolrQueryResultEntity> {
 
-	private Object resultEntity;
-	private Map<String, List<String>> highlightings;
+  private Object resultEntity;
+  private Map<String, List<String>> highlightings;
 
-	public SolrQueryResultEntity(Object resultEntity,
-			Map<String, List<String>> map) {
-		this.resultEntity = resultEntity;
-		this.highlightings = new HashMap<String, List<String>>();
-		for (Entry<String, List<String>> e : map.entrySet()) {
-			highlightings.put(e.getKey(), e.getValue());
-		}
-	}
+  public SolrQueryResultEntity(Object resultEntity, Map<String, List<String>> map) {
+    this.resultEntity = resultEntity;
+    this.highlightings = new HashMap<String, List<String>>();
+    for (Entry<String, List<String>> e : map.entrySet()) {
+      highlightings.put(e.getKey(), e.getValue());
+    }
+  }
 
-	public SolrQueryResultEntity(Object resultEntity) {
-		this.resultEntity = resultEntity;
-	}
+  public SolrQueryResultEntity(Object resultEntity) {
+    this.resultEntity = resultEntity;
+  }
 
-	public Object getResultEntity() {
-		return resultEntity;
-	}
+  public Object getResultEntity() {
+    return resultEntity;
+  }
 
-	public void setResultEntity(Object resultEntity) {
-		this.resultEntity = resultEntity;
-	}
+  public void setResultEntity(Object resultEntity) {
+    this.resultEntity = resultEntity;
+  }
 
-	public Map<String, List<String>> getHighlightings() {
-		return highlightings;
-	}
+  public Map<String, List<String>> getHighlightings() {
+    return highlightings;
+  }
 
-	public void setHighlightings(Map<String, List<String>> highlightings) {
-		this.highlightings = highlightings;
-	}
+  public void setHighlightings(Map<String, List<String>> highlightings) {
+    this.highlightings = highlightings;
+  }
 
-	public int getSize() {
-		int size = 0;
-		for (Entry<String, List<String>> e : highlightings.entrySet()) {
-			if (excludedFromCount(e.getKey())) {
-				for (String match : e.getValue()) {
-					size += StringUtils.countMatches(match, "<b>");
-				}
-			}
-		}
-		return size;
-	}
+  public int getSize() {
+    int size = 0;
+    for (Entry<String, List<String>> e : highlightings.entrySet()) {
+      if (excludedFromCount(e.getKey())) {
+        for (String match : e.getValue()) {
+          size += StringUtils.countMatches(match, "<b>");
+        }
+      }
+    }
+    return size;
+  }
 
-	private boolean excludedFromCount(String key) {
-		return !key.equals("type") && !key.equals("id");
-	}
+  private boolean excludedFromCount(String key) {
+    return !key.equals("type") && !key.equals("id");
+  }
 
-	@Override
-	public int compareTo(SolrQueryResultEntity other) {
-		if (this.highlightings == null || other.highlightings == null) {
-			return 0;
-		}
-		return Integer.compare(this.getSize(), other.getSize()) * -1;
-	}
+  @Override
+  public int compareTo(SolrQueryResultEntity other) {
+    if (this.highlightings == null || other.highlightings == null) {
+      return 0;
+    }
+    return Integer.compare(this.getSize(), other.getSize()) * -1;
+  }
 
 }

@@ -27,71 +27,61 @@ import org.schedoscope.metascope.util.MySQLUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ViewDependencyEntityMySQLRepository implements
-		MySQLRepository<ViewDependencyEntity> {
+public class ViewDependencyEntityMySQLRepository implements MySQLRepository<ViewDependencyEntity> {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(ViewDependencyEntityMySQLRepository.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ViewDependencyEntityMySQLRepository.class);
 
-	@Override
-	public void insertOrUpdate(Connection connection,
-			ViewDependencyEntity viewDependencyEntity) {
-		String insertDependencySql = "insert into view_dependency_entity ("
-				+ JDBCUtil
-						.getDatabaseColumnsForClass(ViewDependencyEntity.class)
-				+ ") values ("
-				+ JDBCUtil.getValuesCountForClass(ViewDependencyEntity.class)
-				+ ") " + "on duplicate key update "
-				+ MySQLUtil.getOnDuplicateKeyString(ViewDependencyEntity.class);
-		PreparedStatement stmt = null;
-		try {
-			stmt = connection.prepareStatement(insertDependencySql);
-			stmt.setString(1, viewDependencyEntity.getUrlPath());
-			stmt.setString(2, viewDependencyEntity.getDependencyUrlPath());
-			stmt.setString(3, viewDependencyEntity.getDependencyFqdn());
-			stmt.setString(4, viewDependencyEntity.getInternalViewId());
-			stmt.execute();
-		} catch (SQLException e) {
-			LOG.error("Could not save view dependency", e);
-		} finally {
-			DbUtils.closeQuietly(stmt);
-		}
-	}
+  @Override
+  public void insertOrUpdate(Connection connection, ViewDependencyEntity viewDependencyEntity) {
+    String insertDependencySql = "insert into view_dependency_entity ("
+        + JDBCUtil.getDatabaseColumnsForClass(ViewDependencyEntity.class) + ") values ("
+        + JDBCUtil.getValuesCountForClass(ViewDependencyEntity.class) + ") " + "on duplicate key update "
+        + MySQLUtil.getOnDuplicateKeyString(ViewDependencyEntity.class);
+    PreparedStatement stmt = null;
+    try {
+      stmt = connection.prepareStatement(insertDependencySql);
+      stmt.setString(1, viewDependencyEntity.getUrlPath());
+      stmt.setString(2, viewDependencyEntity.getDependencyUrlPath());
+      stmt.setString(3, viewDependencyEntity.getDependencyFqdn());
+      stmt.setString(4, viewDependencyEntity.getInternalViewId());
+      stmt.execute();
+    } catch (SQLException e) {
+      LOG.error("Could not save view dependency", e);
+    } finally {
+      DbUtils.closeQuietly(stmt);
+    }
+  }
 
-	@Override
-	public void insertOrUpdate(Connection connection,
-			List<ViewDependencyEntity> dependencies) {
-		String insertDependencySql = "insert into view_dependency_entity ("
-				+ JDBCUtil
-						.getDatabaseColumnsForClass(ViewDependencyEntity.class)
-				+ ") values ("
-				+ JDBCUtil.getValuesCountForClass(ViewDependencyEntity.class)
-				+ ") " + "on duplicate key update "
-				+ MySQLUtil.getOnDuplicateKeyString(ViewDependencyEntity.class);
-		PreparedStatement stmt = null;
-		try {
-			int batch = 0;
-			connection.setAutoCommit(false);
-			stmt = connection.prepareStatement(insertDependencySql);
-			for (ViewDependencyEntity viewDependencyEntity : dependencies) {
-				stmt.setString(1, viewDependencyEntity.getUrlPath());
-				stmt.setString(2, viewDependencyEntity.getDependencyUrlPath());
-				stmt.setString(3, viewDependencyEntity.getDependencyFqdn());
-				stmt.setString(4, viewDependencyEntity.getInternalViewId());
-				stmt.addBatch();
-				batch++;
-				if (batch % 1024 == 0) {
-					stmt.executeBatch();
-				}
-			}
-			stmt.executeBatch();
-			connection.commit();
-			connection.setAutoCommit(true);
-		} catch (SQLException e) {
-			LOG.error("Could not save view dependency", e);
-		} finally {
-			DbUtils.closeQuietly(stmt);
-		}
-	}
+  @Override
+  public void insertOrUpdate(Connection connection, List<ViewDependencyEntity> dependencies) {
+    String insertDependencySql = "insert into view_dependency_entity ("
+        + JDBCUtil.getDatabaseColumnsForClass(ViewDependencyEntity.class) + ") values ("
+        + JDBCUtil.getValuesCountForClass(ViewDependencyEntity.class) + ") " + "on duplicate key update "
+        + MySQLUtil.getOnDuplicateKeyString(ViewDependencyEntity.class);
+    PreparedStatement stmt = null;
+    try {
+      int batch = 0;
+      connection.setAutoCommit(false);
+      stmt = connection.prepareStatement(insertDependencySql);
+      for (ViewDependencyEntity viewDependencyEntity : dependencies) {
+        stmt.setString(1, viewDependencyEntity.getUrlPath());
+        stmt.setString(2, viewDependencyEntity.getDependencyUrlPath());
+        stmt.setString(3, viewDependencyEntity.getDependencyFqdn());
+        stmt.setString(4, viewDependencyEntity.getInternalViewId());
+        stmt.addBatch();
+        batch++;
+        if (batch % 1024 == 0) {
+          stmt.executeBatch();
+        }
+      }
+      stmt.executeBatch();
+      connection.commit();
+      connection.setAutoCommit(true);
+    } catch (SQLException e) {
+      LOG.error("Could not save view dependency", e);
+    } finally {
+      DbUtils.closeQuietly(stmt);
+    }
+  }
 
 }

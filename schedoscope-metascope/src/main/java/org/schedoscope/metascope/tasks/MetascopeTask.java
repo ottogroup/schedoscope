@@ -31,50 +31,44 @@ import org.slf4j.LoggerFactory;
 
 public class MetascopeTask implements Runnable {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(MetascopeTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MetascopeTask.class);
 
-	private List<Task> tasks;
-	private ScheduledThreadPoolExecutor executor;
+  private List<Task> tasks;
+  private ScheduledThreadPoolExecutor executor;
 
-	public MetascopeTask(RepositoryDAO repo, DataSource dataSource,
-			SolrFacade solr, MetascopeConfig config,
-			SchedoscopeUtil schedoscopUtil) {
-		this.tasks = new ArrayList<Task>();
-		this.tasks.add(new SchedoscopeSyncTask(repo, dataSource, solr, config,
-				schedoscopUtil));
-		this.tasks.add(new SetMetadataTask(repo, dataSource, solr, config,
-				schedoscopUtil));
-		this.tasks.add(new MetastoreSyncTask(repo, dataSource, solr, config,
-				schedoscopUtil));
-		this.tasks.add(new LastDataTask(repo, dataSource, solr, config,
-				schedoscopUtil));
-	}
+  public MetascopeTask(RepositoryDAO repo, DataSource dataSource, SolrFacade solr, MetascopeConfig config,
+      SchedoscopeUtil schedoscopUtil) {
+    this.tasks = new ArrayList<Task>();
+    this.tasks.add(new SchedoscopeSyncTask(repo, dataSource, solr, config, schedoscopUtil));
+    this.tasks.add(new SetMetadataTask(repo, dataSource, solr, config, schedoscopUtil));
+    this.tasks.add(new MetastoreSyncTask(repo, dataSource, solr, config, schedoscopUtil));
+    this.tasks.add(new LastDataTask(repo, dataSource, solr, config, schedoscopUtil));
+  }
 
-	@Override
-	public void run() {
-		boolean allTasksFinishedSuccessfully = true;
-		long start = System.currentTimeMillis();
-		for (Task task : tasks) {
-			boolean success = task.execute(start);
-			if (!success) {
-				allTasksFinishedSuccessfully = false;
-				break;
-			}
-		}
+  @Override
+  public void run() {
+    boolean allTasksFinishedSuccessfully = true;
+    long start = System.currentTimeMillis();
+    for (Task task : tasks) {
+      boolean success = task.execute(start);
+      if (!success) {
+        allTasksFinishedSuccessfully = false;
+        break;
+      }
+    }
 
-		if (!allTasksFinishedSuccessfully) {
-			LOG.warn("Subtask failed, rescheduling MetaschopeTask in 30 seconds");
-			executor.schedule(this, 30, TimeUnit.SECONDS);
-			return;
-		}
+    if (!allTasksFinishedSuccessfully) {
+      LOG.warn("Subtask failed, rescheduling MetaschopeTask in 30 seconds");
+      executor.schedule(this, 30, TimeUnit.SECONDS);
+      return;
+    }
 
-		LOG.warn("MetaschopeTask finished successfully, rescheduling in 24 hours");
-		executor.schedule(this, 24, TimeUnit.HOURS);
-	}
+    LOG.warn("MetaschopeTask finished successfully, rescheduling in 24 hours");
+    executor.schedule(this, 24, TimeUnit.HOURS);
+  }
 
-	public void setExecutor(ScheduledThreadPoolExecutor executor) {
-		this.executor = executor;
-	}
+  public void setExecutor(ScheduledThreadPoolExecutor executor) {
+    this.executor = executor;
+  }
 
 }

@@ -24,10 +24,9 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
 public interface TableDependencyEntityRepository extends
-		CrudRepository<TableDependencyEntity, TableDependencyEntityKey> {
+    CrudRepository<TableDependencyEntity, TableDependencyEntityKey> {
 
-	@Query("select t from TableDependencyEntity t where t.key.dependencyFqdn = :fqdn")
-	public List<TableDependencyEntity> getSuccessorsForFqdn(
-			@Param(value = "fqdn") String fqdn);
+  @Query("select t from TableDependencyEntity t where t.key.dependencyFqdn = :fqdn")
+  public List<TableDependencyEntity> getSuccessorsForFqdn(@Param(value = "fqdn") String fqdn);
 
 }

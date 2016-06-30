@@ -33,47 +33,41 @@ import org.slf4j.LoggerFactory;
 
 public class LastDataTask extends Task {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(LastDataTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LastDataTask.class);
 
-	private ScheduledThreadPoolExecutor executor;
+  private ScheduledThreadPoolExecutor executor;
 
-	public LastDataTask(RepositoryDAO repo, DataSource dataSource,
-			SolrFacade solr, MetascopeConfig config,
-			SchedoscopeUtil schedoscopeUtil) {
-		super(repo, dataSource, solr, config, schedoscopeUtil);
-		this.executor = new ScheduledThreadPoolExecutor(4);
-	}
+  public LastDataTask(RepositoryDAO repo, DataSource dataSource, SolrFacade solr, MetascopeConfig config,
+      SchedoscopeUtil schedoscopeUtil) {
+    super(repo, dataSource, solr, config, schedoscopeUtil);
+    this.executor = new ScheduledThreadPoolExecutor(4);
+  }
 
-	public boolean run(long start) {
-		Connection connection;
-		try {
-			connection = dataSource.getConnection();
-		} catch (SQLException e) {
-			LOG.info("[LastDataTask] FAILED: Could not connect to repository",
-					e);
-			return false;
-		}
+  public boolean run(long start) {
+    Connection connection;
+    try {
+      connection = dataSource.getConnection();
+    } catch (SQLException e) {
+      LOG.info("[LastDataTask] FAILED: Could not connect to repository", e);
+      return false;
+    }
 
-		List<TableEntity> tables = repo.getTables(connection);
-		for (TableEntity tableEntity : tables) {
-			if (tableEntity.getTimestampField() != null
-					&& (tableEntity.getLastChange() == start || tableEntity
-							.getLastData() == null)) {
-				LOG.info("Scheduled LastDataJob for table '{}'",
-						tableEntity.getFqdn());
-				executor.execute(new LastDataJob(tableEntity, repo, dataSource,
-						config, start));
-			}
-		}
+    List<TableEntity> tables = repo.getTables(connection);
+    for (TableEntity tableEntity : tables) {
+      if (tableEntity.getTimestampField() != null
+          && (tableEntity.getLastChange() == start || tableEntity.getLastData() == null)) {
+        LOG.info("Scheduled LastDataJob for table '{}'", tableEntity.getFqdn());
+        executor.execute(new LastDataJob(tableEntity, repo, dataSource, config, start));
+      }
+    }
 
-		try {
-			connection.close();
-		} catch (SQLException e) {
-			LOG.error("Could not close connection to repository", e);
-		}
+    try {
+      connection.close();
+    } catch (SQLException e) {
+      LOG.error("Could not close connection to repository", e);
+    }
 
-		return true;
-	}
+    return true;
+  }
 
 }

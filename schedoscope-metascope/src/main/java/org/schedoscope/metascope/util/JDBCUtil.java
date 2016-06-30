@@ -20,69 +20,69 @@ import java.lang.reflect.Modifier;
 
 public class JDBCUtil {
 
-	public static String getDatabaseColumnsForClass(Class<?> clazz) {
-		String columns = "";
-		Field[] fields = clazz.getDeclaredFields();
-		for (Field field : fields) {
-			field.setAccessible(true);
-			if (Modifier.isStatic(field.getModifiers())) {
-				try {
-					Object classField = field.get(null);
-					if (classField instanceof String) {
-						if (!columns.isEmpty()) {
-							columns += ", ";
-						}
-						columns += classField;
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return columns;
-	}
+  public static String getDatabaseColumnsForClass(Class<?> clazz) {
+    String columns = "";
+    Field[] fields = clazz.getDeclaredFields();
+    for (Field field : fields) {
+      field.setAccessible(true);
+      if (Modifier.isStatic(field.getModifiers())) {
+        try {
+          Object classField = field.get(null);
+          if (classField instanceof String) {
+            if (!columns.isEmpty()) {
+              columns += ", ";
+            }
+            columns += classField;
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    return columns;
+  }
 
-	public static String getValuesCountForClass(Class<?> clazz) {
-		String values = "";
-		Field[] fields = clazz.getDeclaredFields();
-		for (Field field : fields) {
-			field.setAccessible(true);
-			if (Modifier.isStatic(field.getModifiers())) {
-				try {
-					Object classField = field.get(null);
-					if (classField instanceof String) {
-						if (!values.isEmpty()) {
-							values += ", ";
-						}
-						values += "?";
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return values;
-	}
+  public static String getValuesCountForClass(Class<?> clazz) {
+    String values = "";
+    Field[] fields = clazz.getDeclaredFields();
+    for (Field field : fields) {
+      field.setAccessible(true);
+      if (Modifier.isStatic(field.getModifiers())) {
+        try {
+          Object classField = field.get(null);
+          if (classField instanceof String) {
+            if (!values.isEmpty()) {
+              values += ", ";
+            }
+            values += "?";
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    return values;
+  }
 
-	public static String getSetExpressionForClass(Class<?> clazz) {
-		String setExpression = "";
-		Field[] fields = clazz.getDeclaredFields();
-		for (Field field : fields) {
-			field.setAccessible(true);
-			if (Modifier.isStatic(field.getModifiers())) {
-				try {
-					Object classField = field.get(null);
-					if (classField instanceof String) {
-						if (!setExpression.isEmpty()) {
-							setExpression += ", ";
-						}
-						setExpression += classField + "=?";
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return setExpression;
-	}
+  public static String getSetExpressionForClass(Class<?> clazz) {
+    String setExpression = "";
+    Field[] fields = clazz.getDeclaredFields();
+    for (Field field : fields) {
+      field.setAccessible(true);
+      if (Modifier.isStatic(field.getModifiers())) {
+        try {
+          Object classField = field.get(null);
+          if (classField instanceof String) {
+            if (!setExpression.isEmpty()) {
+              setExpression += ", ";
+            }
+            setExpression += classField + "=?";
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    return setExpression;
+  }
 }

@@ -28,50 +28,48 @@ import org.slf4j.LoggerFactory;
 
 public class MetadataMySQLRepository implements MySQLRepository<Metadata> {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(MetadataMySQLRepository.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataMySQLRepository.class);
 
-	public Metadata get(Connection connection, String key) {
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		Metadata metadata = null;
-		try {
-			stmt = connection
-					.prepareStatement("select * from metadata where metadata_key = ?");
-			stmt.setString(1, key);
-			rs = stmt.executeQuery();
-			if (rs.next()) {
-				metadata = new Metadata(key, rs.getString("metadata_value"));
-			}
-		} catch (SQLException e) {
-			LOG.error("Could not get distinct parameters parameters", e);
-		} finally {
-			DbUtils.closeQuietly(rs);
-			DbUtils.closeQuietly(stmt);
-		}
-		return metadata;
-	}
+  public Metadata get(Connection connection, String key) {
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+    Metadata metadata = null;
+    try {
+      stmt = connection.prepareStatement("select * from metadata where metadata_key = ?");
+      stmt.setString(1, key);
+      rs = stmt.executeQuery();
+      if (rs.next()) {
+        metadata = new Metadata(key, rs.getString("metadata_value"));
+      }
+    } catch (SQLException e) {
+      LOG.error("Could not get distinct parameters parameters", e);
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(stmt);
+    }
+    return metadata;
+  }
 
-	@Override
-	public void insertOrUpdate(Connection connection, Metadata metadata) {
-		String insertMetadataSql = "insert into metadata (metadata_key, metadata_value) values (?, ?) "
-				+ "on duplicate key update metadata_key=values(metadata_key), metadata_value=values(metadata_value)";
-		PreparedStatement stmt = null;
-		try {
-			stmt = connection.prepareStatement(insertMetadataSql);
-			stmt.setString(1, metadata.getMetadataKey());
-			stmt.setString(2, metadata.getMetadataValue());
-			stmt.execute();
-		} catch (SQLException e) {
-			LOG.error("Could not save metadata", e);
-		} finally {
-			DbUtils.closeQuietly(stmt);
-		}
-	}
+  @Override
+  public void insertOrUpdate(Connection connection, Metadata metadata) {
+    String insertMetadataSql = "insert into metadata (metadata_key, metadata_value) values (?, ?) "
+        + "on duplicate key update metadata_key=values(metadata_key), metadata_value=values(metadata_value)";
+    PreparedStatement stmt = null;
+    try {
+      stmt = connection.prepareStatement(insertMetadataSql);
+      stmt.setString(1, metadata.getMetadataKey());
+      stmt.setString(2, metadata.getMetadataValue());
+      stmt.execute();
+    } catch (SQLException e) {
+      LOG.error("Could not save metadata", e);
+    } finally {
+      DbUtils.closeQuietly(stmt);
+    }
+  }
 
-	@Override
-	public void insertOrUpdate(Connection connection, List<Metadata> entities) {
-		throw new UnsupportedOperationException("Not implemented");
-	}
+  @Override
+  public void insertOrUpdate(Connection connection, List<Metadata> entities) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
 
 }
