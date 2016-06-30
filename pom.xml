@@ -22,7 +22,7 @@
 		<pig.version>0.12.0-cdh5.7.1</pig.version>
 		<pig.parquet.version>1.6.0</pig.parquet.version>
 		<mrunit.version>1.1.0</mrunit.version>
-		<hiveunit.version>1.0.4</hiveunit.version>
+		<hiveunit.version>1.0.5</hiveunit.version>
 		<minioozie.version>0.1.15</minioozie.version>
 		<schedoscope.version>0.6.2-SNAPSHOT</schedoscope.version>
 	</properties>
