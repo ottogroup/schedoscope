@@ -70,4 +70,5 @@
 			<url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
+
 </project> 
