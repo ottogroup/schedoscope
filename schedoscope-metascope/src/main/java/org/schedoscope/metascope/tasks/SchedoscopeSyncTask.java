@@ -44,6 +44,7 @@ import org.schedoscope.metascope.schedoscope.model.ViewField;
 import org.schedoscope.metascope.schedoscope.model.ViewStatus;
 import org.schedoscope.metascope.schedoscope.model.ViewTransformation;
 import org.schedoscope.metascope.tasks.repository.RepositoryDAO;
+import org.schedoscope.metascope.util.SchedoscopeConnectException;
 import org.schedoscope.metascope.util.SchedoscopeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +71,13 @@ public class SchedoscopeSyncTask extends Task {
 		LOG.info("Retrieve and parse data from schedoscope");
 
 		/* get data from schedoscope */
-		ViewStatus viewStatus = schedoscopeUtil.getViewStatus(true);
+		ViewStatus viewStatus;
+    try {
+      viewStatus = schedoscopeUtil.getViewStatus(true);
+    } catch (SchedoscopeConnectException e) {
+      LOG.error("Could not retrieve view information", e);
+      return false;
+    }
 
 		if (viewStatus == null || viewStatus.getViews().size() == 0) {
 			LOG.info("[SchedoscopeSyncTask] FAILED: Schedoscope status information is not available");

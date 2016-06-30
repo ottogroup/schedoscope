@@ -32,6 +32,7 @@ import org.schedoscope.metascope.model.Metadata;
 import org.schedoscope.metascope.model.TableEntity;
 import org.schedoscope.metascope.model.ViewEntity;
 import org.schedoscope.metascope.tasks.repository.RepositoryDAO;
+import org.schedoscope.metascope.util.SchedoscopeConnectException;
 import org.schedoscope.metascope.util.SchedoscopeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,7 @@ public class SchedoscopeStatusTask implements Runnable {
 	private DataSource dataSource;
 	private SolrFacade solr;
 	private SchedoscopeUtil schedoscopeUtil;
+  private long lastExceptionPrinted;
 
 	public SchedoscopeStatusTask(RepositoryDAO repo, DataSource dataSource,
 			SolrFacade solr, SchedoscopeUtil schedoscopeUtil) {
@@ -52,6 +54,7 @@ public class SchedoscopeStatusTask implements Runnable {
 		this.dataSource = dataSource;
 		this.solr = solr;
 		this.schedoscopeUtil = schedoscopeUtil;
+		this.lastExceptionPrinted = 0;
 	}
 
 	@Override
@@ -77,7 +80,16 @@ public class SchedoscopeStatusTask implements Runnable {
 		Map<String, List<ViewEntity>> repositoryViewGrouppedByFqdn = createViewListMap(repoViews);
 
 		/* get current view information from Schedoscope */
-		List<ViewEntity> views = schedoscopeUtil.getViews(false);
+		List<ViewEntity> views;
+    try {
+      views = schedoscopeUtil.getViews(false);
+    } catch (SchedoscopeConnectException e) {
+      if (printException()) {
+        LOG.warn("Could not retrieve view status from Schedoscope", e);
+        this.lastExceptionPrinted = System.currentTimeMillis();
+      }
+      return;
+    }
 		if (views == null || views.size() == 0) {
 			repo.insertOrUpdate(connection, new Metadata("status", "offline"));
 			DbUtils.closeQuietly(connection);
@@ -131,7 +143,17 @@ public class SchedoscopeStatusTask implements Runnable {
 		DbUtils.closeQuietly(connection);
 	}
 
-	private Map<String, TableEntity> createTableMap(List<TableEntity> tables) {
+	/**
+   * @return
+   */
+  private boolean printException() {
+    if (System.currentTimeMillis() - lastExceptionPrinted > 60000) {
+      return true;
+    }
+    return false;
+  }
+
+  private Map<String, TableEntity> createTableMap(List<TableEntity> tables) {
 		Map<String, TableEntity> map = new HashMap<String, TableEntity>();
 		for (TableEntity tableEntity : tables) {
 			map.put(tableEntity.getFqdn(), tableEntity);

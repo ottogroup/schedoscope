@@ -120,8 +120,9 @@ public class SchedoscopeUtil {
 	 * @param all
 	 *            Schedoscope flag; if set, more information is retrieved
 	 * @return
+	 * @throws SchedoscopeConnectException 
 	 */
-	public List<ViewEntity> getViews(boolean all) {
+	public List<ViewEntity> getViews(boolean all) throws SchedoscopeConnectException {
 		List<ViewEntity> views = new ArrayList<ViewEntity>();
 		ViewStatus viewStatus = getViewStatus(all);
 		if (viewStatus != null) {
@@ -141,8 +142,9 @@ public class SchedoscopeUtil {
 	 * @param all
 	 *            Schedoscope flag; if set, more information is retrieved
 	 * @return
+	 * @throws SchedoscopeConnectException 
 	 */
-	public ViewStatus getViewStatus(boolean all) {
+	public ViewStatus getViewStatus(boolean all) throws SchedoscopeConnectException {
 		String json = getViewsAsJsonFromSchedoscope(all);
 		if (json == null) {
 			return null;
@@ -169,8 +171,9 @@ public class SchedoscopeUtil {
 	 * Get views list from Schedoscope REST interface
 	 * 
 	 * @return the JSON output created by Schedoscopes REST interface
+	 * @throws SchedoscopeConnectException 
 	 */
-	public String getViewsAsJsonFromSchedoscope(boolean all) {
+	public String getViewsAsJsonFromSchedoscope(boolean all) throws SchedoscopeConnectException {
 		Client client = Client.create();
 		String url = "http://" + config.getSchedoscopeHost() + ":"
 				+ config.getSchedoscopePort() + "/";
@@ -184,8 +187,7 @@ public class SchedoscopeUtil {
 			response = webResource.accept("application/json").get(
 					ClientResponse.class);
 		} catch (Exception e) {
-			LOG.info("Could not connect to Schedoscope REST API", e);
-			return null;
+			throw new SchedoscopeConnectException("Could not connect to Schedoscope REST API", e);
 		}
 
 		if (response.getStatus() != 200) {

@@ -30,6 +30,7 @@ import org.mockito.Matchers;
 import org.schedoscope.metascope.SpringTest;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.ViewEntity;
+import org.schedoscope.metascope.util.SchedoscopeConnectException;
 import org.schedoscope.metascope.util.SchedoscopeUtil;
 
 import com.google.common.base.Charsets;
@@ -48,7 +49,7 @@ public class SchedoscopeSyncRepositoryTest extends SpringTest {
 	private SchedoscopeSyncTask schedoscopeSyncTask;
 
 	@Before
-	public void setupLocal() throws IOException {
+	public void setupLocal() throws IOException, SchedoscopeConnectException {
 		SolrFacade solrFacadeMock = mock(SolrFacade.class);
 		SchedoscopeUtil schedoscopeUtilMock = mock(SchedoscopeUtil.class);
 
