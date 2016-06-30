@@ -41,7 +41,7 @@ import org.schedoscope.export.utils.RedisMRJedisFactory;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({ "javax.*", "org.apache.*", "com.*", "org.mortbay.*",
-		"org.xml.*", "org.w3c.*" })
+		"org.eclipse.mortbay.*", "org.xml.*", "org.w3c.*" })
 @PrepareForTest(RedisMRJedisFactory.class)
 public class RedisExportMrTest extends HiveUnitBaseTest {
 

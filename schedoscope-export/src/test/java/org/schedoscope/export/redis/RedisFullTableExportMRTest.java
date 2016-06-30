@@ -46,7 +46,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockIgnore({ "javax.*", "org.apache.*", "com.*", "org.mortbay.*",
-		"org.xml.*", "org.w3c.*" })
+		"org.eclipse.mortbay.*", "org.xml.*", "org.w3c.*" })
 @PrepareForTest(RedisMRJedisFactory.class)
 public class RedisFullTableExportMRTest extends HiveUnitBaseTest {
 
