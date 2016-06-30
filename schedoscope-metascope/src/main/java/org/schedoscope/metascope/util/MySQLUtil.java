@@ -20,27 +20,26 @@ import java.lang.reflect.Modifier;
 
 public class MySQLUtil {
 
-	public static String getOnDuplicateKeyString(Class<?> clazz) {
-		String onDuplicateKey = "";
-		Field[] fields = clazz.getDeclaredFields();
-		for (Field field : fields) {
-			field.setAccessible(true);
-			if (Modifier.isStatic(field.getModifiers())) {
-				try {
-					Object classField = field.get(null);
-					if (classField instanceof String) {
-						if (!onDuplicateKey.isEmpty()) {
-							onDuplicateKey += ", ";
-						}
-						onDuplicateKey += classField + "=values(" + classField
-								+ ")";
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		}
-		return onDuplicateKey;
-	}
+  public static String getOnDuplicateKeyString(Class<?> clazz) {
+    String onDuplicateKey = "";
+    Field[] fields = clazz.getDeclaredFields();
+    for (Field field : fields) {
+      field.setAccessible(true);
+      if (Modifier.isStatic(field.getModifiers())) {
+        try {
+          Object classField = field.get(null);
+          if (classField instanceof String) {
+            if (!onDuplicateKey.isEmpty()) {
+              onDuplicateKey += ", ";
+            }
+            onDuplicateKey += classField + "=values(" + classField + ")";
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }
+    return onDuplicateKey;
+  }
 
 }

@@ -25,49 +25,49 @@ import javax.persistence.ManyToOne;
 @Entity
 public class CategoryObjectEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private long categoryObjectId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private long categoryObjectId;
 
-	@ManyToOne
-	private CategoryEntity category;
+  @ManyToOne
+  private CategoryEntity category;
 
-	@Column(columnDefinition = "varchar(32672)")
-	private String name;
+  @Column(columnDefinition = "varchar(32672)")
+  private String name;
 
-	@Column(columnDefinition = "varchar(32672)")
-	private String description;
+  @Column(columnDefinition = "varchar(32672)")
+  private String description;
 
-	public long getCategoryObjectId() {
-		return categoryObjectId;
-	}
+  public long getCategoryObjectId() {
+    return categoryObjectId;
+  }
 
-	public void setCategoryObjectId(long categoryObjectId) {
-		this.categoryObjectId = categoryObjectId;
-	}
+  public void setCategoryObjectId(long categoryObjectId) {
+    this.categoryObjectId = categoryObjectId;
+  }
 
-	public CategoryEntity getCategory() {
-		return category;
-	}
+  public CategoryEntity getCategory() {
+    return category;
+  }
 
-	public void setCategory(CategoryEntity category) {
-		this.category = category;
-	}
+  public void setCategory(CategoryEntity category) {
+    this.category = category;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public String getDescription() {
-		return description;
-	}
+  public String getDescription() {
+    return description;
+  }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
 }

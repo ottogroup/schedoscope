@@ -54,146 +54,124 @@ import com.typesafe.config.ConfigFactory;
 @Profile("production")
 public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter {
 
-	@Autowired
-	private UserEntityService userEntityService;
+  @Autowired
+  private UserEntityService userEntityService;
 
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		MetascopeConfig config = metascopeConfig();
-		if (config.getAuthenticationMethod().equalsIgnoreCase("ldap")) {
-			String[] allgroups = appendRolePrefix(config.getAllowedGroups(),
-					config.getAdminGroups());
-			String[] adminGroups = appendRolePrefix(config.getAdminGroups());
-			http.authorizeRequests()
-					.antMatchers("/", "/?error=cred", "/status/*", "/expired")
-					.permitAll().antMatchers("/**").hasAnyAuthority(allgroups)
-					.antMatchers("/admin**").hasAnyAuthority(adminGroups)
-					.antMatchers("/admin/").hasAnyAuthority(adminGroups)
-					.antMatchers("/admin/**").hasAnyAuthority(adminGroups)
-					.anyRequest().authenticated().and().formLogin()
-					.loginPage("/").failureUrl("/?error=cred")
-					.defaultSuccessUrl("/home").and().logout()
-					.logoutSuccessUrl("/").and().rememberMe().and()
-					.exceptionHandling().accessDeniedPage("/accessdenied");
-		} else {
-			http.authorizeRequests()
-					.antMatchers("/", "/?error=cred", "/status/*", "/expired")
-					.permitAll().antMatchers("/admin**")
-					.hasAuthority("ROLE_ADMIN").antMatchers("/admin/")
-					.hasAuthority("ROLE_ADMIN").antMatchers("/admin/**")
-					.hasAuthority("ROLE_ADMIN").anyRequest().authenticated()
-					.and().formLogin().loginPage("/")
-					.failureUrl("/?error=cred").and().logout()
-					.logoutSuccessUrl("/").and().rememberMe().and()
-					.exceptionHandling().accessDeniedPage("/accessdenied");
-		}
-		http.sessionManagement().maximumSessions(1).expiredUrl("/expired")
-				.sessionRegistry(sessionRegistry());
-	}
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    MetascopeConfig config = metascopeConfig();
+    if (config.getAuthenticationMethod().equalsIgnoreCase("ldap")) {
+      String[] allgroups = appendRolePrefix(config.getAllowedGroups(), config.getAdminGroups());
+      String[] adminGroups = appendRolePrefix(config.getAdminGroups());
+      http.authorizeRequests().antMatchers("/", "/?error=cred", "/status/*", "/expired").permitAll().antMatchers("/**")
+          .hasAnyAuthority(allgroups).antMatchers("/admin**").hasAnyAuthority(adminGroups).antMatchers("/admin/")
+          .hasAnyAuthority(adminGroups).antMatchers("/admin/**").hasAnyAuthority(adminGroups).anyRequest()
+          .authenticated().and().formLogin().loginPage("/").failureUrl("/?error=cred").defaultSuccessUrl("/home").and()
+          .logout().logoutSuccessUrl("/").and().rememberMe().and().exceptionHandling()
+          .accessDeniedPage("/accessdenied");
+    } else {
+      http.authorizeRequests().antMatchers("/", "/?error=cred", "/status/*", "/expired").permitAll()
+          .antMatchers("/admin**").hasAuthority("ROLE_ADMIN").antMatchers("/admin/").hasAuthority("ROLE_ADMIN")
+          .antMatchers("/admin/**").hasAuthority("ROLE_ADMIN").anyRequest().authenticated().and().formLogin()
+          .loginPage("/").failureUrl("/?error=cred").and().logout().logoutSuccessUrl("/").and().rememberMe().and()
+          .exceptionHandling().accessDeniedPage("/accessdenied");
+    }
+    http.sessionManagement().maximumSessions(1).expiredUrl("/expired").sessionRegistry(sessionRegistry());
+  }
 
-	@Override
-	protected void configure(AuthenticationManagerBuilder auth)
-			throws Exception {
-		MetascopeConfig config = metascopeConfig();
-		if (config.getAuthenticationMethod().equalsIgnoreCase("ldap")) {
-			auth.ldapAuthentication().userDnPatterns(config.getUserDnPattern())
-					.groupSearchBase(config.getGroupSearchBase())
-					.contextSource(ldapContextSource());
-		} else {
-			auth.jdbcAuthentication()
-					.passwordEncoder(new ShaPasswordEncoder(256))
-					.dataSource(dataSource())
-					.usersByUsernameQuery(
-							"select username,password_hash,'true' from user_entity where username = ?")
-					.authoritiesByUsernameQuery(
-							"select username,userrole from user_entity where username = ?");
+  @Override
+  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+    MetascopeConfig config = metascopeConfig();
+    if (config.getAuthenticationMethod().equalsIgnoreCase("ldap")) {
+      auth.ldapAuthentication().userDnPatterns(config.getUserDnPattern()).groupSearchBase(config.getGroupSearchBase())
+          .contextSource(ldapContextSource());
+    } else {
+      auth.jdbcAuthentication().passwordEncoder(new ShaPasswordEncoder(256)).dataSource(dataSource())
+          .usersByUsernameQuery("select username,password_hash,'true' from user_entity where username = ?")
+          .authoritiesByUsernameQuery("select username,userrole from user_entity where username = ?");
 
-			userEntityService.createAdminAccount();
-		}
+      userEntityService.createAdminAccount();
+    }
 
-	}
+  }
 
-	@Bean
-	public LdapContextSource ldapContextSource() {
-		MetascopeConfig config = metascopeConfig();
-		LdapContextSource contextSource = new LdapContextSource();
-		contextSource.setUrl(config.getLdapUrl());
-		contextSource.setUserDn(config.getManagerDn());
-		contextSource.setPassword(config.getManagerPassword());
-		return contextSource;
-	}
+  @Bean
+  public LdapContextSource ldapContextSource() {
+    MetascopeConfig config = metascopeConfig();
+    LdapContextSource contextSource = new LdapContextSource();
+    contextSource.setUrl(config.getLdapUrl());
+    contextSource.setUserDn(config.getManagerDn());
+    contextSource.setPassword(config.getManagerPassword());
+    return contextSource;
+  }
 
-	@Bean
-	public LdapTemplate ldapTemplate() {
-		return new LdapTemplate(ldapContextSource());
-	}
+  @Bean
+  public LdapTemplate ldapTemplate() {
+    return new LdapTemplate(ldapContextSource());
+  }
 
-	@Bean
-	public SessionRegistry sessionRegistry() {
-		return new SessionRegistryImpl();
-	}
+  @Bean
+  public SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
 
-	@Bean
-	public ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
-		return new ServletListenerRegistrationBean<HttpSessionEventPublisher>(
-				new HttpSessionEventPublisher());
-	}
+  @Bean
+  public ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
+    return new ServletListenerRegistrationBean<HttpSessionEventPublisher>(new HttpSessionEventPublisher());
+  }
 
-	@Bean
-	public MetascopeConfig metascopeConfig() {
-		return new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
-	}
+  @Bean
+  public MetascopeConfig metascopeConfig() {
+    return new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
+  }
 
-	@Bean
-	public DataSource dataSource() {
-		MetascopeConfig metascopeConfig = metascopeConfig();
-		DataSource dataSource = DataSourceBuilder.create()
-				.username(metascopeConfig.getRepositoryUser())
-				.password(metascopeConfig.getRepositoryPassword())
-				.url(metascopeConfig.getRepositoryUrl()).build();
+  @Bean
+  public DataSource dataSource() {
+    MetascopeConfig metascopeConfig = metascopeConfig();
+    DataSource dataSource = DataSourceBuilder.create().username(metascopeConfig.getRepositoryUser())
+        .password(metascopeConfig.getRepositoryPassword()).url(metascopeConfig.getRepositoryUrl()).build();
 
-		if (dataSource instanceof org.apache.tomcat.jdbc.pool.DataSource) {
-			org.apache.tomcat.jdbc.pool.DataSource tomcatDataSource = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
-			tomcatDataSource.setTestOnBorrow(true);
-			tomcatDataSource.setMaxIdle(10);
-			tomcatDataSource.setMinIdle(1);
-			tomcatDataSource.setTestWhileIdle(true);
-			String validationQuery = ValidationQueryUtil
-					.getValidationQuery(tomcatDataSource.getDriverClassName());
-			tomcatDataSource.setValidationQuery(validationQuery);
-		}
+    if (dataSource instanceof org.apache.tomcat.jdbc.pool.DataSource) {
+      org.apache.tomcat.jdbc.pool.DataSource tomcatDataSource = (org.apache.tomcat.jdbc.pool.DataSource) dataSource;
+      tomcatDataSource.setTestOnBorrow(true);
+      tomcatDataSource.setMaxIdle(10);
+      tomcatDataSource.setMinIdle(1);
+      tomcatDataSource.setTestWhileIdle(true);
+      String validationQuery = ValidationQueryUtil.getValidationQuery(tomcatDataSource.getDriverClassName());
+      tomcatDataSource.setValidationQuery(validationQuery);
+    }
 
-		return dataSource;
-	}
+    return dataSource;
+  }
 
-	@Bean
-	public RepositoryDAO repositoryDAO() {
-		MetascopeConfig config = metascopeConfig();
-		if (config.getRepositoryUrl().startsWith("jdbc:mysql")) {
-			return new MySQLRepository();
-		} else {
-			return new NativeSqlRepository();
-		}
-	}
+  @Bean
+  public RepositoryDAO repositoryDAO() {
+    MetascopeConfig config = metascopeConfig();
+    if (config.getRepositoryUrl().startsWith("jdbc:mysql")) {
+      return new MySQLRepository();
+    } else {
+      return new NativeSqlRepository();
+    }
+  }
 
-	@Bean
-	public SolrFacade solrFacade() {
-		MetascopeConfig config = metascopeConfig();
-		return new SolrFacade(config.getSolrUrl());
-	}
+  @Bean
+  public SolrFacade solrFacade() {
+    MetascopeConfig config = metascopeConfig();
+    return new SolrFacade(config.getSolrUrl());
+  }
 
-	private String[] appendRolePrefix(String groups) {
-		String[] groupsArray = groups.split(",");
-		for (int i = 0; i < groupsArray.length; i++) {
-			groupsArray[i] = "ROLE_" + groupsArray[i].toUpperCase();
-		}
-		return groupsArray;
-	}
+  private String[] appendRolePrefix(String groups) {
+    String[] groupsArray = groups.split(",");
+    for (int i = 0; i < groupsArray.length; i++) {
+      groupsArray[i] = "ROLE_" + groupsArray[i].toUpperCase();
+    }
+    return groupsArray;
+  }
 
-	private String[] appendRolePrefix(String allowedGroups, String adminGroups) {
-		String[] allowedGroupArray = appendRolePrefix(allowedGroups);
-		String[] adminGroupArray = appendRolePrefix(adminGroups);
-		return (String[]) ArrayUtils.addAll(allowedGroupArray, adminGroupArray);
-	}
+  private String[] appendRolePrefix(String allowedGroups, String adminGroups) {
+    String[] allowedGroupArray = appendRolePrefix(allowedGroups);
+    String[] adminGroupArray = appendRolePrefix(adminGroups);
+    return (String[]) ArrayUtils.addAll(allowedGroupArray, adminGroupArray);
+  }
 
 }

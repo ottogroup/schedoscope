@@ -30,39 +30,35 @@ import org.slf4j.LoggerFactory;
 
 public class SetMetadataTask extends Task {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(SetMetadataTask.class);
+  private static final Logger LOG = LoggerFactory.getLogger(SetMetadataTask.class);
 
-	public SetMetadataTask(RepositoryDAO repo, DataSource dataSource,
-			SolrFacade solr, MetascopeConfig config,
-			SchedoscopeUtil schedoscopUtil) {
-		super(repo, dataSource, solr, config, schedoscopUtil);
-	}
+  public SetMetadataTask(RepositoryDAO repo, DataSource dataSource, SolrFacade solr, MetascopeConfig config,
+      SchedoscopeUtil schedoscopUtil) {
+    super(repo, dataSource, solr, config, schedoscopUtil);
+  }
 
-	@Override
-	public boolean run(long start) {
-		Connection connection;
-		try {
-			connection = dataSource.getConnection();
-		} catch (SQLException e) {
-			LOG.info(
-					"[SetMetadataTask] FAILED: Could not connect to repository",
-					e);
-			return false;
-		}
+  @Override
+  public boolean run(long start) {
+    Connection connection;
+    try {
+      connection = dataSource.getConnection();
+    } catch (SQLException e) {
+      LOG.info("[SetMetadataTask] FAILED: Could not connect to repository", e);
+      return false;
+    }
 
-		Metadata lastSync = repo.getMetadata(connection, "timestamp");
-		repo.insertOrUpdate(connection, new Metadata("timestamp", "" + start));
-		if (lastSync == null) {
-			LOG.info("Initialilzed repository. You can now log in");
-		}
+    Metadata lastSync = repo.getMetadata(connection, "timestamp");
+    repo.insertOrUpdate(connection, new Metadata("timestamp", "" + start));
+    if (lastSync == null) {
+      LOG.info("Initialilzed repository. You can now log in");
+    }
 
-		try {
-			connection.close();
-		} catch (SQLException e) {
-			LOG.error("Could not close connection to repository", e);
-		}
-		return true;
-	}
+    try {
+      connection.close();
+    } catch (SQLException e) {
+      LOG.error("Could not close connection to repository", e);
+    }
+    return true;
+  }
 
 }

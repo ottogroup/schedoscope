@@ -35,336 +35,309 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TaxonomyService {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(TaxonomyService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(TaxonomyService.class);
 
-	@Autowired
-	private UserEntityService userEntityService;
+  @Autowired
+  private UserEntityService userEntityService;
 
-	@Autowired
-	private TaxonomyEntityRepository taxonomyEntityRepository;
+  @Autowired
+  private TaxonomyEntityRepository taxonomyEntityRepository;
 
-	@Autowired
-	private CategoryEntityRepository categoryEntityRepository;
+  @Autowired
+  private CategoryEntityRepository categoryEntityRepository;
 
-	@Autowired
-	private CategoryObjectEntityRepository categoryObjectEntityRepository;
+  @Autowired
+  private CategoryObjectEntityRepository categoryObjectEntityRepository;
 
-	@Autowired
-	private TableEntityRepository tableEntityRepository;
+  @Autowired
+  private TableEntityRepository tableEntityRepository;
 
-	@Autowired
-	private SolrFacade solr;
+  @Autowired
+  private SolrFacade solr;
 
-	//
-	// ### Taxonomy ###
-	//
+  //
+  // ### Taxonomy ###
+  //
 
-	public Iterable<TaxonomyEntity> getTaxonomies() {
-		return taxonomyEntityRepository.findAll();
-	}
+  public Iterable<TaxonomyEntity> getTaxonomies() {
+    return taxonomyEntityRepository.findAll();
+  }
 
-	@Transactional
-	public long createTaxonomy(String taxonomyName) {
-		if (taxonomyName == null) {
-			LOG.info("Taxonomy name can't be null");
-			return -1;
-		}
+  @Transactional
+  public long createTaxonomy(String taxonomyName) {
+    if (taxonomyName == null) {
+      LOG.info("Taxonomy name can't be null");
+      return -1;
+    }
 
-		if (taxonomyEntityRepository.findByName(taxonomyName) != null) {
-			LOG.info("Taxonomy already exists.");
-			return -1;
-		}
+    if (taxonomyEntityRepository.findByName(taxonomyName) != null) {
+      LOG.info("Taxonomy already exists.");
+      return -1;
+    }
 
-		TaxonomyEntity taxonomyEntity = new TaxonomyEntity();
-		taxonomyEntity.setName(taxonomyName);
-		long taxonomyId = taxonomyEntityRepository.save(taxonomyEntity)
-				.getTaxonomyId();
-		LOG.info("User '{}' created new taxonomy '{}'", userEntityService
-				.getUser().getUsername(), taxonomyName);
+    TaxonomyEntity taxonomyEntity = new TaxonomyEntity();
+    taxonomyEntity.setName(taxonomyName);
+    long taxonomyId = taxonomyEntityRepository.save(taxonomyEntity).getTaxonomyId();
+    LOG.info("User '{}' created new taxonomy '{}'", userEntityService.getUser().getUsername(), taxonomyName);
 
-		return taxonomyId;
-	}
+    return taxonomyId;
+  }
 
-	@Transactional
-	public void editTaxonomy(Long taxonomyId, String taxonomyName) {
-		if (taxonomyId == null) {
-			LOG.info("Taxonomy ID can't be null");
-			return;
-		}
+  @Transactional
+  public void editTaxonomy(Long taxonomyId, String taxonomyName) {
+    if (taxonomyId == null) {
+      LOG.info("Taxonomy ID can't be null");
+      return;
+    }
 
-		if (taxonomyName == null) {
-			LOG.info("Taxonomy name can't be null");
-			return;
-		}
+    if (taxonomyName == null) {
+      LOG.info("Taxonomy name can't be null");
+      return;
+    }
 
-		TaxonomyEntity taxonomyEntity = taxonomyEntityRepository
-				.findOne(taxonomyId);
-		if (taxonomyEntity == null) {
-			LOG.info("Taxonomy does not exists.");
-			return;
-		}
+    TaxonomyEntity taxonomyEntity = taxonomyEntityRepository.findOne(taxonomyId);
+    if (taxonomyEntity == null) {
+      LOG.info("Taxonomy does not exists.");
+      return;
+    }
 
-		String oldName = taxonomyEntity.getName();
+    String oldName = taxonomyEntity.getName();
 
-		taxonomyEntity.setName(taxonomyName);
-		taxonomyEntityRepository.save(taxonomyEntity);
-		LOG.info("User '{}' changed taxonomy name from '{}' to '{}'",
-				userEntityService.getUser().getUsername(), oldName,
-				taxonomyName);
-	}
+    taxonomyEntity.setName(taxonomyName);
+    taxonomyEntityRepository.save(taxonomyEntity);
+    LOG.info("User '{}' changed taxonomy name from '{}' to '{}'", userEntityService.getUser().getUsername(), oldName,
+        taxonomyName);
+  }
 
-	@Transactional
-	public void deleteTaxonomy(Long taxonomyId) {
-		if (taxonomyId == null) {
-			LOG.info("Taxonomy ID can't be null");
-			return;
-		}
+  @Transactional
+  public void deleteTaxonomy(Long taxonomyId) {
+    if (taxonomyId == null) {
+      LOG.info("Taxonomy ID can't be null");
+      return;
+    }
 
-		TaxonomyEntity taxonomyEntity = taxonomyEntityRepository
-				.findOne(taxonomyId);
-		if (taxonomyEntity == null) {
-			LOG.info("Taxonomy does not exists.");
-			return;
-		}
+    TaxonomyEntity taxonomyEntity = taxonomyEntityRepository.findOne(taxonomyId);
+    if (taxonomyEntity == null) {
+      LOG.info("Taxonomy does not exists.");
+      return;
+    }
 
-		deleteCategoryObjectsFromTable(taxonomyEntity);
+    deleteCategoryObjectsFromTable(taxonomyEntity);
 
-		taxonomyEntityRepository.delete(taxonomyEntity);
-		LOG.info("User '{}' deleted taxonomy '{}'", userEntityService.getUser()
-				.getUsername(), taxonomyEntity.getName());
-	}
+    taxonomyEntityRepository.delete(taxonomyEntity);
+    LOG.info("User '{}' deleted taxonomy '{}'", userEntityService.getUser().getUsername(), taxonomyEntity.getName());
+  }
 
-	//
-	// ### Category ###
-	//
+  //
+  // ### Category ###
+  //
 
-	@Transactional
-	public long createCategory(Long taxonomyId, String categoryName) {
-		if (taxonomyId == null) {
-			LOG.info("Taxonomy ID can't be null");
-			return -1;
-		}
+  @Transactional
+  public long createCategory(Long taxonomyId, String categoryName) {
+    if (taxonomyId == null) {
+      LOG.info("Taxonomy ID can't be null");
+      return -1;
+    }
 
-		if (categoryName == null) {
-			LOG.info("Category name can't be null");
-			return -1;
-		}
+    if (categoryName == null) {
+      LOG.info("Category name can't be null");
+      return -1;
+    }
 
-		TaxonomyEntity taxonomyEntity = taxonomyEntityRepository
-				.findOne(taxonomyId);
-		if (taxonomyEntity == null) {
-			LOG.info("Taxonomy does not exists.");
-			return -1;
-		}
+    TaxonomyEntity taxonomyEntity = taxonomyEntityRepository.findOne(taxonomyId);
+    if (taxonomyEntity == null) {
+      LOG.info("Taxonomy does not exists.");
+      return -1;
+    }
 
-		for (CategoryEntity categoryEntity : taxonomyEntity.getCategories()) {
-			if (categoryEntity.getName().equals(categoryName)) {
-				LOG.info("Category already exists.");
-				return -1;
-			}
-		}
+    for (CategoryEntity categoryEntity : taxonomyEntity.getCategories()) {
+      if (categoryEntity.getName().equals(categoryName)) {
+        LOG.info("Category already exists.");
+        return -1;
+      }
+    }
 
-		CategoryEntity categoryEntity = new CategoryEntity();
-		categoryEntity.setName(categoryName);
-		categoryEntity.setTaxonomy(taxonomyEntity);
-		long categoryId = categoryEntityRepository.save(categoryEntity)
-				.getCategoryId();
+    CategoryEntity categoryEntity = new CategoryEntity();
+    categoryEntity.setName(categoryName);
+    categoryEntity.setTaxonomy(taxonomyEntity);
+    long categoryId = categoryEntityRepository.save(categoryEntity).getCategoryId();
 
-		taxonomyEntity.getCategories().add(categoryEntity);
-		taxonomyEntityRepository.save(taxonomyEntity);
-		LOG.info("User '{}' created new category '{}'", userEntityService
-				.getUser().getUsername(), categoryName);
-		return categoryId;
-	}
+    taxonomyEntity.getCategories().add(categoryEntity);
+    taxonomyEntityRepository.save(taxonomyEntity);
+    LOG.info("User '{}' created new category '{}'", userEntityService.getUser().getUsername(), categoryName);
+    return categoryId;
+  }
 
-	@Transactional
-	public void editCategory(Long categoryId, String categoryName) {
-		if (categoryId == null) {
-			LOG.info("Category ID can't be null");
-			return;
-		}
+  @Transactional
+  public void editCategory(Long categoryId, String categoryName) {
+    if (categoryId == null) {
+      LOG.info("Category ID can't be null");
+      return;
+    }
 
-		if (categoryName == null) {
-			LOG.info("Category name can't be null");
-			return;
-		}
+    if (categoryName == null) {
+      LOG.info("Category name can't be null");
+      return;
+    }
 
-		CategoryEntity categoryEntity = categoryEntityRepository
-				.findOne(categoryId);
-		if (categoryEntity == null) {
-			LOG.info("Category does not exists.");
-			return;
-		}
+    CategoryEntity categoryEntity = categoryEntityRepository.findOne(categoryId);
+    if (categoryEntity == null) {
+      LOG.info("Category does not exists.");
+      return;
+    }
 
-		String oldName = categoryEntity.getName();
+    String oldName = categoryEntity.getName();
 
-		categoryEntity.setName(categoryName);
-		categoryEntityRepository.save(categoryEntity);
-		LOG.info("User '{}' changed category name from '{}' to '{}'",
-				userEntityService.getUser().getUsername(), oldName,
-				categoryName);
-	}
+    categoryEntity.setName(categoryName);
+    categoryEntityRepository.save(categoryEntity);
+    LOG.info("User '{}' changed category name from '{}' to '{}'", userEntityService.getUser().getUsername(), oldName,
+        categoryName);
+  }
 
-	@Transactional
-	public void deleteCategory(Long categoryId) {
-		if (categoryId == null) {
-			LOG.info("Category ID can't be null");
-			return;
-		}
+  @Transactional
+  public void deleteCategory(Long categoryId) {
+    if (categoryId == null) {
+      LOG.info("Category ID can't be null");
+      return;
+    }
 
-		CategoryEntity categoryEntity = categoryEntityRepository
-				.findOne(categoryId);
-		if (categoryEntity == null) {
-			LOG.info("Category does not exists.");
-			return;
-		}
+    CategoryEntity categoryEntity = categoryEntityRepository.findOne(categoryId);
+    if (categoryEntity == null) {
+      LOG.info("Category does not exists.");
+      return;
+    }
 
-		deleteCategoryObjectsFromTable(categoryEntity);
+    deleteCategoryObjectsFromTable(categoryEntity);
 
-		TaxonomyEntity taxonomyEntity = categoryEntity.getTaxonomy();
-		taxonomyEntity.getCategories().remove(categoryEntity);
+    TaxonomyEntity taxonomyEntity = categoryEntity.getTaxonomy();
+    taxonomyEntity.getCategories().remove(categoryEntity);
 
-		categoryEntityRepository.delete(categoryEntity);
-		taxonomyEntityRepository.save(taxonomyEntity);
-		LOG.info("User '{}' deleted category '{}'", userEntityService.getUser()
-				.getUsername(), categoryEntity.getName());
-	}
+    categoryEntityRepository.delete(categoryEntity);
+    taxonomyEntityRepository.save(taxonomyEntity);
+    LOG.info("User '{}' deleted category '{}'", userEntityService.getUser().getUsername(), categoryEntity.getName());
+  }
 
-	//
-	// ### Category Object ###
-	//
+  //
+  // ### Category Object ###
+  //
 
-	@Transactional
-	public void createCategoryObject(Long categoryId,
-			String categoryObjectName, String description) {
-		if (categoryId == null) {
-			LOG.info("Category ID can't be null");
-			return;
-		}
+  @Transactional
+  public void createCategoryObject(Long categoryId, String categoryObjectName, String description) {
+    if (categoryId == null) {
+      LOG.info("Category ID can't be null");
+      return;
+    }
 
-		if (categoryObjectName == null) {
-			LOG.info("Category Object name can't be null");
-			return;
-		}
+    if (categoryObjectName == null) {
+      LOG.info("Category Object name can't be null");
+      return;
+    }
 
-		if (description == null) {
-			LOG.info("Category Object description can't be null");
-			return;
-		}
+    if (description == null) {
+      LOG.info("Category Object description can't be null");
+      return;
+    }
 
-		CategoryEntity categoryEntity = categoryEntityRepository
-				.findOne(categoryId);
-		if (categoryEntity == null) {
-			LOG.info("Category does not exists.");
-			return;
-		}
+    CategoryEntity categoryEntity = categoryEntityRepository.findOne(categoryId);
+    if (categoryEntity == null) {
+      LOG.info("Category does not exists.");
+      return;
+    }
 
-		for (CategoryObjectEntity categoryObjectEntity : categoryEntity
-				.getCategoryObjects()) {
-			if (categoryObjectEntity.getName().equals(categoryObjectName)) {
-				LOG.info("Category Object with name '{}' already exists.",
-						categoryObjectName);
-				return;
-			}
-		}
+    for (CategoryObjectEntity categoryObjectEntity : categoryEntity.getCategoryObjects()) {
+      if (categoryObjectEntity.getName().equals(categoryObjectName)) {
+        LOG.info("Category Object with name '{}' already exists.", categoryObjectName);
+        return;
+      }
+    }
 
-		CategoryObjectEntity categoryObjectEntity = new CategoryObjectEntity();
-		categoryObjectEntity.setName(categoryObjectName);
-		categoryObjectEntity.setDescription(description);
-		categoryObjectEntity.setCategory(categoryEntity);
-		categoryObjectEntityRepository.save(categoryObjectEntity);
+    CategoryObjectEntity categoryObjectEntity = new CategoryObjectEntity();
+    categoryObjectEntity.setName(categoryObjectName);
+    categoryObjectEntity.setDescription(description);
+    categoryObjectEntity.setCategory(categoryEntity);
+    categoryObjectEntityRepository.save(categoryObjectEntity);
 
-		categoryEntity.getCategoryObjects().add(categoryObjectEntity);
-		categoryEntityRepository.save(categoryEntity);
+    categoryEntity.getCategoryObjects().add(categoryObjectEntity);
+    categoryEntityRepository.save(categoryEntity);
 
-		LOG.info("User '{}' created new category object '{}'",
-				userEntityService.getUser().getUsername(), categoryObjectName);
-	}
+    LOG.info("User '{}' created new category object '{}'", userEntityService.getUser().getUsername(),
+        categoryObjectName);
+  }
 
-	@Transactional
-	public long editCategoryObject(Long categoryObjectId,
-			String categoryObjectName, String description) {
-		if (categoryObjectId == null) {
-			LOG.info("Category ID can't be null");
-			return -1;
-		}
+  @Transactional
+  public long editCategoryObject(Long categoryObjectId, String categoryObjectName, String description) {
+    if (categoryObjectId == null) {
+      LOG.info("Category ID can't be null");
+      return -1;
+    }
 
-		CategoryObjectEntity categoryObjectEntity = categoryObjectEntityRepository
-				.findOne(categoryObjectId);
-		if (categoryObjectEntity == null) {
-			LOG.info("Category Object does not exists.");
-			return -1;
-		}
+    CategoryObjectEntity categoryObjectEntity = categoryObjectEntityRepository.findOne(categoryObjectId);
+    if (categoryObjectEntity == null) {
+      LOG.info("Category Object does not exists.");
+      return -1;
+    }
 
-		String oldName = categoryObjectEntity.getName();
+    String oldName = categoryObjectEntity.getName();
 
-		if (categoryObjectName != null) {
-			categoryObjectEntity.setName(categoryObjectName);
-		}
+    if (categoryObjectName != null) {
+      categoryObjectEntity.setName(categoryObjectName);
+    }
 
-		if (description != null) {
-			categoryObjectEntity.setDescription(description);
-		}
+    if (description != null) {
+      categoryObjectEntity.setDescription(description);
+    }
 
-		categoryObjectEntityRepository.save(categoryObjectEntity);
-		LOG.info(
-				"User '{}' changed category name from '{}' to '{}' with description '{}'",
-				userEntityService.getUser().getUsername(), oldName,
-				categoryObjectName, description);
-		return categoryObjectEntity.getCategory().getCategoryId();
-	}
+    categoryObjectEntityRepository.save(categoryObjectEntity);
+    LOG.info("User '{}' changed category name from '{}' to '{}' with description '{}'", userEntityService.getUser()
+        .getUsername(), oldName, categoryObjectName, description);
+    return categoryObjectEntity.getCategory().getCategoryId();
+  }
 
-	@Transactional
-	public long deleteCategoryObject(Long categoryObjectId) {
-		if (categoryObjectId == null) {
-			LOG.info("Category ID can't be null");
-			return -1;
-		}
+  @Transactional
+  public long deleteCategoryObject(Long categoryObjectId) {
+    if (categoryObjectId == null) {
+      LOG.info("Category ID can't be null");
+      return -1;
+    }
 
-		CategoryObjectEntity categoryObjectEntity = categoryObjectEntityRepository
-				.findOne(categoryObjectId);
-		if (categoryObjectEntity == null) {
-			LOG.info("Category Object does not exists.");
-			return -1;
-		}
+    CategoryObjectEntity categoryObjectEntity = categoryObjectEntityRepository.findOne(categoryObjectId);
+    if (categoryObjectEntity == null) {
+      LOG.info("Category Object does not exists.");
+      return -1;
+    }
 
-		deleteCategoryObjectsFromTable(categoryObjectEntity);
+    deleteCategoryObjectsFromTable(categoryObjectEntity);
 
-		CategoryEntity categoryEntity = categoryObjectEntity.getCategory();
-		categoryEntity.getCategoryObjects().remove(categoryObjectEntity);
+    CategoryEntity categoryEntity = categoryObjectEntity.getCategory();
+    categoryEntity.getCategoryObjects().remove(categoryObjectEntity);
 
-		categoryObjectEntityRepository.delete(categoryObjectEntity);
-		categoryEntityRepository.save(categoryEntity);
-		LOG.info("User '{}' deleted category object '{}'", userEntityService
-				.getUser().getUsername(), categoryObjectEntity.getName());
-		return categoryEntity.getCategoryId();
-	}
+    categoryObjectEntityRepository.delete(categoryObjectEntity);
+    categoryEntityRepository.save(categoryEntity);
+    LOG.info("User '{}' deleted category object '{}'", userEntityService.getUser().getUsername(),
+        categoryObjectEntity.getName());
+    return categoryEntity.getCategoryId();
+  }
 
-	private void deleteCategoryObjectsFromTable(TaxonomyEntity taxonomyEntity) {
-		for (CategoryEntity categoryEntity : taxonomyEntity.getCategories()) {
-			deleteCategoryObjectsFromTable(categoryEntity);
-		}
-	}
+  private void deleteCategoryObjectsFromTable(TaxonomyEntity taxonomyEntity) {
+    for (CategoryEntity categoryEntity : taxonomyEntity.getCategories()) {
+      deleteCategoryObjectsFromTable(categoryEntity);
+    }
+  }
 
-	private void deleteCategoryObjectsFromTable(CategoryEntity categoryEntity) {
-		for (CategoryObjectEntity categoryObjectEntity : categoryEntity
-				.getCategoryObjects()) {
-			deleteCategoryObjectsFromTable(categoryObjectEntity);
-		}
-	}
+  private void deleteCategoryObjectsFromTable(CategoryEntity categoryEntity) {
+    for (CategoryObjectEntity categoryObjectEntity : categoryEntity.getCategoryObjects()) {
+      deleteCategoryObjectsFromTable(categoryObjectEntity);
+    }
+  }
 
-	private void deleteCategoryObjectsFromTable(
-			CategoryObjectEntity categoryObjectEntity) {
-		List<TableEntity> tableEntities = tableEntityRepository
-				.findByCategoryObject(categoryObjectEntity);
+  private void deleteCategoryObjectsFromTable(CategoryObjectEntity categoryObjectEntity) {
+    List<TableEntity> tableEntities = tableEntityRepository.findByCategoryObject(categoryObjectEntity);
 
-		for (TableEntity tableEntity : tableEntities) {
-			tableEntity.removeCategoryObjectById(categoryObjectEntity
-					.getCategoryObjectId());
-			tableEntityRepository.save(tableEntity);
-			solr.updateTableEntityAsync(tableEntity, true);
-		}
-	}
+    for (TableEntity tableEntity : tableEntities) {
+      tableEntity.removeCategoryObjectById(categoryObjectEntity.getCategoryObjectId());
+      tableEntityRepository.save(tableEntity);
+      solr.updateTableEntityAsync(tableEntity, true);
+    }
+  }
 
 }

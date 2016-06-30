@@ -31,226 +31,202 @@ import org.springframework.transaction.annotation.Transactional;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class TaxonomyServiceTest extends SpringTest {
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_01_createTaxonomy() {
-		int taxonomies = size(taxonomyEntityRepository.findAll());
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_01_createTaxonomy() {
+    int taxonomies = size(taxonomyEntityRepository.findAll());
 
-		assertEquals(taxonomies, 0);
+    assertEquals(taxonomies, 0);
 
-		taxonomyService.createTaxonomy(TEST_TAXONOMY);
+    taxonomyService.createTaxonomy(TEST_TAXONOMY);
 
-		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository
-				.findAll();
+    Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
 
-		assertEquals(size(taxonomyEntities), 1);
+    assertEquals(size(taxonomyEntities), 1);
 
-		TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
+    TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
 
-		assertEquals(taxonomyEntity.getName(), TEST_TAXONOMY);
-		assertEquals(taxonomyEntity.getCategories().size(), 0);
-	}
+    assertEquals(taxonomyEntity.getName(), TEST_TAXONOMY);
+    assertEquals(taxonomyEntity.getCategories().size(), 0);
+  }
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_02_createCategory() {
-		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository
-				.findAll();
-		int categories = size(categoryEntityRepository.findAll());
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_02_createCategory() {
+    Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
+    int categories = size(categoryEntityRepository.findAll());
 
-		assertEquals(categories, 0);
+    assertEquals(categories, 0);
 
-		taxonomyService.createCategory(taxonomyEntities.iterator().next()
-				.getTaxonomyId(), TEST_CATEGORY_NAME);
+    taxonomyService.createCategory(taxonomyEntities.iterator().next().getTaxonomyId(), TEST_CATEGORY_NAME);
 
-		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository
-				.findAll();
+    Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
 
-		assertEquals(size(categoryEntities), 1);
-	}
+    assertEquals(size(categoryEntities), 1);
+  }
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_03_createCategoryObject() {
-		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository
-				.findAll();
-		int cos = size(coEntityRepository.findAll());
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_03_createCategoryObject() {
+    Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
+    int cos = size(coEntityRepository.findAll());
 
-		assertEquals(cos, 0);
+    assertEquals(cos, 0);
 
-		taxonomyService.createCategoryObject(categoryEntities.iterator().next()
-				.getCategoryId(), TEST_CATEGORY_OBJECT_NAME,
-				TEST_CATEGORY_OBJECT_DESC);
+    taxonomyService.createCategoryObject(categoryEntities.iterator().next().getCategoryId(), TEST_CATEGORY_OBJECT_NAME,
+        TEST_CATEGORY_OBJECT_DESC);
 
-		Iterable<CategoryObjectEntity> coEntites = coEntityRepository.findAll();
+    Iterable<CategoryObjectEntity> coEntites = coEntityRepository.findAll();
 
-		assertEquals(size(coEntites), 1);
+    assertEquals(size(coEntites), 1);
 
-		CategoryObjectEntity coEntity = coEntites.iterator().next();
+    CategoryObjectEntity coEntity = coEntites.iterator().next();
 
-		assertEquals(coEntity.getName(), TEST_CATEGORY_OBJECT_NAME);
-		assertEquals(coEntity.getDescription(), TEST_CATEGORY_OBJECT_DESC);
-		assertTrue(coEntity.getCategory() != null);
-	}
+    assertEquals(coEntity.getName(), TEST_CATEGORY_OBJECT_NAME);
+    assertEquals(coEntity.getDescription(), TEST_CATEGORY_OBJECT_DESC);
+    assertTrue(coEntity.getCategory() != null);
+  }
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_04_editTaxonomy() {
-		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository
-				.findAll();
-		TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_04_editTaxonomy() {
+    Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
+    TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
 
-		assertEquals(taxonomyEntity.getName(), TEST_TAXONOMY);
+    assertEquals(taxonomyEntity.getName(), TEST_TAXONOMY);
 
-		taxonomyService.editTaxonomy(taxonomyEntity.getTaxonomyId(),
-				"NewTaxonomyName");
+    taxonomyService.editTaxonomy(taxonomyEntity.getTaxonomyId(), "NewTaxonomyName");
 
-		taxonomyEntities = taxonomyEntityRepository.findAll();
+    taxonomyEntities = taxonomyEntityRepository.findAll();
 
-		taxonomyEntity = taxonomyEntities.iterator().next();
+    taxonomyEntity = taxonomyEntities.iterator().next();
 
-		assertEquals(taxonomyEntity.getName(), "NewTaxonomyName");
+    assertEquals(taxonomyEntity.getName(), "NewTaxonomyName");
 
-		taxonomyService.editTaxonomy(taxonomyEntity.getTaxonomyId(),
-				TEST_TAXONOMY);
-	}
+    taxonomyService.editTaxonomy(taxonomyEntity.getTaxonomyId(), TEST_TAXONOMY);
+  }
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_05_editCategory() {
-		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository
-				.findAll();
-		CategoryEntity categoryEntity = categoryEntities.iterator().next();
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_05_editCategory() {
+    Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
+    CategoryEntity categoryEntity = categoryEntities.iterator().next();
 
-		assertEquals(categoryEntity.getName(), TEST_CATEGORY_NAME);
+    assertEquals(categoryEntity.getName(), TEST_CATEGORY_NAME);
 
-		taxonomyService.editCategory(categoryEntity.getCategoryId(),
-				"NewCategoryName");
+    taxonomyService.editCategory(categoryEntity.getCategoryId(), "NewCategoryName");
 
-		categoryEntities = categoryEntityRepository.findAll();
+    categoryEntities = categoryEntityRepository.findAll();
 
-		categoryEntity = categoryEntities.iterator().next();
+    categoryEntity = categoryEntities.iterator().next();
 
-		assertEquals(categoryEntity.getName(), "NewCategoryName");
+    assertEquals(categoryEntity.getName(), "NewCategoryName");
 
-		taxonomyService.editCategory(categoryEntity.getCategoryId(),
-				TEST_CATEGORY_NAME);
-	}
+    taxonomyService.editCategory(categoryEntity.getCategoryId(), TEST_CATEGORY_NAME);
+  }
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_06_editCategoryObject() {
-		Iterable<CategoryObjectEntity> categoryObjectEntities = coEntityRepository
-				.findAll();
-		CategoryObjectEntity categoryObjectEntity = categoryObjectEntities
-				.iterator().next();
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_06_editCategoryObject() {
+    Iterable<CategoryObjectEntity> categoryObjectEntities = coEntityRepository.findAll();
+    CategoryObjectEntity categoryObjectEntity = categoryObjectEntities.iterator().next();
 
-		assertEquals(categoryObjectEntity.getName(), TEST_CATEGORY_OBJECT_NAME);
-		assertEquals(categoryObjectEntity.getDescription(),
-				TEST_CATEGORY_OBJECT_DESC);
+    assertEquals(categoryObjectEntity.getName(), TEST_CATEGORY_OBJECT_NAME);
+    assertEquals(categoryObjectEntity.getDescription(), TEST_CATEGORY_OBJECT_DESC);
 
-		taxonomyService.editCategoryObject(
-				categoryObjectEntity.getCategoryObjectId(),
-				"NewCategoryObjectName", "NewCategoryObjectDesc");
+    taxonomyService.editCategoryObject(categoryObjectEntity.getCategoryObjectId(), "NewCategoryObjectName",
+        "NewCategoryObjectDesc");
 
-		categoryObjectEntities = coEntityRepository.findAll();
+    categoryObjectEntities = coEntityRepository.findAll();
 
-		categoryObjectEntity = categoryObjectEntities.iterator().next();
+    categoryObjectEntity = categoryObjectEntities.iterator().next();
 
-		assertEquals(categoryObjectEntity.getName(), "NewCategoryObjectName");
-		assertEquals(categoryObjectEntity.getDescription(),
-				"NewCategoryObjectDesc");
+    assertEquals(categoryObjectEntity.getName(), "NewCategoryObjectName");
+    assertEquals(categoryObjectEntity.getDescription(), "NewCategoryObjectDesc");
 
-		taxonomyService.editCategoryObject(
-				categoryObjectEntity.getCategoryObjectId(),
-				TEST_CATEGORY_OBJECT_NAME, TEST_CATEGORY_OBJECT_DESC);
-	}
+    taxonomyService.editCategoryObject(categoryObjectEntity.getCategoryObjectId(), TEST_CATEGORY_OBJECT_NAME,
+        TEST_CATEGORY_OBJECT_DESC);
+  }
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_07_deleteCategoryObject() {
-		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository
-				.findAll();
-		CategoryEntity categoryEntity = categoryEntities.iterator().next();
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_07_deleteCategoryObject() {
+    Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
+    CategoryEntity categoryEntity = categoryEntities.iterator().next();
 
-		CategoryObjectEntity categoryObjectEntity = new CategoryObjectEntity();
-		categoryObjectEntity.setName(TO_BE_DELETED);
-		categoryObjectEntity.setDescription(TO_BE_DELETED);
-		categoryObjectEntity.setCategory(categoryEntity);
+    CategoryObjectEntity categoryObjectEntity = new CategoryObjectEntity();
+    categoryObjectEntity.setName(TO_BE_DELETED);
+    categoryObjectEntity.setDescription(TO_BE_DELETED);
+    categoryObjectEntity.setCategory(categoryEntity);
 
-		categoryObjectEntity = coEntityRepository.save(categoryObjectEntity);
+    categoryObjectEntity = coEntityRepository.save(categoryObjectEntity);
 
-		Iterable<CategoryObjectEntity> categoryObjectEntities = coEntityRepository
-				.findAll();
+    Iterable<CategoryObjectEntity> categoryObjectEntities = coEntityRepository.findAll();
 
-		int categoryObjects = size(categoryObjectEntities);
-		assertEquals(categoryObjects, 2);
+    int categoryObjects = size(categoryObjectEntities);
+    assertEquals(categoryObjects, 2);
 
-		taxonomyService.deleteCategoryObject(categoryObjectEntity
-				.getCategoryObjectId());
+    taxonomyService.deleteCategoryObject(categoryObjectEntity.getCategoryObjectId());
 
-		categoryObjectEntities = coEntityRepository.findAll();
+    categoryObjectEntities = coEntityRepository.findAll();
 
-		categoryObjects = size(categoryObjectEntities);
-		assertEquals(categoryObjects, 1);
-	}
+    categoryObjects = size(categoryObjectEntities);
+    assertEquals(categoryObjects, 1);
+  }
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_08_deleteCategory() {
-		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository
-				.findAll();
-		TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_08_deleteCategory() {
+    Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
+    TaxonomyEntity taxonomyEntity = taxonomyEntities.iterator().next();
 
-		CategoryEntity categoryEntity = new CategoryEntity();
-		categoryEntity.setName(TO_BE_DELETED);
-		categoryEntity.setTaxonomy(taxonomyEntity);
+    CategoryEntity categoryEntity = new CategoryEntity();
+    categoryEntity.setName(TO_BE_DELETED);
+    categoryEntity.setTaxonomy(taxonomyEntity);
 
-		categoryEntity = categoryEntityRepository.save(categoryEntity);
+    categoryEntity = categoryEntityRepository.save(categoryEntity);
 
-		Iterable<CategoryEntity> categoryEntities = categoryEntityRepository
-				.findAll();
+    Iterable<CategoryEntity> categoryEntities = categoryEntityRepository.findAll();
 
-		int categories = size(categoryEntities);
-		assertEquals(categories, 2);
+    int categories = size(categoryEntities);
+    assertEquals(categories, 2);
 
-		taxonomyService.deleteCategory(categoryEntity.getCategoryId());
+    taxonomyService.deleteCategory(categoryEntity.getCategoryId());
 
-		categoryEntities = categoryEntityRepository.findAll();
+    categoryEntities = categoryEntityRepository.findAll();
 
-		categories = size(categoryEntities);
-		assertEquals(categories, 1);
-	}
+    categories = size(categoryEntities);
+    assertEquals(categories, 1);
+  }
 
-	@Test
-	@Transactional
-	@Rollback(false)
-	public void taxonomyService_09_deleteTaxonomy() {
-		TaxonomyEntity taxonomyEntity = new TaxonomyEntity();
-		taxonomyEntity.setName(TO_BE_DELETED);
+  @Test
+  @Transactional
+  @Rollback(false)
+  public void taxonomyService_09_deleteTaxonomy() {
+    TaxonomyEntity taxonomyEntity = new TaxonomyEntity();
+    taxonomyEntity.setName(TO_BE_DELETED);
 
-		taxonomyEntity = taxonomyEntityRepository.save(taxonomyEntity);
+    taxonomyEntity = taxonomyEntityRepository.save(taxonomyEntity);
 
-		Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository
-				.findAll();
+    Iterable<TaxonomyEntity> taxonomyEntities = taxonomyEntityRepository.findAll();
 
-		int taxonomies = size(taxonomyEntities);
-		assertEquals(taxonomies, 2);
+    int taxonomies = size(taxonomyEntities);
+    assertEquals(taxonomies, 2);
 
-		taxonomyService.deleteTaxonomy(taxonomyEntity.getTaxonomyId());
+    taxonomyService.deleteTaxonomy(taxonomyEntity.getTaxonomyId());
 
-		taxonomyEntities = taxonomyEntityRepository.findAll();
+    taxonomyEntities = taxonomyEntityRepository.findAll();
 
-		taxonomies = size(taxonomyEntities);
-		assertEquals(taxonomies, 1);
-	}
+    taxonomies = size(taxonomyEntities);
+    assertEquals(taxonomies, 1);
+  }
 
 }

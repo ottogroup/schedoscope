@@ -48,41 +48,40 @@ import com.typesafe.config.ConfigFactory;
 @EnableAsync
 public class TestSpringConfiguration extends WebSecurityConfigurerAdapter {
 
-	@Bean
-	public LdapTemplate ldapTemplate() {
-		return new LdapTemplate(new LdapContextSource());
-	}
+  @Bean
+  public LdapTemplate ldapTemplate() {
+    return new LdapTemplate(new LdapContextSource());
+  }
 
-	@Bean
-	public SessionRegistry sessionRegistry() {
-		return new SessionRegistryImpl();
-	}
+  @Bean
+  public SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
 
-	@Bean
-	public ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
-		return new ServletListenerRegistrationBean<HttpSessionEventPublisher>(
-				new HttpSessionEventPublisher());
-	}
+  @Bean
+  public ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
+    return new ServletListenerRegistrationBean<HttpSessionEventPublisher>(new HttpSessionEventPublisher());
+  }
 
-	@Bean
-	public MetascopeConfig metascopeConfig() {
-		return new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
-	}
+  @Bean
+  public MetascopeConfig metascopeConfig() {
+    return new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
+  }
 
-	@Bean
-	public DataSource dataSource() {
-		return DataSourceBuilder.create().username("sa").password("")
-				.url("jdbc:derby:memory:metascope;create=true").build();
-	}
+  @Bean
+  public DataSource dataSource() {
+    return DataSourceBuilder.create().username("sa").password("").url("jdbc:derby:memory:metascope;create=true")
+        .build();
+  }
 
-	@Bean
-	public RepositoryDAO repositoryDAO() {
-		return new NativeSqlRepository();
-	}
+  @Bean
+  public RepositoryDAO repositoryDAO() {
+    return new NativeSqlRepository();
+  }
 
-	@Bean
-	public SolrFacade solrFacade() {
-		return new SolrFacade("target/test-resources/solr");
-	}
+  @Bean
+  public SolrFacade solrFacade() {
+    return new SolrFacade("target/test-resources/solr");
+  }
 
 }

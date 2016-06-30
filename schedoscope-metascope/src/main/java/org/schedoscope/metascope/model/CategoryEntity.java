@@ -31,53 +31,53 @@ import javax.persistence.OneToMany;
 @Entity
 public class CategoryEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	private long categoryId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private long categoryId;
 
-	@ManyToOne
-	private TaxonomyEntity taxonomy;
+  @ManyToOne
+  private TaxonomyEntity taxonomy;
 
-	@Column(columnDefinition = "varchar(32672)")
-	private String name;
+  @Column(columnDefinition = "varchar(32672)")
+  private String name;
 
-	@OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<CategoryObjectEntity> categoryObjects;
+  @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<CategoryObjectEntity> categoryObjects;
 
-	public CategoryEntity() {
-		this.categoryObjects = new ArrayList<CategoryObjectEntity>();
-	}
+  public CategoryEntity() {
+    this.categoryObjects = new ArrayList<CategoryObjectEntity>();
+  }
 
-	public long getCategoryId() {
-		return categoryId;
-	}
+  public long getCategoryId() {
+    return categoryId;
+  }
 
-	public void setCategoryId(long categoryId) {
-		this.categoryId = categoryId;
-	}
+  public void setCategoryId(long categoryId) {
+    this.categoryId = categoryId;
+  }
 
-	public TaxonomyEntity getTaxonomy() {
-		return taxonomy;
-	}
+  public TaxonomyEntity getTaxonomy() {
+    return taxonomy;
+  }
 
-	public void setTaxonomy(TaxonomyEntity taxonomy) {
-		this.taxonomy = taxonomy;
-	}
+  public void setTaxonomy(TaxonomyEntity taxonomy) {
+    this.taxonomy = taxonomy;
+  }
 
-	public String getName() {
-		return name;
-	}
+  public String getName() {
+    return name;
+  }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+  public void setName(String name) {
+    this.name = name;
+  }
 
-	public List<CategoryObjectEntity> getCategoryObjects() {
-		return categoryObjects;
-	}
+  public List<CategoryObjectEntity> getCategoryObjects() {
+    return categoryObjects;
+  }
 
-	public void setCategoryObjects(List<CategoryObjectEntity> categoryObjects) {
-		this.categoryObjects = categoryObjects;
-	}
+  public void setCategoryObjects(List<CategoryObjectEntity> categoryObjects) {
+    this.categoryObjects = categoryObjects;
+  }
 
 }

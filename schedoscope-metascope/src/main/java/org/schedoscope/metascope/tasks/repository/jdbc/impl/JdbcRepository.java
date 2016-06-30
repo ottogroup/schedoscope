@@ -20,12 +20,12 @@ import java.util.List;
 
 public interface JdbcRepository<T, K> {
 
-	public T get(Connection connection, K key);
+  public T get(Connection connection, K key);
 
-	public List<T> get(Connection connection);
+  public List<T> get(Connection connection);
 
-	public void save(Connection connection, T entity);
+  public void save(Connection connection, T entity);
 
-	public void update(Connection connection, T entity);
+  public void update(Connection connection, T entity);
 
 }

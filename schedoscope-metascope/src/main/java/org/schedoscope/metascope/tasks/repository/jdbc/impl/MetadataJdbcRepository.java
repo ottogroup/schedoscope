@@ -29,84 +29,82 @@ import org.slf4j.LoggerFactory;
 
 public class MetadataJdbcRepository implements JdbcRepository<Metadata, String> {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(MetadataJdbcRepository.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MetadataJdbcRepository.class);
 
-	@Override
-	public List<Metadata> get(Connection connection) {
-		List<Metadata> list = new ArrayList<Metadata>();
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		try {
-			stmt = connection.prepareStatement("select * from metadata");
-			rs = stmt.executeQuery();
-			while (rs.next()) {
-				Metadata metadata = new Metadata();
-				metadata.setMetadataKey(rs.getString("metadata_key"));
-				metadata.setMetadataValue(rs.getString("metadata_value"));
-				list.add(metadata);
-			}
-		} catch (SQLException e) {
-			LOG.error("Could not query metadata", e);
-		} finally {
-			DbUtils.closeQuietly(rs);
-			DbUtils.closeQuietly(stmt);
-		}
-		return list;
-	}
+  @Override
+  public List<Metadata> get(Connection connection) {
+    List<Metadata> list = new ArrayList<Metadata>();
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+    try {
+      stmt = connection.prepareStatement("select * from metadata");
+      rs = stmt.executeQuery();
+      while (rs.next()) {
+        Metadata metadata = new Metadata();
+        metadata.setMetadataKey(rs.getString("metadata_key"));
+        metadata.setMetadataValue(rs.getString("metadata_value"));
+        list.add(metadata);
+      }
+    } catch (SQLException e) {
+      LOG.error("Could not query metadata", e);
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(stmt);
+    }
+    return list;
+  }
 
-	public Metadata get(Connection connection, String key) {
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		Metadata metadata = null;
-		try {
-			stmt = connection
-					.prepareStatement("select * from metadata where metadata_key = ?");
-			stmt.setString(1, key);
-			rs = stmt.executeQuery();
-			if (rs.next()) {
-				metadata = new Metadata(key, rs.getString("metadata_value"));
-			}
-		} catch (SQLException e) {
-			LOG.error("Could not get distinct parameters parameters", e);
-		} finally {
-			DbUtils.closeQuietly(rs);
-			DbUtils.closeQuietly(stmt);
-		}
-		return metadata;
-	}
+  public Metadata get(Connection connection, String key) {
+    PreparedStatement stmt = null;
+    ResultSet rs = null;
+    Metadata metadata = null;
+    try {
+      stmt = connection.prepareStatement("select * from metadata where metadata_key = ?");
+      stmt.setString(1, key);
+      rs = stmt.executeQuery();
+      if (rs.next()) {
+        metadata = new Metadata(key, rs.getString("metadata_value"));
+      }
+    } catch (SQLException e) {
+      LOG.error("Could not get distinct parameters parameters", e);
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(stmt);
+    }
+    return metadata;
+  }
 
-	@Override
-	public void save(Connection connection, Metadata metadata) {
-		String insertMetadataSql = "insert into metadata (metadata_key, metadata_value) values (?, ?)";
-		PreparedStatement stmt = null;
-		try {
-			stmt = connection.prepareStatement(insertMetadataSql);
-			stmt.setString(1, metadata.getMetadataKey());
-			stmt.setString(2, metadata.getMetadataValue());
-			stmt.execute();
-		} catch (SQLException e) {
-			LOG.error("Could not save metadata", e);
-		} finally {
-			DbUtils.closeQuietly(stmt);
-		}
-	}
+  @Override
+  public void save(Connection connection, Metadata metadata) {
+    String insertMetadataSql = "insert into metadata (metadata_key, metadata_value) values (?, ?)";
+    PreparedStatement stmt = null;
+    try {
+      stmt = connection.prepareStatement(insertMetadataSql);
+      stmt.setString(1, metadata.getMetadataKey());
+      stmt.setString(2, metadata.getMetadataValue());
+      stmt.execute();
+    } catch (SQLException e) {
+      LOG.error("Could not save metadata", e);
+    } finally {
+      DbUtils.closeQuietly(stmt);
+    }
+  }
 
-	@Override
-	public void update(Connection connection, Metadata metadata) {
-		String insertMetadataSql = "update metadata set metadata_key=?, metadata_value=? where metadata_key = ?";
-		PreparedStatement stmt = null;
-		try {
-			stmt = connection.prepareStatement(insertMetadataSql);
-			stmt.setString(1, metadata.getMetadataKey());
-			stmt.setString(2, metadata.getMetadataValue());
-			stmt.setString(3, metadata.getMetadataKey());
-			stmt.execute();
-		} catch (SQLException e) {
-			LOG.error("Could not update metadata", e);
-		} finally {
-			DbUtils.closeQuietly(stmt);
-		}
-	}
+  @Override
+  public void update(Connection connection, Metadata metadata) {
+    String insertMetadataSql = "update metadata set metadata_key=?, metadata_value=? where metadata_key = ?";
+    PreparedStatement stmt = null;
+    try {
+      stmt = connection.prepareStatement(insertMetadataSql);
+      stmt.setString(1, metadata.getMetadataKey());
+      stmt.setString(2, metadata.getMetadataValue());
+      stmt.setString(3, metadata.getMetadataKey());
+      stmt.execute();
+    } catch (SQLException e) {
+      LOG.error("Could not update metadata", e);
+    } finally {
+      DbUtils.closeQuietly(stmt);
+    }
+  }
 
 }

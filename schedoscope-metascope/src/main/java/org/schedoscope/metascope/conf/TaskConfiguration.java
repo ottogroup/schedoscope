@@ -28,32 +28,32 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 @Configuration
 public class TaskConfiguration implements AsyncConfigurer {
 
-	@Bean
-	public TaskExecutor taskExecutor() {
-		ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-		threadPoolTaskExecutor.setCorePoolSize(6);
-		threadPoolTaskExecutor.setMaxPoolSize(6);
-		threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-		return threadPoolTaskExecutor;
-	}
+  @Bean
+  public TaskExecutor taskExecutor() {
+    ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+    threadPoolTaskExecutor.setCorePoolSize(6);
+    threadPoolTaskExecutor.setMaxPoolSize(6);
+    threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+    return threadPoolTaskExecutor;
+  }
 
-	@Bean
-	public TaskExecutor asyncTaskExecutor() {
-		ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-		threadPoolTaskExecutor.setCorePoolSize(10);
-		threadPoolTaskExecutor.setMaxPoolSize(10);
-		threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-		return threadPoolTaskExecutor;
-	}
+  @Bean
+  public TaskExecutor asyncTaskExecutor() {
+    ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+    threadPoolTaskExecutor.setCorePoolSize(10);
+    threadPoolTaskExecutor.setMaxPoolSize(10);
+    threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+    return threadPoolTaskExecutor;
+  }
 
-	@Override
-	public Executor getAsyncExecutor() {
-		return asyncTaskExecutor();
-	}
+  @Override
+  public Executor getAsyncExecutor() {
+    return asyncTaskExecutor();
+  }
 
-	@Override
-	public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
-		return new SimpleAsyncUncaughtExceptionHandler();
-	}
+  @Override
+  public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+    return new SimpleAsyncUncaughtExceptionHandler();
+  }
 
 }
