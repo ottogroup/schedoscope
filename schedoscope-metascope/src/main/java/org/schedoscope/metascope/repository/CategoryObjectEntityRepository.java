@@ -18,7 +18,6 @@ package org.schedoscope.metascope.repository;
 import org.schedoscope.metascope.model.CategoryObjectEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface CategoryObjectEntityRepository extends
-		CrudRepository<CategoryObjectEntity, Long> {
+public interface CategoryObjectEntityRepository extends CrudRepository<CategoryObjectEntity, Long> {
 
 }

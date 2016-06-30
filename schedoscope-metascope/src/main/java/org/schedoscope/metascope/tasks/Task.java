@@ -24,29 +24,29 @@ import org.schedoscope.metascope.util.SchedoscopeUtil;
 
 public abstract class Task {
 
-	protected RepositoryDAO repo;
-	protected DataSource dataSource;
-	protected SolrFacade solr;
-	protected MetascopeConfig config;
-	protected SchedoscopeUtil schedoscopeUtil;
+  protected RepositoryDAO repo;
+  protected DataSource dataSource;
+  protected SolrFacade solr;
+  protected MetascopeConfig config;
+  protected SchedoscopeUtil schedoscopeUtil;
 
-	public Task(RepositoryDAO repo, DataSource dataSource, SolrFacade solr,
-			MetascopeConfig config, SchedoscopeUtil schedoscopeUtil) {
-		this.repo = repo;
-		this.dataSource = dataSource;
-		this.solr = solr;
-		this.config = config;
-		this.schedoscopeUtil = schedoscopeUtil;
-	}
+  public Task(RepositoryDAO repo, DataSource dataSource, SolrFacade solr, MetascopeConfig config,
+      SchedoscopeUtil schedoscopeUtil) {
+    this.repo = repo;
+    this.dataSource = dataSource;
+    this.solr = solr;
+    this.config = config;
+    this.schedoscopeUtil = schedoscopeUtil;
+  }
 
-	public void preExecute() {
-	}
+  public void preExecute() {
+  }
 
-	public boolean execute(long start) {
-		preExecute();
-		return run(start);
-	}
+  public boolean execute(long start) {
+    preExecute();
+    return run(start);
+  }
 
-	public abstract boolean run(long start);
+  public abstract boolean run(long start);
 
 }

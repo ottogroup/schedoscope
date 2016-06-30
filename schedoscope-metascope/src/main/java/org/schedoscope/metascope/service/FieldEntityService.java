@@ -27,25 +27,24 @@ import org.springframework.stereotype.Service;
 @Service
 public class FieldEntityService {
 
-	@Autowired
-	private FieldEntityRepository fieldEntityRepository;
+  @Autowired
+  private FieldEntityRepository fieldEntityRepository;
 
-	public FieldEntity findByFqdnAndName(String fqdn, String name) {
-		return fieldEntityRepository.findAllByKeyFqdnAndKeyName(fqdn, name);
-	}
+  public FieldEntity findByFqdnAndName(String fqdn, String name) {
+    return fieldEntityRepository.findAllByKeyFqdnAndKeyName(fqdn, name);
+  }
 
-	public FieldEntity findByComment(CommentEntity commentEntity) {
-		return fieldEntityRepository.findByComment(commentEntity);
-	}
+  public FieldEntity findByComment(CommentEntity commentEntity) {
+    return fieldEntityRepository.findByComment(commentEntity);
+  }
 
-	public List<String> findDistinctParameters() {
-		List<String> list = new ArrayList<String>();
-		List<Object[]> parameters = fieldEntityRepository
-				.findDistinctParameters();
-		for (Object[] field : parameters) {
-			list.add((String) field[0]);
-		}
-		return list;
-	}
+  public List<String> findDistinctParameters() {
+    List<String> list = new ArrayList<String>();
+    List<Object[]> parameters = fieldEntityRepository.findDistinctParameters();
+    for (Object[] field : parameters) {
+      list.add((String) field[0]);
+    }
+    return list;
+  }
 
 }

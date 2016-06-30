@@ -20,6 +20,6 @@ import org.schedoscope.metascope.model.key.ViewDataDistributionEntityKey;
 import org.springframework.data.repository.CrudRepository;
 
 public interface DataDistributionEntityRepository extends
-		CrudRepository<DataDistributionEntity, ViewDataDistributionEntityKey> {
+    CrudRepository<DataDistributionEntity, ViewDataDistributionEntityKey> {
 
 }

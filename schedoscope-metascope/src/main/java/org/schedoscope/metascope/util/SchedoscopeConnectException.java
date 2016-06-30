@@ -22,7 +22,7 @@ package org.schedoscope.metascope.util;
 public class SchedoscopeConnectException extends Exception {
 
   private static final long serialVersionUID = 853889137952803512L;
-  
+
   public SchedoscopeConnectException(String msg, Throwable e) {
     super(msg, e);
   }

@@ -18,7 +18,6 @@ package org.schedoscope.metascope.repository;
 import org.schedoscope.metascope.model.CommentEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface CommentEntityRepository extends
-		CrudRepository<CommentEntity, Long> {
+public interface CommentEntityRepository extends CrudRepository<CommentEntity, Long> {
 
 }

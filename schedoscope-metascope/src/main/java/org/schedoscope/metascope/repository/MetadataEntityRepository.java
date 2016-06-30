@@ -18,7 +18,6 @@ package org.schedoscope.metascope.repository;
 import org.schedoscope.metascope.model.Metadata;
 import org.springframework.data.repository.CrudRepository;
 
-public interface MetadataEntityRepository extends
-		CrudRepository<Metadata, String> {
+public interface MetadataEntityRepository extends CrudRepository<Metadata, String> {
 
 }

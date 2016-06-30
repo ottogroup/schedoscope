@@ -28,32 +28,30 @@ import org.schedoscope.metascope.model.Metadata;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class MetadataEntityServiceTest extends SpringTest {
 
-	private static final String METADATA_TEST_KEY = "testkey";
-	private static final String METADATA_TEST_VALUE = "testvalue";
-	private static final String NON_EXIST_METADATA_KEY = "nonExistKey";
+  private static final String METADATA_TEST_KEY = "testkey";
+  private static final String METADATA_TEST_VALUE = "testvalue";
+  private static final String NON_EXIST_METADATA_KEY = "nonExistKey";
 
-	@Before
-	public void setup() {
-		Metadata metadata = new Metadata();
-		metadata.setMetadataKey(METADATA_TEST_KEY);
-		metadata.setMetadataValue(METADATA_TEST_VALUE);
-		metadataEntityRepository.save(metadata);
-	}
+  @Before
+  public void setup() {
+    Metadata metadata = new Metadata();
+    metadata.setMetadataKey(METADATA_TEST_KEY);
+    metadata.setMetadataValue(METADATA_TEST_VALUE);
+    metadataEntityRepository.save(metadata);
+  }
 
-	@Test
-	public void metadataService_01_getMetadataValue() {
-		String metadataValue = metadataEntityService
-				.getMetadataValue(METADATA_TEST_KEY);
+  @Test
+  public void metadataService_01_getMetadataValue() {
+    String metadataValue = metadataEntityService.getMetadataValue(METADATA_TEST_KEY);
 
-		assertEquals(metadataValue, METADATA_TEST_VALUE);
-	}
+    assertEquals(metadataValue, METADATA_TEST_VALUE);
+  }
 
-	@Test
-	public void metadataService_02_getMetadataValue_nonExist() {
-		String metadataValue = metadataEntityService
-				.getMetadataValue(NON_EXIST_METADATA_KEY);
+  @Test
+  public void metadataService_02_getMetadataValue_nonExist() {
+    String metadataValue = metadataEntityService.getMetadataValue(NON_EXIST_METADATA_KEY);
 
-		assertTrue(metadataValue == null);
-	}
+    assertTrue(metadataValue == null);
+  }
 
 }

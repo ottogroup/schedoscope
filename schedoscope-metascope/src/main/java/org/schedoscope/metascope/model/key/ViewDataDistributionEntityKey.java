@@ -23,91 +23,88 @@ import javax.persistence.Embeddable;
 @Embeddable
 public class ViewDataDistributionEntityKey implements Serializable {
 
-	private static final long serialVersionUID = 3005056897508298198L;
+  private static final long serialVersionUID = 3005056897508298198L;
 
-	@Column
-	private String urlPath;
-	@Column
-	private String fieldName;
-	@Column
-	private String distributionKey;
+  @Column
+  private String urlPath;
+  @Column
+  private String fieldName;
+  @Column
+  private String distributionKey;
 
-	public ViewDataDistributionEntityKey() {
-	}
+  public ViewDataDistributionEntityKey() {
+  }
 
-	public ViewDataDistributionEntityKey(String urlPath, String fieldName,
-			String key) {
-		this.urlPath = urlPath;
-		this.fieldName = fieldName;
-		this.distributionKey = key;
-	}
+  public ViewDataDistributionEntityKey(String urlPath, String fieldName, String key) {
+    this.urlPath = urlPath;
+    this.fieldName = fieldName;
+    this.distributionKey = key;
+  }
 
-	public String getUrlPath() {
-		return urlPath;
-	}
+  public String getUrlPath() {
+    return urlPath;
+  }
 
-	public void setUrlPath(String urlPath) {
-		this.urlPath = urlPath;
-	}
+  public void setUrlPath(String urlPath) {
+    this.urlPath = urlPath;
+  }
 
-	public String getFieldName() {
-		return fieldName;
-	}
+  public String getFieldName() {
+    return fieldName;
+  }
 
-	public void setFieldName(String fieldName) {
-		this.fieldName = fieldName;
-	}
+  public void setFieldName(String fieldName) {
+    this.fieldName = fieldName;
+  }
 
-	public String getDistributionKey() {
-		return distributionKey;
-	}
+  public String getDistributionKey() {
+    return distributionKey;
+  }
 
-	public void setDistributionKey(String distributionKey) {
-		this.distributionKey = distributionKey;
-	}
+  public void setDistributionKey(String distributionKey) {
+    this.distributionKey = distributionKey;
+  }
 
-	@Override
-	public String toString() {
-		return urlPath + " " + fieldName + " " + distributionKey;
-	}
+  @Override
+  public String toString() {
+    return urlPath + " " + fieldName + " " + distributionKey;
+  }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((distributionKey == null) ? 0 : distributionKey.hashCode());
-		result = prime * result
-				+ ((fieldName == null) ? 0 : fieldName.hashCode());
-		result = prime * result + ((urlPath == null) ? 0 : urlPath.hashCode());
-		return result;
-	}
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((distributionKey == null) ? 0 : distributionKey.hashCode());
+    result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
+    result = prime * result + ((urlPath == null) ? 0 : urlPath.hashCode());
+    return result;
+  }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ViewDataDistributionEntityKey other = (ViewDataDistributionEntityKey) obj;
-		if (distributionKey == null) {
-			if (other.distributionKey != null)
-				return false;
-		} else if (!distributionKey.equals(other.distributionKey))
-			return false;
-		if (fieldName == null) {
-			if (other.fieldName != null)
-				return false;
-		} else if (!fieldName.equals(other.fieldName))
-			return false;
-		if (urlPath == null) {
-			if (other.urlPath != null)
-				return false;
-		} else if (!urlPath.equals(other.urlPath))
-			return false;
-		return true;
-	}
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    ViewDataDistributionEntityKey other = (ViewDataDistributionEntityKey) obj;
+    if (distributionKey == null) {
+      if (other.distributionKey != null)
+        return false;
+    } else if (!distributionKey.equals(other.distributionKey))
+      return false;
+    if (fieldName == null) {
+      if (other.fieldName != null)
+        return false;
+    } else if (!fieldName.equals(other.fieldName))
+      return false;
+    if (urlPath == null) {
+      if (other.urlPath != null)
+        return false;
+    } else if (!urlPath.equals(other.urlPath))
+      return false;
+    return true;
+  }
 
 }

@@ -24,56 +24,55 @@ import org.schedoscope.metascope.model.key.ViewDataDistributionEntityKey;
 @Entity
 public class DataDistributionEntity {
 
-	@EmbeddedId
-	private ViewDataDistributionEntityKey key;
-	@Column(columnDefinition = "varchar(32672)")
-	private String distributionValue;
+  @EmbeddedId
+  private ViewDataDistributionEntityKey key;
+  @Column(columnDefinition = "varchar(32672)")
+  private String distributionValue;
 
-	public DataDistributionEntity() {
-	}
+  public DataDistributionEntity() {
+  }
 
-	public DataDistributionEntity(String urlPath, String fieldName,
-			String c_key, String value) {
-		if (key == null) {
-			key = new ViewDataDistributionEntityKey(urlPath, fieldName, c_key);
-		} else {
-			setUrlPath(urlPath);
-			setFieldName(fieldName);
-			setDistributionKey(c_key);
-		}
-		this.distributionValue = value;
-	}
+  public DataDistributionEntity(String urlPath, String fieldName, String c_key, String value) {
+    if (key == null) {
+      key = new ViewDataDistributionEntityKey(urlPath, fieldName, c_key);
+    } else {
+      setUrlPath(urlPath);
+      setFieldName(fieldName);
+      setDistributionKey(c_key);
+    }
+    this.distributionValue = value;
+  }
 
-	public String getUrlPath() {
-		return this.key.getUrlPath();
-	}
+  public String getUrlPath() {
+    return this.key.getUrlPath();
+  }
 
-	public void setUrlPath(String urlPath) {
-		this.key.setUrlPath(urlPath);
-	}
+  public void setUrlPath(String urlPath) {
+    this.key.setUrlPath(urlPath);
+  }
 
-	public String getFieldName() {
-		return this.key.getFieldName();
-	}
+  public String getFieldName() {
+    return this.key.getFieldName();
+  }
 
-	public void setFieldName(String fieldName) {
-		this.key.setFieldName(fieldName);
-	}
+  public void setFieldName(String fieldName) {
+    this.key.setFieldName(fieldName);
+  }
 
-	public String getDistributionKey() {
-		return this.key.getDistributionKey();
-	}
+  public String getDistributionKey() {
+    return this.key.getDistributionKey();
+  }
 
-	public void setDistributionKey(String distributionKey) {
-		this.key.setDistributionKey(distributionKey);
-	}
+  public void setDistributionKey(String distributionKey) {
+    this.key.setDistributionKey(distributionKey);
+  }
 
-	public String getDistributionValue() {
-		return distributionValue;
-	}
+  public String getDistributionValue() {
+    return distributionValue;
+  }
 
-	public void setDistributionValue(String distributionValue) {
-		this.distributionValue = distributionValue;
-	}
+  public void setDistributionValue(String distributionValue) {
+    this.distributionValue = distributionValue;
+  }
 
 }

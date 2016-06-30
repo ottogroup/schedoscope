@@ -30,58 +30,53 @@ import org.springframework.transaction.annotation.Transactional;
 
 public class RowCountJob extends AsyncRepositoryJob {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(RowCountJob.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RowCountJob.class);
 
-	public RowCountJob(ViewEntity viewEntity,
-			ViewEntityRepository viewEntityRepository,
-			JobMetadataEntityRepository jobMetadataEntityRepository,
-			MetascopeConfig config, String jobMetadataKey,
-			String jobMetadataField) {
-		super(viewEntity, viewEntityRepository, jobMetadataEntityRepository,
-				config, jobMetadataKey, jobMetadataField);
-	}
+  public RowCountJob(ViewEntity viewEntity, ViewEntityRepository viewEntityRepository,
+      JobMetadataEntityRepository jobMetadataEntityRepository, MetascopeConfig config, String jobMetadataKey,
+      String jobMetadataField) {
+    super(viewEntity, viewEntityRepository, jobMetadataEntityRepository, config, jobMetadataKey, jobMetadataField);
+  }
 
-	@Override
-	@Transactional
-	protected void execute() {
-		LOG.info("RowCountJob for view '{}' started", viewEntity.getUrlPath());
-		/* get count for partition */
-		long rows = getRows(viewEntity);
+  @Override
+  @Transactional
+  protected void execute() {
+    LOG.info("RowCountJob for view '{}' started", viewEntity.getUrlPath());
+    /* get count for partition */
+    long rows = getRows(viewEntity);
 
-		/* save view entity */
-		viewEntity = viewEntityRepository
-				.findByUrlPath(viewEntity.getUrlPath());
-		viewEntity.setRows(rows);
-		viewEntity.setRowJobFinished(true);
-		viewEntityRepository.save(viewEntity);
-		LOG.info("RowCountJob for view '{}' finished", viewEntity.getUrlPath());
-	}
+    /* save view entity */
+    viewEntity = viewEntityRepository.findByUrlPath(viewEntity.getUrlPath());
+    viewEntity.setRows(rows);
+    viewEntity.setRowJobFinished(true);
+    viewEntityRepository.save(viewEntity);
+    LOG.info("RowCountJob for view '{}' finished", viewEntity.getUrlPath());
+  }
 
-	private long getRows(ViewEntity viewEntity) {
-		try {
-			String sql = "select count(*) from " + viewEntity.getFqdn();
-			if (!viewEntity.getParameters().isEmpty()) {
-				sql += " where ";
-				String whereCond = "";
-				for (ParameterValueEntity kve : viewEntity.getParameters()) {
-					if (!whereCond.isEmpty()) {
-						whereCond += " and ";
-					}
-					whereCond += kve.getKey() + " = '" + kve.getValue() + "'";
-				}
-				sql += whereCond;
-			}
+  private long getRows(ViewEntity viewEntity) {
+    try {
+      String sql = "select count(*) from " + viewEntity.getFqdn();
+      if (!viewEntity.getParameters().isEmpty()) {
+        sql += " where ";
+        String whereCond = "";
+        for (ParameterValueEntity kve : viewEntity.getParameters()) {
+          if (!whereCond.isEmpty()) {
+            whereCond += " and ";
+          }
+          whereCond += kve.getKey() + " = '" + kve.getValue() + "'";
+        }
+        sql += whereCond;
+      }
 
-			Statement stmt = connection.createStatement();
-			ResultSet rs = stmt.executeQuery(sql);
-			if (rs.next()) {
-				return rs.getLong(1);
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return 0;
-	}
+      Statement stmt = connection.createStatement();
+      ResultSet rs = stmt.executeQuery(sql);
+      if (rs.next()) {
+        return rs.getLong(1);
+      }
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
+    return 0;
+  }
 
 }

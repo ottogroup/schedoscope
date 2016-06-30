@@ -31,26 +31,23 @@ import org.springframework.stereotype.Service;
 @Service
 public class JobSchedulerService {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(JobSchedulerService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(JobSchedulerService.class);
 
-	@Autowired
-	private RepositoryDAO repo;
-	@Autowired
-	private DataSource dataSource;
-	@Autowired
-	private MetascopeConfig config;
-	@Autowired
-	@Qualifier("taskExecutor")
-	private TaskExecutor executor;
+  @Autowired
+  private RepositoryDAO repo;
+  @Autowired
+  private DataSource dataSource;
+  @Autowired
+  private MetascopeConfig config;
+  @Autowired
+  @Qualifier("taskExecutor")
+  private TaskExecutor executor;
 
-	public void updateLastDataForTable(TableEntity tableEntity) {
-		if (tableEntity.getTimestampField() != null) {
-			LOG.info("Scheduled LastDataJob for table '{}'",
-					tableEntity.getFqdn());
-			executor.execute(new LastDataJob(tableEntity, repo, dataSource,
-					config, System.currentTimeMillis()));
-		}
-	}
+  public void updateLastDataForTable(TableEntity tableEntity) {
+    if (tableEntity.getTimestampField() != null) {
+      LOG.info("Scheduled LastDataJob for table '{}'", tableEntity.getFqdn());
+      executor.execute(new LastDataJob(tableEntity, repo, dataSource, config, System.currentTimeMillis()));
+    }
+  }
 
 }

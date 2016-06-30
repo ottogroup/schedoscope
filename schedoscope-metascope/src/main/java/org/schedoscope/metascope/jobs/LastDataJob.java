@@ -32,65 +32,64 @@ import org.slf4j.LoggerFactory;
 
 public class LastDataJob implements Runnable {
 
-	private static final Logger LOG = LoggerFactory
-			.getLogger(LastDataJob.class);
+  private static final Logger LOG = LoggerFactory.getLogger(LastDataJob.class);
 
-	private TableEntity tableEntity;
-	private RepositoryDAO repo;
-	private DataSource dataSource;
-	private long start;
-	private HiveServerConnection hiveServer;
+  private TableEntity tableEntity;
+  private RepositoryDAO repo;
+  private DataSource dataSource;
+  private long start;
+  private HiveServerConnection hiveServer;
 
-	public LastDataJob(TableEntity tableEntity, RepositoryDAO repo,
-			DataSource dataSource, MetascopeConfig config, long start) {
-		this.tableEntity = tableEntity;
-		this.repo = repo;
-		this.dataSource = dataSource;
-		this.start = start;
-		this.hiveServer = new HiveServerConnection(config);
-	}
+  public LastDataJob(TableEntity tableEntity, RepositoryDAO repo, DataSource dataSource, MetascopeConfig config,
+      long start) {
+    this.tableEntity = tableEntity;
+    this.repo = repo;
+    this.dataSource = dataSource;
+    this.start = start;
+    this.hiveServer = new HiveServerConnection(config);
+  }
 
-	@Override
-	public void run() {
-		this.hiveServer.connect();
-		LOG.info("LastDataJob for table '{}' started", tableEntity.getFqdn());
-		String fn = tableEntity.getTimestampField();
-		String tn = tableEntity.getFqdn();
-		String sql = "select max(" + fn + ") as ts from " + tn;
-		Statement stmt = null;
-		ResultSet rs = null;
-		try {
-			stmt = hiveServer.createStatement();
-			rs = stmt.executeQuery(sql);
-			if (rs.next()) {
-				tableEntity.setLastData(rs.getString("ts"));
-				tableEntity.setLastChange(start);
-			}
-		} catch (SQLException e) {
-			LOG.error("Could not query for last timestamp", e);
-		} finally {
-			DbUtils.closeQuietly(rs);
-			DbUtils.closeQuietly(stmt);
-			DbUtils.closeQuietly(hiveServer.getConnection());
-		}
+  @Override
+  public void run() {
+    this.hiveServer.connect();
+    LOG.info("LastDataJob for table '{}' started", tableEntity.getFqdn());
+    String fn = tableEntity.getTimestampField();
+    String tn = tableEntity.getFqdn();
+    String sql = "select max(" + fn + ") as ts from " + tn;
+    Statement stmt = null;
+    ResultSet rs = null;
+    try {
+      stmt = hiveServer.createStatement();
+      rs = stmt.executeQuery(sql);
+      if (rs.next()) {
+        tableEntity.setLastData(rs.getString("ts"));
+        tableEntity.setLastChange(start);
+      }
+    } catch (SQLException e) {
+      LOG.error("Could not query for last timestamp", e);
+    } finally {
+      DbUtils.closeQuietly(rs);
+      DbUtils.closeQuietly(stmt);
+      DbUtils.closeQuietly(hiveServer.getConnection());
+    }
 
-		Connection connection;
-		try {
-			connection = dataSource.getConnection();
-		} catch (SQLException e) {
-			LOG.error("Could not connect to repository", e);
-			return;
-		}
+    Connection connection;
+    try {
+      connection = dataSource.getConnection();
+    } catch (SQLException e) {
+      LOG.error("Could not connect to repository", e);
+      return;
+    }
 
-		repo.insertOrUpdate(connection, tableEntity);
+    repo.insertOrUpdate(connection, tableEntity);
 
-		try {
-			connection.close();
-		} catch (SQLException e) {
-			LOG.error("Could not close connection to repository", e);
-		}
+    try {
+      connection.close();
+    } catch (SQLException e) {
+      LOG.error("Could not close connection to repository", e);
+    }
 
-		LOG.info("LastDataJob for table '{}' finished", tableEntity.getFqdn());
-	}
+    LOG.info("LastDataJob for table '{}' finished", tableEntity.getFqdn());
+  }
 
 }

@@ -20,10 +20,10 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface UserEntityRepository extends CrudRepository<UserEntity, Long> {
 
-	public UserEntity findByUsername(String username);
+  public UserEntity findByUsername(String username);
 
-	public UserEntity findByEmail(String email);
+  public UserEntity findByEmail(String email);
 
-	public UserEntity findByFullname(String fullname);
+  public UserEntity findByFullname(String fullname);
 
 }

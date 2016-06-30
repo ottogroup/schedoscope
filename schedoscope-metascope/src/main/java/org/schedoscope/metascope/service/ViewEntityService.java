@@ -24,15 +24,15 @@ import org.springframework.stereotype.Service;
 @Service
 public class ViewEntityService {
 
-	@Autowired
-	private ViewEntityRepository viewRepository;
+  @Autowired
+  private ViewEntityRepository viewRepository;
 
-	public ViewEntity findByUrlPath(String urlPath) {
-		return viewRepository.findByUrlPath(urlPath);
-	}
+  public ViewEntity findByUrlPath(String urlPath) {
+    return viewRepository.findByUrlPath(urlPath);
+  }
 
-	public int getPartitionCount(TableEntity tableEntity) {
-		return viewRepository.getPartitionCountForFqdn(tableEntity.getFqdn());
-	}
+  public int getPartitionCount(TableEntity tableEntity) {
+    return viewRepository.getPartitionCountForFqdn(tableEntity.getFqdn());
+  }
 
 }

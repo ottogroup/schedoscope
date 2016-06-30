@@ -38,82 +38,66 @@ import com.google.common.io.Resources;
 
 public class SchedoscopeSyncRepositoryTest extends SpringTest {
 
-	private static final int TABLES_TESTDATA_COUNT = 8;
-	private static final int VIEWS_TESTDATA_COUNT = 35;
-	private static final int FIELDS_TESTDATA_COUNT = 55;
-	private static final int TABLEDEPENDENCIES_TESTDATA_COUNT = 9;
-	private static final int TRANSFORMATION_TESTDATA_COUNT = 13;
-	private static final int PARAMETERVALUE_TESTDATA_COUNT = 84;
-	private static final int DEPENDENCY_TESTDATA_COUNT = 144;
+  private static final int TABLES_TESTDATA_COUNT = 8;
+  private static final int VIEWS_TESTDATA_COUNT = 35;
+  private static final int FIELDS_TESTDATA_COUNT = 55;
+  private static final int TABLEDEPENDENCIES_TESTDATA_COUNT = 9;
+  private static final int TRANSFORMATION_TESTDATA_COUNT = 13;
+  private static final int PARAMETERVALUE_TESTDATA_COUNT = 84;
+  private static final int DEPENDENCY_TESTDATA_COUNT = 144;
 
-	private SchedoscopeSyncTask schedoscopeSyncTask;
+  private SchedoscopeSyncTask schedoscopeSyncTask;
 
-	@Before
-	public void setupLocal() throws IOException, SchedoscopeConnectException {
-		SolrFacade solrFacadeMock = mock(SolrFacade.class);
-		SchedoscopeUtil schedoscopeUtilMock = mock(SchedoscopeUtil.class);
+  @Before
+  public void setupLocal() throws IOException, SchedoscopeConnectException {
+    SolrFacade solrFacadeMock = mock(SolrFacade.class);
+    SchedoscopeUtil schedoscopeUtilMock = mock(SchedoscopeUtil.class);
 
-		String json = Resources.toString(
-				Resources.getResource("schedoscope-rest.json"), Charsets.UTF_8);
+    String json = Resources.toString(Resources.getResource("schedoscope-rest.json"), Charsets.UTF_8);
 
-		when(
-				schedoscopeUtilMock
-						.getViewsAsJsonFromSchedoscope(any(Boolean.class)))
-				.thenReturn(json);
-		when(schedoscopeUtilMock.getViewStatus(any(Boolean.class)))
-				.thenCallRealMethod();
-		when(schedoscopeUtilMock.getViewStatusFromJson(any(String.class)))
-				.thenCallRealMethod();
-		when(
-				schedoscopeUtilMock.getStatus(Matchers
-						.anyListOf(ViewEntity.class))).thenCallRealMethod();
+    when(schedoscopeUtilMock.getViewsAsJsonFromSchedoscope(any(Boolean.class))).thenReturn(json);
+    when(schedoscopeUtilMock.getViewStatus(any(Boolean.class))).thenCallRealMethod();
+    when(schedoscopeUtilMock.getViewStatusFromJson(any(String.class))).thenCallRealMethod();
+    when(schedoscopeUtilMock.getStatus(Matchers.anyListOf(ViewEntity.class))).thenCallRealMethod();
 
-		this.schedoscopeSyncTask = new SchedoscopeSyncTask(repo, dataSource,
-				solrFacadeMock, null, schedoscopeUtilMock);
-	}
+    this.schedoscopeSyncTask = new SchedoscopeSyncTask(repo, dataSource, solrFacadeMock, null, schedoscopeUtilMock);
+  }
 
-	@Test
-	public void schedoscopeSyncTask_01_run() {
-		assertEquals(size(tableEntityRepository.findAll()), 0);
-		assertEquals(size(viewEntityRepository.findAll()), 0);
-		assertEquals(size(fieldEntityRepository.findAll()), 0);
-		assertEquals(size(tableDependencyEntityRepository.findAll()), 0);
-		assertEquals(size(transformationEntityRepository.findAll()), 0);
-		assertEquals(size(parameterValueEntityRepository.findAll()), 0);
-		assertEquals(size(viewDependencyEntityRepository.findAll()), 0);
-		assertEquals(size(successorEntityRepository.findAll()), 0);
+  @Test
+  public void schedoscopeSyncTask_01_run() {
+    assertEquals(size(tableEntityRepository.findAll()), 0);
+    assertEquals(size(viewEntityRepository.findAll()), 0);
+    assertEquals(size(fieldEntityRepository.findAll()), 0);
+    assertEquals(size(tableDependencyEntityRepository.findAll()), 0);
+    assertEquals(size(transformationEntityRepository.findAll()), 0);
+    assertEquals(size(parameterValueEntityRepository.findAll()), 0);
+    assertEquals(size(viewDependencyEntityRepository.findAll()), 0);
+    assertEquals(size(successorEntityRepository.findAll()), 0);
 
-		Connection connection;
-		try {
-			connection = dataSource.getConnection();
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return;
-		}
+    Connection connection;
+    try {
+      connection = dataSource.getConnection();
+    } catch (SQLException e) {
+      e.printStackTrace();
+      return;
+    }
 
-		schedoscopeSyncTask.run(System.currentTimeMillis());
+    schedoscopeSyncTask.run(System.currentTimeMillis());
 
-		try {
-			connection.close();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
+    try {
+      connection.close();
+    } catch (SQLException e) {
+      e.printStackTrace();
+    }
 
-		assertEquals(size(tableEntityRepository.findAll()),
-				TABLES_TESTDATA_COUNT);
-		assertEquals(size(viewEntityRepository.findAll()), VIEWS_TESTDATA_COUNT);
-		assertEquals(size(fieldEntityRepository.findAll()),
-				FIELDS_TESTDATA_COUNT);
-		assertEquals(size(tableDependencyEntityRepository.findAll()),
-				TABLEDEPENDENCIES_TESTDATA_COUNT);
-		assertEquals(size(transformationEntityRepository.findAll()),
-				TRANSFORMATION_TESTDATA_COUNT);
-		assertEquals(size(parameterValueEntityRepository.findAll()),
-				PARAMETERVALUE_TESTDATA_COUNT);
-		assertEquals(size(viewDependencyEntityRepository.findAll()),
-				DEPENDENCY_TESTDATA_COUNT);
-		assertEquals(size(successorEntityRepository.findAll()),
-				DEPENDENCY_TESTDATA_COUNT);
-	}
+    assertEquals(size(tableEntityRepository.findAll()), TABLES_TESTDATA_COUNT);
+    assertEquals(size(viewEntityRepository.findAll()), VIEWS_TESTDATA_COUNT);
+    assertEquals(size(fieldEntityRepository.findAll()), FIELDS_TESTDATA_COUNT);
+    assertEquals(size(tableDependencyEntityRepository.findAll()), TABLEDEPENDENCIES_TESTDATA_COUNT);
+    assertEquals(size(transformationEntityRepository.findAll()), TRANSFORMATION_TESTDATA_COUNT);
+    assertEquals(size(parameterValueEntityRepository.findAll()), PARAMETERVALUE_TESTDATA_COUNT);
+    assertEquals(size(viewDependencyEntityRepository.findAll()), DEPENDENCY_TESTDATA_COUNT);
+    assertEquals(size(successorEntityRepository.findAll()), DEPENDENCY_TESTDATA_COUNT);
+  }
 
 }

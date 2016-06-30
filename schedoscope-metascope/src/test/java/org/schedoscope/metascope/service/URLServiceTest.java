@@ -33,100 +33,91 @@ import org.schedoscope.metascope.SpringTest;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class URLServiceTest extends SpringTest {
 
-	private static final String LOCALHOST = "http://localhost:8080/";
-	private static final String SOME_URL_KEY = "someKey";
-	private static final String SOME_URL_VALUE = "someValue";
-	private static final String SOME_URL_PARAMETER = SOME_URL_KEY + "="
-			+ SOME_URL_VALUE;
-	private static final String FILTER_URL_KEY = "filterByKey";
-	private static final String FILTER_URL_VALUE_1 = "filterByValue1";
-	private static final String FILTER_URL_VALUE_2 = "filterByValue2";
-	private static final String FILTER_URL_PARAMETER = FILTER_URL_KEY + "="
-			+ FILTER_URL_VALUE_1;
-	private static final String PAGINATION_URL_PART = "p=0&e=10";
+  private static final String LOCALHOST = "http://localhost:8080/";
+  private static final String SOME_URL_KEY = "someKey";
+  private static final String SOME_URL_VALUE = "someValue";
+  private static final String SOME_URL_PARAMETER = SOME_URL_KEY + "=" + SOME_URL_VALUE;
+  private static final String FILTER_URL_KEY = "filterByKey";
+  private static final String FILTER_URL_VALUE_1 = "filterByValue1";
+  private static final String FILTER_URL_VALUE_2 = "filterByValue2";
+  private static final String FILTER_URL_PARAMETER = FILTER_URL_KEY + "=" + FILTER_URL_VALUE_1;
+  private static final String PAGINATION_URL_PART = "p=0&e=10";
 
-	private HttpServletRequest request;
+  private HttpServletRequest request;
 
-	@Before
-	public void setupLocal() {
-		this.request = mock(HttpServletRequest.class);
-		when(request.getRequestURL()).thenReturn(new StringBuffer(LOCALHOST));
-	}
+  @Before
+  public void setupLocal() {
+    this.request = mock(HttpServletRequest.class);
+    when(request.getRequestURL()).thenReturn(new StringBuffer(LOCALHOST));
+  }
 
-	@Test
-	public void urlService_01_getPaginationUrl() {
-		String url = urlService.getPaginationURL(request, 0, 10);
+  @Test
+  public void urlService_01_getPaginationUrl() {
+    String url = urlService.getPaginationURL(request, 0, 10);
 
-		assertEquals(url, LOCALHOST + "?" + PAGINATION_URL_PART);
-	}
+    assertEquals(url, LOCALHOST + "?" + PAGINATION_URL_PART);
+  }
 
-	@Test
-	public void urlService_02_getPaginationUrlWithParams() {
-		Map<String, String[]> urlParams = new HashMap<String, String[]>();
-		urlParams.put(SOME_URL_KEY, new String[] { SOME_URL_VALUE });
-		when(request.getParameterMap()).thenReturn(urlParams);
+  @Test
+  public void urlService_02_getPaginationUrlWithParams() {
+    Map<String, String[]> urlParams = new HashMap<String, String[]>();
+    urlParams.put(SOME_URL_KEY, new String[] { SOME_URL_VALUE });
+    when(request.getParameterMap()).thenReturn(urlParams);
 
-		String url = urlService.getPaginationURL(request, 0, 10);
+    String url = urlService.getPaginationURL(request, 0, 10);
 
-		assertEquals(url, LOCALHOST + "?" + SOME_URL_PARAMETER + "&"
-				+ PAGINATION_URL_PART);
-	}
+    assertEquals(url, LOCALHOST + "?" + SOME_URL_PARAMETER + "&" + PAGINATION_URL_PART);
+  }
 
-	@Test
-	public void urlService_03_getFilterUrlClean() {
-		String url = urlService.getFilterURL(request, FILTER_URL_KEY,
-				FILTER_URL_VALUE_1);
+  @Test
+  public void urlService_03_getFilterUrlClean() {
+    String url = urlService.getFilterURL(request, FILTER_URL_KEY, FILTER_URL_VALUE_1);
 
-		assertEquals(url, LOCALHOST + "?" + FILTER_URL_PARAMETER);
-	}
+    assertEquals(url, LOCALHOST + "?" + FILTER_URL_PARAMETER);
+  }
 
-	@Test
-	public void urlService_04_getFilterWithOtherParameter() {
-		Map<String, String[]> urlParams = new HashMap<String, String[]>();
-		urlParams.put(SOME_URL_KEY, new String[] { SOME_URL_VALUE });
-		when(request.getParameterMap()).thenReturn(urlParams);
+  @Test
+  public void urlService_04_getFilterWithOtherParameter() {
+    Map<String, String[]> urlParams = new HashMap<String, String[]>();
+    urlParams.put(SOME_URL_KEY, new String[] { SOME_URL_VALUE });
+    when(request.getParameterMap()).thenReturn(urlParams);
 
-		String url = urlService.getFilterURL(request, FILTER_URL_KEY,
-				FILTER_URL_VALUE_1);
+    String url = urlService.getFilterURL(request, FILTER_URL_KEY, FILTER_URL_VALUE_1);
 
-		assertEquals(url, LOCALHOST + "?" + SOME_URL_PARAMETER + "&"
-				+ FILTER_URL_PARAMETER);
-	}
+    assertEquals(url, LOCALHOST + "?" + SOME_URL_PARAMETER + "&" + FILTER_URL_PARAMETER);
+  }
 
-	@Test
-	public void urlService_05_getFilterWithSameParameter() {
-		Map<String, String[]> urlParams = new HashMap<String, String[]>();
-		urlParams.put(FILTER_URL_KEY, new String[] { FILTER_URL_VALUE_1 });
-		when(request.getParameterMap()).thenReturn(urlParams);
+  @Test
+  public void urlService_05_getFilterWithSameParameter() {
+    Map<String, String[]> urlParams = new HashMap<String, String[]>();
+    urlParams.put(FILTER_URL_KEY, new String[] { FILTER_URL_VALUE_1 });
+    when(request.getParameterMap()).thenReturn(urlParams);
 
-		String url = urlService.getFilterURL(request, FILTER_URL_KEY,
-				FILTER_URL_VALUE_2);
+    String url = urlService.getFilterURL(request, FILTER_URL_KEY, FILTER_URL_VALUE_2);
 
-		assertEquals(url, LOCALHOST + "?" + FILTER_URL_PARAMETER + ","
-				+ FILTER_URL_VALUE_2);
-	}
+    assertEquals(url, LOCALHOST + "?" + FILTER_URL_PARAMETER + "," + FILTER_URL_VALUE_2);
+  }
 
-	@Test
-	public void urlService_06_getExclusiveFilter() {
-		Map<String, String[]> urlParams = new HashMap<String, String[]>();
-		urlParams.put(FILTER_URL_KEY, new String[] { FILTER_URL_VALUE_2 });
-		when(request.getParameterMap()).thenReturn(urlParams);
+  @Test
+  public void urlService_06_getExclusiveFilter() {
+    Map<String, String[]> urlParams = new HashMap<String, String[]>();
+    urlParams.put(FILTER_URL_KEY, new String[] { FILTER_URL_VALUE_2 });
+    when(request.getParameterMap()).thenReturn(urlParams);
 
-		String url = urlService.getExclusiveFilterURL(request, FILTER_URL_KEY,
-				FILTER_URL_VALUE_1);
+    String url = urlService.getExclusiveFilterURL(request, FILTER_URL_KEY, FILTER_URL_VALUE_1);
 
-		assertEquals(url, LOCALHOST + "?" + FILTER_URL_PARAMETER);
-	}
+    assertEquals(url, LOCALHOST + "?" + FILTER_URL_PARAMETER);
+  }
 
-	@Test
-	public void urlService_07_removeFromFilter() {
-		Map<String, String[]> urlParams = new HashMap<String, String[]>();
-		urlParams.put(FILTER_URL_KEY, new String[] { FILTER_URL_VALUE_2 });
-		when(request.getParameterMap()).thenReturn(urlParams);
+  @Test
+  public void urlService_07_removeFromFilter() {
+    Map<String, String[]> urlParams = new HashMap<String, String[]>();
+    urlParams.put(FILTER_URL_KEY, new String[] { FILTER_URL_VALUE_2 });
+    when(request.getParameterMap()).thenReturn(urlParams);
 
-		String url = urlService.removeFromFilterURL(request, FILTER_URL_KEY);
+    String url = urlService.removeFromFilterURL(request, FILTER_URL_KEY);
 
-		assertEquals(url, LOCALHOST + "?");
-	}
+    assertEquals(url, LOCALHOST + "?");
+  }
 
 }
