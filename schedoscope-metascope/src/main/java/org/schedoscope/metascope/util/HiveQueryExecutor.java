@@ -123,14 +123,9 @@ public class HiveQueryExecutor {
       while (rs.next()) {
         List<String> row = new ArrayList<String>();
         for (int i = 1; i <= rsmd.getColumnCount(); i++) {
-          int type = rsmd.getColumnType(i);
-          if (type == Types.VARCHAR || type == Types.CHAR || type == Types.JAVA_OBJECT) {
-            row.add(rs.getString(i));
-          } else if (type == Types.BOOLEAN) {
-            row.add("" + rs.getBoolean(i));
-          } else {
-            row.add("" + rs.getLong(i));
-          }
+          Object val = rs.getObject(i);
+          String strVal = (val == null ? null : val.toString());
+          row.add(strVal);
         }
         rows.add(row);
       }

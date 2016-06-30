@@ -20,10 +20,12 @@
       <div class="panel-heading">
         <div class="row">
           <div class="col-md-12">
-            <a th:href="'table?fqdn=' + ${partition.fqdn} + '#partitionsContent-' + ${partition.internalViewId}"
-              th:text="${!partition.parameters.isEmpty()} ? 
-                 ${partition.urlPath} + ' (' + ${partition.parameterString} + ')' :
-                 ${partition.urlPath}"></a>
+            <a
+            th:href="'table?fqdn=' + ${partition.fqdn} + '&amp;partitionPage=' + ${urlService.getPartitionPage(partition.fqdn, partition.internalViewId)} 
+            	+ '#partitionsContent-' + ${partition.internalViewId}"
+            th:text="${!partition.parameters.isEmpty()} ? 
+               ${partition.urlPath} + ' (' + ${partition.parameterString} + ')' :
+               ${partition.urlPath}"></a>
             <span style="padding-left: 10px;" data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span>
             <div data-th-if="${admin}" class="dropdown pull-right">
               <a class="btn-link dropdown-toggle" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
