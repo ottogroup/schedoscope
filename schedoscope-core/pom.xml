@@ -150,6 +150,16 @@
 			<groupId>org.apache.hadoop</groupId>
 			<artifactId>hadoop-auth</artifactId>
 			<version>${hadoop.version}</version>
+			<exclusions>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.hadoop</groupId>
@@ -188,8 +198,8 @@
 			<classifier>jar-with-dependencies</classifier>
 			<exclusions>
 				<exclusion>
-					<artifactId>hive-hcatalog-core</artifactId>
-					<groupId>org.apache.hive.hcatalog</groupId>
+					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -197,10 +207,13 @@
 			<groupId>org.apache.pig</groupId>
 			<artifactId>pig</artifactId>
 			<version>${pig.version}</version>
-			<classifier>h2</classifier>
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-log4j12</artifactId>
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
@@ -232,6 +245,10 @@
 			<exclusions>
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
+					<groupId>org.slf4j</groupId>
+				</exclusion>
+				<exclusion>
+					<artifactId>slf4j-simple</artifactId>
 					<groupId>org.slf4j</groupId>
 				</exclusion>
 			</exclusions>
