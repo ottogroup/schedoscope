@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>schedoscope</groupId>
 	<artifactId>schedoscope-suite</artifactId>
-	<version>0.6.3</version>
+	<version>0.6.4-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Schedoscope Suite</name>
 	<description>A wrapper building all modules of the Schedoscope project</description>
@@ -24,7 +24,7 @@
 		<mrunit.version>1.1.0</mrunit.version>
 		<hiveunit.version>1.2.3</hiveunit.version>
 		<minioozie.version>1.2.1</minioozie.version>
-		<schedoscope.version>0.6.3</schedoscope.version>
+		<schedoscope.version>0.6.4-SNAPSHOT</schedoscope.version>
 	</properties>
 
 	<modules>

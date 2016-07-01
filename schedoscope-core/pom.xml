@@ -9,7 +9,7 @@
 	<parent>
 		<artifactId>schedoscope-suite</artifactId>
 		<groupId>schedoscope</groupId>
-		<version>0.6.3</version>
+		<version>0.6.4-SNAPSHOT</version>
 	</parent>
 
 	<dependencies>
