@@ -63,10 +63,17 @@ public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter 
     if (config.getAuthenticationMethod().equalsIgnoreCase("ldap")) {
       String[] allgroups = appendRolePrefix(config.getAllowedGroups(), config.getAdminGroups());
       String[] adminGroups = appendRolePrefix(config.getAdminGroups());
-      http.authorizeRequests().antMatchers("/", "/?error=cred", "/status/*", "/expired").permitAll().antMatchers("/**")
-          .hasAnyAuthority(allgroups).antMatchers("/admin**").hasAnyAuthority(adminGroups).antMatchers("/admin/")
-          .hasAnyAuthority(adminGroups).antMatchers("/admin/**").hasAnyAuthority(adminGroups).anyRequest()
-          .authenticated().and().formLogin().loginPage("/").failureUrl("/?error=cred").defaultSuccessUrl("/home").and()
+      http.authorizeRequests()
+          .antMatchers("/", "/?error=cred", "/status/*", "/expired").permitAll()
+          .antMatchers("/admin**").hasAnyAuthority(adminGroups)
+          .antMatchers("/admin/").hasAnyAuthority(adminGroups)
+          .antMatchers("/admin/**").hasAnyAuthority(adminGroups)
+          .antMatchers("/**").hasAnyAuthority(allgroups)
+          .anyRequest().authenticated()
+          .and()
+          .formLogin().loginPage("/").failureUrl("/?error=cred")
+          .defaultSuccessUrl("/home")
+          .and()
           .logout().logoutSuccessUrl("/").and().rememberMe().and().exceptionHandling()
           .accessDeniedPage("/accessdenied");
     } else {

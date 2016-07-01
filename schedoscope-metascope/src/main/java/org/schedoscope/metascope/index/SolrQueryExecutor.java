@@ -47,6 +47,7 @@ import org.schedoscope.metascope.service.TableEntityService;
 import org.schedoscope.metascope.service.ViewEntityService;
 import org.schedoscope.metascope.util.URLUtil;
 
+//TODO this class should be refactored..
 public class SolrQueryExecutor {
 
   public static final String ID = "id";
@@ -186,7 +187,7 @@ public class SolrQueryExecutor {
     Map<String, List<String>> activeFilterValues = new HashMap<String, List<String>>();
 
     /*
-     * determine on which type is searched for (either 'Table' or 'Partition'
+     * determine on which type is searched for (either 'Table' or 'Partition')
      */
     String typeFilterValue = params.get(TYPE);
     filter.add(new SolrQueryParameter(FILTER_TYPE, TYPE, FilterType.EXCLUSIVE, FacetSort.COUNT));
@@ -284,6 +285,7 @@ public class SolrQueryExecutor {
       if (queryFilter.getFacetSort().equals(FacetSort.INDEX)) {
         query.add("f." + queryFilter.getName() + ".facet.sort", "index");
       }
+      query.add("f." + queryFilter.getName() + ".facet.limit", "-1");
     }
 
     /* set facet queries */
