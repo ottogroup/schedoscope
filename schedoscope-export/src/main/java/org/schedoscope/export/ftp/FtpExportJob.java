@@ -22,11 +22,15 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
-import org.schedoscope.export.ftp.outputformat.TextPairArrayWritable;
+import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class FtpExportJob extends BaseExportJob {
 
@@ -71,6 +75,10 @@ public class FtpExportJob extends BaseExportJob {
 		}
 
 		CSVOutputFormat.setOutputPath(job, new Path("/tmp/richter"));
+
+		DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
+		String timestamp = fmt.print(DateTime.now(DateTimeZone.UTC));
+		CSVOutputFormat.setOutput(conf, timestamp, true);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);

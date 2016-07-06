@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.schedoscope.export.ftp.outputformat;
+package org.schedoscope.export.writables;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,6 @@ import java.util.List;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import org.schedoscope.export.jdbc.outputformat.TextPairWritable;
 
 public class TextPairArrayWritable extends ArrayWritable {
 
@@ -44,8 +43,8 @@ public class TextPairArrayWritable extends ArrayWritable {
 
 	public List<Text> getFirstAsList() {
 		List<Text> firstValues = new ArrayList<Text>();
-		for (TextPairWritable v : (TextPairWritable[]) get()) {
-			firstValues.add(v.getFirst());
+		for (Writable v : get()) {
+			firstValues.add(((TextPairWritable) v).getFirst());
 		}
 		return firstValues;
 	}

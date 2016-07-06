@@ -25,6 +25,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class CSVRecordWriter<K, V extends TextPairArrayWritable> extends RecordWriter<K, V> {
 
@@ -34,15 +35,16 @@ public class CSVRecordWriter<K, V extends TextPairArrayWritable> extends RecordW
 
 	private CSVFormat csvFormat;
 
-	public CSVRecordWriter(DataOutputStream out) {
+	public CSVRecordWriter(DataOutputStream out, String[] header) {
 		this.out = out;
-		csvFormat = CSVFormat.DEFAULT.withTrim(true).withQuoteMode(QuoteMode.ALL);
+		csvFormat = CSVFormat.DEFAULT.withTrim(true).withQuoteMode(QuoteMode.ALL).withHeader(header);
 	}
 
 	@Override
 	public void write(K key, V value) throws IOException {
 
 		StringBuilder buffer = new StringBuilder();
+
 		csvPrinter = csvFormat.print(buffer);
 		csvPrinter.printRecord(value.getSecondAsList());
 		out.write(buffer.toString().getBytes(StandardCharsets.UTF_8));

@@ -22,11 +22,24 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hive.hcatalog.data.schema.HCatSchema;
+import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
+import org.schedoscope.export.writables.TextPairArrayWritable;
+
+import com.google.common.collect.Iterables;
 
 public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOutputFormat<K, V> {
+
+	private static final String FTP_EXPORT_DATE_TIME = "ftp.export.date.time";
+
+	private static final String FTP_EXPORT_HEADER_COLUMNS = "ftp.export.header.columns";
+
+	private CSVFileOutputCommitter committer = null;
 
 	@Override
 	public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException {
@@ -36,6 +49,33 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 		Path file = getDefaultWorkFile(context, "");
 		FileSystem fs = file.getFileSystem(conf);
 		FSDataOutputStream fileOut = fs.create(file, false);
-		return new CSVRecordWriter<K, V>(fileOut);
+		String[] header = conf.getStrings(FTP_EXPORT_HEADER_COLUMNS);
+		return new CSVRecordWriter<K, V>(fileOut, header);
+	}
+
+	public static void setOutput(Configuration conf, String timestamp, boolean printHeader) throws IOException {
+
+		conf.setInt(FileOutputCommitter.FILEOUTPUTCOMMITTER_ALGORITHM_VERSION, 2);
+		conf.set(FTP_EXPORT_DATE_TIME, timestamp);
+
+		if (printHeader) {
+			conf.setStrings(FTP_EXPORT_HEADER_COLUMNS, setCSVHeader(conf));
+		}
+	}
+
+	private static String[] setCSVHeader(Configuration conf) throws IOException {
+
+		HCatSchema schema = HCatInputFormat.getTableSchema(conf);
+		return Iterables.toArray(schema.getFieldNames(), String.class);
+	}
+
+	@Override
+	public synchronized OutputCommitter getOutputCommitter(TaskAttemptContext context) throws IOException {
+
+		if (committer == null) {
+			Path output = getOutputPath(context);
+			committer = new CSVFileOutputCommitter(output, context);
+		}
+		return committer;
 	}
 }

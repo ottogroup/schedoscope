@@ -13,13 +13,19 @@ import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
-import org.schedoscope.export.ftp.outputformat.TextPairArrayWritable;
+import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class FtpExportCSVMRTest extends HiveUnitBaseTest {
+
+	private static final String OUTPUT_DIR = "/tmp/putput";
 
 	@Override
 	@Before
@@ -34,15 +40,22 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		BasicConfigurator.configure();
 		Logger.getRootLogger().setLevel(Level.INFO);
 
+
+
 		Job job = Job.getInstance(conf);
 
-		Path outfile = new Path("/tmp/new");
+		Path outfile = new Path(OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
 
+		DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
+		String timestamp = fmt.print(DateTime.now(DateTimeZone.UTC));
+
+		CSVOutputFormat.setOutput(job.getConfiguration(), timestamp, true);
+
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
-		job.setNumReduceTasks(1);
+		job.setNumReduceTasks(2);
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);
 
