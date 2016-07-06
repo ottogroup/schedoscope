@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.lib.db.DBWritable;
+import org.schedoscope.export.writables.TextPairWritable;
 
 /**
  * The JDBCWritable can be used to write data from a MR job into a database

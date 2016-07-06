@@ -26,7 +26,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
-import org.schedoscope.export.ftp.outputformat.TextPairArrayWritable;
+import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class FtpExportJob extends BaseExportJob {
 

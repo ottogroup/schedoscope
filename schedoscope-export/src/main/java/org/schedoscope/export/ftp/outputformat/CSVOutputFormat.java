@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOutputFormat<K, V> {
 

@@ -25,6 +25,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class CSVRecordWriter<K, V extends TextPairArrayWritable> extends RecordWriter<K, V> {
 

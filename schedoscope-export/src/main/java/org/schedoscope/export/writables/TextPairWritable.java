@@ -1,4 +1,4 @@
-package org.schedoscope.export.jdbc.outputformat;
+package org.schedoscope.export.writables;
 
 import java.io.DataInput;
 import java.io.DataOutput;

@@ -30,10 +30,10 @@ import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.BaseExportJob;
-import org.schedoscope.export.ftp.outputformat.TextPairArrayWritable;
-import org.schedoscope.export.jdbc.outputformat.TextPairWritable;
 import org.schedoscope.export.utils.HCatRecordJsonSerializer;
 import org.schedoscope.export.utils.HCatUtils;
+import org.schedoscope.export.writables.TextPairArrayWritable;
+import org.schedoscope.export.writables.TextPairWritable;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;

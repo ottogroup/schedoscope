@@ -17,7 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
-import org.schedoscope.export.ftp.outputformat.TextPairArrayWritable;
+import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
