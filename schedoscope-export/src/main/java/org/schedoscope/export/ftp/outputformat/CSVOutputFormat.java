@@ -33,6 +33,7 @@ import org.schedoscope.export.writables.TextPairArrayWritable;
 
 import com.google.common.collect.Iterables;
 
+
 public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOutputFormat<K, V> {
 
 	private static final String FTP_EXPORT_DATE_TIME = "ftp.export.date.time";
