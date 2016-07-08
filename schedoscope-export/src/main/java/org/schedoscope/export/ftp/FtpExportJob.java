@@ -78,7 +78,7 @@ public class FtpExportJob extends BaseExportJob {
 
 		DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
 		String timestamp = fmt.print(DateTime.now(DateTimeZone.UTC));
-		CSVOutputFormat.setOutput(conf, timestamp, true);
+		CSVOutputFormat.setOutput(job, timestamp, true, true);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);

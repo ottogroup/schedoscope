@@ -16,17 +16,22 @@
 
 package org.schedoscope.export.ftp.outputformat;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.GzipCodec;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.writables.TextPairArrayWritable;
@@ -47,27 +52,51 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 		Configuration conf = context.getConfiguration();
 
-		Path file = getDefaultWorkFile(context, "");
+		boolean isCompressed = getCompressOutput(context);
+
+		CompressionCodec codec = null;
+		String extension = null;
+
+		if (isCompressed) {
+			Class<? extends CompressionCodec> codecClass = getOutputCompressorClass(context, GzipCodec.class);
+			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+			extension = codec.getDefaultExtension();
+		}
+
+		String[] header = conf.getStrings(FTP_EXPORT_HEADER_COLUMNS);
+
+		Path file = getDefaultWorkFile(context, extension);
 		FileSystem fs = file.getFileSystem(conf);
 		FSDataOutputStream fileOut = fs.create(file, false);
-		String[] header = conf.getStrings(FTP_EXPORT_HEADER_COLUMNS);
-		return new CSVRecordWriter<K, V>(fileOut, header);
+
+		if (!isCompressed) {
+			return new CSVRecordWriter<K, V>(fileOut, header);
+		} else {
+			return new CSVRecordWriter<K, V>(new DataOutputStream(codec.createOutputStream(fileOut)), header);
+		}
 	}
 
-	public static void setOutput(Configuration conf, String timestamp, boolean printHeader) throws IOException {
+	public static void setOutput(Job job, String timestamp, boolean printHeader, boolean compress) throws IOException {
 
+		Configuration conf = job.getConfiguration();
 		conf.setInt(FileOutputCommitter.FILEOUTPUTCOMMITTER_ALGORITHM_VERSION, 2);
 		conf.set(FTP_EXPORT_DATE_TIME, timestamp);
 
 		if (printHeader) {
 			conf.setStrings(FTP_EXPORT_HEADER_COLUMNS, setCSVHeader(conf));
 		}
+
+		setCompressOutput(job, compress);
 	}
 
 	private static String[] setCSVHeader(Configuration conf) throws IOException {
 
 		HCatSchema schema = HCatInputFormat.getTableSchema(conf);
 		return Iterables.toArray(schema.getFieldNames(), String.class);
+	}
+
+	public static String getOutputName(TaskAttemptContext context) {
+		return getUniqueFile(context, FileOutputFormat.getOutputName(context), "");
 	}
 
 	@Override

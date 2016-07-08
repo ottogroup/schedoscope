@@ -51,7 +51,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
 		String timestamp = fmt.print(DateTime.now(DateTimeZone.UTC));
 
-		CSVOutputFormat.setOutput(job.getConfiguration(), timestamp, true);
+		CSVOutputFormat.setOutput(job, timestamp, true, true);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
