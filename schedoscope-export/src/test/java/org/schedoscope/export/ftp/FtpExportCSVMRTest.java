@@ -13,10 +13,6 @@ import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
@@ -40,18 +36,14 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		BasicConfigurator.configure();
 		Logger.getRootLogger().setLevel(Level.INFO);
 
-
+		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
 
 		Job job = Job.getInstance(conf);
 
 		Path outfile = new Path(OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-
-		DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
-		String timestamp = fmt.print(DateTime.now(DateTimeZone.UTC));
-
-		CSVOutputFormat.setOutput(job, timestamp, true, true);
+		CSVOutputFormat.setOutput(job, true, true, "ftp://192.168.56.101:21/", "vagrant", "vagrant", null, "testing");
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);

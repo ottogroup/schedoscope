@@ -16,25 +16,53 @@
 
 package org.schedoscope.export.ftp;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.ISODateTimeFormat;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
+import org.schedoscope.export.ftp.upload.Uploader;
 import org.schedoscope.export.writables.TextPairArrayWritable;
+
+
 
 public class FtpExportJob extends BaseExportJob {
 
-	// private static final Log LOG = LogFactory.getLog(FtpExportJob.class);
+	private static final Log LOG = LogFactory.getLog(FtpExportJob.class);
+
+	private static final String LOCAL_PATH_PREFIX = "file://";
+
+	private static final String PRIVATE_KEY_FILE_NAME = "id_rsa";
+
+	private static final String TMP_OUTPUT_PATH = "/tmp/export";
+
+	@Option(name = "-k", usage = "ssh private key file")
+	private String keyFile = "~/.ssh/id_rsa";
+
+	@Option(name = "-u", usage = "the (s)ftp user")
+	private String ftpUser;
+
+	@Option(name = "-w", usage = "the ftp password / sftp passphrase")
+	private String ftpPass;
+
+	@Option(name = "-j", usage = "the (s)ftp endpoint, e.g. ftp://ftp.example.com:21/path/to/")
+	private String ftpEndpoint;
+
+	@Option(name = "-x", usage = "passive mode, only for ftp connections")
+	private boolean passiveMode = true;
+
+	@Option(name = "-z", usage = "user dir is root, home dir on remote end is (s)ftp root dir")
+	private boolean userIsRoot = true;
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -55,6 +83,8 @@ public class FtpExportJob extends BaseExportJob {
 
 	private Job configure() throws Exception {
 
+		Uploader.checkPrivateKey(keyFile);
+
 		Configuration conf = getConfiguration();
 		conf = configureHiveMetaStore(conf);
 		conf = configureKerberos(conf);
@@ -74,17 +104,38 @@ public class FtpExportJob extends BaseExportJob {
 					inputFilter);
 		}
 
-		CSVOutputFormat.setOutputPath(job, new Path("/tmp/richter"));
+		FileSystem fs = FileSystem.get(job.getConfiguration());
+		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
+		String hdfsKeyFile = null;
+		if (tmpDir != null) {
+			LOG.info("copy " + LOCAL_PATH_PREFIX + keyFile + " to " + tmpDir);
+			hdfsKeyFile = tmpDir + "/" + PRIVATE_KEY_FILE_NAME;
+			fs.copyFromLocalFile(false,  true, new Path(LOCAL_PATH_PREFIX, keyFile), new Path(hdfsKeyFile));
+		} else {
+			throw new IllegalArgumentException("hadoop tmp dir not defined");
+		}
 
-		DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
-		String timestamp = fmt.print(DateTime.now(DateTimeZone.UTC));
-		CSVOutputFormat.setOutput(job, timestamp, true, true);
+		String filePrefix = inputDatabase + "_" + inputTable;
+		CSVOutputFormat.setOutputPath(job, new Path(TMP_OUTPUT_PATH));
+		CSVOutputFormat.setOutput(job, true, true, ftpEndpoint, ftpUser, ftpPass, hdfsKeyFile, filePrefix);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(TextPairArrayWritable.class);
 
+
 		return job;
+	}
+
+	public static void main (String[] args) throws Exception {
+
+		try {
+			int exitCode = ToolRunner.run(new FtpExportJob(), args);
+			System.exit(exitCode);
+		} catch (Exception e) {
+			LOG.error(e.getMessage());
+			System.exit(1);
+		}
 	}
 }
