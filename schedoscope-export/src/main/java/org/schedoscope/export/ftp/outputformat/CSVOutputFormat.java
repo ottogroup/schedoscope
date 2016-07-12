@@ -41,6 +41,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
+import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
 import com.google.common.collect.Iterables;
@@ -104,7 +105,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 		}
 	}
 
-	public static void setOutput(Job job, boolean printHeader, boolean compress, String ftpEndpoint, String ftpUser, String ftpPass,
+	public static void setOutput(Job job, boolean printHeader, FileCompressionCodec codec, String ftpEndpoint, String ftpUser, String ftpPass,
 			String keyFile, String filePrefix) throws IOException {
 
 		Configuration conf = job.getConfiguration();
@@ -113,6 +114,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 		conf.set(FTP_EXPORT_ENDPOINT, ftpEndpoint);
 		conf.set(FTP_EXPORT_USER, ftpUser);
 		conf.set(FTP_EXPORT_PASS, ftpPass);
+
 		if (keyFile != null) {
 			conf.set(FTP_EXPORT_KEY_FILE, keyFile);
 		}
@@ -125,8 +127,11 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 			conf.setStrings(FTP_EXPORT_HEADER_COLUMNS, setCSVHeader(conf));
 		}
 
-		setCompressOutput(job, compress);
-		setOutputCompressorClass(job, GzipCodec.class);
+		if (codec.equals(FileCompressionCodec.gzip)) {
+			setOutputCompressorClass(job, GzipCodec.class);
+		} else if (codec.equals(FileCompressionCodec.bzip2)) {
+			setOutputCompressorClass(job, BZip2Codec.class);
+		}
 	}
 
 	private static String[] setCSVHeader(Configuration conf) throws IOException {

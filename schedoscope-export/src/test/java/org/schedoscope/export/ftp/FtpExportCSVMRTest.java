@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
+import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class FtpExportCSVMRTest extends HiveUnitBaseTest {
@@ -43,7 +44,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, true, "ftp://192.168.56.101:21/", "vagrant", "vagrant", null, "testing");
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "ftp://192.168.56.101:21/", "vagrant", "vagrant", null, "testing");
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);

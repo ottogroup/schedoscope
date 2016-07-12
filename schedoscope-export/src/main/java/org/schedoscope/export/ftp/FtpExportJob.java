@@ -31,6 +31,7 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
+import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 import org.schedoscope.export.ftp.upload.Uploader;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
@@ -63,6 +64,10 @@ public class FtpExportJob extends BaseExportJob {
 
 	@Option(name = "-z", usage = "user dir is root, home dir on remote end is (s)ftp root dir")
 	private boolean userIsRoot = true;
+
+	@Option(name = "-c", usage = "compression codec, either 'none', 'gzip' or 'bzip2'")
+	private FileCompressionCodec codec = FileCompressionCodec.gzip;
+
 
 	@Override
 	public int run(String[] args) throws Exception {
@@ -117,7 +122,7 @@ public class FtpExportJob extends BaseExportJob {
 
 		String filePrefix = inputDatabase + "_" + inputTable;
 		CSVOutputFormat.setOutputPath(job, new Path(TMP_OUTPUT_PATH));
-		CSVOutputFormat.setOutput(job, true, true, ftpEndpoint, ftpUser, ftpPass, hdfsKeyFile, filePrefix);
+		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, hdfsKeyFile, filePrefix);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);
