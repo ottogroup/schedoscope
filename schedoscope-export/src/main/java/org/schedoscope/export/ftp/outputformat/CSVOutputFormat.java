@@ -81,15 +81,16 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 		if (isCompressed) {
 			Class<? extends CompressionCodec> codecClass = getOutputCompressorClass(context, GzipCodec.class);
-			codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
-			extension = codec.getDefaultExtension();
-		}
 
-		// only support gzip and bzip2 compression
-		if (!codec.getCompressorType().equals(BZip2Codec.class) && !codec.getCompressorType().equals(GzipCodec.class)) {
-			LOG.warn("neither gzip nor bzip2 compression codec found - disabling compression");
-			isCompressed = false;
-			extension = "";
+			// only support gzip and bzip2 compression
+			if (codecClass.equals(BZip2Codec.class) || codecClass.equals(GzipCodec.class)) {
+				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+				extension = codec.getDefaultExtension();
+			} else {
+				LOG.warn("neither gzip nor bzip2 compression codec found - disabling compression");
+				isCompressed = false;
+				extension = "";
+			}
 		}
 
 		String[] header = conf.getStrings(FTP_EXPORT_HEADER_COLUMNS);
@@ -131,6 +132,8 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 			setOutputCompressorClass(job, GzipCodec.class);
 		} else if (codec.equals(FileCompressionCodec.bzip2)) {
 			setOutputCompressorClass(job, BZip2Codec.class);
+		} else if (codec.equals(FileCompressionCodec.none)) {
+			extension = "";
 		}
 	}
 

@@ -45,7 +45,7 @@ public class FtpExportJob extends BaseExportJob {
 
 	private static final String PRIVATE_KEY_FILE_NAME = "id_rsa";
 
-	private static final String TMP_OUTPUT_PATH = "/tmp/export";
+	private static final String TMP_OUTPUT_PATH = "export";
 
 	@Option(name = "-k", usage = "ssh private key file")
 	private String keyFile = "~/.ssh/id_rsa";
@@ -121,7 +121,7 @@ public class FtpExportJob extends BaseExportJob {
 		}
 
 		String filePrefix = inputDatabase + "_" + inputTable;
-		CSVOutputFormat.setOutputPath(job, new Path(TMP_OUTPUT_PATH));
+		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, TMP_OUTPUT_PATH));
 		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, hdfsKeyFile, filePrefix);
 
 		job.setInputFormatClass(HCatInputFormat.class);

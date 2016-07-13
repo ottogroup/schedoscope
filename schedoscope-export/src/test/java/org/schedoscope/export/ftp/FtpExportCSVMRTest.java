@@ -44,7 +44,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "ftp://192.168.56.101:21/", "vagrant", "vagrant", null, "testing");
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.none, "ftp://192.168.56.101:21/", "vagrant", "vagrant", null, "testing");
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -65,4 +65,41 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 			System.out.println(stat.next());
 		}
 	}
+
+	@Test
+	public void testSftpCSVExport() throws Exception {
+		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+
+		BasicConfigurator.configure();
+		Logger.getRootLogger().setLevel(Level.INFO);
+
+		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
+
+		Job job = Job.getInstance(conf);
+
+		Path outfile = new Path(OUTPUT_DIR);
+
+		CSVOutputFormat.setOutputPath(job, outfile);
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://192.168.56.101:22/", "vagrant", "vagrant", null, "testing");
+
+		job.setMapperClass(FtpExportCSVMapper.class);
+		job.setReducerClass(Reducer.class);
+		job.setNumReduceTasks(2);
+		job.setInputFormatClass(HCatInputFormat.class);
+		job.setOutputFormatClass(CSVOutputFormat.class);
+
+		job.setOutputKeyClass(LongWritable.class);
+		job.setOutputValueClass(TextPairArrayWritable.class);
+
+		assertTrue(job.waitForCompletion(true));
+
+		FileSystem fs = outfile.getFileSystem(conf);
+
+		RemoteIterator<LocatedFileStatus> stat = fs.listFiles(outfile, true);
+
+		while (stat.hasNext()) {
+			System.out.println(stat.next());
+		}
+	}
+
 }
