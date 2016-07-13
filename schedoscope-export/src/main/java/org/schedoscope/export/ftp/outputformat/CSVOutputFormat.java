@@ -18,6 +18,9 @@ package org.schedoscope.export.ftp.outputformat;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,6 +45,7 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
+import org.schedoscope.export.ftp.upload.Uploader;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
 import com.google.common.collect.Iterables;
@@ -56,7 +60,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 	public static final String FTP_EXPORT_PASS = "ftp.export.pass";
 
-	public static final String FTP_EXPORT_KEY_FILE = "ftp.export.key.file";
+	public static final String FTP_EXPORT_KEY_FILE_CONTENT = "ftp.export.key.file.content";
 
 	public static final String FTP_EXPORT_ENDPOINT = "ftp.export.endpoint";
 
@@ -107,7 +111,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 	}
 
 	public static void setOutput(Job job, boolean printHeader, FileCompressionCodec codec, String ftpEndpoint, String ftpUser, String ftpPass,
-			String keyFile, String filePrefix) throws IOException {
+			String keyFile, String filePrefix) throws Exception {
 
 		Configuration conf = job.getConfiguration();
 		conf.setInt(FileOutputCommitter.FILEOUTPUTCOMMITTER_ALGORITHM_VERSION, 2);
@@ -116,8 +120,11 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 		conf.set(FTP_EXPORT_USER, ftpUser);
 		conf.set(FTP_EXPORT_PASS, ftpPass);
 
-		if (keyFile != null) {
-			conf.set(FTP_EXPORT_KEY_FILE, keyFile);
+		if (keyFile != null && Files.exists(Paths.get(keyFile))) {
+
+			Uploader.checkPrivateKey(keyFile);
+			String privateKey = new String(Files.readAllBytes(Paths.get(keyFile)), StandardCharsets.US_ASCII);
+			conf.set(FTP_EXPORT_KEY_FILE_CONTENT, privateKey);
 		}
 
 		DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();

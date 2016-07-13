@@ -80,7 +80,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://192.168.56.101:22/", "vagrant", "vagrant", null, "testing");
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://192.168.56.101:22/home/vagrant/", "vagrant", "", "/Users/mac/.ssh/id_rsa", "testing");
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);

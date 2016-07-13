@@ -19,7 +19,6 @@ package org.schedoscope.export.ftp;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
@@ -32,18 +31,11 @@ import org.kohsuke.args4j.Option;
 import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
-import org.schedoscope.export.ftp.upload.Uploader;
 import org.schedoscope.export.writables.TextPairArrayWritable;
-
-
 
 public class FtpExportJob extends BaseExportJob {
 
 	private static final Log LOG = LogFactory.getLog(FtpExportJob.class);
-
-	private static final String LOCAL_PATH_PREFIX = "file://";
-
-	private static final String PRIVATE_KEY_FILE_NAME = "id_rsa";
 
 	private static final String TMP_OUTPUT_PATH = "export";
 
@@ -68,7 +60,6 @@ public class FtpExportJob extends BaseExportJob {
 	@Option(name = "-c", usage = "compression codec, either 'none', 'gzip' or 'bzip2'")
 	private FileCompressionCodec codec = FileCompressionCodec.gzip;
 
-
 	@Override
 	public int run(String[] args) throws Exception {
 
@@ -87,8 +78,6 @@ public class FtpExportJob extends BaseExportJob {
 	}
 
 	private Job configure() throws Exception {
-
-		Uploader.checkPrivateKey(keyFile);
 
 		Configuration conf = getConfiguration();
 		conf = configureHiveMetaStore(conf);
@@ -109,26 +98,15 @@ public class FtpExportJob extends BaseExportJob {
 					inputFilter);
 		}
 
-		FileSystem fs = FileSystem.get(job.getConfiguration());
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
-		String hdfsKeyFile = null;
-		if (tmpDir != null) {
-			LOG.info("copy " + LOCAL_PATH_PREFIX + keyFile + " to " + tmpDir);
-			hdfsKeyFile = tmpDir + "/" + PRIVATE_KEY_FILE_NAME;
-			fs.copyFromLocalFile(false,  true, new Path(LOCAL_PATH_PREFIX, keyFile), new Path(hdfsKeyFile));
-		} else {
-			throw new IllegalArgumentException("hadoop tmp dir not defined");
-		}
-
 		String filePrefix = inputDatabase + "_" + inputTable;
 		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, TMP_OUTPUT_PATH));
-		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, hdfsKeyFile, filePrefix);
+		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(TextPairArrayWritable.class);
-
 
 		return job;
 	}

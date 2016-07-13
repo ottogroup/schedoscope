@@ -64,6 +64,9 @@ public class Uploader {
 
 		// set up authentication - pub/priv key
 		LOG.debug("setting up pub key authentication for sftp protocol");
+		UserAuthenticator auth = new StaticUserAuthenticator(null, user, null);
+		DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth);
+
 		IdentityInfo ident = new IdentityInfo(new File(keyFile), passphrase.getBytes(StandardCharsets.UTF_8));
 		SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(opts, ident);
 	}
