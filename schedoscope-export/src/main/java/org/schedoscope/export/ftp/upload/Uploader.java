@@ -18,7 +18,6 @@ package org.schedoscope.export.ftp.upload;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,6 +29,7 @@ import org.apache.commons.vfs2.UserAuthenticator;
 import org.apache.commons.vfs2.auth.StaticUserAuthenticator;
 import org.apache.commons.vfs2.impl.DefaultFileSystemConfigBuilder;
 import org.apache.commons.vfs2.impl.StandardFileSystemManager;
+import org.apache.commons.vfs2.provider.ftp.FtpFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.hdfs.HdfsFileSystemConfigBuilder;
 import org.apache.commons.vfs2.provider.sftp.IdentityInfo;
 import org.apache.commons.vfs2.provider.sftp.SftpFileSystemConfigBuilder;
@@ -49,25 +49,30 @@ public class Uploader {
 	public Uploader(String user, String pass, Configuration conf, boolean passive, boolean userIsRoot)
 			throws IOException {
 
-		initFileSystem(conf);
+		initFileSystem(conf, passive, userIsRoot);
 
-		// set up authentication - user/pass
+		// set up authentication - user/pass for ftp and sftp
 		LOG.debug("setting up user/pass authentication");
+
 		UserAuthenticator auth = new StaticUserAuthenticator(null, user, pass);
 		DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth);
 	}
 
-	public Uploader(String user, String keyFile, String passphrase, Configuration conf, boolean passive,
+
+
+	public Uploader(String user, File keyFile, String passphrase, Configuration conf, boolean passive,
 			boolean userIsRoot) throws IOException {
 
-		initFileSystem(conf);
+		initFileSystem(conf, passive, userIsRoot);
 
 		// set up authentication - pub/priv key
 		LOG.debug("setting up pub key authentication for sftp protocol");
 		UserAuthenticator auth = new StaticUserAuthenticator(null, user, null);
 		DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth);
 
-		IdentityInfo ident = new IdentityInfo(new File(keyFile), passphrase.getBytes(StandardCharsets.UTF_8));
+		IdentityInfo ident = new IdentityInfo(keyFile);
+		SftpFileSystemConfigBuilder.getInstance().setStrictHostKeyChecking(opts, "no");
+		SftpFileSystemConfigBuilder.getInstance().setUserInfo(opts, new PassphraseUserInfo(passphrase));
 		SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(opts, ident);
 	}
 
@@ -79,55 +84,20 @@ public class Uploader {
 		}
 	}
 
-	private void initFileSystem(Configuration conf) throws IOException {
+	private void initFileSystem(Configuration conf, boolean passive, boolean userIsRoot) throws IOException {
 		this.fsManager = new StandardFileSystemManager();
 		this.fsManager.init();
 		this.opts = new FileSystemOptions();
+		// configure hdfs file system
 		HdfsFileSystemConfigBuilder.getInstance().setConfigConfiguration(opts, conf);
-	}
 
-	// public Uploader(URI uri, String user, String pass, String keyFile,
-	// boolean passive, boolean userRoot,
-	// Configuration conf) throws IOException {
-	//
-	// this.fsManager = new StandardFileSystemManager();
-	// this.fsManager.init();
-	// this.opts = new FileSystemOptions();
-	//
-	// String scheme = uri.getScheme();
-	// HdfsFileSystemConfigBuilder.getInstance().setConfigConfiguration(opts,
-	// conf);
-	//
-	// if (scheme.equals("sftp")) {
-	//
-	// if (keyFile != null) {
-	// // set up authentication - pub/priv key
-	// LOG.debug("setting up pub key authentication for sftp protocol");
-	// IdentityInfo ident = new IdentityInfo(new File(keyFile));
-	// SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(opts, ident);
-	// } else {
-	// // set up authentication - user/pass
-	// LOG.debug("setting up user/pass authentication for sftp protocol");
-	// UserAuthenticator auth = new StaticUserAuthenticator(null, user, pass);
-	// DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts,
-	// auth);
-	// }
-	//
-	// SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts,
-	// userRoot);
-	//
-	// } else if (scheme.equals("ftp")) {
-	//
-	// // set up ftp connection and set active/passive mode according to
-	// // configuration
-	// LOG.debug("setting up user/pass authentication for ftp protocol");
-	// FtpFileSystemConfigBuilder.getInstance().setPassiveMode(opts, passive);
-	// FtpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, false);
-	//
-	// } else {
-	// throw new IllegalArgumentException("unsupported schemecol: " + scheme);
-	// }
-	// }
+		// configure sftp file system
+		SftpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, userIsRoot);
+
+		// configure ftp file system
+		FtpFileSystemConfigBuilder.getInstance().setUserDirIsRoot(opts, userIsRoot);
+		FtpFileSystemConfigBuilder.getInstance().setPassiveMode(opts, passive);
+	}
 
 	public void uploadFile(String inFile, String outFile) throws FileSystemException {
 

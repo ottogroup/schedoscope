@@ -45,7 +45,6 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
-import org.schedoscope.export.ftp.upload.Uploader;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
 import com.google.common.collect.Iterables;
@@ -118,11 +117,14 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 		conf.set(FTP_EXPORT_ENDPOINT, ftpEndpoint);
 		conf.set(FTP_EXPORT_USER, ftpUser);
-		conf.set(FTP_EXPORT_PASS, ftpPass);
+
+		if (ftpPass != null) {
+			conf.set(FTP_EXPORT_PASS, ftpPass);
+		}
 
 		if (keyFile != null && Files.exists(Paths.get(keyFile))) {
 
-			Uploader.checkPrivateKey(keyFile);
+			//Uploader.checkPrivateKey(keyFile);
 			String privateKey = new String(Files.readAllBytes(Paths.get(keyFile)), StandardCharsets.US_ASCII);
 			conf.set(FTP_EXPORT_KEY_FILE_CONTENT, privateKey);
 		}

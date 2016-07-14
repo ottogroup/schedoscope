@@ -100,12 +100,11 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 			keyFile.deleteOnExit();
 			Files.write(keyContent.getBytes(StandardCharsets.US_ASCII), keyFile);
 
-			uploader = new Uploader(user, keyFile.getCanonicalPath(), pass, conf, passiveMode, userIsRoot);
+			uploader = new Uploader(user, new File(keyFile.getCanonicalPath()), pass, conf, passiveMode, userIsRoot);
 		} else {
 			uploader = new Uploader(user, pass, conf, passiveMode, userIsRoot);
 
 		}
-
 		uploader.uploadFile(new Path(outputPath, fileName).toString(), remote);
 	}
 }
