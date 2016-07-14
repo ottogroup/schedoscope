@@ -12,4 +12,8 @@
         <Class name="org.schedoscope.export.jdbc.outputformat.JdbcOutputFormat"/>
         <Bug code="SQL" />
     </Match>
+    <Match>
+        <Class name="org.schedoscope.export.ftp.outputformat.CSVOutputFormat"/>
+        <Bug code="ST" />
+    </Match>
 </FindBugsFilter>
