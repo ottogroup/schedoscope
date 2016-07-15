@@ -58,8 +58,6 @@ public class Uploader {
 		DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth);
 	}
 
-
-
 	public Uploader(String user, File keyFile, String passphrase, Configuration conf, boolean passive,
 			boolean userIsRoot) throws IOException {
 
@@ -77,17 +75,21 @@ public class Uploader {
 	}
 
 	public static void checkPrivateKey(String keyFile) throws Exception {
+
 		JSch jsch = new JSch();
 		KeyPair keyPair = KeyPair.load(jsch, keyFile);
+
 		if (!keyPair.isEncrypted()) {
 			throw new IllegalArgumentException("private key is not protected by a passphrase - aborting");
 		}
 	}
 
 	private void initFileSystem(Configuration conf, boolean passive, boolean userIsRoot) throws IOException {
+
 		this.fsManager = new StandardFileSystemManager();
 		this.fsManager.init();
 		this.opts = new FileSystemOptions();
+
 		// configure hdfs file system
 		HdfsFileSystemConfigBuilder.getInstance().setConfigConfiguration(opts, conf);
 

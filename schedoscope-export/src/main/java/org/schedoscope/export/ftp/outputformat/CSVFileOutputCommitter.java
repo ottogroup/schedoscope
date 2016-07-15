@@ -54,7 +54,6 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 
 	private boolean userIsRoot;
 
-
 	public CSVFileOutputCommitter(Path outputPath, TaskAttemptContext context) throws IOException {
 
 		super(outputPath, context);

@@ -79,7 +79,6 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 		Configuration conf = context.getConfiguration();
 
 		boolean isCompressed = getCompressOutput(context);
-
 		CompressionCodec codec = null;
 
 		if (isCompressed) {
@@ -87,7 +86,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 			// only support gzip and bzip2 compression
 			if (codecClass.equals(BZip2Codec.class) || codecClass.equals(GzipCodec.class)) {
-				codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+				codec = ReflectionUtils.newInstance(codecClass, conf);
 				extension = codec.getDefaultExtension();
 			} else {
 				LOG.warn("neither gzip nor bzip2 compression codec found - disabling compression");
@@ -109,8 +108,8 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 		}
 	}
 
-	public static void setOutput(Job job, boolean printHeader, FileCompressionCodec codec, String ftpEndpoint, String ftpUser, String ftpPass,
-			String keyFile, String filePrefix) throws Exception {
+	public static void setOutput(Job job, boolean printHeader, FileCompressionCodec codec, String ftpEndpoint,
+			String ftpUser, String ftpPass, String keyFile, String filePrefix) throws Exception {
 
 		Configuration conf = job.getConfiguration();
 		conf.setInt(FileOutputCommitter.FILEOUTPUTCOMMITTER_ALGORITHM_VERSION, 2);
@@ -124,7 +123,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 		if (keyFile != null && Files.exists(Paths.get(keyFile))) {
 
-			//Uploader.checkPrivateKey(keyFile);
+			// Uploader.checkPrivateKey(keyFile);
 			String privateKey = new String(Files.readAllBytes(Paths.get(keyFile)), StandardCharsets.US_ASCII);
 			conf.set(FTP_EXPORT_KEY_FILE_CONTENT, privateKey);
 		}
