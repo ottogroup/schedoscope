@@ -18,8 +18,13 @@ package org.schedoscope.export.ftp;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
@@ -43,6 +48,20 @@ import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.sshd.SshServer;
+import org.apache.sshd.common.NamedFactory;
+import org.apache.sshd.common.file.virtualfs.VirtualFileSystemFactory;
+import org.apache.sshd.common.util.KeyUtils;
+import org.apache.sshd.server.Command;
+import org.apache.sshd.server.PasswordAuthenticator;
+import org.apache.sshd.server.PublickeyAuthenticator;
+import org.apache.sshd.server.UserAuth;
+import org.apache.sshd.server.auth.UserAuthPassword;
+import org.apache.sshd.server.auth.UserAuthPublicKey;
+import org.apache.sshd.server.command.ScpCommandFactory;
+import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
+import org.apache.sshd.server.session.ServerSession;
+import org.apache.sshd.sftp.subsystem.SftpSubsystem;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,11 +70,19 @@ import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
+
 public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 	private static final String OUTPUT_DIR = "/tmp/putput";
 
-	FtpServer server;
+	private static final String FTP_SERVER_DIR = "/tmp";
+
+	private FtpServer ftpd;
+
+	private SshServer sshd;
 
 	@Override
 	@Before
@@ -63,12 +90,14 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		super.setUp();
 		startEmbeddedFtpServer();
+		startEmbeddedSftpServer();
 	}
 
 	@Override
 	@After
-	public void tearDown() {
-		server.stop();
+	public void tearDown() throws InterruptedException {
+		ftpd.stop();
+		sshd.stop(true);
 	}
 
 	@Test
@@ -123,8 +152,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://192.168.56.101:22/", "vagrant",
-				"vagrant", null, "testing");
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "pass1", null, "testing");
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -160,8 +188,8 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.bzip2, "sftp://192.168.56.101:22/", "vagrant", null,
-				"/Users/mac/work/otto/schedoscope/schedoscope-export/src/test/resources/keys/id_rsa_not_encrypted",
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.bzip2, "sftp://localhost:12222/", "user1", null,
+				"src/test/resources/keys/id_rsa_not_encrypted",
 				"testing");
 
 		job.setMapperClass(FtpExportCSVMapper.class);
@@ -198,8 +226,8 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://192.168.56.101:22/", "vagrant", "12345",
-				"/Users/mac/work/otto/schedoscope/schedoscope-export/src/test/resources/keys/id_rsa_encrypted",
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "12345",
+				"src/test/resources/keys/id_rsa_encrypted",
 				"testing");
 
 		job.setMapperClass(FtpExportCSVMapper.class);
@@ -222,7 +250,6 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		}
 	}
 
-
 	private void startEmbeddedFtpServer() throws FtpException {
 
 		PropertiesUserManagerFactory propertyFactory = new PropertiesUserManagerFactory();
@@ -231,7 +258,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		UserFactory userFactory = new UserFactory();
 		userFactory.setName("user1");
 		userFactory.setPassword("pass1");
-		userFactory.setHomeDirectory("/tmp");
+		userFactory.setHomeDirectory(FTP_SERVER_DIR);
 
 		List<Authority> auths = new ArrayList<Authority>();
 		Authority auth = new WritePermission();
@@ -250,7 +277,64 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		serverFactory.setUserManager(userManager);
 		serverFactory.addListener("default", listenerFactory.createListener());
 
-		server = serverFactory.createServer();
-		server.start();
+		ftpd = serverFactory.createServer();
+		ftpd.start();
+	}
+
+	private void startEmbeddedSftpServer() throws IOException {
+
+		sshd = SshServer.setUpDefaultServer();
+		sshd.setPort(12222);
+		sshd.setHost("localhost");
+
+		List<NamedFactory<UserAuth>> userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
+		userAuthFactories.add(new UserAuthPassword.Factory());
+		userAuthFactories.add(new UserAuthPublicKey.Factory());
+		sshd.setUserAuthFactories(userAuthFactories);
+
+		sshd.setPasswordAuthenticator(new PasswordAuthenticator() {
+
+			@Override
+			public boolean authenticate(String username, String password, ServerSession session) {
+				return "user1".equals(username) && "pass1".equals(password);
+			}
+		});
+
+		sshd.setPublickeyAuthenticator(new PublickeyAuthenticator() {
+
+			@Override
+			public boolean authenticate(String username, PublicKey key, ServerSession session) {
+				if (username.equals("user1")) {
+
+					try {
+						Set<String> keys = new HashSet<String>();
+
+						JSch jsch = new JSch();
+						String key1= KeyPair.load(jsch,
+								"src/test/resources/keys/id_rsa_not_encrypted",
+								"src/test/resources/keys/id_rsa_not_encrypted.pub").getFingerPrint();
+						String key2= KeyPair.load(jsch,
+								"src/test/resources/keys/id_rsa_encrypted",
+								"src/test/resources/keys/id_rsa_encrypted.pub").getFingerPrint();
+
+						keys.add(key1);
+						keys.add(key2);
+
+						if (keys.contains(KeyUtils.getFingerPrint(key))) {
+							return true;
+						}
+					} catch (JSchException e) {
+					}
+				}
+				return false;
+			}
+		});
+
+		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
+		sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(new SftpSubsystem.Factory()));
+		sshd.setCommandFactory(new ScpCommandFactory());
+		sshd.setFileSystemFactory(new VirtualFileSystemFactory(FTP_SERVER_DIR));
+
+		sshd.start();
 	}
 }
