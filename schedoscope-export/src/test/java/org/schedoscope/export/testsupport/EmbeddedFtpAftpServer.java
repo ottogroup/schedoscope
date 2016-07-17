@@ -96,9 +96,8 @@ public class EmbeddedFtpAftpServer {
 
 			ftpd = serverFactory.createServer();
 			ftpd.start();
-			ftpStarted =true;
+			ftpStarted = true;
 		}
-
 	}
 
 	public void stopEmbeddedFtpServer() {
