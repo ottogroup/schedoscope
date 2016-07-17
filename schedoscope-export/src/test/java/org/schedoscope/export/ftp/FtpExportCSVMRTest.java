@@ -62,8 +62,9 @@ import org.apache.sshd.server.command.ScpCommandFactory;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.ServerSession;
 import org.apache.sshd.sftp.subsystem.SftpSubsystem;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
@@ -76,28 +77,32 @@ import com.jcraft.jsch.KeyPair;
 
 public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
-	private static final String OUTPUT_DIR = "/tmp/putput";
+	private static final String HDFS_OUTPUT_DIR = "/tmp/output";
 
 	private static final String FTP_SERVER_DIR = "/tmp";
 
-	private FtpServer ftpd;
+	private static FtpServer ftpd;
 
-	private SshServer sshd;
+	private static SshServer sshd;
 
 	@Override
 	@Before
 	public void setUp() throws Exception {
 
 		super.setUp();
+	}
+
+	@BeforeClass()
+	public static void setUpServer() throws Exception {
+
 		startEmbeddedFtpServer();
 		startEmbeddedSftpServer();
 	}
 
-	@Override
-	@After
-	public void tearDown() throws InterruptedException {
+	@AfterClass
+	public static void tearDownServer() throws InterruptedException {
 		ftpd.stop();
-		sshd.stop(true);
+		sshd.stop();
 	}
 
 	@Test
@@ -112,7 +117,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Path outfile = new Path(OUTPUT_DIR);
+		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.none, "ftp://localhost:2221/", "user1", "pass1", null,
@@ -149,7 +154,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Path outfile = new Path(OUTPUT_DIR);
+		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "pass1", null, "testing");
@@ -185,7 +190,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Path outfile = new Path(OUTPUT_DIR);
+		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.bzip2, "sftp://localhost:12222/", "user1", null,
@@ -223,7 +228,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		Path outfile = new Path(OUTPUT_DIR);
+		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "12345",
@@ -250,7 +255,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		}
 	}
 
-	private void startEmbeddedFtpServer() throws FtpException {
+	private static void startEmbeddedFtpServer() throws FtpException {
 
 		PropertiesUserManagerFactory propertyFactory = new PropertiesUserManagerFactory();
 		propertyFactory.setPasswordEncryptor(new ClearTextPasswordEncryptor());
@@ -281,7 +286,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		ftpd.start();
 	}
 
-	private void startEmbeddedSftpServer() throws IOException {
+	private static void startEmbeddedSftpServer() throws IOException {
 
 		sshd = SshServer.setUpDefaultServer();
 		sshd.setPort(12222);
