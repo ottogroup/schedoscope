@@ -42,11 +42,13 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 	private static EmbeddedFtpAftpServer server;
 
+
 	@Override
 	@Before
 	public void setUp() throws Exception {
 
 		super.setUp();
+
 	}
 
 	@BeforeClass()
@@ -204,4 +206,5 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 			System.out.println(stat.next());
 		}
 	}
+
 }
