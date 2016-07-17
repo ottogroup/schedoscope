@@ -62,101 +62,118 @@ public class EmbeddedFtpAftpServer {
 
 	private SshServer sshd;
 
+	private boolean ftpStarted = false;
+
+	private boolean sshStarted = false;
+
 	public void startEmbeddedFtpServer() throws FtpException {
 
-		PropertiesUserManagerFactory propertyFactory = new PropertiesUserManagerFactory();
-		propertyFactory.setPasswordEncryptor(new ClearTextPasswordEncryptor());
+		if (!ftpStarted) {
+			PropertiesUserManagerFactory propertyFactory = new PropertiesUserManagerFactory();
+			propertyFactory.setPasswordEncryptor(new ClearTextPasswordEncryptor());
 
-		UserFactory userFactory = new UserFactory();
-		userFactory.setName("user1");
-		userFactory.setPassword("pass1");
-		userFactory.setHomeDirectory(FTP_SERVER_DIR);
+			UserFactory userFactory = new UserFactory();
+			userFactory.setName("user1");
+			userFactory.setPassword("pass1");
+			userFactory.setHomeDirectory(FTP_SERVER_DIR);
 
-		List<Authority> auths = new ArrayList<Authority>();
-		Authority auth = new WritePermission();
-		auths.add(auth);
-		userFactory.setAuthorities(auths);
+			List<Authority> auths = new ArrayList<Authority>();
+			Authority auth = new WritePermission();
+			auths.add(auth);
+			userFactory.setAuthorities(auths);
 
-		User user = userFactory.createUser();
-		UserManager userManager = propertyFactory.createUserManager();
-		userManager.save(user);
+			User user = userFactory.createUser();
+			UserManager userManager = propertyFactory.createUserManager();
+			userManager.save(user);
 
 
-		ListenerFactory listenerFactory = new ListenerFactory();
-		listenerFactory.setPort(2221);
+			ListenerFactory listenerFactory = new ListenerFactory();
+			listenerFactory.setPort(2221);
 
-		FtpServerFactory serverFactory = new FtpServerFactory();
-		serverFactory.setUserManager(userManager);
-		serverFactory.addListener("default", listenerFactory.createListener());
+			FtpServerFactory serverFactory = new FtpServerFactory();
+			serverFactory.setUserManager(userManager);
+			serverFactory.addListener("default", listenerFactory.createListener());
 
-		ftpd = serverFactory.createServer();
-		ftpd.start();
+			ftpd = serverFactory.createServer();
+			ftpd.start();
+			ftpStarted =true;
+		}
+
 	}
 
 	public void stopEmbeddedFtpServer() {
 
-		ftpd.stop();
+		if (ftpStarted) {
+			ftpd.stop();
+			ftpStarted = false;
+		}
 	}
 
 	public void startEmbeddedSftpServer() throws IOException {
 
-		sshd = SshServer.setUpDefaultServer();
-		sshd.setPort(12222);
-		sshd.setHost("localhost");
+		if (!sshStarted) {
+			sshd = SshServer.setUpDefaultServer();
+			sshd.setPort(12222);
+			sshd.setHost("localhost");
 
-		List<NamedFactory<UserAuth>> userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
-		userAuthFactories.add(new UserAuthPassword.Factory());
-		userAuthFactories.add(new UserAuthPublicKey.Factory());
-		sshd.setUserAuthFactories(userAuthFactories);
+			List<NamedFactory<UserAuth>> userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
+			userAuthFactories.add(new UserAuthPassword.Factory());
+			userAuthFactories.add(new UserAuthPublicKey.Factory());
+			sshd.setUserAuthFactories(userAuthFactories);
 
-		sshd.setPasswordAuthenticator(new PasswordAuthenticator() {
+			sshd.setPasswordAuthenticator(new PasswordAuthenticator() {
 
-			@Override
-			public boolean authenticate(String username, String password, ServerSession session) {
-				return "user1".equals(username) && "pass1".equals(password);
-			}
-		});
-
-		sshd.setPublickeyAuthenticator(new PublickeyAuthenticator() {
-
-			@Override
-			public boolean authenticate(String username, PublicKey key, ServerSession session) {
-				if (username.equals("user1")) {
-
-					try {
-						Set<String> keys = new HashSet<String>();
-
-						JSch jsch = new JSch();
-						String key1= KeyPair.load(jsch,
-								"src/test/resources/keys/id_rsa_not_encrypted",
-								"src/test/resources/keys/id_rsa_not_encrypted.pub").getFingerPrint();
-						String key2= KeyPair.load(jsch,
-								"src/test/resources/keys/id_rsa_encrypted",
-								"src/test/resources/keys/id_rsa_encrypted.pub").getFingerPrint();
-
-						keys.add(key1);
-						keys.add(key2);
-
-						if (keys.contains(KeyUtils.getFingerPrint(key))) {
-							return true;
-						}
-					} catch (JSchException e) {
-					}
+				@Override
+				public boolean authenticate(String username, String password, ServerSession session) {
+					return "user1".equals(username) && "pass1".equals(password);
 				}
-				return false;
-			}
-		});
+			});
 
-		sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
-		sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(new SftpSubsystem.Factory()));
-		sshd.setCommandFactory(new ScpCommandFactory());
-		sshd.setFileSystemFactory(new VirtualFileSystemFactory(FTP_SERVER_DIR));
+			sshd.setPublickeyAuthenticator(new PublickeyAuthenticator() {
 
-		sshd.start();
+				@Override
+				public boolean authenticate(String username, PublicKey key, ServerSession session) {
+					if (username.equals("user1")) {
+
+						try {
+							Set<String> keys = new HashSet<String>();
+
+							JSch jsch = new JSch();
+							String key1= KeyPair.load(jsch,
+									"src/test/resources/keys/id_rsa_not_encrypted",
+									"src/test/resources/keys/id_rsa_not_encrypted.pub").getFingerPrint();
+							String key2= KeyPair.load(jsch,
+									"src/test/resources/keys/id_rsa_encrypted",
+									"src/test/resources/keys/id_rsa_encrypted.pub").getFingerPrint();
+
+							keys.add(key1);
+							keys.add(key2);
+
+							if (keys.contains(KeyUtils.getFingerPrint(key))) {
+								return true;
+							}
+						} catch (JSchException e) {
+						}
+					}
+					return false;
+				}
+			});
+
+			sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
+			sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(new SftpSubsystem.Factory()));
+			sshd.setCommandFactory(new ScpCommandFactory());
+			sshd.setFileSystemFactory(new VirtualFileSystemFactory(FTP_SERVER_DIR));
+
+			sshd.start();
+			sshStarted = true;
+		}
 	}
 
 	public void stopEmbeddedSftpServer() throws InterruptedException {
 
-		sshd.stop();
+		if (sshStarted) {
+			sshd.stop();
+			sshStarted = false;
+		}
 	}
 }
