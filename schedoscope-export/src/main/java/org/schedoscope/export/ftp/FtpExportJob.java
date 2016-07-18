@@ -78,6 +78,33 @@ public class FtpExportJob extends BaseExportJob {
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 
+	public Job configure(boolean isSecured, String metaStoreUris, String principal,
+			String inputDatabase, String inputTable, String inputFilter, int numReducer,
+			String[] anonFields, String exportSalt, String keyFile, String ftpUser,
+			String ftpPass, String ftpEndpoint, boolean passiveMode, boolean userIsRoot,
+			boolean cleanHdfsDir, FileCompressionCodec codec) throws Exception {
+
+		this.isSecured = isSecured;
+		this.metaStoreUris = metaStoreUris;
+		this.principal = principal;
+		this.inputDatabase = inputDatabase;
+		this.inputTable = inputTable;
+		this.inputFilter = inputFilter;
+		this.numReducer = numReducer;
+		this.anonFields = anonFields;
+		this.exportSalt = exportSalt;
+		this.keyFile = keyFile;
+		this.ftpUser = ftpUser;
+		this.ftpPass = ftpPass;
+		this.ftpEndpoint = ftpEndpoint;
+		this.passiveMode = passiveMode;
+		this.userIsRoot = userIsRoot;
+		this.cleanHdfsDir = cleanHdfsDir;
+		this.codec = codec;
+
+		return configure();
+	}
+
 	private Job configure() throws Exception {
 
 		Configuration conf = getConfiguration();
