@@ -40,22 +40,25 @@ public class FtpExportJob extends BaseExportJob {
 	@Option(name = "-k", usage = "ssh private key file")
 	private String keyFile = "~/.ssh/id_rsa";
 
-	@Option(name = "-u", usage = "the (s)ftp user")
+	@Option(name = "-u", usage = "the (s)ftp user", required = true)
 	private String ftpUser;
 
 	@Option(name = "-w", usage = "the ftp password / sftp passphrase")
 	private String ftpPass;
 
-	@Option(name = "-j", usage = "the (s)ftp endpoint, e.g. ftp://ftp.example.com:21/path/to/")
+	@Option(name = "-j", usage = "the (s)ftp endpoint, e.g. ftp://ftp.example.com:21/path/to/", required = true)
 	private String ftpEndpoint;
 
-	@Option(name = "-x", usage = "passive mode, only for ftp connections")
+	@Option(name = "-x", usage = "passive mode, only for ftp connections, defaults to 'true'")
 	private boolean passiveMode = true;
 
-	@Option(name = "-z", usage = "user dir is root, home dir on remote end is (s)ftp root dir")
+	@Option(name = "-z", usage = "user dir is root, home dir on remote end is (s)ftp root dir defaults to 'true'")
 	private boolean userIsRoot = true;
 
-	@Option(name = "-c", usage = "compression codec, either 'none', 'gzip' or 'bzip2'")
+	@Option(name = "-g", usage = "clean up hdfs dir after export, defaults to 'true'")
+	private boolean cleanHdfsDir = true;
+
+	@Option(name = "-c", usage = "compression codec, either 'none', 'gzip' or 'bzip2', defaults to 'gzip'")
 	private FileCompressionCodec codec = FileCompressionCodec.gzip;
 
 	@Override
@@ -99,7 +102,7 @@ public class FtpExportJob extends BaseExportJob {
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
 		String filePrefix = inputDatabase + "_" + inputTable;
 		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, CSVOutputFormat.FILE_EXPORT_TMP_OUTPUT_PATH));
-		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix);
+		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix, passiveMode, userIsRoot, cleanHdfsDir);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);

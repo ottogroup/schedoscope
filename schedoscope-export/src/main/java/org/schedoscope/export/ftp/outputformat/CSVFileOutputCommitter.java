@@ -56,6 +56,8 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 
 	private boolean userIsRoot;
 
+	private boolean cleanHdfsDir;
+
 	public CSVFileOutputCommitter(Path outputPath, TaskAttemptContext context) throws IOException {
 
 		super(outputPath, context);
@@ -71,6 +73,7 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 		this.keyContent = conf.get(CSVOutputFormat.FTP_EXPORT_KEY_FILE_CONTENT);
 		this.passiveMode = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_PASSIVE_MODE, true);
 		this.userIsRoot = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_USER_IS_ROOT, true);
+		this.cleanHdfsDir = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_CLEAN_HDFS_DIR, true);
 
 		try {
 
@@ -113,7 +116,9 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 	@Override
 	public void commitJob(JobContext context) throws IOException {
 
-		FileSystem fs = FileSystem.get(context.getConfiguration());
-		fs.delete(outputPath, true);
+		if (cleanHdfsDir) {
+			FileSystem fs = FileSystem.get(context.getConfiguration());
+			fs.delete(outputPath, true);
+		}
 	}
 }

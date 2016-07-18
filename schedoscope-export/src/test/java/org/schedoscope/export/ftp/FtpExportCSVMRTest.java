@@ -85,7 +85,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.none, "ftp://localhost:2221/", "user1", "pass1", null,
-				filePrefix);
+				filePrefix, true, true, true);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -112,7 +112,8 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "pass1", null, filePrefix);
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "pass1", null,
+				filePrefix, true, true, true);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -141,7 +142,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.bzip2, "sftp://localhost:12222/", "user1", null,
 				"src/test/resources/keys/id_rsa_not_encrypted",
-				filePrefix);
+				filePrefix, true, true, true);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -170,7 +171,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "12345",
 				"src/test/resources/keys/id_rsa_encrypted",
-				filePrefix);
+				filePrefix, true, true, true);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);

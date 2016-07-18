@@ -69,6 +69,8 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 	public static final String FTP_EXPORT_USER_IS_ROOT = "ftp.export.user.is.root";
 
+	public static final String FTP_EXPORT_CLEAN_HDFS_DIR = "ftp.export.clean.hdfs.dir";
+
 	private static final String FTP_EXPORT_HEADER_COLUMNS = "ftp.export.header.columns";
 
 	private CSVFileOutputCommitter committer = null;
@@ -111,7 +113,8 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 	}
 
 	public static void setOutput(Job job, boolean printHeader, FileCompressionCodec codec, String ftpEndpoint,
-			String ftpUser, String ftpPass, String keyFile, String filePrefix) throws Exception {
+			String ftpUser, String ftpPass, String keyFile, String filePrefix, boolean passiveMode,
+			boolean userIsRoot, boolean cleanHdfsDir) throws Exception {
 
 		Configuration conf = job.getConfiguration();
 		conf.setInt(FileOutputCommitter.FILEOUTPUTCOMMITTER_ALGORITHM_VERSION, 2);
@@ -129,6 +132,10 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 			String privateKey = new String(Files.readAllBytes(Paths.get(keyFile)), StandardCharsets.US_ASCII);
 			conf.set(FTP_EXPORT_KEY_FILE_CONTENT, privateKey);
 		}
+
+		conf.setBoolean(FTP_EXPORT_PASSIVE_MODE, passiveMode);
+		conf.setBoolean(FTP_EXPORT_USER_IS_ROOT, userIsRoot);
+		conf.setBoolean(FTP_EXPORT_CLEAN_HDFS_DIR, cleanHdfsDir);
 
 		DateTimeFormatter fmt = ISODateTimeFormat.basicDateTimeNoMillis();
 		String timestamp = fmt.print(DateTime.now(DateTimeZone.UTC));
