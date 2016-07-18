@@ -53,6 +53,8 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 	private static final Log LOG = LogFactory.getLog(CSVOutputFormat.class);
 
+	public static final String FILE_EXPORT_TMP_OUTPUT_PATH = "export";
+
 	public static final String FTP_EXPORT_FILE_PREFIX = "ftp.export.file.prefix";
 
 	public static final String FTP_EXPORT_USER = "ftp.export.user";

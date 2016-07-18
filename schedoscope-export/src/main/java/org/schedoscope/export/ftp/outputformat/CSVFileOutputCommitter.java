@@ -23,7 +23,9 @@ import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.schedoscope.export.ftp.upload.Uploader;
@@ -105,5 +107,12 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 
 		}
 		uploader.uploadFile(new Path(outputPath, fileName).toString(), remote);
+	}
+
+	@Override
+	public void commitJob(JobContext context) throws IOException {
+
+		FileSystem fs = FileSystem.get(context.getConfiguration());
+		fs.delete(outputPath, true);
 	}
 }

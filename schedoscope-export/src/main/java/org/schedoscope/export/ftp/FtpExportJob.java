@@ -37,8 +37,6 @@ public class FtpExportJob extends BaseExportJob {
 
 	private static final Log LOG = LogFactory.getLog(FtpExportJob.class);
 
-	private static final String TMP_OUTPUT_PATH = "export";
-
 	@Option(name = "-k", usage = "ssh private key file")
 	private String keyFile = "~/.ssh/id_rsa";
 
@@ -100,7 +98,7 @@ public class FtpExportJob extends BaseExportJob {
 
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
 		String filePrefix = inputDatabase + "_" + inputTable;
-		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, TMP_OUTPUT_PATH));
+		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, CSVOutputFormat.FILE_EXPORT_TMP_OUTPUT_PATH));
 		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix);
 
 		job.setInputFormatClass(HCatInputFormat.class);

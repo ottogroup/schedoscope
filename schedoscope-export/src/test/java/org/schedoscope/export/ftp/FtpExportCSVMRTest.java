@@ -16,12 +16,15 @@
 
 package org.schedoscope.export.ftp;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.LocatedFileStatus;
+import java.io.IOException;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPFile;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
@@ -42,13 +45,14 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 	private static EmbeddedFtpAftpServer server;
 
+	private String filePrefix;
 
 	@Override
 	@Before
 	public void setUp() throws Exception {
 
 		super.setUp();
-
+		filePrefix = RandomStringUtils.randomNumeric(20);
 	}
 
 	@BeforeClass()
@@ -73,13 +77,15 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
 
+
+
 		Job job = Job.getInstance(conf);
 
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.none, "ftp://localhost:2221/", "user1", "pass1", null,
-				"testing");
+				filePrefix);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -91,14 +97,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(TextPairArrayWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
-
-		FileSystem fs = outfile.getFileSystem(conf);
-
-		RemoteIterator<LocatedFileStatus> stat = fs.listFiles(outfile, true);
-
-		while (stat.hasNext()) {
-			System.out.println(stat.next());
-		}
+		assertEquals(2, getFileCount());
 	}
 
 	@Test
@@ -113,7 +112,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "pass1", null, "testing");
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "pass1", null, filePrefix);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -125,14 +124,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(TextPairArrayWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
-
-		FileSystem fs = outfile.getFileSystem(conf);
-
-		RemoteIterator<LocatedFileStatus> stat = fs.listFiles(outfile, true);
-
-		while (stat.hasNext()) {
-			System.out.println(stat.next());
-		}
+		assertEquals(2, getFileCount());
 	}
 
 	@Test
@@ -149,7 +141,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.bzip2, "sftp://localhost:12222/", "user1", null,
 				"src/test/resources/keys/id_rsa_not_encrypted",
-				"testing");
+				filePrefix);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -161,14 +153,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(TextPairArrayWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
-
-		FileSystem fs = outfile.getFileSystem(conf);
-
-		RemoteIterator<LocatedFileStatus> stat = fs.listFiles(outfile, true);
-
-		while (stat.hasNext()) {
-			System.out.println(stat.next());
-		}
+		assertEquals(2, getFileCount());
 	}
 
 	@Test
@@ -185,7 +170,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		CSVOutputFormat.setOutputPath(job, outfile);
 		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "12345",
 				"src/test/resources/keys/id_rsa_encrypted",
-				"testing");
+				filePrefix);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
@@ -197,14 +182,22 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setOutputValueClass(TextPairArrayWritable.class);
 
 		assertTrue(job.waitForCompletion(true));
-
-		FileSystem fs = outfile.getFileSystem(conf);
-
-		RemoteIterator<LocatedFileStatus> stat = fs.listFiles(outfile, true);
-
-		while (stat.hasNext()) {
-			System.out.println(stat.next());
-		}
+		assertEquals(2, getFileCount());
 	}
 
+	private int getFileCount() throws IOException {
+
+		FTPClient ftp = new FTPClient();
+		ftp.connect("localhost", 2221);
+		ftp.login("user1", "pass1");
+		FTPFile[] files = ftp.listFiles();
+
+		int fileCounter = 0;
+		for (FTPFile f : files) {
+			if (f.getName().contains(filePrefix)) {
+				fileCounter += 1;
+			}
+		}
+		return fileCounter;
+	}
 }
