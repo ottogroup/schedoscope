@@ -107,6 +107,7 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 
 		}
 		uploader.uploadFile(new Path(outputPath, fileName).toString(), remote);
+		uploader.closeFilesystem();
 	}
 
 	@Override

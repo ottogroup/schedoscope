@@ -108,4 +108,9 @@ public class Uploader {
 		LOG.debug("copy " + local + " to " + remote);
 		remote.copyFrom(local, new AllFileSelector());
 	}
+
+	public void closeFilesystem() {
+
+		fsManager.close();
+	}
 }
