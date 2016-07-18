@@ -49,6 +49,9 @@ public class FtpExportJob extends BaseExportJob {
 	@Option(name = "-j", usage = "the (s)ftp endpoint, e.g. ftp://ftp.example.com:21/path/to/", required = true)
 	private String ftpEndpoint;
 
+	@Option(name = "-z", usage = "file prefix for files send to (s)ftp server, defaults to 'database'-'table'")
+	private String filePrefix;
+
 	@Option(name = "-x", usage = "passive mode, only for ftp connections, defaults to 'true'")
 	private boolean passiveMode = true;
 
@@ -81,8 +84,8 @@ public class FtpExportJob extends BaseExportJob {
 	public Job configure(boolean isSecured, String metaStoreUris, String principal,
 			String inputDatabase, String inputTable, String inputFilter, int numReducer,
 			String[] anonFields, String exportSalt, String keyFile, String ftpUser,
-			String ftpPass, String ftpEndpoint, boolean passiveMode, boolean userIsRoot,
-			boolean cleanHdfsDir, FileCompressionCodec codec) throws Exception {
+			String ftpPass, String ftpEndpoint, String filePrefix, boolean passiveMode,
+			boolean userIsRoot, boolean cleanHdfsDir, FileCompressionCodec codec) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -97,6 +100,7 @@ public class FtpExportJob extends BaseExportJob {
 		this.ftpUser = ftpUser;
 		this.ftpPass = ftpPass;
 		this.ftpEndpoint = ftpEndpoint;
+		this.filePrefix = filePrefix;
 		this.passiveMode = passiveMode;
 		this.userIsRoot = userIsRoot;
 		this.cleanHdfsDir = cleanHdfsDir;
@@ -126,8 +130,12 @@ public class FtpExportJob extends BaseExportJob {
 					inputFilter);
 		}
 
+		if (filePrefix == null) {
+			filePrefix = inputDatabase + "-" + inputTable;
+		}
+
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
-		String filePrefix = inputDatabase + "_" + inputTable;
+
 		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, CSVOutputFormat.FILE_EXPORT_TMP_OUTPUT_PATH));
 		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix, passiveMode, userIsRoot, cleanHdfsDir);
 

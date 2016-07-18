@@ -36,14 +36,14 @@ import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
-import org.schedoscope.export.testsupport.EmbeddedFtpAftpServer;
+import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 	private static final String HDFS_OUTPUT_DIR = "/tmp/output";
 
-	private static EmbeddedFtpAftpServer server;
+	private static EmbeddedFtpSftpServer server;
 
 	private String filePrefix;
 
@@ -58,7 +58,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 	@BeforeClass()
 	public static void setUpServer() throws Exception {
 
-		server = new EmbeddedFtpAftpServer();
+		server = new EmbeddedFtpSftpServer();
 		server.startEmbeddedFtpServer();
 		server.startEmbeddedSftpServer();
 	}
@@ -84,7 +84,8 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.none, "ftp://localhost:2221/", "user1", "pass1", null,
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.none, "ftp://localhost:2221/",
+				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
 				filePrefix, true, true, true);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
@@ -112,7 +113,8 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "pass1", null,
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/",
+				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
 				filePrefix, true, true, true);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
@@ -140,8 +142,8 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.bzip2, "sftp://localhost:12222/", "user1", null,
-				"src/test/resources/keys/id_rsa_not_encrypted",
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.bzip2, "sftp://localhost:12222/",
+				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, null, "src/test/resources/keys/id_rsa_not_encrypted",
 				filePrefix, true, true, true);
 
 		job.setMapperClass(FtpExportCSVMapper.class);
@@ -169,7 +171,8 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/", "user1", "12345",
+		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/",
+				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, "12345",
 				"src/test/resources/keys/id_rsa_encrypted",
 				filePrefix, true, true, true);
 
@@ -190,7 +193,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		FTPClient ftp = new FTPClient();
 		ftp.connect("localhost", 2221);
-		ftp.login("user1", "pass1");
+		ftp.login(EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING);
 		FTPFile[] files = ftp.listFiles();
 
 		int fileCounter = 0;

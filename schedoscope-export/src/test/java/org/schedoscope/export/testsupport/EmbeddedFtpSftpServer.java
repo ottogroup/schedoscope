@@ -54,9 +54,13 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.KeyPair;
 
-public class EmbeddedFtpAftpServer {
+public class EmbeddedFtpSftpServer {
 
-	private static final String FTP_SERVER_DIR = "/tmp";
+	public static final String FTP_SERVER_DIR = "/tmp";
+
+	public static final String FTP_USER_FOR_TESTING = "user1";
+
+	public static final String FTP_PASS_FOR_TESTING = "pass1";
 
 	private FtpServer ftpd;
 
@@ -73,8 +77,8 @@ public class EmbeddedFtpAftpServer {
 			propertyFactory.setPasswordEncryptor(new ClearTextPasswordEncryptor());
 
 			UserFactory userFactory = new UserFactory();
-			userFactory.setName("user1");
-			userFactory.setPassword("pass1");
+			userFactory.setName(FTP_USER_FOR_TESTING);
+			userFactory.setPassword(FTP_PASS_FOR_TESTING);
 			userFactory.setHomeDirectory(FTP_SERVER_DIR);
 
 			List<Authority> auths = new ArrayList<Authority>();
@@ -124,7 +128,7 @@ public class EmbeddedFtpAftpServer {
 
 				@Override
 				public boolean authenticate(String username, String password, ServerSession session) {
-					return "user1".equals(username) && "pass1".equals(password);
+					return FTP_USER_FOR_TESTING.equals(username) && FTP_PASS_FOR_TESTING.equals(password);
 				}
 			});
 
@@ -132,7 +136,7 @@ public class EmbeddedFtpAftpServer {
 
 				@Override
 				public boolean authenticate(String username, PublicKey key, ServerSession session) {
-					if (username.equals("user1")) {
+					if (username.equals(FTP_USER_FOR_TESTING)) {
 
 						try {
 							Set<String> keys = new HashSet<String>();

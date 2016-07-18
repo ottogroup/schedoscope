@@ -19,6 +19,8 @@ package org.schedoscope.dsl.transformations
 import org.apache.hadoop.mapreduce.Job
 import org.schedoscope.Settings
 import org.schedoscope.dsl.{ Field, View }
+import org.schedoscope.export.ftp.FtpExportJob
+import org.schedoscope.export.ftp.upload.FileCompressionCodec
 import org.schedoscope.export.jdbc.JdbcExportJob
 import org.schedoscope.export.jdbc.exception.{ RetryException, UnrecoverableException }
 import org.schedoscope.export.redis.RedisExportJob
@@ -313,5 +315,71 @@ object Export {
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
         "schedoscope.export.metastoreUri" -> metastoreUri))
+  }
+
+  def Ftp(
+    v: View,
+    ftpEndpoint: String,
+    ftpUser: String,
+    ftpPass: String = null,
+    filePrefix: String = null,
+    keyFile: String = "~/.ssh/id_rsa",
+    numReducers: Int = Schedoscope.settings.ftpExportNumReducers,
+    passiveMode: Boolean = true,
+    userIsRoot: Boolean = true,
+    cleanHdfsDir: Boolean = true,
+    exportSalt: String = Schedoscope.settings.exportSalt,
+    codec: FileCompressionCodec = FileCompressionCodec.gzip,
+    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
+
+    val t = MapreduceTransformation(
+        v,
+        (conf) => {
+          val filter = v.partitionParameters
+            .map { (p => s"${p.n} = '${p.v.get}'") }
+            .mkString(" and ")
+
+          val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
+          val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+
+          new FtpExportJob().configure(
+            conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
+            conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
+            conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
+            v.dbName,
+            v.n,
+            filter,
+            conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
+            anonFields ++ anonParameters,
+            conf.get("schedoscope.export.salt").get.asInstanceOf[String],
+            conf.get("schedoscope.export.keyFile").get.asInstanceOf[String],
+            conf.get("schedoscope.export.ftpUser").get.asInstanceOf[String],
+            conf.get("schedoscope.export.ftpPass").getOrElse(null).asInstanceOf[String],
+            conf.get("schedoscope.export.ftpEndpoint").get.asInstanceOf[String],
+            filePrefix,
+            conf.get("schedoscope.export.passiveMode").get.asInstanceOf[Boolean],
+            conf.get("schedoscope.export.userIsRoot").get.asInstanceOf[Boolean],
+            conf.get("schedoscope.export.cleanHdfsDir").get.asInstanceOf[Boolean],
+            codec
+          )
+
+        })
+      t.directoriesToDelete = List()
+      t.configureWith(
+        Map(
+          "schedoscope.export.isKerberized" -> isKerberized,
+          "schedoscope.export.metastoreUri" -> metastoreUri,
+          "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
+          "schedoscope.export.numReducers" -> numReducers,
+          "schedoscope.export.salt" -> exportSalt,
+          "schedoscope.export.keyFile" -> keyFile,
+          "schedoscope.export.ftpUser" -> ftpUser,
+          "schedoscope.export.ftpPass" -> ftpPass,
+          "schedoscope.export.ftpEndpoint" -> ftpEndpoint,
+          "schedoscope.export.passiveMode" -> passiveMode,
+          "schedoscope.export.userIsRoot" -> userIsRoot,
+          "schedoscope.export.cleanHdfsDir" -> cleanHdfsDir))
   }
 }

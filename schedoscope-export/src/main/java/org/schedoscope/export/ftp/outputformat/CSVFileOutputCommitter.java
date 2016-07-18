@@ -52,6 +52,8 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 
 	private String keyContent;
 
+	private int numReducer;
+
 	private boolean passiveMode;
 
 	private boolean userIsRoot;
@@ -74,6 +76,7 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 		this.passiveMode = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_PASSIVE_MODE, true);
 		this.userIsRoot = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_USER_IS_ROOT, true);
 		this.cleanHdfsDir = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_CLEAN_HDFS_DIR, true);
+		this.numReducer = context.getNumReduceTasks();
 
 		try {
 
@@ -94,7 +97,7 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 		super.commitTask(context);
 
 		String fileName = CSVOutputFormat.getOutputName(context);
-		String remote = endpoint + "/" + filePrefix + context.getTaskAttemptID().getTaskID().getId() + CSVOutputFormat.getOutputNameExtension();
+		String remote = endpoint + "/" + filePrefix + context.getTaskAttemptID().getTaskID().getId() + "-" + numReducer + CSVOutputFormat.getOutputNameExtension();
 
 		Configuration conf = context.getConfiguration();
 
