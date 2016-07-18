@@ -52,6 +52,12 @@ public class FtpExportJob extends BaseExportJob {
 	@Option(name = "-z", usage = "file prefix for files send to (s)ftp server, defaults to 'database'-'table'")
 	private String filePrefix;
 
+	@Option(name = "-l", usage = "delimiter for csv export, defaults to '\t'")
+	private String delimiter = "\t";
+
+	@Option(name = "-h", usage = "print header in exported CSV files")
+	private boolean printHeader;
+
 	@Option(name = "-x", usage = "passive mode, only for ftp connections, defaults to 'true'")
 	private boolean passiveMode = true;
 
@@ -84,8 +90,9 @@ public class FtpExportJob extends BaseExportJob {
 	public Job configure(boolean isSecured, String metaStoreUris, String principal,
 			String inputDatabase, String inputTable, String inputFilter, int numReducer,
 			String[] anonFields, String exportSalt, String keyFile, String ftpUser,
-			String ftpPass, String ftpEndpoint, String filePrefix, boolean passiveMode,
-			boolean userIsRoot, boolean cleanHdfsDir, FileCompressionCodec codec) throws Exception {
+			String ftpPass, String ftpEndpoint, String filePrefix, String delimiter,
+			boolean printHeader, boolean passiveMode, boolean userIsRoot,
+			boolean cleanHdfsDir, FileCompressionCodec codec) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -101,6 +108,8 @@ public class FtpExportJob extends BaseExportJob {
 		this.ftpPass = ftpPass;
 		this.ftpEndpoint = ftpEndpoint;
 		this.filePrefix = filePrefix;
+		this.delimiter = delimiter;
+		this.printHeader = printHeader;
 		this.passiveMode = passiveMode;
 		this.userIsRoot = userIsRoot;
 		this.cleanHdfsDir = cleanHdfsDir;
@@ -137,7 +146,7 @@ public class FtpExportJob extends BaseExportJob {
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
 
 		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, CSVOutputFormat.FILE_EXPORT_TMP_OUTPUT_PATH));
-		CSVOutputFormat.setOutput(job, true, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix, passiveMode, userIsRoot, cleanHdfsDir);
+		CSVOutputFormat.setOutput(job, printHeader, delimiter, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix, passiveMode, userIsRoot, cleanHdfsDir);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);

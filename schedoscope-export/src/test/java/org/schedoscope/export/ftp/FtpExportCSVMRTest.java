@@ -45,6 +45,8 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 	private static EmbeddedFtpSftpServer server;
 
+	private static final String DELIMITER = "\t";
+
 	private String filePrefix;
 
 	@Override
@@ -84,7 +86,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.none, "ftp://localhost:2221/",
+		CSVOutputFormat.setOutput(job, true, DELIMITER, FileCompressionCodec.none, "ftp://localhost:2221/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
 				filePrefix, true, true, true);
 
@@ -113,7 +115,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/",
+		CSVOutputFormat.setOutput(job, true, DELIMITER, FileCompressionCodec.gzip, "sftp://localhost:12222/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
 				filePrefix, true, true, true);
 
@@ -142,7 +144,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.bzip2, "sftp://localhost:12222/",
+		CSVOutputFormat.setOutput(job, true, DELIMITER, FileCompressionCodec.bzip2, "sftp://localhost:12222/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, null, "src/test/resources/keys/id_rsa_not_encrypted",
 				filePrefix, true, true, true);
 
@@ -171,7 +173,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		Path outfile = new Path(HDFS_OUTPUT_DIR);
 
 		CSVOutputFormat.setOutputPath(job, outfile);
-		CSVOutputFormat.setOutput(job, true, FileCompressionCodec.gzip, "sftp://localhost:12222/",
+		CSVOutputFormat.setOutput(job, true, DELIMITER, FileCompressionCodec.gzip, "sftp://localhost:12222/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, "12345",
 				"src/test/resources/keys/id_rsa_encrypted",
 				filePrefix, true, true, true);

@@ -35,9 +35,13 @@ public class CSVRecordWriter<K, V extends TextPairArrayWritable> extends RecordW
 
 	private CSVFormat csvFormat;
 
-	public CSVRecordWriter(DataOutputStream out, String[] header) {
+	public CSVRecordWriter(DataOutputStream out, String[] header, char delimiter) {
 		this.out = out;
-		csvFormat = CSVFormat.DEFAULT.withTrim(true).withQuoteMode(QuoteMode.ALL).withHeader(header);
+		csvFormat = CSVFormat.DEFAULT
+				.withTrim(true)
+				.withQuoteMode(QuoteMode.ALL)
+				.withHeader(header)
+				.withDelimiter(delimiter);
 	}
 
 	@Override

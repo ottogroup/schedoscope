@@ -71,6 +71,8 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 	public static final String FTP_EXPORT_CLEAN_HDFS_DIR = "ftp.export.clean.hdfs.dir";
 
+	public static final String FTP_EXPORT_CVS_DELIMITER = "ftp.export.csv.delimmiter";
+
 	private static final String FTP_EXPORT_HEADER_COLUMNS = "ftp.export.header.columns";
 
 	private CSVFileOutputCommitter committer = null;
@@ -99,6 +101,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 			}
 		}
 
+		char delimiter = conf.get(FTP_EXPORT_CVS_DELIMITER, "\t").charAt(0);
 		String[] header = conf.getStrings(FTP_EXPORT_HEADER_COLUMNS);
 
 		Path file = getDefaultWorkFile(context, extension);
@@ -106,13 +109,13 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 		FSDataOutputStream fileOut = fs.create(file, false);
 
 		if (!isCompressed) {
-			return new CSVRecordWriter<K, V>(fileOut, header);
+			return new CSVRecordWriter<K, V>(fileOut, header, delimiter);
 		} else {
-			return new CSVRecordWriter<K, V>(new DataOutputStream(codec.createOutputStream(fileOut)), header);
+			return new CSVRecordWriter<K, V>(new DataOutputStream(codec.createOutputStream(fileOut)), header, delimiter);
 		}
 	}
 
-	public static void setOutput(Job job, boolean printHeader, FileCompressionCodec codec, String ftpEndpoint,
+	public static void setOutput(Job job, boolean printHeader, String delimiter, FileCompressionCodec codec, String ftpEndpoint,
 			String ftpUser, String ftpPass, String keyFile, String filePrefix, boolean passiveMode,
 			boolean userIsRoot, boolean cleanHdfsDir) throws Exception {
 
@@ -124,6 +127,13 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 		if (ftpPass != null) {
 			conf.set(FTP_EXPORT_PASS, ftpPass);
+		}
+
+		if (delimiter != null) {
+			if (delimiter.length() != 1) {
+				throw new IllegalArgumentException("delimiter must be exactly 1 char");
+			}
+			conf.set(FTP_EXPORT_CVS_DELIMITER, delimiter);
 		}
 
 		if (keyFile != null && Files.exists(Paths.get(keyFile))) {
