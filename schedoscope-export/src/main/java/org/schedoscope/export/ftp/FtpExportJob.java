@@ -101,7 +101,7 @@ public class FtpExportJob extends BaseExportJob {
 		this.inputTable = inputTable;
 		this.inputFilter = inputFilter;
 		this.numReducer = numReducer;
-		this.anonFields = anonFields;
+		this.anonFields = anonFields.clone();
 		this.exportSalt = exportSalt;
 		this.keyFile = keyFile;
 		this.ftpUser = ftpUser;

@@ -107,10 +107,13 @@ public class EmbeddedFtpSftpServer {
 	public void stopEmbeddedFtpServer() {
 
 		if (ftpStarted) {
-			ftpd.stop();
+			if (ftpd != null) {
+				ftpd.stop();
+			}
 			ftpStarted = false;
 		}
 	}
+
 
 	public void startEmbeddedSftpServer() throws IOException {
 
@@ -124,44 +127,8 @@ public class EmbeddedFtpSftpServer {
 			userAuthFactories.add(new UserAuthPublicKey.Factory());
 			sshd.setUserAuthFactories(userAuthFactories);
 
-			sshd.setPasswordAuthenticator(new PasswordAuthenticator() {
-
-				@Override
-				public boolean authenticate(String username, String password, ServerSession session) {
-					return FTP_USER_FOR_TESTING.equals(username) && FTP_PASS_FOR_TESTING.equals(password);
-				}
-			});
-
-			sshd.setPublickeyAuthenticator(new PublickeyAuthenticator() {
-
-				@Override
-				public boolean authenticate(String username, PublicKey key, ServerSession session) {
-					if (username.equals(FTP_USER_FOR_TESTING)) {
-
-						try {
-							Set<String> keys = new HashSet<String>();
-
-							JSch jsch = new JSch();
-							String key1= KeyPair.load(jsch,
-									"src/test/resources/keys/id_rsa_not_encrypted",
-									"src/test/resources/keys/id_rsa_not_encrypted.pub").getFingerPrint();
-							String key2= KeyPair.load(jsch,
-									"src/test/resources/keys/id_rsa_encrypted",
-									"src/test/resources/keys/id_rsa_encrypted.pub").getFingerPrint();
-
-							keys.add(key1);
-							keys.add(key2);
-
-							if (keys.contains(KeyUtils.getFingerPrint(key))) {
-								return true;
-							}
-						} catch (JSchException e) {
-						}
-					}
-					return false;
-				}
-			});
-
+			sshd.setPasswordAuthenticator(new SimplePasswordAuthenticator());
+			sshd.setPublickeyAuthenticator(new SimplePubkeyAuthenticator());
 			sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
 			sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(new SftpSubsystem.Factory()));
 			sshd.setCommandFactory(new ScpCommandFactory());
@@ -175,8 +142,48 @@ public class EmbeddedFtpSftpServer {
 	public void stopEmbeddedSftpServer() throws InterruptedException {
 
 		if (sshStarted) {
-			sshd.stop();
+			if (sshd != null) {
+				sshd.stop();
+			}
 			sshStarted = false;
+		}
+	}
+
+	public static class SimplePasswordAuthenticator implements PasswordAuthenticator {
+
+		@Override
+		public boolean authenticate(String username, String password, ServerSession session) {
+			return FTP_USER_FOR_TESTING.equals(username) && FTP_PASS_FOR_TESTING.equals(password);
+		}
+	}
+
+	public static class SimplePubkeyAuthenticator implements PublickeyAuthenticator {
+
+		@Override
+		public boolean authenticate(String username, PublicKey key, ServerSession session) {
+			if (username.equals(FTP_USER_FOR_TESTING)) {
+
+				try {
+					Set<String> keys = new HashSet<String>();
+
+					JSch jsch = new JSch();
+					String key1= KeyPair.load(jsch,
+							"src/test/resources/keys/id_rsa_not_encrypted",
+							"src/test/resources/keys/id_rsa_not_encrypted.pub").getFingerPrint();
+					String key2= KeyPair.load(jsch,
+							"src/test/resources/keys/id_rsa_encrypted",
+							"src/test/resources/keys/id_rsa_encrypted.pub").getFingerPrint();
+
+					keys.add(key1);
+					keys.add(key2);
+
+					if (keys.contains(KeyUtils.getFingerPrint(key))) {
+						return true;
+					}
+				} catch (JSchException e) {
+				}
+			}
+			return false;
 		}
 	}
 }
