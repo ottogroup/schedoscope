@@ -145,7 +145,7 @@ public class FtpExportJob extends BaseExportJob {
 
 		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
 
-		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, CSVOutputFormat.FILE_EXPORT_TMP_OUTPUT_PATH));
+		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, CSVOutputFormat.FTP_EXPORT_TMP_OUTPUT_PATH));
 		CSVOutputFormat.setOutput(job, printHeader, delimiter, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix, passiveMode, userIsRoot, cleanHdfsDir);
 
 		job.setInputFormatClass(HCatInputFormat.class);

@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -53,7 +54,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 	private static final Log LOG = LogFactory.getLog(CSVOutputFormat.class);
 
-	public static final String FILE_EXPORT_TMP_OUTPUT_PATH = "export";
+	public static final String FTP_EXPORT_TMP_OUTPUT_PATH = "export_";
 
 	public static final String FTP_EXPORT_FILE_PREFIX = "ftp.export.file.prefix";
 
@@ -120,6 +121,10 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 			boolean userIsRoot, boolean cleanHdfsDir) throws Exception {
 
 		Configuration conf = job.getConfiguration();
+		String tmpDir = conf.get("hadoop.tmp.dir");
+		String localTmpDir = RandomStringUtils.randomNumeric(10);
+		setOutputPath(job, new Path(tmpDir, FTP_EXPORT_TMP_OUTPUT_PATH + localTmpDir));
+
 		conf.setInt(FileOutputCommitter.FILEOUTPUTCOMMITTER_ALGORITHM_VERSION, 2);
 
 		conf.set(FTP_EXPORT_ENDPOINT, ftpEndpoint);
