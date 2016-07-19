@@ -35,23 +35,26 @@ public class CSVRecordWriter<K, V> extends RecordWriter<K, V> {
 
 	private CSVFormat csvFormat;
 
-	public CSVRecordWriter(DataOutputStream out, String[] header, char delimiter) {
+	private StringBuilder buffer;
+
+	public CSVRecordWriter(DataOutputStream out, String[] header, char delimiter) throws IOException {
 		this.out = out;
 		csvFormat = CSVFormat.DEFAULT
 				.withTrim(true)
 				.withQuoteMode(QuoteMode.ALL)
 				.withHeader(header)
 				.withDelimiter(delimiter);
+
+		buffer = new StringBuilder();
+		csvPrinter = csvFormat.print(buffer);
 	}
 
 	@Override
 	public void write(K key, V value) throws IOException {
 
-		StringBuilder buffer = new StringBuilder();
-
-		csvPrinter = csvFormat.print(buffer);
 		csvPrinter.printRecord(((TextPairArrayWritable) value).getSecondAsList());
 		out.write(buffer.toString().getBytes(StandardCharsets.UTF_8));
+		buffer.setLength(0);
 	}
 
 	@Override
