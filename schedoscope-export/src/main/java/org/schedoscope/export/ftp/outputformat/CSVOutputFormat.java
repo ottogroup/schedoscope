@@ -76,7 +76,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 	private static final String FTP_EXPORT_HEADER_COLUMNS = "ftp.export.header.columns";
 
-	private CSVFileOutputCommitter committer = null;
+	private FtpUploadOutputCommitter committer = null;
 
 	private static String extension = "";
 
@@ -188,7 +188,7 @@ public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOut
 
 		if (committer == null) {
 			Path output = getOutputPath(context);
-			committer = new CSVFileOutputCommitter(output, context);
+			committer = new FtpUploadOutputCommitter(output, context);
 		}
 		return committer;
 	}

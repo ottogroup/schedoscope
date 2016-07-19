@@ -32,7 +32,7 @@ import org.schedoscope.export.ftp.upload.Uploader;
 
 import com.google.common.io.Files;
 
-public class CSVFileOutputCommitter extends FileOutputCommitter {
+public class FtpUploadOutputCommitter extends FileOutputCommitter {
 
 	private static final String TMP_FILE_PREFIX = "private_key_";
 
@@ -60,7 +60,7 @@ public class CSVFileOutputCommitter extends FileOutputCommitter {
 
 	private boolean cleanHdfsDir;
 
-	public CSVFileOutputCommitter(Path outputPath, TaskAttemptContext context) throws IOException {
+	public FtpUploadOutputCommitter(Path outputPath, TaskAttemptContext context) throws IOException {
 
 		super(outputPath, context);
 
