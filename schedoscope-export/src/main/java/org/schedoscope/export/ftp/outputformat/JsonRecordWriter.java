@@ -20,42 +20,29 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.QuoteMode;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.mapred.AvroValue;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.schedoscope.export.writables.TextPairArrayWritable;
 
-public class CSVRecordWriter<K, V> extends RecordWriter<K, V> {
+public class JsonRecordWriter<K, V> extends RecordWriter<K, V> {
+
+	private static final String NEWLINE = "\n";
 
 	private DataOutputStream out;
 
-	private CSVPrinter csvPrinter;
-
-	private CSVFormat csvFormat;
-
-	private StringBuilder buffer;
-
-	public CSVRecordWriter(DataOutputStream out, String[] header, char delimiter) throws IOException {
+	public JsonRecordWriter(DataOutputStream out) {
 
 		this.out = out;
-		csvFormat = CSVFormat.DEFAULT
-				.withTrim(true)
-				.withQuoteMode(QuoteMode.ALL)
-				.withHeader(header)
-				.withDelimiter(delimiter);
-
-		buffer = new StringBuilder();
-		csvPrinter = csvFormat.print(buffer);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void write(K key, V value) throws IOException {
 
-		csvPrinter.printRecord(((TextPairArrayWritable) value).getSecondAsList());
-		out.write(buffer.toString().getBytes(StandardCharsets.UTF_8));
-		buffer.setLength(0);
+		AvroValue<GenericRecord> avroValue = (AvroValue<GenericRecord>) value;
+		out.write(avroValue.datum().toString().getBytes(StandardCharsets.UTF_8));
+		out.write(NEWLINE.getBytes(StandardCharsets.UTF_8));
 	}
 
 	@Override

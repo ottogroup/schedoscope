@@ -55,6 +55,8 @@ public class CSVOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
 	public static final String FTP_EXPORT_TMP_OUTPUT_PATH = "export_";
 
+	public static final String FTP_EXPORT_TABLE_NAME = "ftp.export.table.name";
+
 	public static final String FTP_EXPORT_FILE_PREFIX = "ftp.export.file.prefix";
 
 	public static final String FTP_EXPORT_USER = "ftp.export.user";
@@ -74,6 +76,8 @@ public class CSVOutputFormat<K, V> extends FileOutputFormat<K, V> {
 	public static final String FTP_EXPORT_CVS_DELIMITER = "ftp.export.csv.delimmiter";
 
 	private static final String FTP_EXPORT_HEADER_COLUMNS = "ftp.export.header.columns";
+
+	private static final String FTP_EXPORT_FILE_TYPE = "ftp.export.file.type";
 
 	private FtpUploadOutputCommitter committer = null;
 
@@ -108,16 +112,34 @@ public class CSVOutputFormat<K, V> extends FileOutputFormat<K, V> {
 		FileSystem fs = file.getFileSystem(conf);
 		FSDataOutputStream fileOut = fs.create(file, false);
 
-		if (!isCompressed) {
-			return new CSVRecordWriter<K, V>(fileOut, header, delimiter);
+		RecordWriter<K, V> writer;
+
+		if (conf.get(FTP_EXPORT_FILE_TYPE).equals(FileOutputType.csv.toString())) {
+
+			if (!isCompressed) {
+				writer = new CSVRecordWriter<K, V>(fileOut, header, delimiter);
+			} else {
+				writer = new CSVRecordWriter<K, V>(new DataOutputStream(codec.createOutputStream(fileOut)), header, delimiter);
+			}
+
+		} else if (conf.get(FTP_EXPORT_FILE_TYPE).equals(FileOutputType.json.toString())) {
+
+			if (!isCompressed) {
+				writer = new JsonRecordWriter<K, V>(fileOut);
+			} else {
+				writer = new JsonRecordWriter<K, V>(new DataOutputStream(codec.createOutputStream(fileOut)));
+			}
+
 		} else {
-			return new CSVRecordWriter<K, V>(new DataOutputStream(codec.createOutputStream(fileOut)), header, delimiter);
+			throw new IllegalArgumentException("unknown file output type");
 		}
+
+		return writer;
 	}
 
-	public static void setOutput(Job job, boolean printHeader, String delimiter, FileCompressionCodec codec, String ftpEndpoint,
-			String ftpUser, String ftpPass, String keyFile, String filePrefix, boolean passiveMode,
-			boolean userIsRoot, boolean cleanHdfsDir) throws Exception {
+	public static void setOutput(Job job, String tableName, boolean printHeader, String delimiter, FileOutputType fileType,
+			FileCompressionCodec codec, String ftpEndpoint, String ftpUser, String ftpPass, String keyFile, String filePrefix,
+			boolean passiveMode, boolean userIsRoot, boolean cleanHdfsDir) throws Exception {
 
 		Configuration conf = job.getConfiguration();
 		String tmpDir = conf.get("hadoop.tmp.dir");
@@ -125,6 +147,8 @@ public class CSVOutputFormat<K, V> extends FileOutputFormat<K, V> {
 		setOutputPath(job, new Path(tmpDir, FTP_EXPORT_TMP_OUTPUT_PATH + localTmpDir));
 
 		conf.setInt(FileOutputCommitter.FILEOUTPUTCOMMITTER_ALGORITHM_VERSION, 2);
+
+		conf.set(FTP_EXPORT_TABLE_NAME, tableName);
 
 		conf.set(FTP_EXPORT_ENDPOINT, ftpEndpoint);
 		conf.set(FTP_EXPORT_USER, ftpUser);
@@ -158,6 +182,8 @@ public class CSVOutputFormat<K, V> extends FileOutputFormat<K, V> {
 		if (printHeader) {
 			conf.setStrings(FTP_EXPORT_HEADER_COLUMNS, setCSVHeader(conf));
 		}
+
+		conf.set(FTP_EXPORT_FILE_TYPE, fileType.toString());
 
 		if (codec.equals(FileCompressionCodec.gzip)) {
 			setOutputCompressorClass(job, GzipCodec.class);

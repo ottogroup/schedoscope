@@ -16,21 +16,26 @@
 
 package org.schedoscope.export.ftp;
 
+import org.apache.avro.Schema;
+import org.apache.avro.mapred.AvroValue;
+import org.apache.avro.mapreduce.AvroJob;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.BaseExportJob;
 import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
+import org.schedoscope.export.ftp.outputformat.FileOutputType;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
+import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class FtpExportJob extends BaseExportJob {
@@ -70,6 +75,9 @@ public class FtpExportJob extends BaseExportJob {
 	@Option(name = "-c", usage = "compression codec, either 'none', 'gzip' or 'bzip2', defaults to 'gzip'")
 	private FileCompressionCodec codec = FileCompressionCodec.gzip;
 
+	@Option(name = "-v", usage = "file output encoding, either 'csv' or 'json', defaults to 'csv'")
+	private FileOutputType fileType = FileOutputType.csv;
+
 	@Override
 	public int run(String[] args) throws Exception {
 
@@ -92,7 +100,7 @@ public class FtpExportJob extends BaseExportJob {
 			String[] anonFields, String exportSalt, String keyFile, String ftpUser,
 			String ftpPass, String ftpEndpoint, String filePrefix, String delimiter,
 			boolean printHeader, boolean passiveMode, boolean userIsRoot,
-			boolean cleanHdfsDir, FileCompressionCodec codec) throws Exception {
+			boolean cleanHdfsDir, FileCompressionCodec codec, FileOutputType fileType) throws Exception {
 
 		this.isSecured = isSecured;
 		this.metaStoreUris = metaStoreUris;
@@ -114,6 +122,7 @@ public class FtpExportJob extends BaseExportJob {
 		this.userIsRoot = userIsRoot;
 		this.cleanHdfsDir = cleanHdfsDir;
 		this.codec = codec;
+		this.fileType = fileType;
 
 		return configure();
 	}
@@ -126,8 +135,8 @@ public class FtpExportJob extends BaseExportJob {
 		conf = configureAnonFields(conf);
 
 		Job job = Job.getInstance(conf, "FtpExport: " + inputDatabase + "." + inputTable);
+
 		job.setJarByClass(FtpExportJob.class);
-		job.setMapperClass(FtpExportCSVMapper.class);
 		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(numReducer);
 
@@ -143,16 +152,31 @@ public class FtpExportJob extends BaseExportJob {
 			filePrefix = inputDatabase + "-" + inputTable;
 		}
 
-		String tmpDir = job.getConfiguration().get("hadoop.tmp.dir");
-
-		CSVOutputFormat.setOutputPath(job, new Path(tmpDir, CSVOutputFormat.FTP_EXPORT_TMP_OUTPUT_PATH));
-		CSVOutputFormat.setOutput(job, printHeader, delimiter, codec, ftpEndpoint, ftpUser, ftpPass, keyFile, filePrefix, passiveMode, userIsRoot, cleanHdfsDir);
+		CSVOutputFormat.setOutput(job, inputTable, printHeader, delimiter,
+				fileType, codec, ftpEndpoint, ftpUser, ftpPass, keyFile,
+				filePrefix, passiveMode, userIsRoot, cleanHdfsDir);
 
 		job.setInputFormatClass(HCatInputFormat.class);
 		job.setOutputFormatClass(CSVOutputFormat.class);
 		job.setOutputKeyClass(LongWritable.class);
-		job.setOutputValueClass(TextPairArrayWritable.class);
 
+		if (fileType.equals(FileOutputType.csv)) {
+
+			job.setOutputValueClass(TextPairArrayWritable.class);
+			job.setMapperClass(FtpExportCSVMapper.class);
+		} else if (fileType.equals(FileOutputType.json)) {
+
+			HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(conf);
+			HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
+			Schema schema = schemaConverter.convertSchema(hcatInputSchema, inputTable);
+			AvroJob.setMapOutputValueSchema(job, schema);
+
+
+			job.setOutputValueClass(AvroValue.class);
+			job.setMapperClass(FtpExportJsonMapper.class);
+		} else {
+			throw new IllegalArgumentException("file output type must be either 'csv' or 'json'");
+		}
 		return job;
 	}
 

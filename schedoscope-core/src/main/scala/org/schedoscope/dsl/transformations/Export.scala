@@ -20,6 +20,7 @@ import org.apache.hadoop.mapreduce.Job
 import org.schedoscope.Settings
 import org.schedoscope.dsl.{ Field, View }
 import org.schedoscope.export.ftp.FtpExportJob
+import org.schedoscope.export.ftp.outputformat.FileOutputType
 import org.schedoscope.export.ftp.upload.FileCompressionCodec
 import org.schedoscope.export.jdbc.JdbcExportJob
 import org.schedoscope.export.jdbc.exception.{ RetryException, UnrecoverableException }
@@ -326,6 +327,7 @@ object Export {
     delimiter: String = "\t",
     printHeader: Boolean = true,
     keyFile: String = "~/.ssh/id_rsa",
+    fileType: FileOutputType = FileOutputType.csv,
     numReducers: Int = Schedoscope.settings.ftpExportNumReducers,
     passiveMode: Boolean = true,
     userIsRoot: Boolean = true,
@@ -366,7 +368,8 @@ object Export {
             conf.get("schedoscope.export.passiveMode").get.asInstanceOf[Boolean],
             conf.get("schedoscope.export.userIsRoot").get.asInstanceOf[Boolean],
             conf.get("schedoscope.export.cleanHdfsDir").get.asInstanceOf[Boolean],
-            codec
+            codec,
+            fileType
           )
 
         })
