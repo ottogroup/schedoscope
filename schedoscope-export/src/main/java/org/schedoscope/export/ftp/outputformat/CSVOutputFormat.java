@@ -46,11 +46,10 @@ import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.ISODateTimeFormat;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
-import org.schedoscope.export.writables.TextPairArrayWritable;
 
 import com.google.common.collect.Iterables;
 
-public class CSVOutputFormat<K, V extends TextPairArrayWritable> extends FileOutputFormat<K, V> {
+public class CSVOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
 	private static final Log LOG = LogFactory.getLog(CSVOutputFormat.class);
 

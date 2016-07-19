@@ -27,7 +27,7 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
-public class CSVRecordWriter<K, V extends TextPairArrayWritable> extends RecordWriter<K, V> {
+public class CSVRecordWriter<K, V> extends RecordWriter<K, V> {
 
 	private DataOutputStream out;
 
@@ -50,7 +50,7 @@ public class CSVRecordWriter<K, V extends TextPairArrayWritable> extends RecordW
 		StringBuilder buffer = new StringBuilder();
 
 		csvPrinter = csvFormat.print(buffer);
-		csvPrinter.printRecord(value.getSecondAsList());
+		csvPrinter.printRecord(((TextPairArrayWritable) value).getSecondAsList());
 		out.write(buffer.toString().getBytes(StandardCharsets.UTF_8));
 	}
 

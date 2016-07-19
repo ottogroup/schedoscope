@@ -40,8 +40,6 @@ import org.schedoscope.export.writables.TextPairArrayWritable;
 
 public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
-	private static final String HDFS_OUTPUT_DIR = "/tmp/output";
-
 	private static EmbeddedFtpSftpServer server;
 
 	private static final String DELIMITER = "\t";
