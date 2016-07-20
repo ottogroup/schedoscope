@@ -31,16 +31,13 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
-import org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat;
 import org.schedoscope.export.ftp.outputformat.FileOutputType;
+import org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer;
@@ -188,8 +185,6 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 	public void testFtpJsonExport() throws Exception {
 
 		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
-		BasicConfigurator.configure();
-		Logger.getRootLogger().setLevel(Level.INFO);
 
 		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
 

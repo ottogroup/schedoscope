@@ -5,6 +5,7 @@ Schedoscope Export is a collection of Map/Reduce jobs to move data from Hive (vi
  * JDBC
  * Redis
  * Kafka
+ * (S)FTP
 
 ### JDBC
 
@@ -53,7 +54,7 @@ export YARN_USER_CLASSPATH=/path/to/jdbc/jar/file/mysql-connector-java-5.1.38.ja
 After the classpath has been defined the JDBC export job can now be started:
 
 <pre>
-yarn jar target/schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.jdbc.JdbcExportJob -d default -t my_table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10 -j 'jdbc:mysql://host/db' -k 1000  -u username -w mypassword
+yarn jar target/schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.jdbc.JdbcExportJob -d default -t my_table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10 -j 'jdbc:mysql://host/db' -k 1000  -u username -w mypassword
 </pre>
 
 ### Redis
@@ -105,13 +106,13 @@ This Map/Reduce job moves data into Redis, it supports to modes:
 
 ##### Run full table export
 <pre>
-yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10
+yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10
 </pre>
 
 ##### Run custom column export
 
 <pre>
-yarn jar schedoscope-export-0.3.6-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -v products -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10
+yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -v products -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10
 </pre>
 
 ### Kafka
@@ -161,5 +162,59 @@ This Map/Reduce job moves data into Kafka, using Avro schema underneath. The Avr
 
 #### Run the Kafka export
 <pre>
-yarn jar target/schedoscope-export-0.4.0-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.kafka.KafkaExportJob -d default -t table   -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -k id  -z zookeeper:2181 -b broker:9092
+yarn jar target/schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.kafka.KafkaExportJob -d default -t table   -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -k id  -z zookeeper:2181 -b broker:9092
 </pre>
+
+
+### (S)FTP
+
+This Map/Reduce job uploads files to a remote SFTP and FTP location. It supports user/pass authentication as well as user / key and user / key / passphrase authentication. The compression codecs one can use are gzip or bzip2 or none. The file format is either CSV or JSON.
+
+#### Configuration options
+
+ * -s set to true if kerberos is enabled
+
+ * -m specify the metastore URIs
+
+ * -p the kerberos principal
+
+ * -d input database
+
+ * -t input table
+
+ * -i input filter, e.g. month='08' and year='2015'
+
+ * -c number of reducers, concurrency level
+
+ * -A a list of fields to anonymize separated by space, e.g. 'id visitor_id'
+
+ * -S an optional salt to for anonymizing fields
+
+ * -k the private ssh key file location
+
+ * -u the (s)ftp user
+
+ * -w the (s)ftp password or sftp passphrase
+
+ * -j the (s)ftp endpoint, e.g. ftp://ftp.example.com:21/path
+
+ * -q an optional file prefix to use, defaults to 'database-tablename-'
+
+ * -l the delimiter to use for CSV files, defaults to '\t'
+
+ * -h a flag to enable a header in CSV files
+
+ * -x enable passive mode, only for ftp connections, defaults to 'true'
+
+ * -z user dir is root, home dir on remote end is (s)ftp root dir
+
+ * -g clean up hdfs dir after export, defaults to 'true'
+
+ * -y the compression codec to use, one of 'gzip', 'bzip2' or 'none'
+
+ * -v the file type to export, either 'csv' or 'json'
+
+ #### Run the (S)FTP export
+ <pre>
+ yarn jar schedoscope-export/target/schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.ftp.FtpExportJob -d default -t table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 2 -u username -w mypassword -j 'ftp://ftp.example.com:21/path' -h -v json -y bzip2
+ </pre>
