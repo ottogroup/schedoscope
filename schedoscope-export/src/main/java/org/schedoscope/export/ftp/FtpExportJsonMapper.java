@@ -15,7 +15,7 @@ import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.schedoscope.export.BaseExportJob;
-import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
+import org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat;
 import org.schedoscope.export.kafka.avro.HCatToAvroRecordConverter;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.utils.HCatRecordJsonSerializer;
@@ -39,7 +39,7 @@ public class FtpExportJsonMapper extends Mapper<WritableComparable<?>, HCatRecor
 		Configuration conf = context.getConfiguration();
 		hcatSchema = HCatInputFormat.getTableSchema(conf);
 
-		tableName = conf.get(CSVOutputFormat.FTP_EXPORT_TABLE_NAME);
+		tableName = conf.get(FtpUploadOutputFormat.FTP_EXPORT_TABLE_NAME);
 
 		Set<String> anonFields = ImmutableSet.copyOf(conf.getStrings(BaseExportJob.EXPORT_ANON_FIELDS, new String[0]));
 

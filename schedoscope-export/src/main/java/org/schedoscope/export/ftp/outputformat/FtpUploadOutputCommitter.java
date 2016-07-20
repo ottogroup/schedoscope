@@ -67,15 +67,15 @@ public class FtpUploadOutputCommitter extends FileOutputCommitter {
 		Configuration conf = context.getConfiguration();
 
 		this.outputPath = outputPath;
-		this.endpoint = conf.get(CSVOutputFormat.FTP_EXPORT_ENDPOINT);
-		this.filePrefix = conf.get(CSVOutputFormat.FTP_EXPORT_FILE_PREFIX);
+		this.endpoint = conf.get(FtpUploadOutputFormat.FTP_EXPORT_ENDPOINT);
+		this.filePrefix = conf.get(FtpUploadOutputFormat.FTP_EXPORT_FILE_PREFIX);
 
-		this.user = conf.get(CSVOutputFormat.FTP_EXPORT_USER);
-		this.pass = conf.get(CSVOutputFormat.FTP_EXPORT_PASS);
-		this.keyContent = conf.get(CSVOutputFormat.FTP_EXPORT_KEY_FILE_CONTENT);
-		this.passiveMode = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_PASSIVE_MODE, true);
-		this.userIsRoot = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_USER_IS_ROOT, true);
-		this.cleanHdfsDir = conf.getBoolean(CSVOutputFormat.FTP_EXPORT_CLEAN_HDFS_DIR, true);
+		this.user = conf.get(FtpUploadOutputFormat.FTP_EXPORT_USER);
+		this.pass = conf.get(FtpUploadOutputFormat.FTP_EXPORT_PASS);
+		this.keyContent = conf.get(FtpUploadOutputFormat.FTP_EXPORT_KEY_FILE_CONTENT);
+		this.passiveMode = conf.getBoolean(FtpUploadOutputFormat.FTP_EXPORT_PASSIVE_MODE, true);
+		this.userIsRoot = conf.getBoolean(FtpUploadOutputFormat.FTP_EXPORT_USER_IS_ROOT, true);
+		this.cleanHdfsDir = conf.getBoolean(FtpUploadOutputFormat.FTP_EXPORT_CLEAN_HDFS_DIR, true);
 		this.numReducer = context.getNumReduceTasks();
 
 		try {
@@ -96,8 +96,8 @@ public class FtpUploadOutputCommitter extends FileOutputCommitter {
 
 		super.commitTask(context);
 
-		String fileName = CSVOutputFormat.getOutputName(context);
-		String remote = endpoint + "/" + filePrefix + context.getTaskAttemptID().getTaskID().getId() + "-" + numReducer + CSVOutputFormat.getOutputNameExtension();
+		String fileName = FtpUploadOutputFormat.getOutputName(context);
+		String remote = endpoint + "/" + filePrefix + context.getTaskAttemptID().getTaskID().getId() + "-" + numReducer + FtpUploadOutputFormat.getOutputNameExtension();
 
 		Configuration conf = context.getConfiguration();
 

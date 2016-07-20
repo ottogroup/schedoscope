@@ -39,7 +39,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.schedoscope.export.HiveUnitBaseTest;
-import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
+import org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat;
 import org.schedoscope.export.ftp.outputformat.FileOutputType;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
@@ -88,7 +88,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		CSVOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.none, "ftp://localhost:2221/",
+		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.none, "ftp://localhost:2221/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
 				filePrefix, true, true, true);
 
@@ -96,7 +96,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(2);
 		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(CSVOutputFormat.class);
+		job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(TextPairArrayWritable.class);
@@ -114,7 +114,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		CSVOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.gzip, "sftp://localhost:12222/",
+		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.gzip, "sftp://localhost:12222/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
 				filePrefix, true, true, true);
 
@@ -122,7 +122,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(2);
 		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(CSVOutputFormat.class);
+		job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(TextPairArrayWritable.class);
@@ -140,7 +140,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		CSVOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.bzip2, "sftp://localhost:12222/",
+		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.bzip2, "sftp://localhost:12222/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, null, "src/test/resources/keys/id_rsa_not_encrypted",
 				filePrefix, true, true, true);
 
@@ -148,7 +148,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(2);
 		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(CSVOutputFormat.class);
+		job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(TextPairArrayWritable.class);
@@ -166,7 +166,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		CSVOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.gzip, "sftp://localhost:12222/",
+		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.gzip, "sftp://localhost:12222/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, "12345",
 				"src/test/resources/keys/id_rsa_encrypted",
 				filePrefix, true, true, true);
@@ -175,7 +175,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(2);
 		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(CSVOutputFormat.class);
+		job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(TextPairArrayWritable.class);
@@ -200,7 +200,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		AvroJob.setMapOutputValueSchema(job, schema);
 
 
-		CSVOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.json, FileCompressionCodec.none, "ftp://localhost:2221/",
+		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.json, FileCompressionCodec.none, "ftp://localhost:2221/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
 				filePrefix, true, true, true);
 
@@ -208,7 +208,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 		job.setReducerClass(Reducer.class);
 		job.setNumReduceTasks(2);
 		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(CSVOutputFormat.class);
+		job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
 		job.setOutputKeyClass(LongWritable.class);
 		job.setOutputValueClass(AvroValue.class);

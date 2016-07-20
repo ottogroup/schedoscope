@@ -49,9 +49,9 @@ import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 
 import com.google.common.collect.Iterables;
 
-public class CSVOutputFormat<K, V> extends FileOutputFormat<K, V> {
+public class FtpUploadOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
-	private static final Log LOG = LogFactory.getLog(CSVOutputFormat.class);
+	private static final Log LOG = LogFactory.getLog(FtpUploadOutputFormat.class);
 
 	public static final String FTP_EXPORT_TMP_OUTPUT_PATH = "export_";
 

@@ -32,7 +32,7 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.BaseExportJob;
-import org.schedoscope.export.ftp.outputformat.CSVOutputFormat;
+import org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat;
 import org.schedoscope.export.ftp.outputformat.FileOutputType;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
@@ -152,12 +152,12 @@ public class FtpExportJob extends BaseExportJob {
 			filePrefix = inputDatabase + "-" + inputTable;
 		}
 
-		CSVOutputFormat.setOutput(job, inputTable, printHeader, delimiter,
+		FtpUploadOutputFormat.setOutput(job, inputTable, printHeader, delimiter,
 				fileType, codec, ftpEndpoint, ftpUser, ftpPass, keyFile,
 				filePrefix, passiveMode, userIsRoot, cleanHdfsDir);
 
 		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(CSVOutputFormat.class);
+		job.setOutputFormatClass(FtpUploadOutputFormat.class);
 		job.setOutputKeyClass(LongWritable.class);
 
 		if (fileType.equals(FileOutputType.csv)) {
