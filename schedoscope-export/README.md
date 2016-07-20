@@ -54,7 +54,7 @@ export YARN_USER_CLASSPATH=/path/to/jdbc/jar/file/mysql-connector-java-5.1.38.ja
 After the classpath has been defined the JDBC export job can now be started:
 
 <pre>
-yarn jar target/schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.jdbc.JdbcExportJob -d default -t my_table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10 -j 'jdbc:mysql://host/db' -k 1000  -u username -w mypassword
+yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.jdbc.JdbcExportJob -d default -t my_table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083' -c 10 -j 'jdbc:mysql://host/db' -k 1000 -u username -w mypassword
 </pre>
 
 ### Redis
@@ -106,18 +106,17 @@ This Map/Reduce job moves data into Redis, it supports to modes:
 
 ##### Run full table export
 <pre>
-yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10
+yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083' -c 10
 </pre>
 
 ##### Run custom column export
-
 <pre>
-yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -v products -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 10
+yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.RedisExportJob -d default -t my_table -h 'redishost' -k id -v products -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083' -c 10
 </pre>
 
 ### Kafka
-
 This Map/Reduce job moves data into Kafka, using Avro schema underneath. The Avro schema is auto generated from the HCatalog schema. It supports 2 output encodings, though internally everything is handled as Avro:
+
  * JSON (plain string containing the payload as Json)
 
  * Avro (binary blob, containing the payload, the schema fingerprint is embedded in the byte stream)
@@ -162,12 +161,11 @@ This Map/Reduce job moves data into Kafka, using Avro schema underneath. The Avr
 
 #### Run the Kafka export
 <pre>
-yarn jar target/schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.kafka.KafkaExportJob -d default -t table   -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -k id  -z zookeeper:2181 -b broker:9092
+yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.kafka.KafkaExportJob -d default -t table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083' -k id -z zookeeper:2181 -b broker:9092
 </pre>
 
 
 ### (S)FTP
-
 This Map/Reduce job uploads files to a remote SFTP and FTP location. It supports user/pass authentication as well as user / key and user / key / passphrase authentication. The compression codecs one can use are gzip or bzip2 or none. The file format is either CSV or JSON.
 
 #### Configuration options
@@ -216,5 +214,5 @@ This Map/Reduce job uploads files to a remote SFTP and FTP location. It supports
 
  #### Run the (S)FTP export
  <pre>
- yarn jar schedoscope-export/target/schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.ftp.FtpExportJob -d default -t table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083'  -c 2 -u username -w mypassword -j 'ftp://ftp.example.com:21/path' -h -v json -y bzip2
+yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.ftp.FtpExportJob -d default -t table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083' -c 2 -u username -w mypassword -j 'ftp://ftp.example.com:21/path' -h -v json -y bzip2
  </pre>
