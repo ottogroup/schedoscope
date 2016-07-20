@@ -32,12 +32,15 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.BaseExportJob;
-import org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat;
 import org.schedoscope.export.ftp.outputformat.FileOutputType;
+import org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat;
 import org.schedoscope.export.ftp.upload.FileCompressionCodec;
 import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
+/**
+ * The MR driver to run the Hive to (S)FTP server export.
+ */
 public class FtpExportJob extends BaseExportJob {
 
 	private static final Log LOG = LogFactory.getLog(FtpExportJob.class);
@@ -95,6 +98,32 @@ public class FtpExportJob extends BaseExportJob {
 		return job.waitForCompletion(true) ? 0 : 1;
 	}
 
+	/**
+	 *
+	 * @param isSecured A flag indicating if Kerberos is enabled.
+	 * @param metaStoreUris A string containing the Hive meta store URI
+	 * @param principal The Kerberos principal
+	 * @param inputDatabase The Hive input database
+	 * @param inputTable The Hive input table
+	 * @param inputFilter An optional input filter
+	 * @param numReducer Number of reducers / partitions
+	 * @param anonFields A list of fields to anonymize
+	 * @param exportSalt An optional salt when anonymizing fields
+	 * @param keyFile A private ssh key file
+	 * @param ftpUser The (s)ftp user
+	 * @param ftpPass The (s)ftp password or passphrase is key file is set
+	 * @param ftpEndpoint The (s)ftp endpoint.
+	 * @param filePrefix A custom file prefix for exported files
+	 * @param delimiter A custom delimiter to use
+	 * @param printHeader To print a header or not (only CSV)
+	 * @param passiveMode Enable passive mode for FTP connections
+	 * @param userIsRoot User dir is root for (s)ftp connections
+	 * @param cleanHdfsDir Clean up HDFS temporary files (or  not)
+	 * @param codec The compression codec to use, either gzip or bzip2
+	 * @param fileType The output file type, either csv or json
+	 * @return A configured MR job object.
+	 * @throws Exception
+	 */
 	public Job configure(boolean isSecured, String metaStoreUris, String principal,
 			String inputDatabase, String inputTable, String inputFilter, int numReducer,
 			String[] anonFields, String exportSalt, String keyFile, String ftpUser,
@@ -180,6 +209,14 @@ public class FtpExportJob extends BaseExportJob {
 		return job;
 	}
 
+	/**
+	 * The entry point when called from the command line.
+	 *
+	 * @param args
+	 *            A string array containing the cmdl args.
+	 * @throws Exception
+	 *             is thrown if an error occurs.
+	 */
 	public static void main (String[] args) throws Exception {
 
 		try {

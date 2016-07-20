@@ -16,6 +16,9 @@
 
 package org.schedoscope.export.ftp.outputformat;
 
+/**
+ * The Json Record Writer is used to write the records as JSON to a file.
+ */
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,6 +34,10 @@ public class JsonRecordWriter<K, V> extends RecordWriter<K, V> {
 
 	private DataOutputStream out;
 
+	/**
+	 * The constructor to initialize the Json Record Writer.
+	 * @param out A data output stream.
+	 */
 	public JsonRecordWriter(DataOutputStream out) {
 
 		this.out = out;

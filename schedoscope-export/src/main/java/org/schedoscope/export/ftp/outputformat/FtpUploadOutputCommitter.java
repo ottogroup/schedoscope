@@ -32,6 +32,10 @@ import org.schedoscope.export.ftp.upload.Uploader;
 
 import com.google.common.io.Files;
 
+/**
+ * A custom file output committer that transfers file to a (s)ftp
+ * remote location.
+ */
 public class FtpUploadOutputCommitter extends FileOutputCommitter {
 
 	private static final String TMP_FILE_PREFIX = "private_key_";
@@ -60,6 +64,12 @@ public class FtpUploadOutputCommitter extends FileOutputCommitter {
 
 	private boolean cleanHdfsDir;
 
+	/**
+	 * The constructor to initialize the output committer.
+	 * @param outputPath The HDFS location of the src file to upload.
+	 * @param context The TaskAttemptContext,
+	 * @throws IOException Is thrown if an error occurs.
+	 */
 	public FtpUploadOutputCommitter(Path outputPath, TaskAttemptContext context) throws IOException {
 
 		super(outputPath, context);

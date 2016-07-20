@@ -38,6 +38,9 @@ import org.schedoscope.export.writables.TextPairWritable;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
 
+/**
+ * A mapper that reads data from Hive via HCatalog and emits a TextPairArrayWritable.
+ */
 public class FtpExportCSVMapper extends Mapper<WritableComparable<?>, HCatRecord, LongWritable, TextPairArrayWritable> {
 
 	private Configuration conf;

@@ -16,6 +16,9 @@
 
 package org.schedoscope.export.ftp.outputformat;
 
+/**
+ * An enum representing the different file output formats to use (csv / json).
+ */
 public enum FileOutputType {
 	csv {
 		@Override

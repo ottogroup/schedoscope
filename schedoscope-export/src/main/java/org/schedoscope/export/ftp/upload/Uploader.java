@@ -38,6 +38,11 @@ import org.apache.hadoop.conf.Configuration;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.KeyPair;
 
+/**
+ * The class takes care of setting up the (S)FTP connection and provides
+ * a function to upload a file.
+ *
+ */
 public class Uploader {
 
 	private static final Log LOG = LogFactory.getLog(Uploader.class);
@@ -46,6 +51,15 @@ public class Uploader {
 
 	private FileSystemOptions opts = null;
 
+	/**
+	 * The constructor to initialize a user name / password (s)ftp connection.
+	 * @param user The username to use.
+	 * @param pass The password to use.
+	 * @param conf The Hadoop Configuration object, needed to initialize HDFS.
+	 * @param passive A flag to use FTP passive mode (only for ftp connections).
+	 * @param userIsRoot A flag indicating the user dir is (s)ftp root dir.
+	 * @throws IOException Is thrown if an error occures.
+	 */
 	public Uploader(String user, String pass, Configuration conf, boolean passive, boolean userIsRoot)
 			throws IOException {
 
@@ -58,6 +72,16 @@ public class Uploader {
 		DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth);
 	}
 
+	/**
+	 * A constructor to initialize a user name / pub key sftp connection.
+	 * @param user The username to use.
+	 * @param keyFile The private key file.
+	 * @param passphrase The passphrase to use (can be null)
+	 * @param conf The Hadoop Configuration object.
+	 * @param passive A flag to use FTP passive mode (only for ftp connections).
+	 * @param userIsRoot A flag indicating the user dir is (s)ftp root dir.
+	 * @throws IOException Is thrown if an error occurs.
+	 */
 	public Uploader(String user, File keyFile, String passphrase, Configuration conf, boolean passive,
 			boolean userIsRoot) throws IOException {
 
@@ -74,6 +98,11 @@ public class Uploader {
 		SftpFileSystemConfigBuilder.getInstance().setIdentityInfo(opts, ident);
 	}
 
+	/**
+	 * A method to check if a private key is passphrase protected.
+	 * @param keyFile The private key file to check.
+	 * @throws Exception Is thrown if an error occurs.
+	 */
 	public static void checkPrivateKey(String keyFile) throws Exception {
 
 		JSch jsch = new JSch();
@@ -101,6 +130,12 @@ public class Uploader {
 		FtpFileSystemConfigBuilder.getInstance().setPassiveMode(opts, passive);
 	}
 
+	/**
+	 * A method to copy a file from src (hdfs) to (s)ftp (remote).
+	 * @param inFile The input file to copy.
+	 * @param outFile The output file to create.
+	 * @throws FileSystemException Is thrown if an error occurs.
+	 */
 	public void uploadFile(String inFile, String outFile) throws FileSystemException {
 
 		FileObject local = fsManager.resolveFile(inFile);

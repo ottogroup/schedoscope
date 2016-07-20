@@ -27,6 +27,9 @@ import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
+/**
+ * The CSV Record Writer is used to write the records as a CSV file.
+ */
 public class CSVRecordWriter<K, V> extends RecordWriter<K, V> {
 
 	private DataOutputStream out;
@@ -37,6 +40,13 @@ public class CSVRecordWriter<K, V> extends RecordWriter<K, V> {
 
 	private StringBuilder buffer;
 
+	/**
+	 * The constructor to initialize the CSV Record Writer.
+	 * @param out A data output stream.
+	 * @param header A flag to print a header or not.
+	 * @param delimiter The delimiter to use.
+	 * @throws IOException Is thrown if an error occurs.
+	 */
 	public CSVRecordWriter(DataOutputStream out, String[] header, char delimiter) throws IOException {
 
 		this.out = out;

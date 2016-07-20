@@ -18,10 +18,17 @@ package org.schedoscope.export.ftp.upload;
 
 import com.jcraft.jsch.UserInfo;
 
+/**
+ * A User Info class providing the private ssh key passphrase to JSch library.
+ */
 public class PassphraseUserInfo implements UserInfo {
 
 	private String passphrase = null;
 
+	/**
+	 * The constructor to initialize the user info instance
+	 * @param passphrase The passphrase to use for decrypting the key.
+	 */
 	public PassphraseUserInfo(final String passphrase) {
 
 		this.passphrase = passphrase;

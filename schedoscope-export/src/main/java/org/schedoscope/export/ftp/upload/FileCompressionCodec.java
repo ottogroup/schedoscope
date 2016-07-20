@@ -16,6 +16,9 @@
 
 package org.schedoscope.export.ftp.upload;
 
+/**
+ * An enum reresenting the available compression codecs (none / gzip / bzip2)
+ */
 public enum FileCompressionCodec {
 	none {
 		@Override
