@@ -54,14 +54,14 @@ public class FtpExportJob extends BaseExportJob {
 	@Option(name = "-j", usage = "the (s)ftp endpoint, e.g. ftp://ftp.example.com:21/path/to/", required = true)
 	private String ftpEndpoint;
 
-	@Option(name = "-z", usage = "file prefix for files send to (s)ftp server, defaults to 'database'-'table'")
+	@Option(name = "-q", usage = "file prefix for files send to (s)ftp server, defaults to 'database'-'table'")
 	private String filePrefix;
 
 	@Option(name = "-l", usage = "delimiter for csv export, defaults to '\t'")
 	private String delimiter = "\t";
 
-	@Option(name = "-h", usage = "print header in exported CSV files")
-	private boolean printHeader;
+	@Option(name = "-h", usage = "print header in exported CSV files, defaults to 'true'")
+	private boolean printHeader = true;
 
 	@Option(name = "-x", usage = "passive mode, only for ftp connections, defaults to 'true'")
 	private boolean passiveMode = true;
@@ -72,7 +72,7 @@ public class FtpExportJob extends BaseExportJob {
 	@Option(name = "-g", usage = "clean up hdfs dir after export, defaults to 'true'")
 	private boolean cleanHdfsDir = true;
 
-	@Option(name = "-c", usage = "compression codec, either 'none', 'gzip' or 'bzip2', defaults to 'gzip'")
+	@Option(name = "-y", usage = "compression codec, either 'none', 'gzip' or 'bzip2', defaults to 'gzip'")
 	private FileCompressionCodec codec = FileCompressionCodec.gzip;
 
 	@Option(name = "-v", usage = "file output encoding, either 'csv' or 'json', defaults to 'csv'")
@@ -166,7 +166,7 @@ public class FtpExportJob extends BaseExportJob {
 			job.setMapperClass(FtpExportCSVMapper.class);
 		} else if (fileType.equals(FileOutputType.json)) {
 
-			HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(conf);
+			HCatSchema hcatInputSchema = HCatInputFormat.getTableSchema(job.getConfiguration());
 			HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
 			Schema schema = schemaConverter.convertSchema(hcatInputSchema, inputTable);
 			AvroJob.setMapOutputValueSchema(job, schema);
