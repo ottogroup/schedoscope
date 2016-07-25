@@ -318,6 +318,28 @@ object Export {
         "schedoscope.export.metastoreUri" -> metastoreUri))
   }
 
+  /**
+   * This function configures the (S)FTP export and returns a configured MapReduceTransformation.
+   *
+   * @param v The view to export
+   * @param ftpEndpoint The (s)ftp endpoint.
+   * @param ftpUser The (s)ftp user.
+   * @param ftpPass The (s)ftp pass.
+   * @param filePrefix A custom file prefix for exported files.
+   * @param delimiter A custom delimiter to use.
+   * @param printHeader To print a header or not (only CSV export)
+   * @param keyFile A private ssh key file.
+   * @param fileType The output file type, either csv or json.
+   * @param numReducers Number of reducers / number of files.
+   * @param passiveMode Enable passive mode for FTP connections.
+   * @param userIsRoot User dir is root for (s)ftp connections.
+   * @param cleanHdfsDir Clean up HDFS temporary files (or not).
+   * @param exportSalt an optional salt when anonymizing fields.
+   * @param codec The compression codec to use, either gzip or bzip2
+   * @param isKerberized A flag indication if Kerberos is enabled.
+   * @param kerberosPrincipal The Kerberos principal
+   * @param metastoreUri A string containing the Hive meta store url.
+   */
   def Ftp(
     v: View,
     ftpEndpoint: String,
