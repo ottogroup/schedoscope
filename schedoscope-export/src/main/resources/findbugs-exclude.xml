@@ -13,7 +13,7 @@
         <Bug code="SQL" />
     </Match>
     <Match>
-        <Class name="org.schedoscope.export.ftp.outputformat.CSVOutputFormat"/>
+        <Class name="org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat"/>
         <Bug code="ST" />
     </Match>
 </FindBugsFilter>
