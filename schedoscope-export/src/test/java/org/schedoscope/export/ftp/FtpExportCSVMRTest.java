@@ -85,7 +85,7 @@ public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
 		Job job = Job.getInstance(conf);
 
-		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.none, "ftp://localhost:2221/",
+		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, false, DELIMITER, FileOutputType.csv, FileCompressionCodec.none, "ftp://localhost:2221/",
 				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
 				filePrefix, true, true, true);
 
