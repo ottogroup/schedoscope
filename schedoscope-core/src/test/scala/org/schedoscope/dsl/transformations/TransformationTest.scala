@@ -33,6 +33,8 @@ class TransformationTest extends FlatSpec with Matchers {
 
     val checksum3 = transformation.checksum
 
+    checksum1 shouldBe Checksum.digest("select * from view")
+
     checksum1 shouldBe checksum2
 
     checksum3 should not be checksum1
