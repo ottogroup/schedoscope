@@ -29,9 +29,10 @@ abstract class Transformation {
   var view: Option[View] = None
 
   /**
-    * Seed to overwrite checksum
+    * Explicitly defined version to overwrite checksum
     */
-  var definedVersion = ""
+  var definedVersion: Option[String] = None
+
 
   def getView() = if (view.isDefined) view.get.urlPath else "no-view"
 
@@ -55,11 +56,11 @@ abstract class Transformation {
 
   /**
     * Fluent interface to define a version for the transformation.
-    * The transformation will now not be invalidated by changes to the logic.
+    * The transformation will now not be invalidated by changes to the logic but only by changes to this version.
     * @param definedVersion string with version
     */
   def defineVersion(definedVersion: String) = {
-    this.definedVersion = definedVersion
+    this.definedVersion = Some(definedVersion)
     this
   }
 
@@ -76,12 +77,9 @@ abstract class Transformation {
   /**
     * Transformation checksum. Per default an MD5 hash of the file resource hashes.
     */
-  def checksum = {
-    if (definedVersion.isEmpty) {
-      Checksum.digest((Checksum.resourceHashes(fileResourcesToChecksum) ++ stringsToChecksum): _*)
-    } else {
-      Checksum.digest(definedVersion)
-    }
+  def checksum = definedVersion match {
+    case Some(version) => Checksum.digest(version)
+    case None => Checksum.digest((Checksum.resourceHashes(fileResourcesToChecksum) ++ stringsToChecksum): _*)
   }
 
   /**

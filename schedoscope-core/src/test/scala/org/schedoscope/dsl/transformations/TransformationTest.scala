@@ -49,7 +49,4 @@ class TransformationTest extends FlatSpec with Matchers {
     view.transformation().checksum shouldBe Checksum.digest("v2.2")
 
   }
-
-
-
 }
