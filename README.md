@@ -77,6 +77,13 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 08/12/2016 - Release 0.6.4
+We have released Version 0.6.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+We have added: 
+* simple parallel [(S)FTP exporting of views](https://github.com/ottogroup/schedoscope/wiki/(S)FTP%20Export)
+* the ability to manually assign versions to transformations with `defineVersion` in order to avoid unnecessary recomputations in complex cases where the automatic transformation logic change detection generates too many false positives.
+
 ###### 07/01/2016 - Release 0.6.3
 We have released Version 0.6.3 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
 
