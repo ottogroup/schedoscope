@@ -167,6 +167,11 @@ class BaseSettings(val config: Config) {
   lazy val kafkaExportNumReducers = config.getInt("schedoscope.export.kafka.numberOfReducers")
 
   /**
+   * Number of reducers to use for (S)Ftp export.
+   */
+  lazy val ftpExportNumReducers = config.getInt("schedoscope.export.ftp.numberOfReducers")
+
+  /**
    * Port of Metascope web service.
    */
   lazy val metascopePort = config.getInt("schedoscope.metascope.port")
