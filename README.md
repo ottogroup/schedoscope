@@ -40,7 +40,7 @@ Take a look at the View DSL Primer to get more information about the capabilitie
 - 
 Read more about how Schedoscope actually performs its scheduling work:
 
-- [Schedoscope Scheduling](Scheduling)
+- [Schedoscope Scheduling](https://github.com/ottogroup/schedoscope/wiki/Scheduling)
 
 More documentation can be found here:
 
