@@ -16,6 +16,7 @@
 package test.eci.datahub
 
 import java.util.Date
+import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer
 import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.Structure
@@ -34,6 +35,7 @@ import org.schedoscope.Settings
 import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.dsl.storageformats._
 import scala.io.Source
+import scala.util.Random
 
 case class Brand(
   shopCode: Parameter[String]) extends View
@@ -288,6 +290,33 @@ case class ClickOfEC0101WithKafkaExport(
 
   exportTo(() => Kafka(this, id, "localhost:9092", "localhost:2182"))
 
+}
+
+case class ClickOfEC0101WithFtpExport(
+  year: Parameter[String],
+  month: Parameter[String],
+  day: Parameter[String]) extends View
+    with Id
+    with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this, s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+
+  val filePrefix = Random.alphanumeric.take(10).mkString
+
+  exportTo(() => Ftp(this,
+                     "ftp://localhost:2221/",
+                     EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING,
+                     EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING,
+                     filePrefix))
 }
 
 case class ClickOfEC0101ViaOozie(
