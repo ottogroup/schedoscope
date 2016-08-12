@@ -20,12 +20,15 @@ import java.util.Properties
 
 import scala.collection.JavaConversions.iterableAsScalaIterable
 
+import org.apache.commons.net.ftp.FTPClient
+import org.apache.commons.net.ftp.FTPFile
 import org.apache.curator.test.TestingServer
 import org.json4s.jvalue2monadic
 import org.json4s.native.JsonMethods.parse
 import org.json4s.string2JsonInput
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter
 import org.scalatest.{ FlatSpec, Matchers }
+import org.schedoscope.Schedoscope
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
@@ -35,7 +38,8 @@ import org.schedoscope.test.{ rows, test }
 
 import com.google.common.collect.ImmutableList
 
-import test.eci.datahub.{ Click, ClickOfEC0101WithJdbcExport, ClickOfEC0101WithKafkaExport, ClickOfEC0101WithRedisExport }
+import test.eci.datahub.{ Click, ClickOfEC0101WithJdbcExport, ClickOfEC0101WithKafkaExport, ClickOfEC0101WithRedisExport, ClickOfEC0101WithFtpExport }
+import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer
 
 class ExportTest extends FlatSpec with Matchers {
 
@@ -161,5 +165,39 @@ class ExportTest extends FlatSpec with Matchers {
     kafkaServer.shutdown()
     zkServer.stop()
 
+  }
+
+  it should "execute hive transformations and perform Ftp export" taggedAs (DriverTests) in {
+
+    val ftpServer = new EmbeddedFtpSftpServer()
+    ftpServer.startEmbeddedFtpServer()
+
+    val v = new ClickOfEC0101WithFtpExport(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+
+      `then`()
+
+      numRows shouldBe 3
+
+      row(
+        v(id) shouldBe "event01",
+        v(url) shouldBe "http://ec0101.com/url1")
+      row(
+        v(id) shouldBe "event02",
+        v(url) shouldBe "http://ec0101.com/url2")
+      row(
+        v(id) shouldBe "event03",
+        v(url) shouldBe "http://ec0101.com/url3")
+
+    }
+
+    val ftp = new FTPClient();
+    ftp.connect("localhost", 2221);
+    ftp.login(EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING);
+    val files = ftp.listFiles();
+
+    files.filter { _.getName().contains(v.filePrefix) }.length shouldBe Schedoscope.settings.ftpExportNumReducers
+
+    ftpServer.stopEmbeddedFtpServer()
   }
 }

@@ -19,6 +19,9 @@ package org.schedoscope.dsl.transformations
 import org.apache.hadoop.mapreduce.Job
 import org.schedoscope.Settings
 import org.schedoscope.dsl.{ Field, View }
+import org.schedoscope.export.ftp.FtpExportJob
+import org.schedoscope.export.ftp.outputformat.FileOutputType
+import org.schedoscope.export.ftp.upload.FileCompressionCodec
 import org.schedoscope.export.jdbc.JdbcExportJob
 import org.schedoscope.export.jdbc.exception.{ RetryException, UnrecoverableException }
 import org.schedoscope.export.redis.RedisExportJob
@@ -313,5 +316,101 @@ object Export {
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
         "schedoscope.export.metastoreUri" -> metastoreUri))
+  }
+
+  /**
+   * This function configures the (S)FTP export and returns a configured MapReduceTransformation.
+   *
+   * @param v The view to export
+   * @param ftpEndpoint The (s)ftp endpoint.
+   * @param ftpUser The (s)ftp user.
+   * @param ftpPass The (s)ftp pass.
+   * @param filePrefix A custom file prefix for exported files.
+   * @param delimiter A custom delimiter to use.
+   * @param printHeader To print a header or not (only CSV export)
+   * @param keyFile A private ssh key file.
+   * @param fileType The output file type, either csv or json.
+   * @param numReducers Number of reducers / number of files.
+   * @param passiveMode Enable passive mode for FTP connections.
+   * @param userIsRoot User dir is root for (s)ftp connections.
+   * @param cleanHdfsDir Clean up HDFS temporary files (or not).
+   * @param exportSalt an optional salt when anonymizing fields.
+   * @param codec The compression codec to use, either gzip or bzip2
+   * @param isKerberized A flag indication if Kerberos is enabled.
+   * @param kerberosPrincipal The Kerberos principal
+   * @param metastoreUri A string containing the Hive meta store url.
+   */
+  def Ftp(
+    v: View,
+    ftpEndpoint: String,
+    ftpUser: String,
+    ftpPass: String = null,
+    filePrefix: String = null,
+    delimiter: String = "\t",
+    printHeader: Boolean = true,
+    keyFile: String = "~/.ssh/id_rsa",
+    fileType: FileOutputType = FileOutputType.csv,
+    numReducers: Int = Schedoscope.settings.ftpExportNumReducers,
+    passiveMode: Boolean = true,
+    userIsRoot: Boolean = true,
+    cleanHdfsDir: Boolean = true,
+    exportSalt: String = Schedoscope.settings.exportSalt,
+    codec: FileCompressionCodec = FileCompressionCodec.gzip,
+    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
+
+    val t = MapreduceTransformation(
+        v,
+        (conf) => {
+          val filter = v.partitionParameters
+            .map { (p => s"${p.n} = '${p.v.get}'") }
+            .mkString(" and ")
+
+          val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
+          val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+
+          new FtpExportJob().configure(
+            conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
+            conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
+            conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
+            v.dbName,
+            v.n,
+            filter,
+            conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
+            anonFields ++ anonParameters,
+            conf.get("schedoscope.export.salt").get.asInstanceOf[String],
+            conf.get("schedoscope.export.keyFile").get.asInstanceOf[String],
+            conf.get("schedoscope.export.ftpUser").get.asInstanceOf[String],
+            conf.get("schedoscope.export.ftpPass").getOrElse(null).asInstanceOf[String],
+            conf.get("schedoscope.export.ftpEndpoint").get.asInstanceOf[String],
+            filePrefix,
+            conf.get("schedoscope.export.delimiter").get.asInstanceOf[String],
+            conf.get("schedoscope.export.printHeader").get.asInstanceOf[Boolean],
+            conf.get("schedoscope.export.passiveMode").get.asInstanceOf[Boolean],
+            conf.get("schedoscope.export.userIsRoot").get.asInstanceOf[Boolean],
+            conf.get("schedoscope.export.cleanHdfsDir").get.asInstanceOf[Boolean],
+            codec,
+            fileType
+          )
+
+        })
+      t.directoriesToDelete = List()
+      t.configureWith(
+        Map(
+          "schedoscope.export.isKerberized" -> isKerberized,
+          "schedoscope.export.metastoreUri" -> metastoreUri,
+          "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
+          "schedoscope.export.numReducers" -> numReducers,
+          "schedoscope.export.salt" -> exportSalt,
+          "schedoscope.export.keyFile" -> keyFile,
+          "schedoscope.export.ftpUser" -> ftpUser,
+          "schedoscope.export.ftpPass" -> ftpPass,
+          "schedoscope.export.ftpEndpoint" -> ftpEndpoint,
+          "schedoscope.export.delimiter" -> delimiter,
+          "schedoscope.export.printHeader" -> printHeader,
+          "schedoscope.export.passiveMode" -> passiveMode,
+          "schedoscope.export.userIsRoot" -> userIsRoot,
+          "schedoscope.export.cleanHdfsDir" -> cleanHdfsDir))
   }
 }
