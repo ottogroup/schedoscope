@@ -324,11 +324,11 @@ object Export {
    * @param v The view to export
    * @param ftpEndpoint The (s)ftp endpoint.
    * @param ftpUser The (s)ftp user.
-   * @param ftpPass The (s)ftp pass.
+   * @param ftpPass The (s)ftp passphrase or password.
    * @param filePrefix A custom file prefix for exported files.
-   * @param delimiter A custom delimiter to use.
+   * @param delimiter A custom delimiter to use (only CSV export).
    * @param printHeader To print a header or not (only CSV export)
-   * @param keyFile A private ssh key file.
+   * @param keyFile A private ssh key file. Defaults to ~/.ssh/id_rsa
    * @param fileType The output file type, either csv or json.
    * @param numReducers Number of reducers / number of files.
    * @param passiveMode Enable passive mode for FTP connections.
