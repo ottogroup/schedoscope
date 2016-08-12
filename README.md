@@ -37,7 +37,7 @@ Follow the Open Street Map tutorial to install and run Schedoscope in a standard
 Take a look at the View DSL Primer to get more information about the capabilities of the Schedoscope DSL:
 
 - [Schedoscope View DSL Primer](https://github.com/ottogroup/schedoscope/wiki/Schedoscope%20View%20DSL%20Primer)
-- 
+
 Read more about how Schedoscope actually performs its scheduling work:
 
 - [Schedoscope Scheduling](https://github.com/ottogroup/schedoscope/wiki/Scheduling)
