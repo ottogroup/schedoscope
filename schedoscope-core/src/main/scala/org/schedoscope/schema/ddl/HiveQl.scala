@@ -16,7 +16,7 @@
 
 package org.schedoscope.schema.ddl
 
-import org.schedoscope.dsl.{ Structure, View }
+import org.schedoscope.dsl.{FieldLike, Structure, View}
 import org.schedoscope.dsl.storageformats._
 
 object HiveQl {
@@ -126,4 +126,5 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 
   def selectAll(view: View): String = s"SELECT * FROM ${view.tableName} ${partitionWhereClause(view)}"
 
+  def selectAllOrdered(view: View, orderByField: FieldLike[_]) = s"${selectAll(view)} ORDER BY ${orderByField.n} ASC"
 }

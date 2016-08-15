@@ -111,7 +111,7 @@ trait test extends TestableView {
 
     driver().runAndWait(this.transformation())
 
-    populate(sortedBy)
+    populate(if (sortedBy != null) Some(sortedBy) else None)
   }
 
   /**
