@@ -37,14 +37,7 @@ trait test extends TestableView {
   var rowIdx = 0
 
   var driver: () => Driver[Transformation] =
-    () => this.transformation() match {
-      case t: SeqTransformation[_, _] => resources().seqDriver.asInstanceOf[Driver[Transformation]]
-      case t: HiveTransformation => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
-      case t: OozieTransformation => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
-      case t: PigTransformation => resources().pigDriver.asInstanceOf[Driver[Transformation]]
-      case t: MapreduceTransformation => resources().mapreduceDriver.asInstanceOf[Driver[Transformation]]
-      case t: FilesystemTransformation => resources().fileSystemDriver.asInstanceOf[Driver[Transformation]]
-    }
+    () => resources().driverFor[Transformation](transformation())
 
   val deps = ListBuffer[View with rows]()
 
@@ -73,26 +66,20 @@ trait test extends TestableView {
       }
     }
 
+    deps.foreach(_.createViewTableAndWriteTestData())
+
+    createViewTable()
+
+    if (isPartitioned()) {
+      resources().crate.createPartition(this)
+    }
+
     val t = registeredTransformation()
 
     //transformation validation
     if(!disableTransformationValidation) {
       t.validateTransformation()
     }
-
-
-
-    deploySchema()
-
-    deps.map(d => {
-      d.write()
-    })
-
-    if (this.isPartitioned()) {
-      val part = resources().crate.createPartition(this)
-    }
-
-
 
     t match {
       case ot: OozieTransformation => deployWorkflow(ot)

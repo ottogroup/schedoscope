@@ -20,7 +20,7 @@ import akka.event.{ Logging, LoggingReceive }
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.schedoscope.conf.{ DriverSettings, SchedoscopeSettings }
 import org.schedoscope.dsl.transformations._
-import org.schedoscope.scheduler.driver.{ Driver, RetryableDriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FileSystemDriver, HiveDriver, MapreduceDriver, OozieDriver, PigDriver, ShellDriver }
+import org.schedoscope.scheduler.driver.{ Driver, RetryableDriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FilesystemDriver$, HiveDriver, MapreduceDriver, OozieDriver, PigDriver, ShellDriver }
 import org.schedoscope.scheduler.messages._
 import scala.concurrent.duration.{ DurationInt, FiniteDuration }
 import scala.language.postfixOps
@@ -226,7 +226,7 @@ object DriverActor {
     Props(
       classOf[DriverActor[_]],
       transformationManager,
-      settings.getDriverSettings(transformationName), (ds: DriverSettings) => Driver.driverFor(transformationName, ds),
+      settings.getDriverSettings(transformationName), (ds: DriverSettings) => Driver.driverFor(ds),
       if (transformationName == "filesystem")
         100 milliseconds
       else

@@ -30,7 +30,7 @@ import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.dsl.views.DateParameterizationUtils
 import org.schedoscope.dsl.views.ViewUrlParser.ParsedViewAugmentor
 import org.schedoscope.scheduler.driver.Driver
-import org.schedoscope.scheduler.driver.FileSystemDriver.fileSystem
+import org.schedoscope.scheduler.driver.FilesystemDriver.fileSystem
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions._
 import scala.collection.mutable.HashMap
@@ -171,6 +171,12 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
  * Accessor for transformation driver-related settings.
  */
 class DriverSettings(val config: Config, val name: String) {
+
+  /**
+    * Name of the class implementing the driver
+    */
+  lazy val driverClassName = config.getString("driverClassName")
+
   /**
    * Location where to put transformation-driver related resources into HDFS upon Schedoscope start.
    */
@@ -231,13 +237,11 @@ class DriverSettings(val config: Config, val name: String) {
   /**
    * Paths of jars in HDFS.
    */
-  lazy val libJarsHdfs = {
+  lazy val libJarsHdfs =
     if (unpack)
       List[String]()
-    else {
+    else
       libJars.map(lj => location + "/" + Paths.get(lj).getFileName.toString)
-    }
-  }
 
   /**
    * Configured driver run completion handlers.

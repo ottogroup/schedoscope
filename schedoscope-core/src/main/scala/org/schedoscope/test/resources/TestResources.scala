@@ -1,32 +1,31 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.test.resources
 
-import java.sql.{ Connection, DriverManager }
-import java.util.concurrent.ConcurrentHashMap
+import java.sql.{Connection, DriverManager}
 import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 
-import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
 import org.schedoscope.dsl.storageformats.TextFile
-import org.schedoscope.dsl.transformations.Transformation
-import org.schedoscope.scheduler.driver.{ Driver, DriverRunCompletionHandler, DriverRunHandle, DriverRunState, FileSystemDriver, HiveDriver, MapreduceDriver, OozieDriver, PigDriver, ShellDriver, SeqDriver }
+import org.schedoscope.dsl.transformations._
+import org.schedoscope.scheduler.driver.{Driver, DriverRunCompletionHandler, DriverRunHandle, DriverRunState}
 import org.schedoscope.schema.SchemaManager
 import org.schedoscope.test.Database
 
@@ -48,6 +47,7 @@ object TestDriverRunCompletionHandlerCallCounter {
 }
 
 class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompletionHandler[T] {
+
   import TestDriverRunCompletionHandlerCallCounter._
 
   def driverRunStarted(run: DriverRunHandle[T]) {
@@ -98,35 +98,9 @@ abstract class TestResources {
 
   lazy val crate: SchemaManager = SchemaManager(metastoreClient, connection)
 
-  def driverFor(transformationName: String): Driver[Transformation] = (transformationName match {
+  def driverFor[T <: Transformation](driverName: String) = Driver.driverFor[T](driverName, Some(this))
 
-    case "filesystem" => new FileSystemDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true))
-
-    case "pig"        => new PigDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi)
-
-    case "mapreduce"  => new MapreduceDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new FileSystemDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), ugi, new Configuration(true)))
-
-    case "shell"      => new ShellDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"))
-
-    case "hive"       => new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), hiveConf)
-
-    case "seq"        => new SeqDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), driverFor)
-
-  }).asInstanceOf[Driver[Transformation]]
-
-  lazy val fileSystemDriver: FileSystemDriver = driverFor("filesystem").asInstanceOf[FileSystemDriver]
-
-  lazy val oozieDriver: OozieDriver = driverFor("oozie").asInstanceOf[OozieDriver]
-
-  lazy val pigDriver: PigDriver = driverFor("pig").asInstanceOf[PigDriver]
-
-  lazy val hiveDriver: HiveDriver = driverFor("hive").asInstanceOf[HiveDriver]
-
-  lazy val mapreduceDriver: MapreduceDriver = driverFor("mapreduce").asInstanceOf[MapreduceDriver]
-
-  lazy val shellDriver: ShellDriver = driverFor("shell").asInstanceOf[ShellDriver]
-
-  lazy val seqDriver: SeqDriver = driverFor("seq").asInstanceOf[SeqDriver]
+  def driverFor[T <: Transformation](transformation: T) = Driver.driverFor[T](transformation, Some(this))
 
   lazy val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "\u0002", mapKeyTerminator = "\u0003")
 }

@@ -98,8 +98,8 @@ trait rows extends View {
     * Persists this view into local hive
     *
     */
-  def write() {
-    deploySchema()
+  def createViewTableAndWriteTestData() {
+    createViewTable()
     writeData()
   }
 
@@ -163,7 +163,7 @@ trait rows extends View {
     }
   }
 
-  def deploySchema() {
+  def createViewTable() {
     val d = resources().crate
     if (!d.schemaExists(this)) {
       d.dropAndCreateTableSchema(this)

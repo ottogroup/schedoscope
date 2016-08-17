@@ -19,7 +19,7 @@ import java.security.MessageDigest
 
 import org.apache.hadoop.fs.{ FileStatus, Path }
 import org.schedoscope.Schedoscope
-import org.schedoscope.scheduler.driver.FileSystemDriver._
+import org.schedoscope.scheduler.driver.FilesystemDriver._
 
 import scala.Array.canBuildFrom
 import scala.collection.mutable.HashMap

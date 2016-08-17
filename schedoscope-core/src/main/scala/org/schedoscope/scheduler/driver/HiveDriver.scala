@@ -29,6 +29,7 @@ import org.schedoscope.Schedoscope
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
+import org.schedoscope.test.resources.TestResources
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConversions.asScalaBuffer
@@ -213,7 +214,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
 /**
   * Factory methods for Hive drivers
   */
-object HiveDriver {
+object HiveDriver extends DriverCompanionObject[HiveTransformation] {
 
   def apply(ds: DriverSettings) = {
     val ugi = Schedoscope.settings.userGroupInformation
@@ -234,5 +235,9 @@ object HiveDriver {
 
     new HiveDriver(ds.driverRunCompletionHandlers, conf)
   }
+
+  def apply(driverSettings: DriverSettings, testResources: TestResources): Driver[HiveTransformation] =
+    new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), testResources.hiveConf)
+
 }
 

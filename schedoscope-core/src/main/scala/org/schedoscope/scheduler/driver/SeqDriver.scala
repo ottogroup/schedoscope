@@ -1,57 +1,58 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.driver
 
-import scala.language.existentials
-import org.schedoscope.Schedoscope
-import org.schedoscope.conf.DriverSettings
-import org.schedoscope.dsl.transformations.{ Transformation, SeqTransformation }
 import org.joda.time.LocalDateTime
+import org.schedoscope.conf.DriverSettings
+import org.schedoscope.dsl.transformations.{SeqTransformation, Transformation}
+import org.schedoscope.test.resources.TestResources
+
+import scala.language.existentials
 
 /**
- * Driver for executing Seq transformations. This is just a delegate to the drivers for
- * the transformation types the Seq is composed of.
- */
+  * Driver for executing Seq transformations. This is just a delegate to the drivers for
+  * the transformation types the Seq is composed of.
+  */
 class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFor: (String) => Driver[Transformation]) extends DriverOnNonBlockingApi[SeqTransformation[Transformation, Transformation]] {
 
   /**
-   * Possible states capturing how far the Seq transformation has progressed.
-   */
+    * Possible states capturing how far the Seq transformation has progressed.
+    */
   sealed abstract class SeqDriverStateHandle
 
   /**
-   * First transformation of Seq still not finished
-   */
+    * First transformation of Seq still not finished
+    */
   case class FirstTransformationOngoing(firstRun: DriverRunHandle[Transformation]) extends SeqDriverStateHandle
 
   /**
-   * First transformation has finished. This will be the final state if the first transformation has failed.
-   * Otherwise, this state will be left as soon as the second transformation commences.
-   */
+    * First transformation has finished. This will be the final state if the first transformation has failed.
+    * Otherwise, this state will be left as soon as the second transformation commences.
+    */
   case class FirstTransformationFinished(firstRunState: DriverRunState[Transformation]) extends SeqDriverStateHandle
 
   /**
-   * The first transformation has been run successfully. Now the second transformation is ongoing.
-   */
+    * The first transformation has been run successfully. Now the second transformation is ongoing.
+    */
   case class SecondTransformationOngoing(firstRunState: DriverRunState[Transformation], secondRun: DriverRunHandle[Transformation]) extends SeqDriverStateHandle
 
   /**
-   * The first transformation has been run successfully. The second transformation has finished. It
-   * may have failed or succeeded.
-   */
+    * The first transformation has been run successfully. The second transformation has finished. It
+    * may have failed or succeeded.
+    */
   case class Finished(firstRunState: DriverRunState[Transformation], secondRunState: DriverRunState[Transformation]) extends SeqDriverStateHandle
 
   def transformationName = "seq"
@@ -171,9 +172,13 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
 }
 
 /**
- * Factory for Seq driver
- */
-object SeqDriver {
+  * Factory for Seq driver
+  */
+object SeqDriver extends DriverCompanionObject[SeqTransformation[Transformation, Transformation]] {
+
   def apply(ds: DriverSettings) =
     new SeqDriver(ds.driverRunCompletionHandlers, (transformationName: String) => Driver.driverFor(transformationName))
+
+  def apply(ds: DriverSettings, testResources: TestResources) =
+    new SeqDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), (transformationName: String) => testResources.driverFor(transformationName))
 }
