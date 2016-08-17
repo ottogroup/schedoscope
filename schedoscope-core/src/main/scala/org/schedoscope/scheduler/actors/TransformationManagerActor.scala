@@ -1,38 +1,38 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.SupervisorStrategy.{ Escalate, Restart }
-import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props, actorRef2Scala }
-import akka.event.{ Logging, LoggingReceive }
+import akka.actor.{Actor, ActorInitializationException, ActorRef, OneForOneStrategy, Props}
+import akka.actor.SupervisorStrategy._
+import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{ FilesystemTransformation, Transformation }
-import org.schedoscope.scheduler.driver.{ Driver, RetryableDriverException }
-import org.schedoscope.scheduler.messages.{ CommandWithSender, DeployCommand, GetQueues, GetTransformations, PollCommand, QueueStatusListResponse, TransformationStatusListResponse, TransformationStatusResponse }
+import org.schedoscope.dsl.transformations.{FilesystemTransformation, Transformation}
+import org.schedoscope.scheduler.driver.{Driver, RetryableDriverException}
+import org.schedoscope.scheduler.messages._
+
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
 import scala.util.Random
-import akka.actor.ActorInitializationException
 
 /**
- * The transformation manager actor queues transformation requests it receives from view actors by
- * transformation type. Idle driver actors poll the transformation manager for new transformations to perform.
- *
- */
+  * The transformation manager actor queues transformation requests it receives from view actors by
+  * transformation type. Idle driver actors poll the transformation manager for new transformations to perform.
+  *
+  */
 class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
 
   import context._
@@ -40,14 +40,14 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   val log = Logging(system, TransformationManagerActor.this)
 
   /**
-   * Supervision strategy. If a driver actor raises a DriverException, the driver actor will be restarted.
-   * If any other exception is raised, it is escalated.
-   */
+    * Supervision strategy. If a driver actor raises a DriverException, the driver actor will be restarted.
+    * If any other exception is raised, it is escalated.
+    */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
-      case _: RetryableDriverException     => Restart
+      case _: RetryableDriverException => Restart
       case _: ActorInitializationException => Restart
-      case _                               => Escalate
+      case _ => Escalate
     }
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
@@ -110,8 +110,8 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   }
 
   /**
-   * Create driver actors as required by configured transformation types and their concurrency.
-   */
+    * Create driver actors as required by configured transformation types and their concurrency.
+    */
   override def preStart {
     for (transformation <- Driver.transformationsWithDrivers; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
       actorOf(DriverActor.props(settings, transformation, self), s"${transformation}-${c + 1}")
@@ -119,15 +119,15 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   }
 
   /**
-   * Message handler
-   */
+    * Message handler
+    */
   def receive = LoggingReceive({
 
     case asr: TransformationStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
-    case GetTransformations()                 => sender ! TransformationStatusListResponse(driverStates.values.toList)
+    case GetTransformations() => sender ! TransformationStatusListResponse(driverStates.values.toList)
 
-    case GetQueues()                          => sender ! QueueStatusListResponse(transformationQueueStatus)
+    case GetQueues() => sender ! QueueStatusListResponse(transformationQueueStatus)
 
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
@@ -160,17 +160,17 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
       }
     }
 
-    case viewToTransform: View                              => self ! CommandWithSender(viewToTransform.transformation().forView(viewToTransform), sender)
+    case viewToTransform: View => self ! CommandWithSender(viewToTransform.transformation().forView(viewToTransform), sender)
 
     case filesystemTransformation: FilesystemTransformation => self ! CommandWithSender(filesystemTransformation, sender)
 
-    case deploy: DeployCommand                              => self ! CommandWithSender(deploy, sender)
+    case deploy: DeployCommand => self ! CommandWithSender(deploy, sender)
   })
 }
 
 /**
- * Factory for the actions manager actor.
- */
+  * Factory for the actions manager actor.
+  */
 object TransformationManagerActor {
   def props(settings: SchedoscopeSettings) = Props(classOf[TransformationManagerActor], settings).withDispatcher("akka.actor.transformation-manager-dispatcher")
 }

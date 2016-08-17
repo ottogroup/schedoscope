@@ -15,7 +15,7 @@
  */  -->
 
 <div data-th-fragment="index">
-  <script th:inline="javascript">
+    <script th:inline="javascript">
   /*<![CDATA[*/
     var setupFilter = function() {
       var filterNames = [[${solrQuery.filters}]];
@@ -35,11 +35,12 @@
       }
     }
   /*]]>*/
-  </script>
+
+    </script>
 </div>
 
 <div data-th-fragment="table">
-  <script th:inline="javascript">
+    <script th:inline="javascript">
   /*<![CDATA[*/
     var users = [[${owner}]];
     var fqdn = [[${table.fqdn}]];
@@ -167,5 +168,6 @@
       successToast("Taxonomy", "The taxonomy has been changed successfuly");
     }
   /*]]>*/
-</script>
+
+    </script>
 </div>

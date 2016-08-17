@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,6 @@
  */
 package org.schedoscope.metascope.repository;
 
-import java.util.List;
-
 import org.schedoscope.metascope.model.CommentEntity;
 import org.schedoscope.metascope.model.FieldEntity;
 import org.schedoscope.metascope.model.key.FieldEntityKey;
@@ -24,14 +22,16 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface FieldEntityRepository extends CrudRepository<FieldEntity, FieldEntityKey> {
 
-  @Query("SELECT f FROM FieldEntity f WHERE :commentEntity MEMBER OF f.comments")
-  public FieldEntity findByComment(@Param(value = "commentEntity") CommentEntity commentEntity);
+    @Query("SELECT f FROM FieldEntity f WHERE :commentEntity MEMBER OF f.comments")
+    public FieldEntity findByComment(@Param(value = "commentEntity") CommentEntity commentEntity);
 
-  @Query("SELECT f.key.name, MAX(f.fieldOrder) FROM FieldEntity f WHERE f.parameterField = true GROUP BY f.key.name ORDER BY MAX(f.fieldOrder)")
-  public List<Object[]> findDistinctParameters();
+    @Query("SELECT f.key.name, MAX(f.fieldOrder) FROM FieldEntity f WHERE f.parameterField = true GROUP BY f.key.name ORDER BY MAX(f.fieldOrder)")
+    public List<Object[]> findDistinctParameters();
 
-  public FieldEntity findAllByKeyFqdnAndKeyName(String fqdn, String name);
+    public FieldEntity findAllByKeyFqdnAndKeyName(String fqdn, String name);
 
 }

@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,32 +21,32 @@ import javax.persistence.Id;
 @Entity
 public class Metadata {
 
-  @Id
-  private String metadataKey;
-  private String metadataValue;
+    @Id
+    private String metadataKey;
+    private String metadataValue;
 
-  public Metadata() {
-  }
+    public Metadata() {
+    }
 
-  public Metadata(String key, String value) {
-    this.metadataKey = key;
-    this.metadataValue = value;
-  }
+    public Metadata(String key, String value) {
+        this.metadataKey = key;
+        this.metadataValue = value;
+    }
 
-  public String getMetadataKey() {
-    return metadataKey;
-  }
+    public String getMetadataKey() {
+        return metadataKey;
+    }
 
-  public void setMetadataKey(String metadataKey) {
-    this.metadataKey = metadataKey;
-  }
+    public void setMetadataKey(String metadataKey) {
+        this.metadataKey = metadataKey;
+    }
 
-  public String getMetadataValue() {
-    return metadataValue;
-  }
+    public String getMetadataValue() {
+        return metadataValue;
+    }
 
-  public void setMetadataValue(String metadataValue) {
-    this.metadataValue = metadataValue;
-  }
+    public void setMetadataValue(String metadataValue) {
+        this.metadataValue = metadataValue;
+    }
 
 }

@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,6 @@ package org.schedoscope.export.utils;
 
 import org.apache.hadoop.conf.Configuration;
 import org.schedoscope.export.redis.outputformat.RedisOutputFormat;
-
 import redis.clients.jedis.Jedis;
 
 /**
@@ -26,47 +25,47 @@ import redis.clients.jedis.Jedis;
  */
 public class RedisMRJedisFactory {
 
-	private static volatile Jedis jedisMock = null;
+    private static volatile Jedis jedisMock = null;
 
-	private static volatile Jedis jedis = null;
+    private static volatile Jedis jedis = null;
 
-	/**
-	 * Set a Jedis mock object for test purposes, that will be delivered by
-	 * getJedisClient
-	 *
-	 * @param mock
-	 *            the Jedis mock to set
-	 */
-	public static void setJedisMock(Jedis mock) {
-		jedisMock = mock;
-	}
+    /**
+     * Set a Jedis mock object for test purposes, that will be delivered by
+     * getJedisClient
+     *
+     * @param mock
+     *            the Jedis mock to set
+     */
+    public static void setJedisMock(Jedis mock) {
+        jedisMock = mock;
+    }
 
-	/**
-	 * Returns a configured Redis client.
-	 *
-	 * @param conf
-	 *            The Hadoop configuration object.
-	 * @return The configured Redis client.
-	 */
-	public static Jedis getJedisClient(Configuration conf) {
-		if (jedisMock != null)
-			return jedisMock;
+    /**
+     * Returns a configured Redis client.
+     *
+     * @param conf
+     *            The Hadoop configuration object.
+     * @return The configured Redis client.
+     */
+    public static Jedis getJedisClient(Configuration conf) {
+        if (jedisMock != null)
+            return jedisMock;
 
-		if (jedis == null) {
-			jedis = new Jedis(conf.get(
-					RedisOutputFormat.REDIS_EXPORT_SERVER_HOST, "localhost"),
-					conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_PORT,
-							6379), 1800);
-		}
+        if (jedis == null) {
+            jedis = new Jedis(conf.get(
+                    RedisOutputFormat.REDIS_EXPORT_SERVER_HOST, "localhost"),
+                    conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_PORT,
+                            6379), 1800);
+        }
 
-		String password = conf.get(
-				RedisOutputFormat.REDIS_EXPORT_AUTH_PASSWORD, "");
-		if (!password.equals("")) {
-			jedis.auth(password);
-		}
+        String password = conf.get(
+                RedisOutputFormat.REDIS_EXPORT_AUTH_PASSWORD, "");
+        if (!password.equals("")) {
+            jedis.auth(password);
+        }
 
-		int redisDb = conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_DB, 0);
-		jedis.select(redisDb);
-		return jedis;
-	}
+        int redisDb = conf.getInt(RedisOutputFormat.REDIS_EXPORT_SERVER_DB, 0);
+        jedis.select(redisDb);
+        return jedis;
+    }
 }

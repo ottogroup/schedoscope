@@ -1,45 +1,38 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.dsl.transformations
 
 import java.sql.DriverManager
 import java.util.Properties
 
-import scala.collection.JavaConversions.iterableAsScalaIterable
-
+import com.google.common.collect.ImmutableList
 import org.apache.commons.net.ftp.FTPClient
-import org.apache.commons.net.ftp.FTPFile
 import org.apache.curator.test.TestingServer
-import org.json4s.jvalue2monadic
 import org.json4s.native.JsonMethods.parse
-import org.json4s.string2JsonInput
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter
-import org.scalatest.{ FlatSpec, Matchers }
-import org.schedoscope.Schedoscope
-import org.schedoscope.DriverTests
+import org.scalatest.{FlatSpec, Matchers}
+import org.schedoscope.{DriverTests, Schedoscope}
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.export.testsupport.{ EmbeddedKafkaCluster, SimpleTestKafkaConsumer }
+import org.schedoscope.export.testsupport.{EmbeddedFtpSftpServer, EmbeddedKafkaCluster, SimpleTestKafkaConsumer}
 import org.schedoscope.export.utils.RedisMRJedisFactory
-import org.schedoscope.test.{ rows, test }
+import org.schedoscope.test.{rows, test}
+import _root_.test.eci.datahub._
 
-import com.google.common.collect.ImmutableList
-
-import test.eci.datahub.{ Click, ClickOfEC0101WithJdbcExport, ClickOfEC0101WithKafkaExport, ClickOfEC0101WithRedisExport, ClickOfEC0101WithFtpExport }
-import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer
+import scala.collection.JavaConversions.iterableAsScalaIterable
 
 class ExportTest extends FlatSpec with Matchers {
 
@@ -196,7 +189,9 @@ class ExportTest extends FlatSpec with Matchers {
     ftp.login(EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING);
     val files = ftp.listFiles();
 
-    files.filter { _.getName().contains(v.filePrefix) }.length shouldBe Schedoscope.settings.ftpExportNumReducers
+    files.filter {
+      _.getName().contains(v.filePrefix)
+    }.length shouldBe Schedoscope.settings.ftpExportNumReducers
 
     ftpServer.stopEmbeddedFtpServer()
   }

@@ -1,21 +1,21 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.states
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
@@ -51,7 +51,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -60,7 +60,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationTimestamp(viewUnderTest, 10))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -69,7 +69,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -87,7 +87,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -105,7 +105,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -114,7 +114,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -132,7 +132,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -141,7 +141,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -159,7 +159,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -168,7 +168,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationTimestamp(viewUnderTest, 10))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -177,7 +177,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -195,7 +195,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -213,7 +213,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -222,7 +222,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -240,7 +240,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -249,7 +249,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -267,7 +267,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationCheckum(viewUnderTest))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -276,7 +276,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(WriteTransformationTimestamp(viewUnderTest, 10))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -285,7 +285,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportMaterialized(viewUnderTest, Set(dependentView), 10, withErrors = false, incomplete = false))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 
@@ -303,7 +303,7 @@ class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(_, s) => s should contain(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
-      case _                                  => fail()
+      case _ => fail()
     }
   }
 }

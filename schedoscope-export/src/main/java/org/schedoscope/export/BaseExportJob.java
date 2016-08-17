@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,78 +28,78 @@ import org.kohsuke.args4j.spi.StringArrayOptionHandler;
  */
 public abstract class BaseExportJob extends Configured implements Tool {
 
-	public static final String EXPORT_ANON_FIELDS = "export.anon.fields";
+    public static final String EXPORT_ANON_FIELDS = "export.anon.fields";
 
-	public static final String EXPORT_ANON_SALT = "export.anon.salt";
+    public static final String EXPORT_ANON_SALT = "export.anon.salt";
 
-	@Option(name = "-s", usage = "set to true if kerberos is enabled")
-	protected boolean isSecured = false;
+    @Option(name = "-s", usage = "set to true if kerberos is enabled")
+    protected boolean isSecured = false;
 
-	@Option(name = "-m", usage = "specify the metastore URIs", required = true)
-	protected String metaStoreUris = "";
+    @Option(name = "-m", usage = "specify the metastore URIs", required = true)
+    protected String metaStoreUris = "";
 
-	@Option(name = "-p", usage = "the kerberos principal", depends = { "-s" })
-	protected String principal;
+    @Option(name = "-p", usage = "the kerberos principal", depends = {"-s"})
+    protected String principal;
 
-	@Option(name = "-d", usage = "input database", required = true)
-	protected String inputDatabase;
+    @Option(name = "-d", usage = "input database", required = true)
+    protected String inputDatabase;
 
-	@Option(name = "-t", usage = "input table", required = true)
-	protected String inputTable;
+    @Option(name = "-t", usage = "input table", required = true)
+    protected String inputTable;
 
-	@Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
-	protected String inputFilter;
+    @Option(name = "-i", usage = "input filter, e.g. \"month='08' and year='2015'\"")
+    protected String inputFilter;
 
-	@Option(name = "-c", usage = "number of reducers, concurrency level")
-	protected int numReducer = 2;
+    @Option(name = "-c", usage = "number of reducers, concurrency level")
+    protected int numReducer = 2;
 
-	@Option(name = "-A", handler = StringArrayOptionHandler.class, usage = "a space separated list of fields to anonymize")
-	protected String[] anonFields = new String[0];
+    @Option(name = "-A", handler = StringArrayOptionHandler.class, usage = "a space separated list of fields to anonymize")
+    protected String[] anonFields = new String[0];
 
-	@Option(name = "-S", usage = "an optional salt used to anonymize fields")
-	protected String exportSalt = "";
+    @Option(name = "-S", usage = "an optional salt used to anonymize fields")
+    protected String exportSalt = "";
 
-	protected Configuration getConfiguration() {
+    protected Configuration getConfiguration() {
 
-		if (getConf() == null)
-			setConf(new Configuration());
+        if (getConf() == null)
+            setConf(new Configuration());
 
-		return getConf();
-	}
+        return getConf();
+    }
 
-	protected Configuration configureHiveMetaStore(Configuration conf) {
+    protected Configuration configureHiveMetaStore(Configuration conf) {
 
-		if (metaStoreUris.startsWith("thrift://")) {
-			conf.set("hive.metastore.local", "false");
-			conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
-		} else {
-			conf.set("hive.metastore.local", "true");
-			conf.unset(HiveConf.ConfVars.METASTOREURIS.varname);
-			conf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
-					metaStoreUris);
-		}
-		return conf;
-	}
+        if (metaStoreUris.startsWith("thrift://")) {
+            conf.set("hive.metastore.local", "false");
+            conf.set(HiveConf.ConfVars.METASTOREURIS.varname, metaStoreUris);
+        } else {
+            conf.set("hive.metastore.local", "true");
+            conf.unset(HiveConf.ConfVars.METASTOREURIS.varname);
+            conf.set(HiveConf.ConfVars.METASTORECONNECTURLKEY.varname,
+                    metaStoreUris);
+        }
+        return conf;
+    }
 
-	protected Configuration configureKerberos(Configuration conf) {
+    protected Configuration configureKerberos(Configuration conf) {
 
-		if (isSecured) {
-			conf.setBoolean(
-					HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
-			conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
-					principal);
+        if (isSecured) {
+            conf.setBoolean(
+                    HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL.varname, true);
+            conf.set(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL.varname,
+                    principal);
 
-			if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
-				conf.set("mapreduce.job.credentials.binary",
-						System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
-			}
-		}
-		return conf;
-	}
+            if (System.getenv("HADOOP_TOKEN_FILE_LOCATION") != null) {
+                conf.set("mapreduce.job.credentials.binary",
+                        System.getenv("HADOOP_TOKEN_FILE_LOCATION"));
+            }
+        }
+        return conf;
+    }
 
-	protected Configuration configureAnonFields(Configuration conf) {
-		conf.setStrings(EXPORT_ANON_FIELDS, anonFields);
-		conf.set(EXPORT_ANON_SALT, exportSalt);
-		return conf;
-	}
+    protected Configuration configureAnonFields(Configuration conf) {
+        conf.setStrings(EXPORT_ANON_FIELDS, anonFields);
+        conf.set(EXPORT_ANON_SALT, exportSalt);
+        return conf;
+    }
 }

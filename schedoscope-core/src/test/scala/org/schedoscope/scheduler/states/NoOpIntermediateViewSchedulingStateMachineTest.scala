@@ -1,25 +1,25 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.states
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
-import test.eci.datahub.{ ProductBrandsNoOpMirror, ProductBrandsNoOpMirrorDependent }
+import test.eci.datahub.{ProductBrandsNoOpMirror, ProductBrandsNoOpMirrorDependent}
 
 class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 
@@ -45,10 +45,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -72,10 +72,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          _, _, _, _, _,
-          materializationMode,
-          _, _, _, _), _) =>
+      Waiting(
+      _, _, _, _, _,
+      materializationMode,
+      _, _, _, _), _) =>
         materializationMode shouldBe RESET_TRANSFORMATION_CHECKSUMS
       case _ => fail()
     }
@@ -98,10 +98,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -125,10 +125,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          _, _, _, _, _,
-          materializationMode,
-          _, _, _, _), _) =>
+      Waiting(
+      _, _, _, _, _,
+      materializationMode,
+      _, _, _, _), _) =>
         materializationMode shouldBe RESET_TRANSFORMATION_CHECKSUMS
       case _ => fail()
     }
@@ -151,10 +151,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -178,10 +178,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          _, _, _, _, _,
-          materializationMode,
-          _, _, _, _), _) =>
+      Waiting(
+      _, _, _, _, _,
+      materializationMode,
+      _, _, _, _), _) =>
         materializationMode shouldBe RESET_TRANSFORMATION_CHECKSUMS
       case _ => fail()
     }
@@ -204,10 +204,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -231,10 +231,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          _, _, _, _, _,
-          materializationMode,
-          _, _, _, _), _) =>
+      Waiting(
+      _, _, _, _, _,
+      materializationMode,
+      _, _, _, _), _) =>
         materializationMode shouldBe RESET_TRANSFORMATION_CHECKSUMS
       case _ => fail()
     }
@@ -257,10 +257,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, `viewTransformationChecksum`, 10,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, `viewTransformationChecksum`, 10,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -284,10 +284,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          _, _, _, _, _,
-          materializationMode,
-          _, _, _, _), _) =>
+      Waiting(
+      _, _, _, _, _,
+      materializationMode,
+      _, _, _, _), _) =>
         materializationMode shouldBe RESET_TRANSFORMATION_CHECKSUMS
       case _ => fail()
     }
@@ -310,10 +310,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, `viewTransformationChecksum`, 10,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, `viewTransformationChecksum`, 10,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -337,10 +337,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          _, _, _, _, _,
-          materializationMode,
-          _, _, _, _), _) =>
+      Waiting(
+      _, _, _, _, _,
+      materializationMode,
+      _, _, _, _), _) =>
         materializationMode shouldBe RESET_TRANSFORMATION_CHECKSUMS
       case _ => fail()
     }
@@ -363,10 +363,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -390,10 +390,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -420,10 +420,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, `viewTransformationChecksum`, 10,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), s) =>
+      Waiting(
+      `viewUnderTest`, `viewTransformationChecksum`, 10,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), s) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
         interestedParties should contain(DependentView(anotherDependentView))
@@ -455,10 +455,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, `viewTransformationChecksum`, 10,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), s) =>
+      Waiting(
+      `viewUnderTest`, `viewTransformationChecksum`, 10,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), s) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
         interestedParties should contain(DependentView(anotherDependentView))
@@ -472,10 +472,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, `viewTransformationChecksum`, 10,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, `viewTransformationChecksum`, 10,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -499,10 +499,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          _, _, _, _, _,
-          materializationMode,
-          _, _, _, _), _) =>
+      Waiting(
+      _, _, _, _, _,
+      materializationMode,
+      _, _, _, _), _) =>
         materializationMode shouldBe RESET_TRANSFORMATION_CHECKSUMS
       case _ => fail()
     }
@@ -525,10 +525,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, currentTime = 20) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          `viewUnderTest`, `viewTransformationChecksum`, 10,
-          dependenciesMaterializing, interestedParties,
-          DEFAULT, false, false, false, 0), _) =>
+      Waiting(
+      `viewUnderTest`, `viewTransformationChecksum`, 10,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
       case _ => fail()
@@ -552,10 +552,10 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialize(startState, dependentView, materializationMode = RESET_TRANSFORMATION_CHECKSUMS, currentTime = 10) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          _, _, _, _, _,
-          materializationMode,
-          _, _, _, _), _) =>
+      Waiting(
+      _, _, _, _, _,
+      materializationMode,
+      _, _, _, _), _) =>
         materializationMode shouldBe RESET_TRANSFORMATION_CHECKSUMS
       case _ => fail()
     }
@@ -581,14 +581,14 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          view,
-          `viewTransformationChecksum`,
-          10,
-          waitingForDependencies, dependViews,
-          DEFAULT,
-          false, false, true, 0l
-          ), _) =>
+      Waiting(
+      view,
+      `viewTransformationChecksum`,
+      10,
+      waitingForDependencies, dependViews,
+      DEFAULT,
+      false, false, true, 0l
+      ), _) =>
         waitingForDependencies shouldEqual Set(secondDependency)
         dependViews shouldEqual Set(DependentView(dependentView))
         view shouldBe viewUnderTest
@@ -605,8 +605,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
-        NoData(view),
-        s) =>
+      NoData(view),
+      s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
 
@@ -622,13 +622,13 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          20,
-          false,
-          true),
-        _) =>
+      Materialized(
+      view,
+      `viewTransformationChecksum`,
+      20,
+      false,
+      true),
+      _) =>
         view shouldBe viewUnderTest
 
       case _ => fail()
@@ -697,13 +697,13 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.noDataAvailable(startState, firstDependency, 30) match {
       case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          30,
-          false,
-          true),
-        _) =>
+      Materialized(
+      view,
+      `viewTransformationChecksum`,
+      30,
+      false,
+      true),
+      _) =>
         view shouldBe viewUnderTest
 
       case _ => fail()
@@ -767,13 +767,13 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.noDataAvailable(startState, firstDependency, 30) match {
       case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          30,
-          false,
-          true),
-        _) =>
+      Materialized(
+      view,
+      `viewTransformationChecksum`,
+      30,
+      false,
+      true),
+      _) =>
         view shouldBe viewUnderTest
 
       case _ => fail()
@@ -837,14 +837,14 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.failed(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          view,
-          `viewTransformationChecksum`,
-          10,
-          waitingForDependencies, dependViews,
-          DEFAULT,
-          false, true, true, 0l
-          ), _) =>
+      Waiting(
+      view,
+      `viewTransformationChecksum`,
+      10,
+      waitingForDependencies, dependViews,
+      DEFAULT,
+      false, true, true, 0l
+      ), _) =>
         waitingForDependencies shouldEqual Set(secondDependency)
         dependViews shouldEqual Set(DependentView(dependentView))
         view shouldBe viewUnderTest
@@ -861,8 +861,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.failed(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
-        NoData(view),
-        s) =>
+      NoData(view),
+      s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
 
@@ -878,13 +878,13 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.failed(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          20,
-          true,
-          true),
-        _) =>
+      Materialized(
+      view,
+      `viewTransformationChecksum`,
+      20,
+      true,
+      true),
+      _) =>
         view shouldBe viewUnderTest
 
       case _ => fail()
@@ -948,13 +948,13 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.failed(startState, firstDependency, 30) match {
       case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          30,
-          true,
-          true),
-        _) =>
+      Materialized(
+      view,
+      `viewTransformationChecksum`,
+      30,
+      true,
+      true),
+      _) =>
         view shouldBe viewUnderTest
 
       case _ => fail()
@@ -1018,14 +1018,14 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          view,
-          `viewTransformationChecksum`,
-          10,
-          waitingForDependencies, dependViews,
-          DEFAULT,
-          true, false, false, 15
-          ), _) =>
+      Waiting(
+      view,
+      `viewTransformationChecksum`,
+      10,
+      waitingForDependencies, dependViews,
+      DEFAULT,
+      true, false, false, 15
+      ), _) =>
         waitingForDependencies shouldEqual Set(secondDependency)
         dependViews shouldEqual Set(DependentView(dependentView))
         view shouldBe viewUnderTest
@@ -1042,8 +1042,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.noDataAvailable(startState, firstDependency, 20) match {
       case ResultingViewSchedulingState(
-        NoData(view),
-        s) =>
+      NoData(view),
+      s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
 
@@ -1059,8 +1059,8 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
-        NoData(view),
-        s) =>
+      NoData(view),
+      s) =>
         view shouldBe viewUnderTest
         s shouldEqual Set(ReportNoDataAvailable(viewUnderTest, Set(dependentView)))
 
@@ -1076,13 +1076,13 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          20,
-          false,
-          false),
-        _) =>
+      Materialized(
+      view,
+      `viewTransformationChecksum`,
+      20,
+      false,
+      false),
+      _) =>
         view shouldBe viewUnderTest
 
       case _ => fail()
@@ -1195,13 +1195,13 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
-        Materialized(
-          view,
-          `viewTransformationChecksum`,
-          20,
-          true,
-          true),
-        _) =>
+      Materialized(
+      view,
+      `viewTransformationChecksum`,
+      20,
+      true,
+      true),
+      _) =>
         view shouldBe viewUnderTest
 
       case _ => fail()
@@ -1235,14 +1235,14 @@ class NoOpIntermediateViewSchedulingStateMachineTest extends FlatSpec with Match
 
     stateMachine.materialized(startState, firstDependency, 15, false, false, 20) match {
       case ResultingViewSchedulingState(
-        Waiting(
-          view,
-          `viewTransformationChecksum`,
-          10,
-          waitingForDependencies, dependViews,
-          DEFAULT,
-          true, true, true, 15
-          ), _) =>
+      Waiting(
+      view,
+      `viewTransformationChecksum`,
+      10,
+      waitingForDependencies, dependViews,
+      DEFAULT,
+      true, true, true, 15
+      ), _) =>
         waitingForDependencies shouldEqual Set(secondDependency)
         dependViews shouldEqual Set(DependentView(dependentView))
         view shouldBe viewUnderTest

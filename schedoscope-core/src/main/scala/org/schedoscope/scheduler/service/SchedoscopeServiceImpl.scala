@@ -1,21 +1,23 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.service
 
-import akka.actor.{ ActorRef, ActorSystem, actorRef2Scala }
+import java.util.regex.Pattern
+
+import akka.actor.{ActorRef, ActorSystem, actorRef2Scala}
 import akka.event.Logging
 import akka.pattern.Patterns
 import akka.util.Timeout
@@ -25,16 +27,16 @@ import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import org.schedoscope.AskPattern._
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.dsl.{ Named, View }
 import org.schedoscope.dsl.transformations._
+import org.schedoscope.dsl.{Named, View}
 import org.schedoscope.scheduler.actors.ViewManagerActor
-import org.schedoscope.scheduler.driver.{ DriverRunFailed, DriverRunOngoing, DriverRunState, DriverRunSucceeded }
+import org.schedoscope.scheduler.driver.{DriverRunFailed, DriverRunOngoing, DriverRunState, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.schema.ddl.HiveQl
-import scala.concurrent.{ Await, Future }
+
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
-import java.util.regex.Pattern
 
 class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
 
@@ -65,7 +67,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         viewsFromUrl(viewUrlPath.get)
       } catch {
         case t: Throwable => throw new IllegalArgumentException(s"Invalid view URL pattern passed: ${viewUrlPath.get}."
-          + {if(t.getMessage != null) s"\noriginal Message: ${t.getMessage}"},t)
+          + {
+          if (t.getMessage != null) s"\noriginal Message: ${t.getMessage}"
+        }, t)
       }
   }
 
@@ -80,7 +84,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
     val c = command match {
       case s: String => s
-      case c: Any    => Named.camelToLowerUnderscore(c.getClass.getSimpleName)
+      case c: Any => Named.camelToLowerUnderscore(c.getClass.getSimpleName)
     }
 
     val a = if (args.size == 0) "_" else args.filter(_.isDefined).map(_.getOrElse("_")).mkString(":")
@@ -143,11 +147,13 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
 
         case s: DriverRunSucceeded[_] => {
-          comment = getOrElse(s.comment, "no-comment"); status = "succeeded"
+          comment = getOrElse(s.comment, "no-comment");
+          status = "succeeded"
         }
 
         case f: DriverRunFailed[_] => {
-          comment = getOrElse(f.reason, "no-reason"); status = "failed"
+          comment = getOrElse(f.reason, "no-reason");
+          status = "failed"
         }
 
         case o: DriverRunOngoing[_] => {
@@ -369,8 +375,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       .filter(a => !status.isDefined || status.get.equals(a.status))
       .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
     val overview = actions
-      .groupBy(_.status)
-      .map(el => (el._1, el._2.size))
+        .groupBy(_.status)
+        .map(el => (el._1, el._2.size))
 
     TransformationStatusList(overview, actions)
   }
@@ -426,7 +432,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   def commands(status: Option[String], filter: Option[String]) = {
     checkFilter(filter)
 
-    val running = runningCommands.keys.map { commandStatus(_) }.toList
+    val running = runningCommands.keys.map {
+      commandStatus(_)
+    }.toList
 
     (running ++ doneCommands.values)
       .groupBy(_.id)

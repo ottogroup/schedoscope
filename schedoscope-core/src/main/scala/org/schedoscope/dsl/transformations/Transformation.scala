@@ -57,6 +57,7 @@ abstract class Transformation {
   /**
     * Fluent interface to define a version for the transformation.
     * The transformation will now not be invalidated by changes to the logic but only by changes to this version.
+    *
     * @param definedVersion string with version
     */
   def defineVersion(definedVersion: String) = {

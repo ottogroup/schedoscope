@@ -15,44 +15,45 @@
  */  -->
 
 <div class="tab-pane" id="transformationContent" data-th-fragment="transformation(table,util)">
-  <div>
-    <div class="row">
-      <div class="col-md-12">
+    <div>
         <div class="row">
-          <div class="col-md-6">
-            <div style="overflow: auto">
-              <table class="table bordered">
-                <tr>
-                  <th>Transformation</th>
-                </tr>
-                <tr>
-                  <td>Type</td>
-                  <td data-th-text="${table.transformationType}"></td>
-                </tr>
-                <tr data-th-each="transformationEntity : ${table.transformationProperties}">
-                  <td data-th-text="${transformationEntity.transformationKey}"></td>
-                  <td data-th-text="${transformationEntity.transformationValue}" style="white-space: pre;"></td>
-                </tr>
-              </table>
+            <div class="col-md-12">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div style="overflow: auto">
+                            <table class="table bordered">
+                                <tr>
+                                    <th>Transformation</th>
+                                </tr>
+                                <tr>
+                                    <td>Type</td>
+                                    <td data-th-text="${table.transformationType}"></td>
+                                </tr>
+                                <tr data-th-each="transformationEntity : ${table.transformationProperties}">
+                                    <td data-th-text="${transformationEntity.transformationKey}"></td>
+                                    <td data-th-text="${transformationEntity.transformationValue}"
+                                        style="white-space: pre;"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div data-th-each="export : ${table.exports}">
+                            <div style="overflow: auto">
+                                <table class="table bordered">
+                                    <tr>
+                                        <th data-th-text="${export.getType()} + ' Export'"></th>
+                                    </tr>
+                                    <tr data-th-each="e : ${export.properties.entrySet()}">
+                                        <td data-th-text="${e.key}"></td>
+                                        <td data-th-text="${e.value}" style="white-space: pre;"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="col-md-6">
-            <div data-th-each="export : ${table.exports}">
-              <div style="overflow: auto">
-                <table class="table bordered">
-                  <tr>
-                    <th data-th-text="${export.getType()} + ' Export'"></th>
-                  </tr>
-                  <tr data-th-each="e : ${export.properties.entrySet()}">
-                    <td data-th-text="${e.key}"></td>
-                    <td data-th-text="${e.value}" style="white-space: pre;"></td>
-                  </tr>
-                </table>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>

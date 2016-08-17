@@ -1,23 +1,23 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 
 package org.schedoscope.schema.ddl
 
-import org.schedoscope.dsl.{FieldLike, Structure, View}
 import org.schedoscope.dsl.storageformats._
+import org.schedoscope.dsl.{FieldLike, Structure, View}
 
 object HiveQl {
   def typeDdl[T](scalaType: Manifest[T]): String = {
@@ -46,7 +46,7 @@ object HiveQl {
 
   def commentDdl(view: View): String = view.comment match {
     case Some(c) => s"COMMENT '${c}'"
-    case None    => ""
+    case None => ""
   }
 
   def fieldsDdl(structure: Structure): String = structure
@@ -71,7 +71,7 @@ object HiveQl {
   }
 
   def storedAsDdl(
-    view: View) = view.storageFormat match {
+                   view: View) = view.storageFormat match {
     case Parquet() => "STORED AS PARQUET"
 
     case Avro(schemaPath) => s"""ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
@@ -93,7 +93,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 
   def locationDdl(view: View): String = view.tablePath match {
     case "" => ""
-    case l  => s"LOCATION '${l}'"
+    case l => s"LOCATION '${l}'"
   }
 
   def ddl(view: View): String =
@@ -109,13 +109,12 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
   def partitionWhereClause(view: View): String = {
     val whereClause = view
       .partitionParameters
-      .map { f =>
-        {
-          if (f.t == manifest[String])
-            s"${f.n}='${f.v.get}'"
-          else
-            s"${f.n}=${f.v.get}"
-        }
+      .map { f => {
+        if (f.t == manifest[String])
+          s"${f.n}='${f.v.get}'"
+        else
+          s"${f.n}=${f.v.get}"
+      }
       }
 
     if (!whereClause.isEmpty)

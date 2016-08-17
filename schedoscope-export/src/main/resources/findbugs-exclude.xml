@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <FindBugsFilter>
     <Match>
-        <Class name="~.*\.*Test" />
+        <Class name="~.*\.*Test"/>
     </Match>
     <!-- database identifiers like table name can not be used in prepared statements. -->
     <Match>
         <Class name="org.schedoscope.export.utils.JdbcQueryUtils"/>
-        <Bug code="SQL" />
+        <Bug code="SQL"/>
     </Match>
     <Match>
         <Class name="org.schedoscope.export.jdbc.outputformat.JdbcOutputFormat"/>
-        <Bug code="SQL" />
+        <Bug code="SQL"/>
     </Match>
     <Match>
         <Class name="org.schedoscope.export.ftp.outputformat.FtpUploadOutputFormat"/>
-        <Bug code="ST" />
+        <Bug code="ST"/>
     </Match>
 </FindBugsFilter>

@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,14 +16,9 @@
 
 package org.schedoscope.export.testsupport;
 
-import java.io.IOException;
-import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.KeyPair;
 import org.apache.ftpserver.FtpServer;
 import org.apache.ftpserver.FtpServerFactory;
 import org.apache.ftpserver.ftplet.Authority;
@@ -50,140 +45,140 @@ import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.session.ServerSession;
 import org.apache.sshd.sftp.subsystem.SftpSubsystem;
 
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.KeyPair;
+import java.io.IOException;
+import java.security.PublicKey;
+import java.util.*;
 
 public class EmbeddedFtpSftpServer {
 
-	public static final String FTP_SERVER_DIR = "/tmp";
+    public static final String FTP_SERVER_DIR = "/tmp";
 
-	public static final String FTP_USER_FOR_TESTING = "user1";
+    public static final String FTP_USER_FOR_TESTING = "user1";
 
-	public static final String FTP_PASS_FOR_TESTING = "pass1";
+    public static final String FTP_PASS_FOR_TESTING = "pass1";
 
-	private FtpServer ftpd;
+    private FtpServer ftpd;
 
-	private SshServer sshd;
+    private SshServer sshd;
 
-	private boolean ftpStarted = false;
+    private boolean ftpStarted = false;
 
-	private boolean sshStarted = false;
+    private boolean sshStarted = false;
 
-	public void startEmbeddedFtpServer() throws FtpException {
+    public void startEmbeddedFtpServer() throws FtpException {
 
-		if (!ftpStarted) {
-			PropertiesUserManagerFactory propertyFactory = new PropertiesUserManagerFactory();
-			propertyFactory.setPasswordEncryptor(new ClearTextPasswordEncryptor());
+        if (!ftpStarted) {
+            PropertiesUserManagerFactory propertyFactory = new PropertiesUserManagerFactory();
+            propertyFactory.setPasswordEncryptor(new ClearTextPasswordEncryptor());
 
-			UserFactory userFactory = new UserFactory();
-			userFactory.setName(FTP_USER_FOR_TESTING);
-			userFactory.setPassword(FTP_PASS_FOR_TESTING);
-			userFactory.setHomeDirectory(FTP_SERVER_DIR);
+            UserFactory userFactory = new UserFactory();
+            userFactory.setName(FTP_USER_FOR_TESTING);
+            userFactory.setPassword(FTP_PASS_FOR_TESTING);
+            userFactory.setHomeDirectory(FTP_SERVER_DIR);
 
-			List<Authority> auths = new ArrayList<Authority>();
-			Authority auth = new WritePermission();
-			auths.add(auth);
-			userFactory.setAuthorities(auths);
+            List<Authority> auths = new ArrayList<Authority>();
+            Authority auth = new WritePermission();
+            auths.add(auth);
+            userFactory.setAuthorities(auths);
 
-			User user = userFactory.createUser();
-			UserManager userManager = propertyFactory.createUserManager();
-			userManager.save(user);
-
-
-			ListenerFactory listenerFactory = new ListenerFactory();
-			listenerFactory.setPort(2221);
-
-			FtpServerFactory serverFactory = new FtpServerFactory();
-			serverFactory.setUserManager(userManager);
-			serverFactory.addListener("default", listenerFactory.createListener());
-
-			ftpd = serverFactory.createServer();
-			ftpd.start();
-			ftpStarted = true;
-		}
-	}
-
-	public void stopEmbeddedFtpServer() {
-
-		if (ftpStarted) {
-			if (ftpd != null) {
-				ftpd.stop();
-			}
-			ftpStarted = false;
-		}
-	}
+            User user = userFactory.createUser();
+            UserManager userManager = propertyFactory.createUserManager();
+            userManager.save(user);
 
 
-	public void startEmbeddedSftpServer() throws IOException {
+            ListenerFactory listenerFactory = new ListenerFactory();
+            listenerFactory.setPort(2221);
 
-		if (!sshStarted) {
-			sshd = SshServer.setUpDefaultServer();
-			sshd.setPort(12222);
-			sshd.setHost("localhost");
+            FtpServerFactory serverFactory = new FtpServerFactory();
+            serverFactory.setUserManager(userManager);
+            serverFactory.addListener("default", listenerFactory.createListener());
 
-			List<NamedFactory<UserAuth>> userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
-			userAuthFactories.add(new UserAuthPassword.Factory());
-			userAuthFactories.add(new UserAuthPublicKey.Factory());
-			sshd.setUserAuthFactories(userAuthFactories);
+            ftpd = serverFactory.createServer();
+            ftpd.start();
+            ftpStarted = true;
+        }
+    }
 
-			sshd.setPasswordAuthenticator(new SimplePasswordAuthenticator());
-			sshd.setPublickeyAuthenticator(new SimplePubkeyAuthenticator());
-			sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
-			sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(new SftpSubsystem.Factory()));
-			sshd.setCommandFactory(new ScpCommandFactory());
-			sshd.setFileSystemFactory(new VirtualFileSystemFactory(FTP_SERVER_DIR));
+    public void stopEmbeddedFtpServer() {
 
-			sshd.start();
-			sshStarted = true;
-		}
-	}
+        if (ftpStarted) {
+            if (ftpd != null) {
+                ftpd.stop();
+            }
+            ftpStarted = false;
+        }
+    }
 
-	public void stopEmbeddedSftpServer() throws InterruptedException {
 
-		if (sshStarted) {
-			if (sshd != null) {
-				sshd.stop();
-			}
-			sshStarted = false;
-		}
-	}
+    public void startEmbeddedSftpServer() throws IOException {
 
-	public static class SimplePasswordAuthenticator implements PasswordAuthenticator {
+        if (!sshStarted) {
+            sshd = SshServer.setUpDefaultServer();
+            sshd.setPort(12222);
+            sshd.setHost("localhost");
 
-		@Override
-		public boolean authenticate(String username, String password, ServerSession session) {
-			return FTP_USER_FOR_TESTING.equals(username) && FTP_PASS_FOR_TESTING.equals(password);
-		}
-	}
+            List<NamedFactory<UserAuth>> userAuthFactories = new ArrayList<NamedFactory<UserAuth>>();
+            userAuthFactories.add(new UserAuthPassword.Factory());
+            userAuthFactories.add(new UserAuthPublicKey.Factory());
+            sshd.setUserAuthFactories(userAuthFactories);
 
-	public static class SimplePubkeyAuthenticator implements PublickeyAuthenticator {
+            sshd.setPasswordAuthenticator(new SimplePasswordAuthenticator());
+            sshd.setPublickeyAuthenticator(new SimplePubkeyAuthenticator());
+            sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider());
+            sshd.setSubsystemFactories(Arrays.<NamedFactory<Command>>asList(new SftpSubsystem.Factory()));
+            sshd.setCommandFactory(new ScpCommandFactory());
+            sshd.setFileSystemFactory(new VirtualFileSystemFactory(FTP_SERVER_DIR));
 
-		@Override
-		public boolean authenticate(String username, PublicKey key, ServerSession session) {
-			if (username.equals(FTP_USER_FOR_TESTING)) {
+            sshd.start();
+            sshStarted = true;
+        }
+    }
 
-				try {
-					Set<String> keys = new HashSet<String>();
+    public void stopEmbeddedSftpServer() throws InterruptedException {
 
-					JSch jsch = new JSch();
-					String key1= KeyPair.load(jsch,
-							"src/test/resources/keys/id_rsa_not_encrypted",
-							"src/test/resources/keys/id_rsa_not_encrypted.pub").getFingerPrint();
-					String key2= KeyPair.load(jsch,
-							"src/test/resources/keys/id_rsa_encrypted",
-							"src/test/resources/keys/id_rsa_encrypted.pub").getFingerPrint();
+        if (sshStarted) {
+            if (sshd != null) {
+                sshd.stop();
+            }
+            sshStarted = false;
+        }
+    }
 
-					keys.add(key1);
-					keys.add(key2);
+    public static class SimplePasswordAuthenticator implements PasswordAuthenticator {
 
-					if (keys.contains(KeyUtils.getFingerPrint(key))) {
-						return true;
-					}
-				} catch (JSchException e) {
-				}
-			}
-			return false;
-		}
-	}
+        @Override
+        public boolean authenticate(String username, String password, ServerSession session) {
+            return FTP_USER_FOR_TESTING.equals(username) && FTP_PASS_FOR_TESTING.equals(password);
+        }
+    }
+
+    public static class SimplePubkeyAuthenticator implements PublickeyAuthenticator {
+
+        @Override
+        public boolean authenticate(String username, PublicKey key, ServerSession session) {
+            if (username.equals(FTP_USER_FOR_TESTING)) {
+
+                try {
+                    Set<String> keys = new HashSet<String>();
+
+                    JSch jsch = new JSch();
+                    String key1 = KeyPair.load(jsch,
+                            "src/test/resources/keys/id_rsa_not_encrypted",
+                            "src/test/resources/keys/id_rsa_not_encrypted.pub").getFingerPrint();
+                    String key2 = KeyPair.load(jsch,
+                            "src/test/resources/keys/id_rsa_encrypted",
+                            "src/test/resources/keys/id_rsa_encrypted.pub").getFingerPrint();
+
+                    keys.add(key1);
+                    keys.add(key2);
+
+                    if (keys.contains(KeyUtils.getFingerPrint(key))) {
+                        return true;
+                    }
+                } catch (JSchException e) {
+                }
+            }
+            return false;
+        }
+    }
 }

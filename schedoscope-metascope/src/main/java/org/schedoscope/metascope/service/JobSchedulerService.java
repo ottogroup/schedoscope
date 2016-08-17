@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 package org.schedoscope.metascope.service;
-
-import javax.sql.DataSource;
 
 import org.schedoscope.metascope.conf.MetascopeConfig;
 import org.schedoscope.metascope.jobs.LastDataJob;
@@ -28,26 +26,28 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
 
+import javax.sql.DataSource;
+
 @Service
 public class JobSchedulerService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(JobSchedulerService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JobSchedulerService.class);
 
-  @Autowired
-  private RepositoryDAO repo;
-  @Autowired
-  private DataSource dataSource;
-  @Autowired
-  private MetascopeConfig config;
-  @Autowired
-  @Qualifier("taskExecutor")
-  private TaskExecutor executor;
+    @Autowired
+    private RepositoryDAO repo;
+    @Autowired
+    private DataSource dataSource;
+    @Autowired
+    private MetascopeConfig config;
+    @Autowired
+    @Qualifier("taskExecutor")
+    private TaskExecutor executor;
 
-  public void updateLastDataForTable(TableEntity tableEntity) {
-    if (tableEntity.getTimestampField() != null) {
-      LOG.info("Scheduled LastDataJob for table '{}'", tableEntity.getFqdn());
-      executor.execute(new LastDataJob(tableEntity, repo, dataSource, config, System.currentTimeMillis()));
+    public void updateLastDataForTable(TableEntity tableEntity) {
+        if (tableEntity.getTimestampField() != null) {
+            LOG.info("Scheduled LastDataJob for table '{}'", tableEntity.getFqdn());
+            executor.execute(new LastDataJob(tableEntity, repo, dataSource, config, System.currentTimeMillis()));
+        }
     }
-  }
 
 }

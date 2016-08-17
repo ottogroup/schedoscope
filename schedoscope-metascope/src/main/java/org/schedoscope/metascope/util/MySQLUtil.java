@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,26 +20,26 @@ import java.lang.reflect.Modifier;
 
 public class MySQLUtil {
 
-  public static String getOnDuplicateKeyString(Class<?> clazz) {
-    String onDuplicateKey = "";
-    Field[] fields = clazz.getDeclaredFields();
-    for (Field field : fields) {
-      field.setAccessible(true);
-      if (Modifier.isStatic(field.getModifiers())) {
-        try {
-          Object classField = field.get(null);
-          if (classField instanceof String) {
-            if (!onDuplicateKey.isEmpty()) {
-              onDuplicateKey += ", ";
+    public static String getOnDuplicateKeyString(Class<?> clazz) {
+        String onDuplicateKey = "";
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            if (Modifier.isStatic(field.getModifiers())) {
+                try {
+                    Object classField = field.get(null);
+                    if (classField instanceof String) {
+                        if (!onDuplicateKey.isEmpty()) {
+                            onDuplicateKey += ", ";
+                        }
+                        onDuplicateKey += classField + "=values(" + classField + ")";
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            onDuplicateKey += classField + "=values(" + classField + ")";
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
         }
-      }
+        return onDuplicateKey;
     }
-    return onDuplicateKey;
-  }
 
 }

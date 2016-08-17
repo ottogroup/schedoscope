@@ -11,7 +11,7 @@ case class HiveView() extends View {
   transformVia {
     () => HiveTransformation(
       insertInto(this, "select * from view"))
-        .defineVersion("v2.2")
+      .defineVersion("v2.2")
   }
 
 }
@@ -44,7 +44,7 @@ class TransformationTest extends FlatSpec with Matchers {
 
   it should "change the checksum of a transformation in a view" in {
     //new transformation
-   val view = new HiveView()
+    val view = new HiveView()
 
     view.transformation().checksum shouldBe Checksum.digest("v2.2")
 

@@ -1,53 +1,54 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.schema
 
-import java.security.{ MessageDigest, PrivilegedAction }
-import java.sql.{ Connection, DriverManager, SQLException }
+import java.security.{MessageDigest, PrivilegedAction}
+import java.sql.{Connection, DriverManager}
+
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.metastore.{ HiveMetaStoreClient, IMetaStoreClient }
-import org.apache.hadoop.hive.metastore.api.{ AlreadyExistsException, Partition }
+import org.apache.hadoop.hive.metastore.api.{AlreadyExistsException, Partition}
+import org.apache.hadoop.hive.metastore.{HiveMetaStoreClient, IMetaStoreClient}
+import org.apache.thrift.TException
 import org.joda.time.DateTime
 import org.schedoscope.Schedoscope.settings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{ Checksum }
+import org.schedoscope.dsl.transformations.Checksum
 import org.schedoscope.schema.ddl.HiveQl
 import org.slf4j.LoggerFactory
-import scala.collection.JavaConversions.{ asScalaBuffer, mapAsScalaMap, mutableMapAsJavaMap, seqAsJavaList }
+
+import scala.collection.JavaConversions.{asScalaBuffer, mapAsScalaMap, mutableMapAsJavaMap, seqAsJavaList}
 import scala.collection.mutable.HashMap
-import org.apache.thrift.protocol.TProtocolException
-import org.apache.thrift.TException
 
 /**
- * Exception class for wrapping retryable exceptions raised by the schema manager.
- * The schema-related actors (SchemaManager/PartitionCreator/MetadataLogger) will
- * restart when facing these exceptions.
- */
+  * Exception class for wrapping retryable exceptions raised by the schema manager.
+  * The schema-related actors (SchemaManager/PartitionCreator/MetadataLogger) will
+  * restart when facing these exceptions.
+  */
 case class RetryableSchemaManagerException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
 /**
- * Exception class for wrapping fatal exceptions raised by the schema manager with no prospect of a successful retry.
- * The schema-related actors (SchemaManager/PartitionCreator/MetadataLogger) will
- * restart when facing these exceptions.
- */
+  * Exception class for wrapping fatal exceptions raised by the schema manager with no prospect of a successful retry.
+  * The schema-related actors (SchemaManager/PartitionCreator/MetadataLogger) will
+  * restart when facing these exceptions.
+  */
 case class FatalSchemaManagerException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
 
 /**
- * Interface to the Hive metastore. Used by partition creator actor and metadata logger actor.
- */
+  * Interface to the Hive metastore. Used by partition creator actor and metadata logger actor.
+  */
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
   private val md5 = MessageDigest.getInstance("MD5")
   private val existingSchemas = collection.mutable.Set[String]()
@@ -71,7 +72,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
-      partitions.map(p => (partitionToView(tablePrototype, p) -> (Checksum.defaultDigest, 0.toLong))).toMap
+      partitions.map(p => (partitionToView(tablePrototype, p) ->(Checksum.defaultDigest, 0.toLong))).toMap
     }
   } catch {
     case are: AlreadyExistsException => throw are
@@ -123,8 +124,8 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   /**
-   * Create a partition for a view in the metastore (if it does not exist already) and return it.
-   */
+    * Create a partition for a view in the metastore (if it does not exist already) and return it.
+    */
   def createPartition(view: View): Partition = {
     val partition = viewsToPartitions(List(view)).values.head
     try {
@@ -136,10 +137,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   /**
-   * Execute create database and table for view, dropping the table should it exist already.
-   *
-   * It throws a RetryableSchemaManagerException in case of any problem, encapsulating the original exception.
-   */
+    * Execute create database and table for view, dropping the table should it exist already.
+    *
+    * It throws a RetryableSchemaManagerException in case of any problem, encapsulating the original exception.
+    */
   def dropAndCreateTableSchema(view: View): Unit = try {
     val ddl = HiveQl.ddl(view)
     val stmt = connection.createStatement()
@@ -164,10 +165,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   /**
-   * Checks whether a database and table exists for the given view, as well as whether is has the correct form.
-   *
-   * Throws a RetryableSchemaManagerException in case of any problem, encapsulating the original exception.
-   */
+    * Checks whether a database and table exists for the given view, as well as whether is has the correct form.
+    *
+    * Throws a RetryableSchemaManagerException in case of any problem, encapsulating the original exception.
+    */
   def schemaExists(view: View): Boolean = try {
     val d = Checksum.digest(HiveQl.ddl(view))
 
@@ -205,13 +206,13 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   /**
-   * Store the transformation version checksum for the given view with the corresponding table partition in
-   * the metastore.
-   *
-   * Throws a RetryableSchemaManagerException in case of a protiocol / connection problem with the metastore; a
-   * FatalSchemaManagerException in case of any other issue.
-   *
-   */
+    * Store the transformation version checksum for the given view with the corresponding table partition in
+    * the metastore.
+    *
+    * Throws a RetryableSchemaManagerException in case of a protiocol / connection problem with the metastore; a
+    * FatalSchemaManagerException in case of any other issue.
+    *
+    */
   def setTransformationVersion(view: View) = try {
     if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.checksumProperty, view.transformation().checksum)
@@ -231,13 +232,13 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   /**
-   * Store the given transformation timestamp for the given view with the corresponding table partition in
-   * the metastore.
-   *
-   * Throws a RetryableSchemaManagerException in case of a protiocol / connection problem with the metastore; a
-   * FatalSchemaManagerException in case of any other issue.
-   *
-   */
+    * Store the given transformation timestamp for the given view with the corresponding table partition in
+    * the metastore.
+    *
+    * Throws a RetryableSchemaManagerException in case of a protiocol / connection problem with the metastore; a
+    * FatalSchemaManagerException in case of any other issue.
+    *
+    */
   def setTransformationTimestamp(view: View, timestamp: Long) = try {
     if (view.isPartitioned()) {
       setPartitionProperty(view.dbName, view.n, view.partitionSpec, Checksum.TransformationChecksum.timestampProperty, timestamp.toString)
@@ -257,13 +258,13 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   /**
-   * Retrieve transformation metadata for the given views relating to a single (!) table from the metastore. Grouped by view a tuple with
-   * the transformation version checksum and timestamp of last transformation is returned.
-   *
-   * Throws a RetryableSchemaManagerException in case of a protocol / connection problem with the metastore; a
-   * FatalSchemaManagerException in case of any other issue.
-   *
-   */
+    * Retrieve transformation metadata for the given views relating to a single (!) table from the metastore. Grouped by view a tuple with
+    * the transformation version checksum and timestamp of last transformation is returned.
+    *
+    * Throws a RetryableSchemaManagerException in case of a protocol / connection problem with the metastore; a
+    * FatalSchemaManagerException in case of any other issue.
+    *
+    */
   def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = try {
     val tablePrototype = views.head
 
@@ -285,11 +286,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     log.info(s"Retrieving existing transformation metadata for view ${tablePrototype.module}.${tablePrototype.n} from partitions.")
 
     val existingMetadata = existingPartitions.grouped(settings.metastoreReadBatchSize)
-      .map { ep =>
-        {
-          log.info(s"Reading ${ep.size} partition metadata for view ${tablePrototype.module}.${tablePrototype.n}")
-          getExistingTransformationMetadata(tablePrototype, ep)
-        }
+      .map { ep => {
+        log.info(s"Reading ${ep.size} partition metadata for view ${tablePrototype.module}.${tablePrototype.n}")
+        getExistingTransformationMetadata(tablePrototype, ep)
+      }
       }.reduceOption(_ ++ _).getOrElse(Map())
 
     val createdMetadata = nonExistingPartitions.grouped(settings.metastoreWriteBatchSize)

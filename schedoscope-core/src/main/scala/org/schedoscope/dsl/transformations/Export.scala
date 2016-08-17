@@ -1,85 +1,91 @@
 /**
- * Copyright 2016 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2016 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 
 package org.schedoscope.dsl.transformations
 
 import org.apache.hadoop.mapreduce.Job
-import org.schedoscope.Settings
-import org.schedoscope.dsl.{ Field, View }
+import org.schedoscope.Schedoscope
+import org.schedoscope.dsl.{Field, View}
 import org.schedoscope.export.ftp.FtpExportJob
 import org.schedoscope.export.ftp.outputformat.FileOutputType
 import org.schedoscope.export.ftp.upload.FileCompressionCodec
 import org.schedoscope.export.jdbc.JdbcExportJob
-import org.schedoscope.export.jdbc.exception.{ RetryException, UnrecoverableException }
-import org.schedoscope.export.redis.RedisExportJob
-import org.schedoscope.scheduler.driver.{ Driver, DriverRunFailed, DriverRunState, DriverRunSucceeded, RetryableDriverException }
-import org.schedoscope.Schedoscope
+import org.schedoscope.export.jdbc.exception.{RetryException, UnrecoverableException}
 import org.schedoscope.export.kafka.KafkaExportJob
-import org.schedoscope.export.kafka.options.ProducerType
-import org.schedoscope.export.kafka.options.CleanupPolicy
-import org.schedoscope.export.kafka.options.CompressionCodec
-import org.schedoscope.export.kafka.options.OutputEncoding
+import org.schedoscope.export.kafka.options.{CleanupPolicy, CompressionCodec, OutputEncoding, ProducerType}
+import org.schedoscope.export.redis.RedisExportJob
+import org.schedoscope.scheduler.driver._
 
 /**
- * A helper class to with constructors for exportTo() MR jobs.
- */
+  * A helper class to with constructors for exportTo() MR jobs.
+  */
 object Export {
 
   /**
-   * This function configures the JDBC export job and returns a MapreduceTransformation.
-   *
-   * @param v The view to export
-   * @param jdbcConnection A JDBC connection string
-   * @param dbUser The database user
-   * @param dbPass the database password
-   * @param distributionKey The distribution key (only relevant for exasol)
-   * @param exportSalt an optional salt when anonymizing fields
-   * @param storageEngine The underlying storage engine (only relevant for MySQL)
-   * @param numReducers The number of reducers, defines concurrency
-   * @param commitSize The size of batches for JDBC inserts
-   * @param isKerberized Is the cluster kerberized?
-   * @param kerberosPrincipal The kerberos principal to use
-   * @param metastoreUri The thrift URI to the metastore
-   */
+    * This function configures the JDBC export job and returns a MapreduceTransformation.
+    *
+    * @param v                 The view to export
+    * @param jdbcConnection    A JDBC connection string
+    * @param dbUser            The database user
+    * @param dbPass            the database password
+    * @param distributionKey   The distribution key (only relevant for exasol)
+    * @param exportSalt        an optional salt when anonymizing fields
+    * @param storageEngine     The underlying storage engine (only relevant for MySQL)
+    * @param numReducers       The number of reducers, defines concurrency
+    * @param commitSize        The size of batches for JDBC inserts
+    * @param isKerberized      Is the cluster kerberized?
+    * @param kerberosPrincipal The kerberos principal to use
+    * @param metastoreUri      The thrift URI to the metastore
+    */
   def Jdbc(
-    v: View,
-    jdbcConnection: String,
-    dbUser: String = null,
-    dbPass: String = null,
-    distributionKey: Field[_] = null,
-    exportSalt: String = Schedoscope.settings.exportSalt,
-    storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
-    numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,
-    commitSize: Int = Schedoscope.settings.jdbcExportBatchSize,
-    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
-    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
-    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
+            v: View,
+            jdbcConnection: String,
+            dbUser: String = null,
+            dbPass: String = null,
+            distributionKey: Field[_] = null,
+            exportSalt: String = Schedoscope.settings.exportSalt,
+            storageEngine: String = Schedoscope.settings.jdbcStorageEngine,
+            numReducers: Int = Schedoscope.settings.jdbcExportNumReducers,
+            commitSize: Int = Schedoscope.settings.jdbcExportBatchSize,
+            isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+            kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+            metastoreUri: String = Schedoscope.settings.metastoreUri) = {
 
     val t = MapreduceTransformation(
       v,
       (conf) => {
 
         val filter = v.partitionParameters
-          .map { (p => s"${p.n} = '${p.v.get}'") }
+          .map {
+            (p => s"${p.n} = '${p.v.get}'")
+          }
           .mkString(" and ")
 
         val distributionField = if (distributionKey != null) distributionKey.n else null
 
-        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
-        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonFields = v.fields.filter {
+          _.isPrivacySensitive
+        }.map {
+          _.n
+        }.toArray
+        val anonParameters = v.partitionParameters.filter {
+          _.isPrivacySensitive
+        }.map {
+          _.n
+        }.toArray
 
         new JdbcExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -118,16 +124,16 @@ object Export {
   }
 
   /**
-   * This function runs the post commit action and finalizes the database tables.
-   *
-   * @param job The MR job object
-   * @param driver The schedoscope driver
-   * @param runState The job's runstate
-   */
+    * This function runs the post commit action and finalizes the database tables.
+    *
+    * @param job      The MR job object
+    * @param driver   The schedoscope driver
+    * @param runState The job's runstate
+    */
   def jdbcPostCommit(
-    job: Job,
-    driver: Driver[MapreduceTransformation],
-    runState: DriverRunState[MapreduceTransformation]): DriverRunState[MapreduceTransformation] = {
+                      job: Job,
+                      driver: Driver[MapreduceTransformation],
+                      runState: DriverRunState[MapreduceTransformation]): DriverRunState[MapreduceTransformation] = {
 
     val jobConfigurer = new JdbcExportJob()
 
@@ -137,62 +143,72 @@ object Export {
       runState
 
     } catch {
-      case ex: RetryException         => throw new RetryableDriverException(ex.getMessage, ex)
+      case ex: RetryException => throw new RetryableDriverException(ex.getMessage, ex)
       case ex: UnrecoverableException => DriverRunFailed(driver, ex.getMessage, ex)
     }
   }
 
   /**
-   * This function configures the Redis export job and returns a MapreduceTransformation.
-   *
-   * @param v The view
-   * @param redisHost The Redis hostname
-   * @param key The field to use as the Redis key
-   * @param value An optional field to export. If null, all fields are attached to the key as a map. If not null, only that field's value is attached to the key.
-   * @param keyPrefix An optional key prefix
-   * @param exportSalt an optional salt when anonymizing fields
-   * @param replace A flag indicating of existing keys should be replaced (or extended)
-   * @param flush A flag indicating if the key space should be flushed before writing data
-   * @param redisPort The Redis port (default 6379)
-   * @param redisKeySpace The Redis key space (default 0)
-   * @param commitSize The number of events to write before syncing the pipelined writer.
-   * @param numReducers The number of reducers, defines concurrency
-   * @param pipeline A flag indicating that the Redis pipeline mode should be used for writing data
-   * @param isKerberized Is the cluster kerberized?
-   * @param kerberosPrincipal The kerberos principal to use
-   * @param metastoreUri The thrift URI to the metastore
-   */
+    * This function configures the Redis export job and returns a MapreduceTransformation.
+    *
+    * @param v                 The view
+    * @param redisHost         The Redis hostname
+    * @param key               The field to use as the Redis key
+    * @param value             An optional field to export. If null, all fields are attached to the key as a map. If not null, only that field's value is attached to the key.
+    * @param keyPrefix         An optional key prefix
+    * @param exportSalt        an optional salt when anonymizing fields
+    * @param replace           A flag indicating of existing keys should be replaced (or extended)
+    * @param flush             A flag indicating if the key space should be flushed before writing data
+    * @param redisPort         The Redis port (default 6379)
+    * @param redisKeySpace     The Redis key space (default 0)
+    * @param commitSize        The number of events to write before syncing the pipelined writer.
+    * @param numReducers       The number of reducers, defines concurrency
+    * @param pipeline          A flag indicating that the Redis pipeline mode should be used for writing data
+    * @param isKerberized      Is the cluster kerberized?
+    * @param kerberosPrincipal The kerberos principal to use
+    * @param metastoreUri      The thrift URI to the metastore
+    */
   def Redis(
-    v: View,
-    redisHost: String,
-    key: Field[_],
-    value: Field[_] = null,
-    keyPrefix: String = "",
-    exportSalt: String = Schedoscope.settings.exportSalt,
-    replace: Boolean = true,
-    flush: Boolean = false,
-    redisPort: Int = 6379,
-    redisPassword: String = null,
-    redisKeySpace: Int = 0,
-    commitSize: Int = Schedoscope.settings.redisExportBatchSize,
-    numReducers: Int = Schedoscope.settings.redisExportNumReducers,
-    pipeline: Boolean = Schedoscope.settings.redisExportUsesPipelineMode,
-    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
-    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
-    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
+             v: View,
+             redisHost: String,
+             key: Field[_],
+             value: Field[_] = null,
+             keyPrefix: String = "",
+             exportSalt: String = Schedoscope.settings.exportSalt,
+             replace: Boolean = true,
+             flush: Boolean = false,
+             redisPort: Int = 6379,
+             redisPassword: String = null,
+             redisKeySpace: Int = 0,
+             commitSize: Int = Schedoscope.settings.redisExportBatchSize,
+             numReducers: Int = Schedoscope.settings.redisExportNumReducers,
+             pipeline: Boolean = Schedoscope.settings.redisExportUsesPipelineMode,
+             isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+             kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+             metastoreUri: String = Schedoscope.settings.metastoreUri) = {
 
     val t = MapreduceTransformation(
       v,
       (conf) => {
 
         val filter = v.partitionParameters
-          .map { (p => s"${p.n} = '${p.v.get}'") }
+          .map {
+            (p => s"${p.n} = '${p.v.get}'")
+          }
           .mkString(" and ")
 
         val valueFieldName = if (value != null) value.n else null
 
-        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
-        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonFields = v.fields.filter {
+          _.isPrivacySensitive
+        }.map {
+          _.n
+        }.toArray
+        val anonParameters = v.partitionParameters.filter {
+          _.isPrivacySensitive
+        }.map {
+          _.n
+        }.toArray
 
         new RedisExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -236,52 +252,62 @@ object Export {
   }
 
   /**
-   * This function creates a Kafka topic export MapreduceTransformation.
-   *
-   * @param v The view to export
-   * @param key the field to serve as the topic's key
-   * @param kafkaHosts String list of Kafka hosts to communicate with
-   * @param zookeeperHosts String list of zookeeper hosts
-   * @param replicationFactor The replication factor, defaults to 1
-   * @param numPartitions The number of partitions in the topic. Defaults to 3
-   * @param exportSalt an optional salt when anonymizing fields
-   * @param producerType The type of producer to use, defaults to synchronous
-   * @param cleanupPolicy Default cleanup policy is delete
-   * @param compressionCodes Default compression codec is gzip
-   * @param encoding Defines, whether data is to be serialized as strings (one line JSONs) or Avro
-   * @param numReducers number of reducers to use (i.e., the parallelism)
-   * @param isKerberized Is the cluster kerberized?
-   * @param kerberosPrincipal The kerberos principal to use
-   * @param metastoreUri The thrift URI to the metastore
-   *
-   */
+    * This function creates a Kafka topic export MapreduceTransformation.
+    *
+    * @param v                 The view to export
+    * @param key               the field to serve as the topic's key
+    * @param kafkaHosts        String list of Kafka hosts to communicate with
+    * @param zookeeperHosts    String list of zookeeper hosts
+    * @param replicationFactor The replication factor, defaults to 1
+    * @param numPartitions     The number of partitions in the topic. Defaults to 3
+    * @param exportSalt        an optional salt when anonymizing fields
+    * @param producerType      The type of producer to use, defaults to synchronous
+    * @param cleanupPolicy     Default cleanup policy is delete
+    * @param compressionCodes  Default compression codec is gzip
+    * @param encoding          Defines, whether data is to be serialized as strings (one line JSONs) or Avro
+    * @param numReducers       number of reducers to use (i.e., the parallelism)
+    * @param isKerberized      Is the cluster kerberized?
+    * @param kerberosPrincipal The kerberos principal to use
+    * @param metastoreUri      The thrift URI to the metastore
+    *
+    */
   def Kafka(
-    v: View,
-    key: Field[_],
-    kafkaHosts: String,
-    zookeeperHosts: String,
-    replicationFactor: Int = 1,
-    numPartitons: Int = 3,
-    exportSalt: String = Schedoscope.settings.exportSalt,
-    producerType: ProducerType = ProducerType.sync,
-    cleanupPolicy: CleanupPolicy = CleanupPolicy.delete,
-    compressionCodec: CompressionCodec = CompressionCodec.gzip,
-    encoding: OutputEncoding = OutputEncoding.string,
-    numReducers: Int = Schedoscope.settings.kafkaExportNumReducers,
-    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
-    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
-    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
+             v: View,
+             key: Field[_],
+             kafkaHosts: String,
+             zookeeperHosts: String,
+             replicationFactor: Int = 1,
+             numPartitons: Int = 3,
+             exportSalt: String = Schedoscope.settings.exportSalt,
+             producerType: ProducerType = ProducerType.sync,
+             cleanupPolicy: CleanupPolicy = CleanupPolicy.delete,
+             compressionCodec: CompressionCodec = CompressionCodec.gzip,
+             encoding: OutputEncoding = OutputEncoding.string,
+             numReducers: Int = Schedoscope.settings.kafkaExportNumReducers,
+             isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+             kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+             metastoreUri: String = Schedoscope.settings.metastoreUri) = {
 
     val t = MapreduceTransformation(
       v,
       (conf) => {
 
         val filter = v.partitionParameters
-          .map { (p => s"${p.n} = '${p.v.get}'") }
+          .map {
+            (p => s"${p.n} = '${p.v.get}'")
+          }
           .mkString(" and ")
 
-        val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
-        val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonFields = v.fields.filter {
+          _.isPrivacySensitive
+        }.map {
+          _.n
+        }.toArray
+        val anonParameters = v.partitionParameters.filter {
+          _.isPrivacySensitive
+        }.map {
+          _.n
+        }.toArray
 
         new KafkaExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -319,98 +345,108 @@ object Export {
   }
 
   /**
-   * This function configures the (S)FTP export and returns a configured MapReduceTransformation.
-   *
-   * @param v The view to export
-   * @param ftpEndpoint The (s)ftp endpoint.
-   * @param ftpUser The (s)ftp user.
-   * @param ftpPass The (s)ftp passphrase or password.
-   * @param filePrefix A custom file prefix for exported files.
-   * @param delimiter A custom delimiter to use (only CSV export).
-   * @param printHeader To print a header or not (only CSV export)
-   * @param keyFile A private ssh key file. Defaults to ~/.ssh/id_rsa
-   * @param fileType The output file type, either csv or json.
-   * @param numReducers Number of reducers / number of files.
-   * @param passiveMode Enable passive mode for FTP connections.
-   * @param userIsRoot User dir is root for (s)ftp connections.
-   * @param cleanHdfsDir Clean up HDFS temporary files (or not).
-   * @param exportSalt an optional salt when anonymizing fields.
-   * @param codec The compression codec to use, either gzip or bzip2
-   * @param isKerberized A flag indication if Kerberos is enabled.
-   * @param kerberosPrincipal The Kerberos principal
-   * @param metastoreUri A string containing the Hive meta store url.
-   */
+    * This function configures the (S)FTP export and returns a configured MapReduceTransformation.
+    *
+    * @param v                 The view to export
+    * @param ftpEndpoint       The (s)ftp endpoint.
+    * @param ftpUser           The (s)ftp user.
+    * @param ftpPass           The (s)ftp passphrase or password.
+    * @param filePrefix        A custom file prefix for exported files.
+    * @param delimiter         A custom delimiter to use (only CSV export).
+    * @param printHeader       To print a header or not (only CSV export)
+    * @param keyFile           A private ssh key file. Defaults to ~/.ssh/id_rsa
+    * @param fileType          The output file type, either csv or json.
+    * @param numReducers       Number of reducers / number of files.
+    * @param passiveMode       Enable passive mode for FTP connections.
+    * @param userIsRoot        User dir is root for (s)ftp connections.
+    * @param cleanHdfsDir      Clean up HDFS temporary files (or not).
+    * @param exportSalt        an optional salt when anonymizing fields.
+    * @param codec             The compression codec to use, either gzip or bzip2
+    * @param isKerberized      A flag indication if Kerberos is enabled.
+    * @param kerberosPrincipal The Kerberos principal
+    * @param metastoreUri      A string containing the Hive meta store url.
+    */
   def Ftp(
-    v: View,
-    ftpEndpoint: String,
-    ftpUser: String,
-    ftpPass: String = null,
-    filePrefix: String = null,
-    delimiter: String = "\t",
-    printHeader: Boolean = true,
-    keyFile: String = "~/.ssh/id_rsa",
-    fileType: FileOutputType = FileOutputType.csv,
-    numReducers: Int = Schedoscope.settings.ftpExportNumReducers,
-    passiveMode: Boolean = true,
-    userIsRoot: Boolean = true,
-    cleanHdfsDir: Boolean = true,
-    exportSalt: String = Schedoscope.settings.exportSalt,
-    codec: FileCompressionCodec = FileCompressionCodec.gzip,
-    isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
-    kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
-    metastoreUri: String = Schedoscope.settings.metastoreUri) = {
+           v: View,
+           ftpEndpoint: String,
+           ftpUser: String,
+           ftpPass: String = null,
+           filePrefix: String = null,
+           delimiter: String = "\t",
+           printHeader: Boolean = true,
+           keyFile: String = "~/.ssh/id_rsa",
+           fileType: FileOutputType = FileOutputType.csv,
+           numReducers: Int = Schedoscope.settings.ftpExportNumReducers,
+           passiveMode: Boolean = true,
+           userIsRoot: Boolean = true,
+           cleanHdfsDir: Boolean = true,
+           exportSalt: String = Schedoscope.settings.exportSalt,
+           codec: FileCompressionCodec = FileCompressionCodec.gzip,
+           isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+           kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+           metastoreUri: String = Schedoscope.settings.metastoreUri) = {
 
     val t = MapreduceTransformation(
-        v,
-        (conf) => {
-          val filter = v.partitionParameters
-            .map { (p => s"${p.n} = '${p.v.get}'") }
-            .mkString(" and ")
+      v,
+      (conf) => {
+        val filter = v.partitionParameters
+          .map {
+            (p => s"${p.n} = '${p.v.get}'")
+          }
+          .mkString(" and ")
 
-          val anonFields = v.fields.filter { _.isPrivacySensitive }.map { _.n }.toArray
-          val anonParameters = v.partitionParameters.filter { _.isPrivacySensitive }.map { _.n }.toArray
+        val anonFields = v.fields.filter {
+          _.isPrivacySensitive
+        }.map {
+          _.n
+        }.toArray
+        val anonParameters = v.partitionParameters.filter {
+          _.isPrivacySensitive
+        }.map {
+          _.n
+        }.toArray
 
-          new FtpExportJob().configure(
-            conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
-            conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
-            conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
-            v.dbName,
-            v.n,
-            filter,
-            conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
-            anonFields ++ anonParameters,
-            conf.get("schedoscope.export.salt").get.asInstanceOf[String],
-            conf.get("schedoscope.export.keyFile").get.asInstanceOf[String],
-            conf.get("schedoscope.export.ftpUser").get.asInstanceOf[String],
-            conf.get("schedoscope.export.ftpPass").getOrElse(null).asInstanceOf[String],
-            conf.get("schedoscope.export.ftpEndpoint").get.asInstanceOf[String],
-            filePrefix,
-            conf.get("schedoscope.export.delimiter").get.asInstanceOf[String],
-            conf.get("schedoscope.export.printHeader").get.asInstanceOf[Boolean],
-            conf.get("schedoscope.export.passiveMode").get.asInstanceOf[Boolean],
-            conf.get("schedoscope.export.userIsRoot").get.asInstanceOf[Boolean],
-            conf.get("schedoscope.export.cleanHdfsDir").get.asInstanceOf[Boolean],
-            codec,
-            fileType
-          )
+        new FtpExportJob().configure(
+          conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
+          conf.get("schedoscope.export.metastoreUri").get.asInstanceOf[String],
+          conf.get("schedoscope.export.kerberosPrincipal").get.asInstanceOf[String],
+          v.dbName,
+          v.n,
+          filter,
+          conf.get("schedoscope.export.numReducers").get.asInstanceOf[Int],
+          anonFields ++ anonParameters,
+          conf.get("schedoscope.export.salt").get.asInstanceOf[String],
+          conf.get("schedoscope.export.keyFile").get.asInstanceOf[String],
+          conf.get("schedoscope.export.ftpUser").get.asInstanceOf[String],
+          conf.get("schedoscope.export.ftpPass").getOrElse(null).asInstanceOf[String],
+          conf.get("schedoscope.export.ftpEndpoint").get.asInstanceOf[String],
+          filePrefix,
+          conf.get("schedoscope.export.delimiter").get.asInstanceOf[String],
+          conf.get("schedoscope.export.printHeader").get.asInstanceOf[Boolean],
+          conf.get("schedoscope.export.passiveMode").get.asInstanceOf[Boolean],
+          conf.get("schedoscope.export.userIsRoot").get.asInstanceOf[Boolean],
+          conf.get("schedoscope.export.cleanHdfsDir").get.asInstanceOf[Boolean],
+          codec,
+          fileType
+        )
 
-        })
-      t.directoriesToDelete = List()
-      t.configureWith(
-        Map(
-          "schedoscope.export.isKerberized" -> isKerberized,
-          "schedoscope.export.metastoreUri" -> metastoreUri,
-          "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
-          "schedoscope.export.numReducers" -> numReducers,
-          "schedoscope.export.salt" -> exportSalt,
-          "schedoscope.export.keyFile" -> keyFile,
-          "schedoscope.export.ftpUser" -> ftpUser,
-          "schedoscope.export.ftpPass" -> ftpPass,
-          "schedoscope.export.ftpEndpoint" -> ftpEndpoint,
-          "schedoscope.export.delimiter" -> delimiter,
-          "schedoscope.export.printHeader" -> printHeader,
-          "schedoscope.export.passiveMode" -> passiveMode,
-          "schedoscope.export.userIsRoot" -> userIsRoot,
-          "schedoscope.export.cleanHdfsDir" -> cleanHdfsDir))
+      })
+    t.directoriesToDelete = List()
+    t.configureWith(
+      Map(
+        "schedoscope.export.isKerberized" -> isKerberized,
+        "schedoscope.export.metastoreUri" -> metastoreUri,
+        "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
+        "schedoscope.export.numReducers" -> numReducers,
+        "schedoscope.export.salt" -> exportSalt,
+        "schedoscope.export.keyFile" -> keyFile,
+        "schedoscope.export.ftpUser" -> ftpUser,
+        "schedoscope.export.ftpPass" -> ftpPass,
+        "schedoscope.export.ftpEndpoint" -> ftpEndpoint,
+        "schedoscope.export.delimiter" -> delimiter,
+        "schedoscope.export.printHeader" -> printHeader,
+        "schedoscope.export.passiveMode" -> passiveMode,
+        "schedoscope.export.userIsRoot" -> userIsRoot,
+        "schedoscope.export.cleanHdfsDir" -> cleanHdfsDir))
   }
 }

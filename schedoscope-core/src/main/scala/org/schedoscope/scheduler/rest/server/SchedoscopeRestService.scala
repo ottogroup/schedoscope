@@ -1,22 +1,23 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.rest.server
 
-import java.util.logging.{ Level, LogManager, Logger }
-import akka.actor.{ Actor, Props }
+import java.util.logging.{Level, LogManager, Logger}
+
+import akka.actor.{Actor, Props}
 import akka.io.IO
 import akka.pattern.ask
 import akka.routing.SmallestMailboxPool
@@ -24,7 +25,7 @@ import akka.util.Timeout
 import org.schedoscope.Schedoscope
 import org.schedoscope.scheduler.commandline.SchedoscopeCliRepl
 import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat._
-import org.schedoscope.scheduler.service.{ SchedoscopeService, SchedoscopeServiceImpl }
+import org.schedoscope.scheduler.service.{SchedoscopeService, SchedoscopeServiceImpl}
 import org.slf4j.bridge.SLF4JBridgeHandler
 import spray.can.Http
 import spray.http.HttpHeaders.RawHeader
@@ -32,14 +33,14 @@ import spray.http.StatusCodes._
 import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
 import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
 import spray.routing.Directive.pimpApply
-import spray.routing.HttpService
-import spray.routing.ExceptionHandler
-import scala.language.postfixOps
+import spray.routing.{ExceptionHandler, HttpService}
 import spray.util.LoggingContext
 
+import scala.language.postfixOps
+
 /**
- * Spray actor providing the Schedoscope REST service
- */
+  * Spray actor providing the Schedoscope REST service
+  */
 class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor with HttpService {
 
   def actorRefFactory = context
@@ -63,38 +64,37 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
 
   val route = get {
     respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-      parameters("status"?, "filter"?, "dependencies".as[Boolean]?, "typ"?, "mode" ?, "overview".as[Boolean] ?, "all".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview, all) =>
-        {
-          path("transformations") {
-            complete(schedoscope.transformations(status, filter))
+      parameters("status" ?, "filter" ?, "dependencies".as[Boolean] ?, "typ" ?, "mode" ?, "overview".as[Boolean] ?, "all".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview, all) => {
+        path("transformations") {
+          complete(schedoscope.transformations(status, filter))
+        } ~
+          path("queues") {
+            complete(schedoscope.queues(typ, filter))
           } ~
-            path("queues") {
-              complete(schedoscope.queues(typ, filter))
-            } ~
-            path("commands") {
-              complete(schedoscope.commands(status, filter))
-            } ~
-            path("views" / Rest ?) { viewUrlPath =>
-              complete(schedoscope.views(viewUrlPath, status, filter, dependencies, overview, all))
-            } ~
-            path("materialize" / Rest ?) { viewUrlPath =>
-              complete(schedoscope.materialize(viewUrlPath, status, filter, mode))
-            } ~
-            path("invalidate" / Rest ?) { viewUrlPath =>
-              complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
-            } ~
-            path("command" / Rest) { commandId =>
-              complete(schedoscope.commandStatus(commandId))
-            }
-        }
+          path("commands") {
+            complete(schedoscope.commands(status, filter))
+          } ~
+          path("views" / Rest ?) { viewUrlPath =>
+            complete(schedoscope.views(viewUrlPath, status, filter, dependencies, overview, all))
+          } ~
+          path("materialize" / Rest ?) { viewUrlPath =>
+            complete(schedoscope.materialize(viewUrlPath, status, filter, mode))
+          } ~
+          path("invalidate" / Rest ?) { viewUrlPath =>
+            complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
+          } ~
+          path("command" / Rest) { commandId =>
+            complete(schedoscope.commandStatus(commandId))
+          }
+      }
       }
     }
   }
 }
 
 /**
- * Main object for launching the schedoscope rest service.
- */
+  * Main object for launching the schedoscope rest service.
+  */
 object SchedoscopeRestService {
 
   LogManager.getLogManager().reset()
@@ -109,7 +109,7 @@ object SchedoscopeRestService {
 
     head("schedoscope-rest-service")
     help("help") text ("print usage")
-    opt[Unit]('s', "shell") action { (_, c) => c.copy(shell = true) } optional () text ("start an interactive shell with direct schedoscope access.")
+    opt[Unit]('s', "shell") action { (_, c) => c.copy(shell = true) } optional() text ("start an interactive shell with direct schedoscope access.")
   }
 
   implicit val actorSystem = Schedoscope.actorSystem
@@ -138,7 +138,7 @@ object SchedoscopeRestService {
   def main(args: Array[String]) {
     start(parser.parse(args, Config()) match {
       case Some(config) => config
-      case None         => Config()
+      case None => Config()
     })
   }
 }

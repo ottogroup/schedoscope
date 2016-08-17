@@ -139,14 +139,14 @@ object HiveTransformation {
   def checkJoinsWithOns(sql: String): Boolean = {
     val normalizedSQl = normalizeQuery(sql)
     // delete empty strings
-    val noEmptyStrings = normalizedSQl.replaceAll("(''|\"\")","")
+    val noEmptyStrings = normalizedSQl.replaceAll("(''|\"\")", "")
     // The expression will delete the characters between two quotes:
     // ((?<![\\])['"])  Match a single or double quote, as long as it's not preceded by \
     // (['"]) store the matched quote
     // (?:.(?!\1))*.? Continue matching ANY characters.. as long as they aren't followed by the same quote that was matched in #1...
     val noStrings = noEmptyStrings.replaceAll("((?<![\\\\])['\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1", "")
     // prepend/append spaces to make the count easier
-    val paddedSQL = " " + noStrings.replaceAll("[(),]"," ") + " "
+    val paddedSQL = " " + noStrings.replaceAll("[(),]", " ") + " "
 
     val join = "(?i)(?<! cross) join(?= )".r
     val on = "(?i) on(?= )".r
@@ -173,7 +173,7 @@ object HiveTransformation {
       _.trim().replaceAll("^--(.|\\w)*$", "")
     }.filter(_.nonEmpty).mkString(" ")
 
-    val noSets = noComments.replaceAll("(?i)( |^)SET [^;]+;","")
+    val noSets = noComments.replaceAll("(?i)( |^)SET [^;]+;", "")
 
     //replace the whitespaces inside quotes with ;
     replaceWhitespace(noSets)
@@ -198,7 +198,7 @@ object HiveTransformation {
       .map { case (s, i) =>
         //make sure the char has a twin before replacing
         if (i % 2 == 1 && (i < array.length - 1 || endsWithQuote)) {
-          val nested = if(quote == "\"") s.replaceAll("'","\"") else s
+          val nested = if (quote == "\"") s.replaceAll("'", "\"") else s
           nested.replaceAll("\\s", ";")
         } else {
           s

@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,54 +23,54 @@ import javax.persistence.Id;
 @Entity
 public class CommentEntity {
 
-  @Id
-  @GeneratedValue
-  private Long id;
-  @Column(columnDefinition = "varchar(32629)")
-  private String text;
-  @Column(columnDefinition = "varchar(32629)")
-  private String plainText;
-  private String username;
-  private long lastEdit;
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Column(columnDefinition = "varchar(32629)")
+    private String text;
+    @Column(columnDefinition = "varchar(32629)")
+    private String plainText;
+    private String username;
+    private long lastEdit;
 
-  public Long getId() {
-    return id;
-  }
+    public Long getId() {
+        return id;
+    }
 
-  public String getText() {
-    return text;
-  }
+    public String getText() {
+        return text;
+    }
 
-  public void setText(String text) {
-    this.text = text;
-  }
+    public void setText(String text) {
+        this.text = text;
+    }
 
-  public String getPlainText() {
-    return plainText;
-  }
+    public String getPlainText() {
+        return plainText;
+    }
 
-  public void setPlainText(String plainText) {
-    this.plainText = plainText;
-  }
+    public void setPlainText(String plainText) {
+        this.plainText = plainText;
+    }
 
-  public String getUsername() {
-    return username;
-  }
+    public String getUsername() {
+        return username;
+    }
 
-  public void setUsername(String username) {
-    this.username = username;
-  }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-  public long getLastEdit() {
-    return lastEdit;
-  }
+    public long getLastEdit() {
+        return lastEdit;
+    }
 
-  public void setLastEdit(long lastEdit) {
-    this.lastEdit = lastEdit;
-  }
+    public void setLastEdit(long lastEdit) {
+        this.lastEdit = lastEdit;
+    }
 
-  public String getPreview() {
-    return plainText.length() <= 75 ? plainText : plainText.substring(0, 75) + " ...";
-  }
+    public String getPreview() {
+        return plainText.length() <= 75 ? plainText : plainText.substring(0, 75) + " ...";
+    }
 
 }

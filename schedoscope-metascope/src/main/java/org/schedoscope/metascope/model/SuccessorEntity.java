@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,73 +15,73 @@
  */
 package org.schedoscope.metascope.model;
 
+import org.schedoscope.metascope.model.key.SuccessorEntityKey;
+
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 
-import org.schedoscope.metascope.model.key.SuccessorEntityKey;
-
 @Entity
 public class SuccessorEntity {
 
-  public static final String URL_PATH = "url_path";
-  public static final String SUCCESSOR_URL_PATH = "successor_url_path";
-  public static final String SUCCESSOR_FQDN = "successor_fqdn";
-  public static final String INTERNAL_VIEW_ID = "internal_view_id";
+    public static final String URL_PATH = "url_path";
+    public static final String SUCCESSOR_URL_PATH = "successor_url_path";
+    public static final String SUCCESSOR_FQDN = "successor_fqdn";
+    public static final String INTERNAL_VIEW_ID = "internal_view_id";
 
-  @EmbeddedId
-  private SuccessorEntityKey key;
-  @Column(name = SuccessorEntity.INTERNAL_VIEW_ID)
-  private String internalViewId;
+    @EmbeddedId
+    private SuccessorEntityKey key;
+    @Column(name = SuccessorEntity.INTERNAL_VIEW_ID)
+    private String internalViewId;
 
-  public SuccessorEntity() {
-    this.key = new SuccessorEntityKey();
-  }
-
-  public SuccessorEntity(String urlPath, String successorUrlPath, String depdencyFqdn) {
-    if (key == null) {
-      this.key = new SuccessorEntityKey(urlPath, successorUrlPath, depdencyFqdn);
-    } else {
-      setUrlPath(urlPath);
-      setSuccessorUrlPath(successorUrlPath);
-      setSuccessorFqdn(depdencyFqdn);
+    public SuccessorEntity() {
+        this.key = new SuccessorEntityKey();
     }
-  }
 
-  public SuccessorEntityKey getEntityKey() {
-    return key;
-  }
+    public SuccessorEntity(String urlPath, String successorUrlPath, String depdencyFqdn) {
+        if (key == null) {
+            this.key = new SuccessorEntityKey(urlPath, successorUrlPath, depdencyFqdn);
+        } else {
+            setUrlPath(urlPath);
+            setSuccessorUrlPath(successorUrlPath);
+            setSuccessorFqdn(depdencyFqdn);
+        }
+    }
 
-  public String getUrlPath() {
-    return this.key.getUrlPath();
-  }
+    public SuccessorEntityKey getEntityKey() {
+        return key;
+    }
 
-  public void setUrlPath(String urlPath) {
-    this.key.setUrlPath(urlPath);
-  }
+    public String getUrlPath() {
+        return this.key.getUrlPath();
+    }
 
-  public String getSuccessorUrlPath() {
-    return this.key.getSuccessorUrlPath();
-  }
+    public void setUrlPath(String urlPath) {
+        this.key.setUrlPath(urlPath);
+    }
 
-  public void setSuccessorUrlPath(String successorUrlPath) {
-    this.key.setSuccessorUrlPath(successorUrlPath);
-  }
+    public String getSuccessorUrlPath() {
+        return this.key.getSuccessorUrlPath();
+    }
 
-  public String getSuccessorFqdn() {
-    return this.key.getSuccessorFqdn();
-  }
+    public void setSuccessorUrlPath(String successorUrlPath) {
+        this.key.setSuccessorUrlPath(successorUrlPath);
+    }
 
-  public void setSuccessorFqdn(String fqdn) {
-    this.key.setSuccessorFqdn(fqdn);
-  }
+    public String getSuccessorFqdn() {
+        return this.key.getSuccessorFqdn();
+    }
 
-  public String getInternalViewId() {
-    return internalViewId;
-  }
+    public void setSuccessorFqdn(String fqdn) {
+        this.key.setSuccessorFqdn(fqdn);
+    }
 
-  public void setInternalViewId(String internalViewId) {
-    this.internalViewId = internalViewId;
-  }
+    public String getInternalViewId() {
+        return internalViewId;
+    }
+
+    public void setInternalViewId(String internalViewId) {
+        this.internalViewId = internalViewId;
+    }
 
 }
