@@ -1,35 +1,36 @@
 package org.schedoscope.scheduler.driver
 
 import java.io.File
-import org.scalatest.{ FlatSpec, Matchers }
-import org.schedoscope.{ DriverTests, ShellTests }
+
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.transformations.ShellTransformation
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
+import org.schedoscope.{DriverTests, ShellTests}
+
 import scala.io.Source
-import org.schedoscope.dsl.transformations.ShellTransformation
 
 class ShellDriverTest extends FlatSpec with Matchers {
 
-  lazy val driver: ShellDriver = new LocalTestResources().shellDriver
+  lazy val driver = new LocalTestResources().driverFor[ShellTransformation]("shell")
 
-  "ShellDriver" should "have transformation name shell" taggedAs (DriverTests, ShellTests) in {
+  "ShellDriver" should "have transformation name shell" taggedAs(DriverTests, ShellTests) in {
     driver.transformationName shouldBe "shell"
   }
 
-  it should "execute shell transformations synchronously" taggedAs (DriverTests, ShellTests) in {
+  it should "execute shell transformations synchronously" taggedAs(DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("ls -l > /dev/null"))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute another shell transformations synchronously" taggedAs (DriverTests, ShellTests) in {
+  it should "execute another shell transformations synchronously" taggedAs(DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("ls -ld > /dev/null"))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "pass environment to the shell" taggedAs (DriverTests, ShellTests) in {
+  it should "pass environment to the shell" taggedAs(DriverTests, ShellTests) in {
     val file = File.createTempFile("_schedoscope", ".sh")
     file.deleteOnExit()
 
@@ -42,7 +43,7 @@ class ShellDriverTest extends FlatSpec with Matchers {
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute shell transformations and return errors when running synchronously" taggedAs (DriverTests, ShellTests) in {
+  it should "execute shell transformations and return errors when running synchronously" taggedAs(DriverTests, ShellTests) in {
     val driverRunState = driver.runAndWait(ShellTransformation("exit 1"))
 
     driverRunState shouldBe a[DriverRunFailed[_]]

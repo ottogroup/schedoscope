@@ -1,32 +1,32 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.driver
 
 import java.io.File
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.transformations.{ FilesystemTransformation, _ }
+import org.schedoscope.dsl.transformations.{FilesystemTransformation, _}
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
 import test.eci.datahub.Product
 
-class FileSystemDriverTest extends FlatSpec with Matchers with TestFolder {
-  lazy val driver: FileSystemDriver = new LocalTestResources().fileSystemDriver
+class FilesystemDriverTest extends FlatSpec with Matchers with TestFolder {
+  lazy val driver: Driver[FilesystemTransformation] = new LocalTestResources().driverFor[FilesystemTransformation]("filesystem")
 
   "FileSystemDriver" should "be have transformation name filesystem" taggedAs (DriverTests) in {
     driver.transformationName shouldBe "filesystem"

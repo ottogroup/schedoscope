@@ -1,10 +1,11 @@
 package org.schedoscope.scheduler.driver
 
-import java.io.{ File, FileWriter }
+import java.io.{File, FileWriter}
 
 import org.joda.time.LocalDateTime
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.ShellTransformation
+import org.schedoscope.test.resources.TestResources
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -12,8 +13,8 @@ import scala.language.reflectiveCalls
 import scala.sys.process._
 
 /**
- * Driver for executing shell transformations.
- */
+  * Driver for executing shell transformations.
+  */
 class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extends DriverOnBlockingApi[ShellTransformation] {
 
   val log = LoggerFactory.getLogger(classOf[ShellDriver])
@@ -21,16 +22,16 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
   def transformationName = "shell"
 
   /**
-   * Construct a future-based driver run handle
-   */
+    * Construct a future-based driver run handle
+    */
   def run(t: ShellTransformation): DriverRunHandle[ShellTransformation] =
     new DriverRunHandle(this, new LocalDateTime(), t, Future {
       doRun(t)
     })
 
   /**
-   * Actually run the shell transformation.
-   */
+    * Actually run the shell transformation.
+    */
   def doRun(t: ShellTransformation): DriverRunState[ShellTransformation] = {
     val stdout = new StringBuilder
     try {
@@ -42,7 +43,9 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
         val writer = new FileWriter(file)
         try {
           writer.write(s"#!${t.shell}\n")
-          t.script.foreach { writer.write(_) }
+          t.script.foreach {
+            writer.write(_)
+          }
         } finally {
           writer.close()
         }
@@ -62,8 +65,12 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
 }
 
 /**
- * Factory methods for shell transformations.
- */
-object ShellDriver {
+  * Factory methods for shell transformations.
+  */
+object ShellDriver extends DriverCompanionObject[ShellTransformation] {
+
   def apply(ds: DriverSettings) = new ShellDriver(ds.driverRunCompletionHandlers)
+
+  def apply(ds: DriverSettings, testResources: TestResources) =
+    new ShellDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"))
 }

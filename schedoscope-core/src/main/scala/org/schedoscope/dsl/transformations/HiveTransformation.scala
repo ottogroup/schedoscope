@@ -26,8 +26,7 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.{HashMap, ListBuffer}
 
 /**
-  * Hive Transformation: compute views via HiveQL Hive Server 2.
-  *
+  * Hive Transformation: compute views via HiveQL.
   */
 case class HiveTransformation(sql: String, udfs: List[Function] = List()) extends Transformation {
 

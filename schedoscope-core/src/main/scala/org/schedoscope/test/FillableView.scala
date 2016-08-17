@@ -15,17 +15,13 @@
   */
 package org.schedoscope.test
 
-import java.io.{File, OutputStreamWriter}
+import java.io.OutputStreamWriter
 import java.net.URI
 
 import org.apache.hadoop.fs.Path
-import org.apache.hadoop.hive.metastore.api.{ResourceType, ResourceUri}
-import org.schedoscope.dsl.transformations.{HiveTransformation, OozieTransformation}
 import org.schedoscope.dsl.{FieldLike, Named, View}
 import org.schedoscope.test.resources.{LocalTestResources, TestResources}
 
-import scala.Array.canBuildFrom
-import scala.collection.JavaConversions.seqAsJavaList
 import scala.collection.mutable.ListBuffer
 
 /**
@@ -36,11 +32,9 @@ trait FillableView extends View with rows {}
 trait rows extends View {
   env = "test"
 
-  val localTestResources = new LocalTestResources()
+  var resources: TestResources = new LocalTestResources()
 
-  var resources: () => TestResources = () => localTestResources
-
-  val rs = new ListBuffer[Map[String, Any]]()
+  val rowData = new ListBuffer[Map[String, Any]]()
 
   var allowNullFields: Boolean = false
 
@@ -50,12 +44,12 @@ trait rows extends View {
 
   moduleNameBuilder = () => Named.camelToLowerUnderscore(getClass().getSuperclass.getPackage().getName()).replaceAll("[.]", "_")
 
-  tablePathBuilder = (env: String) => resources().hiveWarehouseDir + ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
+  tablePathBuilder = (env: String) => resources.hiveWarehouseDir + ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
 
   // unify storage format
-  storedAs(localTestResources.textStorage)
+  storedAs(resources.textStorage)
 
-  // overrides (to enable correct table/database names, otherwise $$anonFunc...) 
+  // overrides (to enable correct table/database names, otherwise $$anonFunc...)
 
   /**
     * Inserts a row to this field. If columns are left out, they are either set to null or filled with random data.
@@ -64,8 +58,8 @@ trait rows extends View {
     */
   def set(row: (FieldLike[_], Any)*) {
     val m = row.map(f => f._1.n -> f._2).toMap[String, Any]
-    rs.append(fields.map(f => {
-      if (m.contains(f.n)) f.n -> m(f.n) else f.n -> nullOrRandom(f, rs.size)
+    rowData.append(fields.map(f => {
+      if (m.contains(f.n)) f.n -> m(f.n) else f.n -> nullOrRandom(f, rowData.size)
     }).toMap[String, Any])
   }
 
@@ -73,14 +67,14 @@ trait rows extends View {
     * Returns the number of rows in this view
     */
   def numRows(): Int = {
-    rs.size
+    rowData.size
   }
 
   /**
     * Generates a new rowId for the current row.
     */
   def rowId(): String = {
-    rowIdPattern.format(rs.size)
+    rowIdPattern.format(rowData.size)
   }
 
   /**
@@ -89,96 +83,36 @@ trait rows extends View {
     * @param orderedBy the optional FieldLike for the column to sort by
     */
   def populate(orderedBy: Option[FieldLike[_]]) {
-    val db = resources().database
-    rs.clear()
-    rs.appendAll(db.selectView(this, orderedBy))
+    val db = resources.database
+    rowData.clear()
+    rowData.appendAll(db.selectView(this, orderedBy))
   }
 
   /**
     * Persists this view into local hive
     *
     */
-  def write() {
-    deploySchema()
+  def createViewTableAndWriteTestData() {
+    createViewTable()
     writeData()
   }
 
-  /**
-    * Deploys a local oozie workflow for oozie tests
-    *
-    */
-  def deployWorkflow(wf: OozieTransformation) {
-    val fs = resources().fileSystem
-    val dest = new Path(resources().namenode + new URI(wf.workflowAppPath).getPath + "/")
-
-    if (!fs.exists(dest))
-      fs.mkdirs(dest)
-
-    // FIXME: make source path configurable, recursive upload
-    val srcFilesFromMain = if (new File(s"src/main/resources/oozie/${
-      wf.bundle
-    }/${
-      wf.workflow
-    }").listFiles() == null)
-      Array[File]()
-    else
-      new File(s"src/main/resources/oozie/${
-        wf.bundle
-      }/${
-        wf.workflow
-      }").listFiles()
-
-    val srcFilesFromTest = if (new File(s"src/test/resources/oozie/${
-      wf.bundle
-    }/${
-      wf.workflow
-    }").listFiles() == null)
-      Array[File]()
-    else
-      new File(s"src/test/resources/oozie/${
-        wf.bundle
-      }/${
-        wf.workflow
-      }").listFiles()
-
-    (srcFilesFromMain ++ srcFilesFromTest).map(f => {
-      val src = new Path("file:///" + f.getAbsolutePath)
-      fs.copyFromLocalFile(src, dest)
-    })
-
-    wf.workflowAppPath = dest.toString()
-  }
-
-  /**
-    * Modifies a hivetransformation so that it will find locally deployed UDFS
-    *
-    */
-  def deployFunctions(ht: HiveTransformation) {
-    ht.udfs.foreach {
-      f => {
-        val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
-        val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
-        f.setResourceUris(List(jarResource))
-      }
-    }
-  }
-
-  def deploySchema() {
-    val d = resources().crate
+  def createViewTable() {
+    val d = resources.crate
     if (!d.schemaExists(this)) {
       d.dropAndCreateTableSchema(this)
     }
   }
 
   def writeData() {
-    val d = resources().crate
+    val d = resources.crate
     val partitionFilePath = if (this.isPartitioned())
       new Path(new URI(d.createPartition(this).getSd.getLocation).getPath)
     else
       new Path(this.fullPath)
 
     val partitionFile = new Path(partitionFilePath, "00000")
-    val fs = resources().fileSystem
+    val fs = resources.fileSystem
     if (fs.exists(partitionFilePath))
       fs.delete(partitionFilePath, true)
     fs.mkdirs(partitionFilePath)
@@ -193,6 +127,6 @@ trait rows extends View {
   }
 
   private def nullOrRandom(f: FieldLike[_], i: Int) = {
-    if (allowNullFields) "\\N" else FieldSequentialValue.get(f, rs.size, rowIdPattern)
+    if (allowNullFields) "\\N" else FieldSequentialValue.get(f, rowData.size, rowIdPattern)
   }
 }

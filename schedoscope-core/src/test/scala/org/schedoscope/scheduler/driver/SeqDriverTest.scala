@@ -1,29 +1,28 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.driver
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.DriverTests
-import org.schedoscope.dsl.transformations.{ HiveTransformation, SeqTransformation }
+import org.schedoscope.dsl.transformations.{HiveTransformation, SeqTransformation, Transformation}
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
-import org.schedoscope.dsl.transformations.SeqTransformation
 
 class SeqDriverTest extends FlatSpec with Matchers {
-  lazy val driver = new LocalTestResources().seqDriver
+  lazy val driver = new LocalTestResources().driverFor[SeqTransformation[Transformation, Transformation]]("seq")
 
   "SeqDriver" should "have transformation name seq" taggedAs (DriverTests) in {
     driver.transformationName shouldBe "seq"

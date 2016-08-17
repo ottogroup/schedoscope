@@ -20,7 +20,7 @@ import java.io.{OutputStream, PrintStream}
 
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
-import org.apache.hadoop.hive.metastore.api.Function
+import org.apache.hadoop.hive.metastore.api.{Function, ResourceType, ResourceUri}
 import org.apache.hadoop.hive.ql.metadata.Hive
 import org.apache.hadoop.hive.ql.processors.{CommandProcessor, CommandProcessorFactory}
 import org.apache.hadoop.hive.ql.session.SessionState
@@ -29,9 +29,10 @@ import org.schedoscope.Schedoscope
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
+import org.schedoscope.test.resources.TestResources
 import org.slf4j.LoggerFactory
 
-import scala.collection.JavaConversions.asScalaBuffer
+import scala.collection.JavaConversions.{asScalaBuffer, seqAsJavaList}
 import scala.collection.mutable.Stack
 import scala.concurrent.Future
 
@@ -51,6 +52,21 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
       executeHiveQuery(t.udfs, replaceParameters(t.sql, t.configuration.toMap))
     })
+
+  /**
+    * Rig Hive transformations prior to test by tweaking UDF path references to local classpath references.
+    */
+  override def rigTransformationForTest(t: HiveTransformation, testResources: TestResources) = {
+    t.udfs.foreach {
+      f => {
+        val jarFile = Class.forName(f.getClassName).getProtectionDomain.getCodeSource.getLocation.getFile
+        val jarResource = new ResourceUri(ResourceType.JAR, jarFile)
+        f.setResourceUris(List(jarResource))
+      }
+    }
+
+    t
+  }
 
   /**
     * Actually perform the given query - after registering required functions - and return a run state after completion.
@@ -213,7 +229,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
 /**
   * Factory methods for Hive drivers
   */
-object HiveDriver {
+object HiveDriver extends DriverCompanionObject[HiveTransformation] {
 
   def apply(ds: DriverSettings) = {
     val ugi = Schedoscope.settings.userGroupInformation
@@ -234,5 +250,9 @@ object HiveDriver {
 
     new HiveDriver(ds.driverRunCompletionHandlers, conf)
   }
+
+  def apply(driverSettings: DriverSettings, testResources: TestResources): Driver[HiveTransformation] =
+    new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), testResources.hiveConf)
+
 }
 

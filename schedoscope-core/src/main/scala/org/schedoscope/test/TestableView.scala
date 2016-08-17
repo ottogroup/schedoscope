@@ -16,15 +16,10 @@
 package org.schedoscope.test
 
 import org.apache.hadoop.fs.Path
-import org.schedoscope.dsl.transformations.{FilesystemTransformation, HiveTransformation, MapreduceTransformation, OozieTransformation, PigTransformation, SeqTransformation, Transformation}
 import org.schedoscope.dsl.{FieldLike, Structure, View}
-import org.schedoscope.scheduler.driver.Driver
 import org.schedoscope.test.resources.OozieTestResources
 
-import scala.collection.breakOut
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.Promise
-import scala.util.Try
 
 trait TestableView extends FillableView {}
 
@@ -34,19 +29,8 @@ trait TestableView extends FillableView {}
   *
   */
 trait test extends TestableView {
-  var rowIdx = 0
 
-  var driver: () => Driver[Transformation] =
-    () => this.transformation() match {
-      case t: SeqTransformation[_, _] => resources().seqDriver.asInstanceOf[Driver[Transformation]]
-      case t: HiveTransformation => resources().hiveDriver.asInstanceOf[Driver[Transformation]]
-      case t: OozieTransformation => resources().oozieDriver.asInstanceOf[Driver[Transformation]]
-      case t: PigTransformation => resources().pigDriver.asInstanceOf[Driver[Transformation]]
-      case t: MapreduceTransformation => resources().mapreduceDriver.asInstanceOf[Driver[Transformation]]
-      case t: FilesystemTransformation => resources().fileSystemDriver.asInstanceOf[Driver[Transformation]]
-    }
-
-  val deps = ListBuffer[View with rows]()
+  val inputFixtures = ListBuffer[View with rows]()
 
   /**
     * Execute the hive query in test on previously specified test fixtures
@@ -60,56 +44,51 @@ trait test extends TestableView {
   /**
     * Execute the hive query in test on previously specified test fixtures.
     *
-    * @param sortedBy sort the table by field
+    * @param sortedBy               sort the table by field
     * @param disableDependencyCheck disable dependency checks
     */
   def `then`(sortedBy: FieldLike[_] = null,
              disableDependencyCheck: Boolean = false,
              disableTransformationValidation: Boolean = false) {
     //dependencyCheck
-    if(!disableDependencyCheck) {
+    if (!disableDependencyCheck) {
       if (!checkDependencies()) {
         throw new IllegalArgumentException("The input views to the test given by basedOn() do not cover all types of dependencies of the view under test.")
       }
     }
 
-    val t = registeredTransformation()
+    inputFixtures.foreach(_.createViewTableAndWriteTestData())
+
+    createViewTable()
+
+    if (isPartitioned()) {
+      resources.crate.createPartition(this)
+    }
+
+    val declaredTransformation = registeredTransformation()
 
     //transformation validation
-    if(!disableTransformationValidation) {
-      t.validateTransformation()
-    }
+    if (!disableTransformationValidation)
+      declaredTransformation.validateTransformation()
 
+    val transformationRiggedForTest = resources
+      .driverFor(declaredTransformation)
+      .rigTransformationForTest(declaredTransformation, resources)
 
-
-    deploySchema()
-
-    deps.map(d => {
-      d.write()
-    })
-
-    if (this.isPartitioned()) {
-      val part = resources().crate.createPartition(this)
-    }
-
-
-
-    t match {
-      case ot: OozieTransformation => deployWorkflow(ot)
-      case ht: HiveTransformation => deployFunctions(ht)
-      case _ => Unit
-    }
-
-    this.registeredTransformation = () => t
+    this.registeredTransformation = () => transformationRiggedForTest
 
     //
     // Patch export configurations to point to the test metastore with no kerberization.
     //
     configureExport("schedoscope.export.isKerberized", false)
     configureExport("schedoscope.export.kerberosPrincipal", "")
-    configureExport("schedoscope.export.metastoreUri", resources().metastoreUri)
+    configureExport("schedoscope.export.metastoreUri", resources.metastoreUri)
 
-    driver().runAndWait(this.transformation())
+    val finalTransformationToRun = this.transformation()
+
+    resources
+      .driverFor(finalTransformationToRun)
+      .runAndWait(finalTransformationToRun)
 
     populate(if (sortedBy != null) Some(sortedBy) else None)
   }
@@ -118,8 +97,8 @@ trait test extends TestableView {
     * Adds dependencies for this view
     */
   def basedOn(d: View with rows*) {
-    d.map(el => el.resources = () => resources())
-    deps ++= d
+    d.foreach(el => el.resources = resources)
+    inputFixtures ++= d
   }
 
   /**
@@ -130,7 +109,7 @@ trait test extends TestableView {
     */
   def checkDependencies(): Boolean = {
 
-    if (deps.isEmpty && dependencies.isEmpty) {
+    if (inputFixtures.isEmpty && dependencies.isEmpty) {
       return true
     }
 
@@ -139,7 +118,7 @@ trait test extends TestableView {
       .distinct
       .toList
 
-    val depNames = deps.map(v => v.dbName + "." + v.tableName)
+    val depNames = inputFixtures.map(v => v.dbName + "." + v.tableName)
       .distinct
       .toList
 
@@ -153,6 +132,12 @@ trait test extends TestableView {
 
   }
 
+
+  /**
+    * Keeps the index of the current row
+    */
+  var rowIdx = 0
+
   /**
     * Get the value of a file in the current row
     *
@@ -160,10 +145,10 @@ trait test extends TestableView {
     *
     */
   def v[T](f: FieldLike[T]): T = {
-    if (rs(rowIdx).get(f.n).isEmpty)
+    if (rowData(rowIdx).get(f.n).isEmpty)
       None.asInstanceOf[T]
     else
-      rs(rowIdx).get(f.n).get.asInstanceOf[T]
+      rowData(rowIdx).get(f.n).get.asInstanceOf[T]
   }
 
   /**
@@ -171,7 +156,22 @@ trait test extends TestableView {
     *
     */
   def vs(f: FieldLike[_]): Array[(FieldLike[_], Any)] = {
-    rs(rowIdx).get(f.n).get.asInstanceOf[Array[(FieldLike[_], Any)]]
+    rowData(rowIdx).get(f.n).get.asInstanceOf[Array[(FieldLike[_], Any)]]
+  }
+
+  /**
+    * Just increments the row index, new values that are injected by set
+    * will be added to the next row
+    */
+  def row(fields: Unit*) {
+    rowIdx = rowIdx + 1
+  }
+
+  /* (non-Javadoc)
+   * @see org.schedoscope.test.rows#rowId()
+  */
+  override def rowId(): String = {
+    rowIdPattern.format(rowIdx)
   }
 
   /**
@@ -221,29 +221,14 @@ trait test extends TestableView {
     res.foreach(r => {
       val prop = r._1
       val file = r._2
-      val fs = resources().fileSystem
+      val fs = resources.fileSystem
       val src = new Path(file)
-      val target = new Path(s"${resources().remoteTestDirectory}/${src.getName}")
+      val target = new Path(s"${resources.remoteTestDirectory}/${src.getName}")
       if (fs.exists(target))
         fs.delete(target, false)
       fs.copyFromLocalFile(src, target)
       configureTransformation(prop, target.toString.replaceAll("^file:/", "file:///"))
     })
-  }
-
-  /**
-    * Just increments the row index, new values that are injected by set
-    * will be added to the next row
-    */
-  def row(fields: Unit*) {
-    rowIdx = rowIdx + 1
-  }
-
-  /* (non-Javadoc)
-   * @see org.schedoscope.test.rows#rowId()
-  */
-  override def rowId(): String = {
-    rowIdPattern.format(rowIdx)
   }
 }
 
@@ -251,8 +236,7 @@ trait test extends TestableView {
   * A test environment that is executed in a local minicluster
   */
 trait clustertest extends test {
-  val otr = OozieTestResources()
-  resources = () => otr
+  resources = new OozieTestResources()
 
-  def cluster = () => otr.mo
+  def cluster = resources.asInstanceOf[OozieTestResources].mo
 }

@@ -25,7 +25,7 @@ import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.AskPattern.queryActor
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{ NoOp, Touch }
-import org.schedoscope.scheduler.driver.FileSystemDriver.defaultFileSystem
+import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages.{ InvalidateView, LogTransformationTimestamp, MaterializeView, Retry, SetViewVersion, TransformationFailure, TransformationSuccess, ViewFailed, ViewHasNoData, ViewMaterialized, ViewStatusResponse }
 import org.schedoscope.scheduler.states._
 import scala.concurrent.duration.Duration
