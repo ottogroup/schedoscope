@@ -17,84 +17,90 @@
 <head data-th-if="${local == false}" data-th-include="includes/head :: head('Metascope')"></head>
 
 <div data-th-if="${local == false}">
-  <nav data-th-replace="header/header :: navigation"></nav>
+    <nav data-th-replace="header/header :: navigation"></nav>
 </div>
 
 <div class="col-md-12" data-th-fragment="table">
-  <div class="row">
-    <div class="col-md-12">
-      <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
-        <div class="panel-heading">
-          <div class="row">
-            <form data-th-action="@{/table/favourite}" method="POST">
-              <input type="hidden" name="fqdn" th:value="${table.fqdn}" />
-              <div class="col-md-12">
-                <button th:attr="class=${isFavourite ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}"
-                  style="font-size: 1.5em; margin-right: 5px;" type="submit"></button>
-                <a data-th-if="${!table.isPartitioned()}" href="javascript:void(0)" data-th-text="${table.databaseName} + ' :: ' + ${table.tableName}"></a>
-                <a data-th-if="${table.isPartitioned()}" href="javascript:void(0)"
-                  data-th-text="${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')'"></a>
-                <button type='button' id="minimizeButton" style="padding: 0px; width: 30px;" class="btn btn-link pull-right">
-                  <span id="minimizeButtonCaret" class="glyphicon glyphicon-triangle-top"></span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-        <table id="identityTable" class="table table-reflow">
-          <tr style="border-bottom: 1px solid lightgrey;">
-            <td width="20%"><b>Database</b></td>
-            <td width="80%" data-th-text="${table.databaseName}"></td>
-          </tr>
-          <tr data-th-if="${table.isPartitioned()}" style="border-bottom: 1px solid lightgrey;">
-            <td width="20%"><b>Partition</b></td>
-            <td width="80%" data-th-text="${table.parameterString}"></td>
-          </tr>
-          <tr data-th-if="${table.tableDescription != null and !table.tableDescription.isEmpty()}" style="border-bottom: 1px solid lightgrey;">
-            <td width="20%"><b>Description</b></td>
-            <td width="80%" data-th-text="${table.tableDescription}"></td>
-          </tr>
-        </table>
-        <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
-          <div class="col-md-12">
-            <!-- Navigation Buttons -->
-            <div class="col-md-2" style="padding-left: 5px; padding-right: 2px;">
-              <ul class="nav nav-pills nav-stacked" id="myTabs">
-                <li th:attr="class=${selectedPartition == null ? 'active' : ''}"><a href="#documentationContent">Documentation</a></li>
-                <li><a href="#taxonomyContent">Taxonomy</a></li>
-                <li><a href="#schemaContent">Schema</a></li>
-                <li data-th-if="${table.isPartitioned()}"><a href="#parameterContent">Parameter</a></li>
-                <li><a href="#partitionsContent">Partitions</a></li>
-                <li><a href="#sampleContent" id="">Sample</a></li>
-                <li th:attr="class=${selectedPartition != null ? 'active' : ''}"><a href="#datadistributionContent">Data Distribution</a></li>
-                <li><a href="#storageContent">Storage</a></li>
-                <li><a href="#transformationContent">Transformation</a></li>
-                <li><a href="#dependencyContent">Dependency</a></li>
-                <li data-th-if="${admin}"><a href="#adminContent">Administration</a></li>
-              </ul>
-            </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
+                <div class="panel-heading">
+                    <div class="row">
+                        <form data-th-action="@{/table/favourite}" method="POST">
+                            <input type="hidden" name="fqdn" th:value="${table.fqdn}"/>
+                            <div class="col-md-12">
+                                <button th:attr="class=${isFavourite ? 'btn-link glyphicon glyphicon-star' : 'btn-link glyphicon glyphicon-star-empty'}"
+                                        style="font-size: 1.5em; margin-right: 5px;" type="submit"></button>
+                                <a data-th-if="${!table.isPartitioned()}" href="javascript:void(0)"
+                                   data-th-text="${table.databaseName} + ' :: ' + ${table.tableName}"></a>
+                                <a data-th-if="${table.isPartitioned()}" href="javascript:void(0)"
+                                   data-th-text="${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')'"></a>
+                                <button type='button' id="minimizeButton" style="padding: 0px; width: 30px;"
+                                        class="btn btn-link pull-right">
+                                    <span id="minimizeButtonCaret" class="glyphicon glyphicon-triangle-top"></span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <table id="identityTable" class="table table-reflow">
+                    <tr style="border-bottom: 1px solid lightgrey;">
+                        <td width="20%"><b>Database</b></td>
+                        <td width="80%" data-th-text="${table.databaseName}"></td>
+                    </tr>
+                    <tr data-th-if="${table.isPartitioned()}" style="border-bottom: 1px solid lightgrey;">
+                        <td width="20%"><b>Partition</b></td>
+                        <td width="80%" data-th-text="${table.parameterString}"></td>
+                    </tr>
+                    <tr data-th-if="${table.tableDescription != null and !table.tableDescription.isEmpty()}"
+                        style="border-bottom: 1px solid lightgrey;">
+                        <td width="20%"><b>Description</b></td>
+                        <td width="80%" data-th-text="${table.tableDescription}"></td>
+                    </tr>
+                </table>
+                <div class="row" style="padding-top: 5px; padding-bottom: 5px;">
+                    <div class="col-md-12">
+                        <!-- Navigation Buttons -->
+                        <div class="col-md-2" style="padding-left: 5px; padding-right: 2px;">
+                            <ul class="nav nav-pills nav-stacked" id="myTabs">
+                                <li th:attr="class=${selectedPartition == null ? 'active' : ''}"><a
+                                        href="#documentationContent">Documentation</a></li>
+                                <li><a href="#taxonomyContent">Taxonomy</a></li>
+                                <li><a href="#schemaContent">Schema</a></li>
+                                <li data-th-if="${table.isPartitioned()}"><a href="#parameterContent">Parameter</a></li>
+                                <li><a href="#partitionsContent">Partitions</a></li>
+                                <li><a href="#sampleContent" id="">Sample</a></li>
+                                <li th:attr="class=${selectedPartition != null ? 'active' : ''}"><a
+                                        href="#datadistributionContent">Data Distribution</a></li>
+                                <li><a href="#storageContent">Storage</a></li>
+                                <li><a href="#transformationContent">Transformation</a></li>
+                                <li><a href="#dependencyContent">Dependency</a></li>
+                                <li data-th-if="${admin}"><a href="#adminContent">Administration</a></li>
+                            </ul>
+                        </div>
 
-            <!-- Content -->
-            <div class="col-md-10" style="padding-left: 1px; padding-right: 0px;">
-              <div class="tab-content" style="border: none;">
-                <div data-th-replace="body/table/sections/documentation :: documentation(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/taxonomy :: taxonomy(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/fields :: schema(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/parameter :: parameter(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/partitions :: partitions(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/sample :: sample(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/datadistribution :: data(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/storage :: storage(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/transformation :: transformation(${table}, ${util})"></div>
-                <div data-th-replace="body/table/sections/dependency :: dependency(${table}, ${util})"></div>
-                <div data-th-if="${admin}" data-th-replace="body/table/sections/admin :: admin(${table}, ${util})"></div>
-              </div>
+                        <!-- Content -->
+                        <div class="col-md-10" style="padding-left: 1px; padding-right: 0px;">
+                            <div class="tab-content" style="border: none;">
+                                <div data-th-replace="body/table/sections/documentation :: documentation(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/taxonomy :: taxonomy(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/fields :: schema(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/parameter :: parameter(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/partitions :: partitions(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/sample :: sample(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/datadistribution :: data(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/storage :: storage(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/transformation :: transformation(${table}, ${util})"></div>
+                                <div data-th-replace="body/table/sections/dependency :: dependency(${table}, ${util})"></div>
+                                <div data-th-if="${admin}"
+                                     data-th-replace="body/table/sections/admin :: admin(${table}, ${util})"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
 <nav data-th-replace="footer/footer :: footer"></nav>
@@ -103,5 +109,5 @@
 <div data-th-if="${local == false}" data-th-include="includes/scripts :: table"></div>
 
 <div id="javascript-thymleaf" th:inline="javascript" th:remove="tag">
-  <div data-th-replace="includes/thymeleaf-js :: table"></div>
+    <div data-th-replace="includes/thymeleaf-js :: table"></div>
 </div>

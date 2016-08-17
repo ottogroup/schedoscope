@@ -1,41 +1,42 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.actors
 
 import akka.actor.SupervisorStrategy.Escalate
-import akka.actor.{ Actor, ActorRef, OneForOneStrategy, Props, actorRef2Scala }
-import akka.event.{ Logging, LoggingReceive }
+import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, actorRef2Scala}
+import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.AskPattern._
 import org.schedoscope.Schedoscope
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
-import org.schedoscope.scheduler.messages._
-import scala.collection.mutable.{ HashMap, HashSet }
-import org.schedoscope.scheduler.states.{ CreatedByViewManager, ReadFromSchemaManager }
 import org.schedoscope.dsl.transformations.Checksum
+import org.schedoscope.scheduler.messages._
+import org.schedoscope.scheduler.states.{CreatedByViewManager, ReadFromSchemaManager}
+
+import scala.collection.mutable.{HashMap, HashSet}
 
 /**
- * The view manager actor is the factory and import org.schedoscope.scheduler.actors.ViewActor
- * supervisor of view actors. Upon creation of view actors
- * it is responsible for creating non-existing tables or partitions in the Hive metastore, for reading
- * the last transformation timestamps and version checksums from the metastore for already materialized
- * views.
- *
- * It does this by cooperating with the parition creator actor and metadata logger actor.
- */
+  * The view manager actor is the factory and import org.schedoscope.scheduler.actors.ViewActor
+  * supervisor of view actors. Upon creation of view actors
+  * it is responsible for creating non-existing tables or partitions in the Hive metastore, for reading
+  * the last transformation timestamps and version checksums from the metastore for already materialized
+  * views.
+  *
+  * It does this by cooperating with the parition creator actor and metadata logger actor.
+  */
 class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, partitionCreatorActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
 
   import context._
@@ -45,16 +46,16 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
   /**
-   * Supervisor strategy: Escalate any problems because view actor failures are not recoverable.
-   */
+    * Supervisor strategy: Escalate any problems because view actor failures are not recoverable.
+    */
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _ => Escalate
     }
 
   /**
-   * Message handler.
-   */
+    * Message handler.
+    */
   def receive = LoggingReceive({
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
@@ -75,13 +76,13 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
   })
 
   /**
-   * Initialize view actors for a list of views. If a view actor has been produced for a view
-   * previously, that one is returned.
-   *
-   * @param vs 	the views to create actors for
-   * @param dependencies	create actors for the prerequisite views as well.
-   * @return the list of corresponding view actor refs
-   */
+    * Initialize view actors for a list of views. If a view actor has been produced for a view
+    * previously, that one is returned.
+    *
+    * @param vs           the views to create actors for
+    * @param dependencies create actors for the prerequisite views as well.
+    * @return the list of corresponding view actor refs
+    */
   def initializeViewActors(vs: List[View], dependencies: Boolean = false) = {
     log.info(s"Initializing ${vs.size} views")
 
@@ -169,8 +170,8 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 }
 
 /**
- * View manager factory methods
- */
+  * View manager factory methods
+  */
 object ViewManagerActor {
   def props(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 

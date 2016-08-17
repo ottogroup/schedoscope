@@ -93,49 +93,28 @@ public class RedisExportJob extends BaseExportJob {
      * This function takes all required parameters and returns a configured job
      * object.
      *
-     * @param isSecured
-     *            A flag indicating if Kerberos is enabled.
-     * @param metaStoreUris
-     *            A string containing the Hive meta store URI
-     * @param principal
-     *            The Kerberos principal.
-     * @param redisHost
-     *            The Redis host.
-     * @param redisPort
-     *            The Redis port.
-     * @param password
-     *            The password to authenticate
-     * @param redisDb
-     *            The Redis key space / database.
-     * @param inputDatabase
-     *            The Hive input database
-     * @param inputTable
-     *            The Hive inut table.
-     * @param inputFilter
-     *            An optional filter for Hive.
-     * @param keyName
-     *            The field name to use as key.
-     * @param valueName
-     *            The fields name to use a value, can be null.
-     * @param keyPrefix
-     *            An optional key prefix.
-     * @param numReducer
-     *            Number of reducers / partitions.
-     * @param replace
-     *            A flag indicating of data should be replaced.
-     * @param pipeline
-     *            A flag to set the Redis client pipeline mode.
-     * @param flush
-     *            A flag indicating Redis key space should be flushed.
-     * @param commitSize
-     * 			  The batch size for storing records in Redis in pipline mode
-     * @param anonFields
-     *            A list of fields to anonymize.
-     * @param exportSalt
-     *            An optional salt when anonymizing fields
+     * @param isSecured     A flag indicating if Kerberos is enabled.
+     * @param metaStoreUris A string containing the Hive meta store URI
+     * @param principal     The Kerberos principal.
+     * @param redisHost     The Redis host.
+     * @param redisPort     The Redis port.
+     * @param password      The password to authenticate
+     * @param redisDb       The Redis key space / database.
+     * @param inputDatabase The Hive input database
+     * @param inputTable    The Hive inut table.
+     * @param inputFilter   An optional filter for Hive.
+     * @param keyName       The field name to use as key.
+     * @param valueName     The fields name to use a value, can be null.
+     * @param keyPrefix     An optional key prefix.
+     * @param numReducer    Number of reducers / partitions.
+     * @param replace       A flag indicating of data should be replaced.
+     * @param pipeline      A flag to set the Redis client pipeline mode.
+     * @param flush         A flag indicating Redis key space should be flushed.
+     * @param commitSize    The batch size for storing records in Redis in pipline mode
+     * @param anonFields    A list of fields to anonymize.
+     * @param exportSalt    An optional salt when anonymizing fields
      * @return A configured job instance
-     * @throws Exception
-     *             is thrown if an error occurs.
+     * @throws Exception is thrown if an error occurs.
      */
     public Job configure(boolean isSecured, String metaStoreUris,
                          String principal, String redisHost, int redisPort, String password,
@@ -231,10 +210,8 @@ public class RedisExportJob extends BaseExportJob {
     /**
      * The entry point when called from the command line.
      *
-     * @param args
-     *            A string array containing the cmdl args.
-     * @throws Exception
-     *             is thrown if an error occurs.
+     * @param args A string array containing the cmdl args.
+     * @throws Exception is thrown if an error occurs.
      */
     public static void main(String[] args) throws Exception {
         try {

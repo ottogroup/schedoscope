@@ -1,28 +1,28 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.dsl
 
 import java.util.Date
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.TypedAny.typedAny
-import org.schedoscope.dsl.storageformats.{ Parquet, TextFile }
-import org.schedoscope.dsl.transformations.{ HiveTransformation, NoOp }
-import org.schedoscope.dsl.views.{ DailyParameterization, JobMetadata, PointOccurrence }
+import org.schedoscope.dsl.storageformats.{Parquet, TextFile}
+import org.schedoscope.dsl.transformations.{HiveTransformation, NoOp}
+import org.schedoscope.dsl.views.{DailyParameterization, JobMetadata, PointOccurrence}
 import org.schedoscope.schema.ddl.HiveQl.ddl
 import test.eci.datahub._
 
@@ -117,15 +117,15 @@ class DslTest extends FlatSpec with Matchers {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     val fields = productBrandView.fields.map { f => (f.n, f.t) }
 
-    fields should contain allOf (("product_id", manifest[String]), ("brand_name", manifest[String]), ("occurred_at", manifest[String]), ("created_at", manifest[Date]), ("created_by", manifest[String]))
+    fields should contain allOf(("product_id", manifest[String]), ("brand_name", manifest[String]), ("occurred_at", manifest[String]), ("created_at", manifest[Date]), ("created_by", manifest[String]))
   }
 
   it should "collect all parameters" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     val parameterTypes = productBrandView.parameters.map { f => (f.n, f.t) }
     val parameterValues = productBrandView.parameters.map { f => (f.n, f.v) }
-    parameterTypes should contain allOf (("shop_code", manifest[String]), ("year", manifest[String]), ("month", manifest[String]), ("day", manifest[String]))
-    parameterValues should contain allOf (("shop_code", Some("ec0106")), ("year", Some("2014")), ("month", Some("01")), ("day", Some("01")))
+    parameterTypes should contain allOf(("shop_code", manifest[String]), ("year", manifest[String]), ("month", manifest[String]), ("day", manifest[String]))
+    parameterValues should contain allOf(("shop_code", Some("ec0106")), ("year", Some("2014")), ("month", Some("01")), ("day", Some("01")))
   }
 
   "A view's field types" should "be accessible at both compile and runtime" in {
@@ -199,13 +199,13 @@ class DslTest extends FlatSpec with Matchers {
 
     productBrand.fields.map {
       _.n
-    } should contain inOrder ("occurred_at", "product_id", "brand_name", "created_at", "created_by")
+    } should contain inOrder("occurred_at", "product_id", "brand_name", "created_at", "created_by")
     productBrand.brand().fields.map {
       _.n
-    } should contain inOrder ("id", "brand_name", "created_at", "created_by")
+    } should contain inOrder("id", "brand_name", "created_at", "created_by")
     productBrand.product().fields.map {
       _.n
-    } should contain inOrder ("id", "occurred_at", "name", "brand_id", "created_at", "created_by")
+    } should contain inOrder("id", "occurred_at", "name", "brand_id", "created_at", "created_by")
   }
 
   it should "be able to have comments" in {
@@ -343,7 +343,7 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "throw an exception during dynamic instantiation" in {
-    val thrown = the [java.lang.RuntimeException] thrownBy View.viewsFromUrl("dev", "/test.eci.datahub/RequireView/ec0106/")
+    val thrown = the[java.lang.RuntimeException] thrownBy View.viewsFromUrl("dev", "/test.eci.datahub/RequireView/ec0106/")
     thrown.getMessage() shouldBe "Error while parsing view(s) /test.eci.datahub/RequireView/ec0106/ : requirement failed: Put in upper case: ec0106"
   }
 
@@ -362,7 +362,7 @@ class DslTest extends FlatSpec with Matchers {
   it should "be queryable" in {
     val views = View.viewsInPackage("test.eci.datahub")
 
-    views should contain allOf (classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101], classOf[ClickOfEC0101ViaOozie])
+    views should contain allOf(classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101], classOf[ClickOfEC0101ViaOozie])
 
     val traits = View.getTraits(classOf[ProductBrand])
 

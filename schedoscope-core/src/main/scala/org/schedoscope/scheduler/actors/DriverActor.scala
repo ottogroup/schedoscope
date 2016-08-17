@@ -1,37 +1,37 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{ Actor, ActorRef, Props, actorRef2Scala }
-import akka.event.{ Logging, LoggingReceive }
+import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
+import akka.event.{Logging, LoggingReceive}
 import org.apache.commons.lang.exception.ExceptionUtils
-import org.schedoscope.conf.{ DriverSettings, SchedoscopeSettings }
+import org.schedoscope.conf.{DriverSettings, SchedoscopeSettings}
 import org.schedoscope.dsl.transformations._
-import org.schedoscope.scheduler.driver.{ Driver, RetryableDriverException, DriverRunFailed, DriverRunHandle, DriverRunOngoing, DriverRunState, DriverRunSucceeded, FilesystemDriver$, HiveDriver, MapreduceDriver, OozieDriver, PigDriver, ShellDriver }
+import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages._
-import scala.concurrent.duration.{ DurationInt, FiniteDuration }
+
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.language.postfixOps
-import org.schedoscope.scheduler.driver.RetryableDriverException
 
 /**
- * A driver actor manages the executions of transformations using hive, oozie etc. The actual
- * execution is done using a driver trait implementation. The driver actor code itself is transformation
- * type agnostic. Driver actors poll the transformation tasks they execute from the transformation manager actor
- *
- */
+  * A driver actor manages the executions of transformations using hive, oozie etc. The actual
+  * execution is done using a driver trait implementation. The driver actor code itself is transformation
+  * type agnostic. Driver actors poll the transformation tasks they execute from the transformation manager actor
+  *
+  */
 class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
 
   import context._
@@ -43,8 +43,8 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
   var runningCommand: Option[CommandWithSender] = None
 
   /**
-   * Start ticking upon start.
-   */
+    * Start ticking upon start.
+    */
   override def preStart() {
     try {
       driver = driverConstructor(ds)
@@ -58,24 +58,24 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
   }
 
   /**
-   * If the driver actor is being restarted by the transformation manager actor, the currently running action is reenqueued so it does not get lost.
-   */
+    * If the driver actor is being restarted by the transformation manager actor, the currently running action is reenqueued so it does not get lost.
+    */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
       transformationManagerActor ! runningCommand.get
   }
 
   /**
-   * Provide continuous ticking in default state
-   */
+    * Provide continuous ticking in default state
+    */
   def tick() {
     system.scheduler.scheduleOnce(pingDuration, self, "tick")
   }
 
   /**
-   * Message handler for the default state.
-   * Transitions only to state running, keeps polling the action manager for new work
-   */
+    * Message handler for the default state.
+    * Transitions only to state running, keeps polling the action manager for new work
+    */
   def receive = LoggingReceive {
     case CommandWithSender(command, sender) => toRunning(CommandWithSender(command, sender))
 
@@ -86,10 +86,11 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
   }
 
   /**
-   * Message handler for the running state
-   * @param runHandle  reference to the running driver
-   * @param originalSender reference to the viewActor that requested the transformation (for sending back the result)
-   */
+    * Message handler for the running state
+    *
+    * @param runHandle      reference to the running driver
+    * @param originalSender reference to the viewActor that requested the transformation (for sending back the result)
+    */
   def running(runHandle: DriverRunHandle[T], originalSender: ActorRef): Receive = LoggingReceive {
     case KillCommand() => {
       driver.killRun(runHandle)
@@ -157,8 +158,8 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
   }
 
   /**
-   * State transition to default state.
-   */
+    * State transition to default state.
+    */
   def toReceive() {
     runningCommand = None
 
@@ -168,13 +169,13 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
   }
 
   /**
-   * State transition to running state.
-   *
-   * Includes special handling of "Deploy" commands, those are executed directly, no state transition despite name of function
-   * Otherwise run the transformation using the driver instance and switch to running state
-   *
-   * @param commandToRun
-   */
+    * State transition to running state.
+    *
+    * Includes special handling of "Deploy" commands, those are executed directly, no state transition despite name of function
+    * Otherwise run the transformation using the driver instance and switch to running state
+    *
+    * @param commandToRun
+    */
   def toRunning(commandToRun: CommandWithSender) {
     runningCommand = Some(commandToRun)
 
@@ -219,8 +220,8 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
 }
 
 /**
- * Factory methods for driver actors.
- */
+  * Factory methods for driver actors.
+  */
 object DriverActor {
   def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef) =
     Props(

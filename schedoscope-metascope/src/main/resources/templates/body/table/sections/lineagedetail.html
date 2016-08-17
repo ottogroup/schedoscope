@@ -15,76 +15,84 @@
  */  -->
 
 <div>
-  <div data-th-if="${type.equals('tables')}">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="col-md-2">
-          <span class="glyphicon glyphicon-list-alt" style="font-size: 3em;"></span>
+    <div data-th-if="${type.equals('tables')}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-2">
+                    <span class="glyphicon glyphicon-list-alt" style="font-size: 3em;"></span>
+                </div>
+                <div class="col-md-10" style="padding-top: 15px;">
+                    <a th:href="'table?fqdn=' + ${table.fqdn}" data-th-text="${table.tableName}"></a>
+                </div>
+            </div>
         </div>
-        <div class="col-md-10" style="padding-top: 15px;">
-          <a th:href="'table?fqdn=' + ${table.fqdn}" data-th-text="${table.tableName}"></a>
-        </div>
-      </div>
+        <br/>
+        <table class="table table-reflow">
+            <tr style="border-bottom: 1px solid lightgrey;">
+                <td width="20%"><b>Database</b></td>
+                <td width="80%" data-th-text="${table.databaseName}"></td>
+            </tr>
+            <tr data-th-if="${table.isPartitioned()}" style="border-bottom: 1px solid lightgrey;">
+                <td width="20%"><b>Partition</b></td>
+                <td width="80%" data-th-text="${table.parameterString}"></td>
+            </tr>
+            <tr data-th-if="${table.tableDescription != null}" style="border-bottom: 1px solid lightgrey;">
+                <td width="20%"><b>Description</b></td>
+                <td width="80%" data-th-text="${table.tableDescription}"></td>
+            </tr>
+            <tr data-th-if="${table.getLastData() != null}" style="border-bottom: 1px solid lightgrey;">
+                <td width="20%"><b>Last Data from</b></td>
+                <td width="80%" th:with="value=${util.getTime(table.lastData, table.timestampFieldFormat)}"
+                    data-th-text="${value == null} ? '-' : ${value}"></td>
+            </tr>
+            <tr data-th-if="${table.isPartitioned() and table.lastPartitionCreated > 0}"
+                style="border-bottom: 1px solid lightgrey;">
+                <td width="20%"><b>Last Partition created</b></td>
+                <td width="80%" th:with="value=${util.getTime(table.lastPartitionCreated)}"
+                    data-th-text="${value == null} ? '-' : ${value}"></td>
+            </tr>
+            <tr data-th-if="${table.lastSchemaChange > 0}" style="border-bottom: 1px solid lightgrey;">
+                <td width="20%"><b>Last Schema change</b></td>
+                <td width="80%" th:with="value=${util.getTime(table.lastSchemaChange)}"
+                    data-th-text="${value == null} ? '-' : ${value}"></td>
+            </tr>
+            <tr data-th-if="${table.personResponsible != null}"
+                th:with="user=${userEntityService.findByFullname(table.personResponsible)}"
+                style="border-bottom: 1px solid lightgrey;">
+                <td width="20%"><b>Person responsible</b></td>
+                <td data-th-if="${user != null}" width="80%"><a th:href="'mailto:' + ${user.email}"
+                                                                data-th-text="${user.fullname}"></a></td>
+                <td data-th-if="${user == null}" width="80%" data-th-text="${table.personResponsible}"></td>
+            </tr>
+        </table>
     </div>
-    <br />
-    <table class="table table-reflow">
-      <tr style="border-bottom: 1px solid lightgrey;">
-        <td width="20%"><b>Database</b></td>
-        <td width="80%" data-th-text="${table.databaseName}"></td>
-      </tr>
-      <tr data-th-if="${table.isPartitioned()}" style="border-bottom: 1px solid lightgrey;">
-        <td width="20%"><b>Partition</b></td>
-        <td width="80%" data-th-text="${table.parameterString}"></td>
-      </tr>
-      <tr data-th-if="${table.tableDescription != null}" style="border-bottom: 1px solid lightgrey;">
-        <td width="20%"><b>Description</b></td>
-        <td width="80%" data-th-text="${table.tableDescription}"></td>
-      </tr>
-      <tr data-th-if="${table.getLastData() != null}" style="border-bottom: 1px solid lightgrey;">
-        <td width="20%"><b>Last Data from</b></td>
-        <td width="80%" th:with="value=${util.getTime(table.lastData, table.timestampFieldFormat)}" data-th-text="${value == null} ? '-' : ${value}"></td>
-      </tr>
-      <tr data-th-if="${table.isPartitioned() and table.lastPartitionCreated > 0}" style="border-bottom: 1px solid lightgrey;">
-        <td width="20%"><b>Last Partition created</b></td>
-        <td width="80%" th:with="value=${util.getTime(table.lastPartitionCreated)}" data-th-text="${value == null} ? '-' : ${value}"></td>
-      </tr>
-      <tr data-th-if="${table.lastSchemaChange > 0}" style="border-bottom: 1px solid lightgrey;">
-        <td width="20%"><b>Last Schema change</b></td>
-        <td width="80%" th:with="value=${util.getTime(table.lastSchemaChange)}" data-th-text="${value == null} ? '-' : ${value}"></td>
-      </tr>
-      <tr data-th-if="${table.personResponsible != null}" th:with="user=${userEntityService.findByFullname(table.personResponsible)}"
-        style="border-bottom: 1px solid lightgrey;">
-        <td width="20%"><b>Person responsible</b></td>
-        <td data-th-if="${user != null}" width="80%"><a th:href="'mailto:' + ${user.email}" data-th-text="${user.fullname}"></a></td>
-        <td data-th-if="${user == null}" width="80%" data-th-text="${table.personResponsible}"></td>
-      </tr>
-    </table>
-  </div>
-  <div data-th-if="${type.equals('transformations')}">
-    <div class="row">
-      <div class="col-md-12">
-        <div class="col-md-2">
-          <span class="glyphicon glyphicon-cog" style="font-size: 3em;"></span>
+    <div data-th-if="${type.equals('transformations')}">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-2">
+                    <span class="glyphicon glyphicon-cog" style="font-size: 3em;"></span>
+                </div>
+                <div class="col-md-10" style="padding-top: 15px;">
+                    <a th:href="'table?fqdn=' + ${table.fqdn} + '#transformationContent'"
+                       data-th-text="${table.transformationType}"></a>
+                </div>
+            </div>
         </div>
-        <div class="col-md-10" style="padding-top: 15px;">
-          <a th:href="'table?fqdn=' + ${table.fqdn} + '#transformationContent'" data-th-text="${table.transformationType}"></a>
-        </div>
-      </div>
+        <br/>
+        <table class="table table-reflow" style="table-layout: fixed; width: 100%;">
+            <tr style="border-bottom: 1px solid lightgrey; word-wrap: break-word;">
+                <td width="40%"><b>Tablename</b></td>
+                <td data-th-text="${table.tableName}"></td>
+            </tr>
+            <tr style="border-bottom: 1px solid lightgrey; word-wrap: break-word;">
+                <td width="40%"><b>Database</b></td>
+                <td data-th-text="${table.databaseName}"></td>
+            </tr>
+            <tr data-th-if="${table.getLastTransformation() != 0}"
+                style="border-bottom: 1px solid lightgrey; word-wrap: break-word;">
+                <td width="40%"><b>Last Transformation</b></td>
+                <td data-th-text="${util.getTime(table.getLastTransformation())}"></td>
+            </tr>
+        </table>
     </div>
-    <br />
-    <table class="table table-reflow" style="table-layout: fixed; width: 100%;">
-      <tr style="border-bottom: 1px solid lightgrey; word-wrap: break-word;">
-        <td width="40%"><b>Tablename</b></td>
-        <td data-th-text="${table.tableName}"></td>
-      </tr>
-      <tr style="border-bottom: 1px solid lightgrey; word-wrap: break-word;">
-        <td width="40%"><b>Database</b></td>
-        <td data-th-text="${table.databaseName}"></td>
-      </tr>
-      <tr data-th-if="${table.getLastTransformation() != 0}" style="border-bottom: 1px solid lightgrey; word-wrap: break-word;">
-        <td width="40%"><b>Last Transformation</b></td>
-        <td data-th-text="${util.getTime(table.getLastTransformation())}"></td>
-      </tr>
-    </table>
-  </div>
 </div>

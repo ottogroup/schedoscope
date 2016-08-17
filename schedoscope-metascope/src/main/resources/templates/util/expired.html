@@ -19,18 +19,18 @@
 <!-- CSS -->
 <head data-th-replace="includes/head :: head('Otto Group BI')"></head>
 <body>
-  <!-- HEADER NAVIGATION -->
-  <nav data-th-replace="header/header :: navigation"></nav>
-  <!-- CONTENT BEGIN -->
-  <div class="container">
+<!-- HEADER NAVIGATION -->
+<nav data-th-replace="header/header :: navigation"></nav>
+<!-- CONTENT BEGIN -->
+<div class="container">
     <span class="alert alert-danger col-md-12"> <span
-      data-th-text="'This session has been expired. Possibly this happend due to multiple logins or an admin has edited or deleted this account.'"></span>
+            data-th-text="'This session has been expired. Possibly this happend due to multiple logins or an admin has edited or deleted this account.'"></span>
       <a class="btn-link" data-th-href="@{/}">Login</a>
     </span>
-  </div>
-  <!-- CONTENT END -->
-  <!-- JAVASCRIPT -->
-  <div data-th-replace="includes/scripts :: global"></div>
-  <div data-th-replace="includes/scripts :: index"></div>
+</div>
+<!-- CONTENT END -->
+<!-- JAVASCRIPT -->
+<div data-th-replace="includes/scripts :: global"></div>
+<div data-th-replace="includes/scripts :: index"></div>
 </body>
 </html>

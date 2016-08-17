@@ -1,31 +1,31 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.dsl.views
 
-import org.scalatest.{ FlatSpec, Matchers }
+import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
 
 class DailyParameterizationTest extends FlatSpec with Matchers {
   "prevDay" should "compute the previous date" in {
     val prevDate = DateParameterizationUtils.prevDay(p("2014"), p("01"), p("01")) match {
       case Some((prevYear, prevMonth, prevDay)) => (prevYear, prevMonth, prevDay)
-      case None                                 => null
+      case None => null
     }
 
-    prevDate shouldEqual ("2013", "12", "31")
+    prevDate shouldEqual("2013", "12", "31")
   }
 
   it should "stop at the earliest date" in {
@@ -37,10 +37,10 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
   "prevMonth" should "compute the previous month" in {
     val prevDate = DateParameterizationUtils.prevMonth(p("2014"), p("01")) match {
       case Some((prevYear, prevMonth)) => (prevYear, prevMonth)
-      case None                        => null
+      case None => null
     }
 
-    prevDate shouldEqual ("2013", "12")
+    prevDate shouldEqual("2013", "12")
   }
 
   it should "stop at the earliest date" in {
@@ -77,8 +77,8 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
     val days = dayParameterRange(dayRange(fromThisDay, toThisDay))
 
     days.size shouldEqual 31
-    days.head shouldEqual ("2014", "11", "14")
-    days.reverse.head shouldEqual ("2014", "10", "15")
+    days.head shouldEqual("2014", "11", "14")
+    days.reverse.head shouldEqual("2014", "10", "15")
   }
 
   "lastMonths" should "deliver all months between the current date and the specified one" in {
@@ -89,8 +89,8 @@ class DailyParameterizationTest extends FlatSpec with Matchers {
     val months = monthParameterRange(dayRange(fromThisDay, toThisDay))
 
     months.size shouldEqual 11
-    months.head shouldEqual ("2014", "11")
-    months.reverse.head shouldEqual ("2014", "01")
+    months.head shouldEqual("2014", "11")
+    months.reverse.head shouldEqual("2014", "01")
 
   }
 

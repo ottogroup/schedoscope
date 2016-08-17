@@ -216,11 +216,11 @@ AND anotherParam = 'Value'"""
       "\n" +
       "SELECT price \n" +
       "FROM transactions\n" +
-    //use '<>' instead of '='
+      //use '<>' instead of '='
       "WHERE date<>'${date}'"
 
     HiveTransformation.normalizeQuery(qry1) should not
-      equal(HiveTransformation.normalizeQuery(qry2))
+    equal(HiveTransformation.normalizeQuery(qry2))
   }
 
   "replace Whitespaces in quotes" should "do it's thing" in {

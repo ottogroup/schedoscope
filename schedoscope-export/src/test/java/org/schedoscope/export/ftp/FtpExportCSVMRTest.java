@@ -1,12 +1,12 @@
 /**
  * Copyright 2016 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,11 +15,6 @@
  */
 
 package org.schedoscope.export.ftp;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
 
 import org.apache.avro.Schema;
 import org.apache.avro.mapred.AvroValue;
@@ -43,188 +38,193 @@ import org.schedoscope.export.kafka.avro.HCatToAvroSchemaConverter;
 import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer;
 import org.schedoscope.export.writables.TextPairArrayWritable;
 
+import java.io.IOException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 public class FtpExportCSVMRTest extends HiveUnitBaseTest {
 
-	private static EmbeddedFtpSftpServer server;
+    private static EmbeddedFtpSftpServer server;
 
-	private static final String DELIMITER = "\t";
+    private static final String DELIMITER = "\t";
 
-	private static final String TEST_TABLE = "test_table";
+    private static final String TEST_TABLE = "test_table";
 
-	private String filePrefix;
+    private String filePrefix;
 
-	@Override
-	@Before
-	public void setUp() throws Exception {
+    @Override
+    @Before
+    public void setUp() throws Exception {
 
-		super.setUp();
-		filePrefix = RandomStringUtils.randomNumeric(20);
-	}
+        super.setUp();
+        filePrefix = RandomStringUtils.randomNumeric(20);
+    }
 
-	@BeforeClass()
-	public static void setUpServer() throws Exception {
+    @BeforeClass()
+    public static void setUpServer() throws Exception {
 
-		server = new EmbeddedFtpSftpServer();
-		server.startEmbeddedFtpServer();
-		server.startEmbeddedSftpServer();
-	}
+        server = new EmbeddedFtpSftpServer();
+        server.startEmbeddedFtpServer();
+        server.startEmbeddedSftpServer();
+    }
 
-	@AfterClass
-	public static void tearDownServer() throws InterruptedException {
+    @AfterClass
+    public static void tearDownServer() throws InterruptedException {
 
-		server.stopEmbeddedFtpServer();
-		server.stopEmbeddedSftpServer();
-	}
+        server.stopEmbeddedFtpServer();
+        server.stopEmbeddedSftpServer();
+    }
 
-	@Test
-	public void testFtpCSVExport() throws Exception {
+    @Test
+    public void testFtpCSVExport() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
-		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
+        conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
 
-		Job job = Job.getInstance(conf);
+        Job job = Job.getInstance(conf);
 
-		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, false, DELIMITER, FileOutputType.csv, FileCompressionCodec.none, "ftp://localhost:2221/",
-				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
-				filePrefix, true, true, true);
+        FtpUploadOutputFormat.setOutput(job, TEST_TABLE, false, DELIMITER, FileOutputType.csv, FileCompressionCodec.none, "ftp://localhost:2221/",
+                EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
+                filePrefix, true, true, true);
 
-		job.setMapperClass(FtpExportCSVMapper.class);
-		job.setReducerClass(Reducer.class);
-		job.setNumReduceTasks(2);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(FtpUploadOutputFormat.class);
+        job.setMapperClass(FtpExportCSVMapper.class);
+        job.setReducerClass(Reducer.class);
+        job.setNumReduceTasks(2);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
-		job.setOutputKeyClass(LongWritable.class);
-		job.setOutputValueClass(TextPairArrayWritable.class);
+        job.setOutputKeyClass(LongWritable.class);
+        job.setOutputValueClass(TextPairArrayWritable.class);
 
-		assertTrue(job.waitForCompletion(true));
-		assertEquals(2, getFileCount());
-	}
+        assertTrue(job.waitForCompletion(true));
+        assertEquals(2, getFileCount());
+    }
 
-	@Test
-	public void testSftpCSVExportUserPassAuth() throws Exception {
+    @Test
+    public void testSftpCSVExportUserPassAuth() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
-		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
+        conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
 
-		Job job = Job.getInstance(conf);
+        Job job = Job.getInstance(conf);
 
-		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.gzip, "sftp://localhost:12222/",
-				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
-				filePrefix, true, true, true);
+        FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.gzip, "sftp://localhost:12222/",
+                EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
+                filePrefix, true, true, true);
 
-		job.setMapperClass(FtpExportCSVMapper.class);
-		job.setReducerClass(Reducer.class);
-		job.setNumReduceTasks(2);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(FtpUploadOutputFormat.class);
+        job.setMapperClass(FtpExportCSVMapper.class);
+        job.setReducerClass(Reducer.class);
+        job.setNumReduceTasks(2);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
-		job.setOutputKeyClass(LongWritable.class);
-		job.setOutputValueClass(TextPairArrayWritable.class);
+        job.setOutputKeyClass(LongWritable.class);
+        job.setOutputValueClass(TextPairArrayWritable.class);
 
-		assertTrue(job.waitForCompletion(true));
-		assertEquals(2, getFileCount());
-	}
+        assertTrue(job.waitForCompletion(true));
+        assertEquals(2, getFileCount());
+    }
 
-	@Test
-	public void testSftpCSVExportPubKeyAuthNoEnc() throws Exception {
+    @Test
+    public void testSftpCSVExportPubKeyAuthNoEnc() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
-		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
+        conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
 
-		Job job = Job.getInstance(conf);
+        Job job = Job.getInstance(conf);
 
-		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.bzip2, "sftp://localhost:12222/",
-				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, null, "src/test/resources/keys/id_rsa_not_encrypted",
-				filePrefix, true, true, true);
+        FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.bzip2, "sftp://localhost:12222/",
+                EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, null, "src/test/resources/keys/id_rsa_not_encrypted",
+                filePrefix, true, true, true);
 
-		job.setMapperClass(FtpExportCSVMapper.class);
-		job.setReducerClass(Reducer.class);
-		job.setNumReduceTasks(2);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(FtpUploadOutputFormat.class);
+        job.setMapperClass(FtpExportCSVMapper.class);
+        job.setReducerClass(Reducer.class);
+        job.setNumReduceTasks(2);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
-		job.setOutputKeyClass(LongWritable.class);
-		job.setOutputValueClass(TextPairArrayWritable.class);
+        job.setOutputKeyClass(LongWritable.class);
+        job.setOutputValueClass(TextPairArrayWritable.class);
 
-		assertTrue(job.waitForCompletion(true));
-		assertEquals(2, getFileCount());
-	}
+        assertTrue(job.waitForCompletion(true));
+        assertEquals(2, getFileCount());
+    }
 
-	@Test
-	public void testSftpCSVExportPubKeyAuthEnc() throws Exception {
+    @Test
+    public void testSftpCSVExportPubKeyAuthEnc() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
-		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
+        conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
 
-		Job job = Job.getInstance(conf);
+        Job job = Job.getInstance(conf);
 
-		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.gzip, "sftp://localhost:12222/",
-				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, "12345",
-				"src/test/resources/keys/id_rsa_encrypted",
-				filePrefix, true, true, true);
+        FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.csv, FileCompressionCodec.gzip, "sftp://localhost:12222/",
+                EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, "12345",
+                "src/test/resources/keys/id_rsa_encrypted",
+                filePrefix, true, true, true);
 
-		job.setMapperClass(FtpExportCSVMapper.class);
-		job.setReducerClass(Reducer.class);
-		job.setNumReduceTasks(2);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(FtpUploadOutputFormat.class);
+        job.setMapperClass(FtpExportCSVMapper.class);
+        job.setReducerClass(Reducer.class);
+        job.setNumReduceTasks(2);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
-		job.setOutputKeyClass(LongWritable.class);
-		job.setOutputValueClass(TextPairArrayWritable.class);
+        job.setOutputKeyClass(LongWritable.class);
+        job.setOutputValueClass(TextPairArrayWritable.class);
 
-		assertTrue(job.waitForCompletion(true));
-		assertEquals(2, getFileCount());
-	}
+        assertTrue(job.waitForCompletion(true));
+        assertEquals(2, getFileCount());
+    }
 
-	@Test
-	public void testFtpJsonExport() throws Exception {
+    @Test
+    public void testFtpJsonExport() throws Exception {
 
-		setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
+        setUpHiveServer("src/test/resources/test_map_data.txt", "src/test/resources/test_map.hql", "test_map");
 
-		conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
+        conf.set("io.compression.codecs", "org.apache.hadoop.io.compress.GzipCodec,org.apache.hadoop.io.compress.BZip2Codec");
 
-		Job job = Job.getInstance(conf);
+        Job job = Job.getInstance(conf);
 
-		HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
-		Schema schema = schemaConverter.convertSchema(hcatInputSchema, TEST_TABLE);
-		AvroJob.setMapOutputValueSchema(job, schema);
+        HCatToAvroSchemaConverter schemaConverter = new HCatToAvroSchemaConverter();
+        Schema schema = schemaConverter.convertSchema(hcatInputSchema, TEST_TABLE);
+        AvroJob.setMapOutputValueSchema(job, schema);
 
 
-		FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.json, FileCompressionCodec.none, "ftp://localhost:2221/",
-				EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
-				filePrefix, true, true, true);
+        FtpUploadOutputFormat.setOutput(job, TEST_TABLE, true, DELIMITER, FileOutputType.json, FileCompressionCodec.none, "ftp://localhost:2221/",
+                EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING, null,
+                filePrefix, true, true, true);
 
-		job.setMapperClass(FtpExportJsonMapper.class);
-		job.setReducerClass(Reducer.class);
-		job.setNumReduceTasks(2);
-		job.setInputFormatClass(HCatInputFormat.class);
-		job.setOutputFormatClass(FtpUploadOutputFormat.class);
+        job.setMapperClass(FtpExportJsonMapper.class);
+        job.setReducerClass(Reducer.class);
+        job.setNumReduceTasks(2);
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(FtpUploadOutputFormat.class);
 
-		job.setOutputKeyClass(LongWritable.class);
-		job.setOutputValueClass(AvroValue.class);
+        job.setOutputKeyClass(LongWritable.class);
+        job.setOutputValueClass(AvroValue.class);
 
-		assertTrue(job.waitForCompletion(true));
-		assertEquals(2, getFileCount());
-	}
+        assertTrue(job.waitForCompletion(true));
+        assertEquals(2, getFileCount());
+    }
 
-	private int getFileCount() throws IOException {
+    private int getFileCount() throws IOException {
 
-		FTPClient ftp = new FTPClient();
-		ftp.connect("localhost", 2221);
-		ftp.login(EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING);
-		FTPFile[] files = ftp.listFiles();
+        FTPClient ftp = new FTPClient();
+        ftp.connect("localhost", 2221);
+        ftp.login(EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING, EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING);
+        FTPFile[] files = ftp.listFiles();
 
-		int fileCounter = 0;
-		for (FTPFile f : files) {
-			if (f.getName().contains(filePrefix)) {
-				fileCounter += 1;
-			}
-		}
-		return fileCounter;
-	}
+        int fileCounter = 0;
+        for (FTPFile f : files) {
+            if (f.getName().contains(filePrefix)) {
+                fileCounter += 1;
+            }
+        }
+        return fileCounter;
+    }
 }

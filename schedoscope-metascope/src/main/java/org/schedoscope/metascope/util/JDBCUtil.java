@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,69 +20,69 @@ import java.lang.reflect.Modifier;
 
 public class JDBCUtil {
 
-  public static String getDatabaseColumnsForClass(Class<?> clazz) {
-    String columns = "";
-    Field[] fields = clazz.getDeclaredFields();
-    for (Field field : fields) {
-      field.setAccessible(true);
-      if (Modifier.isStatic(field.getModifiers())) {
-        try {
-          Object classField = field.get(null);
-          if (classField instanceof String) {
-            if (!columns.isEmpty()) {
-              columns += ", ";
+    public static String getDatabaseColumnsForClass(Class<?> clazz) {
+        String columns = "";
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            if (Modifier.isStatic(field.getModifiers())) {
+                try {
+                    Object classField = field.get(null);
+                    if (classField instanceof String) {
+                        if (!columns.isEmpty()) {
+                            columns += ", ";
+                        }
+                        columns += classField;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            columns += classField;
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
         }
-      }
+        return columns;
     }
-    return columns;
-  }
 
-  public static String getValuesCountForClass(Class<?> clazz) {
-    String values = "";
-    Field[] fields = clazz.getDeclaredFields();
-    for (Field field : fields) {
-      field.setAccessible(true);
-      if (Modifier.isStatic(field.getModifiers())) {
-        try {
-          Object classField = field.get(null);
-          if (classField instanceof String) {
-            if (!values.isEmpty()) {
-              values += ", ";
+    public static String getValuesCountForClass(Class<?> clazz) {
+        String values = "";
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            if (Modifier.isStatic(field.getModifiers())) {
+                try {
+                    Object classField = field.get(null);
+                    if (classField instanceof String) {
+                        if (!values.isEmpty()) {
+                            values += ", ";
+                        }
+                        values += "?";
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            values += "?";
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
         }
-      }
+        return values;
     }
-    return values;
-  }
 
-  public static String getSetExpressionForClass(Class<?> clazz) {
-    String setExpression = "";
-    Field[] fields = clazz.getDeclaredFields();
-    for (Field field : fields) {
-      field.setAccessible(true);
-      if (Modifier.isStatic(field.getModifiers())) {
-        try {
-          Object classField = field.get(null);
-          if (classField instanceof String) {
-            if (!setExpression.isEmpty()) {
-              setExpression += ", ";
+    public static String getSetExpressionForClass(Class<?> clazz) {
+        String setExpression = "";
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            if (Modifier.isStatic(field.getModifiers())) {
+                try {
+                    Object classField = field.get(null);
+                    if (classField instanceof String) {
+                        if (!setExpression.isEmpty()) {
+                            setExpression += ", ";
+                        }
+                        setExpression += classField + "=?";
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-            setExpression += classField + "=?";
-          }
-        } catch (Exception e) {
-          e.printStackTrace();
         }
-      }
+        return setExpression;
     }
-    return setExpression;
-  }
 }

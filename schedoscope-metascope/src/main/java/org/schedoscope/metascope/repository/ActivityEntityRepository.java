@@ -1,12 +1,12 @@
 /**
  * Copyright 2015 Otto (GmbH & Co KG)
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,14 +15,14 @@
  */
 package org.schedoscope.metascope.repository;
 
-import java.util.List;
-
 import org.schedoscope.metascope.model.ActivityEntity;
 import org.schedoscope.metascope.model.key.ActivityEntityKey;
 import org.springframework.data.repository.CrudRepository;
 
+import java.util.List;
+
 public interface ActivityEntityRepository extends CrudRepository<ActivityEntity, ActivityEntityKey> {
 
-  public List<ActivityEntity> findFirst10ByOrderByTimestampDesc();
+    public List<ActivityEntity> findFirst10ByOrderByTimestampDesc();
 
 }

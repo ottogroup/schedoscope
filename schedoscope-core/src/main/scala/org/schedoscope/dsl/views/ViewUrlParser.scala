@@ -1,26 +1,26 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.dsl.views
 
 import java.net.URLDecoder
 
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.TypedAny.typedAny
-import org.schedoscope.dsl.{ TypedAny, View }
-import org.schedoscope.dsl.views.DateParameterizationUtils.{ thisAndPrevDays, thisAndPrevMonths }
+import org.schedoscope.dsl.views.DateParameterizationUtils.{thisAndPrevDays, thisAndPrevMonths}
+import org.schedoscope.dsl.{TypedAny, View}
 
 import scala.Array.canBuildFrom;
 
@@ -55,16 +55,16 @@ object ViewUrlParser {
     .replaceAllLiterally("\\-", "-")
 
   def typeBasicParameter(parameter: String) = parameter match {
-    case NullValue()                         => List(null)
-    case BooleanValue(b, _, _)               => List(typedAny(p(b.toBoolean)))
-    case IntValue(d)                         => List(typedAny(p(d.toInt)))
-    case LongValue(d)                        => List(typedAny(p(d.toLong)))
-    case ByteValue(d)                        => List(typedAny(p(d.toByte)))
-    case FloatValue(f)                       => List(typedAny(p(f.toFloat)))
-    case DoubleValue(f)                      => List(typedAny(p(f.toDouble)))
-    case MonthlyParameterizationValue(y, m)  => List(typedAny(p(y)), typedAny(p(m)))
+    case NullValue() => List(null)
+    case BooleanValue(b, _, _) => List(typedAny(p(b.toBoolean)))
+    case IntValue(d) => List(typedAny(p(d.toInt)))
+    case LongValue(d) => List(typedAny(p(d.toLong)))
+    case ByteValue(d) => List(typedAny(p(d.toByte)))
+    case FloatValue(f) => List(typedAny(p(f.toFloat)))
+    case DoubleValue(f) => List(typedAny(p(f.toDouble)))
+    case MonthlyParameterizationValue(y, m) => List(typedAny(p(y)), typedAny(p(m)))
     case DailyParameterizationValue(y, m, d) => List(typedAny(p(y)), typedAny(p(m)), typedAny(p(d)))
-    case aStringValue                        => List(typedAny(p(unquote(aStringValue))))
+    case aStringValue => List(typedAny(p(unquote(aStringValue))))
   }
 
   def typeMonthlyRangeParameter(earlierYear: String, earlierMonth: String, laterYear: String, laterMonth: String): List[List[TypedAny]] =

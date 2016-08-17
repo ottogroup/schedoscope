@@ -15,88 +15,99 @@
  */  -->
 
 <div class="well" data-th-fragment="filters">
-  <a data-th-href="@{/}" class="pull-right" style="padding-left: 10px; padding-top: 7px;">clear all</a>
-  <form id="filterForm">
-    <div class="input-group">
+    <a data-th-href="@{/}" class="pull-right" style="padding-left: 10px; padding-top: 7px;">clear all</a>
+    <form id="filterForm">
+        <div class="input-group">
       <span class="input-group-addon"> <i class="glyphicon glyphicon-search"></i>
-      </span> <input class="form-control" th:attr="value=${solrQuery.searchQuery.equals('*') ? null : solrQuery.searchQuery}" name="searchQuery"
-        id="searchInputField" placeholder="Search ..." />
-      <div class="input-group-btn">
-        <button class="btn btn-default" type="button" onclick="clearSearchField()">
-          <span class="glyphicon glyphicon-remove"></span>
-        </button>
-      </div>
+      </span> <input class="form-control"
+                     th:attr="value=${solrQuery.searchQuery.equals('*') ? null : solrQuery.searchQuery}"
+                     name="searchQuery"
+                     id="searchInputField" placeholder="Search ..."/>
+            <div class="input-group-btn">
+                <button class="btn btn-default" type="button" onclick="clearSearchField()">
+                    <span class="glyphicon glyphicon-remove"></span>
+                </button>
+            </div>
+        </div>
+    </form>
+    <br/>
+    <div id="filters">
+        <div data-th-replace="body/home/filter :: typeFilter"></div>
+        <div data-th-each="solrQueryFilter : ${solrQuery.filters}">
+            <div data-th-replace="body/home/filter :: filter(${solrQueryFilter})"></div>
+        </div>
     </div>
-  </form>
-  <br />
-  <div id="filters">
-    <div data-th-replace="body/home/filter :: typeFilter"></div>
-    <div data-th-each="solrQueryFilter : ${solrQuery.filters}">
-      <div data-th-replace="body/home/filter :: filter(${solrQueryFilter})"></div>
-    </div>
-  </div>
 </div>
 
 <div class="row" data-th-fragment="typeFilter">
-  <div class="panel-group" style="margin-bottom: 1px;">
-    <div class="panel panel-default" style="border-color: lightgray; border-radius: 0px;">
-      <div class="panel-heading" style="background-color: white; background-image: none;">
-        <h4 class="panel-title">
-          <a class="accordion-toggle filter-heading" id="typeToggleLabel" data-toggle="collapse" href="#typeToggle"
-            onclick="setFilterStatus(this, 'typeToggle')" text="Type"> <span>Type</span> <span id="typeToggleCaret" class="dropup"><span
-              class="caret"></span></span>
-          </a>
-        </h4>
-      </div>
-      <div class="panel-collapse collapse in" id="typeToggle">
-        <div class="list-group">
-          <div>
-            <div th:with="count=${solrQuery.getCountForFacetAndKey('type', 'Table')}">
-              <a data-th-if="${count > 0}"
-                th:class="${solrQuery.resultType.equals('Table')} ? 'list-group-item active activeFilter' : 'list-group-item'"
-                th:href="${urlService.removeFromFilterURL(#httpServletRequest, 'type')}"> <em style="margin-left: 10px">Tables</em> <span
-                class="badge pull-right" data-th-text="${count}"></span>
-              </a>
+    <div class="panel-group" style="margin-bottom: 1px;">
+        <div class="panel panel-default" style="border-color: lightgray; border-radius: 0px;">
+            <div class="panel-heading" style="background-color: white; background-image: none;">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle filter-heading" id="typeToggleLabel" data-toggle="collapse"
+                       href="#typeToggle"
+                       onclick="setFilterStatus(this, 'typeToggle')" text="Type"> <span>Type</span> <span
+                            id="typeToggleCaret" class="dropup"><span
+                            class="caret"></span></span>
+                    </a>
+                </h4>
             </div>
-            <div th:with="count=${solrQuery.getCountForFacetAndKey('type', 'Partition')}">
-              <a data-th-if="${count > 0}"
-                th:class="${solrQuery.resultType.equals('Partition')} ? 'list-group-item active activeFilter' : 'list-group-item'"
-                th:href="${urlService.getFilterURL(#httpServletRequest, 'type', 'partition')}"> <em style="margin-left: 10px">Partitions</em> <span
-                class="badge pull-right" data-th-text="${count}"></span>
-              </a>
+            <div class="panel-collapse collapse in" id="typeToggle">
+                <div class="list-group">
+                    <div>
+                        <div th:with="count=${solrQuery.getCountForFacetAndKey('type', 'Table')}">
+                            <a data-th-if="${count > 0}"
+                               th:class="${solrQuery.resultType.equals('Table')} ? 'list-group-item active activeFilter' : 'list-group-item'"
+                               th:href="${urlService.removeFromFilterURL(#httpServletRequest, 'type')}"> <em
+                                    style="margin-left: 10px">Tables</em> <span
+                                    class="badge pull-right" data-th-text="${count}"></span>
+                            </a>
+                        </div>
+                        <div th:with="count=${solrQuery.getCountForFacetAndKey('type', 'Partition')}">
+                            <a data-th-if="${count > 0}"
+                               th:class="${solrQuery.resultType.equals('Partition')} ? 'list-group-item active activeFilter' : 'list-group-item'"
+                               th:href="${urlService.getFilterURL(#httpServletRequest, 'type', 'partition')}"> <em
+                                    style="margin-left: 10px">Partitions</em> <span
+                                    class="badge pull-right" data-th-text="${count}"></span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>
 
 <div class="row" data-th-fragment="filter(solrQueryFilter))">
-  <div data-th-if="${solrQuery.hasFacetValues(solrQueryFilter.name)}" class="panel-group" style="margin-bottom: 1px;">
-    <div class="panel panel-default" style="border-color: lightgray; border-radius: 0px;">
-      <div class="panel-heading" style="background-color: white; background-image: none;">
-        <h4 class="panel-title">
-          <a class="accordion-toggle filter-heading" th:id="${solrQueryFilter.name} + 'ToggleLabel'" data-toggle="collapse"
-            th:href="'#' + ${solrQueryFilter.name} + 'Toggle'" th:onclick="'setFilterStatus(this, \'' + ${solrQueryFilter.name} + 'Toggle\')'"> <span
-            data-th-text="${solrQueryFilter.displayName}"></span> <span class="caret"></span>
-          </a> <a data-th-if="${solrQuery.activeFilterValues.get(solrQueryFilter.name).size() > 0}" style="color: #337AB7; font-size: 12px;"
-            th:href="${urlService.removeFromFilterURL(#httpServletRequest, solrQueryFilter.name)}" class="pull-right">clear</a>
-        </h4>
-      </div>
-      <div class="panel-collapse collapse" th:id="${solrQueryFilter.name} + 'Toggle'">
-        <div class="list-group" data-th-if="${solrQuery.facetValues.get(solrQueryFilter.name) != null}">
-          <div style="max-height: 250px; overflow-y: auto;">
-            <a data-th-each="count : ${solrQuery.facetValues.get(solrQueryFilter.name)}"
-              th:class="${solrQuery.activeFilterValues.get(solrQueryFilter.name).contains(count.name)} ? 'list-group-item active activeFilter' : 'list-group-item'"
-              th:href="${solrQueryFilter.isExclusiveFilter()} ? ${urlService.getExclusiveFilterURL(#httpServletRequest, solrQueryFilter.name, count.name)} : 
+    <div data-th-if="${solrQuery.hasFacetValues(solrQueryFilter.name)}" class="panel-group" style="margin-bottom: 1px;">
+        <div class="panel panel-default" style="border-color: lightgray; border-radius: 0px;">
+            <div class="panel-heading" style="background-color: white; background-image: none;">
+                <h4 class="panel-title">
+                    <a class="accordion-toggle filter-heading" th:id="${solrQueryFilter.name} + 'ToggleLabel'"
+                       data-toggle="collapse"
+                       th:href="'#' + ${solrQueryFilter.name} + 'Toggle'"
+                       th:onclick="'setFilterStatus(this, \'' + ${solrQueryFilter.name} + 'Toggle\')'"> <span
+                            data-th-text="${solrQueryFilter.displayName}"></span> <span class="caret"></span>
+                    </a> <a data-th-if="${solrQuery.activeFilterValues.get(solrQueryFilter.name).size() > 0}"
+                            style="color: #337AB7; font-size: 12px;"
+                            th:href="${urlService.removeFromFilterURL(#httpServletRequest, solrQueryFilter.name)}"
+                            class="pull-right">clear</a>
+                </h4>
+            </div>
+            <div class="panel-collapse collapse" th:id="${solrQueryFilter.name} + 'Toggle'">
+                <div class="list-group" data-th-if="${solrQuery.facetValues.get(solrQueryFilter.name) != null}">
+                    <div style="max-height: 250px; overflow-y: auto;">
+                        <a data-th-each="count : ${solrQuery.facetValues.get(solrQueryFilter.name)}"
+                           th:class="${solrQuery.activeFilterValues.get(solrQueryFilter.name).contains(count.name)} ? 'list-group-item active activeFilter' : 'list-group-item'"
+                           th:href="${solrQueryFilter.isExclusiveFilter()} ? ${urlService.getExclusiveFilterURL(#httpServletRequest, solrQueryFilter.name, count.name)} :
                ${urlService.getFilterURL(#httpServletRequest, solrQueryFilter.name, count.name)}"
-              data-th-if="${count.count > 0}"> <em style="margin-left: 10px" data-th-text="${count.name}"></em> <span class="badge"
-              data-th-text="${count.count}"></span>
-            </a>
-          </div>
+                           data-th-if="${count.count > 0}"> <em style="margin-left: 10px"
+                                                                data-th-text="${count.name}"></em> <span class="badge"
+                                                                                                         data-th-text="${count.count}"></span>
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </div>

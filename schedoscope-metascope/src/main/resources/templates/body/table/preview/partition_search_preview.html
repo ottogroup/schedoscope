@@ -15,66 +15,81 @@
  */  -->
 
 <div data-th-fragment="partition(obj)">
-  <div th:with="partition=${obj.resultEntity}">
-    <div th:class="'panel panel-' + ${util.getColorForPanel(partition.status)}">
-      <div class="panel-heading">
-        <div class="row">
-          <div class="col-md-12">
-            <a
-            th:href="'table?fqdn=' + ${partition.fqdn} + '&amp;partitionPage=' + ${urlService.getPartitionPage(partition.fqdn, partition.internalViewId)} 
+    <div th:with="partition=${obj.resultEntity}">
+        <div th:class="'panel panel-' + ${util.getColorForPanel(partition.status)}">
+            <div class="panel-heading">
+                <div class="row">
+                    <div class="col-md-12">
+                        <a
+                                th:href="'table?fqdn=' + ${partition.fqdn} + '&amp;partitionPage=' + ${urlService.getPartitionPage(partition.fqdn, partition.internalViewId)}
             	+ '#partitionsContent-' + ${partition.internalViewId}"
-            th:text="${!partition.parameters.isEmpty()} ? 
+                                th:text="${!partition.parameters.isEmpty()} ?
                ${partition.urlPath} + ' (' + ${partition.parameterString} + ')' :
                ${partition.urlPath}"></a>
-            <span style="padding-left: 10px;" data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span>
-            <div data-th-if="${admin}" class="dropdown pull-right">
-              <a class="btn-link dropdown-toggle" id="actions" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true"
-                style="color: inherit;"> <em data-th-text="${partition.status}" style="padding-right: 5px;"></em> <span class="caret"></span>
-              </a>
-              <ul class="dropdown-menu" aria-labelledby="actions">
-                <li class="dropdown-header">Actions</li>
-                <li data-th-if="${!partition.status.equals('materialized') and !partition.status.equals('invalidated') }" class="dropdown-header">No
-                  actions available</li>
-                <li data-th-if="${partition.status.equals('materialized')}"><a href="javascript:void(0)" onclick="$(this).next().submit();">Invalidate</a>
-                  <form action="/admin/schedoscope" method="get">
-                    <input type="hidden" name="action" value="invalidate" /> <input type="hidden" name="urlPath" th:value="${partition.urlPath}" />
-                  </form></li>
-                <li data-th-if="${partition.status.equals('invalidated')}"><a href="javascript:void(0)" onclick="$(this).next().submit();">Materialize</a>
-                  <form action="/admin/schedoscope" method="get">
-                    <input type="hidden" name="action" value="materialize" /> <input type="hidden" name="urlPath" th:value="${partition.urlPath}" />
-                  </form></li>
-              </ul>
+                        <span style="padding-left: 10px;"
+                              data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span>
+                        <div data-th-if="${admin}" class="dropdown pull-right">
+                            <a class="btn-link dropdown-toggle" id="actions" data-toggle="dropdown" aria-haspopup="true"
+                               aria-expanded="true"
+                               style="color: inherit;"> <em data-th-text="${partition.status}"
+                                                            style="padding-right: 5px;"></em> <span
+                                    class="caret"></span>
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="actions">
+                                <li class="dropdown-header">Actions</li>
+                                <li data-th-if="${!partition.status.equals('materialized') and !partition.status.equals('invalidated') }"
+                                    class="dropdown-header">No
+                                    actions available
+                                </li>
+                                <li data-th-if="${partition.status.equals('materialized')}"><a href="javascript:void(0)"
+                                                                                               onclick="$(this).next().submit();">Invalidate</a>
+                                    <form action="/admin/schedoscope" method="get">
+                                        <input type="hidden" name="action" value="invalidate"/> <input type="hidden"
+                                                                                                       name="urlPath"
+                                                                                                       th:value="${partition.urlPath}"/>
+                                    </form>
+                                </li>
+                                <li data-th-if="${partition.status.equals('invalidated')}"><a href="javascript:void(0)"
+                                                                                              onclick="$(this).next().submit();">Materialize</a>
+                                    <form action="/admin/schedoscope" method="get">
+                                        <input type="hidden" name="action" value="materialize"/> <input type="hidden"
+                                                                                                        name="urlPath"
+                                                                                                        th:value="${partition.urlPath}"/>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                        <span data-th-if="${!admin}" class="pull-right" style="color: inherit;"
+                              data-th-text="${partition.status}"> </span>
+                    </div>
+                </div>
             </div>
-            <span data-th-if="${!admin}" class="pull-right" style="color: inherit;" data-th-text="${partition.status}"> </span>
-          </div>
+            <table id="partitionPreviewTable" class="table table-reflow">
+                <div th:with="e=${obj.highlightings.get('tableName')}">
+                    <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+                        <td width="20%"><b data-th-text="'Table'"></b></td>
+                        <td width="80%"><span th:utext="${e}"></span></td>
+                    </tr>
+                </div>
+                <div th:with="e=${obj.highlightings.get('databaseName')}">
+                    <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+                        <td width="20%"><b data-th-text="'Database'"></b></td>
+                        <td width="80%"><span th:utext="${e}"></span></td>
+                    </tr>
+                </div>
+                <div th:with="e=${obj.highlightings.get('parameterString')}">
+                    <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+                        <td width="20%"><b data-th-text="'Parameters'"></b></td>
+                        <td width="80%"><span th:utext="${e}"></span></td>
+                    </tr>
+                </div>
+                <div th:with="e=${obj.highlightings.get('status')}">
+                    <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+                        <td width="20%"><b data-th-text="'Status'"></b></td>
+                        <td width="80%"><span th:utext="${e}"></span></td>
+                    </tr>
+                </div>
+            </table>
         </div>
-      </div>
-      <table id="partitionPreviewTable" class="table table-reflow">
-        <div th:with="e=${obj.highlightings.get('tableName')}">
-          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
-            <td width="20%"><b data-th-text="'Table'"></b></td>
-            <td width="80%"><span th:utext="${e}"></span></td>
-          </tr>
-        </div>
-        <div th:with="e=${obj.highlightings.get('databaseName')}">
-          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
-            <td width="20%"><b data-th-text="'Database'"></b></td>
-            <td width="80%"><span th:utext="${e}"></span></td>
-          </tr>
-        </div>
-        <div th:with="e=${obj.highlightings.get('parameterString')}">
-          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
-            <td width="20%"><b data-th-text="'Parameters'"></b></td>
-            <td width="80%"><span th:utext="${e}"></span></td>
-          </tr>
-        </div>
-        <div th:with="e=${obj.highlightings.get('status')}">
-          <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
-            <td width="20%"><b data-th-text="'Status'"></b></td>
-            <td width="80%"><span th:utext="${e}"></span></td>
-          </tr>
-        </div>
-      </table>
     </div>
-  </div>
 </div>

@@ -15,87 +15,90 @@
  */  -->
 
 <div class="tab-pane" id="storageContent" data-th-fragment="storage(table,util)">
-  <div>
-    <div class="row">
-      <div class="col-md-12">
-        <div class="col-md-6">
-          <table class="table bordered">
-            <tr>
-              <th>Storage</th>
-            </tr>
-            <tr>
-              <td>Owner</td>
-              <td data-th-text="${table.tableOwner}"></td>
-            </tr>
-            <tr>
-              <td>Storage format</td>
-              <td data-th-text="${table.storageFormat}"></td>
-            </tr>
-            <tr>
-              <td>Input format</td>
-              <td data-th-text="${table.inputFormat}"></td>
-            </tr>
-            <tr>
-              <td>Output format</td>
-              <td data-th-text="${table.outputFormat}"></td>
-            </tr>
-          </table>
+    <div>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-6">
+                    <table class="table bordered">
+                        <tr>
+                            <th>Storage</th>
+                        </tr>
+                        <tr>
+                            <td>Owner</td>
+                            <td data-th-text="${table.tableOwner}"></td>
+                        </tr>
+                        <tr>
+                            <td>Storage format</td>
+                            <td data-th-text="${table.storageFormat}"></td>
+                        </tr>
+                        <tr>
+                            <td>Input format</td>
+                            <td data-th-text="${table.inputFormat}"></td>
+                        </tr>
+                        <tr>
+                            <td>Output format</td>
+                            <td data-th-text="${table.outputFormat}"></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table bordered">
+                        <tr>
+                            <th>Data</th>
+                        </tr>
+                        <tr>
+                            <td>Data location</td>
+                            <td data-th-text="${table.dataPath}"></td>
+                        </tr>
+                        <tr>
+                            <td>Permissions</td>
+                            <td data-th-text="${table.permissions}"></td>
+                        </tr>
+                        <tr>
+                            <td>Size</td>
+                            <td data-th-text="${util.getSize(table.dataSize)}"></td>
+                        </tr>
+                        <tr>
+                            <td>Partitions</td>
+                            <td data-th-text="${partitionCount}"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
         </div>
-        <div class="col-md-6">
-          <table class="table bordered">
-            <tr>
-              <th>Data</th>
-            </tr>
-            <tr>
-              <td>Data location</td>
-              <td data-th-text="${table.dataPath}"></td>
-            </tr>
-            <tr>
-              <td>Permissions</td>
-              <td data-th-text="${table.permissions}"></td>
-            </tr>
-            <tr>
-              <td>Size</td>
-              <td data-th-text="${util.getSize(table.dataSize)}"></td>
-            </tr>
-            <tr>
-              <td>Partitions</td>
-              <td data-th-text="${partitionCount}"></td>
-            </tr>
-          </table>
+        <div class="row">
+            <div class="col-md-12">
+                <div class="col-md-6">
+                    <table class="table bordered">
+                        <tr>
+                            <th>Timestamps</th>
+                        </tr>
+                        <tr>
+                            <td>Table created</td>
+                            <td data-th-text="${util.getTime(table.createdAt)}"></td>
+                        </tr>
+                        <tr data-th-if="${table.getLastTransformation() != 0}">
+                            <td>Last Transformation</td>
+                            <td data-th-text="${util.getTime(table.getLastTransformation())}"></td>
+                        </tr>
+                        <tr data-th-if="${table.getLastData() != null}">
+                            <td>Last Data from</td>
+                            <td th:with="value=${util.getTime(table.lastData, table.timestampFieldFormat)}"
+                                data-th-text="${value == null} ? '-' : ${value}"></td>
+                        </tr>
+                        <tr data-th-if="${table.isPartitioned() and table.lastPartitionCreated > 0}">
+                            <td>Last Partition created</td>
+                            <td th:with="value=${util.getTime(table.lastPartitionCreated)}"
+                                data-th-text="${value == null} ? '-' : ${value}"></td>
+                        </tr>
+                        <tr data-th-if="${table.lastSchemaChange > 0}">
+                            <td>Last Schema change</td>
+                            <td th:with="value=${util.getTime(table.lastSchemaChange)}"
+                                data-th-text="${value == null} ? '-' : ${value}"></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
-    <div class="row">
-      <div class="col-md-12">
-        <div class="col-md-6">
-          <table class="table bordered">
-            <tr>
-              <th>Timestamps</th>
-            </tr>
-            <tr>
-              <td>Table created</td>
-              <td data-th-text="${util.getTime(table.createdAt)}"></td>
-            </tr>
-            <tr data-th-if="${table.getLastTransformation() != 0}">
-              <td>Last Transformation</td>
-              <td data-th-text="${util.getTime(table.getLastTransformation())}"></td>
-            </tr>
-            <tr data-th-if="${table.getLastData() != null}">
-              <td>Last Data from</td>
-              <td th:with="value=${util.getTime(table.lastData, table.timestampFieldFormat)}" data-th-text="${value == null} ? '-' : ${value}"></td>
-            </tr>
-            <tr data-th-if="${table.isPartitioned() and table.lastPartitionCreated > 0}">
-              <td>Last Partition created</td>
-              <td th:with="value=${util.getTime(table.lastPartitionCreated)}" data-th-text="${value == null} ? '-' : ${value}"></td>
-            </tr>
-            <tr data-th-if="${table.lastSchemaChange > 0}">
-              <td>Last Schema change</td>
-              <td th:with="value=${util.getTime(table.lastSchemaChange)}" data-th-text="${value == null} ? '-' : ${value}"></td>
-            </tr>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>
