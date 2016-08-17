@@ -15,9 +15,12 @@
   */
 package org.schedoscope.scheduler.driver
 
+import java.io.File
+import java.net.URI
 import java.util.Properties
 
 import com.typesafe.config.ConfigFactory
+import org.apache.hadoop.fs.Path
 import org.apache.hadoop.security.UserGroupInformation
 import org.apache.oozie.client.OozieClient
 import org.apache.oozie.client.WorkflowJob.Status.{PREP, RUNNING, SUCCEEDED, SUSPENDED}
@@ -65,6 +68,54 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
     } catch {
       case e: Throwable => throw RetryableDriverException(s"Unexpected error occurred while killing Oozie job ${run.stateHandle}", e)
     }
+  }
+
+  /**
+    * Rig Oozie transformations prior to test by loading the workflow bundle into the test environment's HDFS
+    * and tweak the path references accordingly
+    */
+  override def rigTransformationForTest(t: OozieTransformation, testResources: TestResources) = {
+    val fs = testResources.fileSystem
+    val dest = new Path(testResources.namenode + new URI(t.workflowAppPath).getPath + "/")
+
+    if (!fs.exists(dest))
+      fs.mkdirs(dest)
+
+    // FIXME: make source path configurable, recursive upload
+    val srcFilesFromMain = if (new File(s"src/main/resources/oozie/${
+      t.bundle
+    }/${
+      t.workflow
+    }").listFiles() == null)
+      Array[File]()
+    else
+      new File(s"src/main/resources/oozie/${
+        t.bundle
+      }/${
+        t.workflow
+      }").listFiles()
+
+    val srcFilesFromTest = if (new File(s"src/test/resources/oozie/${
+      t.bundle
+    }/${
+      t.workflow
+    }").listFiles() == null)
+      Array[File]()
+    else
+      new File(s"src/test/resources/oozie/${
+        t.bundle
+      }/${
+        t.workflow
+      }").listFiles()
+
+    (srcFilesFromMain ++ srcFilesFromTest).map(f => {
+      val src = new Path("file:///" + f.getAbsolutePath)
+      fs.copyFromLocalFile(src, dest)
+    })
+
+    t.workflowAppPath = dest.toString()
+
+    t
   }
 
   def runOozieJob(jobProperties: Properties): String = client.run(jobProperties)

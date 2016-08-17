@@ -96,6 +96,16 @@ trait Driver[T <: Transformation] {
   }
 
   /**
+    * Perform any rigging of a transformation necessary to execute it within the scope of the
+    * test framework represented by an instance of TestResources using this driver.
+    *
+    * The rigged transformation is returned.
+    *
+    * By default, the transformation is not changed.
+    */
+  def rigTransformationForTest(t: T, testResources: TestResources): T = t
+
+  /**
     * Needs to be overridden to return the class names of driver run completion handlers to apply.
     *
     * E.g., provide a val of the same name to the constructor of the driver implementation.
