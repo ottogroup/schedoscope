@@ -20,47 +20,47 @@ import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.TypedAny.typedAny
 import org.schedoscope.dsl.views.ViewUrlParser.{ParsedView, parse, parseParameters}
-import test.eci.datahub.{Brand, Product}
+import test.views.{Brand, Product}
 
 class ViewUrlParserTest extends FlatSpec with Matchers {
 
   "ViewUrlParse.parse(viewUrlPath)" should "start with /env/package/view" in {
-    val List(ParsedView(env, clazz, arguments)) = parse("dev", "/test.eci.datahub/Brand")
+    val List(ParsedView(env, clazz, arguments)) = parse("dev", "/test.views/Brand")
     env shouldBe "dev"
     clazz shouldBe classOf[Brand]
     arguments should be(empty)
   }
 
   it should "work without preceding /" in {
-    val List(ParsedView(env, clazz, arguments)) = parse("dev", "test.eci.datahub/Brand")
+    val List(ParsedView(env, clazz, arguments)) = parse("dev", "test.views/Brand")
     env shouldBe "dev"
     clazz shouldBe classOf[Brand]
     arguments should be(empty)
   }
 
   it should "work with trailing /" in {
-    val List(ParsedView(env, clazz, arguments)) = parse("dev", "test.eci.datahub/Brand/")
+    val List(ParsedView(env, clazz, arguments)) = parse("dev", "test.views/Brand/")
     env shouldBe "dev"
     clazz shouldBe classOf[Brand]
     arguments should be(empty)
   }
 
   it should "work with preceding and trailing /" in {
-    val List(ParsedView(env, clazz, arguments)) = parse("dev", "/test.eci.datahub/Brand/")
+    val List(ParsedView(env, clazz, arguments)) = parse("dev", "/test.views/Brand/")
     env shouldBe "dev"
     clazz shouldBe classOf[Brand]
     arguments should be(empty)
   }
 
   it should "parse parameters as well" in {
-    val List(ParsedView(env, clazz, arguments)) = parse("dev", "/test.eci.datahub/Product/EC0106/2014/01/12/")
+    val List(ParsedView(env, clazz, arguments)) = parse("dev", "/test.views/Product/EC0106/2014/01/12/")
     env shouldBe "dev"
     clazz shouldBe classOf[Product]
     arguments should be(List(typedAny(p("EC0106")), typedAny(p("2014")), typedAny(p("01")), typedAny(p("12"))))
   }
 
   it should "parse multiple views" in {
-    val parsedViews = parse("dev", "/test.eci.datahub/e(Product,Brand)/EC0106/2014/01/12/")
+    val parsedViews = parse("dev", "/test.views/e(Product,Brand)/EC0106/2014/01/12/")
     parsedViews.size shouldBe 2
     parsedViews(0).env shouldBe "dev"
     parsedViews(0).viewClass shouldBe classOf[Product]
@@ -71,11 +71,11 @@ class ViewUrlParserTest extends FlatSpec with Matchers {
   }
 
   it should "fail when called with not enough arguments" in {
-    an[IllegalArgumentException] should be thrownBy parse("dev", "/test.eci.datahub/")
+    an[IllegalArgumentException] should be thrownBy parse("dev", "/test.views/")
   }
 
   it should "fail when called with illegal class name" in {
-    an[IllegalArgumentException] should be thrownBy parse("dev", "/test.eci.datahub/Brund/")
+    an[IllegalArgumentException] should be thrownBy parse("dev", "/test.views/Brund/")
   }
 
   it should "fail when called with illegal package name" in {

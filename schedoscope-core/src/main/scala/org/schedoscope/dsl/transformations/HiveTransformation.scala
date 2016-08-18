@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.metastore.api.{Function, ResourceType, ResourceUri}
 import org.schedoscope.Settings
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.service.ViewTransformationStatus
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.{HashMap, ListBuffer}
@@ -47,6 +48,9 @@ case class HiveTransformation(sql: String, udfs: List[Function] = List()) extend
       throw new InvalidTransformationException("Uneven count of joins and ons in Hive query")
     }
 
+  override def viewTransformationStatus = ViewTransformationStatus(
+    name,
+    Some(Map("sql" -> sql)))
 
 }
 

@@ -45,7 +45,7 @@ This Map/Reduce job moves data into a relational database via a JDBC connection.
 
 #### Run the JDBC export
 
-The schedoscope-export project doesn't bundle any JDBC driver. It's necessary to add a JDBC driver to the classpath, the export job will copy into HDFS / distributed cache and add the driver to the classpath:
+The schedoscope-export project doesn't oozie.bundle any JDBC driver. It's necessary to add a JDBC driver to the classpath, the export job will copy into HDFS / distributed cache and add the driver to the classpath:
 
 <pre>
 export YARN_USER_CLASSPATH=/path/to/jdbc/jar/file/mysql-connector-java-5.1.38.jar

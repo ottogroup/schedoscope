@@ -17,7 +17,6 @@ package org.schedoscope.test
 
 import org.apache.hadoop.fs.Path
 import org.schedoscope.dsl.{FieldLike, Structure, View}
-import org.schedoscope.test.resources.OozieTestResources
 
 import scala.collection.mutable.ListBuffer
 
@@ -230,13 +229,4 @@ trait test extends TestableView {
       configureTransformation(prop, target.toString.replaceAll("^file:/", "file:///"))
     })
   }
-}
-
-/**
-  * A test environment that is executed in a local minicluster
-  */
-trait clustertest extends test {
-  resources = new OozieTestResources()
-
-  def cluster = resources.asInstanceOf[OozieTestResources].mo
 }

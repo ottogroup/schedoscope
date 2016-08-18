@@ -24,13 +24,13 @@ import org.apache.curator.test.TestingServer
 import org.json4s.native.JsonMethods.parse
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter
 import org.scalatest.{FlatSpec, Matchers}
-import org.schedoscope.{DriverTests, Schedoscope}
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.export.testsupport.{EmbeddedFtpSftpServer, EmbeddedKafkaCluster, SimpleTestKafkaConsumer}
 import org.schedoscope.export.utils.RedisMRJedisFactory
 import org.schedoscope.test.{rows, test}
-import _root_.test.eci.datahub._
+import _root_.test.views._
 
 import scala.collection.JavaConversions.iterableAsScalaIterable
 
@@ -66,7 +66,7 @@ class ExportTest extends FlatSpec with Matchers {
       v(url, "http://ec0106.com/url3"))
   }
 
-  "The test framework" should "execute hive transformations and perform JDBC export" taggedAs (DriverTests) in {
+  "The test framework" should "execute hive transformations and perform JDBC export" in {
 
     new ClickOfEC0101WithJdbcExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
@@ -88,7 +88,7 @@ class ExportTest extends FlatSpec with Matchers {
     }
 
     val statement = dbConnection.createStatement()
-    val resultSet = statement.executeQuery("SELECT COUNT(*) FROM TEST_TEST_ECI_DATAHUB_CLICK_OF_E_C0101_WITH_JDBC_EXPORT")
+    val resultSet = statement.executeQuery("SELECT COUNT(*) FROM TEST_TEST_VIEWS_CLICK_OF_E_C0101_WITH_JDBC_EXPORT")
     resultSet.next()
 
     resultSet.getInt(1) shouldBe 3
@@ -97,7 +97,7 @@ class ExportTest extends FlatSpec with Matchers {
     statement.close()
   }
 
-  it should "execute hive transformations and perform Redis export" taggedAs (DriverTests) in {
+  it should "execute hive transformations and perform Redis export" in {
 
     new ClickOfEC0101WithRedisExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
@@ -124,7 +124,7 @@ class ExportTest extends FlatSpec with Matchers {
 
   }
 
-  it should "execute hive transformations and perform Kafka export" taggedAs (DriverTests) in {
+  it should "execute hive transformations and perform Kafka export" in {
 
     val zkServer = new TestingServer(2182);
     zkServer.start()
@@ -160,7 +160,7 @@ class ExportTest extends FlatSpec with Matchers {
 
   }
 
-  it should "execute hive transformations and perform Ftp export" taggedAs (DriverTests) in {
+  it should "execute hive transformations and perform Ftp export" in {
 
     val ftpServer = new EmbeddedFtpSftpServer()
     ftpServer.startEmbeddedFtpServer()

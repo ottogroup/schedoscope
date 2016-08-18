@@ -18,6 +18,7 @@ package org.schedoscope.dsl.transformations
 import java.io.InputStream
 
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.service.ViewTransformationStatus
 
 /**
   * FileSystem transformations: compute views by copying or moving files
@@ -31,44 +32,82 @@ class FilesystemTransformation extends Transformation {
   * Copy a file from one directory to the view's fullPath
   *
   */
-case class CopyFrom(val fromPattern: String, val toView: View, val recursive: Boolean = true) extends FilesystemTransformation
+case class CopyFrom(val fromPattern: String, val toView: View, val recursive: Boolean = true) extends FilesystemTransformation {
+  override def viewTransformationStatus = ViewTransformationStatus(
+    "filesystem -> CopyFromTransformation",
+    Some(Map(
+      "from" -> fromPattern,
+      "destinationView" -> toView.urlPath, "recursive" -> recursive.toString())))
+}
 
 /**
   * Retrieve contents from a stream and store it on the view's fullPath
   *
   */
-case class StoreFrom(val inputStream: InputStream, val toView: View) extends FilesystemTransformation
+case class StoreFrom(val inputStream: InputStream, val toView: View) extends FilesystemTransformation {
+  override def viewTransformationStatus = ViewTransformationStatus(
+    "filesystem -> StoreFromTransformation",
+    Some(Map("destinationView" -> toView.urlPath)))
+}
 
 /**
   * Copy file satisfying fromPattern to toPath
   *
   */
-case class Copy(val fromPattern: String, val toPath: String, val recursive: Boolean = true) extends FilesystemTransformation
+case class Copy(val fromPattern: String, val toPath: String, val recursive: Boolean = true) extends FilesystemTransformation {
+  override def viewTransformationStatus = ViewTransformationStatus(
+    "filesystem -> CopyTransformation",
+    Some(Map(
+      "from" -> fromPattern,
+      "destinationPath" -> toPath)))
+}
 
 /**
   * Move files satisfying fromPattern to toPath
   *
   */
-case class Move(val fromPattern: String, val toPath: String) extends FilesystemTransformation
+case class Move(val fromPattern: String, val toPath: String) extends FilesystemTransformation {
+  override def viewTransformationStatus = ViewTransformationStatus(
+    "filesystem -> MoveTransformation",
+    Some(Map(
+      "from" -> fromPattern,
+      "destinationPath" -> toPath)))
+}
 
 /**
   *
   * Delete files satisfying fromPattern
   *
   */
-case class Delete(val fromPattern: String, val recursive: Boolean = false) extends FilesystemTransformation
+case class Delete(val fromPattern: String, val recursive: Boolean = false) extends FilesystemTransformation {
+  override def viewTransformationStatus = ViewTransformationStatus(
+    "filesystem -> DeleteTransformation",
+    Some(Map(
+      "from" -> fromPattern,
+      "recursive" -> recursive.toString)))
+}
 
 /**
   * Touch an empty file
   *
   */
-case class Touch(val fromPath: String) extends FilesystemTransformation
+case class Touch(val fromPath: String) extends FilesystemTransformation {
+  override def viewTransformationStatus = ViewTransformationStatus(
+    "filesystem -> TouchTransformation",
+    Some(Map(
+      "from" -> fromPath)))
+}
 
 /**
   * Create a directory
   *
   */
-case class MkDir(val fromPath: String) extends FilesystemTransformation
+case class MkDir(val fromPath: String) extends FilesystemTransformation {
+  override def viewTransformationStatus = ViewTransformationStatus(
+    "filesystem -> MkDirTransformation",
+    Some(Map(
+      "from" -> fromPath)))
+}
 
 /**
   * Wraps a second transformation which will only be executed if the file specified as

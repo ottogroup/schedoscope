@@ -31,6 +31,9 @@
 		<module>schedoscope-conf</module>
 		<module>schedoscope-export</module>
 		<module>schedoscope-core</module>
+ 		<module>schedoscope-transformation-oozie</module>
+		<module>schedoscope-transformation-pig</module>
+		<module>schedoscope-transformation-shell</module>
 		<module>schedoscope-tutorial</module>
 		<module>schedoscope-metascope</module>
 	</modules>

@@ -16,7 +16,6 @@
 package org.schedoscope.test
 
 import org.scalatest.{FlatSpec, Matchers}
-import org.schedoscope.DriverTests
 import org.schedoscope.dsl.Structure
 
 case class Contingency() extends Structure {
@@ -33,14 +32,15 @@ case class Nested() extends Structure {
 
 class ViewSerdeTest extends FlatSpec with Matchers {
 
-  "view Serde" should "deserialize structures" taggedAs (DriverTests) in {
+  "view Serde" should "deserialize structures" in {
     val c = new Contingency()
     val json = """{"value":1, "nested":{"o11":1,"o12":0,"o21":0,"o22":11}}"""
     val res = ViewSerDe.deserializeField(manifest[Nested], json)
     assert(res == Map("value" -> 1, "nested" -> Map("o11" -> 1, "o12" -> 0, "o21" -> 0, "o22" -> 11)))
 
   }
-  "view Serde" should "deserialize Lists" taggedAs (DriverTests) in {
+
+  it should "deserialize Lists" in {
     assert(ViewSerDe.deserializeField(manifest[List[Long]], "[]") == List())
     assert(ViewSerDe.deserializeField(manifest[List[Long]], "[1,2,3]") == List(1, 2, 3))
 
