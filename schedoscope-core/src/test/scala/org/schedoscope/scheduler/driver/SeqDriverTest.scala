@@ -16,7 +16,6 @@
 package org.schedoscope.scheduler.driver
 
 import org.scalatest.{FlatSpec, Matchers}
-import org.schedoscope.DriverTests
 import org.schedoscope.dsl.transformations.{HiveTransformation, SeqTransformation, Transformation}
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
@@ -24,30 +23,30 @@ import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter.
 class SeqDriverTest extends FlatSpec with Matchers {
   lazy val driver = new LocalTestResources().driverFor[SeqTransformation[Transformation, Transformation]]("seq")
 
-  "SeqDriver" should "have transformation name seq" taggedAs (DriverTests) in {
+  "SeqDriver" should "have transformation name seq" in {
     driver.transformationName shouldBe "seq"
   }
 
-  it should "execute seq transformations synchronously" taggedAs (DriverTests) in {
+  it should "execute seq transformations synchronously" in {
 
     val driverRunState = driver.runAndWait(SeqTransformation(HiveTransformation("SHOW TABLES"), HiveTransformation("SHOW TABLES")))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute another seq transformations synchronously" taggedAs (DriverTests) in {
+  it should "execute another seq transformations synchronously" in {
     val driverRunState = driver.runAndWait(SeqTransformation(HiveTransformation("SHOW TABLES"), HiveTransformation("SHOW TABLES")))
 
     driverRunState shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "execute seq transformations and return errors when running synchronously" taggedAs (DriverTests) in {
+  it should "execute seq transformations and return errors when running synchronously" in {
     val driverRunState = driver.runAndWait(SeqTransformation(HiveTransformation("FAIL ME"), HiveTransformation("SHOW TABLES")))
 
     driverRunState shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "execute seq transformations asynchronously" taggedAs (DriverTests) in {
+  it should "execute seq transformations asynchronously" in {
     val driverRunHandle = driver.run(SeqTransformation(HiveTransformation("SHOW TABLES"), HiveTransformation("SHOW TABLES")))
 
     var runWasAsynchronous = false
@@ -59,7 +58,7 @@ class SeqDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "succeed when first transformation is driving and second errorneous" taggedAs (DriverTests) in {
+  it should "succeed when first transformation is driving and second errorneous" in {
     val driverRunHandle = driver.run(SeqTransformation(HiveTransformation("SHOW TABLES"), HiveTransformation("FAIL ME")))
 
     var runWasAsynchronous = false
@@ -71,7 +70,7 @@ class SeqDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunSucceeded[_]]
   }
 
-  it should "fail when first transformation is not driving and second errorneous" taggedAs (DriverTests) in {
+  it should "fail when first transformation is not driving and second errorneous" in {
     val driverRunHandle = driver.run(SeqTransformation(HiveTransformation("SHOW TABLES"), HiveTransformation("FAIL ME"), false))
 
     var runWasAsynchronous = false
@@ -83,7 +82,7 @@ class SeqDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "execute seq transformations and return errors when running asynchronously" taggedAs (DriverTests) in {
+  it should "execute seq transformations and return errors when running asynchronously" in {
     val driverRunHandle = driver.run(SeqTransformation(HiveTransformation("FAIL ME"), HiveTransformation("SHOW TABLES")))
 
     var runWasAsynchronous = false
@@ -95,7 +94,7 @@ class SeqDriverTest extends FlatSpec with Matchers {
     driver.getDriverRunState(driverRunHandle) shouldBe a[DriverRunFailed[_]]
   }
 
-  it should "call its DriverRunCompletitionHandlers' driverRunCompleted upon request" taggedAs (DriverTests) in {
+  it should "call its DriverRunCompletitionHandlers' driverRunCompleted upon request" in {
     val runHandle = driver.run(SeqTransformation(HiveTransformation("SHOW TABLES"), HiveTransformation("SHOW TABLES")))
 
     while (driver.getDriverRunState(runHandle).isInstanceOf[DriverRunOngoing[_]]) {}
@@ -105,7 +104,7 @@ class SeqDriverTest extends FlatSpec with Matchers {
     driverRunCompletedCalled(runHandle, driver.getDriverRunState(runHandle)) shouldBe true
   }
 
-  it should "call its DriverRunCompletitionHandlers' driverRunStarted upon request" taggedAs (DriverTests) in {
+  it should "call its DriverRunCompletitionHandlers' driverRunStarted upon request" in {
     val runHandle = driver.run(SeqTransformation(HiveTransformation("SHOW TABLES"), HiveTransformation("SHOW TABLES")))
 
     driver.driverRunStarted(runHandle)

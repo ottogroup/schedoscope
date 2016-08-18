@@ -18,10 +18,13 @@ package org.schedoscope.dsl.transformations
 import java.net.URI
 
 import org.apache.commons.lang3.StringUtils
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import org.apache.hadoop.mapreduce.{Job, MRJobConfig}
 import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.driver.{DriverRunState, MapreduceDriver}
+import org.schedoscope.scheduler.service.ViewTransformationStatus
 
 /**
   * Compute a view using a plain Map-Reduce job.
@@ -63,6 +66,12 @@ case class MapreduceTransformation(
       .libJarsHdfs
       .filter(lj => jarName == null || lj.contains(jarName))
   }
+
+  override def viewTransformationStatus = ViewTransformationStatus(
+    name,
+    Some(Map(
+      "input" -> job.getConfiguration().get(FileInputFormat.INPUT_DIR),
+      "output" -> job.getConfiguration().get(FileOutputFormat.OUTDIR))))
 
   def configure() {
     // if job jar hasn't been registered, add all mapreduce libjars

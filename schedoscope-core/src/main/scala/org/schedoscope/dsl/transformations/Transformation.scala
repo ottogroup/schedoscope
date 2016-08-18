@@ -16,6 +16,7 @@
 package org.schedoscope.dsl.transformations
 
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.service.ViewTransformationStatus
 
 import scala.collection.mutable.HashMap
 
@@ -102,6 +103,11 @@ abstract class Transformation {
   @throws[InvalidTransformationException]
   def validateTransformation() = {}
 
+
+  /**
+    * Transformation types should override this to return more detailed transformation status to the Schedoscope service.
+    */
+  def viewTransformationStatus: ViewTransformationStatus = ViewTransformationStatus(name, None)
 }
 
 /**

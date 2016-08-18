@@ -20,7 +20,7 @@ import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.transformations.Checksum.defaultDigest
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
-import test.eci.datahub.{ProductBrandMaterializeOnce, ProductBrandsNoOpMirror}
+import test.views.{ProductBrandMaterializeOnce, ProductBrandsNoOpMirror}
 
 class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 

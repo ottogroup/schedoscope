@@ -19,7 +19,7 @@ import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.states.PartyInterestedInViewSchedulingStateChange._
-import test.eci.datahub.ProductBrand
+import test.views.ProductBrand
 
 class NoOpLeafViewSchedulingStateMachineTest extends FlatSpec with Matchers {
 

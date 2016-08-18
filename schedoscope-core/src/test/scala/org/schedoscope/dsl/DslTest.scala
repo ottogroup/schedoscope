@@ -24,7 +24,7 @@ import org.schedoscope.dsl.storageformats.{Parquet, TextFile}
 import org.schedoscope.dsl.transformations.{HiveTransformation, NoOp}
 import org.schedoscope.dsl.views.{DailyParameterization, JobMetadata, PointOccurrence}
 import org.schedoscope.schema.ddl.HiveQl.ddl
-import test.eci.datahub._
+import test.views._
 
 class DslTest extends FlatSpec with Matchers {
 
@@ -43,7 +43,7 @@ class DslTest extends FlatSpec with Matchers {
   it should "have a module name which is defined by its package" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    productBrandView.module shouldEqual "test_eci_datahub"
+    productBrandView.module shouldEqual "test_views"
   }
 
   it should "be commentable" in {
@@ -234,7 +234,7 @@ class DslTest extends FlatSpec with Matchers {
 
     val ddlStatement = ddl(productBrand)
 
-    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_eci_datahub.product_brand (") shouldBe true
+    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.product_brand (") shouldBe true
     ddlStatement.contains("occurred_at STRING,") shouldBe true
     ddlStatement.contains("product_id STRING,") shouldBe true
     ddlStatement.contains("brand_name STRING,") shouldBe true
@@ -244,7 +244,7 @@ class DslTest extends FlatSpec with Matchers {
     ddlStatement.contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
     ddlStatement.contains("PARTITIONED BY (shop_code STRING, year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
     ddlStatement.contains("STORED AS PARQUET") shouldBe true
-    ddlStatement.contains("LOCATION '/hdp/dev/test/eci/datahub/product_brand'") shouldBe true
+    ddlStatement.contains("LOCATION '/hdp/dev/test/views/product_brand'") shouldBe true
   }
 
   it should "be transformable into DDL for an env" in {
@@ -253,7 +253,7 @@ class DslTest extends FlatSpec with Matchers {
 
     val ddlStatement = ddl(productBrand)
 
-    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS prod_test_eci_datahub.product_brand (") shouldBe true
+    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS prod_test_views.product_brand (") shouldBe true
     ddlStatement.contains("occurred_at STRING,") shouldBe true
     ddlStatement.contains("product_id STRING,") shouldBe true
     ddlStatement.contains("brand_name STRING,") shouldBe true
@@ -263,7 +263,7 @@ class DslTest extends FlatSpec with Matchers {
     ddlStatement.contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
     ddlStatement.contains("PARTITIONED BY (shop_code STRING, year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
     ddlStatement.contains("STORED AS PARQUET") shouldBe true
-    ddlStatement.contains("LOCATION '/hdp/prod/test/eci/datahub/product_brand'") shouldBe true
+    ddlStatement.contains("LOCATION '/hdp/prod/test/views/product_brand'") shouldBe true
 
   }
 
@@ -327,7 +327,7 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "be dynamically instantiatable via URL path" in {
-    val views = View.viewsFromUrl("dev", "/test.eci.datahub/Product/e(EC0106,EC0101)/rymd(20140224-20131202)/")
+    val views = View.viewsFromUrl("dev", "/test.views/Product/e(EC0106,EC0101)/rymd(20140224-20131202)/")
 
     views.length shouldBe 2 * 85
 
@@ -343,12 +343,12 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "throw an exception during dynamic instantiation" in {
-    val thrown = the[java.lang.RuntimeException] thrownBy View.viewsFromUrl("dev", "/test.eci.datahub/RequireView/ec0106/")
-    thrown.getMessage() shouldBe "Error while parsing view(s) /test.eci.datahub/RequireView/ec0106/ : requirement failed: Put in upper case: ec0106"
+    val thrown = the[java.lang.RuntimeException] thrownBy View.viewsFromUrl("dev", "/test.views/RequireView/ec0106/")
+    thrown.getMessage() shouldBe "Error while parsing view(s) /test.views/RequireView/ec0106/ : requirement failed: Put in upper case: ec0106"
   }
 
   it should "have the same urlPath as the one they were dynamically constructed with" in {
-    val views = View.viewsFromUrl("dev", "test.eci.datahub/Product/EC0106/2014/02/24/20140224")
+    val views = View.viewsFromUrl("dev", "test.views/Product/EC0106/2014/02/24/20140224")
 
     views.length shouldBe 1
 
@@ -356,13 +356,13 @@ class DslTest extends FlatSpec with Matchers {
 
     val productParameters = product.partitionParameters
 
-    product.urlPath shouldBe "test.eci.datahub/Product/EC0106/2014/02/24/20140224"
+    product.urlPath shouldBe "test.views/Product/EC0106/2014/02/24/20140224"
   }
 
   it should "be queryable" in {
-    val views = View.viewsInPackage("test.eci.datahub")
+    val views = View.viewsInPackage("test.views")
 
-    views should contain allOf(classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101], classOf[ClickOfEC0101ViaOozie])
+    views should contain allOf(classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101])
 
     val traits = View.getTraits(classOf[ProductBrand])
 

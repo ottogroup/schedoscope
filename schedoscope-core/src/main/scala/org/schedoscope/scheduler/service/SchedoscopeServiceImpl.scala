@@ -186,60 +186,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   private def getOrElse[T](o: T, d: T) = if (o != null) o else d
 
-  private def viewTransformationStatus(transformation: Transformation): ViewTransformationStatus = {
-    transformation match {
-
-      case t: HiveTransformation => ViewTransformationStatus(
-        t.name,
-        Some(Map("sql" -> t.sql)))
-
-      case t: MapreduceTransformation => ViewTransformationStatus(
-        t.name,
-        Some(Map(
-          "input" -> t.job.getConfiguration().get(FileInputFormat.INPUT_DIR),
-          "output" -> t.job.getConfiguration().get(FileOutputFormat.OUTDIR))))
-
-      case t: PigTransformation => ViewTransformationStatus(
-        t.name,
-        Some(Map("latin" -> t.latin)))
-
-      case t: OozieTransformation => ViewTransformationStatus(
-        t.name,
-        Some(Map(
-          "bundle" -> t.bundle,
-          "workflow" -> t.workflow)))
-
-      case t: ShellTransformation => ViewTransformationStatus(
-        t.name,
-        Some(Map(
-          "shell" -> t.shell, "script" -> t.script,
-          "scriptFile" -> t.scriptFile)))
-
-      case t: CopyFrom => ViewTransformationStatus(
-        "filesystem -> CopyFromTransformation",
-        Some(Map(
-          "from" -> t.fromPattern,
-          "destinationView" -> t.toView.urlPath, "recursive" -> t.recursive.toString())))
-
-      case t: Copy => ViewTransformationStatus(
-        "filesystem -> CopyTransformation",
-        Some(Map(
-          "from" -> t.fromPattern,
-          "destinationPath" -> t.toPath)))
-
-      case t: Move => ViewTransformationStatus(
-        "filesystem -> MoveTransformation",
-        Some(Map(
-          "from" -> t.fromPattern,
-          "destinationPath" -> t.toPath)))
-
-      case t: StoreFrom => ViewTransformationStatus(
-        "filesystem -> StoreFromTransformation",
-        Some(Map("destinationView" -> t.toView.urlPath)))
-
-      case t => ViewTransformationStatus(t.name, None)
-    }
-  }
+  private def viewTransformationStatus(transformation: Transformation): ViewTransformationStatus = transformation.viewTransformationStatus
 
   private def viewExportStatus(exports: List[Transformation]): List[ViewTransformationStatus] = {
     exports.map(e =>
