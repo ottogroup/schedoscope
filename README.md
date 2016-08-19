@@ -77,6 +77,13 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 08/19/2016 - Release 0.6.5
+We have released Version 0.6.5 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+We have factored out Oozie, Pig, and shell transformations and their drivers into separate modules and removed knowledge about which transformation types exist from `schedoscope-core`. Thus, one can now extend Schedoscope with new tranformation types without touching the core.
+
+We have fixed a bug in the test framework where sorting results with null values yielded a null pointer exception.
+
 ###### 08/12/2016 - Release 0.6.4
 We have released Version 0.6.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
 
