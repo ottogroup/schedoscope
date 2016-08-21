@@ -46,7 +46,7 @@ More documentation can be found here:
 
 - [Schedoscope Wiki](https://github.com/ottogroup/schedoscope/wiki)
 
-Check out Metascope! It's an add-on to Schedoscope for collaborative metadata management, data discovery and exploration, and data lineage tracing:
+Check out Metascope! It's an add-on to Schedoscope for collaborative metadata management, data discovery, exploration, and data lineage tracing:
 
 - [Metascope Primer](https://github.com/ottogroup/schedoscope/wiki/Metascope%20Primer)
 
