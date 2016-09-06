@@ -116,7 +116,7 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
     UserGroupInformation.setConfiguration(hadoopConf)
     val ugi = UserGroupInformation.getCurrentUser()
     ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
-    ugi.reloginFromKeytab();
+    ugi.reloginFromKeytab()
     ugi
   }
 
