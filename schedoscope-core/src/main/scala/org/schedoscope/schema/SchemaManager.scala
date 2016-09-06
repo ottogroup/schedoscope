@@ -315,6 +315,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 }
 
 object SchemaManager {
+
   def apply(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String): SchemaManager = try {
     Class.forName("org.apache.hive.jdbc.HiveDriver")
     val connection =

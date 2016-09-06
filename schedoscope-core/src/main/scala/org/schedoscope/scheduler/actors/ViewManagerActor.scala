@@ -60,7 +60,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
     case GetViews(views, status, filter, dependencies) => {
-      val viewActors = if (views.isDefined) initializeViewActors(views.get, dependencies) else List()
+      val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
       val viewStates = viewStatusMap.values
         .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
@@ -81,7 +81,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     *
     * @param vs           the views to create actors for
     * @param dependencies create actors for the prerequisite views as well.
-    * @return the list of corresponding view actor refs
+    * @return the set of corresponding view actor refs
     */
   def initializeViewActors(vs: List[View], dependencies: Boolean = false) = {
     log.info(s"Initializing ${vs.size} views")
@@ -128,8 +128,8 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 
       log.info(s"Partitions created, initializing actors")
 
-      viewsWithMetadataToCreate.foreach(
-        _.metadata.foreach {
+      viewsWithMetadataToCreate.foreach { t =>
+        t.metadata.foreach {
           case (view, (version, timestamp)) => {
 
             val initialState =
@@ -141,13 +141,26 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
             val actorRef = actorOf(ViewActor.props(initialState, settings, self, actionsManagerActor, metadataLoggerActor), ViewManagerActor.actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
-        })
+        }
+
+        log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
+      }
     }
 
-    if (dependencies)
-      allViews.map { case (view, _, _) => child(ViewManagerActor.actorNameForView(view)).get }.distinct
+    log.info(s"Returning actors${if (dependencies) " including dependencies."}")
+
+    val viewsToReturnActorRefsFor = if (dependencies)
+      allViews.map { case (view, _, _) => view }.toSet
     else
-      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => child(ViewManagerActor.actorNameForView(view)).get }.distinct
+      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => view }.toSet
+
+    log.info(s"Fetching ${viewsToReturnActorRefsFor.size} actors")
+
+    val actors = viewsToReturnActorRefsFor.map { view => child(ViewManagerActor.actorNameForView(view)).get }
+
+    log.info(s"Returned ${actors.size} actors")
+
+    actors
   }
 
   def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
