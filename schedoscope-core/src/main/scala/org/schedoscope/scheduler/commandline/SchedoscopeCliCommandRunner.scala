@@ -54,10 +54,6 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
       opt[String]('t', "typ") action { (x, c) => c.copy(typ = Some(x)) } optional() valueName ("<type>") text ("filter queued actions by their type (e.g. 'oozie', 'filesystem', ...)"),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName ("<regex>") text ("regular expression to filter queued actions (e.g. '.*my.dabatase/myView.*'). "))
 
-    cmd("commands") action { (_, c) => c.copy(action = Some(COMMANDS)) } text ("list commands") children(
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName ("<status>") text ("filter commands by their status (e.g. 'failed')"),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName ("<regex>") text ("regular expression to filter command display (e.g. '.*201501.*'). "))
-
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children(
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName ("<status>") text ("filter views to be materialized by their status (e.g. 'failed')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
@@ -101,9 +97,6 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
             }
             case INVALIDATE => {
               schedoscope.invalidate(config.viewUrlPath, config.status, config.filter, config.dependencies)
-            }
-            case COMMANDS => {
-              schedoscope.commands(config.status, config.filter)
             }
             case SHUTDOWN => {
               schedoscope.shutdown()

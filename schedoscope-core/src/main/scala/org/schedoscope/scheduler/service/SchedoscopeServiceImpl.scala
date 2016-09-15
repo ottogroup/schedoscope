@@ -19,23 +19,18 @@ import java.util.regex.Pattern
 
 import akka.actor.{ActorRef, ActorSystem, actorRef2Scala}
 import akka.event.Logging
-import akka.pattern.Patterns
-import akka.util.Timeout
-import org.apache.hadoop.mapreduce.lib.input.FileInputFormat
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat
 import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import org.schedoscope.AskPattern._
 import org.schedoscope.conf.SchedoscopeSettings
+import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations._
-import org.schedoscope.dsl.{Named, View}
 import org.schedoscope.scheduler.actors.ViewManagerActor
 import org.schedoscope.scheduler.driver.{DriverRunFailed, DriverRunOngoing, DriverRunState, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.schema.ddl.HiveQl
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
 import scala.language.postfixOps
 
 class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
@@ -44,13 +39,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   transformationManagerActor ! DeployCommand()
 
-  case class SchedoscopeCommand(id: String, start: String, parts: List[Future[_]])
-
-  val runningCommands = collection.mutable.HashMap[String, SchedoscopeCommand]()
-  val doneCommands = collection.mutable.HashMap[String, SchedoscopeCommandStatus]()
-
-  private def viewsFromUrl(viewUrlPath: String) =
-    View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
+  private def getOrElse[T](o: T, d: T) = if (o != null) o else d
 
   private def checkFilter(filter: Option[String]) {
     if (filter.isDefined)
@@ -73,64 +62,75 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       }
   }
 
-  private def getViews(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
+  private def viewsFromUrl(viewUrlPath: String) =
+    View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
+
+  private def getViewStatus(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
+    checkFilter(filter)
+    checkViewUrlPath(viewUrlPath)
+
     val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
 
     queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.schedulingCommandTimeout).viewStatusList
   }
 
-  private def commandId(command: Any, args: Seq[Option[String]], start: Option[LocalDateTime] = None) = {
-    val format = DateTimeFormat.forPattern("YYYYMMddHHmmss")
+  private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
 
-    val c = command match {
-      case s: String => s
-      case c: Any => Named.camelToLowerUnderscore(c.getClass.getSimpleName)
+    val viewStatusListWithoutViewDetails = viewStatusResponses.map {
+      v =>
+        ViewStatus(
+          viewPath = v.view.urlPath,
+          viewTableName = if (all.getOrElse(false))
+            Some(v.view.tableName)
+          else
+            None,
+          status = v.status,
+          properties = None,
+          fields = None,
+          parameters = None,
+          dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
+            Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
+          else
+            None,
+          transformation = None,
+          export = None,
+          storageFormat = None,
+          materializeOnce = None,
+          comment = None,
+          isTable = if (all.getOrElse(false))
+            Some(false)
+          else
+            None)
     }
 
-    val a = if (args.size == 0) "_" else args.filter(_.isDefined).map(_.getOrElse("_")).mkString(":")
-
-    if (start.isDefined)
-      s"${c}::${a}::${format.print(start.get)}"
+    val viewStatusList = if (all.getOrElse(false))
+      viewStatusResponses
+        .groupBy(v => v.view.tableName)
+        .map(e => e._2.head)
+        .map(v => ViewStatus(
+          viewPath = v.view.urlPathPrefix,
+          viewTableName = Option(v.view.tableName),
+          status = v.status,
+          properties = None,
+          fields = Option(v.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
+          parameters = if (!v.view.parameters.isEmpty)
+            Some(v.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList)
+          else
+            None,
+          dependencies = None,
+          transformation = Option(v.view.registeredTransformation().viewTransformationStatus),
+          export = Option(viewExportStatus(v.view.registeredExports.map(e => e.apply()))),
+          storageFormat = Option(v.view.storageFormat.getClass.getSimpleName),
+          materializeOnce = Option(v.view.isMaterializeOnce),
+          comment = Option(v.view.comment),
+          isTable = Option(true)))
+        .toList ::: viewStatusListWithoutViewDetails
     else
-      s"${c}::${a}"
+      viewStatusListWithoutViewDetails
 
-  }
+    val statusOverview = viewStatusListWithoutViewDetails.groupBy(_.status).mapValues(_.size)
 
-  private def submitCommandInternal(actors: List[ActorRef], command: Any, args: Option[String]*) = {
-    val currentCommandId = runningCommandId(command.toString, args: _*)
-
-    if (currentCommandId.isDefined)
-      commandStatus(currentCommandId.get)
-    else {
-      val jobFutures = actors.map { actor => Patterns.ask(actor, command, Timeout(settings.schedulingCommandTimeout)) }
-      val start = new LocalDateTime()
-      val id = commandId(command, args, Some(start))
-
-      runningCommands.put(id, SchedoscopeCommand(id, formatDate(start), jobFutures))
-
-      SchedoscopeCommandStatus(id, formatDate(start), None, Map("submitted" -> jobFutures.size))
-    }
-  }
-
-  private def finalizeInternal(commandId: String, start: String, status: Map[String, Int]) = {
-    runningCommands.remove(commandId)
-
-    val scs = SchedoscopeCommandStatus(commandId, start, Some(formatDate(new LocalDateTime())), status)
-
-    doneCommands.put(commandId, scs)
-
-    scs
-  }
-
-  private def runningCommandId(command: String, args: Option[String]*): Option[String] = {
-    val cidPrefix = commandId(command, args)
-
-    runningCommands.keys
-      .foreach(k =>
-        if (k.startsWith(cidPrefix))
-          return Some(k))
-
-    None
+    ViewStatusList(statusOverview, if (overview.getOrElse(false)) List() else viewStatusList)
   }
 
   private def formatDate(d: LocalDateTime): String =
@@ -184,9 +184,6 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         RunStatus(o.toString, "", "", "", None))
   }
 
-  private def getOrElse[T](o: T, d: T) = if (o != null) o else d
-
-  private def viewTransformationStatus(transformation: Transformation): ViewTransformationStatus = transformation.viewTransformationStatus
 
   private def viewExportStatus(exports: List[Transformation]): List[ViewTransformationStatus] = {
     exports.map(e =>
@@ -217,100 +214,51 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
-    checkFilter(filter)
-    checkViewUrlPath(viewUrlPath)
 
-    val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
+    val viewStatusResponses = getViewStatus(viewUrlPath, status, filter)
 
-    submitCommandInternal(viewActors, MaterializeView(
-      try {
-        MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
-      } catch {
-        case _: NoSuchElementException => MaterializeViewMode.DEFAULT
-      }), viewUrlPath, status, filter)
+    viewStatusResponses
+      .map(_.actor)
+      .foreach {
+        _ ! MaterializeView(
+          try {
+            MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
+          } catch {
+            case _: NoSuchElementException => MaterializeViewMode.DEFAULT
+          })
+      }
+
+    viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
-    checkFilter(filter)
-    checkViewUrlPath(viewUrlPath)
+    val viewStatusResponses = getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false))
 
-    val viewActors = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false)).map(v => v.actor)
+    viewStatusResponses
+      .map(v => v.actor)
+      .foreach {
+        _ ! InvalidateView()
+      }
 
-    submitCommandInternal(viewActors, InvalidateView(), viewUrlPath, status, filter)
+    viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None)
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    checkFilter(filter)
-    checkViewUrlPath(viewUrlPath)
 
-    val viewActors = getViews(viewUrlPath, status, filter).map(v => v.actor)
+    val viewStatusResponses = getViewStatus(viewUrlPath, status, filter)
 
-    submitCommandInternal(viewActors, "newdata", viewUrlPath, status, filter)
+    viewStatusResponses
+      .map(_.actor)
+      .foreach {
+        _ ! "newdata"
+      }
+
+    viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
-    checkFilter(filter)
-    checkViewUrlPath(viewUrlPath)
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
+    viewStatusListFromStatusResponses(getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)), dependencies, overview, all)
 
-    val views = getViews(viewUrlPath, status, filter, dependencies.getOrElse(false))
-    val statusMap = views.map(v => (v.view.urlPath, v.status)).toMap // needed for status of dependencies in output
-
-    val viewStatusListWithoutViewDetails = views.map {
-      v =>
-        ViewStatus(
-          viewPath = v.view.urlPath,
-          viewTableName = if (all.getOrElse(false))
-            Some(v.view.tableName)
-          else
-            None,
-          status = v.status,
-          properties = None,
-          fields = None,
-          parameters = None,
-          dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
-            Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
-          else
-            None,
-          transformation = None,
-          export = None,
-          storageFormat = None,
-          materializeOnce = None,
-          comment = None,
-          isTable = if (all.getOrElse(false))
-            Some(false)
-          else
-            None)
-    }.toList
-
-    val viewStatusList = if (all.getOrElse(false))
-      views
-        .groupBy(v => v.view.tableName)
-        .map(e => e._2.head)
-        .map(v => ViewStatus(
-          viewPath = v.view.urlPathPrefix,
-          viewTableName = Option(v.view.tableName),
-          status = v.status,
-          properties = None,
-          fields = Option(v.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
-          parameters = if (!v.view.parameters.isEmpty)
-            Some(v.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList)
-          else
-            None,
-          dependencies = None,
-          transformation = Option(viewTransformationStatus(v.view.registeredTransformation())),
-          export = Option(viewExportStatus(v.view.registeredExports.map(e => e.apply()))),
-          storageFormat = Option(v.view.storageFormat.getClass.getSimpleName),
-          materializeOnce = Option(v.view.isMaterializeOnce),
-          comment = Option(v.view.comment),
-          isTable = Option(true)))
-        .toList ::: viewStatusListWithoutViewDetails
-    else
-      viewStatusListWithoutViewDetails
-
-    val statusOverview = viewStatusListWithoutViewDetails.groupBy(_.status).mapValues(_.size)
-
-    ViewStatusList(statusOverview, if (overview.getOrElse(false)) List() else viewStatusList)
-  }
 
   def transformations(status: Option[String], filter: Option[String]) = {
 
@@ -343,54 +291,6 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       .map(el => (el._1, el._2.size))
 
     QueueStatusList(overview, queues)
-  }
-
-  def commandStatus(commandId: String) = {
-    val cmd = runningCommands.get(commandId)
-
-    if (!cmd.isDefined)
-      SchedoscopeCommandStatus(commandId, "", None, Map("non-existent" -> 1))
-    else {
-      val statusCounts = cmd.get.parts
-        .map(f => {
-          if (f.isCompleted)
-            Await.result(f, 0 seconds) match {
-              // FIXME: Here we have to map all possible return messages to status codes
-              case ViewMaterialized(view, incomplete, changed, errors) => "materialized"
-              case ViewHasNoData(view) => "nodata"
-              case ViewFailed(view) => "failed"
-              case ViewStatusResponse(status, view, actor) => status
-              case _ => "other"
-            }
-          else
-            "running"
-        })
-        .groupBy(_.toString)
-        .mapValues(_.size)
-
-      if (statusCounts.get("running").getOrElse(0) == 0)
-        finalizeInternal(commandId, cmd.get.start, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
-      else
-        SchedoscopeCommandStatus(commandId, cmd.get.start, None, Map("submitted" -> cmd.get.parts.size) ++ statusCounts)
-
-    }
-  }
-
-  def commands(status: Option[String], filter: Option[String]) = {
-    checkFilter(filter)
-
-    val running = runningCommands.keys.map {
-      commandStatus(_)
-    }.toList
-
-    (running ++ doneCommands.values)
-      .groupBy(_.id)
-      .map(p => p._2.head)
-      .toSeq
-      .sortBy(_.start.toString)
-      .filter(c => if (!status.isDefined || status.get.isEmpty) true else (c.status.get(status.get).isDefined && c.status(status.get) > 0))
-      .filter(c => !filter.isDefined || c.id.matches(filter.get))
-      .toList
   }
 
   def shutdown(): Boolean = {
