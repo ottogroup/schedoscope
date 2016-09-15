@@ -15,8 +15,6 @@
   */
 package org.schedoscope.scheduler.service
 
-case class SchedoscopeCommandStatus(id: String, start: String, end: Option[String], status: Map[String, Int])
-
 case class TransformationStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]])
 
 case class TransformationStatusList(overview: Map[String, Int], transformations: List[TransformationStatus])
@@ -64,9 +62,11 @@ trait SchedoscopeService {
     *
     * Additionally, a MaterializeViewMode can be passed.
     *
+    * This method returns the initial status of the views being materialized.
+    *
     * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
     */
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SchedoscopeCommandStatus
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): ViewStatusList
 
   /**
     * Invalidate view(s). The views that are being invalidated are selected either by
@@ -74,22 +74,11 @@ trait SchedoscopeService {
     *
     * Additionally, it can also be specified whether children are to be invalidated as well.
     *
+    * This method returns the last status of the views that were invalidated.
+    *
     * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
     */
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SchedoscopeCommandStatus
-
-  /**
-    * Return the status of a given previously issued scheduling command.
-    */
-  def commandStatus(commandId: String): SchedoscopeCommandStatus
-
-  /**
-    * Return the states of previously issued scheduling commands, optionally filtering them by command status or regexp.
-    *
-    * Throws an InvalidArgumentException if an invalid regexp filter is passed.
-    *
-    */
-  def commands(status: Option[String], filter: Option[String]): List[SchedoscopeCommandStatus]
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): ViewStatusList
 
   /**
     * Return view(s) and their state(s). The views for which states are being returned are selected either by

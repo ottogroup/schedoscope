@@ -64,15 +64,13 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
 
   val route = get {
     respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-      parameters("status" ?, "filter" ?, "dependencies".as[Boolean] ?, "typ" ?, "mode" ?, "overview".as[Boolean] ?, "all".as[Boolean] ?) { (status, filter, dependencies, typ, mode, overview, all) => {
+      parameters("status" ?, "filter" ?, "dependencies".as[Boolean] ?, "typ" ?, "mode" ?, "overview".as[Boolean] ?, "all".as[Boolean] ?) {
+        (status, filter, dependencies, typ, mode, overview, all) =>
         path("transformations") {
           complete(schedoscope.transformations(status, filter))
         } ~
           path("queues") {
             complete(schedoscope.queues(typ, filter))
-          } ~
-          path("commands") {
-            complete(schedoscope.commands(status, filter))
           } ~
           path("views" / Rest ?) { viewUrlPath =>
             complete(schedoscope.views(viewUrlPath, status, filter, dependencies, overview, all))
@@ -82,11 +80,7 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
           } ~
           path("invalidate" / Rest ?) { viewUrlPath =>
             complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
-          } ~
-          path("command" / Rest) { commandId =>
-            complete(schedoscope.commandStatus(commandId))
           }
-      }
       }
     }
   }

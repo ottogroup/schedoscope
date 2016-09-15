@@ -60,10 +60,9 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
       case u: String if u.startsWith("/views") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
       case u: String if u.startsWith("/transformations") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[TransformationStatusList]
       case u: String if u.startsWith("/queues") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[QueueStatusList]
-      case u: String if u.startsWith("/materialize") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[SchedoscopeCommandStatus]
-      case u: String if u.startsWith("/invalidate") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[SchedoscopeCommandStatus]
-      case u: String if u.startsWith("/newdata") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[SchedoscopeCommandStatus]
-      case u: String if u.startsWith("/commands") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[List[SchedoscopeCommandStatus]]
+      case u: String if u.startsWith("/materialize") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/invalidate") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/newdata") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
       case _ => throw new RuntimeException("Unsupported query path: " + path)
     }
     val uri = Uri.from("http", "", host, port, path) withQuery (query)
@@ -82,24 +81,16 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
     system.isTerminated
   }
 
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): SchedoscopeCommandStatus = {
-    Await.result(get[SchedoscopeCommandStatus](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 3600 seconds)
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): ViewStatusList = {
+    Await.result(get[ViewStatusList](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 3600 seconds)
   }
 
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): SchedoscopeCommandStatus = {
-    Await.result(get[SchedoscopeCommandStatus](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): ViewStatusList = {
+    Await.result(get[ViewStatusList](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
   }
 
-  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): SchedoscopeCommandStatus = {
-    Await.result(get[SchedoscopeCommandStatus](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
-  }
-
-  def commandStatus(commandId: String): SchedoscopeCommandStatus = {
-    null
-  } // TODO
-
-  def commands(status: Option[String], filter: Option[String]): List[SchedoscopeCommandStatus] = {
-    Await.result(get[List[SchedoscopeCommandStatus]](s"/commands", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): ViewStatusList = {
+    Await.result(get[ViewStatusList](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): ViewStatusList = {

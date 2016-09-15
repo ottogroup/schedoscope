@@ -80,13 +80,6 @@ object SchedoscopeCliFormat {
         sb.append("\n" + vl.overview.map(el => s"${el._1}: ${el._2}").mkString("\n") + "\n")
       }
 
-      case sc: SchedoscopeCommandStatus => {
-        sb.append(s"id: ${sc.id}\n")
-        sb.append(s"start: ${sc.start}\n")
-        sb.append(s"end: ${sc.end.getOrElse("")}\n")
-        sb.append(s"status: ${sc.status}\n")
-      }
-
       case f: Future[_] => {
         sb.append(s"submitted; isCompleted: ${f.isCompleted}\n")
       }
