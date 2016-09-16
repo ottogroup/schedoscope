@@ -20,10 +20,10 @@ import java.util.Date
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.TypedAny.typedAny
-import org.schedoscope.dsl.storageformats.{Parquet, TextFile}
+import org.schedoscope.dsl.storageformats.{Avro, Parquet, TextFile}
 import org.schedoscope.dsl.transformations.{HiveTransformation, NoOp}
 import org.schedoscope.dsl.views.{DailyParameterization, JobMetadata, PointOccurrence}
-import org.schedoscope.schema.ddl.HiveQl.ddl
+import org.schedoscope.schema.ddl.HiveQl._
 import test.views._
 
 class DslTest extends FlatSpec with Matchers {
@@ -275,6 +275,26 @@ class DslTest extends FlatSpec with Matchers {
       d.env shouldEqual productBrand.env
     }
   }
+
+  it should "have a DDL checksum that varies" in {
+    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+    val avro = AvroView(p("2014"), p("01"), p("01"))
+
+    ddlChecksum(avro) should not equal ddlChecksum(productBrand)
+  }
+
+  it should "have a DDL checksum that is resilient to Avro schema changes" in {
+    val avro = AvroView(p("2014"), p("01"), p("01"))
+
+    val checksumOriginal = ddlChecksum(avro)
+
+    avro.storageFormat = Avro("new schema")
+
+    val checksumModifiedSchema = ddlChecksum(avro)
+
+    checksumOriginal shouldEqual checksumModifiedSchema
+  }
+
 
   "A parameter" should "be equal to another one of the same parameterization" in {
     val p1: Parameter[Int] = p(2)
