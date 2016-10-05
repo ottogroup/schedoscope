@@ -1,6 +1,5 @@
 package org.schedoscope.test
 
-import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field._
 import org.schedoscope.dsl.Parameter._
 import test.views.{Click, ClickOfEC0101}
@@ -57,13 +56,9 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     row(v(id) shouldBe "event03",
       v(url) shouldBe "http://ec0101.com/url3")
   }
-
-
 }
 
 class TestReusableFixtures extends SchedoscopeSpec with ReusableFixtures {
-
-
 
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows
 
@@ -105,7 +100,6 @@ class TestReusableFixtures extends SchedoscopeSpec with ReusableFixtures {
     numRows() shouldBe 3
   }
 
-
   it should "do this" in {
     {
       import ec0101Clicks._
@@ -125,8 +119,4 @@ class TestReusableFixtures extends SchedoscopeSpec with ReusableFixtures {
     row(v(id) shouldBe "event02",
       v(url) shouldBe "url2")
   }
-
-
-
-
 }

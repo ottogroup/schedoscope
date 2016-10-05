@@ -67,7 +67,7 @@ trait AccessRowData {
    * @see org.schedoscope.test.rows#rowId()
   */
   def rowId(): String = {
-    WriteableView.rowIdPattern.format(rowIdx)
+    WritableView.rowIdPattern.format(rowIdx)
   }
 
   /**

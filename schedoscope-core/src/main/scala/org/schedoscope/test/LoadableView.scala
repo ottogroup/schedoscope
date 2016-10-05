@@ -22,17 +22,18 @@ import scala.collection.mutable.ListBuffer
 
 /**
   * This trait enables a view to be loaded with the results of it's
-  * transformation during tests
+  * transformation during tests.
   */
-trait LoadableView extends WriteableView {
 
-  val inputFixtures = ListBuffer.empty[View with WriteableView]
+trait LoadableView extends WritableView {
+
+  val inputFixtures = ListBuffer.empty[View with WritableView]
   val localResources = ListBuffer.empty[(String, String)]
 
   /**
     * Adds dependencies for this view
     */
-  def basedOn(d: View with WriteableView*) {
+  def basedOn(d: View with WritableView*) {
     d.foreach { el =>
       el.resources = resources
       el.createViewTable()
@@ -104,14 +105,9 @@ trait LoadableView extends WriteableView {
     c.foreach(e => this.configureTransformation(e._1, e._2))
   }
 
-  /**
-    * Add a local resource
-    * @param res
-    */
   def withResource(res: (String, String)*) {
     localResources ++= res
   }
-
 }
 
 
@@ -148,7 +144,7 @@ trait test extends LoadableView with AccessRowData {
   }
 
   override def rowId() = {
-    WriteableView.rowIdPattern.format(rowIdx)
+    WritableView.rowIdPattern.format(rowIdx)
   }
 
   override def numRows() = {

@@ -20,7 +20,7 @@ import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.{NoOp, SeqTransformation, Transformation}
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.{ParsedView, ParsedViewAugmentor}
-import org.schedoscope.test.{WriteableView}
+import org.schedoscope.test.{WritableView}
 
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
@@ -361,7 +361,7 @@ object View {
     PojoClassFactory.getPojoClassesRecursively(packageName, null).filter {
       _.extendz(classOf[View])
     }.filter {
-      !_.extendz(classOf[WriteableView])
+      !_.extendz(classOf[WritableView])
     }.filter {
       !_.isAbstract()
     }.map {

@@ -15,11 +15,10 @@
   */
 package org.schedoscope.test
 
-import java.io.{PrintStream, OutputStream}
+import java.io.{OutputStream, PrintStream}
 
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers, Suite}
 import org.schedoscope.dsl.{Field, FieldLike}
-import org.schedoscope.scheduler.driver.RetryableDriverException
 import org.schedoscope.test.resources.{LocalTestResources, TestResources}
 
 import scala.collection.mutable.ListBuffer
@@ -80,8 +79,6 @@ trait SchedoscopeSuite
   }
 }
 
-
-
 /**
   * This test suite lets you predefine fixtures that can be reused in
   * several test cases. Leading to faster runtime and improved readability.
@@ -115,9 +112,9 @@ trait ReusableFixtures
     * Before this call you should define the input.
     * After this call you can add the assertions.
     *
-    * @param view to load
-    * @param sortedBy sorting of the results
-    * @param disableDependencyCheck disable the check for based on
+    * @param view                            to load
+    * @param sortedBy                        sorting of the results
+    * @param disableDependencyCheck          disable the check for based on
     * @param disableTransformationValidation disable validation of transformations
     */
   def then(view: LoadableView, sortedBy: FieldLike[_] = null,
