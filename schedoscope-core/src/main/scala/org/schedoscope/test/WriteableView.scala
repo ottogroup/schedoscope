@@ -28,8 +28,8 @@ import scala.collection.mutable.ListBuffer
   * This trait allows the view to be filled with data and written into a
   * hive partition.
   */
-trait WriteableView extends View {
-
+trait WritableView extends View {
+  
   env = "test"
 
   var resources: TestResources = new LocalTestResources()
@@ -66,7 +66,7 @@ trait WriteableView extends View {
     * Generates a new rowId for the current row.
     */
   def rowId(): String = {
-    import WriteableView._
+    import WritableView._
     rowIdPattern.format(rowData.size)
   }
 
@@ -127,16 +127,16 @@ trait WriteableView extends View {
   }
 
   private def nullOrRandom(f: FieldLike[_], i: Int) = {
-    import WriteableView._
+    import WritableView._
     if (allowNullFields) "\\N" else FieldSequentialValue.get(f, rowData.size, rowIdPattern)
   }
 }
 
-object WriteableView {
+object WritableView {
   def rowIdPattern = "%04d"
 }
 
 /**
   * Syntantic sugar
   */
-trait rows extends WriteableView
+trait rows extends WritableView
