@@ -19,11 +19,19 @@ import org.schedoscope.dsl.{Structure, FieldLike}
 
 import scala.collection.mutable.ListBuffer
 
+/**
+  * This trait lets you access the RowData of [[LoadableView]] for tests
+  * to define assertions.
+  */
 trait AccessRowData {
 
-  var rowIdx = 0
+  protected var rowIdx = 0
   val rowData: ListBuffer[Map[String, Any]]
 
+
+  def startWithRow(index: Int) {
+    rowIdx = index
+  }
 
   /**
     * Get the value of a file in the current row

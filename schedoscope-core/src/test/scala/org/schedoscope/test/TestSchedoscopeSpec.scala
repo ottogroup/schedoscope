@@ -6,7 +6,7 @@ import org.schedoscope.dsl.Parameter._
 import test.views.{Click, ClickOfEC0101}
 
 
-class TestFixtureTest extends SchedoscopeSpec {
+class TestSchedoscopeSpec extends SchedoscopeSpec {
 
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
@@ -38,14 +38,14 @@ class TestFixtureTest extends SchedoscopeSpec {
     }
   }
 
-  "the test" should "produce the right amount of rows" in {
-    import click._
+  //import the view under test to access it in the tests
+  import click._
+
+  "the spec" should "produce the right amount of rows" in {
     numRows() shouldBe 3
   }
 
-
   it should "contain some events" in {
-    import click._
     row(v(id) shouldBe "event01",
       v(url) shouldBe "http://ec0101.com/url1")
     row(v(id) shouldBe "event02",
@@ -53,8 +53,7 @@ class TestFixtureTest extends SchedoscopeSpec {
   }
 
   it should "increment the row counter" in {
-    import click._
-    rowIdx = 2
+    startWithRow(2)
     row(v(id) shouldBe "event03",
       v(url) shouldBe "http://ec0101.com/url3")
   }
@@ -62,7 +61,9 @@ class TestFixtureTest extends SchedoscopeSpec {
 
 }
 
-class TestFixtureTest2 extends SchedoscopeSpec with ReusableFixtures {
+class TestReusableFixtures extends SchedoscopeSpec with ReusableFixtures {
+
+
 
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows
 
@@ -70,8 +71,10 @@ class TestFixtureTest2 extends SchedoscopeSpec with ReusableFixtures {
 
   val click = new ClickOfEC0101(p("2014"), p("01"), p("01")) with LoadableView {
     basedOn(ec0101Clicks, ec0106Clicks)
+    withResource()
   }
 
+  import click._
 
   "the test" should "do" in {
     {
@@ -117,18 +120,13 @@ class TestFixtureTest2 extends SchedoscopeSpec with ReusableFixtures {
         v(url, "url3"))
     }
     then(click)
-    import click._
     row(v(id) shouldBe "event01",
       v(url) shouldBe "url1")
     row(v(id) shouldBe "event02",
       v(url) shouldBe "url2")
   }
 
-  //  it should "increment the row counter" in {
-  //    import click._
-  //    row(vi(id) shouldBe "event03",
-  //      vi(url) shouldBe "http://ec0101.com/url3")
-  //  }
+
 
 
 }

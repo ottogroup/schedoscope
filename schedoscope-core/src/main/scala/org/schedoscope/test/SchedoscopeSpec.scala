@@ -15,20 +15,43 @@
   */
 package org.schedoscope.test
 
+import java.io.{PrintStream, OutputStream}
+
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers, Suite}
 import org.schedoscope.dsl.{Field, FieldLike}
+import org.schedoscope.scheduler.driver.RetryableDriverException
 import org.schedoscope.test.resources.{LocalTestResources, TestResources}
 
 import scala.collection.mutable.ListBuffer
 
+/**
+  * Default trait for writing schedoscope tests
+  */
 trait SchedoscopeSpec extends FlatSpec with SchedoscopeSuite with Matchers
 
+/**
+  * This trait enables the re-usage of the ViewUnderTest for several test-cases.
+  */
 trait SchedoscopeSuite
   extends BeforeAndAfterAll
     with BeforeAndAfterEach {
   this: Suite =>
 
   val views = ListBuffer.empty[test]
+
+  //mute system err during tests (experimental)
+  val originalStream = System.err
+  System.setErr(new PrintStream(new OutputStream() {
+    def write(b: Int) {}
+  }))
+
+  /**
+    * Deactivate the muting of system err
+    * during tests
+    */
+  def turnOnSystemErr() {
+    System.setErr(originalStream)
+  }
 
   override protected def beforeAll(configMap: org.scalatest.ConfigMap) = {
     views.foreach {
@@ -37,13 +60,33 @@ trait SchedoscopeSuite
     super.beforeAll(configMap)
   }
 
+  /**
+    * Register the view which will be loaded upon the start of the test
+    * suite. This view can then be queried inside the individual tests.
+    * The usage of this method is optional.
+    *
+    * @param view view under test
+    * @tparam T generic type of the view
+    * @return
+    */
   def putViewUnderTest[T <: test](view: T): T = {
     views += view
     view
   }
 
+  override protected def afterAll(): Unit = {
+    System.setErr(originalStream)
+    super.afterAll()
+  }
 }
 
+
+
+/**
+  * This test suite lets you predefine fixtures that can be reused in
+  * several test cases. Leading to faster runtime and improved readability.
+  * The suite can be mixed into the [[SchedoscopeSpec]] trait.
+  */
 trait ReusableFixtures
   extends BeforeAndAfterEach
     with AccessRowData {
@@ -52,12 +95,31 @@ trait ReusableFixtures
   var resources: TestResources = new LocalTestResources
   val rowData = new ListBuffer[Map[String, Any]]()
 
-  override protected def afterEach(): Unit = {
+  override protected def afterEach() {
     rowIdx = 0
     rowData.clear()
     super.afterEach()
   }
 
+  /**
+    * Replace the default [[TestResources]].
+    *
+    * @param resources new resources
+    */
+  def setTestResources(resources: TestResources) {
+    this.resources = resources
+  }
+
+  /**
+    * Call this to initiate the loading of a view.
+    * Before this call you should define the input.
+    * After this call you can add the assertions.
+    *
+    * @param view to load
+    * @param sortedBy sorting of the results
+    * @param disableDependencyCheck disable the check for based on
+    * @param disableTransformationValidation disable validation of transformations
+    */
   def then(view: LoadableView, sortedBy: FieldLike[_] = null,
            disableDependencyCheck: Boolean = false,
            disableTransformationValidation: Boolean = false) {
