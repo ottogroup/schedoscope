@@ -37,7 +37,7 @@ object ViewSerDe {
     * @param v
     * @return
     */
-  def serialize(v: View with rows): String = {
+  def serialize(v: View with WriteableView): String = {
     v.storageFormat match {
       case tf: TextFile => {
         val fterm = if (tf.fieldTerminator == null) "\t" else tf.fieldTerminator.replaceAll("\\\\t", "\t")

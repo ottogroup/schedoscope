@@ -68,19 +68,19 @@ case class IllegalJoinOnView() extends View {
 
 class TestableViewTest extends FlatSpec with Matchers {
 
-  val view2i1 = new View2 with rows {
+  val view2i1 = new View2 with WriteableView {
     set(
       v(v1, 2)
     )
   }
 
-  val view2i2 = new View2 with rows {
+  val view2i2 = new View2 with WriteableView {
     set(
       v(v1, 2)
     )
   }
 
-  val view3 = new View3 with rows {
+  val view3 = new View3 with WriteableView {
     set(
       v(v1, "3")
     )
