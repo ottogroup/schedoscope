@@ -15,7 +15,7 @@
   */
 package org.schedoscope.schema
 
-import java.security.{MessageDigest, PrivilegedAction}
+import java.security.PrivilegedAction
 import java.sql.{Connection, DriverManager}
 
 import org.apache.hadoop.hive.conf.HiveConf
@@ -50,7 +50,6 @@ case class FatalSchemaManagerException(message: String = null, cause: Throwable 
   * Interface to the Hive metastore. Used by partition creator actor and metadata logger actor.
   */
 class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Connection) {
-  private val md5 = MessageDigest.getInstance("MD5")
   private val existingSchemas = collection.mutable.Set[String]()
 
   private val log = LoggerFactory.getLogger(classOf[SchemaManager])
@@ -155,7 +154,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     stmt.close()
 
-    setTableProperty(view.dbName, view.n, Checksum.SchemaChecksum.checksumProperty, Checksum.digest(ddl))
+    setTableProperty(view.dbName, view.n, Checksum.SchemaChecksum.checksumProperty, HiveQl.ddlChecksum(view))
   } catch {
     case t: Throwable => {
       log.error(s"Schema Manager failed to create table ${view.dbName}.${view.n}.")
@@ -170,7 +169,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     * Throws a RetryableSchemaManagerException in case of any problem, encapsulating the original exception.
     */
   def schemaExists(view: View): Boolean = try {
-    val d = Checksum.digest(HiveQl.ddl(view))
+    val d = HiveQl.ddlChecksum(view)
 
     log.info(s"Checking whether table exists: view ${view.dbName}.${view.n} -- Checksum: ${d}")
 

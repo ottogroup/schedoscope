@@ -17,8 +17,14 @@
 package org.schedoscope.schema.ddl
 
 import org.schedoscope.dsl.storageformats._
+import org.schedoscope.dsl.transformations.Checksum
 import org.schedoscope.dsl.{FieldLike, Structure, View}
 
+import scala.util.matching.Regex
+
+/**
+  * Functions for creating Hive CREATE TABLE DDL statements for views
+  */
 object HiveQl {
   def typeDdl[T](scalaType: Manifest[T]): String = {
     if (scalaType.runtimeClass == classOf[List[_]])
@@ -122,6 +128,13 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
     else
       ""
   }
+
+  def ddlChecksum(view: View) = Checksum.digest(
+    view.storageFormat match {
+      case Avro(schemaPath) => ddl(view).replaceAll(Regex.quote(s"${view.avroSchemaPathPrefix}/${schemaPath}"), "")
+      case _ => ddl(view)
+    }
+  )
 
   def selectAll(view: View): String = s"SELECT * FROM ${view.tableName} ${partitionWhereClause(view)}"
 
