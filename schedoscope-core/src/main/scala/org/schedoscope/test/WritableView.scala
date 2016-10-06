@@ -45,7 +45,15 @@ trait WritableView extends View {
   moduleNameBuilder = () => Named.camelToLowerUnderscore(getClass().getSuperclass.getPackage().getName()).replaceAll("[.]", "_")
 
   // overrides (to enable correct table/database names, otherwise $$anonFunc...)
-  tablePathBuilder = (env: String) => resources.hiveWarehouseDir + ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
+  tablePathBuilder = (env: String) =>
+    resources.hiveWarehouseDir +
+      ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") +
+      (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") +
+      "/" +
+      n +
+      (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
+
+
 
   // unify storage format
   storedAs(resources.textStorage)
@@ -120,7 +128,7 @@ trait WritableView extends View {
   /**
     * Changes the name of the file the table is
     * written to.
- *
+    *
     * @param name
     */
   def withFileName(name: String): Unit = {

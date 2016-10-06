@@ -51,11 +51,7 @@ public class JdbcQueryUtils {
 		LOG.info("Drop Table: ");
 		LOG.info(dropTableQuery);
 
-		try {
-			executeStatementWithoutErrorHandling(dropTableQuery.toString(), connection);
-		} catch (SQLException se) {
-			LOG.info("error executing statement:" + se.getMessage());
-		}
+		executeStatementIfExists(dropTableQuery.toString(), connection);
 	}
 
 	/**
@@ -82,11 +78,8 @@ public class JdbcQueryUtils {
 			LOG.info("Drop Table: ");
 			LOG.info(dropTableQuery);
 
-			try {
-				executeStatementWithoutErrorHandling(dropTableQuery.toString(), connection);
-			} catch (SQLException se) {
-				LOG.info("error executing statement:" + se.getMessage());
-			}
+			executeStatementIfExists(dropTableQuery.toString(), connection);
+
 		}
 	}
 
@@ -114,7 +107,7 @@ public class JdbcQueryUtils {
 		LOG.info("Delete rows: ");
 		LOG.info(deleteRowsQuery);
 
-		executeQuery(deleteRowsQuery.toString(), connection);
+		executeStatementIfExists(deleteRowsQuery.toString(), connection);
 	}
 
 	/**
@@ -149,7 +142,7 @@ public class JdbcQueryUtils {
 		LOG.info("Merge output: ");
 		LOG.info(mergeOutputQuery);
 
-		executeQuery(mergeOutputQuery.toString(), connection);
+		executeStatement(mergeOutputQuery.toString(), connection);
 	}
 
 	/**
@@ -164,7 +157,7 @@ public class JdbcQueryUtils {
 		LOG.info("Create Table from DDL:");
 		LOG.info(createTableQuery);
 
-		executeQuery(createTableQuery, connection);
+		executeStatement(createTableQuery, connection);
 	}
 
 	/**
@@ -209,11 +202,24 @@ public class JdbcQueryUtils {
 		return insertQuery.toString();
 	}
 
-	private static void executeQuery(String query, Connection connection) {
+	private static void executeStatementIfExists(String query, Connection connection) {
 		try {
 			executeStatementWithoutErrorHandling(query, connection);
 		} catch (SQLException se) {
-			LOG.error("error executing statement:" + se.getMessage());
+			if (se.getMessage().contains("does not exist.")) {
+				LOG.info("error executing statement:" + se.getMessage());
+			} else {
+				LOG.error("error executing statement:" + se.getMessage());
+			}
+
+		}
+	}
+
+	private static void executeStatement(String query, Connection connection) {
+		try {
+			executeStatementWithoutErrorHandling(query, connection);
+		} catch (SQLException se) {
+			LOG.error("error executing statement:" + query + "\n" + se.getMessage());
 
 		}
 	}

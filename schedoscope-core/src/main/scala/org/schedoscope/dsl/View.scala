@@ -97,7 +97,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * The default implementation does this by joining dbPathBuilder and n. The latter will
     * be surrounded by additionalStoragePathPrefix and additionalStoragePathSuffix, if set.
     */
-  override var tablePathBuilder = (env: String) => dbPathBuilder(env) + (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") + "/" + n + (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
+  override var tablePathBuilder = (env: String) => dbPathBuilder(env) +
+    (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") +
+    "/" +
+    n +
+    (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
 
   def tablePath = tablePathBuilder(env)
 
