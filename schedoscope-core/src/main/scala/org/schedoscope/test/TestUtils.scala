@@ -20,7 +20,8 @@ import org.schedoscope.dsl.FieldLike
 object TestUtils {
 
   /**
-    * Execute the hive query in test on previously specified test fixtures.
+    * Execute the transformation on a view
+    * and ingest the resulting file into the view.
     *
     * @param sortedBy               sort the table by field
     * @param disableDependencyCheck disable dependency checks
@@ -36,6 +37,8 @@ object TestUtils {
         throw new IllegalArgumentException("The input views to the test given by basedOn() do not cover all types of dependencies of the view under test.")
       }
     }
+
+    view.loadLocalResources()
 
     val resources = view.resources
     val inputFixtures = view.inputFixtures

@@ -1,5 +1,6 @@
 package org.schedoscope.test
 
+import org.apache.hadoop.fs.Path
 import org.schedoscope.dsl.Field._
 import org.schedoscope.dsl.Parameter._
 import test.views.{Click, ClickOfEC0101}
@@ -34,6 +35,7 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
   val click = putViewUnderTest {
     new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
+      withResource("test" -> "src/test/resources/test.sql")
     }
   }
 
@@ -56,17 +58,23 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     row(v(id) shouldBe "event03",
       v(url) shouldBe "http://ec0101.com/url3")
   }
+
+  it should "load the local resource into hfds" in {
+    val fs = resources.fileSystem
+    val target = new Path(s"${resources.remoteTestDirectory}/test.sql")
+    fs.exists(target) shouldBe true
+  }
 }
 
-class TestReusableFixtures extends SchedoscopeSpec with ReusableFixtures {
+class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {
 
-  val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows
+  val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with InputSchema
 
-  val ec0106Clicks = new Click(p("EC0106"), p("2014"), p("01"), p("01")) with rows
+  val ec0106Clicks = new Click(p("EC0106"), p("2014"), p("01"), p("01")) with InputSchema
 
-  val click = new ClickOfEC0101(p("2014"), p("01"), p("01")) with LoadableView {
+  val click = new ClickOfEC0101(p("2014"), p("01"), p("01")) with OutputSchema {
     basedOn(ec0101Clicks, ec0106Clicks)
-    withResource()
+    withResource("test" -> "src/test/resources/test.sql")
   }
 
   import click._
@@ -119,4 +127,12 @@ class TestReusableFixtures extends SchedoscopeSpec with ReusableFixtures {
     row(v(id) shouldBe "event02",
       v(url) shouldBe "url2")
   }
+
+  it should "load the local resource into hfds" in {
+    val fs = resources.fileSystem
+    val target = new Path(s"${resources.remoteTestDirectory}/test.sql")
+    fs.exists(target) shouldBe true
+  }
+
+
 }

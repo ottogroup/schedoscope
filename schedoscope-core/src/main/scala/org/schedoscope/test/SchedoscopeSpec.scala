@@ -84,7 +84,7 @@ trait SchedoscopeSuite
   * several test cases. Leading to faster runtime and improved readability.
   * The suite can be mixed into the [[SchedoscopeSpec]] trait.
   */
-trait ReusableFixtures
+trait ReusableHiveSchema
   extends BeforeAndAfterEach
     with AccessRowData {
   this: Suite =>
@@ -126,10 +126,8 @@ trait ReusableFixtures
       v.resources = resources
     }
 
-    view.loadLocalResources()
-    view.localResources.clear()
-
     TestUtils.loadView(view, null, false, false)
+    view.localResources.clear()
 
     rowData.appendAll(view.rowData)
 

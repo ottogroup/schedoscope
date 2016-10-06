@@ -16,7 +16,7 @@
 package org.schedoscope.test
 
 import org.apache.hadoop.fs.Path
-import org.schedoscope.dsl.{FieldLike, Structure, View}
+import org.schedoscope.dsl.{FieldLike, View}
 
 import scala.collection.mutable.ListBuffer
 
@@ -105,12 +105,13 @@ trait LoadableView extends WritableView {
     c.foreach(e => this.configureTransformation(e._1, e._2))
   }
 
+  /**
+    *
+    */
   def withResource(res: (String, String)*) {
     localResources ++= res
   }
 }
-
-
 
 /**
   * This trait implements most of the schedoscope test DSL. it extends View
@@ -136,11 +137,7 @@ trait test extends LoadableView with AccessRowData {
   def `then`(sortedBy: FieldLike[_] = null,
              disableDependencyCheck: Boolean = false,
              disableTransformationValidation: Boolean = false) {
-    loadLocalResources()
-    TestUtils.loadView(this,
-      sortedBy,
-      disableDependencyCheck,
-      disableTransformationValidation)
+    TestUtils.loadView(this, sortedBy, disableDependencyCheck, disableTransformationValidation)
   }
 
   override def rowId() = {
@@ -150,4 +147,10 @@ trait test extends LoadableView with AccessRowData {
   override def numRows() = {
     rowData.size
   }
+
 }
+
+/**
+  * Syntactic sugar for [[ReusableHiveSchema]] tests
+  */
+trait OutputSchema extends LoadableView

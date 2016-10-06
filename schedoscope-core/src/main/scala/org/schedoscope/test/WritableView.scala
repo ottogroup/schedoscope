@@ -109,7 +109,7 @@ trait WritableView extends View {
     fs.mkdirs(partitionFilePath)
     val out = new OutputStreamWriter(fs.create(partitionFile), "UTF-8")
     out.write(ViewSerDe.serialize(this))
-    out.close
+    out.close()
 
   }
 
@@ -138,6 +138,11 @@ object WritableView {
 }
 
 /**
-  * Syntactic sugar
+  * Syntactic sugar for default tests
   */
 trait rows extends WritableView
+
+/**
+  * Syntactic sugar for [[ReusableHiveSchema]] tests
+  */
+trait InputSchema extends WritableView

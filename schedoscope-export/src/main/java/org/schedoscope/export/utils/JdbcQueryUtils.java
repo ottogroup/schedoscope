@@ -44,6 +44,8 @@ public class JdbcQueryUtils {
      */
     public static void dropTable(String table, Connection connection) {
 
+		System.out.println("JdbcQueryUtils.dropTable");
+
         table = table.replace(";", "");
 
         StringBuilder dropTableQuery = new StringBuilder();
@@ -73,6 +75,8 @@ public class JdbcQueryUtils {
         table = table.replace(";", "");
 
         for (int i = 0; i < numberOfPartitions; i++) {
+
+			System.out.println("DROPPPIIIIIIIIIII");
 
             StringBuilder dropTableQuery = new StringBuilder();
             dropTableQuery.append("DROP TABLE ");
