@@ -27,6 +27,10 @@ import scala.collection.mutable.ListBuffer
 
 trait LoadableView extends WritableView {
 
+  var sortedBy: Option[FieldLike[_]] = None
+  var dependencyCheckDisabled = false
+  var transformationValidationDisabled = false
+
   val inputFixtures = ListBuffer.empty[View with WritableView]
   val localResources = ListBuffer.empty[(String, String)]
 
@@ -106,10 +110,23 @@ trait LoadableView extends WritableView {
   }
 
   /**
-    *
+    * Register a local resource which will be added to the configuration and
+    * loaded into the hdfs during tests.
     */
   def withResource(res: (String, String)*) {
     localResources ++= res
+  }
+
+  def disableDependencyCheck(): Unit = {
+//    dependencyCheckDisabled = true
+  }
+
+  def disableTransformationValidation(): Unit = {
+//    transformationValidationDisabled = true
+  }
+
+  def sortRowsBy(fieldLike: FieldLike[_]): Unit = {
+//    sortedBy = Some(fieldLike)
   }
 }
 

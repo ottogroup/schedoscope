@@ -31,8 +31,9 @@ object TestUtils {
                disableDependencyCheck: Boolean = false,
                disableTransformationValidation: Boolean = false) = {
 
+
     //dependencyCheck
-    if (!disableDependencyCheck) {
+    if (!disableDependencyCheck && !disableDependencyCheck) {
       if (!view.checkDependencies()) {
         throw new IllegalArgumentException("The input views to the test given by basedOn() do not cover all types of dependencies of the view under test.")
       }
@@ -54,7 +55,7 @@ object TestUtils {
     val declaredTransformation = view.registeredTransformation()
 
     //transformation validation
-    if (!disableTransformationValidation)
+    if (!(disableTransformationValidation || view.dependencyCheckDisabled))
       declaredTransformation.validateTransformation()
 
     val transformationRiggedForTest = resources
@@ -76,6 +77,11 @@ object TestUtils {
       .driverFor(finalTransformationToRun)
       .runAndWait(finalTransformationToRun)
 
-    view.populate(if (sortedBy != null) Some(sortedBy) else None)
+    if(sortedBy != null) {
+      view.populate(Some(sortedBy))
+    }else{
+      view.populate(view.sortedBy)
+    }
+
   }
 }
