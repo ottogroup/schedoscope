@@ -77,9 +77,6 @@ trait LoadableView extends WritableView {
 
   }
 
-  /**
-    *
-    */
   def loadLocalResources(): Unit = {
     localResources.foreach {
       case (prop, file) =>
@@ -117,16 +114,27 @@ trait LoadableView extends WritableView {
     localResources ++= res
   }
 
+  /**
+    * Disable the matching of the dependencies of the view
+    * and views passed to basedOn()
+    */
   def disableDependencyCheck(): Unit = {
-//    dependencyCheckDisabled = true
+    dependencyCheckDisabled = true
   }
 
+  /**
+    * Disable potential checks of the transformation logic
+    */
   def disableTransformationValidation(): Unit = {
-//    transformationValidationDisabled = true
+    transformationValidationDisabled = true
   }
 
+  /**
+    *
+    * @param fieldLike field to desc
+    */
   def sortRowsBy(fieldLike: FieldLike[_]): Unit = {
-//    sortedBy = Some(fieldLike)
+    sortedBy = Some(fieldLike)
   }
 }
 
@@ -150,6 +158,7 @@ trait test extends LoadableView with AccessRowData {
     *
     * @param sortedBy               sort the table by field
     * @param disableDependencyCheck disable dependency checks
+    * @param disableTransformationValidation disable transformation validation
     */
   def `then`(sortedBy: FieldLike[_] = null,
              disableDependencyCheck: Boolean = false,
