@@ -20,7 +20,7 @@ import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.{NoOp, SeqTransformation, Transformation}
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.{ParsedView, ParsedViewAugmentor}
-import org.schedoscope.test.rows
+import org.schedoscope.test.{WritableView}
 
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
@@ -97,7 +97,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * The default implementation does this by joining dbPathBuilder and n. The latter will
     * be surrounded by additionalStoragePathPrefix and additionalStoragePathSuffix, if set.
     */
-  override var tablePathBuilder = (env: String) => dbPathBuilder(env) + (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") + "/" + n + (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
+  override var tablePathBuilder = (env: String) => dbPathBuilder(env) +
+    (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") +
+    "/" +
+    n +
+    (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
 
   def tablePath = tablePathBuilder(env)
 
@@ -361,7 +365,7 @@ object View {
     PojoClassFactory.getPojoClassesRecursively(packageName, null).filter {
       _.extendz(classOf[View])
     }.filter {
-      !_.extendz(classOf[rows])
+      !_.extendz(classOf[WritableView])
     }.filter {
       !_.isAbstract()
     }.map {

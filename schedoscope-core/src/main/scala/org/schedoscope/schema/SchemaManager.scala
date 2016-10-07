@@ -126,14 +126,19 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     * Create a partition for a view in the metastore (if it does not exist already) and return it.
     */
   def createPartition(view: View): Partition = {
-    val partition = viewsToPartitions(List(view)).values.head
-    try {
-      createNonExistingPartitions(view, List(partition))
-    } catch {
-      case _: Throwable => // Accept exceptions
-    }
-    partition
+      val partition = viewsToPartitions(List(view)).values.head
+      //register in metastore
+      if (view.isPartitioned()) {
+        try {
+          metastoreClient.add_partitions(List(partition), false, false)
+        } catch {
+          case _: Throwable => // Accept exceptions
+        }
+      }
+      partition
   }
+
+
 
   /**
     * Execute create database and table for view, dropping the table should it exist already.

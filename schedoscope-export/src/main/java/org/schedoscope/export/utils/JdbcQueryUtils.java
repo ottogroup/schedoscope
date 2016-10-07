@@ -32,203 +32,205 @@ import java.sql.Statement;
  */
 public class JdbcQueryUtils {
 
-    private static final Log LOG = LogFactory.getLog(JdbcQueryUtils.class);
+	private static final Log LOG = LogFactory.getLog(JdbcQueryUtils.class);
 
-    /**
-     * Drops a table from a database underneath the connection object.
-     *
-     * @param table
-     *            The table to drop.
-     * @param connection
-     *            The JDBC connection to use.
-     */
-    public static void dropTable(String table, Connection connection) {
+	/**
+	 * Drops a table from a database underneath the connection object.
+	 *
+	 * @param table      The table to drop.
+	 * @param connection The JDBC connection to use.
+	 */
+	public static void dropTable(String table, Connection connection) {
 
-        table = table.replace(";", "");
+		table = table.replace(";", "");
 
-        StringBuilder dropTableQuery = new StringBuilder();
-        dropTableQuery.append("DROP TABLE ");
-        dropTableQuery.append(table);
+		StringBuilder dropTableQuery = new StringBuilder();
+		dropTableQuery.append("DROP TABLE ");
+		dropTableQuery.append(table);
 
-        LOG.info("Drop Table: ");
-        LOG.info(dropTableQuery);
+		LOG.info("Drop Table: ");
+		LOG.info(dropTableQuery);
 
-        executeStatement(dropTableQuery.toString(), connection);
-    }
+		executeStatementIfExists(dropTableQuery.toString(), connection);
+	}
 
-    /**
-     * Drop multiple temporary tables from a database underneath a connection
-     * object.
-     *
-     * @param table
-     *            The table to drop.
-     * @param numberOfPartitions
-     *            The number of partitions, each partition represents a table.
-     * @param connection
-     *            The JDBC connection to use.
-     */
-    public static void dropTemporaryOutputTables(String table,
-                                                 int numberOfPartitions, Connection connection) {
+	/**
+	 * Drop multiple temporary tables from a database underneath a connection
+	 * object.
+	 *
+	 * @param table              The table to drop.
+	 * @param numberOfPartitions The number of partitions, each partition represents a table.
+	 * @param connection         The JDBC connection to use.
+	 */
+	public static void dropTemporaryOutputTables(String table,
+												 int numberOfPartitions, Connection connection) {
 
-        table = table.replace(";", "");
+		table = table.replace(";", "");
 
-        for (int i = 0; i < numberOfPartitions; i++) {
+		for (int i = 0; i < numberOfPartitions; i++) {
 
-            StringBuilder dropTableQuery = new StringBuilder();
-            dropTableQuery.append("DROP TABLE ");
-            dropTableQuery.append(table);
-            dropTableQuery.append("_");
-            dropTableQuery.append(i);
+			StringBuilder dropTableQuery = new StringBuilder();
+			dropTableQuery.append("DROP TABLE ");
+			dropTableQuery.append(table);
+			dropTableQuery.append("_");
+			dropTableQuery.append(i);
 
-            LOG.info("Drop Table: ");
-            LOG.info(dropTableQuery);
+			LOG.info("Drop Table: ");
+			LOG.info(dropTableQuery);
 
-            executeStatement(dropTableQuery.toString(), connection);
-        }
-    }
+			executeStatementIfExists(dropTableQuery.toString(), connection);
 
-    /**
-     * Deletes existing rows from a given table, conditions are passed in as
-     * well
-     *
-     * @param table
-     *            The table from which to delete rows.
-     * @param filter
-     *            The filter condition.
-     * @param connection
-     *            The JDBC connection object.
-     */
-    public static void deleteExisitingRows(String table, String filter,
-                                           Connection connection) {
+		}
+	}
 
-        table = table.replace(";", "");
-        filter = filter.replace(";", "");
+	/**
+	 * Deletes existing rows from a given table, conditions are passed in as
+	 * well
+	 *
+	 * @param table      The table from which to delete rows.
+	 * @param filter     The filter condition.
+	 * @param connection The JDBC connection object.
+	 */
+	public static void deleteExisitingRows(String table, String filter,
+										   Connection connection) {
 
-        StringBuilder deleteRowsQuery = new StringBuilder();
-        deleteRowsQuery.append("DELETE FROM ");
-        deleteRowsQuery.append(table);
-        deleteRowsQuery.append(" WHERE USED_FILTER='");
-        deleteRowsQuery.append(filter);
-        deleteRowsQuery.append("'");
+		table = table.replace(";", "");
+		filter = filter.replace(";", "");
 
-        LOG.info("Delete rows: ");
-        LOG.info(deleteRowsQuery);
+		StringBuilder deleteRowsQuery = new StringBuilder();
+		deleteRowsQuery.append("DELETE FROM ");
+		deleteRowsQuery.append(table);
+		deleteRowsQuery.append(" WHERE USED_FILTER='");
+		deleteRowsQuery.append(filter);
+		deleteRowsQuery.append("'");
 
-        executeStatement(deleteRowsQuery.toString(), connection);
-    }
+		LOG.info("Delete rows: ");
+		LOG.info(deleteRowsQuery);
 
-    /**
-     * Merges multiple temporary tables into the final output table, structure
-     * must be the same, uses "UNION ALL" for merging.
-     *
-     * @param table
-     *            The final table containing the merged result.
-     * @param tablePrefix
-     *            The prefix to prepend to the output table name.
-     * @param numberOfPartitions
-     *            The number of temporary tables to merge.
-     * @param connection
-     *            The JDBC connection object.
-     */
-    public static void mergeOutput(String table, String tablePrefix,
-                                   int numberOfPartitions, Connection connection) {
+		executeStatementIfExists(deleteRowsQuery.toString(), connection);
+	}
 
-        StringBuilder mergeOutputQuery = new StringBuilder();
-        mergeOutputQuery.append("INSERT INTO ");
-        mergeOutputQuery.append(table);
+	/**
+	 * Merges multiple temporary tables into the final output table, structure
+	 * must be the same, uses "UNION ALL" for merging.
+	 *
+	 * @param table              The final table containing the merged result.
+	 * @param tablePrefix        The prefix to prepend to the output table name.
+	 * @param numberOfPartitions The number of temporary tables to merge.
+	 * @param connection         The JDBC connection object.
+	 */
+	public static void mergeOutput(String table, String tablePrefix,
+								   int numberOfPartitions, Connection connection) {
 
-        for (int i = 0; i < numberOfPartitions; i++) {
-            mergeOutputQuery.append("\n");
-            mergeOutputQuery.append("SELECT * FROM ");
-            mergeOutputQuery.append(tablePrefix);
-            mergeOutputQuery.append(table);
-            mergeOutputQuery.append("_");
-            mergeOutputQuery.append(i);
-            if (i != numberOfPartitions - 1) {
-                mergeOutputQuery.append("\n");
-                mergeOutputQuery.append("UNION ALL");
-            }
-        }
+		StringBuilder mergeOutputQuery = new StringBuilder();
+		mergeOutputQuery.append("INSERT INTO ");
+		mergeOutputQuery.append(table);
 
-        LOG.info("Merge output: ");
-        LOG.info(mergeOutputQuery);
+		for (int i = 0; i < numberOfPartitions; i++) {
+			mergeOutputQuery.append("\n");
+			mergeOutputQuery.append("SELECT * FROM ");
+			mergeOutputQuery.append(tablePrefix);
+			mergeOutputQuery.append(table);
+			mergeOutputQuery.append("_");
+			mergeOutputQuery.append(i);
+			if (i != numberOfPartitions - 1) {
+				mergeOutputQuery.append("\n");
+				mergeOutputQuery.append("UNION ALL");
+			}
+		}
 
-        executeStatement(mergeOutputQuery.toString(), connection);
-    }
+		LOG.info("Merge output: ");
+		LOG.info(mergeOutputQuery);
 
-    /**
-     * Executes a given CREATE TABLE ... statement.
-     *
-     * @param createTableQuery
-     *            The SQL query to execute
-     * @param connection
-     *            The JDBC connection object.
-     */
-    public static void createTable(String createTableQuery,
-                                   Connection connection) {
+		executeStatement(mergeOutputQuery.toString(), connection);
+	}
 
-        LOG.info("Create Table from DDL:");
-        LOG.info(createTableQuery);
+	/**
+	 * Executes a given CREATE TABLE ... statement.
+	 *
+	 * @param createTableQuery The SQL query to execute
+	 * @param connection       The JDBC connection object.
+	 */
+	public static void createTable(String createTableQuery,
+								   Connection connection) {
 
-        executeStatement(createTableQuery, connection);
-    }
+		LOG.info("Create Table from DDL:");
+		LOG.info(createTableQuery);
 
-    /**
-     * Creates a prepared statement to insert data into a table.
-     *
-     * @param table
-     *            The table to insert the data into.
-     * @param fieldNames
-     *            An array with the column names.
-     * @return The final SQL statement to insert data via a JDBC statement.
-     */
-    public static String createInsertQuery(String table, String[] fieldNames) {
-        if (fieldNames == null) {
-            throw new IllegalArgumentException("Field names may not be null");
-        }
+		executeStatement(createTableQuery, connection);
+	}
 
-        StringBuilder insertQuery = new StringBuilder();
-        insertQuery.append("INSERT INTO ");
-        insertQuery.append(table);
+	/**
+	 * Creates a prepared statement to insert data into a table.
+	 *
+	 * @param table      The table to insert the data into.
+	 * @param fieldNames An array with the column names.
+	 * @return The final SQL statement to insert data via a JDBC statement.
+	 */
+	public static String createInsertQuery(String table, String[] fieldNames) {
+		if (fieldNames == null) {
+			throw new IllegalArgumentException("Field names may not be null");
+		}
 
-        if (fieldNames.length > 0 && fieldNames[0] != null) {
-            insertQuery.append(" (");
-            for (int i = 0; i < fieldNames.length; i++) {
-                insertQuery.append(fieldNames[i]);
-                if (i != fieldNames.length - 1) {
-                    insertQuery.append(",");
-                }
-            }
-            insertQuery.append(")");
-        }
-        insertQuery.append(" VALUES (");
+		StringBuilder insertQuery = new StringBuilder();
+		insertQuery.append("INSERT INTO ");
+		insertQuery.append(table);
 
-        for (int i = 0; i < fieldNames.length; i++) {
-            insertQuery.append("?");
-            if (i != fieldNames.length - 1) {
-                insertQuery.append(",");
-            }
-        }
-        insertQuery.append(")");
+		if (fieldNames.length > 0 && fieldNames[0] != null) {
+			insertQuery.append(" (");
+			for (int i = 0; i < fieldNames.length; i++) {
+				insertQuery.append(fieldNames[i]);
+				if (i != fieldNames.length - 1) {
+					insertQuery.append(",");
+				}
+			}
+			insertQuery.append(")");
+		}
+		insertQuery.append(" VALUES (");
 
-        LOG.info("Insert into: ");
-        LOG.info(insertQuery.toString());
+		for (int i = 0; i < fieldNames.length; i++) {
+			insertQuery.append("?");
+			if (i != fieldNames.length - 1) {
+				insertQuery.append(",");
+			}
+		}
+		insertQuery.append(")");
 
-        return insertQuery.toString();
-    }
+		LOG.info("Insert into: ");
+		LOG.info(insertQuery.toString());
 
-    private static void executeStatement(String query, Connection connection) {
+		return insertQuery.toString();
+	}
 
-        Statement statement = null;
-        try {
+	private static void executeStatementIfExists(String query, Connection connection) {
+		try {
+			executeStatementWithoutErrorHandling(query, connection);
+		} catch (SQLException se) {
+			if (se.getMessage().contains("does not exist.")) {
+				LOG.info("error executing statement:" + se.getMessage());
+			} else {
+				LOG.error("error executing statement:" + se.getMessage());
+			}
 
-            statement = connection.createStatement();
-            statement.executeUpdate(query);
+		}
+	}
 
-        } catch (SQLException se) {
-            LOG.error("error executing statement:" + se.getMessage());
-        } finally {
-            DbUtils.closeQuietly(statement);
-        }
-    }
+	private static void executeStatement(String query, Connection connection) {
+		try {
+			executeStatementWithoutErrorHandling(query, connection);
+		} catch (SQLException se) {
+			LOG.error("error executing statement:" + query + "\n" + se.getMessage());
+
+		}
+	}
+
+	private static void executeStatementWithoutErrorHandling(String query, Connection connection) throws SQLException {
+		Statement statement = null;
+		try {
+			statement = connection.createStatement();
+			statement.executeUpdate(query);
+		} finally {
+			DbUtils.closeQuietly(statement);
+		}
+	}
 }

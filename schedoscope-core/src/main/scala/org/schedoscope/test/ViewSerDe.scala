@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 
 /**
   * Helper for serialization/deserialization of hive data types
-  * *
+  *
   */
 object ViewSerDe {
   val logger = LoggerFactory.getLogger("gna")
@@ -37,7 +37,7 @@ object ViewSerDe {
     * @param v
     * @return
     */
-  def serialize(v: View with rows): String = {
+  def serialize(v: View with WritableView): String = {
     v.storageFormat match {
       case tf: TextFile => {
         val fterm = if (tf.fieldTerminator == null) "\t" else tf.fieldTerminator.replaceAll("\\\\t", "\t")

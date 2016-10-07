@@ -25,11 +25,11 @@ import org.schedoscope.test.resources.{LocalTestResources, TestResources}
 import scala.collection.mutable.ListBuffer
 
 /**
-  * A fillable View is a View with rows of data (a Table).
+  * This trait allows the view to be filled with data and written into a
+  * hive partition.
   */
-trait FillableView extends View with rows {}
+trait WritableView extends View {
 
-trait rows extends View {
   env = "test"
 
   var resources: TestResources = new LocalTestResources()
@@ -38,18 +38,25 @@ trait rows extends View {
 
   var allowNullFields: Boolean = false
 
-  def rowIdPattern = "%04d"
+  var fileName = "00000"
 
   override def namingBase = this.getClass.getSuperclass.getSimpleName()
 
   moduleNameBuilder = () => Named.camelToLowerUnderscore(getClass().getSuperclass.getPackage().getName()).replaceAll("[.]", "_")
 
-  tablePathBuilder = (env: String) => resources.hiveWarehouseDir + ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") + (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") + "/" + n + (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
+  // overrides (to enable correct table/database names, otherwise $$anonFunc...)
+  tablePathBuilder = (env: String) =>
+    resources.hiveWarehouseDir +
+      ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") +
+      (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") +
+      "/" +
+      n +
+      (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
+
+
 
   // unify storage format
   storedAs(resources.textStorage)
-
-  // overrides (to enable correct table/database names, otherwise $$anonFunc...)
 
   /**
     * Inserts a row to this field. If columns are left out, they are either set to null or filled with random data.
@@ -64,17 +71,18 @@ trait rows extends View {
   }
 
   /**
+    * Generates a new rowId for the current row.
+    */
+  def rowId(): String = {
+    import WritableView._
+    rowIdPattern.format(rowData.size)
+  }
+
+  /**
     * Returns the number of rows in this view
     */
   def numRows(): Int = {
     rowData.size
-  }
-
-  /**
-    * Generates a new rowId for the current row.
-    */
-  def rowId(): String = {
-    rowIdPattern.format(rowData.size)
   }
 
   /**
@@ -86,15 +94,6 @@ trait rows extends View {
     val db = resources.database
     rowData.clear()
     rowData.appendAll(db.selectView(this, orderedBy))
-  }
-
-  /**
-    * Persists this view into local hive
-    *
-    */
-  def createViewTableAndWriteTestData() {
-    createViewTable()
-    writeData()
   }
 
   def createViewTable() {
@@ -111,14 +110,14 @@ trait rows extends View {
     else
       new Path(this.fullPath)
 
-    val partitionFile = new Path(partitionFilePath, "00000")
+    val partitionFile = new Path(partitionFilePath, fileName)
     val fs = resources.fileSystem
     if (fs.exists(partitionFilePath))
       fs.delete(partitionFilePath, true)
     fs.mkdirs(partitionFilePath)
     val out = new OutputStreamWriter(fs.create(partitionFile), "UTF-8")
     out.write(ViewSerDe.serialize(this))
-    out.close
+    out.close()
 
   }
 
@@ -126,7 +125,32 @@ trait rows extends View {
     allowNullFields = true
   }
 
+  /**
+    * Changes the name of the file the table is
+    * written to.
+    *
+    * @param name
+    */
+  def withFileName(name: String): Unit = {
+    fileName = name
+  }
+
   private def nullOrRandom(f: FieldLike[_], i: Int) = {
+    import WritableView._
     if (allowNullFields) "\\N" else FieldSequentialValue.get(f, rowData.size, rowIdPattern)
   }
 }
+
+object WritableView {
+  def rowIdPattern = "%04d"
+}
+
+/**
+  * Syntactic sugar for default tests
+  */
+trait rows extends WritableView
+
+/**
+  * Syntactic sugar for [[ReusableHiveSchema]] tests
+  */
+trait InputSchema extends WritableView

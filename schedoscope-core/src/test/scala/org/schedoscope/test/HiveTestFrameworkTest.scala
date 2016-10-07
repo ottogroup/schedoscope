@@ -20,7 +20,7 @@ import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
 import test.views.{Click, ClickOfEC0101}
 
-class HiveTestFrameworkTest extends FlatSpec with Matchers {
+class HiveTestFrameworkTest extends SchedoscopeSpec {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
       v(id, "event01"),

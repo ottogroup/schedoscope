@@ -56,7 +56,7 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
   }
 
   /**
-    * The configured latest, i.e., current day for DateParamterization logic
+    * The configured latest, i.e., current day for DateParameterization logic
     */
   def latestDay = {
     val conf = config.getString("schedoscope.scheduler.latestDay")
