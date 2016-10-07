@@ -69,13 +69,20 @@ Schedoscope was conceived at the Business Intelligence department of [Otto Group
 
 The following people have contributed to the various parts of Schedoscope so far: 
 
-[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Kassem Tohme](https://github.com/ktohme), [Christian Richter](https://github.com/christianrichter), [Dominik Benz](https://github.com/dominikbenz), [Martin Sänger](https://github.com/martinsaenger), [Alexander Kolb](https://github.com/lofifnc), [Annika Seidler](https://github.com/aleveringhaus).
+[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Hans-Peter Zorn](https://github.com/hpzorn), [Kassem Tohme](https://github.com/ktohme), [Alexander Kolb](https://github.com/lofifnc), [Christian Richter](https://github.com/christianrichter), [Dominik Benz](https://github.com/dominikbenz), [Annika Seidler](https://github.com/aleveringhaus), [Martin Sänger](https://github.com/martinsaenger).
 
 We would love to get contributions from you as well. We haven't got a formalized submission process yet. If you have an idea for a contribution or even coded one already, get in touch with Utz or just send us your pull request. We will work it out from there.
 
 Please help making Schedoscope better!
 
 ## News
+
+###### 10/07/2016 - Release 0.6.6
+We have released Version 0.6.6 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+The test framework has received some love. There are [two new testing styles](https://github.com/ottogroup/schedoscope/wiki/Test%20Framework#alternative-testing-styles) that can make your tests look prettier and run faster:
+* compute a view once and execute multiple tests on its data;
+* create the Hive structures for input views and views under test once and load these with different data within each test case saving Hive environment setup overhead and keeping input data and assertions next to each other within each test.
 
 ###### 08/19/2016 - Release 0.6.5
 We have released Version 0.6.5 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
@@ -114,12 +121,6 @@ We have released Version 0.6.0 as a Maven artifact to our Bintray repository (se
 We have updated the checksumming algorithm for Hive transformations such that changes to comments, settings, and formatting no longer affect the checksum. This should significantly reduce operations worries. However, the checksums of all your Hive queries compared to Release 0.5.0 will change. **Take care that you issue a materialization request with [mode `RESET_TRANSFORMATION_CHECKSUMS`](https://github.com/ottogroup/schedoscope/wiki/Scheduling-Command-Reference) when switching to this version to avoid unwanted view recomputations!** Hence the switch of the minor release number.
 
 The test framework now automatically checks whether there is an `ON` condition for each `JOIN` clause in your Hive queries. Also, it checks whether each input view you provide in `basedOn` is also declared as a dependency.
-
-###### 05/21/2016 - Release 0.5.0
-We have released Version 0.5.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom). 
-
-This is a biggie. We have added Metascope to our distribution. Metascope is a collaborative metadata management, documentation, exploration, and data lineage tracing tool that exploits the integrated specification of data structure, dependencies, and computation logic in Schedoscope views. See [the tutorial](https://github.com/ottogroup/schedoscope/wiki/Open%20Street%20Map%20Tutorial) and the [Metascope primer](https://github.com/ottogroup/schedoscope/wiki/Metascope%20Primer) for more information.
-
 
 ## Community / Forums
 
