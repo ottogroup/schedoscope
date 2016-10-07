@@ -169,6 +169,25 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
 
     case _ =>
   }
+
+  /**
+    * Perform any rigging of a transformation necessary to execute it within the scope of the
+    * test framework represented by an instance of TestResources using this driver.
+    *
+    * The rigged transformation is returned.
+    *
+    * By default, the transformation is not changed.
+    */
+  override def rigTransformationForTest(t: SeqTransformation[Transformation, Transformation],
+                                        testResources: TestResources): SeqTransformation[Transformation, Transformation] = {
+    val driverForFirstTransformation = driverFor(t.firstThisTransformation.name)
+    val driverForSecondTransformation = driverFor(t.thenThatTransformation.name)
+
+    val t1 = driverForFirstTransformation.rigTransformationForTest(t.firstThisTransformation, testResources)
+    val t2 = driverForSecondTransformation.rigTransformationForTest(t.thenThatTransformation, testResources)
+
+    SeqTransformation(t1, t2, t.firstTransformationIsDriving)
+  }
 }
 
 /**
