@@ -13,10 +13,10 @@ import org.schedoscope.scheduler.service.ViewTransformationStatus
   * (b) any configuration key starting with "--" is considered a Spark argument. The configuration value is passed as the value of the argument
   * (c) any other configuration key is considered an environment variable to be passed to the Spark job.
   *
+  * @param applicationName An optional logical name for the Spark job
   * @param mainJarOrPy Path to the JAR or Python file containing the Spark job
   * @param mainClass In case of a JAR, the main class within that JAR
   * @param applicationArgs Command line arguments to pass. Defaults to an empty list
-  * @param appName An optional logical name for the Spark job
   * @param master Spark master setting. Defaults to "yarn-cluster".
   * @param deployMode Spark deployment mode setting. Defaults to "cluster"
   * @param additionalJars A list of optional JAR files to deploy with the job. Defaults to an empty list.
@@ -25,9 +25,9 @@ import org.schedoscope.scheduler.service.ViewTransformationStatus
   * @param propertiesFile Path to an optional properties file.
   */
 case class SparkTransformation(
-                                mainJarOrPy: String, mainClass: String = null,
+                                applicationName: String, mainJarOrPy: String, mainClass: String = null,
                                 applicationArgs: List[String] = List(),
-                                appName: String = null, master: String = "yarn-cluster", deployMode: String = "cluster",
+                                master: String = "yarn-cluster", deployMode: String = "cluster",
                                 additionalJars: List[String] = List(),
                                 additionalPys: List[String] = List(),
                                 additionalFiles: List[String] = List(),
@@ -42,6 +42,7 @@ case class SparkTransformation(
   override def viewTransformationStatus = ViewTransformationStatus(
     name,
     Some(Map(
+      "applicationName" -> applicationName,
       "mainJarOrPy" -> mainJarOrPy,
       "mainClass" -> {
         if (mainClass == null) "" else mainClass
@@ -49,9 +50,6 @@ case class SparkTransformation(
       "applicationArgs" -> applicationArgs.mkString(", "),
       "master" -> master,
       "deployMode" -> deployMode,
-      "appName" -> {
-        if (appName == null) "" else appName
-      },
       "additionalJars" -> additionalJars.mkString(", "),
       "additionalPys" -> additionalPys.mkString(", "),
       "additionalFiles" -> additionalFiles.mkString(", "),
