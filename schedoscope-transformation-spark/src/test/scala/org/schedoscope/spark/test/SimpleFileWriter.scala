@@ -18,7 +18,7 @@ object SimpleFileWriter {
     if (args.length < 1)
       throw new IllegalArgumentException("The first parameter must be the output file path")
 
-    val outPath = args.head
+    val outPath: String = args.head
 
     val sc = new SparkContext(confBuilder())
     sc.setLogLevel("ERROR")
