@@ -40,18 +40,6 @@
 					<artifactId>hive-shims-0.20S</artifactId>
 					<groupId>org.apache.hive.shims</groupId>
 				</exclusion>
-				<exclusion>
-					<artifactId>jetty-all</artifactId>
-					<groupId>org.eclipse.jetty.aggregate</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jersey-servlet</artifactId>
-					<groupId>com.sun.jersey</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jsp-api</artifactId>
-					<groupId>javax.servlet.jsp</groupId>
-				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -96,18 +84,6 @@
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
 					<groupId>org.slf4j</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>hbase-annotations</artifactId>
-					<groupId>org.apache.hbase</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>hbase-common</artifactId>
-					<groupId>org.apache.hbase</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>hbase-protocol</artifactId>
-					<groupId>org.apache.hbase</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -163,18 +139,6 @@
 					<artifactId>slf4j-api</artifactId>
 					<groupId>org.slf4j</groupId>
 				</exclusion>
-				<exclusion>
-					<artifactId>servlet-api</artifactId>
-					<groupId>javax.servlet</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>guice-servlet</artifactId>
-					<groupId>com.google.inject.extensions</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jetty-util</artifactId>
-					<groupId>org.mortbay.jetty</groupId>
-				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
@@ -190,22 +154,6 @@
 				<exclusion>
 					<artifactId>slf4j-api</artifactId>
 					<groupId>org.slf4j</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>servlet-api</artifactId>
-					<groupId>javax.servlet</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jsp-api</artifactId>
-					<groupId>javax.servlet.jsp</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jetty</artifactId>
-					<groupId>org.mortbay.jetty</groupId>
-				</exclusion>
-				<exclusion>
-					<artifactId>jetty-util</artifactId>
-					<groupId>org.mortbay.jetty</groupId>
 				</exclusion>
 			</exclusions>
 		</dependency>
@@ -453,11 +401,6 @@
 						-XX:PermSize=512m</argLine>
 				</configuration>
 			</plugin>
-			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-assembly-plugin</artifactId> 
-				<version>2.6</version> <executions> <execution> <id>schedoscope-export</id> 
-				<phase>package</phase> <goals> <goal>single</goal> </goals> <configuration> 
-				<descriptorRefs> <descriptorRef>jar-with-dependencies</descriptorRef> </descriptorRefs> 
-				</configuration> </execution> </executions> </plugin> -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
@@ -516,41 +459,5 @@
 				</executions>
 			</plugin>
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
-					only. It has no influence on the Maven build itself. -->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>
-											org.codehaus.mojo
-										</groupId>
-										<artifactId>
-											findbugs-maven-plugin
-										</artifactId>
-										<versionRange>
-											[3.0.3,)
-										</versionRange>
-										<goals>
-											<goal>check</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore></ignore>
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
 </project> 
