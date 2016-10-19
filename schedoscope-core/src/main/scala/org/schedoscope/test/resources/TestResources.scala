@@ -78,7 +78,7 @@ abstract class TestResources {
 
   lazy val ugi: UserGroupInformation = {
     UserGroupInformation.setConfiguration(hiveConf)
-    val ugi = UserGroupInformation.getCurrentUser()
+    val ugi = UserGroupInformation.getCurrentUser
     ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
     ugi.reloginFromKeytab()
     ugi

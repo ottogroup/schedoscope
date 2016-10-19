@@ -1,3 +1,18 @@
+/**
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.dsl.transformations
 
 import org.schedoscope.scheduler.service.ViewTransformationStatus
@@ -14,15 +29,15 @@ import org.schedoscope.scheduler.service.ViewTransformationStatus
   * (c) any other configuration key is considered an environment variable to be passed to the Spark job.
   *
   * @param applicationName An optional logical name for the Spark job
-  * @param mainJarOrPy Path to the JAR or Python file containing the Spark job
-  * @param mainClass In case of a JAR, the main class within that JAR
+  * @param mainJarOrPy     Path to the JAR or Python file containing the Spark job
+  * @param mainClass       In case of a JAR, the main class within that JAR
   * @param applicationArgs Command line arguments to pass. Defaults to an empty list
-  * @param master Spark master setting. Defaults to "yarn-cluster".
-  * @param deployMode Spark deployment mode setting. Defaults to "cluster"
-  * @param additionalJars A list of optional JAR files to deploy with the job. Defaults to an empty list.
-  * @param additionalPys A list of optional Python files to deploy with the job. Defaults to an empty list.
+  * @param master          Spark master setting. Defaults to "yarn-cluster".
+  * @param deployMode      Spark deployment mode setting. Defaults to "cluster"
+  * @param additionalJars  A list of optional JAR files to deploy with the job. Defaults to an empty list.
+  * @param additionalPys   A list of optional Python files to deploy with the job. Defaults to an empty list.
   * @param additionalFiles A list of optional files to deploy with the job. Defaults to an empty list.
-  * @param propertiesFile Path to an optional properties file.
+  * @param propertiesFile  Path to an optional properties file.
   */
 case class SparkTransformation(
                                 applicationName: String, mainJarOrPy: String, mainClass: String = null,
@@ -63,6 +78,7 @@ object SparkTransformation {
   /**
     * Helper to return the path of a Spark job object on the Schedoscope classpath as a means to fill in the mainJarOrPy
     * parameter of a Spark transformation
+    *
     * @param o the Spark job object
     * @return the path to the JAR file with the object
     */
@@ -71,6 +87,7 @@ object SparkTransformation {
   /**
     * Helper to return the class name of a Spark job object on the Schedoscope classpath as a means to fill in the mainJarOrPy
     * parameter of a Spark transformation
+    *
     * @param o the Spark job object
     * @return the class name
     */

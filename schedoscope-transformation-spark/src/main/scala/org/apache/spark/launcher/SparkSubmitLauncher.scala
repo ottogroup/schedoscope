@@ -1,16 +1,30 @@
+/**
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.apache.spark.launcher
 
-import java.io.IOException
-import java.io.File
+import java.io.{File, IOException}
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.deploy.SparkSubmit
+import org.apache.spark.launcher.SparkAppHandle.{Listener, State}
+import org.schedoscope.dsl.transformations.SparkTransformation._
 
 import scala.collection.JavaConversions._
-import org.apache.spark.launcher.SparkAppHandle.Listener
-import org.schedoscope.dsl.transformations.SparkTransformation._
 
 
 /**
@@ -78,7 +92,7 @@ class SparkSubmitLauncher extends SparkLauncher {
     // create LauncherServer app handle
     //
 
-    val handle = LauncherServer.newAppHandle()
+    val handle = ExitCodeAwareChildProcAppHandle(LauncherServer.newAppHandle())
 
     for (l <- listeners)
       handle.addListener(l)
@@ -140,4 +154,40 @@ class SparkSubmitLauncher extends SparkLauncher {
         throw e
     }
   }
+}
+
+/**
+  * Another sad wrapper class required to get access to the process object within the handle for the SparkSubmit
+  * sub process. Sadly, the default implementation of ChildProcAppHandle does not return a failure when the exit
+  * code of the SparkSubmit sub process is > 0. And of course everything is private and has limited visibility.
+  *
+  * @param childProcAppHandle the wrapped child process handle
+  */
+case class ExitCodeAwareChildProcAppHandle(childProcAppHandle: ChildProcAppHandle) extends SparkAppHandle {
+  var childProc: Option[Process] = None
+
+  override def stop(): Unit = childProcAppHandle.stop()
+
+  override def disconnect(): Unit = childProcAppHandle.disconnect()
+
+  override def kill(): Unit = {
+    childProcAppHandle.kill()
+    childProc = None
+  }
+
+  override def getState: State = childProcAppHandle.getState
+
+  override def addListener(listener: Listener): Unit = childProcAppHandle.addListener(listener)
+
+  override def getAppId: String = childProcAppHandle.getAppId
+
+  def getSecret = childProcAppHandle.getSecret
+
+  def setChildProc(childProc: Process, loggerName: String): Unit = {
+    this.childProc = Some(childProc)
+
+    childProcAppHandle.setChildProc(childProc, loggerName)
+  }
+
+  def getExitCode = childProc.map { p => p.waitFor(); p.exitValue() }
 }

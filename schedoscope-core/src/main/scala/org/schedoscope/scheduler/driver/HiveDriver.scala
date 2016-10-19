@@ -232,8 +232,6 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
 object HiveDriver extends DriverCompanionObject[HiveTransformation] {
 
   def apply(ds: DriverSettings) = {
-    val ugi = Schedoscope.settings.userGroupInformation
-
     val conf = new HiveConf(classOf[SessionState])
 
     conf.set("hive.metastore.local", "false")

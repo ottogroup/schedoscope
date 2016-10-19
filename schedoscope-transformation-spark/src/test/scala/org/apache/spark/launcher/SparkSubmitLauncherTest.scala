@@ -1,13 +1,29 @@
+/**
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.apache.spark.launcher
 
 import java.io.File
 
-import scala.collection.JavaConversions._
 import org.apache.commons.io.FileUtils
 import org.apache.spark.launcher.SparkAppHandle.State._
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.schedoscope.dsl.transformations.SparkTransformation._
 import org.schedoscope.spark.test.SimpleFileWriter
+
+import scala.collection.JavaConversions._
 
 
 class SparkSubmitLauncherTest extends FlatSpec with BeforeAndAfter with Matchers {

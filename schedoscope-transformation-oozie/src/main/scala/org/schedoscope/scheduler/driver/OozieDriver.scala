@@ -108,12 +108,12 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
         t.workflow
       }").listFiles()
 
-    (srcFilesFromMain ++ srcFilesFromTest).map(f => {
+    (srcFilesFromMain ++ srcFilesFromTest).foreach(f => {
       val src = new Path("file:///" + f.getAbsolutePath)
       fs.copyFromLocalFile(src, dest)
     })
 
-    t.workflowAppPath = dest.toString()
+    t.workflowAppPath = dest.toString
 
     t
   }
@@ -126,7 +126,7 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
     wf match {
       case o: OozieTransformation => {
         val properties = new Properties()
-        o.configuration.foreach(c => properties.put(c._1, c._2.toString()))
+        o.configuration.foreach(c => properties.put(c._1, c._2.toString))
 
         properties.put(OozieClient.APP_PATH, wf.workflowAppPath)
         properties.remove(OozieClient.BUNDLE_APP_PATH)
@@ -134,9 +134,9 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
 
         // resolve embedded variables
         val config = ConfigFactory.parseProperties(properties).resolve()
-        config.entrySet().foreach(e => properties.put(e.getKey(), e.getValue().unwrapped().toString()))
+        config.entrySet().foreach(e => properties.put(e.getKey, e.getValue.unwrapped().toString))
         if (!properties.containsKey("user.name"))
-          properties.put("user.name", UserGroupInformation.getLoginUser().getUserName());
+          properties.put("user.name", UserGroupInformation.getLoginUser.getUserName)
         properties
       }
     }
