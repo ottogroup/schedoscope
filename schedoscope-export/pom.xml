@@ -408,7 +408,7 @@
 				<configuration>
 					<shadedArtifactAttached>true</shadedArtifactAttached>
 					<shadedClassifierName>jar-with-dependencies</shadedClassifierName>
-					<createDependencyReducedPom>false</createDependencyReducedPom>
+					<createDependencyReducedPom>true</createDependencyReducedPom>
 					<filters>
 						<filter>
 							<artifact>*:*</artifact>
