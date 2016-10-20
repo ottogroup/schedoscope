@@ -52,7 +52,7 @@ class SparkSubmitLauncherTest extends FlatSpec with BeforeAndAfter with Matchers
 
     val launcher = new SparkSubmitLauncher()
     launcher.setAppName("SimpleFileWriter")
-    launcher.setMainClass(nameOf(SimpleFileWriter))
+    launcher.setMainClass(classNameOf(SimpleFileWriter))
     launcher.setAppResource(jarOf(SimpleFileWriter))
     launcher.addAppArgs(outpath, "one argument", "another argument")
     launcher.setLocalTestMode()

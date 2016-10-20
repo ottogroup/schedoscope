@@ -60,7 +60,7 @@ class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompl
 }
 
 /**
-  * Keeps various properties for the test environment. 
+  * Keeps various properties for the test environment.
   */
 abstract class TestResources {
   val hiveConf: HiveConf

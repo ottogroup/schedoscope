@@ -20,7 +20,7 @@ import java.io.File
 import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.schedoscope.dsl.transformations.SparkTransformation
-import org.schedoscope.dsl.transformations.SparkTransformation.{jarOf, nameOf}
+import org.schedoscope.dsl.transformations.SparkTransformation.{jarOf, classNameOf}
 import org.schedoscope.spark.test.{FailingSimpleFileWriter, SimpleFileWriter}
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._
@@ -33,17 +33,17 @@ class SparkDriverTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   lazy val successfulSparkTransformation = driver.rigTransformationForTest(
     SparkTransformation(
-    nameOf(SimpleFileWriter),
+    classNameOf(SimpleFileWriter),
     jarOf(SimpleFileWriter),
-    nameOf(SimpleFileWriter),
+    classNameOf(SimpleFileWriter),
     List(outpath, "one argument", "another argument")
   ), testResources)
 
   lazy val failingSparkTransformation = driver.rigTransformationForTest(
     SparkTransformation(
-      nameOf(FailingSimpleFileWriter),
+      classNameOf(FailingSimpleFileWriter),
       jarOf(FailingSimpleFileWriter),
-      nameOf(FailingSimpleFileWriter),
+      classNameOf(FailingSimpleFileWriter),
       List(outpath, "one argument", "another argument")
     ), testResources)
 

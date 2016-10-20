@@ -155,13 +155,23 @@ class LocalTestResources extends TestResources {
   }
 }
 
+/**
+  * In order to support testing of transformations that run in different JVMs we need the derby metastore database
+  * accessible via a socket and not just in-memory.
+  *
+  * So this is a singleton managing the derby instance.
+  */
+
 object LocalTestResources {
 
   /**
-    * In order to support testing of transformations that run in different JVMs we need the derby metastore database
-    * accessible via a socket and not just in-memory.
+    * The derby server control object
     */
   lazy val derbyServer = {
+
+    FileUtils.deleteDirectory(new File("metastore_db"))
+    FileUtils.deleteQuietly(new File("derby.log"))
+
     var networkServerControl: NetworkServerControl = null
     var port = 15270
     var notStarted = true

@@ -220,7 +220,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.kafka</groupId>
-			<artifactId>kafka_2.11</artifactId>
+			<artifactId>kafka_${scala.version}</artifactId>
 			<version>0.8.2.2</version>
 			<exclusions>
 				<exclusion>

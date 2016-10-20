@@ -91,6 +91,6 @@ object SparkTransformation {
     * @param o the Spark job object
     * @return the class name
     */
-  def nameOf(o: AnyRef) = o.getClass.getName.replaceAll("\\$$", "")
+  def classNameOf(o: AnyRef) = o.getClass.getName.replaceAll("\\$$", "")
 
 }
