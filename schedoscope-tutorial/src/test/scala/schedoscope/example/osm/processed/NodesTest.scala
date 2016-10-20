@@ -15,14 +15,12 @@
   */
 package schedoscope.example.osm.processed
 
-import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field._
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.test.{rows, test}
+import org.schedoscope.test.{SchedoscopeSpec, rows, test}
 import schedoscope.example.osm.stage.NodeTags
 
-case class NodesTest() extends FlatSpec
-  with Matchers {
+class NodesTest extends SchedoscopeSpec {
 
   val nodes = new NodesWithGeohash() with rows {
     set(v(id, 122317L),

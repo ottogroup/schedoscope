@@ -15,14 +15,12 @@
   */
 package schedoscope.example.osm.datahub
 
-import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field._
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.test.{rows, test}
+import org.schedoscope.test.{SchedoscopeSpec, rows, test}
 import schedoscope.example.osm.processed.Nodes
 
-case class ShopsTest() extends FlatSpec
-  with Matchers {
+class ShopsTest extends SchedoscopeSpec {
 
   val nodes = new Nodes(p("2014"), p("09")) with rows {
     set(v(id, "122317"),
