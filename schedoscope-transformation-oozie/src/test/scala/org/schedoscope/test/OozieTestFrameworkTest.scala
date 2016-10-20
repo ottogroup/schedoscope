@@ -46,7 +46,7 @@ class OozieTestFrameworkTest extends FlatSpec with Matchers {
   }
 
   "Oozie test framework" should "execute oozie workflows in MiniOozie cluster" in {
-    new ClickOfEC0101ViaOozie(p("2014"), p("01"), p("01")) with clustertest {
+    new ClickOfEC0101ViaOozie(p("2014"), p("01"), p("01")) with oozieTest {
       basedOn(ec0101Clicks, ec0106Clicks)
       withConfiguration(
         ("jobTracker" -> cluster.getJobTrackerUri),

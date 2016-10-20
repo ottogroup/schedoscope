@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory
 /**
   * This driver runs Spark transformations
   */
-class SparkDriver(val driverRunCompletionHandlerClassNames: List[String], val conf: HiveConf) extends DriverOnNonBlockingApi[SparkTransformation] {
+class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extends DriverOnNonBlockingApi[SparkTransformation] {
 
   val log = LoggerFactory.getLogger(classOf[SparkDriver])
 
   override def transformationName = "spark"
 
-  override def run(t: SparkTransformation): DriverRunHandle[SparkTransformation] = {
+  override def run(t: SparkTransformation): DriverRunHandle[SparkTransformation] = try {
     val l = new SparkSubmitLauncher()
 
     t match {
@@ -62,8 +62,11 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String], val co
           l.setDeployMode(deployMode)
 
         additionalJars.foreach(l.addJar)
+
         additionalPys.foreach(l.addPyFile)
+
         additionalFiles.foreach(l.addFile)
+
         if (propertiesFile != null)
           l.setPropertiesFile(propertiesFile)
 
@@ -83,6 +86,8 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String], val co
     }
 
     new DriverRunHandle[SparkTransformation](this, new LocalDateTime(), t, l.startApplication())
+  } catch {
+    case t: Throwable => throw new RetryableDriverException("Could not start Spark submit process because of exception", t)
   }
 
 
@@ -96,81 +101,71 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String], val co
         s"$applicationName :: $mainJarOrPy ${if (mainClass != null) s" :: $mainClass" else ""} :: $applicationArgs"
     }
 
-    appHandle.getState match {
-      case FINISHED =>
-        if (appHandle.getExitCode.isDefined && appHandle.getExitCode.head == 0)
-          DriverRunSucceeded[SparkTransformation](this, s"Spark driver run succeeded for $appInfo")
-        else if (appHandle.getExitCode.isEmpty)
-          DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Exit code of Spark submit process is not available tho it is finished"))
-        else
-          DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Exit code of Spark submit process is 1"))
-      case CONNECTED | SUBMITTED | RUNNING => DriverRunOngoing[SparkTransformation](this, run)
-
-      case UNKNOWN => if (appHandle.childProc.isDefined)
-        DriverRunOngoing[SparkTransformation](this, run)
-      else
-        DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Spark driver run was killed for $appInfo"))
-
-      case _ => DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Spark driver run failed for $appInfo"))
-    }
-  }
-
-  override def killRun(run: DriverRunHandle[SparkTransformation]) {
-    val appHandle = run.stateHandle.asInstanceOf[SparkAppHandle]
     try {
-      appHandle.kill()
+      appHandle.getState match {
+
+        case FINISHED =>
+          if (appHandle.getExitCode.isDefined && appHandle.getExitCode.head == 0)
+            DriverRunSucceeded[SparkTransformation](this, s"Spark driver run succeeded for $appInfo")
+          else if (appHandle.getExitCode.isEmpty)
+            DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Exit code of Spark submit process is not available tho the process has finished"))
+          else
+            DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Exit code of Spark submit process is 1"))
+
+        case CONNECTED | SUBMITTED | RUNNING => DriverRunOngoing[SparkTransformation](this, run)
+
+        case UNKNOWN => if (appHandle.childProc.isDefined)
+          DriverRunOngoing[SparkTransformation](this, run)
+        else
+          DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Spark driver run was killed for $appInfo"))
+
+        case _ => DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Spark driver run failed for $appInfo"))
+
+      }
+
     } catch {
-      case t: Throwable => log.error("Spark driver failed to kill driver run", t)
+      case t: Throwable => DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", t)
     }
   }
+
+  override def killRun(run: DriverRunHandle[SparkTransformation]): Unit = try {
+    run.stateHandle.asInstanceOf[SparkAppHandle].kill()
+  } catch {
+    case t: Throwable => log.error("Spark driver failed to kill driver run", t)
+  }
+
 
   /**
     * Rig Spark transformation for test by setting master to local and deploy mode to client.
     */
-  override def rigTransformationForTest(t: SparkTransformation, testResources: TestResources) = {
-    val riggedT = t match {
-
-      case SparkTransformation(
+  override def rigTransformationForTest(t: SparkTransformation, testResources: TestResources) = t match {
+    case SparkTransformation(
+    applicationName, mainJarOrPy, mainClass,
+    applicationArgs,
+    _, _,
+    additionalJars,
+    additionalPys,
+    additionalFiles,
+    propertiesFile
+    ) => SparkTransformation(
       applicationName, mainJarOrPy, mainClass,
       applicationArgs,
-      _, _,
+      "local", "client",
       additionalJars,
       additionalPys,
       additionalFiles,
       propertiesFile
-      ) => SparkTransformation(
-        applicationName, mainJarOrPy, mainClass,
-        applicationArgs,
-        "local", "client",
-        additionalJars,
-        additionalPys,
-        additionalFiles,
-        propertiesFile
-      )
-    }
-    riggedT
+    )
   }
+
 }
 
 object SparkDriver extends DriverCompanionObject[SparkTransformation] {
 
   def apply(ds: DriverSettings) = {
-    val conf = new HiveConf()
-
-    conf.set("hive.metastore.local", "false")
-    conf.setBoolVar(HiveConf.ConfVars.HIVESESSIONSILENT, true)
-    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Schedoscope.settings.metastoreUri.trim())
-
-    if (Schedoscope.settings.kerberosPrincipal.trim() != "") {
-      conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
-        true)
-      conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
-        Schedoscope.settings.kerberosPrincipal)
-    }
-
-    new SparkDriver(ds.driverRunCompletionHandlers, conf)
+    new SparkDriver(ds.driverRunCompletionHandlers)
   }
 
   def apply(driverSettings: DriverSettings, testResources: TestResources): Driver[SparkTransformation] =
-    new SparkDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), testResources.hiveConf)
+    new SparkDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"))
 }

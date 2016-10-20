@@ -32,6 +32,8 @@ class OozieTestResources extends TestResources {
 
   override lazy val hiveScratchDir: String = mo.getScratchDir().toString
 
+  override val hiveSiteXmlPath: Option[String] = None
+
   override lazy val metastoreUri = hiveConf.get(METASTOREURIS.toString)
 
   override lazy val fileSystem: FileSystem = mo.getFileSystem
@@ -41,7 +43,6 @@ class OozieTestResources extends TestResources {
   override lazy val remoteTestDirectory: String = mo.getFsTestCaseDir.toString
 
   override lazy val namenode = mo.getNameNodeUri
-
 }
 
 object OozieTestResources {

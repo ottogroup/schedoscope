@@ -59,12 +59,17 @@ class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompl
   }
 }
 
+/**
+  * Keeps various properties for the test environment. 
+  */
 abstract class TestResources {
   val hiveConf: HiveConf
 
   val hiveWarehouseDir: String
 
   val hiveScratchDir: String
+
+  val hiveSiteXmlPath: Option[String]
 
   val metastoreUri: String
 
