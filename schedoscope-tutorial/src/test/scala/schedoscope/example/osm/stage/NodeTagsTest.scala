@@ -15,11 +15,9 @@
   */
 package schedoscope.example.osm.stage
 
-import org.scalatest.{FlatSpec, Matchers}
-import org.schedoscope.test.test
+import org.schedoscope.test.{SchedoscopeSpec, test}
 
-class NodeTagsTest extends FlatSpec
-  with Matchers {
+class NodeTagsTest extends SchedoscopeSpec {
 
   "stage.NodeTags" should "load correctly from file" in {
     new NodeTags() with test {

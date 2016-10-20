@@ -35,6 +35,17 @@ trait LoadableView extends WritableView {
   val localResources = ListBuffer.empty[(String, String)]
 
   /**
+    * Fills this view with data from hive, potentially sorted by a column
+    *
+    * @param orderedBy the optional FieldLike for the column to sort by
+    */
+  def populate(orderedBy: Option[FieldLike[_]]) {
+    val db = resources.database
+    rowData.clear()
+    rowData.appendAll(db.selectView(this, orderedBy))
+  }
+
+  /**
     * Adds dependencies for this view
     */
   def basedOn(d: View with WritableView*) {

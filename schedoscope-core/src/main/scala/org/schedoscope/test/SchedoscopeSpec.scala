@@ -126,14 +126,18 @@ trait ReusableHiveSchema
       v.resources = resources
     }
 
-    TestUtils.loadView(view, null, false, false)
+    TestUtils.loadView(view,
+      null,
+      disableDependencyCheck = false,
+      disableTransformationValidation = false)
     view.localResources.clear()
 
     rowData.appendAll(view.rowData)
 
-    view.inputFixtures.foreach { v =>
+    view.inputFixtures.filter(!_.isStatic).foreach { v =>
       v.rowData.clear()
     }
+
   }
 
   def v[T](f: Field[T], v: T) = (f, v)
