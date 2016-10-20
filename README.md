@@ -77,6 +77,10 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 10/20/2016 - Release 0.6.7
+
+Minor improvements to test framework.
+
 ###### 10/07/2016 - Release 0.6.6
 We have released Version 0.6.6 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
 
