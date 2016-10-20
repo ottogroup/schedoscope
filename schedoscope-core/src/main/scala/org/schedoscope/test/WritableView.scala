@@ -32,6 +32,8 @@ trait WritableView extends View {
 
   env = "test"
 
+  val isStatic = false
+
   var resources: TestResources = new LocalTestResources()
 
   val rowData = new ListBuffer[Map[String, Any]]()
@@ -83,17 +85,6 @@ trait WritableView extends View {
     */
   def numRows(): Int = {
     rowData.size
-  }
-
-  /**
-    * Fills this view with data from hive, potentially sorted by a column
-    *
-    * @param orderedBy the optional FieldLike for the column to sort by
-    */
-  def populate(orderedBy: Option[FieldLike[_]]) {
-    val db = resources.database
-    rowData.clear()
-    rowData.appendAll(db.selectView(this, orderedBy))
   }
 
   def createViewTable() {
@@ -148,7 +139,9 @@ object WritableView {
 /**
   * Syntactic sugar for default tests
   */
-trait rows extends WritableView
+trait rows extends WritableView {
+  override val isStatic = true
+}
 
 /**
   * Syntactic sugar for [[ReusableHiveSchema]] tests

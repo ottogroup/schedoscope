@@ -60,13 +60,28 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
   }
 
   it should "load the local resource into hfds" in {
-    val fs = resources.fileSystem
-    val target = new Path(s"${resources.remoteTestDirectory}/test.sql")
+    val fs = click.resources.fileSystem
+    val target = new Path(s"${click.resources.remoteTestDirectory}/test.sql")
     fs.exists(target) shouldBe true
   }
 }
 
 class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {
+
+  val ec0101static = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
+    set(
+      v(id, "01"),
+      v(url, "url1"))
+    set(
+      v(id, "02"),
+      v(url, "url2"))
+    set(
+      v(id, "03"),
+      v(url, "url3"))
+    set(
+      v(id, "04"),
+      v(url, "url4"))
+  }
 
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with InputSchema
 
@@ -74,6 +89,11 @@ class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {
 
   val click = new ClickOfEC0101(p("2014"), p("01"), p("01")) with OutputSchema {
     basedOn(ec0101Clicks, ec0106Clicks)
+    withResource("test" -> "src/test/resources/test.sql")
+  }
+
+  val click2 = new ClickOfEC0101(p("2014"), p("01"), p("01")) with OutputSchema {
+    basedOn(ec0101static)
     withResource("test" -> "src/test/resources/test.sql")
   }
 
@@ -109,6 +129,7 @@ class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {
   }
 
   it should "do this" in {
+
     {
       import ec0101Clicks._
       set(
@@ -125,6 +146,25 @@ class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {
     row(v(id) shouldBe "event01",
       v(url) shouldBe "url1")
     row(v(id) shouldBe "event02",
+      v(url) shouldBe "url2")
+
+  }
+
+  it should "handle tests with static input views" in {
+    then(click2)
+    numRows() shouldBe 4
+    row(v(id) shouldBe "01",
+      v(url) shouldBe "url1")
+    row(v(id) shouldBe "02",
+      v(url) shouldBe "url2")
+  }
+
+  it should "handle recurring tests with static input views" in {
+    then(click2)
+    numRows() shouldBe 4
+    row(v(id) shouldBe "01",
+      v(url) shouldBe "url1")
+    row(v(id) shouldBe "02",
       v(url) shouldBe "url2")
   }
 
