@@ -46,8 +46,12 @@ case class ClickOfEC0101ViaSpark(year: Parameter[String],
 
   transformVia(() =>
     SparkTransformation(
-      classNameOf(ClickOfEC0101Transformation), jarOf(ClickOfEC0101Transformation), classNameOf(ClickOfEC0101Transformation),
-      List(click().tableName, tableName, "EC0101", year.v.get, month.v.get, day.v.get, dateId.v.get)
-    ))
+      classNameOf(ClickOfEC0101Transformation),
+      jarOf(ClickOfEC0101Transformation), classNameOf(ClickOfEC0101Transformation),
+      List(
+        click().tableName, tableName,
+        "EC0101",
+        year.v.get, month.v.get, day.v.get, dateId.v.get
+      )))
 
 }
