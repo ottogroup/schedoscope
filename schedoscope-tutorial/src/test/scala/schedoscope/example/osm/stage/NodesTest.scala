@@ -36,7 +36,7 @@ class NodesTest extends SchedoscopeSpec {
       v(latitude) shouldBe 53.5282633)
   }
 
-  "stage.Nodes" should "load the second node" in {
+  it should "load the second node" in {
     startWithRow(1)
     row(v(id) shouldBe 122318,
       v(tstamp) shouldBe "2014-10-17T13:49:26Z",
@@ -46,7 +46,7 @@ class NodesTest extends SchedoscopeSpec {
       v(latitude) shouldBe 53.5297589)
   }
 
-  "stage.Nodes" should "load the third node" in {
+  it should "load the third node" in {
     startWithRow(2)
     row(v(id) shouldBe 122320,
       v(tstamp) shouldBe "2013-12-20T07:43:33Z",

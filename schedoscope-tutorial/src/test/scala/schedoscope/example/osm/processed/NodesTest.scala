@@ -20,7 +20,7 @@ import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.test.{SchedoscopeSpec, rows, test}
 import schedoscope.example.osm.stage.NodeTags
 
-case class NodesTest() extends SchedoscopeSpec {
+class NodesTest extends SchedoscopeSpec {
 
   val nodes = new NodesWithGeohash() with rows {
     set(v(id, 122317L),

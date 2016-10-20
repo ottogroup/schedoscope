@@ -20,7 +20,7 @@ import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.test.{SchedoscopeSpec, rows, test}
 import schedoscope.example.osm.processed.Nodes
 
-case class ShopsTest() extends SchedoscopeSpec {
+class ShopsTest extends SchedoscopeSpec {
 
   val nodes = new Nodes(p("2014"), p("09")) with rows {
     set(v(id, "122317"),
