@@ -15,34 +15,44 @@
   */
 package schedoscope.example.osm.stage
 
-import org.scalatest.{FlatSpec, Matchers}
-import org.schedoscope.test.test
+import org.schedoscope.test.{SchedoscopeSpec, test}
 
-class NodesTest extends FlatSpec
-  with Matchers {
+class NodesTest extends SchedoscopeSpec {
+
+  val nodes = putViewUnderTest(new Nodes with test)
+
+  import nodes._
 
   "stage.Nodes" should "load correctly from classpath" in {
-    new Nodes() with test {
-      then()
-      numRows shouldBe 10
-      row(v(id) shouldBe 122317,
-        v(tstamp) shouldBe "2014-10-17T13:49:26Z",
-        v(version) shouldBe 7,
-        v(userId) shouldBe 50299,
-        v(longitude) shouldBe 10.0232716,
-        v(latitude) shouldBe 53.5282633)
-      row(v(id) shouldBe 122318,
-        v(tstamp) shouldBe "2014-10-17T13:49:26Z",
-        v(version) shouldBe 6,
-        v(userId) shouldBe 50299,
-        v(longitude) shouldBe 10.0243161,
-        v(latitude) shouldBe 53.5297589)
-      row(v(id) shouldBe 122320,
-        v(tstamp) shouldBe "2013-12-20T07:43:33Z",
-        v(version) shouldBe 4,
-        v(userId) shouldBe 51991,
-        v(longitude) shouldBe 10.0293114,
-        v(latitude) shouldBe 53.5351834)
-    }
+    numRows shouldBe 10
+  }
+
+  "stage.Nodes" should "load the first node" in {
+    row(v(id) shouldBe 122317,
+      v(tstamp) shouldBe "2014-10-17T13:49:26Z",
+      v(version) shouldBe 7,
+      v(userId) shouldBe 50299,
+      v(longitude) shouldBe 10.0232716,
+      v(latitude) shouldBe 53.5282633)
+  }
+
+  "stage.Nodes" should "load the second node" in {
+    startWithRow(1)
+    row(v(id) shouldBe 122318,
+      v(tstamp) shouldBe "2014-10-17T13:49:26Z",
+      v(version) shouldBe 6,
+      v(userId) shouldBe 50299,
+      v(longitude) shouldBe 10.0243161,
+      v(latitude) shouldBe 53.5297589)
+  }
+
+  "stage.Nodes" should "load the third node" in {
+    startWithRow(2)
+    row(v(id) shouldBe 122320,
+      v(tstamp) shouldBe "2013-12-20T07:43:33Z",
+      v(version) shouldBe 4,
+      v(userId) shouldBe 51991,
+      v(longitude) shouldBe 10.0293114,
+      v(latitude) shouldBe 53.5351834)
   }
 }

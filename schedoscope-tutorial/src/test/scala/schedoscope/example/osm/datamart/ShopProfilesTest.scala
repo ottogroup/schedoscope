@@ -21,7 +21,7 @@ import org.schedoscope.dsl.Field._
 import org.schedoscope.test.{SchedoscopeSpec, rows, test}
 import schedoscope.example.osm.datahub.{Restaurants, Shops, Trainstations}
 
-case class ShopProfilesTest() extends SchedoscopeSpec {
+class ShopProfilesTest extends SchedoscopeSpec {
 
   Class.forName("org.apache.derby.jdbc.EmbeddedDriver")
   val dbConnection = DriverManager.getConnection("jdbc:derby:memory:TestingDB;create=true")
