@@ -291,6 +291,14 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     registeredExports ::= export
   }
 
+
+  /**
+    * Remove all exports, for example in tests
+    */
+  def muteExports() {
+    registeredExports = List()
+  }
+
   /**
     * Postfactum configuration of the registered exports. Useful to override export configs within a test.
     */

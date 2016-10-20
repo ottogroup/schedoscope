@@ -175,16 +175,27 @@ object LocalTestResources {
     var networkServerControl: NetworkServerControl = null
     var port = 15270
     var notStarted = true
+    var acceptsConnections = false
 
     while (notStarted) {
       try {
-        networkServerControl = new NetworkServerControl(InetAddress.getByName("localhost"), port)
+        networkServerControl = new NetworkServerControl(InetAddress.getByName("127.0.0.1"), port)
         networkServerControl.start(null)
         notStarted = false
       } catch {
         case _: Throwable => port += 1
       }
     }
+
+    while (!acceptsConnections) {
+      try {
+        networkServerControl.ping()
+        acceptsConnections = true
+      } catch {
+        case _: Throwable => Thread.sleep(10)
+      }
+    }
+
 
     networkServerControl
   }

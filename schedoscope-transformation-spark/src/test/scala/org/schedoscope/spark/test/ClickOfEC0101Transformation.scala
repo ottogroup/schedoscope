@@ -50,9 +50,6 @@ object ClickOfEC0101Transformation {
          |WHERE shop_code = '$shopCode' AND  year = '$year' AND month = '$month' AND day = '$day' AND date_id = '$dateId'
          """.stripMargin
 
-    println("Executing Spark SQL:")
-    println(query)
-
     try {
 
       hc.sql(query)
