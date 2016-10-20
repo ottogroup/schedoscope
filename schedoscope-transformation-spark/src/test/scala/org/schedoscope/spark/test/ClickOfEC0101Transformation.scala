@@ -29,11 +29,11 @@ object ClickOfEC0101Transformation {
   def main(args: Array[String]) {
 
     if (args.length < 7)
-      throw new IllegalArgumentException("Args: <sourceTable> <targetTable> <ecShopCode> <year> <month> <day> <dateId>")
+      throw new IllegalArgumentException("Args: <sourceTable> <targetTable> <shopCode> <year> <month> <day> <dateId>")
 
     val sourceTable = args(0)
     val targetTable = args(1)
-    val ecShopCode = args(2)
+    val shopCode = args(2)
     val year = args(3)
     val month = args(4)
     val day = args(5)
@@ -47,7 +47,7 @@ object ClickOfEC0101Transformation {
          |INSERT INTO TABLE ${targetTable} PARTITION(year = '$year', month = '$month', day = '$day', date_id = '$dateId')
          |SELECT *
          |FROM ${sourceTable}
-         |WHERE ec_shop_code = '$ecShopCode' AND  year = '$year' AND month = '$month' AND day = '$day' AND date_id = '$dateId'
+         |WHERE shop_code = '$shopCode' AND  year = '$year' AND month = '$month' AND day = '$day' AND date_id = '$dateId'
          """.stripMargin
 
     println("Executing Spark SQL:")
