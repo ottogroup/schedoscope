@@ -99,6 +99,8 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
         s"$applicationName :: $mainJarOrPy ${if (mainClass != null) s" :: $mainClass" else ""} :: $applicationArgs"
     }
 
+    log.debug(s"checking Spark app handle for $appInfo - state: ${appHandle.getState} exit code: ${appHandle.getExitCode}")
+
     try {
       appHandle.getState match {
 
@@ -112,7 +114,7 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
 
         case CONNECTED | SUBMITTED | RUNNING => DriverRunOngoing[SparkTransformation](this, run)
 
-        case UNKNOWN => if (appHandle.childProc.isDefined)
+        case UNKNOWN => if (appHandle.childProc.isDefined && appHandle.getExitCode.isEmpty)
           DriverRunOngoing[SparkTransformation](this, run)
         else
           DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Spark driver run was killed for $appInfo"))
