@@ -18,7 +18,7 @@ package org.schedoscope.test
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
-import test.views.{Click, ClickOfEC0101ViaSpark}
+import test.views.{Click, ClickOfEC0101ViaHiveQlOnSpark, ClickOfEC0101ViaSpark}
 
 class SparkTestFrameworkTest extends FlatSpec with Matchers {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
@@ -47,6 +47,20 @@ class SparkTestFrameworkTest extends FlatSpec with Matchers {
 
   "Test framework" should "execute Spark jobs with SQL inside" in {
     new ClickOfEC0101ViaSpark(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+      `then`()
+      numRows shouldBe 3
+      row(v(id) shouldBe "event01",
+        v(url) shouldBe "http://ec0101.com/url1")
+      row(v(id) shouldBe "event02",
+        v(url) shouldBe "http://ec0101.com/url2")
+      row(v(id) shouldBe "event03",
+        v(url) shouldBe "http://ec0101.com/url3")
+    }
+  }
+
+  it should "allow one to run Hive transformations on Spark" in {
+    new ClickOfEC0101ViaHiveQlOnSpark(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       `then`()
       numRows shouldBe 3

@@ -186,7 +186,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     sql
       .split(";")
       .foreach { statement => {
-        if (StringUtils.endsWith(queryStack.head, "\\")) {
+        if (StringUtils.endsWith(queryStack.head, """\""")) {
           queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + statement)
         } else {
           queryStack.push(statement)

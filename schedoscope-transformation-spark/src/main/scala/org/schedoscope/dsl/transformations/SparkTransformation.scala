@@ -16,6 +16,7 @@
 package org.schedoscope.dsl.transformations
 
 import org.schedoscope.scheduler.service.ViewTransformationStatus
+import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 
 /**
   * This captures view transformation logic implemented as Spark jobs. It is expected to be available in a submittable
@@ -92,5 +93,40 @@ object SparkTransformation {
     * @return the class name
     */
   def classNameOf(o: AnyRef) = o.getClass.getName.replaceAll("\\$$", "")
+
+
+  /**
+    * Constructs a Spark transformation of out of a Hive transformation by taking its query and passing it to SparkSQLRunner.
+    * @param t  the Hive transformation to run on Spark
+    * @param master          Spark master setting. Defaults to "yarn-cluster".
+    * @param deployMode      Spark deployment mode setting. Defaults to "cluster"
+    * @param additionalJars  A list of optional JAR files to deploy with the job. Defaults to an empty list.
+    * @param additionalPys   A list of optional Python files to deploy with the job. Defaults to an empty list.
+    * @param additionalFiles A list of optional files to deploy with the job. Defaults to an empty list.
+    * @param propertiesFile  Path to an optional properties file.
+    * @return the Spark transformation running the Hive query.
+    */
+  def runOnSpark(t: Transformation,
+                 master: String = "yarn-cluster", deployMode: String = "cluster",
+                 additionalJars: List[String] = List(),
+                 additionalPys: List[String] = List(),
+                 additionalFiles: List[String] = List(),
+                 propertiesFile: String = null): SparkTransformation =
+
+    SparkTransformation(
+      classNameOf(SparkSQLRunner), jarOf(SparkSQLRunner), classNameOf(SparkSQLRunner),
+      List(),
+      master, deployMode,
+      additionalJars,
+      additionalPys,
+      additionalFiles,
+      propertiesFile).configureWith(
+      Map(
+        "SQL_RUNNER_HIVE" -> {
+          val h = t.asInstanceOf[HiveTransformation]
+          replaceParameters(h.sql, h.configuration.toMap)
+        }
+      )
+    ).asInstanceOf[SparkTransformation]
 
 }

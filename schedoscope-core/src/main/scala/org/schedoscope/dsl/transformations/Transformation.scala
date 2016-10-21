@@ -19,6 +19,7 @@ import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.service.ViewTransformationStatus
 
 import scala.collection.mutable.HashMap
+import java.util.regex.Pattern.quote
 
 /**
   * Base class for transformation types
@@ -119,15 +120,28 @@ case class NoOp() extends Transformation {
 }
 
 object Transformation {
-  def replaceParameters(transformationSyntax: String, parameters: Map[String, Any]): String = {
+
+  /**
+    * Replace ${v}-style parameters in transformation syntax with values from the given parameter map. Perform some
+    * quoting against injection attacks.
+    */
+  def replaceParameters(transformationSyntax: String, parameters: Map[String, Any]): String =
     if (parameters.isEmpty)
       transformationSyntax
     else {
       val (key, value) = parameters.head
-      val replacedStatement = transformationSyntax.replaceAll(java.util.regex.Pattern.quote("${" + key + "}"), value.toString().replaceAll("\\$", "|"))
+
+      val replacedStatement = transformationSyntax.replaceAll(
+        quote("${" + key + "}"),
+        value.toString
+          .replaceAll(quote("$"), "|")
+          .replaceAll(quote(";"), "\\\\\\\\;")
+          .replaceAll(quote("\""), "\\\\\\\\\"")
+          .replaceAll(quote("'"), "\\\\\\\\'")
+      )
+
       replaceParameters(replacedStatement, parameters.tail)
     }
-  }
 }
 
 class InvalidTransformationException(msg: String) extends Throwable(msg)

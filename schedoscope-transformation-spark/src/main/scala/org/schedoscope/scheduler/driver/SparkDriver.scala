@@ -15,11 +15,9 @@
   */
 package org.schedoscope.scheduler.driver
 
-import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.spark.launcher.SparkAppHandle.State._
 import org.apache.spark.launcher.{ExitCodeAwareChildProcAppHandle, SparkAppHandle, SparkSubmitLauncher}
 import org.joda.time.LocalDateTime
-import org.schedoscope.Schedoscope
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.SparkTransformation
 import org.schedoscope.test.resources.TestResources
@@ -155,7 +153,7 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
       additionalPys,
       additionalFiles,
       propertiesFile
-    )
+    ).configureWith(t.configuration.toMap).asInstanceOf[SparkTransformation]
   }
 
 }

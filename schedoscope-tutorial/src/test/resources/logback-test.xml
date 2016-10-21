@@ -13,6 +13,8 @@
 
     <logger name="org.apache.hadoop.mapred" level="ERROR"/>
 
+    <logger name="org.apache.spark" level="ERROR"/>
+
     <root level="OFF">
         <appender-ref ref="STDOUT"/>
     </root>

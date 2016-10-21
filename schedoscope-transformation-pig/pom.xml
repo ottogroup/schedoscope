@@ -35,6 +35,18 @@
                     <artifactId>guava</artifactId>
                     <groupId>com.google.guava</groupId>
                 </exclusion>
+                <exclusion>
+                	<artifactId>servlet-api</artifactId>
+                	<groupId>javax.servlet</groupId>
+                </exclusion>
+                <exclusion>
+                	<artifactId>jsp-api</artifactId>
+                	<groupId>javax.servlet.jsp</groupId>
+                </exclusion>
+                <exclusion>
+                	<artifactId>servlet-api-2.5</artifactId>
+                	<groupId>org.mortbay.jetty</groupId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -58,6 +70,10 @@
                 <exclusion>
                     <artifactId>guava</artifactId>
                     <groupId>com.google.guava</groupId>
+                </exclusion>
+                <exclusion>
+                	<artifactId>servlet-api</artifactId>
+                	<groupId>javax.servlet</groupId>
                 </exclusion>
             </exclusions>
         </dependency>

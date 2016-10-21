@@ -16,11 +16,11 @@
 package test.views
 
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.SparkTransformation
+import org.schedoscope.dsl.transformations.{HiveTransformation, SparkSQLRunner, SparkTransformation}
 import org.schedoscope.dsl.transformations.SparkTransformation._
+import org.schedoscope.dsl.transformations.HiveTransformation._
 import org.schedoscope.dsl.views.{DailyParameterization, Id}
 import org.schedoscope.dsl.{Parameter, View}
-import org.schedoscope.spark.test.ClickOfEC0101Transformation
 
 
 case class Click(shopCode: Parameter[String],
@@ -32,7 +32,6 @@ case class Click(shopCode: Parameter[String],
 
   val url = fieldOf[String]
 }
-
 
 case class ClickOfEC0101ViaSpark(year: Parameter[String],
                                  month: Parameter[String],
@@ -46,12 +45,42 @@ case class ClickOfEC0101ViaSpark(year: Parameter[String],
 
   transformVia(() =>
     SparkTransformation(
-      classNameOf(ClickOfEC0101Transformation),
-      jarOf(ClickOfEC0101Transformation), classNameOf(ClickOfEC0101Transformation),
-      List(
-        click().tableName, tableName,
-        "EC0101",
-        year.v.get, month.v.get, day.v.get, dateId.v.get
-      )))
+      "ClickOfEC0101ViaSpark",
+      jarOf(SparkSQLRunner), classNameOf(SparkSQLRunner)
+    ).configureWith(
+      Map(
+        "SQL_RUNNER_HIVE" ->
+          s"""
+             |INSERT INTO TABLE ${this.tableName}
+             |PARTITION (year = '${year.v.get}', month = '${month.v.get}', day = '${day.v.get}', date_id = '${dateId.v.get}')
+             |SELECT *
+             |FROM ${click().tableName}
+             |WHERE shop_code = 'EC0101'
+             |AND   year = '${year.v.get}' AND month = '${month.v.get}' AND day = '${day.v.get}' AND date_id = '${dateId.v.get}'
+         """.stripMargin)
+    )
+  )
+}
 
+case class ClickOfEC0101ViaHiveQlOnSpark(year: Parameter[String],
+                                         month: Parameter[String],
+                                         day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(() => runOnSpark(
+    HiveTransformation(
+      insertInto(this,
+        s"""
+           |SELECT *
+           |FROM ${click().tableName}
+           |WHERE shop_code = 'EC0101'
+           |AND   year = '${year.v.get}' AND month = '${month.v.get}' AND day = '${day.v.get}' AND date_id = '${dateId.v.get}'
+         """)
+    ))
+  )
 }
