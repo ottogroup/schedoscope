@@ -272,6 +272,10 @@
                             <key>config.file</key>
                             <value>src/main/resources/schedoscope.conf</value>
                         </systemProperty>
+                        <systemProperty>
+                            <key>logback.configurationFile</key>
+                            <value>src/main/resources/logback.xml</value>
+                        </systemProperty>
                     </systemProperties>
                     <additionalClasspathElements>
                         <additionalClasspathElement>/etc/hadoop/conf</additionalClasspathElement>

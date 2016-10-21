@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark.deploy.SparkSubmit
+import org.apache.spark.launcher.CommandBuilderUtils._
 import org.apache.spark.launcher.SparkAppHandle.{Listener, State}
 import org.schedoscope.dsl.transformations.SparkTransformation._
 
@@ -28,15 +29,13 @@ import scala.collection.JavaConversions._
 
 
 /**
-  * We sadly have to rig SparkLauncher. Instead of launching the spark-submit shell script, it should
-  * launch org.apache.spark.deploy.SparkSubmit via a subprocess directly.
+  * We have to rig SparkLauncher so that it can launch Spark jobs in a local test mode as well.
+  * The normal SparkLauncher just starts the spark-submit shell script, which we do not have in a test environment.
   *
-  * One of the reasons why we want this is that we do not have the shell script in our test environment (SparkSubmit we have, however);
-  * also, the script just calls org.apache.spark.deploy.SparkSubmit.main by itself, making this an unnecessary detour.
+  * In that environment, we just want to start the Java class SparkSubmit (which is called by the spark-submit script)
+  * in a subprocess directly (SparkSubmitCommandBuilder offers a simple method to do that).
   *
-  * SparkSubmitCommandBuilder actually offers a method for preparing a direct call for launching SparkSubmit. However,
-  * SparkLauncher does not call this method. Even worse, the method createBuilder() where it creates its ProcessBuilder
-  * object is private so we cannot just override it.
+  * Now this would all be very easy if only the method createBuilder in SparkLauncher wasn't private :-(.
   *
   * Sorry for this hack.
   */
@@ -121,10 +120,34 @@ class SparkSubmitLauncher extends SparkLauncher {
     val fullLoggerName = s"${getClass.getPackage.getName}.app.$childLoggerName"
 
     //
-    // Build spark submit call
+    // Build either SparkSubmit or spark-submit call
     //
 
-    val sparkSubmitCall = builder.buildCommand(Map[String, String]())
+    val sparkSubmitCall: List[String] =
+
+      if (builder.master.startsWith("local")) {
+
+        //
+        // Local mode => test framework
+        //
+
+        builder.buildCommand(Map[String, String]()).toList
+
+      } else {
+
+        //
+        // Non-local mode => shell script
+        //
+
+        {
+          List(
+            join(File.separator, builder.getSparkHome, "bin", if (isWindows) "spark-submit.cmd" else "spark-submit")
+          ) ++ builder.buildSparkSubmitArgs()
+        }.map { arg =>
+          if (isWindows) quoteForBatchScript(arg) else arg
+        }
+      }
+
 
     //
     // Create subprocess
@@ -157,7 +180,7 @@ class SparkSubmitLauncher extends SparkLauncher {
 }
 
 /**
-  * Another sad wrapper class required to get access to the process object within the handle for the SparkSubmit
+  * Sad wrapper class required to get access to the process object within the handle for the SparkSubmit
   * sub process. Sadly, the default implementation of ChildProcAppHandle does not return a failure when the exit
   * code of the SparkSubmit sub process is > 0. And of course everything is private and has limited visibility.
   *

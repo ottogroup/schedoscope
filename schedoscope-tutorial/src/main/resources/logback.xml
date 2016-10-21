@@ -18,13 +18,13 @@
         </triggeringPolicy>
     </appender>
 
-    <logger name="org.schedoscope" level="ERROR"/>
+    <logger name="org.schedoscope" level="INFO"/>
 
     <logger name="org.apache.hadoop.hive.ql.Driver" level="ERROR"/>
 
     <logger name="org.apache.hadoop.mapred" level="ERROR"/>
 
-    <logger name="org.apache.spark" level="ERROR"/>
+    <logger name="org.apache.spark" level="INFO"/>
 
     <root level="OFF">
         <appender-ref ref="FILE"/>
