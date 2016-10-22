@@ -17,7 +17,6 @@ package org.schedoscope.dsl.transformations
 
 import org.schedoscope.scheduler.service.ViewTransformationStatus
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
-import org.schedoscope.Settings
 
 /**
   * This captures view transformation logic implemented as Spark jobs. It is expected to be available in a submittable
@@ -125,11 +124,6 @@ object SparkTransformation {
       additionalPys,
       additionalFiles,
       propertiesFile
-    ).configureWith(
-      Map(
-        "spark.driver.extraClassPath" -> Settings().hiveConfDir,
-        "spark.executor.extraClassPath" -> Settings().hiveConfDir
-      )
-    ).asInstanceOf[SparkTransformation]
+    )
 
 }

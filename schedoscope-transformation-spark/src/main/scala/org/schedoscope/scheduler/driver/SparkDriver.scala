@@ -15,9 +15,13 @@
   */
 package org.schedoscope.scheduler.driver
 
+import java.io.File
+
 import org.apache.spark.launcher.SparkAppHandle.State._
+import org.apache.spark.launcher.SparkLauncher.{DRIVER_EXTRA_CLASSPATH, EXECUTOR_EXTRA_CLASSPATH}
 import org.apache.spark.launcher.{ExitCodeAwareChildProcAppHandle, SparkAppHandle, SparkSubmitLauncher}
 import org.joda.time.LocalDateTime
+import org.schedoscope.Settings
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.SparkTransformation
 import org.schedoscope.test.resources.TestResources
@@ -48,8 +52,10 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
       ) =>
         l.setAppName(applicationName)
         l.setAppResource(mainJarOrPy)
+
         if (mainClass != null)
           l.setMainClass(mainClass)
+
         l.addAppArgs(applicationArgs: _*)
 
         l.setMaster(master)
@@ -77,6 +83,22 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
             else
               l.setChildEnv(k, v.toString)
         }
+
+        l.setConf(DRIVER_EXTRA_CLASSPATH, Settings().getDriverSettings(t).libDirectory + (
+          if (l.getConf(DRIVER_EXTRA_CLASSPATH) != null)
+            File.pathSeparator + l.getConf(DRIVER_EXTRA_CLASSPATH)
+          else
+            ""
+          )
+        )
+
+        l.setConf(EXECUTOR_EXTRA_CLASSPATH, Settings().getDriverSettings(t).libDirectory + (
+          if (l.getConf(EXECUTOR_EXTRA_CLASSPATH) != null)
+            File.pathSeparator + l.getConf(EXECUTOR_EXTRA_CLASSPATH)
+          else
+            ""
+          )
+        )
 
         if (master.startsWith("local"))
           l.setLocalTestMode()

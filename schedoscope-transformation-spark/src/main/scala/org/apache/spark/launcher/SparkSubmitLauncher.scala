@@ -19,6 +19,8 @@ import java.io.{File, IOException}
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 
+import SparkLauncher.{DRIVER_EXTRA_CLASSPATH, EXECUTOR_EXTRA_CLASSPATH}
+
 import org.apache.commons.io.FileUtils
 import org.apache.spark.deploy.SparkSubmit
 import org.apache.spark.launcher.CommandBuilderUtils._
@@ -63,8 +65,25 @@ class SparkSubmitLauncher extends SparkLauncher {
   }
 
   def addLocalClasspath(): SparkSubmitLauncher = {
-    val cl = ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader]
-    builder.childEnv.put("SPARK_CLASSPATH", cl.getURLs.map(_.getFile).toList.mkString(File.pathSeparator))
+    val cp = ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs.map(_.getFile).toList.mkString(File.pathSeparator)
+
+    builder.childEnv.put("SPARK_CLASSPATH",
+      cp + (
+        if (builder.conf.containsKey(DRIVER_EXTRA_CLASSPATH))
+          File.pathSeparator + builder.conf.get(DRIVER_EXTRA_CLASSPATH)
+        else
+          ""
+        ) + (
+        if (builder.conf.containsKey(EXECUTOR_EXTRA_CLASSPATH))
+          File.pathSeparator + builder.conf.get(EXECUTOR_EXTRA_CLASSPATH)
+        else
+          ""
+        )
+    )
+
+    builder.conf.remove(DRIVER_EXTRA_CLASSPATH)
+    builder.conf.remove(EXECUTOR_EXTRA_CLASSPATH)
+
     this
   }
 
@@ -83,6 +102,8 @@ class SparkSubmitLauncher extends SparkLauncher {
     setMaster("local")
     this
   }
+
+  def getConf(key: String): String = builder.conf.get(key)
 
   @throws[IOException]
   override def startApplication(listeners: Listener*) = {
@@ -213,5 +234,6 @@ case class ExitCodeAwareChildProcAppHandle(childProcAppHandle: ChildProcAppHandl
     Some(p.exitValue())
   } catch {
     case t: IllegalThreadStateException => None
-  }}
+  }
+  }
 }
