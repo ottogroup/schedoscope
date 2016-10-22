@@ -47,11 +47,7 @@ case class Restaurants() extends View
           queryFromResource("hiveql/datahub/insert_restaurants.sql")))
         .configureWith(defaultHiveQlParameters(this)
         )
-    ).configureWith(
-      Map(
-        "spark.driver.memory" -> "2G",
-        "spark.executor.memory" -> "2G"
-      ))
+    )
   }
 
   comment("View of restaurants")
