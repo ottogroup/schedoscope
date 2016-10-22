@@ -38,6 +38,11 @@ object SparkSQLRunner {
 
       val statement = System.getenv(SQL_STATEMENT).stripMargin
 
+      println("Executing query:")
+      println("================")
+
+      println(statement)
+
       hc.sql(statement)
 
     } catch {

@@ -57,7 +57,7 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
       if (returnCode == 0)
         DriverRunSucceeded[ShellTransformation](this, "Shell script finished")
       else
-        DriverRunFailed[ShellTransformation](this, s"Shell script returned errorcode ${returnCode}", RetryableDriverException(s"Failed shell script, status ${returnCode}"))
+        DriverRunFailed[ShellTransformation](this, s"Shell script returned errorcode ${returnCode}", null)
     } catch {
       case e: Throwable => DriverRunFailed[ShellTransformation](this, s"Shell script execution resulted in exception", e)
     }

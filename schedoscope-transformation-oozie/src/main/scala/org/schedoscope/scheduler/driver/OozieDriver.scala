@@ -54,7 +54,7 @@ class OozieDriver(val driverRunCompletionHandlerClassNames: List[String], val cl
       state match {
         case SUCCEEDED => DriverRunSucceeded[OozieTransformation](this, s"Oozie job ${jobId} succeeded")
         case SUSPENDED | RUNNING | PREP => DriverRunOngoing[OozieTransformation](this, run)
-        case _ => DriverRunFailed[OozieTransformation](this, s"Oozie job ${jobId} failed", RetryableDriverException(s"Failed Oozie job status ${state}"))
+        case _ => DriverRunFailed[OozieTransformation](this, s"Oozie job ${jobId} failed, job status ${state}", null)
       }
     } catch {
       case e: Throwable => throw RetryableDriverException(s"Unexpected error occurred while checking run state of Oozie job ${jobId}", e)

@@ -193,10 +193,7 @@ case class ExitCodeAwareChildProcAppHandle(childProcAppHandle: ChildProcAppHandl
 
   override def disconnect(): Unit = childProcAppHandle.disconnect()
 
-  override def kill(): Unit = {
-    childProcAppHandle.kill()
-    childProc = None
-  }
+  override def kill(): Unit = childProcAppHandle.kill()
 
   override def getState: State = childProcAppHandle.getState
 

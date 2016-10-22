@@ -99,32 +99,29 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
         s"$applicationName :: $mainJarOrPy ${if (mainClass != null) s" :: $mainClass" else ""} :: $applicationArgs"
     }
 
-    log.debug(s"checking Spark app handle for $appInfo - state: ${appHandle.getState} exit code: ${appHandle.getExitCode}")
-
     try {
-      appHandle.getState match {
+      val handleState = appHandle.getState
+      val exitCode = appHandle.getExitCode
 
-        case FINISHED =>
-          if (appHandle.getExitCode.isDefined && appHandle.getExitCode.head == 0)
-            DriverRunSucceeded[SparkTransformation](this, s"Spark driver run succeeded for $appInfo")
-          else if (appHandle.getExitCode.isEmpty)
-            DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Exit code of Spark submit process is not available tho the process has finished"))
+      log.debug(s"checking Spark app handle for $appInfo - state: $handleState exit code: $exitCode")
+
+      (handleState, exitCode) match {
+
+        case (KILLED, _) | (FAILED, _) => DriverRunFailed(this, s"Driver run for Spark transformation $appInfo failed with State $handleState (Exit Code $exitCode)", null)
+
+        case (_, Some(e)) =>
+
+          if (e > 0)
+            DriverRunFailed(this, s"Driver run for Spark transformation $appInfo failed with problematic Exit Code $exitCode (State is $handleState)", null)
           else
-            DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Exit code of Spark submit process is 1"))
+            DriverRunSucceeded(this, s"Driver run for Spark transformation $appInfo completed with successful Exit Code $exitCode (State is $handleState)")
 
-        case CONNECTED | SUBMITTED | RUNNING => DriverRunOngoing[SparkTransformation](this, run)
-
-        case UNKNOWN => if (appHandle.childProc.isDefined && appHandle.getExitCode.isEmpty)
-          DriverRunOngoing[SparkTransformation](this, run)
-        else
-          DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Spark driver run was killed for $appInfo"))
-
-        case _ => DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", new RetryableDriverException(s"Spark driver run failed for $appInfo"))
+        case _ => DriverRunOngoing(this, run)
 
       }
 
     } catch {
-      case t: Throwable => DriverRunFailed[SparkTransformation](this, s"Spark driver run failed for $appInfo", t)
+      case t: Throwable => DriverRunFailed[SparkTransformation](this, s"Spark driver run failed with Exception for $appInfo", t)
     }
   }
 
