@@ -19,12 +19,11 @@ import org.apache.spark.sql.hive.HiveContext
 import org.apache.spark.{SparkConf, SparkContext}
 
 /**
-  * Implements a simple Spark job that runs the Hive / SparkSQL statement in the environment variable SQL_RUNNER_HIVE.
-  * As no result is printed / returned, this makes only sense for running DDL statements.
+  * Implements a simple Spark job that runs the Hive / SparkSQL statement passed as its argument.
+  * As no result is returned, this makes only sense for running DDL statements.
   */
 object SparkSQLRunner {
 
-  val SQL_STATEMENT = "SQL_RUNNER_HIVE"
 
   def main(args: Array[String]) {
 
@@ -33,14 +32,13 @@ object SparkSQLRunner {
 
     try {
 
-      if (System.getenv(SQL_STATEMENT) == null)
-        throw new IllegalArgumentException(s"Environment variable $SQL_STATEMENT not set.")
+      if (args.length != 1)
+        throw new IllegalArgumentException(s"Pass a SQL statement as an argument")
 
-      val statement = System.getenv(SQL_STATEMENT).stripMargin
+      val statement = args(0)
 
       println("Executing query:")
       println("================")
-
       println(statement)
 
       hc.sql(statement)

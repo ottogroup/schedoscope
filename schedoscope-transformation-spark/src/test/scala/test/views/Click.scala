@@ -46,18 +46,17 @@ case class ClickOfEC0101ViaSpark(year: Parameter[String],
   transformVia(() =>
     SparkTransformation(
       "ClickOfEC0101ViaSpark",
-      jarOf(SparkSQLRunner), classNameOf(SparkSQLRunner)
-    ).configureWith(
-      Map(
-        "SQL_RUNNER_HIVE" ->
-          s"""
-             |INSERT INTO TABLE ${this.tableName}
-             |PARTITION (year = '${year.v.get}', month = '${month.v.get}', day = '${day.v.get}', date_id = '${dateId.v.get}')
-             |SELECT *
-             |FROM ${click().tableName}
-             |WHERE shop_code = 'EC0101'
-             |AND   year = '${year.v.get}' AND month = '${month.v.get}' AND day = '${day.v.get}' AND date_id = '${dateId.v.get}'
-         """.stripMargin)
+      jarOf(SparkSQLRunner), classNameOf(SparkSQLRunner),
+      List(
+        s"""
+           INSERT INTO TABLE ${this.tableName}
+           PARTITION (year = '${year.v.get}', month = '${month.v.get}', day = '${day.v.get}', date_id = '${dateId.v.get}')
+           SELECT *
+           FROM ${click().tableName}
+           WHERE shop_code = 'EC0101'
+           AND   year = '${year.v.get}' AND month = '${month.v.get}' AND day = '${day.v.get}' AND date_id = '${dateId.v.get}'
+         """.stripMargin
+      )
     )
   )
 }
@@ -76,10 +75,10 @@ case class ClickOfEC0101ViaHiveQlOnSpark(year: Parameter[String],
     HiveTransformation(
       insertInto(this,
         s"""
-           |SELECT *
-           |FROM ${click().tableName}
-           |WHERE shop_code = 'EC0101'
-           |AND   year = '${year.v.get}' AND month = '${month.v.get}' AND day = '${day.v.get}' AND date_id = '${dateId.v.get}'
+           SELECT *
+           FROM ${click().tableName}
+           WHERE shop_code = 'EC0101'
+           AND   year = '${year.v.get}' AND month = '${month.v.get}' AND day = '${day.v.get}' AND date_id = '${dateId.v.get}'
          """)
     ))
   )

@@ -115,18 +115,15 @@ object SparkTransformation {
 
     SparkTransformation(
       classNameOf(SparkSQLRunner), jarOf(SparkSQLRunner), classNameOf(SparkSQLRunner),
-      List(),
+      List({
+        val h = t.asInstanceOf[HiveTransformation]
+        replaceParameters(h.sql, h.configuration.toMap).stripMargin
+      }),
       master, deployMode,
       additionalJars,
       additionalPys,
       additionalFiles,
-      propertiesFile).configureWith(
-      Map(
-        "SQL_RUNNER_HIVE" -> {
-          val h = t.asInstanceOf[HiveTransformation]
-          replaceParameters(h.sql, h.configuration.toMap)
-        }
-      )
-    ).asInstanceOf[SparkTransformation]
+      propertiesFile
+    )
 
 }
