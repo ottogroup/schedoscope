@@ -23,8 +23,8 @@
         <pig.parquet.version>1.6.0</pig.parquet.version>
         <spark.version>1.6.0-cdh5.8.3</spark.version>
         <mrunit.version>1.1.0</mrunit.version>
-        <hiveunit.version>1.2.3</hiveunit.version>
-        <minioozie.version>1.2.1</minioozie.version>
+        <hiveunit.version>1.2.4</hiveunit.version>
+        <minioozie.version>1.2.2</minioozie.version>
         <schedoscope.version>0.7.0-SNAPSHOT</schedoscope.version>
     </properties>
 

@@ -84,23 +84,25 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
               l.setChildEnv(k, v.toString)
         }
 
-        l.setConf(DRIVER_EXTRA_CLASSPATH, Settings().getDriverSettings(t).libDirectory + (
-          if (l.getConf(DRIVER_EXTRA_CLASSPATH) != null)
-            File.pathSeparator + l.getConf(DRIVER_EXTRA_CLASSPATH)
-          else
-            ""
-          )
-        )
+        if (!master.startsWith("local")) {
 
-        l.setConf(EXECUTOR_EXTRA_CLASSPATH, Settings().getDriverSettings(t).libDirectory + (
-          if (l.getConf(EXECUTOR_EXTRA_CLASSPATH) != null)
-            File.pathSeparator + l.getConf(EXECUTOR_EXTRA_CLASSPATH)
-          else
-            ""
+          l.setConf(DRIVER_EXTRA_CLASSPATH, Settings().getDriverSettings(t).libDirectory + (
+            if (l.getConf(DRIVER_EXTRA_CLASSPATH) != null)
+              File.pathSeparator + l.getConf(DRIVER_EXTRA_CLASSPATH)
+            else
+              ""
+            )
           )
-        )
 
-        if (master.startsWith("local"))
+          l.setConf(EXECUTOR_EXTRA_CLASSPATH, Settings().getDriverSettings(t).libDirectory + (
+            if (l.getConf(EXECUTOR_EXTRA_CLASSPATH) != null)
+              File.pathSeparator + l.getConf(EXECUTOR_EXTRA_CLASSPATH)
+            else
+              ""
+            )
+          )
+
+        } else
           l.setLocalTestMode()
 
     }
