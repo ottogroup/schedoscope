@@ -15,8 +15,11 @@
   */
 package org.schedoscope.dsl.transformations
 
+import java.io.File
+
 import org.schedoscope.scheduler.service.ViewTransformationStatus
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
+import org.schedoscope.scheduler.driver.FilesystemDriver
 
 /**
   * This captures view transformation logic implemented as Spark jobs. It is expected to be available in a submittable
@@ -96,6 +99,13 @@ object SparkTransformation {
 
 
   /**
+    * Return an absolute path for a resource on the classpath so that it can be passed as the mainJarOrPy of a Spark transformation.
+    * @param resourcePath The path to the resource. Needs to start with "classpath://"
+    * @return the absolute path to the resource.
+    */
+  def resource(resourcePath: String) = new File(FilesystemDriver.classpathResourceToFile(resourcePath)).getAbsolutePath
+
+  /**
     * Constructs a Spark transformation of out of a Hive transformation by taking its query and passing it to SparkSQLRunner.
     * @param t  the Hive transformation to run on Spark
     * @param master          Spark master setting. Defaults to "yarn-cluster".
@@ -126,4 +136,10 @@ object SparkTransformation {
       propertiesFile
     )
 
+  /**
+    *
+    * @param resourcePath
+    * @return
+    */
+  def resource(resourcePath: String) = new File(FilesystemDriver.classpathResourceToFile(resourcePath)).getAbsolutePath
 }
