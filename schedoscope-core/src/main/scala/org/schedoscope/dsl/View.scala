@@ -20,7 +20,7 @@ import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.{NoOp, SeqTransformation, Transformation}
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.{ParsedView, ParsedViewAugmentor}
-import org.schedoscope.test.{WritableView}
+import org.schedoscope.test.WritableView
 
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
@@ -32,66 +32,42 @@ import scala.language.{existentials, implicitConversions}
   */
 abstract class View extends Structure with ViewDsl with DelayedInit {
 
-  def lowerCasePackageName = Named.camelToLowerUnderscore(getClass.getPackage.getName)
-
-  override def toString() = urlPath
-
-  def nWithoutPartitioningSuffix = super.n
-
-  override def n =
-    if (!hasSuffixPartitions)
-      nWithoutPartitioningSuffix
+  /**
+    * The rank of the view. Views without dependencies are of Rank 0, all others are one rank higher than the
+    * of biggest rank of their dependencies
+    */
+  lazy val rank: Int = {
+    val ds = dependencies
+    if (ds.isEmpty)
+      0
     else
-      nWithoutPartitioningSuffix + "_" + suffixPartitionParameters.map { p => p.v.get }.mkString("_").toLowerCase()
-
-  /**
-    * The package and view class prefix of the URL syntax representing the present view
-    */
-  def urlPathPrefix = s"${lowerCasePackageName}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}"
-
-  /**
-    * The URL path syntax identifying the present view.
-    */
-  def urlPath = s"${urlPathPrefix}/${partitionValues(false).mkString("/")}"
-
-  /**
-    * The view's environment.
-    */
-  var env = "dev"
-
+      ds.map {
+        _.rank
+      }.max + 1
+  }
+  private val suffixPartitions = new HashSet[Parameter[_]]()
+  private val deferredDependencies = ListBuffer[() => Seq[View]]()
   /**
     * Pluggable builder function that returns the name of the module the view belongs to.
     * The default implemementation returns the view's package in database-friendly lower-case underscore format, replacing all . with _.
     */
   override var moduleNameBuilder = () => lowerCasePackageName.replaceAll("[.]", "_")
-
-  def module = moduleNameBuilder()
-
   /**
     * Pluggable builder function that returns the database name for the view given an environment.
     * The default implementation prepends the environment to the result of moduleNameBuilder with an underscore.
     */
   override var dbNameBuilder = (env: String) => env.toLowerCase() + "_" + moduleNameBuilder()
-
-  def dbName = dbNameBuilder(env)
-
   /**
     * Pluggable builder function that returns the table name for the view given an environment.
     * The default implementation appends the view's name n to the result of dbNameBuilder.
     */
   override var tableNameBuilder = (env: String) => dbNameBuilder(env) + "." + n
-
-  def tableName = tableNameBuilder(env)
-
   /**
     * Pluggable builder function that returns the HDFS path representing the database of the view given an environment.
     * The default implementation does this by building a path from the lower-case-underscore format of
     * moduleNameBuilder, replacing _ with / and prepending hdp/dev/ for the default dev environment.
     */
   override var dbPathBuilder = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
-
-  def dbPath = dbPathBuilder(env)
-
   /**
     * Pluggable builder function that returns the HDFS path to the table the view belongs to.
     * The default implementation does this by joining dbPathBuilder and n. The latter will
@@ -102,47 +78,84 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     "/" +
     n +
     (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
-
-  def tablePath = tablePathBuilder(env)
-
   /**
     * Pluggable builder function that returns the relative partition path for the view. By default,
     * this is the standard Hive /partitionColumn=value/... pattern.
     */
   override var partitionPathBuilder = () => partitionSpec
-
-  def partitionPath = partitionPathBuilder()
-
   /**
     * Pluggable builder function that returns the full HDFS path to the partition represented by the view.
     * The default implementation concatenates the output of tablePathBuilder and partitionPathBuilder for
     * this purpose.
     */
   override var fullPathBuilder = (env: String) => tablePathBuilder(env) + partitionPathBuilder()
-
-  def fullPath = fullPathBuilder(env)
-
   /**
     * Pluggable builder function returning a path prefix of where Avro schemas can be found in HDFS.
     * By default, this is hdfs:///hdp/$\{env\}/global/datadictionary/schema/avro
     */
   override var avroSchemaPathPrefixBuilder = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
+  /**
+    * The view's environment.
+    */
+  var env = "dev"
+  var storageFormat: StorageFormat = TextFile()
+  var additionalStoragePathPrefix: Option[String] = None
+  var additionalStoragePathSuffix: Option[String] = None
+  var registeredTransformation: () => Transformation = () => NoOp()
+  var registeredExports: List[() => Transformation] = List()
+  var isMaterializeOnce = false
+  var isExternal = false
 
-  def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
+  override def toString() = urlPath
 
   /**
-    * Returns true if the present view is partitionend.
+    * The URL path syntax identifying the present view.
     */
-  def isPartitioned() = partitionParameters.nonEmpty
+  def urlPath = s"${urlPathPrefix}/${partitionValues(false).mkString("/")}"
+
+  /**
+    * The package and view class prefix of the URL syntax representing the present view
+    */
+  def urlPathPrefix = s"${lowerCasePackageName}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}"
+
+  def lowerCasePackageName = Named.camelToLowerUnderscore(getClass.getPackage.getName)
+
+  /**
+    * Returns a list of partition values in order the parameter weights. Such lists are necessary for communicating with the metastore.
+    */
+  def partitionValues(ignoreSuffixPartitions: Boolean = true) =
+  (if (ignoreSuffixPartitions)
+    partitionParameters
+  else
+    parameters).map(p => p.v.getOrElse("").toString).toList
+
+  /**
+    * Returns all parameters that are not suffix parameters (i.e., real partitioning parameters) of the present view
+    * in ascending order of their weight.
+    */
+  def partitionParameters = parameters
+    .filter { p => isPartition(p) && !isSuffixPartition(p) }
+
+  override def n =
+    if (!hasSuffixPartitions)
+      nWithoutPartitioningSuffix
+    else
+      nWithoutPartitioningSuffix + "_" + suffixPartitionParameters.map { p => p.v.get }.mkString("_").toLowerCase()
+
+  def nWithoutPartitioningSuffix = super.n
+
+  /**
+    * Are there any parameters implemented as table name suffixes?
+    */
+  def hasSuffixPartitions = !suffixPartitions.isEmpty
+
+  def suffixPartitionParameters = parameters
+    .filter { p => isPartition(p) && isSuffixPartition(p) }
 
   /**
     * Returns true if the passed parameter is a paritioning parameter of the view.
     */
   def isPartition(p: Parameter[_]) = parameters.contains(p)
-
-  def registerParameter(p: Parameter[_]) {
-    p.assignTo(this)
-  }
 
   /**
     * Returns all parameters of the present view in ascending order of their weight.
@@ -157,27 +170,35 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     .toSeq
 
   /**
-    * Returns all parameters that are not suffix parameters (i.e., real partitioning parameters) of the present view
-    * in ascending order of their weight.
+    * Checks wether a given parameter is implemented using a table name suffix.
     */
-  def partitionParameters = parameters
-    .filter { p => isPartition(p) && !isSuffixPartition(p) }
+  def isSuffixPartition(p: Parameter[_]) = suffixPartitions.contains(p)
+
+  def module = moduleNameBuilder()
+
+  def dbName = dbNameBuilder(env)
+
+  def tableName = tableNameBuilder(env)
+
+  def dbPath = dbPathBuilder(env)
+
+  def tablePath = tablePathBuilder(env)
+
+  def partitionPath = partitionPathBuilder()
+
+  def fullPath = fullPathBuilder(env)
+
+  def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
+
+  /**
+    * Returns true if the present view is partitionend.
+    */
+  def isPartitioned() = partitionParameters.nonEmpty
 
   /**
     * Returns the Hive partition pattern (/partitionColumns=value/...) for the present view observing order weight.
     */
   def partitionSpec = "/" + partitionParameters.map(p => s"${p.n}=${p.v.getOrElse("")}").mkString("/")
-
-  /**
-    * Returns a list of partition values in order the parameter weights. Such lists are necessary for communicating with the metastore.
-    */
-  def partitionValues(ignoreSuffixPartitions: Boolean = true) =
-    (if (ignoreSuffixPartitions)
-      partitionParameters
-    else
-      parameters).map(p => p.v.getOrElse("").toString).toList
-
-  private val suffixPartitions = new HashSet[Parameter[_]]()
 
   def asTableSuffix[P <: Parameter[_]](p: P): P = {
     suffixPartitions.add(p)
@@ -185,37 +206,13 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }
 
   /**
-    * Checks wether a given parameter is implemented using a table name suffix.
+    * Marks a given dependency function as external dependency
+    * @param dep the dependency
+    * @return function with dependency marked as external
     */
-  def isSuffixPartition(p: Parameter[_]) = suffixPartitions.contains(p)
-
-  /**
-    * Are there any parameters implemented as table name suffixes?
-    */
-  def hasSuffixPartitions = !suffixPartitions.isEmpty
-
-  def suffixPartitionParameters = parameters
-    .filter { p => isPartition(p) && isSuffixPartition(p) }
-
-  private val deferredDependencies = ListBuffer[() => Seq[View]]()
-
-  /**
-    * Return all dependencies of the view in the order they have been declared.
-    */
-  def dependencies = deferredDependencies.flatMap {
-    _ ()
-  }.distinct
-
-  /**
-    * Add dependencies to the given view. This is done with an anonymous function returning a sequence of views the
-    * current view depends on.
-    */
-  def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
-    val df = () => dsf().map {
-      View.register(this.env, _)
-    }
-
-    deferredDependencies += df
+  def external(dep: () => View) : () => View = {
+    val externalView = dep().makeExternal
+    () => externalView
   }
 
   /**
@@ -231,22 +228,16 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }
 
   /**
-    * The rank of the view. Views without dependencies are of Rank 0, all others are one rank higher than the
-    * of biggest rank of their dependencies
+    * Add dependencies to the given view. This is done with an anonymous function returning a sequence of views the
+    * current view depends on.
     */
-  lazy val rank: Int = {
-    val ds = dependencies
-    if (ds.isEmpty)
-      0
-    else
-      ds.map {
-        _.rank
-      }.max + 1
-  }
+  def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
+    val df = () => dsf().map {
+      View.register(this.env, _)
+    }
 
-  var storageFormat: StorageFormat = TextFile()
-  var additionalStoragePathPrefix: Option[String] = None
-  var additionalStoragePathSuffix: Option[String] = None
+    deferredDependencies += df
+  }
 
   /**
     * Specifiy the storage format of the view, with TextFile being the default. One can optionally specify storage path prefixes and suffixes.
@@ -256,8 +247,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     this.additionalStoragePathPrefix = if (additionalStoragePathPrefix != null) Some(additionalStoragePathPrefix) else None
     this.additionalStoragePathSuffix = if (additionalStoragePathSuffix != null) Some(additionalStoragePathSuffix) else None
   }
-
-  var registeredTransformation: () => Transformation = () => NoOp()
 
   /**
     * Set the transformation with which the view is created. Provide an anonymous function returning the transformation.
@@ -278,8 +267,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     val t = registeredTransformation()
     transformVia(() => t.configureWith(Map((k, v))))
   }
-
-  var registeredExports: List[() => Transformation] = List()
 
   /**
     * Registers an export transformation with the view. You need to provide an anonymous constructor function returning this transformation.
@@ -323,18 +310,20 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       }
   }
 
-  var isMaterializeOnce = false
-
-  def materializeOnce {
-    isMaterializeOnce = true
-  }
-
   /**
     * Dumbly registed all parameters with the view.
     */
   def ensureRegisteredParameters {
     for (p <- parameters)
       registerParameter(p)
+  }
+
+  def registerParameter(p: Parameter[_]) {
+    p.assignTo(this)
+  }
+
+  def materializeOnce {
+    isMaterializeOnce = true
   }
 
   /**
@@ -344,6 +333,27 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     ensureRegisteredParameters
     body
   }
+
+  /**
+    * Marks a [[View]] as external. Schedoscope will not execute the transformation of this view or it's dependencies.
+    * Further no information about this view will be written to the metastore
+    *
+    * @return Modified [[View]]
+    */
+  def makeExternal = {
+    isExternal = true
+    registeredTransformation = () => NoOp()
+    registeredExports = List()
+    deferredDependencies.clear()
+    this
+  }
+
+  /**
+    * Return all dependencies of the view in the order they have been declared.
+    */
+  def dependencies = deferredDependencies.flatMap {
+    _ ()
+  }.distinct
 }
 
 /**
@@ -351,20 +361,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   */
 object View {
   private val knownViews = HashMap[View, View]()
-
-  private def register[V <: View : Manifest](env: String, v: V): V = this.synchronized {
-    val registeredView = knownViews.get(v) match {
-      case Some(registeredView) => {
-        registeredView.asInstanceOf[V]
-      }
-      case None => {
-        knownViews.put(v, v)
-        v
-      }
-    }
-    registeredView.env = env
-    registeredView
-  }
 
   /**
     * Return all views from a given package.
@@ -381,11 +377,36 @@ object View {
     }.toSeq.asInstanceOf[Seq[Class[View]]]
   }
 
+
+
   /**
     * Return the traits implemented by a view.
     */
   def getTraits[V <: View : Manifest](viewClass: Class[V]) = {
     viewClass.getInterfaces().filter(_ != classOf[Serializable]).filter(_ != classOf[scala.Product])
+  }
+
+  /**
+    * Instantiate views given an environment and view URL path. A parsed view augmentor can further modify the created views.
+    */
+  def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] =
+  try {
+    ViewUrlParser
+      .parse(env, viewUrlPath)
+      .map {
+        parsedViewAugmentor.augment(_)
+      }
+      .filter {
+        _ != null
+      }
+      .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
+  } catch {
+    case t: Throwable =>
+      if (t.isInstanceOf[java.lang.reflect.InvocationTargetException]) {
+        throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getCause().getMessage}")
+      } else {
+        throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
+      }
   }
 
   /**
@@ -436,27 +457,18 @@ object View {
     register(env, viewConstructor.invoke(viewCompanionObject, parametersToPass.asInstanceOf[Seq[Object]]: _*).asInstanceOf[V])
   }
 
-  /**
-    * Instantiate views given an environment and view URL path. A parsed view augmentor can further modify the created views.
-    */
-  def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] =
-    try {
-      ViewUrlParser
-        .parse(env, viewUrlPath)
-        .map {
-          parsedViewAugmentor.augment(_)
-        }
-        .filter {
-          _ != null
-        }
-        .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
-    } catch {
-      case t: Throwable =>
-        if (t.isInstanceOf[java.lang.reflect.InvocationTargetException]) {
-          throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getCause().getMessage}")
-        } else {
-          throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
-        }
+  private def register[V <: View : Manifest](env: String, v: V): V = this.synchronized {
+    val registeredView = knownViews.get(v) match {
+      case Some(registeredView) => {
+        registeredView.asInstanceOf[V]
+      }
+      case None => {
+        knownViews.put(v, v)
+        v
+      }
     }
+    registeredView.env = env
+    registeredView
+  }
 
 }

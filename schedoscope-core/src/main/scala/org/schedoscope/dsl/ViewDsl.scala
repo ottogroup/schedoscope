@@ -16,7 +16,7 @@
 package org.schedoscope.dsl
 
 import org.schedoscope.dsl.storageformats._
-import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.dsl.transformations.{NoOp, Transformation}
 
 /**
   * A trait summarizing the DSL constructs available for the definition of views.
@@ -64,6 +64,9 @@ trait ViewDsl extends StructureDsl {
     ps.isPrivacySensitive = true
     ps
   }
+
+
+  def external(d: () => View) : () => View
 
   /**
     * Materialize once makes sure that the given view is only materialized once, even if its dependencies or version checksum change

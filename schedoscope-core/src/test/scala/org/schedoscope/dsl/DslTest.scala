@@ -388,4 +388,27 @@ class DslTest extends FlatSpec with Matchers {
 
     traits should contain theSameElementsAs List(classOf[DailyParameterization], classOf[PointOccurrence], classOf[JobMetadata])
   }
+
+  "A View" should "be marked as external" in {
+    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01")).makeExternal
+
+    productBrand.registeredTransformation() shouldBe NoOp()
+    productBrand.dependencies shouldBe empty
+    productBrand.transformation() shouldBe NoOp()
+    productBrand.registeredExports shouldBe empty
+    productBrand.isExternal shouldBe true
+  }
+
+  it should "have an external dependencies" in {
+    val extView = ViewWithExternalDeps(p("ec0106"), p("2014"), p("01"), p("01"))
+
+    val dependency = extView.dependencies.head
+
+    dependency.registeredTransformation() shouldBe NoOp()
+    dependency.dependencies shouldBe empty
+    dependency.transformation() shouldBe NoOp()
+    dependency.registeredExports shouldBe empty
+    dependency.isExternal shouldBe true
+
+  }
 }
