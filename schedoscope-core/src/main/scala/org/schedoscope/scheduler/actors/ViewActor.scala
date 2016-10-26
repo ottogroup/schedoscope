@@ -109,10 +109,12 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
 
     case WriteTransformationTimestamp(view, transformationTimestamp) =>
-      metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
+      if(!view.isExternal) metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
+
 
     case WriteTransformationCheckum(view) =>
-      metadataLoggerActor ! SetViewVersion(view)
+      if(!view.isExternal) metadataLoggerActor ! SetViewVersion(view)
+
 
     case TouchSuccessFlag(view) =>
       touchSuccessFlag(view)
