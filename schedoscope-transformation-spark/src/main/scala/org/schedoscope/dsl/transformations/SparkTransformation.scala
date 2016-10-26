@@ -135,11 +135,5 @@ object SparkTransformation {
       additionalFiles,
       propertiesFile
     )
-
-  /**
-    *
-    * @param resourcePath
-    * @return
-    */
-  def resource(resourcePath: String) = new File(FilesystemDriver.classpathResourceToFile(resourcePath)).getAbsolutePath
+  
 }
