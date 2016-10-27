@@ -19,6 +19,7 @@ import org.joda.time.LocalDateTime
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.{SeqTransformation, Transformation}
 import org.schedoscope.test.resources.TestResources
+import org.slf4j.LoggerFactory
 
 import scala.language.existentials
 
@@ -27,6 +28,8 @@ import scala.language.existentials
   * the transformation types the Seq is composed of.
   */
 class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFor: (String) => Driver[Transformation]) extends DriverOnNonBlockingApi[SeqTransformation[Transformation, Transformation]] {
+
+  val log = LoggerFactory.getLogger(classOf[SeqDriver])
 
   /**
     * Possible states capturing how far the Seq transformation has progressed.
@@ -62,6 +65,8 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
     val firstTransformation = t.firstThisTransformation
     val driverForFirstTransformation = driverFor(firstTransformation.name)
 
+    log.info(s"SeqDriver running first transformation $firstTransformation with driver $driverForFirstTransformation")
+
     val firstTransformationRunHandle = driverForFirstTransformation.run(firstTransformation)
 
     new DriverRunHandle[SeqTransformation[Transformation, Transformation]](this, new LocalDateTime(), t, FirstTransformationOngoing(firstTransformationRunHandle))
@@ -71,6 +76,8 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
 
     val driverForFirstTransformation = driverFor(run.transformation.firstThisTransformation.name)
     val driverForSecondTransformation = driverFor(run.transformation.thenThatTransformation.name)
+
+
 
     run.stateHandle.asInstanceOf[SeqDriverStateHandle] match {
 
@@ -86,6 +93,9 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
 
           case f: DriverRunFailed[Transformation] => {
             run.stateHandle = FirstTransformationFinished(firstTransformationState)
+
+            log.error(s"First transformation ${run.transformation.firstThisTransformation} with SeqDriver $driverForFirstTransformation failed with reason ${f.reason} and cause ${f.cause}", f.cause)
+
             DriverRunFailed(this, s"First transformation in SeqTransformation failed: ${f.reason}", f.cause)
           }
 
@@ -99,12 +109,19 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
       case FirstTransformationFinished(firstRunState) => firstRunState match {
 
         case s: DriverRunSucceeded[Transformation] => {
+
+          log.info(s"SeqDriver handing over to driver $driverForSecondTransformation for second transformation ${run.transformation.thenThatTransformation}")
+
           val secondTransformationRunHandle = driverForSecondTransformation.run(run.transformation.thenThatTransformation)
           run.stateHandle = SecondTransformationOngoing(s, secondTransformationRunHandle)
+
+
           DriverRunOngoing(this, run)
         }
 
         case f: DriverRunFailed[Transformation] =>
+          log.error(s"First transformation ${run.transformation.firstThisTransformation} with SeqDriver $driverForFirstTransformation failed with reason ${f.reason} and cause ${f.cause}", f.cause)
+
           DriverRunFailed(this, s"First transformation in Seq transformation failed: ${f.reason}", f.cause)
 
         case o: DriverRunOngoing[Transformation] => throw new RuntimeException("Seq transformation should never have finished first transformation with DriverRunOngoing state")
@@ -124,10 +141,17 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
           case f: DriverRunFailed[Transformation] => {
             run.stateHandle = Finished(firstRunState, secondTransformationState)
 
-            if (run.transformation.firstTransformationIsDriving)
+            if (run.transformation.firstTransformationIsDriving) {
+
+              log.warn(s"Second transformation ${run.transformation.thenThatTransformation} with SeqDriver $driverForSecondTransformation failed with reason ${f.reason} and cause ${f.cause}", f.cause)
+
               DriverRunSucceeded(this, s"Seq transformation executed: ${run.transformation} with ignored failure of second transformation: ${f.reason}, cause: ${f.cause}")
-            else
+            } else {
+
+              log.error(s"Second transformation ${run.transformation.thenThatTransformation} with SeqDriver $driverForSecondTransformation failed with reason ${f.reason} and cause ${f.cause}", f.cause)
+
               DriverRunFailed(this, s"Second transformation in SeqTransformation failed: ${f.reason}", f.cause)
+            }
           }
 
           case o: DriverRunOngoing[Transformation] =>

@@ -34,30 +34,38 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
     */
   def doRun(t: ShellTransformation): DriverRunState[ShellTransformation] = {
     val stdout = new StringBuilder
-    try {
-      val returnCode = if (t.scriptFile != "")
-        Process(Seq(t.shell, t.scriptFile), None, t.configuration.toSeq.asInstanceOf[Seq[(String, String)]]: _*).!(ProcessLogger(stdout append _, log.error(_)))
-      else {
-        val file = File.createTempFile("_schedoscope", ".sh")
+    val environment = t.configuration.toSeq.map { case (k, v) => (k, v.toString) }
 
-        val writer = new FileWriter(file)
-        try {
-          writer.write(s"#!${t.shell}\n")
-          t.script.foreach {
-            writer.write(_)
+    try {
+
+      val returnCode =
+        if (t.scriptFile != "")
+          Process(Seq(t.shell, t.scriptFile), None, environment: _*) ! ProcessLogger(log.info, log.error)
+        else {
+          val file = File.createTempFile("_schedoscope", ".sh")
+
+          val writer = new FileWriter(file)
+
+          try {
+            writer.write(s"#!${t.shell}\n")
+            t.script.foreach {
+              writer.write(_)
+            }
+          } finally {
+            writer.close()
           }
-        } finally {
-          writer.close()
+
+          scala.compat.Platform.collectGarbage() // JVM Windows related bug workaround JDK-4715154
+          file.deleteOnExit()
+
+          Process(Seq(t.shell, file.getAbsolutePath), None, environment: _*) ! ProcessLogger(log.info, log.error)
         }
 
-        scala.compat.Platform.collectGarbage() // JVM Windows related bug workaround JDK-4715154
-        file.deleteOnExit()
-        Process(Seq(t.shell, file.getAbsolutePath), None, t.configuration.toSeq.asInstanceOf[Seq[(String, String)]]: _*).!(ProcessLogger(stdout append _, log.error(_)))
-      }
       if (returnCode == 0)
         DriverRunSucceeded[ShellTransformation](this, "Shell script finished")
       else
-        DriverRunFailed[ShellTransformation](this, s"Shell script returned errorcode ${returnCode}", null)
+        DriverRunFailed[ShellTransformation](this, s"Shell script returned errorcode ${returnCode}", RetryableDriverException(s"Failed shell script, status ${returnCode}"))
+
     } catch {
       case e: Throwable => DriverRunFailed[ShellTransformation](this, s"Shell script execution resulted in exception", e)
     }
