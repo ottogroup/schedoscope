@@ -66,8 +66,6 @@ trait ViewDsl extends StructureDsl {
   }
 
 
-  def external(d: () => View) : () => View
-
   /**
     * Materialize once makes sure that the given view is only materialized once, even if its dependencies or version checksum change
     * afterwards.
