@@ -45,7 +45,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
         _.rank
       }.max + 1
   }
-  private val suffixPartitions = new HashSet[Parameter[_]]()
+  val isExternal = false
+  val suffixPartitions = new HashSet[Parameter[_]]()
   private val deferredDependencies = ListBuffer[() => Seq[View]]()
   /**
     * Pluggable builder function that returns the name of the module the view belongs to.
@@ -104,7 +105,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   var registeredTransformation: () => Transformation = () => NoOp()
   var registeredExports: List[() => Transformation] = List()
   var isMaterializeOnce = false
-  var isExternal = false
 
   override def toString() = urlPath
 
@@ -158,18 +158,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def isPartition(p: Parameter[_]) = parameters.contains(p)
 
   /**
-    * Returns all parameters of the present view in ascending order of their weight.
-    */
-  def parameters = fieldLikeGetters
-    .filter { m => classOf[Parameter[_]].isAssignableFrom(m.getReturnType()) }
-    .map { m => m.invoke(this).asInstanceOf[Parameter[_]] }
-    .filter { m => m != null }
-    .sortWith {
-      _.orderWeight < _.orderWeight
-    }
-    .toSeq
-
-  /**
     * Checks wether a given parameter is implemented using a table name suffix.
     */
   def isSuffixPartition(p: Parameter[_]) = suffixPartitions.contains(p)
@@ -206,16 +194,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }
 
   /**
-    * Marks a given dependency function as external dependency
-    * @param dep the dependency
-    * @return function with dependency marked as external
-    */
-  def external(dep: () => View) : () => View = {
-    val externalView = dep().makeExternal
-    () => externalView
-  }
-
-  /**
     * Add a dependency to the given view. This is done with an anonymous function returning a view the
     * current view depends on. This function is returned so that it can be assigned to variables for further reference.
     */
@@ -249,16 +227,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }
 
   /**
-    * Set the transformation with which the view is created. Provide an anonymous function returning the transformation.
-    * NoOp is the default transformation if none is specified.
-    */
-  def transformVia(ft: () => Transformation) {
-    ensureRegisteredParameters
-
-    registeredTransformation = ft
-  }
-
-  /**
     * Postfactum configuration of the registered transformation. Useful to override transformation configs within a test.
     */
   def configureTransformation(k: String, v: Any) {
@@ -266,6 +234,16 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
     val t = registeredTransformation()
     transformVia(() => t.configureWith(Map((k, v))))
+  }
+
+  /**
+    * Set the transformation with which the view is created. Provide an anonymous function returning the transformation.
+    * NoOp is the default transformation if none is specified.
+    */
+  def transformVia(ft: () => Transformation) {
+    ensureRegisteredParameters
+
+    registeredTransformation = ft
   }
 
   /**
@@ -290,6 +268,30 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }
 
   /**
+    * Dumbly registed all parameters with the view.
+    */
+  def ensureRegisteredParameters {
+    for (p <- parameters)
+      registerParameter(p)
+  }
+
+  /**
+    * Returns all parameters of the present view in ascending order of their weight.
+    */
+  def parameters = fieldLikeGetters
+    .filter { m => classOf[Parameter[_]].isAssignableFrom(m.getReturnType()) }
+    .map { m => m.invoke(this).asInstanceOf[Parameter[_]] }
+    .filter { m => m != null }
+    .sortWith {
+      _.orderWeight < _.orderWeight
+    }
+    .toSeq
+
+  def registerParameter(p: Parameter[_]) {
+    p.assignTo(this)
+  }
+
+  /**
     * This method returns the final transformation constructor function, usually the one registered by transformVia().
     * Registered exportTo() transformations will modify the resulting transformation.
     */
@@ -300,18 +302,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       .foldRight(registeredTransformation) {
         (export, transformationSoFar) => () => SeqTransformation(transformationSoFar(), export())
       }
-  }
-
-  /**
-    * Dumbly registed all parameters with the view.
-    */
-  def ensureRegisteredParameters {
-    for (p <- parameters)
-      registerParameter(p)
-  }
-
-  def registerParameter(p: Parameter[_]) {
-    p.assignTo(this)
   }
 
   def materializeOnce {
@@ -327,24 +317,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }
 
   /**
-    * Marks a [[View]] as external. Schedoscope will not execute the transformation of this view or it's dependencies.
-    * Further no information about this view will be written to the metastore
-    *
-    * @return Modified [[View]]
-    */
-  def makeExternal = {
-    isExternal = true
-    registeredTransformation = () => NoOp()
-    registeredExports = List()
-    deferredDependencies.clear()
-    this
-  }
-
-  /**
     * Return all dependencies of the view in the order they have been declared.
     */
-  def dependencies = deferredDependencies.flatMap {
-    _ ()
+  def dependencies = deferredDependencies.flatMap { d =>
+    d().foreach(v => println(v.isExternal))
+    d()
   }.distinct
 }
 
@@ -368,7 +345,6 @@ object View {
       _.getClazz()
     }.toSeq.asInstanceOf[Seq[Class[View]]]
   }
-
 
 
   /**
@@ -462,5 +438,56 @@ object View {
     registeredView.env = env
     registeredView
   }
+
+}
+
+case class ExternalView(view: View) extends View {
+
+  override val isExternal = true
+  env = view.env
+  storageFormat = view.storageFormat
+  additionalStoragePathPrefix = view.additionalStoragePathPrefix
+  additionalStoragePathSuffix = view.additionalStoragePathSuffix
+  registeredExports = view.registeredExports
+  isMaterializeOnce = view.isMaterializeOnce
+
+
+  override def urlPath = view.urlPath
+  override def urlPathPrefix = view.urlPathPrefix
+  override def lowerCasePackageName = view.lowerCasePackageName
+  override def partitionValues(ignoreSuffixPartitions: Boolean = true) = view.partitionValues(ignoreSuffixPartitions)
+  override def partitionParameters = view.partitionParameters
+  override def n = view.n
+  override def nWithoutPartitioningSuffix = view.nWithoutPartitioningSuffix
+  override def hasSuffixPartitions = view.hasSuffixPartitions
+  override def suffixPartitionParameters = view.suffixPartitionParameters
+  override def isPartition(p: Parameter[_]) = parameters.contains(p)
+  override def isSuffixPartition(p: Parameter[_]) = view.isSuffixPartition(p)
+  override def module = view.module
+  override def dbName = view.dbName
+  override def tableName = view.tableName
+  override def dbPath = view.dbPath
+  override def tablePath = view.tablePath
+  override def partitionPath = view.partitionPath
+  override def fullPath = view.fullPath
+  override def avroSchemaPathPrefix = view.avroSchemaPathPrefix
+  override def isPartitioned() = view.isPartitioned()
+  override def partitionSpec = view.partitionSpec
+  override def asTableSuffix[P <: Parameter[_]](p: P): P = {
+    throw new IllegalArgumentException("you can't change the dependencies of an external view")
+  }
+
+  override def dependsOn[V <: View : Manifest](df: () => V) = {
+    throw new IllegalArgumentException("you can't change the dependencies of an external view")
+  }
+  override def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {}
+  override def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) = {}
+  override def configureTransformation(k: String, v: Any) = {}
+  override def transformVia(ft: () => Transformation) = {}
+  override def exportTo(export: () => Transformation) = {}
+  override def configureExport(k: String, v: Any) = {}
+  override def ensureRegisteredParameters = view.ensureRegisteredParameters
+  override def parameters = view.parameters
+  override def materializeOnce = view.materializeOnce
 
 }

@@ -390,7 +390,7 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   "A View" should "be marked as external" in {
-    val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01")).makeExternal
+    val productBrand = ExternalView(ProductBrand(p("ec0106"), p("2014"), p("01"), p("01")))
 
     productBrand.registeredTransformation() shouldBe NoOp()
     productBrand.dependencies shouldBe empty
@@ -399,16 +399,24 @@ class DslTest extends FlatSpec with Matchers {
     productBrand.isExternal shouldBe true
   }
 
-  it should "have an external dependencies" in {
-    val extView = ViewWithExternalDeps(p("ec0106"), p("2014"), p("01"), p("01"))
+  it should "have an external dependency" in {
+    val viewWithExternalDep = ViewWithExternalDeps(p("ec0106"), p("2014"), p("01"), p("01"))
+    val extView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    val dependency = extView.dependencies.head
+    val dependency = viewWithExternalDep.dependencies.head
 
     dependency.registeredTransformation() shouldBe NoOp()
     dependency.dependencies shouldBe empty
     dependency.transformation() shouldBe NoOp()
     dependency.registeredExports shouldBe empty
     dependency.isExternal shouldBe true
+    dependency.dbPath shouldBe extView.dbPath
+    dependency.dbName shouldBe extView.dbName
+    dependency.tableName shouldBe extView.tableName
+    dependency.parameters shouldBe extView.parameters
+    dependency.partitionSpec shouldBe extView.partitionSpec
+    dependency.module shouldBe extView.module
+    dependency.partitionParameters shouldBe extView.partitionParameters
 
   }
 }

@@ -21,7 +21,7 @@ import org.schedoscope.dsl.transformations.Export._
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation._
 import org.schedoscope.dsl.views._
-import org.schedoscope.dsl.{Parameter, Structure, View}
+import org.schedoscope.dsl.{ExternalView, Parameter, Structure, View}
 import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer
 
 import scala.util.Random
@@ -99,7 +99,10 @@ case class ViewWithExternalDeps(shopCode: Parameter[String],
   with JobMetadata
   with DailyParameterization {
 
-  val productBrand = dependsOn(external(() => ProductBrand(shopCode,year,month,day)))
+  val test = () => ExternalView(ProductBrand(shopCode,year,month,day))
+
+
+  val productBrand = dependsOn(test)
 
   val productId = fieldOf[String]
   val brandName = fieldOf[String]
