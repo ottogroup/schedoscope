@@ -21,6 +21,8 @@ import java.security.PrivilegedAction
 import akka.actor.ActorSelection.toScala
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
+import akka.pattern.ask
+import akka.util.Timeout
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
 import org.schedoscope.AskPattern.queryActor
 import org.schedoscope.conf.SchedoscopeSettings
@@ -30,21 +32,51 @@ import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
-import scala.concurrent.duration.Duration
+import scala.concurrent.Await
+import scala.concurrent.duration.{Duration, _}
+import scala.util.{Failure, Success, Try}
 
-class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
+
+class ViewActor(var currentState: ViewSchedulingState,
+                settings: SchedoscopeSettings,
+                hdfs: FileSystem,
+                viewManagerActor: ActorRef,
+                transformationManagerActor: ActorRef,
+                metadataLoggerActor: ActorRef,
+                partitionCreatorActor: ActorRef) extends Actor {
 
   import context._
 
-  val log = Logging(system, this)
+  lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
 
+  val log = Logging(system, this)
   var knownDependencies = currentState.view.dependencies.toSet
 
   def receive: Receive = LoggingReceive {
     {
 
       case MaterializeView(mode) => stateTransition {
-        stateMachine.materialize(currentState, sender, mode)
+        val currentView = currentState.view
+        if (!currentView.isExternal) {
+          stateMachine.materialize(currentState, sender, mode)
+        } else {
+          implicit val timeout = Timeout(5 seconds)
+          //update state if external and NoOp view
+          val future = ask(partitionCreatorActor, AddPartitions(List(currentView))).mapTo[TransformationMetadata]
+          val result = Try(Await.result(future, timeout.duration))
+
+          val currentExternalState = result match {
+            case Success(TransformationMetadata(map)) =>
+              map.head match {
+                case (view, (version, timestamp)) =>
+                  ViewManagerActor.getStateFromMetadata(view, version, timestamp)
+              }
+            case Failure(t) =>
+              log.warning("VIEWACTOR: Could not get state of external view ${view}", t)
+              currentState
+          }
+          stateMachine.materialize(currentExternalState, sender, mode)
+        }
       }
 
       case InvalidateView() => stateTransition {
@@ -109,11 +141,11 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
 
     case WriteTransformationTimestamp(view, transformationTimestamp) =>
-      if(!view.isExternal) metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
+      if (!view.isExternal) metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
 
 
     case WriteTransformationCheckum(view) =>
-      if(!view.isExternal) metadataLoggerActor ! SetViewVersion(view)
+      if (!view.isExternal) metadataLoggerActor ! SetViewVersion(view)
 
 
     case TouchSuccessFlag(view) =>
@@ -149,21 +181,6 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
       }
   }
 
-  lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
-
-  def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
-    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
-    case _ => new ViewSchedulingStateMachineImpl
-  }
-
-  def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
-
-  def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
-    viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
-
-    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
-  }
-
   def actorForView(view: View) = {
 
     //
@@ -180,6 +197,25 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
     ViewManagerActor.actorForView(view)
   }
 
+  def touchSuccessFlag(view: View) {
+    actorOf(Props(new Actor {
+      override def preStart() {
+        transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
+      }
+
+      def receive = {
+        case _ => context stop self
+      }
+    }))
+  }
+
+  def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
+
+  def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
+    viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
+
+    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
+  }
 
   def folderEmpty(view: View) = settings
     .userGroupInformation.doAs(
@@ -194,6 +230,11 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
       (size, status) => size + status.getLen
     } <= 0
 
+  def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
+    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
+    case _ => new ViewSchedulingStateMachineImpl
+  }
+
   def successFlagExists(view: View) = settings
     .userGroupInformation.doAs(
     new PrivilegedAction[Boolean]() {
@@ -201,24 +242,36 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
         hdfs.exists(new Path(view.fullPath + "/_SUCCESS"))
       }
     })
-
-  def touchSuccessFlag(view: View) {
-    actorOf(Props(new Actor {
-      override def preStart() {
-        transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
-      }
-
-      def receive = {
-        case _ => context stop self
-      }
-    }))
-  }
 }
 
 object ViewActor {
+  def props(state: ViewSchedulingState,
+            settings: SchedoscopeSettings,
+            viewManagerActor: ActorRef,
+            transformationManagerActor: ActorRef,
+            metadataLoggerActor: ActorRef,
+            partitionCreatorActor: ActorRef): Props =
+    props(state,
+      settings,
+      defaultFileSystem(settings.hadoopConf),
+      viewManagerActor,
+      transformationManagerActor,
+      metadataLoggerActor,
+      partitionCreatorActor)
 
-  def props(state: ViewSchedulingState, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewActor], state, settings, hdfs, viewManagerActor, transformationManagerActor, metadataLoggerActor).withDispatcher("akka.actor.views-dispatcher")
-
-  def props(state: ViewSchedulingState, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef): Props = props(state, settings, defaultFileSystem(settings.hadoopConf), viewManagerActor, transformationManagerActor, metadataLoggerActor)
+  def props(state: ViewSchedulingState,
+            settings: SchedoscopeSettings,
+            hdfs: FileSystem,
+            viewManagerActor: ActorRef,
+            transformationManagerActor: ActorRef,
+            metadataLoggerActor: ActorRef,
+            partitionCreatorActor: ActorRef): Props =
+    Props(classOf[ViewActor],
+      state,
+      settings,
+      hdfs,
+      viewManagerActor,
+      transformationManagerActor,
+      metadataLoggerActor).withDispatcher("akka.actor.views-dispatcher")
 
 }
