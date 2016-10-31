@@ -39,19 +39,18 @@ import scala.collection.mutable.{HashMap, HashSet}
   */
 class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, partitionCreatorActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
 
+  import ViewManagerActor._
   import context._
-
-  val log = Logging(system, ViewManagerActor.this)
-
-  val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
   /**
     * Supervisor strategy: Escalate any problems because view actor failures are not recoverable.
     */
   override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = -1) {
-      case _ => Escalate
-    }
+  OneForOneStrategy(maxNrOfRetries = -1) {
+    case _ => Escalate
+  }
+  val log = Logging(system, ViewManagerActor.this)
+  val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
   /**
     * Message handler.
@@ -132,13 +131,15 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         t.metadata.foreach {
           case (view, (version, timestamp)) => {
 
-            val initialState =
-              if ((version != Checksum.defaultDigest) || (timestamp > 0))
-                ReadFromSchemaManager(view, version, timestamp)
-              else
-                CreatedByViewManager(view)
+            val initialState = getStateFromMetadata(view, version, timestamp)
 
-            val actorRef = actorOf(ViewActor.props(initialState, settings, self, actionsManagerActor, metadataLoggerActor), ViewManagerActor.actorNameForView(view))
+            val actorRef = actorOf(ViewActor.props(
+              initialState,
+              settings,
+              self,
+              actionsManagerActor,
+              metadataLoggerActor,
+              partitionCreatorActor), ViewManagerActor.actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
         }
@@ -188,9 +189,22 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 object ViewManagerActor {
   def props(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
 
-  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
-
   def actorForView(view: View) =
     Schedoscope.actorSystem.actorSelection(Schedoscope.viewManagerActor.path.child(actorNameForView(view)))
 
+  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
+
+  /**
+    * Helper to convert state to MetaData
+    * @param view
+    * @param version
+    * @param timestamp
+    * @return current [[org.schedoscope.scheduler.states.ViewSchedulingState]] of the view
+    */
+  def getStateFromMetadata(view: View, version: String, timestamp: Long) = {
+    if ((version != Checksum.defaultDigest) || (timestamp > 0))
+      ReadFromSchemaManager(view, version, timestamp)
+    else
+      CreatedByViewManager(view)
+  }
 }
