@@ -62,8 +62,11 @@ class ViewActor(var currentState: ViewSchedulingState,
         } else {
           implicit val timeout = Timeout(5 seconds)
           //update state if external and NoOp view
-          val future = ask(partitionCreatorActor, AddPartitions(List(currentView))).mapTo[TransformationMetadata]
-          val result = Try(Await.result(future, timeout.duration))
+          val result = Try {
+            queryActor[TransformationMetadata](partitionCreatorActor,
+              AddPartitions(List(currentView)),
+              settings.schemaTimeout)
+          }
 
           val currentExternalState = result match {
             case Success(TransformationMetadata(map)) =>
