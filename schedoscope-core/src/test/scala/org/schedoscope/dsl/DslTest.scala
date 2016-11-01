@@ -417,6 +417,7 @@ class DslTest extends FlatSpec with Matchers {
     dependency.partitionSpec shouldBe extView.partitionSpec
     dependency.module shouldBe extView.module
     dependency.partitionParameters shouldBe extView.partitionParameters
+    dependency.fields shouldBe extView.fields
 
   }
 }
