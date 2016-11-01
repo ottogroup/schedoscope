@@ -110,16 +110,28 @@ SELECT * FROM STUFF"""
     replaceParameters("${a} ${a} ${b}", Map("a" -> "A", "b" -> Boolean.box(true))) shouldEqual ("A A true")
   }
 
-  it should "quote semicolons" in {
+  it should "quote semicolons with $-parameters" in {
     replaceParameters("SELECT * FROM test WHERE id = ${a}", Map("a" -> "1; DROP TABLE")) shouldEqual "SELECT * FROM test WHERE id = 1\\; DROP TABLE"
   }
 
-  it should "quote \"" in {
+  it should "quote \" with $-parameters" in {
     replaceParameters("SELECT * FROM test WHERE id = \"${a}\"", Map("a" -> "1\"; DROP TABLE test;\"x")) shouldEqual "SELECT * FROM test WHERE id = \"1\\\"\\; DROP TABLE test\\;\\\"x\""
   }
 
-  it should "quote '" in {
+  it should "quote ' with $-parameters" in {
     replaceParameters("SELECT * FROM test WHERE id = '${a}'", Map("a" -> "1'; DROP TABLE test;'x")) shouldEqual "SELECT * FROM test WHERE id = '1\\'\\; DROP TABLE test\\;\\'x'"
+  }
+
+  it should "quote semicolons with §-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = §{a}", Map("a" -> "1; DROP TABLE")) shouldEqual "SELECT * FROM test WHERE id = 1\\; DROP TABLE"
+  }
+
+  it should "not quote \" with §-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = \"§{a}\"", Map("a" -> "1\"; DROP TABLE test;\"x")) shouldEqual "SELECT * FROM test WHERE id = \"1\"\\; DROP TABLE test\\;\"x\""
+  }
+
+  it should "not quote ' with §-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = '§{a}'", Map("a" -> "1'; DROP TABLE test;'x")) shouldEqual "SELECT * FROM test WHERE id = '1'\\; DROP TABLE test\\;'x'"
   }
 
 

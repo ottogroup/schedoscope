@@ -122,8 +122,8 @@ case class NoOp() extends Transformation {
 object Transformation {
 
   /**
-    * Replace ${v}-style parameters in transformation syntax with values from the given parameter map. Perform some
-    * quoting against injection attacks.
+    * Replace ${v}-style parameters and §{v}-style parameters in transformation syntax with values from the given parameter map.
+    * Perform some quoting against injection attacks. $-style parameters quote ;$'" whereas §-style parameters only quote ;.
     */
   def replaceParameters(transformationSyntax: String, parameters: Map[String, Any]): String =
     if (parameters.isEmpty)
@@ -131,14 +131,20 @@ object Transformation {
     else {
       val (key, value) = parameters.head
 
-      val replacedStatement = transformationSyntax.replaceAll(
-        quote("${" + key + "}"),
-        value.toString
-          .replaceAll(quote("$"), "|")
-          .replaceAll(quote(";"), "\\\\\\\\;")
-          .replaceAll(quote("\""), "\\\\\\\\\"")
-          .replaceAll(quote("'"), "\\\\\\\\'")
-      )
+      val replacedStatement = transformationSyntax
+        .replaceAll(
+          quote("§{" + key + "}"),
+          value.toString
+            .replaceAll(quote(";"), "\\\\\\\\;")
+        )
+        .replaceAll(
+          quote("${" + key + "}"),
+          value.toString
+            .replaceAll(quote("$"), "|")
+            .replaceAll(quote(";"), "\\\\\\\\;")
+            .replaceAll(quote("\""), "\\\\\\\\\"")
+            .replaceAll(quote("'"), "\\\\\\\\'")
+        )
 
       replaceParameters(replacedStatement, parameters.tail)
     }
