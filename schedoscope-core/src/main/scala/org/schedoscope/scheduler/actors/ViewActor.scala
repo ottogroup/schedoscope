@@ -275,6 +275,7 @@ object ViewActor {
       hdfs,
       viewManagerActor,
       transformationManagerActor,
-      metadataLoggerActor).withDispatcher("akka.actor.views-dispatcher")
+      metadataLoggerActor,
+      partitionCreatorActor: ActorRef).withDispatcher("akka.actor.views-dispatcher")
 
 }
