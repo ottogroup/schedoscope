@@ -77,6 +77,14 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 11/01/2016 - Release 0.7.0
+
+[Spark transformations, finally](https://github.com/ottogroup/schedoscope/wiki/Spark-Transformations)! Build views based on Scala and Python Spark 1.6.0 jobs or run your Hive transformations on Spark. Test them using the Schedoscope test framework like any other transformation type. `HiveContext` is supported.
+
+We have also upgraded Schedoscope's dependencies to CDH-5.8.3. There is catch, though: we had to backport Schedoscope 0.7.0 to Scala 2.10 for compatibility with Cloudera's Spark 1.6.0 dependencies.
+
+We have released Version 0.7.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
 ###### 10/20/2016 - Release 0.6.7
 
 Minor improvements to test framework.
