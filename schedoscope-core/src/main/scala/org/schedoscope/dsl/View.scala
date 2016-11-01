@@ -459,6 +459,7 @@ case class ExternalView(view: View) extends View {
   isMaterializeOnce = view.isMaterializeOnce
 
 
+  override def fields= view.fields
   override def urlPath = view.urlPath
   override def urlPathPrefix = view.urlPathPrefix
   override def lowerCasePackageName = view.lowerCasePackageName
@@ -480,6 +481,9 @@ case class ExternalView(view: View) extends View {
   override def avroSchemaPathPrefix = view.avroSchemaPathPrefix
   override def isPartitioned() = view.isPartitioned()
   override def partitionSpec = view.partitionSpec
+  override def namingBase = view.namingBase
+  override def nameOf[F <: FieldLike[_]](f: F): Option[String] = view.nameOf(f)
+
   override def asTableSuffix[P <: Parameter[_]](p: P): P = {
     throw new IllegalArgumentException("you can't change the dependencies of an external view")
   }
