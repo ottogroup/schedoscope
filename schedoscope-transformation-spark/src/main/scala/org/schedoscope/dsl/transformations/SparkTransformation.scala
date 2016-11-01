@@ -103,7 +103,7 @@ object SparkTransformation {
     * @param resourcePath The path to the resource. Needs to start with "classpath://"
     * @return the absolute path to the resource.
     */
-  def resource(resourcePath: String) = new File(FilesystemDriver.classpathResourceToFile(resourcePath)).getAbsolutePath
+  def resource(resourcePath: String) = new File(FilesystemDriver.classpathResourceToFile(resourcePath)).getPath.toString
 
   /**
     * Constructs a Spark transformation of out of a Hive transformation by taking its query and passing it to SparkSQLRunner.
