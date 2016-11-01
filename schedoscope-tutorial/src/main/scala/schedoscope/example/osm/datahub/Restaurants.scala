@@ -20,6 +20,7 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.storageformats.Parquet
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation.{insertInto, queryFromResource}
+import org.schedoscope.dsl.transformations.SparkTransformation.runOnSpark
 import org.schedoscope.dsl.views.DateParameterizationUtils.allMonths
 import org.schedoscope.dsl.views.{Id, JobMetadata}
 import schedoscope.example.osm.Globals._
@@ -39,12 +40,14 @@ case class Restaurants() extends View
   }
 
   transformVia { () =>
-    HiveTransformation(
-      insertInto(
-        this,
-        queryFromResource("hiveql/datahub/insert_restaurants.sql"),
-        settings = Map("parquet.compression" -> "GZIP")))
-      .configureWith(defaultHiveQlParameters(this))
+    runOnSpark(
+      HiveTransformation(
+        insertInto(
+          this,
+          queryFromResource("hiveql/datahub/insert_restaurants.sql")))
+        .configureWith(defaultHiveQlParameters(this)
+        )
+    )
   }
 
   comment("View of restaurants")

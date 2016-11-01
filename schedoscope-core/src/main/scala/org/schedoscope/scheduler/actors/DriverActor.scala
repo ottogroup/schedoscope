@@ -191,10 +191,12 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
 
         runningCommand = None
       } else {
-        val runHandle = driver.run(commandToRun.command.asInstanceOf[T])
+        val transformation: T = commandToRun.command.asInstanceOf[T]
+
+        val runHandle = driver.run(transformation)
         driver.driverRunStarted(runHandle)
 
-        logStateInfo("running", s"DRIVER ACTOR: Running command ${commandToRun}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
+        logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
 
         become(running(runHandle, commandToRun.sender))
       }

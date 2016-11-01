@@ -90,19 +90,8 @@ class FilesystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
   /**
     * Writes all bytes from an given InputStream to a file in the view locationPath
     */
-  def storeFromStream(inputStream: InputStream, to: String): DriverRunState[FilesystemTransformation] = {
-    def inputStreamToFile(inputStream: InputStream) = {
-      val remainingPath = "stream.out"
-      val tempDir = Files.createTempDirectory("classpath").toFile.toString()
-      val tempFile = new File(tempDir + File.separator + remainingPath)
-      FileUtils.touch(tempFile)
-      FileUtils.copyInputStreamToFile(inputStream, tempFile)
-
-      tempFile.toURI().toString()
-    }
-
-    try {
-      val streamInFile = inputStreamToFile(inputStream)
+  def storeFromStream(inputStream: InputStream, to: String): DriverRunState[FilesystemTransformation] = try {
+      val streamInFile = FilesystemDriver.inputStreamToFile(inputStream)
 
       val fromFS = fileSystem(streamInFile)
       val toFS = fileSystem(to)
@@ -116,7 +105,7 @@ class FilesystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
       case i: IOException => DriverRunFailed(this, s"Caught IO exception while storing InputStream to ${to}", i)
       case t: Throwable => throw RetryableDriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
     }
-  }
+
 
   /**
     *
@@ -124,16 +113,7 @@ class FilesystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
     * URLs that a hadoop filesystem implementation can handle. Moreover, classpath URLs are supported.
     */
   def copy(from: String, to: String, recursive: Boolean): DriverRunState[FilesystemTransformation] = {
-    def classpathResourceToFile(classpathResourceUrl: String) = {
-      val remainingPath = classpathResourceUrl.replace("classpath://", "")
-      val tempDir = Files.createTempDirectory("classpath").toFile.toString()
-      val tempFile = new File(tempDir + File.separator + remainingPath)
-      FileUtils.touch(tempFile)
-      FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/" + remainingPath), tempFile)
 
-      tempFile.toURI().toString()
-    }
-    // recursive descent for copying trees
     def inner(fromFS: FileSystem, toFS: FileSystem, files: Seq[FileStatus], to: Path): Unit = {
       toFS.mkdirs(to)
       if (recursive) {
@@ -150,7 +130,7 @@ class FilesystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
     try {
       // is the source a resource that resides in a JAR with classpath?
       val fromIncludingResources = if (from.startsWith("classpath://"))
-        classpathResourceToFile(from)
+        FilesystemDriver.classpathResourceToFile(from)
       else
         from
 
@@ -266,4 +246,23 @@ object FilesystemDriver extends DriverCompanionObject[FilesystemTransformation] 
 
   def defaultFileSystem(hadoopConfiguration: Configuration) = FileSystem.get(hadoopConfiguration)
 
+  def classpathResourceToFile(classpathResourceUrl: String) = {
+    val remainingPath = classpathResourceUrl.replace("classpath://", "")
+    val tempDir = Files.createTempDirectory("classpath").toFile.toString()
+    val tempFile = new File(tempDir + File.separator + remainingPath)
+    FileUtils.touch(tempFile)
+    FileUtils.copyInputStreamToFile(this.getClass().getResourceAsStream("/" + remainingPath), tempFile)
+
+    tempFile.toURI.toString
+  }
+
+  def inputStreamToFile(inputStream: InputStream) = {
+    val remainingPath = "stream.out"
+    val tempDir = Files.createTempDirectory("classpath").toFile.toString()
+    val tempFile = new File(tempDir + File.separator + remainingPath)
+    FileUtils.touch(tempFile)
+    FileUtils.copyInputStreamToFile(inputStream, tempFile)
+
+    tempFile.toURI.toString
+  }
 }

@@ -186,7 +186,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     sql
       .split(";")
       .foreach { statement => {
-        if (StringUtils.endsWith(queryStack.head, "\\")) {
+        if (StringUtils.endsWith(queryStack.head, """\""")) {
           queryStack.push(StringUtils.chop(queryStack.pop()) + ";" + statement)
         } else {
           queryStack.push(statement)
@@ -232,8 +232,6 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
 object HiveDriver extends DriverCompanionObject[HiveTransformation] {
 
   def apply(ds: DriverSettings) = {
-    val ugi = Schedoscope.settings.userGroupInformation
-
     val conf = new HiveConf(classOf[SessionState])
 
     conf.set("hive.metastore.local", "false")

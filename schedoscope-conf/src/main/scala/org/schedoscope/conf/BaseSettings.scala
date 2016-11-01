@@ -72,6 +72,11 @@ class BaseSettings(val config: Config) {
   lazy val metastoreUri = config.getString("schedoscope.metastore.metastoreUri")
 
   /**
+    * Configured path to Hive configuration
+    */
+  lazy val hiveConfDir = config.getString("schedoscope.metastore.hiveConfDir")
+
+  /**
     * Configured view augmentor class for postprocessing of views after URL parsing
     */
   lazy val parsedViewAugmentorClass = config.getString("schedoscope.app.parsedViewAugmentorClass")

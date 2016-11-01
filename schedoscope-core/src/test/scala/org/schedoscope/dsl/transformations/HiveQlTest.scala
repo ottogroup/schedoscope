@@ -55,7 +55,7 @@ case class OrderAll(year: Parameter[Int], month: Parameter[Int], day: Parameter[
   val order = dependsOn(() => Order(year, month, day))
 }
 
-class HiveTransformationTest extends FlatSpec with BeforeAndAfter with Matchers {
+class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
 
   "HiveTransformation.insertInto" should "generate correct static partitioning prefix by default" in {
     val orderAll = OrderAll(p(2014), p(10), p(12))
@@ -106,8 +106,32 @@ PARTITION (year, month, day)
 SELECT * FROM STUFF"""
   }
 
-  "HiveTransformation.replaceParameters" should "replace parameter parameter placeholders" in {
+  "HiveTransformation.replaceParameters" should "replace parameter placeholders" in {
     replaceParameters("${a} ${a} ${b}", Map("a" -> "A", "b" -> Boolean.box(true))) shouldEqual ("A A true")
+  }
+
+  it should "quote semicolons with $-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = ${a}", Map("a" -> "1; DROP TABLE")) shouldEqual "SELECT * FROM test WHERE id = 1\\; DROP TABLE"
+  }
+
+  it should "quote \" with $-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = \"${a}\"", Map("a" -> "1\"; DROP TABLE test;\"x")) shouldEqual "SELECT * FROM test WHERE id = \"1\\\"\\; DROP TABLE test\\;\\\"x\""
+  }
+
+  it should "quote ' with $-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = '${a}'", Map("a" -> "1'; DROP TABLE test;'x")) shouldEqual "SELECT * FROM test WHERE id = '1\\'\\; DROP TABLE test\\;\\'x'"
+  }
+
+  it should "quote semicolons with §-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = §{a}", Map("a" -> "1; DROP TABLE")) shouldEqual "SELECT * FROM test WHERE id = 1\\; DROP TABLE"
+  }
+
+  it should "not quote \" with §-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = \"§{a}\"", Map("a" -> "1\"; DROP TABLE test;\"x")) shouldEqual "SELECT * FROM test WHERE id = \"1\"\\; DROP TABLE test\\;\"x\""
+  }
+
+  it should "not quote ' with §-parameters" in {
+    replaceParameters("SELECT * FROM test WHERE id = '§{a}'", Map("a" -> "1'; DROP TABLE test;'x")) shouldEqual "SELECT * FROM test WHERE id = '1'\\; DROP TABLE test\\;'x'"
   }
 
 

@@ -131,7 +131,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 
   def ddlChecksum(view: View) = Checksum.digest(
     view.storageFormat match {
-      case Avro(schemaPath) => ddl(view).replaceAll(Regex.quote(s"${view.avroSchemaPathPrefix}/${schemaPath}"), "")
+      case Avro(schemaPath) => ddl(view).replaceAll(Regex.quoteReplacement(s"${view.avroSchemaPathPrefix}/${schemaPath}"), "")
       case _ => ddl(view)
     }
   )

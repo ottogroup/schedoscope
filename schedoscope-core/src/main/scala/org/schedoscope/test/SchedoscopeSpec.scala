@@ -39,10 +39,14 @@ trait SchedoscopeSuite
   val views = ListBuffer.empty[test]
 
   //mute system err during tests (experimental)
+
   val originalStream = System.err
-  System.setErr(new PrintStream(new OutputStream() {
-    def write(b: Int) {}
-  }))
+
+  def turnOffSystemErr() {
+    System.setErr(new PrintStream(new OutputStream() {
+      def write(b: Int) {}
+    }))
+  }
 
   /**
     * Deactivate the muting of system err
