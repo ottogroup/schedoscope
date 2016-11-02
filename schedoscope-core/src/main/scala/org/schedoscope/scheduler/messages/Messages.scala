@@ -135,6 +135,8 @@ object MaterializeViewMode extends Enumeration {
   */
 case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
+case class MaterializeExternal(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
+
 /**
   * Instructs a view actor to assume that its data needs to be recomputed.
   */
