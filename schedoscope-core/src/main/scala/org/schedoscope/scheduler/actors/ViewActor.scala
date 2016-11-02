@@ -75,7 +75,7 @@ class ViewActor(var currentState: ViewSchedulingState,
                   ViewManagerActor.getStateFromMetadata(view, version, timestamp)
               }
             case Failure(t) =>
-              log.warning("VIEWACTOR: Could not get state of external view ${view}", t)
+              log.warning(s"VIEWACTOR: Could not get state of external view ${currentView}", t)
               currentState
           }
           stateMachine.materialize(currentExternalState, sender, mode)
@@ -176,7 +176,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       }
 
     case ReportNotInvalidated(view, listeners) =>
-      log.warning("VIEWACTOR: Could not invalidate view ${view}")
+      log.warning(s"VIEWACTOR: Could not invalidate view ${view}")
 
     case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
       listeners.foreach {
