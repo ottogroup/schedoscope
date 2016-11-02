@@ -56,31 +56,31 @@ class ViewActor(var currentState: ViewSchedulingState,
     {
 
       case MaterializeView(mode) => stateTransition {
-        val currentView = currentState.view
-        if (!currentView.isExternal) {
-          stateMachine.materialize(currentState, sender, mode)
-        } else {
-          implicit val timeout = Timeout(5 seconds)
-          //update state if external and NoOp view
-          val result = Try {
-            queryActor[TransformationMetadata](partitionCreatorActor,
-              AddPartitions(List(currentView)),
-              settings.schemaTimeout)
-          }
-
-          val currentExternalState = result match {
-            case Success(TransformationMetadata(map)) =>
-              map.head match {
-                case (view, (version, timestamp)) =>
-                  ViewManagerActor.getStateFromMetadata(view, version, timestamp)
-              }
-            case Failure(t) =>
-              log.warning(s"VIEWACTOR: Could not get state of external view ${currentView}", t)
-              currentState
-          }
-          stateMachine.materialize(currentExternalState, sender, mode)
-        }
+        stateMachine.materialize(currentState, sender, mode)
       }
+
+      case MaterializeExternal(mode) => {
+        val currentView = currentState.view
+        implicit val timeout = Timeout(5 seconds)
+        //update state if external and NoOp view
+
+        partitionCreatorActor ! AddPartitions(List(currentView))
+      }
+
+      case TransformationMetadata(metadata) => stateTransition {
+        //
+        //We got an answer about the state of an external view -> use it to execute the NoOp materialisation
+        //
+        val currentView = metadata.head._1
+
+        metadata.head match {
+          case (view, (version, timestamp)) =>
+            ViewManagerActor.getStateFromMetadata(view, version, timestamp)
+        }
+        //TODO: Ask Utz about mode? Do we even want to allow an other mode than default?
+        stateMachine.materialize(currentState, sender, MaterializeViewMode.DEFAULT)
+      }
+
 
       case InvalidateView() => stateTransition {
         stateMachine.invalidate(currentState, sender)
@@ -155,7 +155,10 @@ class ViewActor(var currentState: ViewSchedulingState,
       touchSuccessFlag(view)
 
     case Materialize(view, mode) =>
-      actorForView(view) ! MaterializeView(mode)
+      if (!view.isExternal)
+        actorForView(view) ! MaterializeView(mode)
+      else
+        actorForView(view) ! MaterializeExternal(mode)
 
     case Transform(view) =>
       transformationManagerActor ! view
