@@ -19,6 +19,7 @@ import akka.actor.ActorRef
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.driver._
+import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
 
 /**
   * Superclass for failure messages.
@@ -135,7 +136,11 @@ object MaterializeViewMode extends Enumeration {
   */
 case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
-case class MaterializeExternal(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
+case class ReloadStateAndMaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
+
+case class GetMetaDataForMaterialize(view: View,
+                                     mode: MaterializeViewMode = MaterializeViewMode.DEFAULT,
+                                     materializeSource: ActorRef) extends CommandRequest
 
 /**
   * Instructs a view actor to assume that its data needs to be recomputed.
@@ -161,6 +166,8 @@ case class DeployCommandSuccess() extends CommandResponse
   * Schema actor or metadata logger notifying view manager actor or view actor of successful schema action.
   */
 case class SchemaActionSuccess() extends CommandResponse
+
+case class MetaDataForMaterialize(metadata: (View,(String,Long)), mode: MaterializeViewMode, materializeSource: ActorRef) extends CommandResponse
 
 /**
   * Driver actor notifying view actor of successful transformation.

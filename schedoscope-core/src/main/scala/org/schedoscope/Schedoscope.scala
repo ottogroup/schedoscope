@@ -16,7 +16,7 @@
 package org.schedoscope
 
 import akka.actor.ActorSystem
-import org.schedoscope.scheduler.actors.{SchemaManagerActor, TransformationManagerActor, ViewManagerActor}
+import org.schedoscope.scheduler.actors.{SchemaManagerRouter, TransformationManagerActor, ViewManagerActor}
 
 /**
   * The Schedoscope object provides accessors for the various components of the schedoscope system.
@@ -42,7 +42,7 @@ object Schedoscope {
   /**
     * A reference to the Schedoscope schema manager actor
     */
-  lazy val schemaManagerActor = actorSystem.actorOf(SchemaManagerActor.props(settings), "schema")
+  lazy val schemaManagerRouter = actorSystem.actorOf(SchemaManagerRouter.props(settings), "schema")
 
   /**
     * A reference to the Schedoscope view manager actor
@@ -50,6 +50,5 @@ object Schedoscope {
   lazy val viewManagerActor = actorSystem.actorOf(
     ViewManagerActor.props(settings,
       transformationManagerActor,
-      schemaManagerActor,
-      schemaManagerActor), "views")
+      schemaManagerRouter), "views")
 }
