@@ -37,7 +37,7 @@ import scala.collection.mutable.{HashMap, HashSet}
   *
   * It does this by cooperating with the parition creator actor and metadata logger actor.
   */
-class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, partitionCreatorActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
+class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaManagerRouter: ActorRef) extends Actor {
 
   import ViewManagerActor._
   import context._
@@ -111,7 +111,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     if (tablesToCreate.nonEmpty) {
       log.info(s"Submitting tables to check or create to schema actor")
       tablesToCreate.foreach {
-        queryActor[Any](partitionCreatorActor, _, settings.schemaTimeout)
+        queryActor[Any](schemaManagerRouter, _, settings.schemaTimeout)
       }
     }
 
@@ -123,7 +123,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     if (partitionsToCreate.nonEmpty) {
       log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")
 
-      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](partitionCreatorActor, partitionsToCreate, settings.schemaTimeout)
+      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaManagerRouter, partitionsToCreate, settings.schemaTimeout)
 
       log.info(s"Partitions created, initializing actors")
 
@@ -138,8 +138,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
               settings,
               self,
               actionsManagerActor,
-              metadataLoggerActor,
-              partitionCreatorActor), ViewManagerActor.actorNameForView(view))
+              schemaManagerRouter), ViewManagerActor.actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
         }
@@ -187,7 +186,9 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
   * View manager factory methods
   */
 object ViewManagerActor {
-  def props(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaActor, metadataLoggerActor).withDispatcher("akka.actor.view-manager-dispatcher")
+  def props(settings: SchedoscopeSettings,
+            actionsManagerActor: ActorRef,
+            schemaManagerRouter: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaManagerRouter).withDispatcher("akka.actor.view-manager-dispatcher")
 
   def actorForView(view: View) =
     Schedoscope.actorSystem.actorSelection(Schedoscope.viewManagerActor.path.child(actorNameForView(view)))

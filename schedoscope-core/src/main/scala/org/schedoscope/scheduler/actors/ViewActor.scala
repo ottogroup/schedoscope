@@ -21,8 +21,6 @@ import java.security.PrivilegedAction
 import akka.actor.ActorSelection.toScala
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
-import akka.pattern.ask
-import akka.util.Timeout
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
 import org.schedoscope.AskPattern.queryActor
 import org.schedoscope.conf.SchedoscopeSettings
@@ -32,9 +30,7 @@ import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
-import scala.concurrent.Await
-import scala.concurrent.duration.{Duration, _}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.duration.Duration
 
 
 class ViewActor(var currentState: ViewSchedulingState,
@@ -42,8 +38,7 @@ class ViewActor(var currentState: ViewSchedulingState,
                 hdfs: FileSystem,
                 viewManagerActor: ActorRef,
                 transformationManagerActor: ActorRef,
-                metadataLoggerActor: ActorRef,
-                partitionCreatorActor: ActorRef) extends Actor {
+                schemaManagerRouter: ActorRef) extends Actor {
 
   import context._
 
@@ -53,78 +48,76 @@ class ViewActor(var currentState: ViewSchedulingState,
   var knownDependencies = currentState.view.dependencies.toSet
 
   def receive: Receive = LoggingReceive {
-    {
 
-      case MaterializeView(mode) => stateTransition {
-        stateMachine.materialize(currentState, sender, mode)
+    case MaterializeView(mode) => stateTransition {
+      stateMachine.materialize(currentState, sender, mode)
+    }
+
+    case ReloadStateAndMaterializeView(mode) => {
+      //TODO: Ask Utz about mode? Do we even want to allow an other mode than default?
+      val currentView = currentState.view
+      //update state if external and NoOp view
+      schemaManagerRouter ! GetMetaDataForMaterialize(currentView, mode, sender)
+    }
+
+    case MetaDataForMaterialize(metadata, mode, source) => stateTransition {
+      //
+      //Got an answer about the state of an external view -> use it to execute the NoOp materialisation
+      //
+      val currentView = metadata._1
+
+      metadata match {
+        case (view, (version, timestamp)) =>
+          ViewManagerActor.getStateFromMetadata(view, version, timestamp)
       }
 
-      case MaterializeExternal(mode) => {
-        val currentView = currentState.view
-        implicit val timeout = Timeout(5 seconds)
-        //update state if external and NoOp view
-
-        partitionCreatorActor ! AddPartitions(List(currentView))
-      }
-
-      case TransformationMetadata(metadata) => stateTransition {
-        //
-        //We got an answer about the state of an external view -> use it to execute the NoOp materialisation
-        //
-        val currentView = metadata.head._1
-
-        metadata.head match {
-          case (view, (version, timestamp)) =>
-            ViewManagerActor.getStateFromMetadata(view, version, timestamp)
-        }
-        //TODO: Ask Utz about mode? Do we even want to allow an other mode than default?
-        stateMachine.materialize(currentState, sender, MaterializeViewMode.DEFAULT)
-      }
+      stateMachine.materialize(currentState, source, mode)
+    }
 
 
-      case InvalidateView() => stateTransition {
-        stateMachine.invalidate(currentState, sender)
-      }
+    case InvalidateView() => stateTransition {
+      stateMachine.invalidate(currentState, sender)
+    }
 
-      case ViewHasNoData(dependency) => stateTransition {
-        stateMachine.noDataAvailable(currentState.asInstanceOf[Waiting], dependency)
-      }
+    case ViewHasNoData(dependency) => stateTransition {
+      stateMachine.noDataAvailable(currentState.asInstanceOf[Waiting], dependency)
+    }
 
-      case ViewFailed(dependency) => stateTransition {
-        stateMachine.failed(currentState.asInstanceOf[Waiting], dependency)
-      }
+    case ViewFailed(dependency) => stateTransition {
+      stateMachine.failed(currentState.asInstanceOf[Waiting], dependency)
+    }
 
-      case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) => stateTransition {
-        stateMachine.materialized(currentState.asInstanceOf[Waiting], dependency, transformationTimestamp, withErrors, incomplete)
-      }
+    case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) => stateTransition {
+      stateMachine.materialized(currentState.asInstanceOf[Waiting], dependency, transformationTimestamp, withErrors, incomplete)
+    }
 
-      case _: TransformationSuccess[_] => stateTransition {
-        stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], folderEmpty(currentState.view))
-      }
+    case _: TransformationSuccess[_] => stateTransition {
+      stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], folderEmpty(currentState.view))
+    }
 
-      case _: TransformationFailure[_] => stateTransition {
-        val s = currentState.asInstanceOf[Transforming]
-        val result = stateMachine.transformationFailed(s)
-        val retry = s.retry
+    case _: TransformationFailure[_] => stateTransition {
+      val s = currentState.asInstanceOf[Transforming]
+      val result = stateMachine.transformationFailed(s)
+      val retry = s.retry
 
-        result.currentState match {
-          case r: Retrying =>
-            system
-              .scheduler
-              .scheduleOnce(Duration.create(pow(2, retry).toLong, "seconds")) {
-                self ! Retry()
-              }
+      result.currentState match {
+        case r: Retrying =>
+          system
+            .scheduler
+            .scheduleOnce(Duration.create(pow(2, retry).toLong, "seconds")) {
+              self ! Retry()
+            }
 
-            result
+          result
 
-          case _ => result
-        }
-      }
-
-      case Retry() => stateTransition {
-        stateMachine.retry(currentState.asInstanceOf[Retrying])
+        case _ => result
       }
     }
+
+    case Retry() => stateTransition {
+      stateMachine.retry(currentState.asInstanceOf[Retrying])
+    }
+
   }
 
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
@@ -144,21 +137,24 @@ class ViewActor(var currentState: ViewSchedulingState,
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
 
     case WriteTransformationTimestamp(view, transformationTimestamp) =>
-      if (!view.isExternal) metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
+      if (!view.isExternal) schemaManagerRouter ! LogTransformationTimestamp(view, transformationTimestamp)
 
 
     case WriteTransformationCheckum(view) =>
-      if (!view.isExternal) metadataLoggerActor ! SetViewVersion(view)
+      if (!view.isExternal) schemaManagerRouter ! SetViewVersion(view)
 
 
     case TouchSuccessFlag(view) =>
       touchSuccessFlag(view)
 
     case Materialize(view, mode) =>
-      if (!view.isExternal)
+      if (!view.isExternal) {
+        log.info("sendind materialize")
         actorForView(view) ! MaterializeView(mode)
-      else
-        actorForView(view) ! MaterializeExternal(mode)
+      } else {
+        actorForView(view) ! ReloadStateAndMaterializeView(mode)
+        log.info("sendind external materialize")
+      }
 
     case Transform(view) =>
       transformationManagerActor ! view
@@ -182,8 +178,9 @@ class ViewActor(var currentState: ViewSchedulingState,
       log.warning(s"VIEWACTOR: Could not invalidate view ${view}")
 
     case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
-      listeners.foreach {
-        _ ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
+      listeners.foreach { l =>
+        log.info(s"report materialized ${view} to ${l}")
+        l ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
       }
   }
 
@@ -255,30 +252,26 @@ object ViewActor {
             settings: SchedoscopeSettings,
             viewManagerActor: ActorRef,
             transformationManagerActor: ActorRef,
-            metadataLoggerActor: ActorRef,
-            partitionCreatorActor: ActorRef): Props =
+            schemaManagerRouter: ActorRef): Props =
     props(state,
       settings,
       defaultFileSystem(settings.hadoopConf),
       viewManagerActor,
       transformationManagerActor,
-      metadataLoggerActor,
-      partitionCreatorActor)
+      schemaManagerRouter)
 
   def props(state: ViewSchedulingState,
             settings: SchedoscopeSettings,
             hdfs: FileSystem,
             viewManagerActor: ActorRef,
             transformationManagerActor: ActorRef,
-            metadataLoggerActor: ActorRef,
-            partitionCreatorActor: ActorRef): Props =
+            schemaManagerRouter: ActorRef): Props =
     Props(classOf[ViewActor],
       state,
       settings,
       hdfs,
       viewManagerActor,
       transformationManagerActor,
-      metadataLoggerActor,
-      partitionCreatorActor: ActorRef).withDispatcher("akka.actor.views-dispatcher")
+      schemaManagerRouter).withDispatcher("akka.actor.views-dispatcher")
 
 }
