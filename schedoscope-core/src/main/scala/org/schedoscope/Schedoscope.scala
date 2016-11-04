@@ -24,10 +24,17 @@ import org.schedoscope.scheduler.actors.{SchemaManagerRouter, TransformationMana
   */
 object Schedoscope {
 
+  var actorSystemBuilder = () => ActorSystem("schedoscope")
+
+  var viewManagerActorBuilder = () => actorSystem.actorOf(
+    ViewManagerActor.props(settings,
+      transformationManagerActor,
+      schemaManagerRouter), "views")
+
   /**
     * The Schedoscope actor system
     */
-  lazy val actorSystem = ActorSystem("schedoscope")
+  lazy val actorSystem = actorSystemBuilder()
 
   /**
     * The Schedoscope settings.
@@ -44,11 +51,10 @@ object Schedoscope {
     */
   lazy val schemaManagerRouter = actorSystem.actorOf(SchemaManagerRouter.props(settings), "schema")
 
+
+
   /**
     * A reference to the Schedoscope view manager actor
     */
-  lazy val viewManagerActor = actorSystem.actorOf(
-    ViewManagerActor.props(settings,
-      transformationManagerActor,
-      schemaManagerRouter), "views")
+  lazy val viewManagerActor = viewManagerActorBuilder()
 }

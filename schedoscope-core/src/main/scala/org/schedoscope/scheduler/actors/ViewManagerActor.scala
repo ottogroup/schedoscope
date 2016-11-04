@@ -72,6 +72,17 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     case v: View => {
       sender ! initializeViewActors(List(v), false).head
     }
+
+    case DelegateMessageToView(view, msg) => {
+      val ref = viewStatusMap.get(actorNameForView(view)) match {
+        case Some(status) =>
+          status.actor
+        case None =>
+          initializeViewActors(List(view), false).head
+      }
+      ref ! msg
+      sender ! NewViewActorRef(view, ref)
+    }
   })
 
   /**
@@ -136,9 +147,10 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
             val actorRef = actorOf(ViewActor.props(
               initialState,
               settings,
+              Map.empty[View, ActorRef],
               self,
               actionsManagerActor,
-              schemaManagerRouter), ViewManagerActor.actorNameForView(view))
+              schemaManagerRouter), actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
         }
@@ -156,7 +168,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 
     log.info(s"Fetching ${viewsToReturnActorRefsFor.size} actors")
 
-    val actors = viewsToReturnActorRefsFor.map { view => child(ViewManagerActor.actorNameForView(view)).get }
+    val actors = viewsToReturnActorRefsFor.map { view => child(actorNameForView(view)).get }
 
     log.info(s"Returned ${actors.size} actors")
 
@@ -168,7 +180,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
       v =>
         if (visited.contains(v))
           List()
-        else if (child(ViewManagerActor.actorNameForView(v)).isEmpty) {
+        else if (child(actorNameForView(v)).isEmpty) {
           visited += v
           (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
         } else if (dependencies) {
@@ -180,6 +192,11 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         }
 
     }.flatten.distinct
+
+  def actorForView(view: View) =
+    Schedoscope.actorSystem.actorSelection(Schedoscope.viewManagerActor.path.child(actorNameForView(view)))
+
+  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
 }
 
 /**
@@ -190,13 +207,9 @@ object ViewManagerActor {
             actionsManagerActor: ActorRef,
             schemaManagerRouter: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaManagerRouter).withDispatcher("akka.actor.view-manager-dispatcher")
 
-  def actorForView(view: View) =
-    Schedoscope.actorSystem.actorSelection(Schedoscope.viewManagerActor.path.child(actorNameForView(view)))
-
-  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
-
   /**
     * Helper to convert state to MetaData
+    *
     * @param view
     * @param version
     * @param timestamp
