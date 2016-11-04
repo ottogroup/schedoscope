@@ -18,11 +18,9 @@ package org.schedoscope.scheduler.actors
 import java.lang.Math.pow
 import java.security.PrivilegedAction
 
-import akka.actor.ActorSelection.toScala
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
-import org.schedoscope.AskPattern.queryActor
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{NoOp, Touch}
@@ -36,6 +34,7 @@ import scala.concurrent.duration.Duration
 class ViewActor(var currentState: ViewSchedulingState,
                 settings: SchedoscopeSettings,
                 hdfs: FileSystem,
+                dependencies: Map[View, ActorRef],
                 viewManagerActor: ActorRef,
                 transformationManagerActor: ActorRef,
                 schemaManagerRouter: ActorRef) extends Actor {
@@ -45,7 +44,7 @@ class ViewActor(var currentState: ViewSchedulingState,
   lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
 
   val log = Logging(system, this)
-  var knownDependencies = currentState.view.dependencies.toSet
+  var knownDependencies = dependencies
 
   def receive: Receive = LoggingReceive {
 
@@ -64,13 +63,10 @@ class ViewActor(var currentState: ViewSchedulingState,
       //
       //Got an answer about the state of an external view -> use it to execute the NoOp materialisation
       //
-      val currentView = metadata._1
-
       metadata match {
         case (view, (version, timestamp)) =>
           ViewManagerActor.getStateFromMetadata(view, version, timestamp)
       }
-
       stateMachine.materialize(currentState, source, mode)
     }
 
@@ -118,6 +114,10 @@ class ViewActor(var currentState: ViewSchedulingState,
       stateMachine.retry(currentState.asInstanceOf[Retrying])
     }
 
+    case NewViewActorRef(view: View, viewRef: ActorRef) => {
+      knownDependencies += view -> viewRef
+    }
+
   }
 
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
@@ -149,11 +149,11 @@ class ViewActor(var currentState: ViewSchedulingState,
 
     case Materialize(view, mode) =>
       if (!view.isExternal) {
-        log.info("sendind materialize")
-        actorForView(view) ! MaterializeView(mode)
+        log.info("sending materialize")
+        sendMessageToView(view, MaterializeView(mode))
       } else {
-        actorForView(view) ! ReloadStateAndMaterializeView(mode)
-        log.info("sendind external materialize")
+        sendMessageToView(view, ReloadStateAndMaterializeView(mode))
+        log.info("sending external materialize")
       }
 
     case Transform(view) =>
@@ -161,17 +161,17 @@ class ViewActor(var currentState: ViewSchedulingState,
 
     case ReportNoDataAvailable(view, listeners) =>
       listeners.foreach {
-        _ ! ViewHasNoData(view)
+        sendMessageToListener(_, ViewHasNoData)
       }
 
     case ReportFailed(view, listeners) =>
       listeners.foreach {
-        _ ! ViewFailed(view)
+        sendMessageToListener(_, ViewFailed(view))
       }
 
     case ReportInvalidated(view, listeners) =>
       listeners.foreach {
-        _ ! ViewStatusResponse("invalidated", view, self)
+        sendMessageToListener(_, ViewStatusResponse("invalidated", view, self))
       }
 
     case ReportNotInvalidated(view, listeners) =>
@@ -180,24 +180,34 @@ class ViewActor(var currentState: ViewSchedulingState,
     case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
       listeners.foreach { l =>
         log.info(s"report materialized ${view} to ${l}")
-        l ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
+        sendMessageToListener(l, ViewMaterialized(view, incomplete, transformationTimestamp, withErrors))
       }
   }
 
-  def actorForView(view: View) = {
+  def sendMessageToListener(listener: PartyInterestedInViewSchedulingStateChange, msg: AnyRef): Unit =
+    listener match {
+      case DependentView(view) => sendMessageToView(view, msg)
+
+      case AkkaActor(actorRef) => actorRef ! msg
+
+      case _ => //Not supported
+    }
+
+  def sendMessageToView(view: View, msg: AnyRef) = {
 
     //
     // New dependencies may appear at a start of a new day. These might not yet have corresponding
     // actors created by the ViewManagerActor. Take care that a view actor is available before
     // returning an actor selection for it, as messages might end up in nirvana otherwise.
     //
-
-    if (!knownDependencies.contains(view)) {
-      queryActor[Any](viewManagerActor, view, settings.schedulingCommandTimeout)
-      knownDependencies += view
+    knownDependencies.get(view) match {
+      case Some(r: ActorRef) =>
+        r ! msg
+      case None =>
+        viewManagerActor ! DelegateMessageToView(view, msg)
     }
 
-    ViewManagerActor.actorForView(view)
+    //    ViewManagerActor.actorForView(view)
   }
 
   def touchSuccessFlag(view: View) {
@@ -250,12 +260,14 @@ class ViewActor(var currentState: ViewSchedulingState,
 object ViewActor {
   def props(state: ViewSchedulingState,
             settings: SchedoscopeSettings,
+            dependencies: Map[View, ActorRef],
             viewManagerActor: ActorRef,
             transformationManagerActor: ActorRef,
             schemaManagerRouter: ActorRef): Props =
     props(state,
       settings,
       defaultFileSystem(settings.hadoopConf),
+      dependencies,
       viewManagerActor,
       transformationManagerActor,
       schemaManagerRouter)
@@ -263,6 +275,7 @@ object ViewActor {
   def props(state: ViewSchedulingState,
             settings: SchedoscopeSettings,
             hdfs: FileSystem,
+            dependencies: Map[View, ActorRef],
             viewManagerActor: ActorRef,
             transformationManagerActor: ActorRef,
             schemaManagerRouter: ActorRef): Props =
@@ -270,6 +283,7 @@ object ViewActor {
       state,
       settings,
       hdfs,
+      dependencies,
       viewManagerActor,
       transformationManagerActor,
       schemaManagerRouter).withDispatcher("akka.actor.views-dispatcher")

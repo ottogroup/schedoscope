@@ -113,6 +113,13 @@ case class GetTransformationStatusList(statusRequester: ActorRef, transformation
 case class GetViews(views: Option[List[View]], status: Option[String], filter: Option[String], dependencies: Boolean = false)
 
 /**
+  * Request to view manager to send a message to a specific view
+  * @param view target view
+  * @param message payload
+  */
+case class DelegateMessageToView(view: View, message: AnyRef) extends CommandRequest
+
+/**
   * Request to the view manager to return the state of all views.
   */
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
@@ -136,8 +143,19 @@ object MaterializeViewMode extends Enumeration {
   */
 case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
+/**
+  * Special [[MaterializeView]] command with will refresh the metadata of a view before materializing it.
+  * Used for external views.
+  * @param mode materialization mode
+  */
 case class ReloadStateAndMaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
+/**
+  * Request for the SchemaManager to
+  * @param view to be materialized
+  * @param mode materialization mode
+  * @param materializeSource sender of materialize command
+  */
 case class GetMetaDataForMaterialize(view: View,
                                      mode: MaterializeViewMode = MaterializeViewMode.DEFAULT,
                                      materializeSource: ActorRef) extends CommandRequest
@@ -163,10 +181,23 @@ sealed class CommandResponse
 case class DeployCommandSuccess() extends CommandResponse
 
 /**
+  * Notification for view actor about a new
+  * @param view
+  * @param viewRef
+  */
+case class NewViewActorRef(view: View, viewRef: ActorRef) extends CommandResponse
+
+/**
   * Schema actor or metadata logger notifying view manager actor or view actor of successful schema action.
   */
 case class SchemaActionSuccess() extends CommandResponse
 
+/**
+  * Schema actor notifying view actor about the metadata of the view
+  * @param metadata of the view
+  * @param mode transformation mode
+  * @param materializeSource sender of the [[MaterializeView]] command
+  */
 case class MetaDataForMaterialize(metadata: (View,(String,Long)), mode: MaterializeViewMode, materializeSource: ActorRef) extends CommandResponse
 
 /**
@@ -187,7 +218,7 @@ case class QueueStatusListResponse(val transformationQueues: Map[String, List[An
 /**
   * Response message of transformation manager actor with state of actions
   *
-  * @param actionsStatusList List of entities of TransformationStatusResponse
+  * @param transformationStatusList List of entities of TransformationStatusResponse
   * @see TransformationStatusResponse
   */
 case class TransformationStatusListResponse(val transformationStatusList: List[TransformationStatusResponse[_]]) extends CommandResponse
