@@ -30,7 +30,6 @@ class ForwardActor(to: ActorRef) extends Actor {
 
 class ParentActor
 
-
 class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
   with FlatSpecLike
@@ -59,8 +58,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 //    mockPath("test.views:Brand:ec0106", brandViewActor)
 //    mockPath("test.views:Product:ec0106:2014:01:01:20140101", productViewActor)
     val fileSystem = mock[FileSystem]
-
-
 
     val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     val brandDependency = view.dependencies.head
@@ -175,6 +172,10 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   "A external view" should "reload it's state and ignore it's deps" in new ViewActorTest {
     val extView = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
+
+    //mock success flag lookup
+    when(fileSystem.exists(any(classOf[Path])))
+      .thenReturn(true)
 
     val extActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(extView),

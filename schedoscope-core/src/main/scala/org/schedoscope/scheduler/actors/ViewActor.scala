@@ -63,11 +63,11 @@ class ViewActor(var currentState: ViewSchedulingState,
       //
       //Got an answer about the state of an external view -> use it to execute the NoOp materialisation
       //
-      metadata match {
+      val externalState = metadata match {
         case (view, (version, timestamp)) =>
           ViewManagerActor.getStateFromMetadata(view, version, timestamp)
       }
-      stateMachine.materialize(currentState, source, mode)
+      stateMachine.materialize(externalState, source, mode)
     }
 
 
