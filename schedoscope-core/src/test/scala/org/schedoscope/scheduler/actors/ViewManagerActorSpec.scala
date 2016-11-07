@@ -82,20 +82,20 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsg(NewViewActorRef(view, actorRef))
   }
 
-  it should "delegate a message to a unknown view" in new ViewManagerActorTest {
-    val unknownView = Brand(p("ec0101"))
-    val actorRef = initializeView(view)
-    viewManagerActor ! DelegateMessageToView(unknownView, "test")
-
-    //if ViewManager does not know view it will start to communicate with
-    //the SchemaManager
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(unknownView)))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("test", 1L))))
-
-    expectMsgType[NewViewActorRef]
-  }
+//  it should "delegate a message to a unknown view" in new ViewManagerActorTest {
+//    val unknownView = Brand(p("ec0101"))
+//    val actorRef = initializeView(view)
+//    viewManagerActor ! DelegateMessageToView(unknownView, "test")
+//
+//    //if ViewManager does not know view it will start to communicate with
+//    //the SchemaManager
+//    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(unknownView)))
+//    schemaManagerRouter.reply(SchemaActionSuccess())
+//    schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
+//    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("test", 1L))))
+//
+//    expectMsgType[NewViewActorRef]
+//  }
 
 
 }
