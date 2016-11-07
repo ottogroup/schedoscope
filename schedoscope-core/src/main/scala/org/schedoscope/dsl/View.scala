@@ -484,8 +484,8 @@ case class ExternalView(view: View) extends View {
   override def namingBase = view.namingBase
   override def nameOf[F <: FieldLike[_]](f: F): Option[String] = view.nameOf(f)
 
-  override def equals(obj: scala.Any): Boolean = view.equals(obj)
-  override def hashCode(): Int = view.hashCode()
+//  override def equals(obj: scala.Any): Boolean = view.equals(obj)
+//  override def hashCode(): Int = view.hashCode()
 
   override def asTableSuffix[P <: Parameter[_]](p: P): P = {
     throw new IllegalArgumentException("you can't change the dependencies of an external view")

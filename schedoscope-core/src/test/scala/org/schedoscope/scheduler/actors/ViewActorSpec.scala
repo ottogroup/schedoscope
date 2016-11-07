@@ -10,9 +10,10 @@ import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
 import org.schedoscope.{Schedoscope, Settings}
-import test.views.ProductBrand
+import test.views.{ProductBrand, ViewWithExternalDeps}
 import org.mockito.Mockito._
 import org.mockito.Matchers._
+import org.schedoscope.dsl.ExternalView
 
 
 object ForwardActor {
@@ -143,6 +144,59 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
+  }
+
+  it should "materialize an external view" in new ViewActorTest {
+
+    when(fileSystem.listStatus(any(classOf[Path]),any(classOf[PathFilter])))
+      .thenReturn(List(new FileStatus(1L,false,1,12L,0L,new Path("test"))).toArray)
+
+    val viewWithExt = ViewWithExternalDeps(p("ec0101"),p("2016"),p("11"),p("07"))
+    val extView = viewWithExt.dependencies.head
+    val extActor = TestProbe()
+    val actorWithExt = system.actorOf(ViewActor.props(
+      CreatedByViewManager(viewWithExt),
+      Settings(),
+      fileSystem,
+      Map(extView -> extActor.ref),
+      viewManagerActor.ref,
+      transformationManagerActor.ref,
+      schemaManagerRouter.ref))
+
+    actorWithExt ! MaterializeView()
+    extActor.expectMsg(ReloadStateAndMaterializeView())
+    extActor.reply(ViewMaterialized(extView, incomplete = false, 1L, errors = false))
+    transformationManagerActor.expectMsg(viewWithExt)
+    val success = mock[TransformationSuccess[HiveTransformation]]
+    transformationManagerActor.reply(success)
+
+    expectMsgType[ViewMaterialized]
+  }
+
+  "A external view" should "reload it's state and ignore it's deps" in new ViewActorTest {
+    val extView = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
+
+    val extActor = system.actorOf(ViewActor.props(
+      CreatedByViewManager(extView),
+      Settings(),
+      fileSystem,
+      Map(),
+      viewManagerActor.ref,
+      transformationManagerActor.ref,
+      schemaManagerRouter.ref))
+
+    extActor ! ReloadStateAndMaterializeView()
+
+    schemaManagerRouter.expectMsg(GetMetaDataForMaterialize(extView,
+      MaterializeViewMode.DEFAULT,
+      self))
+
+    schemaManagerRouter.reply(MetaDataForMaterialize((extView,("checksum",1L)),
+      MaterializeViewMode.DEFAULT,
+      self))
+
+    expectMsgType[ViewMaterialized]
+
   }
 
 }

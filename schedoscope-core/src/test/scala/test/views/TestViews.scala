@@ -99,10 +99,10 @@ case class ViewWithExternalDeps(shopCode: Parameter[String],
   with JobMetadata
   with DailyParameterization {
 
-  val test = () => ExternalView(ProductBrand(shopCode,year,month,day))
+  val pb = () => ExternalView(ProductBrand(shopCode,year,month,day))
 
 
-  val productBrand = dependsOn(test)
+  val productBrand = dependsOn(pb)
 
   val productId = fieldOf[String]
   val brandName = fieldOf[String]
