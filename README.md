@@ -10,13 +10,13 @@ With Schedoscope,
 * you never have to create DDL and schema migration scripts;
 * you do not have to manually determine which data must be deleted and recomputed in face of retroactive changes to logic or data structures;
 * you specify Hive table structures (called "views"), partitioning schemes, storage formats, dependent views, as well as transformation logic in a concise Scala DSL;
-* you have a wide range of options for expressing data transformations - from file operations and MapReduce jobs to Pig scripts, Hive queries, and Oozie workflows;
+* you have a wide range of options for expressing data transformations - from file operations and MapReduce jobs to Pig scripts, Hive queries, Spark jobs, and Oozie workflows;
 * you benefit from Scala's static type system and your IDE's code completion to make less typos that hit you late during deployment or runtime;
 * you can easily write unit tests for your transformation logic in [ScalaTest](http://www.scalatest.org/) and run them quickly right out of your IDE;
 * you schedule jobs by expressing the views you need - Schedoscope takes care that all required dependencies - and only those-  are computed as well;
 * you can easily  export view data in parallel to external systems such as Redis caches, JDBC, or Kafka topics;
 * you have Metascope - a nice metadata management and data lineage tracing tool - at your disposal;
-* you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capacitity.
+* you achieve a higher utilization of your YARN cluster's resources because job launchers are not YARN applications themselves that consume cluster capacitity. 
 
 ## Getting Started
 
@@ -63,7 +63,7 @@ Should any of those assumptions not hold in your context, you should probably lo
 
 ## Origins
 
-Schedoscope was conceived at the Business Intelligence department of [Otto Group](http://ottogroup.com/en/die-otto-group.php)
+Schedoscope was conceived at the Business Intelligence department of [Otto Group](http://www.ottogroup.com/en/die-otto-group/)
 
 ## Contributions
 
@@ -76,6 +76,14 @@ We would love to get contributions from you as well. We haven't got a formalized
 Please help making Schedoscope better!
 
 ## News
+
+###### 11/01/2016 - Release 0.7.0
+
+[Spark transformations, finally](https://github.com/ottogroup/schedoscope/wiki/Spark-Transformations)! Build views based on Scala and Python Spark 1.6.0 jobs or run your Hive transformations on Spark. Test them using the Schedoscope test framework like any other transformation type. `HiveContext` is supported.
+
+We have also upgraded Schedoscope's dependencies to CDH-5.8.3. There is catch, though: we had to backport Schedoscope 0.7.0 to Scala 2.10 for compatibility with Cloudera's Spark 1.6.0 dependencies.
+
+We have released Version 0.7.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
 
 ###### 10/20/2016 - Release 0.6.7
 

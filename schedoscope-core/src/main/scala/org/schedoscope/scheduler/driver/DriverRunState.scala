@@ -35,15 +35,12 @@ case class DriverRunSucceeded[T <: Transformation](override val driver: Driver[T
 
 /**
   * Driver run state: transformation has terminated with an error. The driver actor embedding the driver having failed
-  * at executing the transformation will return a failure message to the view actor initiating the transformation. That view
-  * actor will subsequently retry the transformation.
-  *
+  * at executing the transformation will return a failure message to the view actor initiating the transformation.
   */
 case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], reason: String, cause: Throwable) extends DriverRunState[T](driver)
 
 /**
-  * Exceptions occurring in a driver that merit a retry. These will be escalated to the driver actor
+  * Exceptions occurring in a driver that merit a retry without counting against the retry limit. These will be escalated to the driver actor
   * to cause a driver actor restart.
   */
 case class RetryableDriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
-

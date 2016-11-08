@@ -59,12 +59,17 @@ class TestDriverRunCompletionHandler[T <: Transformation] extends DriverRunCompl
   }
 }
 
+/**
+  * Keeps various properties for the test environment.
+  */
 abstract class TestResources {
   val hiveConf: HiveConf
 
   val hiveWarehouseDir: String
 
   val hiveScratchDir: String
+
+  val hiveSiteXmlPath: Option[String]
 
   val metastoreUri: String
 
@@ -78,7 +83,7 @@ abstract class TestResources {
 
   lazy val ugi: UserGroupInformation = {
     UserGroupInformation.setConfiguration(hiveConf)
-    val ugi = UserGroupInformation.getCurrentUser()
+    val ugi = UserGroupInformation.getCurrentUser
     ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
     ugi.reloginFromKeytab()
     ugi

@@ -1,77 +1,79 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>schedoscope</groupId>
-	<artifactId>schedoscope-suite</artifactId>
-	<version>0.6.8-SNAPSHOT</version>
-	<packaging>pom</packaging>
-	<name>Schedoscope Suite</name>
-	<description>A wrapper building all modules of the Schedoscope project</description>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>schedoscope</groupId>
+    <artifactId>schedoscope-suite</artifactId>
+    <version>0.7.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>Schedoscope Suite</name>
+    <description>A wrapper building all modules of the Schedoscope project</description>
 
-	<properties>
-		<akka.version>2.3.14</akka.version>
-		<scala.version>2.11</scala.version>
-		<scalarelease.version>2.11.7</scalarelease.version>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<hadoop.version>2.6.0-cdh5.7.1</hadoop.version>
-		<hive.version>1.1.0-cdh5.7.1</hive.version>
-		<hive.hcatalog.version>${hive.version}</hive.hcatalog.version>
-		<oozie.version>4.1.0-cdh5.7.1</oozie.version>
-		<pig.version>0.12.0-cdh5.7.1</pig.version>
-		<pig.parquet.version>1.6.0</pig.parquet.version>
-		<mrunit.version>1.1.0</mrunit.version>
-		<hiveunit.version>1.2.3</hiveunit.version>
-		<minioozie.version>1.2.1</minioozie.version>
-		<schedoscope.version>0.6.8-SNAPSHOT</schedoscope.version>
-	</properties>
+    <properties>
+        <akka.version>2.3.14</akka.version>
+        <scala.version>2.10</scala.version>
+        <scalarelease.version>2.10.6</scalarelease.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <hadoop.version>2.6.0-cdh5.8.3</hadoop.version>
+        <hive.version>1.1.0-cdh5.8.3</hive.version>
+        <hive.hcatalog.version>${hive.version}</hive.hcatalog.version>
+        <oozie.version>4.1.0-cdh5.8.3</oozie.version>
+        <pig.version>0.12.0-cdh5.8.3</pig.version>
+        <pig.parquet.version>1.6.0</pig.parquet.version>
+        <spark.version>1.6.0-cdh5.8.3</spark.version>
+        <mrunit.version>1.1.0</mrunit.version>
+        <hiveunit.version>1.2.4</hiveunit.version>
+        <minioozie.version>1.2.2</minioozie.version>
+        <schedoscope.version>0.7.1-SNAPSHOT</schedoscope.version>
+    </properties>
 
-	<modules>
-		<module>schedoscope-conf</module>
-		<module>schedoscope-export</module>
-		<module>schedoscope-core</module>
- 		<module>schedoscope-transformation-oozie</module>
-		<module>schedoscope-transformation-pig</module>
-		<module>schedoscope-transformation-shell</module>
-		<module>schedoscope-tutorial</module>
-		<module>schedoscope-metascope</module>
-	</modules>
+    <modules>
+        <module>schedoscope-conf</module>
+        <module>schedoscope-export</module>
+        <module>schedoscope-core</module>
+        <module>schedoscope-transformation-oozie</module>
+        <module>schedoscope-transformation-pig</module>
+        <module>schedoscope-transformation-shell</module>
+        <module>schedoscope-transformation-spark</module>
+        <module>schedoscope-tutorial</module>
+        <module>schedoscope-metascope</module>
+    </modules>
 
 
-	<repositories>
-		<repository>
-			<id>cloudera</id>
-			<url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
-		</repository>
-		<repository>
-			<id>conjars</id>
-			<url>http://conjars.org/repo</url>
-		</repository>
-		<repository>
-			<id>scratch</id>
-			<url>http://pk11-scratch.googlecode.com/svn/trunk</url>
-		</repository>
-		<repository>
-			<id>otto-bintray</id>
-			<url>https://dl.bintray.com/ottogroup/maven</url>
-		</repository>
-		<repository>
-			<id>lambdanow-bintray</id>
-			<url>https://dl.bintray.com/lambdanow/maven</url>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>cloudera</id>
+            <url>https://repository.cloudera.com/artifactory/cloudera-repos/</url>
+        </repository>
+        <repository>
+            <id>conjars</id>
+            <url>http://conjars.org/repo</url>
+        </repository>
+        <repository>
+            <id>scratch</id>
+            <url>http://pk11-scratch.googlecode.com/svn/trunk</url>
+        </repository>
+        <repository>
+            <id>otto-bintray</id>
+            <url>https://dl.bintray.com/ottogroup/maven</url>
+        </repository>
+        <repository>
+            <id>lambdanow-bintray</id>
+            <url>https://dl.bintray.com/lambdanow/maven</url>
+        </repository>
+    </repositories>
 
-	<distributionManagement>
-		<repository>
-			<id>bintray-ottogroup-maven</id>
-			<url>https://api.bintray.com/maven/ottogroup/maven/schedoscope</url>
-		</repository>
-		<snapshotRepository>
-			<id>gbi-snapshots</id>
-			<name>Ecbi-Snapshot-Releases</name>
-			<url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
+    <distributionManagement>
+        <repository>
+            <id>bintray-ottogroup-maven</id>
+            <url>https://api.bintray.com/maven/ottogroup/maven/schedoscope</url>
+        </repository>
+        <snapshotRepository>
+            <id>gbi-snapshots</id>
+            <name>Ecbi-Snapshot-Releases</name>
+            <url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
 </project> 

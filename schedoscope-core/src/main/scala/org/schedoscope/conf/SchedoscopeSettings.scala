@@ -213,27 +213,31 @@ class DriverSettings(val config: Config, val name: String) {
     * List of jars to upload to HDFS.
     */
   lazy val libJars = {
-    val fromLibDir = libDirectory
-      .split(",")
-      .toList
-      .filter(!_.trim.equals(""))
-      .map(p => {
-        if (!p.endsWith("/")) s"file://${p.trim}/*" else s"file://${p.trim}*"
-      })
-      .flatMap(dir => {
-        fileSystem(dir, Schedoscope.settings.hadoopConf).globStatus(new Path(dir))
-          .map(stat => stat.getPath.toString)
-      })
+    val fromLibDir = try {
+      libDirectory
+        .split(",")
+        .toList
+        .filter(!_.trim.equals(""))
+        .map(p => {
+          if (!p.endsWith("/")) s"file://${p.trim}/*" else s"file://${p.trim}*"
+        })
+        .flatMap(dir => {
+          fileSystem(dir, Schedoscope.settings.hadoopConf).globStatus(new Path(dir))
+            .map(stat => stat.getPath.toString)
+        })
+    } catch {
+      case _: Throwable => List()
+    }
 
     val fromClasspath = this.getClass.getClassLoader
       .asInstanceOf[URLClassLoader]
       .getURLs
       .map(el => el.toString)
       .distinct
-      .filter(_.endsWith(s"-${name}.jar"))
+      .filter(_.endsWith(s"-$name.jar"))
       .toList
 
-    (fromLibDir ++ fromClasspath).toList
+    fromLibDir ++ fromClasspath
   }
 
   /**

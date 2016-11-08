@@ -16,12 +16,13 @@
 package org.schedoscope.test.resources
 
 import java.io.File
-import java.net.{URL, URLClassLoader}
+import java.net.{InetAddress, URL, URLClassLoader}
 import java.nio.file.{Files, Paths}
 import java.util.Properties
 
 import net.lingala.zip4j.core.ZipFile
 import org.apache.commons.io.FileUtils
+import org.apache.derby.drda.NetworkServerControl
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
 import org.apache.hadoop.hive.conf.HiveConf
@@ -39,7 +40,7 @@ class LocalTestResources extends TestResources {
     val conf = new Properties()
     conf.put(METASTOREWAREHOUSE.toString, hiveWarehouseDir)
     conf.put(LOCALMODEAUTO.toString, "true")
-    conf.put(METASTORECONNECTURLKEY.toString, "jdbc:derby:memory:metastore_db;create=true")
+    conf.put(METASTORECONNECTURLKEY.toString, metastoreUri + ";create=true")
     conf.put(HIVEAUXJARS.toString, compiledClassesPath())
     conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
     conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
@@ -48,7 +49,7 @@ class LocalTestResources extends TestResources {
     //conf.put(PLAN_SERIALIZATION.toString(), "javaXML")
     //conf.put(HIVE_LOG_INCREMENTAL_PLAN_PROGRESS_INTERVAL.toString(), "60000")
     val props = conf.stringPropertyNames().toArray().map(p => s"<property><name>${p.toString}</name><value>${conf.getProperty(p.toString)}</value></property>").mkString("\n")
-    Files.write(Paths.get(hiveSiteXmlPath), ("<configuration>\n" + props + "\n</configuration>").getBytes());
+    Files.write(Paths.get(hiveSiteXmlPath.get), ("<configuration>\n" + props + "\n</configuration>").getBytes());
     new HiveConf()
   }
 
@@ -80,7 +81,9 @@ class LocalTestResources extends TestResources {
     new Path(dirUrl).toString()
   }
 
-  override lazy val metastoreUri = "jdbc:derby:memory:metastore_db"
+  override val hiveSiteXmlPath = Some("target/test-classes/hive-site.xml")
+
+  override lazy val metastoreUri = LocalTestResources.derbyUri + "metastore_db" //"jdbc:derby:memory:metastore_db"
 
   override lazy val fileSystem: FileSystem = FileSystem.getLocal(new Configuration())
 
@@ -90,7 +93,6 @@ class LocalTestResources extends TestResources {
 
   override val namenode = "file:///"
 
-  val hiveSiteXmlPath = "target/test-classes/hive-site.xml"
   val dependenciesDir = "deploy/dependencies"
 
   def compiledClassesPath() = {
@@ -151,4 +153,55 @@ class LocalTestResources extends TestResources {
       }
     }
   }
+}
+
+/**
+  * In order to support testing of transformations that run in different JVMs we need the derby metastore database
+  * accessible via a socket and not just in-memory.
+  *
+  * So this is a singleton managing the derby instance.
+  */
+
+object LocalTestResources {
+
+  /**
+    * The derby server control object
+    */
+  lazy val derbyServer = {
+
+    FileUtils.deleteDirectory(new File("metastore_db"))
+    FileUtils.deleteQuietly(new File("derby.log"))
+
+    var networkServerControl: NetworkServerControl = null
+    var port = 15270
+    var notStarted = true
+    var acceptsConnections = false
+
+    while (notStarted) {
+      try {
+        networkServerControl = new NetworkServerControl(InetAddress.getByName("127.0.0.1"), port)
+        networkServerControl.start(null)
+        notStarted = false
+      } catch {
+        case _: Throwable => port += 1
+      }
+    }
+
+    while (!acceptsConnections) {
+      try {
+        networkServerControl.ping()
+        acceptsConnections = true
+      } catch {
+        case _: Throwable => Thread.sleep(10)
+      }
+    }
+
+
+    networkServerControl
+  }
+
+  /**
+    * The JDBC uri to connect to our derby instance.
+    */
+  lazy val derbyUri = s"jdbc:derby://${derbyServer.getCurrentProperties().getProperty("derby.drda.host")}:${derbyServer.getCurrentProperties().getProperty("derby.drda.portNumber")}/"
 }

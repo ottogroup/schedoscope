@@ -9,13 +9,18 @@
     <parent>
         <artifactId>schedoscope-suite</artifactId>
         <groupId>schedoscope</groupId>
-        <version>0.6.8-SNAPSHOT</version>
+        <version>0.7.1-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>schedoscope</groupId>
             <artifactId>schedoscope-core</artifactId>
+            <version>${schedoscope.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>schedoscope</groupId>
+            <artifactId>schedoscope-transformation-spark</artifactId>
             <version>${schedoscope.version}</version>
         </dependency>
         <dependency>
@@ -91,7 +96,7 @@
         </dependency>
         <dependency>
             <groupId>org.scalatest</groupId>
-            <artifactId>scalatest_2.11</artifactId>
+            <artifactId>scalatest_${scala.version}</artifactId>
             <version>2.2.5</version>
             <scope>test</scope>
         </dependency>
@@ -267,12 +272,15 @@
                             <key>config.file</key>
                             <value>src/main/resources/schedoscope.conf</value>
                         </systemProperty>
+                        <systemProperty>
+                            <key>logback.configurationFile</key>
+                            <value>src/main/resources/logback.xml</value>
+                        </systemProperty>
                     </systemProperties>
                     <additionalClasspathElements>
                         <additionalClasspathElement>/etc/hadoop/conf</additionalClasspathElement>
                         <additionalClasspathElement>/etc/hive/conf</additionalClasspathElement>
-                        <additionalClasspathElement>target/${project.build.finalName}-mapreduce.jar
-                        </additionalClasspathElement>
+                        <additionalClasspathElement>target/${project.build.finalName}-mapreduce.jar</additionalClasspathElement>
                     </additionalClasspathElements>
                 </configuration>
             </plugin>
