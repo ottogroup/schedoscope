@@ -15,30 +15,12 @@ import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.schedoscope.dsl.ExternalView
 
-
-object ForwardActor {
-  def props(to: ActorRef) = Props(new ForwardActor(to))
-}
-
-class ForwardActor(to: ActorRef) extends Actor {
-  override def receive = {
-    case x =>
-      println(x)
-      to forward x
-  }
-}
-
-class ParentActor
-
 class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
   with FlatSpecLike
   with Matchers
   with BeforeAndAfterAll
   with MockitoSugar {
-
-  def mockPath(name: String, probe: TestProbe)(implicit system: ActorSystem): Unit =
-    system.actorOf(ForwardActor.props(probe.ref), name)
 
   override def afterAll() = {
     TestKit.shutdownActorSystem(system)
@@ -55,8 +37,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     val schemaManagerRouter = TestProbe()
     val brandViewActor = TestProbe()
     val productViewActor = TestProbe()
-//    mockPath("test.views:Brand:ec0106", brandViewActor)
-//    mockPath("test.views:Product:ec0106:2014:01:01:20140101", productViewActor)
     val fileSystem = mock[FileSystem]
 
     val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))

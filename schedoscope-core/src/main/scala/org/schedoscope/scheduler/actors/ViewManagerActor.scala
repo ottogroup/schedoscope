@@ -74,9 +74,9 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     }
 
     case DelegateMessageToView(view, msg) => {
-      val ref = viewStatusMap.get(actorNameForView(view)) match {
-        case Some(status) =>
-          status.actor
+      val ref = actorForView(view) match {
+        case Some(actorRef) =>
+          actorRef
         case None =>
           initializeViewActors(List(view), false).head
       }
@@ -157,7 +157,26 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 
         log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
       }
+
+      viewsWithMetadataToCreate.foreach{ t =>
+        t.metadata.foreach {
+          case (view, _) =>
+            val newDepsActorRefs = view
+              .dependencies
+              .flatMap(v => actorForView(v).map(NewViewActorRef(v,_)))
+
+            actorForView(view) match {
+              case Some(actorRef) =>
+                newDepsActorRefs.foreach(actorRef ! _)
+              case None => //actor not yet known nothing to do here
+            }
+
+        }
+      }
+
     }
+
+
 
     log.info(s"Returning actors${if (dependencies) " including dependencies."}")
 
@@ -176,7 +195,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
   }
 
   def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
-    views.map {
+    views.flatMap {
       v =>
         if (visited.contains(v))
           List()
@@ -191,10 +210,10 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
           List((v, false, depth))
         }
 
-    }.flatten.distinct
+    }.distinct
 
   def actorForView(view: View) =
-    Schedoscope.actorSystem.actorSelection(Schedoscope.viewManagerActor.path.child(actorNameForView(view)))
+    child(actorNameForView(view))
 
   def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
 }
