@@ -65,6 +65,7 @@ trait ViewDsl extends StructureDsl {
     ps
   }
 
+
   /**
     * Mark a view dependency as external. This functionality is used to use views which are on
     * managed by a different Schedoscope instance. The external dependency can not be materialized,

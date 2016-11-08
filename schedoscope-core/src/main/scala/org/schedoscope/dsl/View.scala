@@ -448,4 +448,63 @@ object View {
 
 }
 
+case class ExternalView(view: View) extends View {
+
+  override val isExternal = true
+  env = view.env
+  storageFormat = view.storageFormat
+  additionalStoragePathPrefix = view.additionalStoragePathPrefix
+  additionalStoragePathSuffix = view.additionalStoragePathSuffix
+  registeredExports = view.registeredExports
+  isMaterializeOnce = view.isMaterializeOnce
+
+
+  override def fields= view.fields
+  override def urlPath = view.urlPath
+  override def urlPathPrefix = view.urlPathPrefix
+  override def lowerCasePackageName = view.lowerCasePackageName
+  override def partitionValues(ignoreSuffixPartitions: Boolean = true) = view.partitionValues(ignoreSuffixPartitions)
+  override def partitionParameters = view.partitionParameters
+  override def n = view.n
+  override def nWithoutPartitioningSuffix = view.nWithoutPartitioningSuffix
+  override def hasSuffixPartitions = view.hasSuffixPartitions
+  override def suffixPartitionParameters = view.suffixPartitionParameters
+  override def isPartition(p: Parameter[_]) = parameters.contains(p)
+  override def isSuffixPartition(p: Parameter[_]) = view.isSuffixPartition(p)
+  override def module = view.module
+  override def dbName = view.dbName
+  override def tableName = view.tableName
+  override def dbPath = view.dbPath
+  override def tablePath = view.tablePath
+  override def partitionPath = view.partitionPath
+  override def fullPath = view.fullPath
+  override def avroSchemaPathPrefix = view.avroSchemaPathPrefix
+  override def isPartitioned() = view.isPartitioned()
+  override def partitionSpec = view.partitionSpec
+  override def namingBase = view.namingBase
+  override def nameOf[F <: FieldLike[_]](f: F): Option[String] = view.nameOf(f)
+
+//  override def equals(obj: scala.Any): Boolean = view.equals(obj)
+//  override def hashCode(): Int = view.hashCode()
+
+  override def asTableSuffix[P <: Parameter[_]](p: P): P = {
+    throw new IllegalArgumentException("you can't change the dependencies of an external view")
+  }
+
+  override def dependsOn[V <: View : Manifest](df: () => V) = {
+    throw new IllegalArgumentException("you can't change the dependencies of an external view")
+  }
+  override def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {}
+  override def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) = {}
+  override def configureTransformation(k: String, v: Any) = {}
+  override def transformVia(ft: () => Transformation) = {}
+  override def exportTo(export: () => Transformation) = {}
+  override def configureExport(k: String, v: Any) = {}
+  override def ensureRegisteredParameters = view.ensureRegisteredParameters
+  override def parameters = view.parameters
+  override def materializeOnce = view.materializeOnce
+>>>>>>> f2aa18fa888fdf23a53fefda3e30131408ddae01
+
+}
+
 

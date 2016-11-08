@@ -30,6 +30,7 @@ import org.mockito.Mockito._
 import org.mockito.Matchers._
 import org.schedoscope.dsl.ExternalView
 
+
 class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
   with FlatSpecLike
