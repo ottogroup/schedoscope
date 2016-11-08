@@ -65,6 +65,14 @@ trait ViewDsl extends StructureDsl {
     ps
   }
 
+  /**
+    * Mark a view dependency as external. This functionality is used to use views which are on
+    * managed by a different Schedoscope instance. The external dependency can not be materialized,
+    * but Schedoscope will fetch the current status from the Metastore each time the view receives a materialize command.
+    * @param view to be handled as external
+    * @return a wrapped version of the original view
+    */
+  def external(view: View) = ExternalView(view)
 
   /**
     * Materialize once makes sure that the given view is only materialized once, even if its dependencies or version checksum change

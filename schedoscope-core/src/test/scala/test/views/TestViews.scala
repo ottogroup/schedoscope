@@ -99,23 +99,17 @@ case class ViewWithExternalDeps(shopCode: Parameter[String],
   with JobMetadata
   with DailyParameterization {
 
-  val pb = () => ExternalView(ProductBrand(shopCode,year,month,day))
 
-
-  val productBrand = dependsOn(pb)
+  val productBrand = dependsOn(() => external(ProductBrand(shopCode,year,month,day)))
 
   val productId = fieldOf[String]
-  val brandName = fieldOf[String]
-
+  val productName = fieldOf[String]
 
   transformVia(() =>
     HiveTransformation(insertInto(
       this,
       s"""SELECT * FROM ${productBrand().n}""")))
 }
-
-
-
 
 trait Shop {
   val shopCode: Parameter[String]

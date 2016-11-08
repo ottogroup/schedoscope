@@ -175,9 +175,6 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
       }
 
     }
-
-
-
     log.info(s"Returning actors${if (dependencies) " including dependencies."}")
 
     val viewsToReturnActorRefsFor = if (dependencies)
