@@ -81,27 +81,33 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
     system.isTerminated
   }
 
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 3600 seconds)
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): Future[ViewStatusList] = {
+    //Await.result(get[ViewStatusList](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 3600 seconds))
+    get[ViewStatusList](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode)))
   }
 
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): Future[ViewStatusList] = {
+    //Await.result(get[ViewStatusList](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
+    get[ViewStatusList](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies)))
   }
 
-  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): Future[ViewStatusList] = {
+    //Await.result(get[ViewStatusList](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+    get[ViewStatusList](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter)))
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies), ("overview", overview), ("all", all))), 3600 seconds)
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): Future[ViewStatusList] = {
+    //Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies), ("overview", overview), ("all", all))), 3600 seconds)
+    get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies), ("overview", overview), ("all", all)))
   }
 
-  def transformations(status: Option[String], filter: Option[String]): TransformationStatusList = {
-    Await.result(get[TransformationStatusList](s"/transformations", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {
+    //Await.result(get[TransformationStatusList](s"/transformations", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+    get[TransformationStatusList](s"/transformations", paramsFrom(("status", status), ("filter", filter)))
   }
 
-  def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
-    Await.result(get[QueueStatusList](s"/queues", paramsFrom(("typ", typ), ("filter", filter))), 3600 seconds)
+  def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList] = {
+    //Await.result(get[QueueStatusList](s"/queues", paramsFrom(("typ", typ), ("filter", filter))), 3600 seconds)
+    get[QueueStatusList](s"/queues", paramsFrom(("typ", typ), ("filter", filter)))
   }
 }

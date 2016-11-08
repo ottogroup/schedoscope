@@ -30,8 +30,10 @@ import org.schedoscope.scheduler.driver.{DriverRunFailed, DriverRunOngoing, Driv
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.schema.ddl.HiveQl
 
+import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
+
 
 class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
 
@@ -41,7 +43,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   private def getOrElse[T](o: T, d: T) = if (o != null) o else d
 
-  private def checkFilter(filter: Option[String]) {
+  private def checkFilter(filter: Option[String]) = {
     if (filter.isDefined)
       try {
         Pattern.compile(filter.get)
@@ -50,7 +52,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       }
   }
 
-  private def checkViewUrlPath(viewUrlPath: Option[String]) {
+  private def checkViewUrlPath(viewUrlPath: Option[String]):Unit = {
     if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty())
       try {
         viewsFromUrl(viewUrlPath.get)
@@ -62,16 +64,28 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       }
   }
 
+  private def parallelFuturesExec(f1:Future[StatusVals], fn:Future[Any]*): Future[StatusVals] = {
+    for {
+      a <- f1
+      b <- Future.sequence(fn)
+    } yield a
+  }
+
   private def viewsFromUrl(viewUrlPath: String) =
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
 
   private def getViewStatus(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
-    checkFilter(filter)
-    checkViewUrlPath(viewUrlPath)
-
-    val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
-
-    queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.schedulingCommandTimeout).viewStatusList
+    val cf = Future(checkFilter(filter))
+    val cvup = Future(checkViewUrlPath(viewUrlPath))
+    val queryActorResult = Future {
+      val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
+      queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.schedulingCommandTimeout).viewStatusList
+    }
+    for {
+      a <- cf
+      b <- cvup
+      c <- queryActorResult
+    } yield c
   }
 
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
@@ -213,84 +227,84 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       })
   }
 
+
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
-
-    val viewStatusResponses = getViewStatus(viewUrlPath, status, filter)
-
-    viewStatusResponses
-      .map(_.actor)
-      .foreach {
-        _ ! MaterializeView(
-          try {
-            MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
-          } catch {
-            case _: NoSuchElementException => MaterializeViewMode.DEFAULT
-          })
-      }
-
-    viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+    getViewStatus(viewUrlPath, status, filter).map {
+      case viewStatusResponses =>
+        viewStatusResponses.map(_.actor)
+        .foreach {
+          _ ! MaterializeView(
+            try {
+              MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
+            } catch {
+              case _: NoSuchElementException => MaterializeViewMode.DEFAULT
+            })
+        }
+      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+    }
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
-    val viewStatusResponses = getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false))
-
-    viewStatusResponses
-      .map(v => v.actor)
-      .foreach {
-        _ ! InvalidateView()
-      }
-
-    viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None)
+    getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map {
+      case viewStatusResponses =>
+        viewStatusResponses
+          .map(v => v.actor)
+          .foreach {
+            _ ! InvalidateView()
+          }
+        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None)
+    }
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
+    getViewStatus(viewUrlPath, status, filter).map { viewStatusResponses =>
+      viewStatusResponses
+        .map(_.actor)
+        .foreach {
+          _ ! "newdata"
+        }
+      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+    }
+  }
 
-    val viewStatusResponses = getViewStatus(viewUrlPath, status, filter)
-
-    viewStatusResponses
-      .map(_.actor)
-      .foreach {
-        _ ! "newdata"
+    def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
+      getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map { viewStatusResponses =>
+        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all)
       }
 
-    viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+  def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {
+    val cf = Future { checkFilter(filter) }
+    val transformationResult = Future {
+      val result = queryActor[TransformationStatusListResponse](transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
+      val actions = result.transformationStatusList
+        .map(a => parseActionStatus(a))
+        .filter(a => !status.isDefined || status.get.equals(a.status))
+        .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
+      val overview = actions
+          .groupBy(_.status)
+          .map(el => (el._1, el._2.size))
+
+      TransformationStatusList(overview, actions)
+    }
+    parallelFuturesExec(transformationResult, cf).mapTo[TransformationStatusList]
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
-    viewStatusListFromStatusResponses(getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)), dependencies, overview, all)
+  def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList] = {
+    val cf = Future { checkFilter(filter) }
+    val transformationResult = Future {
+      val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.schedulingCommandTimeout)
 
+      val queues = result.transformationQueues
+        .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
+        .map { case (t, queue) => (t, parseQueueElements(queue)) }
+        .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
 
-  def transformations(status: Option[String], filter: Option[String]) = {
-
-    checkFilter(filter)
-
-    val result = queryActor[TransformationStatusListResponse](transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
-    val actions = result.transformationStatusList
-      .map(a => parseActionStatus(a))
-      .filter(a => !status.isDefined || status.get.equals(a.status))
-      .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
-    val overview = actions
-        .groupBy(_.status)
+      val overview = queues
         .map(el => (el._1, el._2.size))
 
-    TransformationStatusList(overview, actions)
-  }
-
-  def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
-
-    checkFilter(filter)
-
-    val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.schedulingCommandTimeout)
-
-    val queues = result.transformationQueues
-      .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
-      .map { case (t, queue) => (t, parseQueueElements(queue)) }
-      .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
-
-    val overview = queues
-      .map(el => (el._1, el._2.size))
-
-    QueueStatusList(overview, queues)
+      QueueStatusList(overview, queues)
+    }
+    parallelFuturesExec(transformationResult, cf).mapTo[QueueStatusList]
   }
 
   def shutdown(): Boolean = {
