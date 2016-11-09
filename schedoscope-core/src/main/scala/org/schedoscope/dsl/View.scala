@@ -446,7 +446,6 @@ object View {
     registeredView
   }
 
-}
 
 }
 
