@@ -22,7 +22,7 @@ import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.dsl.View
+import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.dsl.transformations.{NoOp, Touch}
 import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
@@ -65,7 +65,8 @@ class ViewActor(var currentState: ViewSchedulingState,
       //
       val externalState = metadata match {
         case (view, (version, timestamp)) =>
-          ViewManagerActor.getStateFromMetadata(view, version, timestamp)
+          val v = if(view.isInstanceOf[ExternalView]) view else ExternalView(view)
+          ViewManagerActor.getStateFromMetadata(v, version, timestamp)
       }
       stateMachine.materialize(externalState, source, mode)
     }
@@ -84,6 +85,8 @@ class ViewActor(var currentState: ViewSchedulingState,
     }
 
     case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) => stateTransition {
+      val head = currentState.asInstanceOf[Waiting].dependenciesMaterializing.head
+
       stateMachine.materialized(currentState.asInstanceOf[Waiting], dependency, transformationTimestamp, withErrors, incomplete)
     }
 
@@ -149,11 +152,9 @@ class ViewActor(var currentState: ViewSchedulingState,
 
     case Materialize(view, mode) =>
       if (!view.isExternal) {
-        log.info("sending materialize")
         sendMessageToView(view, MaterializeView(mode))
       } else {
         sendMessageToView(view, ReloadStateAndMaterializeView(mode))
-        log.info("sending external materialize")
       }
 
     case Transform(view) =>
@@ -179,7 +180,6 @@ class ViewActor(var currentState: ViewSchedulingState,
 
     case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
       listeners.foreach { l =>
-        log.info(s"report materialized ${view} to ${l}")
         sendMessageToListener(l, ViewMaterialized(view, incomplete, transformationTimestamp, withErrors))
       }
   }

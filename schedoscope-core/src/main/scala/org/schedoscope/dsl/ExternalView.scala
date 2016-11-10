@@ -77,14 +77,14 @@ case class ExternalView(view: View) extends View {
   override def parameters = view.parameters
   override def materializeOnce = view.materializeOnce
 
-  override def equals(o: scala.Any): Boolean = {
-    o match {
-      case view1: ExternalView =>
-        view1.fullPath == this.fullPath
-      case _ => false
-    }
-  }
+//  override def equals(o: scala.Any): Boolean = {
+//    o match {
+//      case view1: ExternalView =>
+//        view1.fullPath == this.fullPath
+//      case _ => false
+//    }
+//  }
 
-  override def hashCode(): Int = fullPath.hashCode
+//  override def hashCode(): Int = fullPath.hashCode
 
 }
