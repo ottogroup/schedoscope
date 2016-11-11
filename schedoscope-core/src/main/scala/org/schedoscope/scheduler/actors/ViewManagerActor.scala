@@ -164,7 +164,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
   }
 
   def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
-    views.map {
+    views.flatMap {
       v =>
         if (visited.contains(v))
           List()
@@ -179,7 +179,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
           List((v, false, depth))
         }
 
-    }.flatten.distinct
+    }.distinct
 }
 
 /**
