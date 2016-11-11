@@ -64,28 +64,21 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       }
   }
 
-  private def parallelFuturesExec(f1:Future[StatusVals], fn:Future[Any]*): Future[StatusVals] = {
-    for {
-      a <- f1
-      b <- Future.sequence(fn)
-    } yield a
-  }
-
   private def viewsFromUrl(viewUrlPath: String) =
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
 
   private def getViewStatus(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))
-    val queryActorResult = Future {
-      val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
-      queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.schedulingCommandTimeout).viewStatusList
+    Future.sequence(List(cf, cvup)).flatMap { r =>
+      Future {
+        val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
+        queryActor[ViewStatusListResponse](
+          viewManagerActor,
+          GetViews(resolvedViews, status, filter, dependencies),
+          settings.schedulingCommandTimeout).viewStatusList
+      }
     }
-    for {
-      a <- cf
-      b <- cvup
-      c <- queryActorResult
-    } yield c
   }
 
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
@@ -273,38 +266,42 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       }
 
   def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {
-    val cf = Future { checkFilter(filter) }
-    val transformationResult = Future {
-      val result = queryActor[TransformationStatusListResponse](transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
-      val actions = result.transformationStatusList
-        .map(a => parseActionStatus(a))
-        .filter(a => !status.isDefined || status.get.equals(a.status))
-        .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
-      val overview = actions
+    val cf = Future(checkFilter(filter))
+    cf.flatMap { r =>
+      Future {
+        val result = queryActor[TransformationStatusListResponse](
+          transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
+        val actions = result.transformationStatusList
+          .map(a => parseActionStatus(a))
+          .filter(a => !status.isDefined || status.get.equals(a.status))
+          .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
+        val overview = actions
           .groupBy(_.status)
           .map(el => (el._1, el._2.size))
 
-      TransformationStatusList(overview, actions)
+        TransformationStatusList(overview, actions)
+      }
     }
-    parallelFuturesExec(transformationResult, cf).mapTo[TransformationStatusList]
   }
 
   def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList] = {
-    val cf = Future { checkFilter(filter) }
-    val transformationResult = Future {
-      val result = queryActor[QueueStatusListResponse](transformationManagerActor, GetQueues(), settings.schedulingCommandTimeout)
+    val cf = Future(checkFilter(filter))
+    cf.flatMap { r =>
+      Future {
+        val result = queryActor[QueueStatusListResponse](
+          transformationManagerActor, GetQueues(), settings.schedulingCommandTimeout)
 
-      val queues = result.transformationQueues
-        .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
-        .map { case (t, queue) => (t, parseQueueElements(queue)) }
-        .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
+        val queues = result.transformationQueues
+          .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
+          .map { case (t, queue) => (t, parseQueueElements(queue)) }
+          .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
 
-      val overview = queues
-        .map(el => (el._1, el._2.size))
+        val overview = queues
+          .map(el => (el._1, el._2.size))
 
-      QueueStatusList(overview, queues)
+        QueueStatusList(overview, queues)
+      }
     }
-    parallelFuturesExec(transformationResult, cf).mapTo[QueueStatusList]
   }
 
   def shutdown(): Boolean = {

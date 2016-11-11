@@ -19,11 +19,9 @@ package org.schedoscope.scheduler.service
 import scala.concurrent.Future
 
 
-sealed trait StatusVals
+case class TransformationStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]])
 
-case class TransformationStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]]) extends StatusVals
-
-case class TransformationStatusList(overview: Map[String, Int], transformations: List[TransformationStatus])  extends StatusVals
+case class TransformationStatusList(overview: Map[String, Int], transformations: List[TransformationStatus])
 
 case class ViewStatus(
                        viewPath: String,
@@ -38,17 +36,17 @@ case class ViewStatus(
                        storageFormat: Option[String],
                        materializeOnce: Option[Boolean],
                        comment: Option[Option[String]],
-                       isTable: Option[Boolean])  extends StatusVals
+                       isTable: Option[Boolean])
 
-case class FieldStatus(name: String, fieldtype: String, comment: Option[String])  extends StatusVals
+case class FieldStatus(name: String, fieldtype: String, comment: Option[String])
 
-case class ViewTransformationStatus(name: String, properties: Option[Map[String, String]]) extends StatusVals
+case class ViewTransformationStatus(name: String, properties: Option[Map[String, String]])
 
-case class ViewStatusList(overview: Map[String, Int], views: List[ViewStatus])  extends StatusVals
+case class ViewStatusList(overview: Map[String, Int], views: List[ViewStatus])
 
-case class QueueStatusList(overview: Map[String, Int], queues: Map[String, List[RunStatus]])  extends StatusVals
+case class QueueStatusList(overview: Map[String, Int], queues: Map[String, List[RunStatus]])
 
-case class RunStatus(description: String, targetView: String, started: String, comment: String, properties: Option[Map[String, String]])  extends StatusVals
+case class RunStatus(description: String, targetView: String, started: String, comment: String, properties: Option[Map[String, String]])
 
 
 /**
