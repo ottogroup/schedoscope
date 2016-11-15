@@ -157,7 +157,13 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
 
   def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
-    viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
+    newState match {
+      case vss: Transforming => viewManagerActor ! ViewStatusResponse(vss.label, newState.view, self, Some(vss.withErrors), Some(vss.incomplete) )
+      case vss: Materialized => viewManagerActor ! ViewStatusResponse(vss.label, newState.view, self, Some(vss.withErrors), Some(vss.incomplete) )
+      case vss: Retrying => viewManagerActor ! ViewStatusResponse(vss.label, newState.view, self, Some(vss.withErrors), Some(vss.incomplete) )
+      case _ => viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
+    }
+
 
     log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
   }

@@ -74,8 +74,49 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     queryActor[ViewStatusListResponse](viewManagerActor, GetViews(resolvedViews, status, filter, dependencies), settings.schedulingCommandTimeout).viewStatusList
   }
 
+  /**
+    * Convenience method for DRYing viewStatusListFromStatusResponses
+    */
+  private def viewStatusBuilder(vsr: ViewStatusResponse,
+                                viewTableName:Option[String],
+                                isTable:Option[Boolean],
+                                properties: Option[Map[String, String]],
+                                dependencies: Option[Map[String, List[String]]],
+                                overview:Boolean=true) = {
+    ViewStatus(
+      viewPath = vsr.view.urlPath,
+      viewTableName = viewTableName,
+      status = vsr.status,
+      properties = properties,
+      fields = if(overview) None else Option(vsr.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
+      parameters = if(overview || vsr.view.parameters.isEmpty) None else
+        Some(vsr.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList),
+      dependencies = dependencies,
+      transformation = if(overview) None else Option(vsr.view.registeredTransformation().viewTransformationStatus),
+      export = if(overview) None else Option(viewExportStatus(vsr.view.registeredExports.map(e => e.apply()))),
+      storageFormat = if(overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
+      materializeOnce = if(overview) None else Option(vsr.view.isMaterializeOnce),
+      comment = if(overview) None else Option(vsr.view.comment),
+      isTable = isTable
+    )
+
+  }
+
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
 
+    lazy val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
+      viewStatusBuilder(vsr = v
+        , viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None
+        , isTable = if (all.getOrElse(false)) Some(false) else None
+        , properties = None
+        , dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
+          Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
+        else
+          None
+        , overview =  true
+      )
+    }
+    /*
     val viewStatusListWithoutViewDetails = viewStatusResponses.map {
       v =>
         ViewStatus(
@@ -102,12 +143,24 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           else
             None)
     }
+    */
 
-    val viewStatusList = if (all.getOrElse(false))
+    lazy val viewStatusList = if (all.getOrElse(false))
       viewStatusResponses
         .groupBy(v => v.view.tableName)
         .map(e => e._2.head)
-        .map(v => ViewStatus(
+        .map(v =>
+          viewStatusBuilder(vsr = v
+            , viewTableName = Option(v.view.tableName)
+            , isTable = Option(true)
+            , properties = Some(Map("errors" -> v.errors.getOrElse(false).toString,
+              "incomplete" -> v.incomplete.getOrElse(false).toString))
+            , dependencies = None
+            , overview = false
+          )
+
+          /*
+          ViewStatus(
           viewPath = v.view.urlPathPrefix,
           viewTableName = Option(v.view.tableName),
           status = v.status,
@@ -123,7 +176,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           storageFormat = Option(v.view.storageFormat.getClass.getSimpleName),
           materializeOnce = Option(v.view.isMaterializeOnce),
           comment = Option(v.view.comment),
-          isTable = Option(true)))
+          isTable = Option(true))
+          */
+        )
+
         .toList ::: viewStatusListWithoutViewDetails
     else
       viewStatusListWithoutViewDetails
