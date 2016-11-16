@@ -104,7 +104,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
 
-    lazy val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
+    val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
       viewStatusBuilder(vsr = v
         , viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None
         , isTable = if (all.getOrElse(false)) Some(false) else None
