@@ -222,8 +222,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     */
   def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) {
     storageFormat = f
-    this.additionalStoragePathPrefix = if (additionalStoragePathPrefix != null) Some(additionalStoragePathPrefix) else None
-    this.additionalStoragePathSuffix = if (additionalStoragePathSuffix != null) Some(additionalStoragePathSuffix) else None
+    this.additionalStoragePathPrefix = Option(additionalStoragePathPrefix)
+    this.additionalStoragePathSuffix = Option(additionalStoragePathSuffix)
   }
 
   /**

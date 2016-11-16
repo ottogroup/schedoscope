@@ -119,6 +119,17 @@ class BaseSettings(val config: Config) {
   lazy val retries = config.getInt("schedoscope.action.retry")
 
   /**
+    * Flag for enabling usage of external dependencies
+    */
+  lazy val externalDependencies = config.getBoolean("schedoscope.external.enabled")
+
+  /**
+    * Flag for disabling checks for external dependencies
+    */
+  lazy val externalChecksDisabled = config.getBoolean("schedoscope.external.checks")
+
+
+  /**
     * Number of parallel threads to access the metastore
     */
   lazy val metastoreConcurrency = config.getInt("schedoscope.metastore.concurrency")

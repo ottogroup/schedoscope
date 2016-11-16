@@ -196,4 +196,35 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   }
 
+  "A view" should "should reload it's state and ignore it's deps when called view external materialize" in new ViewActorTest {
+    val viewNE = ProductBrand(p("ec0101"),p("2016"),p("11"),p("07"))
+    val viewE = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
+
+    //mock success flag lookup
+    when(fileSystem.exists(any(classOf[Path])))
+      .thenReturn(true)
+
+    val extActor = system.actorOf(ViewActor.props(
+      CreatedByViewManager(viewNE),
+      Settings(),
+      fileSystem,
+      Map(),
+      viewManagerActor.ref,
+      transformationManagerActor.ref,
+      schemaManagerRouter.ref))
+
+    extActor ! ReloadStateAndMaterializeView()
+
+    schemaManagerRouter.expectMsg(GetMetaDataForMaterialize(viewNE,
+      MaterializeViewMode.DEFAULT,
+      self))
+
+    schemaManagerRouter.reply(MetaDataForMaterialize((viewNE,("checksum",1L)),
+      MaterializeViewMode.DEFAULT,
+      self))
+
+    expectMsgType[ViewMaterialized]
+
+  }
+
 }
