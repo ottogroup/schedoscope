@@ -32,6 +32,7 @@ case class ExternalView(view: View) extends View {
   storageFormat = view.storageFormat
   additionalStoragePathPrefix = view.additionalStoragePathPrefix
   additionalStoragePathSuffix = view.additionalStoragePathSuffix
+  //TODO yes or no?
   registeredExports = view.registeredExports
   isMaterializeOnce = view.isMaterializeOnce
 

@@ -17,6 +17,7 @@ package org.schedoscope.scheduler.actors
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpecLike, Matchers}
@@ -43,6 +44,21 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   trait ViewActorTest {
+    val myConfig =
+      ConfigFactory.parseString("schedoscope.external.enabled=true")
+    // load the normal config stack (system props,
+    // then application.conf, then reference.conf)
+    val regularConfig =
+    ConfigFactory.load()
+    // override regular stack with myConfig
+    val combined =
+    myConfig.withFallback(regularConfig)
+    // put the result in between the overrides
+    // (system props) and defaults again
+    val complete =
+    ConfigFactory.load(combined)
+
+    Schedoscope.settingsBuilder = () => Settings(complete)
     Schedoscope.actorSystemBuilder = () => system
 
     val viewManagerActor = TestProbe()
@@ -61,7 +77,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val viewActor = TestActorRef(ViewActor.props(
       CreatedByViewManager(view),
-      Settings(),
+      Schedoscope.settings,
       fileSystem,
       Map(brandDependency -> brandViewActor.ref,
         productDependency -> productViewActor.ref),
@@ -79,7 +95,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "add new dependencies" in new ViewActorTest {
     val emptyDepsViewActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(view),
-      Settings(),
+      Schedoscope.settings,
       fileSystem,
       Map(),
       viewManagerActor.ref,
@@ -98,7 +114,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "ask if he doesn't know another ViewActor" in new ViewActorTest {
     val emptyDepsViewActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(view),
-      Settings(),
+      Schedoscope.settings,
       fileSystem,
       Map(),
       viewManagerActor.ref,
@@ -149,7 +165,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     val extActor = TestProbe()
     val actorWithExt = system.actorOf(ViewActor.props(
       CreatedByViewManager(viewWithExt),
-      Settings(),
+      Schedoscope.settings,
       fileSystem,
       Map(extView -> extActor.ref),
       viewManagerActor.ref,
@@ -175,7 +191,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val extActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(extView),
-      Settings(),
+      Schedoscope.settings,
       fileSystem,
       Map(),
       viewManagerActor.ref,
@@ -205,7 +221,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       .thenReturn(true)
 
     val extActor = system.actorOf(ViewActor.props(
-      CreatedByViewManager(viewNE),
+      CreatedByViewManager(viewE),
       Settings(),
       fileSystem,
       Map(),
@@ -215,11 +231,11 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     extActor ! ReloadStateAndMaterializeView()
 
-    schemaManagerRouter.expectMsg(GetMetaDataForMaterialize(viewNE,
+    schemaManagerRouter.expectMsg(GetMetaDataForMaterialize(viewE,
       MaterializeViewMode.DEFAULT,
       self))
 
-    schemaManagerRouter.reply(MetaDataForMaterialize((viewNE,("checksum",1L)),
+    schemaManagerRouter.reply(MetaDataForMaterialize((viewE,("checksum",1L)),
       MaterializeViewMode.DEFAULT,
       self))
 

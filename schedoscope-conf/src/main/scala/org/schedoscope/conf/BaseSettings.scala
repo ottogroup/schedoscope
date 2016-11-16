@@ -18,6 +18,7 @@ package org.schedoscope.conf
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.Config
+import collection.JavaConversions._
 
 import scala.concurrent.duration.Duration
 
@@ -122,6 +123,11 @@ class BaseSettings(val config: Config) {
     * Flag for enabling usage of external dependencies
     */
   lazy val externalDependencies = config.getBoolean("schedoscope.external.enabled")
+
+  /**
+    * The configured list of internal packages
+    */
+  lazy val externalHome = config.getStringList("schedoscope.external.internal").toList
 
   /**
     * Flag for disabling checks for external dependencies

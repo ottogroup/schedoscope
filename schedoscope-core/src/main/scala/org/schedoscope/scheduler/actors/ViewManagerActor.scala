@@ -85,6 +85,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     }
   })
 
+
   /**
     * Initialize view actors for a list of views. If a view actor has been produced for a view
     * previously, that one is returned.
@@ -184,7 +185,11 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 
     log.info(s"Fetching ${viewsToReturnActorRefsFor.size} actors")
 
-    val actors = viewsToReturnActorRefsFor.map { view => child(actorNameForView(view)).get }
+    val actors = viewsToReturnActorRefsFor.map {
+      view =>
+        println(view + " " +view.isExternal)
+        child(actorNameForView(view)).get
+    }
 
     log.info(s"Returned ${actors.size} actors")
 

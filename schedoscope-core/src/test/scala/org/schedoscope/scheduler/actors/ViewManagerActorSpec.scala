@@ -19,13 +19,14 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.View
+import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.{Schedoscope, Settings}
-import test.views.{Brand, ProductBrand}
+import test.views.{Brand, ProductBrand, ViewWithExternalDeps}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -42,24 +43,41 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   trait ViewManagerActorTest {
+    implicit val timeout = Timeout(5 seconds)
+
     val schemaManagerRouter = TestProbe()
     val actionsManagerActor = TestProbe()
 
+    val myConfig =
+      ConfigFactory.parseString("schedoscope.external.enabled=true")
+    // load the normal config stack (system props,
+    // then application.conf, then reference.conf)
+    val regularConfig =
+      ConfigFactory.load()
+    // override regular stack with myConfig
+    val combined =
+      myConfig.withFallback(regularConfig)
+    // put the result in between the overrides
+    // (system props) and defaults again
+    val complete =
+      ConfigFactory.load(combined)
+
+    Schedoscope.actorSystemBuilder = () => system
+    Schedoscope.settingsBuilder = () => Settings(complete)
+
     val viewManagerActor = TestActorRef(ViewManagerActor.props(
-      Settings(),
+      Schedoscope.settings,
       actionsManagerActor.ref,
       schemaManagerRouter.ref))
     val transformationManagerActor = TestProbe()
 
-
-    Schedoscope.actorSystemBuilder = () => system
     Schedoscope.viewManagerActorBuilder = () => viewManagerActor
     val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     val brandDependency = view.dependencies.head
     val productDependency = view.dependencies(1)
 
     def initializeView(view: View): ActorRef = {
-      implicit val timeout = Timeout(5 seconds)
+
       val future = viewManagerActor ? view
 
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
@@ -106,6 +124,32 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     schemaManagerRouter.reply(SchemaActionSuccess())
     schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
     schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("test", 1L))))
+
+    expectMsgType[NewViewActorRef]
+  }
+
+  it should "initialize a external view" in new ViewManagerActorTest {
+
+    val viewWithExt = ViewWithExternalDeps(p("ec0101"),p("2016"),p("11"),p("07"))
+    val future = viewManagerActor ? viewWithExt
+    val viewE = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
+
+
+    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
+    schemaManagerRouter.reply(SchemaActionSuccess())
+    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewE)))
+    schemaManagerRouter.reply(SchemaActionSuccess())
+    schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
+    schemaManagerRouter.expectMsg(AddPartitions(List(viewE)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(viewE -> ("test", 1L))))
+
+    Await.result(future, 5 seconds)
+    future.isCompleted shouldBe true
+    future.value.get.isSuccess shouldBe true
+    val actorRef = future.value.get.get.asInstanceOf[ActorRef]
+
+    viewManagerActor ! DelegateMessageToView(viewE, MaterializeView())
 
     expectMsgType[NewViewActorRef]
   }

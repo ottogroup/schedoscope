@@ -16,6 +16,7 @@
 package org.schedoscope.dsl
 
 import com.openpojo.reflection.impl.PojoClassFactory
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.{NoOp, SeqTransformation, Transformation}
 import org.schedoscope.dsl.views.ViewUrlParser
@@ -210,8 +211,12 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * current view depends on.
     */
   def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
-    val df = () => dsf().map {
-      View.register(this.env, _)
+    val df = () => dsf().map { v =>
+      if(v.isExternal && !Schedoscope.settings.externalDependencies) {
+        throw new UnsupportedOperationException("External dependencies are not enabled," +
+          "if you are sure you wan't to use this feature enable it in the schedoscope.conf.")
+      }
+      View.register(this.env, v)
     }
 
     deferredDependencies += df
