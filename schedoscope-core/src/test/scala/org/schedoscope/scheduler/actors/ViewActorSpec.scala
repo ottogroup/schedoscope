@@ -15,21 +15,21 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpecLike, Matchers}
+import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.schedoscope.dsl.ExternalView
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
 import org.schedoscope.{Schedoscope, Settings}
 import test.views.{ProductBrand, ViewWithExternalDeps}
-import org.mockito.Mockito._
-import org.mockito.Matchers._
-import org.schedoscope.dsl.ExternalView
 
 
 class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))

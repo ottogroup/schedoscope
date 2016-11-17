@@ -187,7 +187,6 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 
     val actors = viewsToReturnActorRefsFor.map {
       view =>
-        println(view + " " +view.isExternal)
         child(actorNameForView(view)).get
     }
 
@@ -217,7 +216,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
   def actorForView(view: View) =
     child(actorNameForView(view))
 
-  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
+
 }
 
 /**
@@ -242,4 +241,6 @@ object ViewManagerActor {
     else
       CreatedByViewManager(view)
   }
+
+  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
 }
