@@ -155,7 +155,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
             , isTable = Option(true)
             , properties = Some(Map("errors" -> v.errors.getOrElse(false).toString,
               "incomplete" -> v.incomplete.getOrElse(false).toString))
-            , dependencies = None
+            , dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
+              Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
+            else
+              None
             , overview = false
           )
 
