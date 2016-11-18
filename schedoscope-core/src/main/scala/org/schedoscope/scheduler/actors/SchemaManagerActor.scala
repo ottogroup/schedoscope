@@ -51,7 +51,7 @@ class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
   }
 
   def receive = {
-    case m: CheckOrCreateTables => partitionCreatorActor forward m
+    case m: CheckOrCreateTables => println("CARALHO"); partitionCreatorActor forward m
 
     case a: AddPartitions => partitionCreatorActor forward a
 
