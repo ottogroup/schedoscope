@@ -1,23 +1,23 @@
 package org.schedoscope.scheduler.service
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.actor.{Actor, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import org.schedoscope.scheduler.actors.ViewManagerActor
-//import org.scalatest.mock.MockitoSugar
+import org.schedoscope.scheduler.messages.ViewStatusListResponse
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.View
+import org.schedoscope.dsl.{Parameter, View}
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.{Schedoscope, Settings}
-import test.views.{Brand, ProductBrand}
+import org.schedoscope.Schedoscope
+import test.views.ProductBrand
 
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import org.schedoscope.dsl.Parameter
+
 
 
 class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
@@ -66,7 +66,28 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     Schedoscope.viewManagerActorBuilder = () => viewManagerActor
 
-    def initializeView(view: View, brandDependency:View, productDependency:View): ActorRef = {
+    def initializeView(view: View): ActorRef = {
+      val future = viewManagerActor ? view
+      schemaManagerActor.expectMsg(CheckOrCreateTables(List(view)))
+      schemaManagerActor.reply(SchemaActionSuccess())
+      schemaManagerActor.expectMsg(AddPartitions(List(view)))
+      schemaManagerActor.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+
+      Await.result(future, 5 seconds)
+      future.isCompleted shouldBe true
+      future.value.get.isSuccess shouldBe true
+      future.value.get.get.asInstanceOf[ActorRef]
+    }
+
+    def getInitializedView(view: View): ActorRef = {
+      val future = viewManagerActor ? view
+      Await.result(future, 5 seconds)
+      future.isCompleted shouldBe true
+      future.value.get.isSuccess shouldBe true
+      future.value.get.get.asInstanceOf[ActorRef]
+    }
+
+    def initializeViewWithDep(view: View, brandDependency:View, productDependency:View): ActorRef = {
       val future = viewManagerActor ? view
 
       schemaManagerActor.expectMsg(CheckOrCreateTables(List(brandDependency)))
@@ -85,10 +106,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       Await.result(future, 5 seconds)
       future.isCompleted shouldBe true
       future.value.get.isSuccess shouldBe true
-      println(future.value.get)
-      println(future.value.get.get)
       future.value.get.get.asInstanceOf[ActorRef]
     }
+
   }
 
   trait SchedoscopeServiceTest extends ViewManagerActorTest {
@@ -104,40 +124,33 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
 
   "The ViewManagerActor" should "create a new view" in new SchedoscopeServiceTest {
-        initializeView(productBrandView01, brandDependency01, productDependency01)
+    initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
   }
 
   "The SchedoscopeService" should "create a get details about all views it knows about" in new SchedoscopeServiceTest {
-    //val (brandViewActor, prodBrandViewActor, prodViewActor) = initializeView(productBrandView01, brandDependency01, productDependency01)
     val initStatus = "receive"
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    // these should have been already initialized, thus should merely return correspondent child View Actor
+    val prodViewActor = getInitializedView(productDependency01)
+    val brandViewActor = getInitializedView(brandDependency01)
 
-    val brandViewActor = initializeView(productBrandView01, brandDependency01, productDependency01)
-
-
-    val prodBrandStatusResponse = ViewStatusResponse(initStatus, productBrandView01, brandViewActor)
+    val prodBrandStatusResponse = ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor)
     val brandStatusResponse = ViewStatusResponse(initStatus, productBrandView01, brandViewActor)
     val prodStatusResponse = ViewStatusResponse(initStatus, productBrandView01, prodViewActor)
 
 
-    val viewUrlPath = Some("views")
+    val viewUrlPath = Some("")
     val statusParam = Some("")
     val filterParam = Some("")
     val dependenciesParam = Some(true)
     val overviewParam = Some(true)
     val allParam = Some(true)
 
-    val res = service.views(viewUrlPath, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
-    Await.result(res, 5 seconds)
-
-    /*
-    val viewStatusProdBrand = ViewStatus()
-    val viewStatusBrand = ViewStatus()
-    val viewStatusProd = ViewStatus()
-    val viewStatusOverviewExpected:Map[String, Int] = Map()
-    val expected = ViewStatusList(
-      viewStatusOverviewExpected,
-      List(viewStatusProdBrand, viewStatusBrand, viewStatusProd))
-    */
+    val response = service.views(viewUrlPath, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    Await.result(response, 5 seconds)
+    response map { result =>
+      result shouldBe ViewStatusListResponse(List(prodBrandStatusResponse, brandStatusResponse, prodStatusResponse))
+    }
   }
 
 
