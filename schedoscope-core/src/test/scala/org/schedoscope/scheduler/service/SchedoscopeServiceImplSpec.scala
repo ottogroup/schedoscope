@@ -1,21 +1,18 @@
 package org.schedoscope.scheduler.service
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
-import org.scalatest.concurrent.{Futures, ScalaFutures}
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
-import org.schedoscope.{Schedoscope, Settings}
-import test.views.Brand
+import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.scheduler.actors.ViewManagerActor
 import org.schedoscope.scheduler.messages.{GetViews, ViewStatusListResponse, ViewStatusResponse}
-import java.util.concurrent._
+import org.schedoscope.{Schedoscope, Settings, TestUtils}
+import test.views.Brand
 
-import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Await, Future}
+import scala.concurrent.Future
 
 class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
@@ -47,21 +44,8 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   trait SchedoscopeServiceExternalTest extends SchedoscopeServiceTest {
-    val myConfig =
-      ConfigFactory.parseString("schedoscope.external.enabled=true\n" +
-        """schedoscope.external.internal=["prod.app.test"] """ )
-    // load the normal config stack (system props,
-    // then application.conf, then reference.conf)
-    val regularConfig =
-    ConfigFactory.load()
-    // override regular stack with myConfig
-    val combined =
-    myConfig.withFallback(regularConfig)
-    // put the result in between the overrides
-    // (system props) and defaults again
-    val complete = ConfigFactory.load(combined)
-
-    override lazy val settings = Settings(complete)
+    override lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true",
+      """schedoscope.external.internal=["prod.app.test"] """ )
   }
 
   "the service" should "ask for status" in new SchedoscopeServiceTest {
@@ -88,8 +72,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       service.views(Some(testView.urlPath), None, None, None, None, None)
     } should have message "Invalid view URL pattern passed: test.views/Brand/test.\n" +
       "original Message: You can not access an external view directly"
-
-
   }
 
 

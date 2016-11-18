@@ -44,26 +44,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   trait ViewActorTest {
-    val myConfig =
-      ConfigFactory.parseString("schedoscope.external.enabled=true")
-    // load the normal config stack (system props,
-    // then application.conf, then reference.conf)
-    val regularConfig =
-    ConfigFactory.load()
-    // override regular stack with myConfig
-    val combined =
-    myConfig.withFallback(regularConfig)
-    // put the result in between the overrides
-    // (system props) and defaults again
-    val complete =
-    ConfigFactory.load(combined)
-
-    Schedoscope.settingsBuilder = () => Settings(complete)
-    Schedoscope.actorSystemBuilder = () => system
-
     val viewManagerActor = TestProbe()
-
-    Schedoscope.viewManagerActorBuilder = () => viewManagerActor.ref
 
     val transformationManagerActor = TestProbe()
     val schemaManagerRouter = TestProbe()
@@ -77,7 +58,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val viewActor = TestActorRef(ViewActor.props(
       CreatedByViewManager(view),
-      Schedoscope.settings,
+      Settings(),
       fileSystem,
       Map(brandDependency -> brandViewActor.ref,
         productDependency -> productViewActor.ref),
@@ -95,7 +76,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "add new dependencies" in new ViewActorTest {
     val emptyDepsViewActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(view),
-      Schedoscope.settings,
+      Settings(),
       fileSystem,
       Map(),
       viewManagerActor.ref,
@@ -114,7 +95,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "ask if he doesn't know another ViewActor" in new ViewActorTest {
     val emptyDepsViewActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(view),
-      Schedoscope.settings,
+      Settings(),
       fileSystem,
       Map(),
       viewManagerActor.ref,
@@ -165,7 +146,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     val extActor = TestProbe()
     val actorWithExt = system.actorOf(ViewActor.props(
       CreatedByViewManager(viewWithExt),
-      Schedoscope.settings,
+      Settings(),
       fileSystem,
       Map(extView -> extActor.ref),
       viewManagerActor.ref,
@@ -191,7 +172,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val extActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(extView),
-      Schedoscope.settings,
+      Settings(),
       fileSystem,
       Map(),
       viewManagerActor.ref,

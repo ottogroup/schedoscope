@@ -99,6 +99,17 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 
     val allViews = viewsToCreateActorsFor(vs, dependencies)
 
+    if (!settings.externalDependencies) {
+      //external dependencies are not allowed
+      val containsExternalDependencies = allViews.exists {
+        case (view, _, _) => view.hasExternalDependencies()
+      }
+
+      if (containsExternalDependencies)
+        throw new UnsupportedOperationException("External dependencies are not enabled," +
+          "if you are sure you wan't to use this feature enable it in the schedoscope.conf.")
+    }
+
     log.info(s"Computed ${allViews.size} views (with dependencies=${dependencies})")
 
     val actorsToCreate = allViews
@@ -159,12 +170,12 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
       }
 
-      viewsWithMetadataToCreate.foreach{ t =>
+      viewsWithMetadataToCreate.foreach { t =>
         t.metadata.foreach {
           case (view, _) =>
             val newDepsActorRefs = view
               .dependencies
-              .flatMap(v => actorForView(v).map(NewViewActorRef(v,_)))
+              .flatMap(v => actorForView(v).map(NewViewActorRef(v, _)))
 
             actorForView(view) match {
               case Some(actorRef) =>

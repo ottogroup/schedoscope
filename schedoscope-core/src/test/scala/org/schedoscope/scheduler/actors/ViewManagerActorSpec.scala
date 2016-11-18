@@ -25,7 +25,7 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.{Schedoscope, Settings}
+import org.schedoscope.{Schedoscope, Settings, TestUtils}
 import test.views.{Brand, ProductBrand, ViewWithExternalDeps}
 
 import scala.concurrent.Await
@@ -45,28 +45,13 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   trait ViewManagerActorTest {
     implicit val timeout = Timeout(5 seconds)
 
+    lazy val settings = Settings()
+
     val schemaManagerRouter = TestProbe()
     val actionsManagerActor = TestProbe()
 
-    val myConfig =
-      ConfigFactory.parseString("schedoscope.external.enabled=true")
-    // load the normal config stack (system props,
-    // then application.conf, then reference.conf)
-    val regularConfig =
-      ConfigFactory.load()
-    // override regular stack with myConfig
-    val combined =
-      myConfig.withFallback(regularConfig)
-    // put the result in between the overrides
-    // (system props) and defaults again
-    val complete =
-      ConfigFactory.load(combined)
-
-    Schedoscope.actorSystemBuilder = () => system
-    Schedoscope.settingsBuilder = () => Settings(complete)
-
     val viewManagerActor = TestActorRef(ViewManagerActor.props(
-      Schedoscope.settings,
+      settings,
       actionsManagerActor.ref,
       schemaManagerRouter.ref))
     val transformationManagerActor = TestProbe()
@@ -100,6 +85,10 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
+  trait ViewManagerActorExternalTest extends ViewManagerActorTest{
+    override lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true")
+  }
+
 
   "The ViewManagerActor" should "create a new view" in new ViewManagerActorTest {
     initializeView(view)
@@ -128,12 +117,11 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgType[NewViewActorRef]
   }
 
-  it should "initialize a external view" in new ViewManagerActorTest {
+  it should "initialize an external view" in new ViewManagerActorExternalTest {
 
     val viewWithExt = ViewWithExternalDeps(p("ec0101"),p("2016"),p("11"),p("07"))
     val future = viewManagerActor ? viewWithExt
     val viewE = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
-
 
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
     schemaManagerRouter.reply(SchemaActionSuccess())
@@ -153,6 +141,15 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     expectMsgType[NewViewActorRef]
   }
+
+  it should "throw an exception if external views are not allowed" in new ViewManagerActorTest {
+    an [UnsupportedOperationException] shouldBe thrownBy {
+      val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
+      viewManagerActor.receive(viewWithExt)
+    }
+
+  }
+
 
 
 }

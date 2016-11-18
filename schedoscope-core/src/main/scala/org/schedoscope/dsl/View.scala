@@ -211,13 +211,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * current view depends on.
     */
   def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
-    val df = () => dsf().map { v =>
-      //TODO: See if this works
-      if(v.isExternal && !Schedoscope.settings.externalDependencies) {
-        throw new UnsupportedOperationException("External dependencies are not enabled," +
-          "if you are sure you wan't to use this feature enable it in the schedoscope.conf.")
-      }
-      View.register(this.env, v)
+    val df = () => dsf().map {
+      View.register(this.env, _)
     }
 
     deferredDependencies += df
@@ -336,6 +331,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def dependencies = deferredDependencies.flatMap {
     _ ()
   }.distinct
+
+  /**
+    * Returns true if views contains external dependencies
+    */
+  def hasExternalDependencies() = dependencies.exists(v => v.isExternal)
 }
 
 /**
