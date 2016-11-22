@@ -108,44 +108,45 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
 
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
 
-    case WriteTransformationTimestamp(view, transformationTimestamp) =>
-      metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
+      case WriteTransformationTimestamp(view, transformationTimestamp) =>
+        metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
 
-    case WriteTransformationCheckum(view) =>
-      metadataLoggerActor ! SetViewVersion(view)
+      case WriteTransformationCheckum(view) =>
+        metadataLoggerActor ! SetViewVersion(view)
 
-    case TouchSuccessFlag(view) =>
-      touchSuccessFlag(view)
+      case TouchSuccessFlag(view) =>
+        touchSuccessFlag(view)
 
-    case Materialize(view, mode) =>
-      actorForView(view) ! MaterializeView(mode)
+      case Materialize(view, mode) =>
+        actorForView(view) ! MaterializeView(mode)
 
-    case Transform(view) =>
-      transformationManagerActor ! view
+      case Transform(view) =>
+        transformationManagerActor ! view
 
-    case ReportNoDataAvailable(view, listeners) =>
-      listeners.foreach {
-        _ ! ViewHasNoData(view)
-      }
+      case ReportNoDataAvailable(view, listeners) =>
+        listeners.foreach {
+          _ ! ViewHasNoData(view)
+        }
 
-    case ReportFailed(view, listeners) =>
-      listeners.foreach {
-        _ ! ViewFailed(view)
-      }
+      case ReportFailed(view, listeners) =>
+        listeners.foreach {
+          _ ! ViewFailed(view)
+        }
 
-    case ReportInvalidated(view, listeners) =>
-      listeners.foreach {
-        _ ! ViewStatusResponse("invalidated", view, self)
-      }
+      case ReportInvalidated(view, listeners) =>
+        listeners.foreach {
+          _ ! ViewStatusResponse("invalidated", view, self)
+        }
 
-    case ReportNotInvalidated(view, listeners) =>
-      log.warning("VIEWACTOR: Could not invalidate view ${view}")
+      case ReportNotInvalidated(view, listeners) =>
+        log.warning("VIEWACTOR: Could not invalidate view ${view}")
 
-    case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
-      listeners.foreach {
-        _ ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
-      }
-  }
+      case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
+        listeners.foreach {
+          _ ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
+        }
+    }
+
 
   lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
 

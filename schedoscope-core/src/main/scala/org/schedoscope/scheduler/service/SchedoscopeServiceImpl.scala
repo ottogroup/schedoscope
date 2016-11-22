@@ -220,7 +220,6 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       })
   }
 
-
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     getViewStatus(viewUrlPath, status, filter).map {
       case viewStatusResponses =>
@@ -296,10 +295,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
           .map { case (t, queue) => (t, parseQueueElements(queue)) }
           .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
-
         val overview = queues
           .map(el => (el._1, el._2.size))
-
         QueueStatusList(overview, queues)
       }
     }
