@@ -16,7 +16,7 @@
 package org.schedoscope
 
 import akka.actor.ActorSystem
-import org.schedoscope.scheduler.actors.{SchemaManagerActor, TransformationManagerActor, ViewManagerActor}
+import org.schedoscope.scheduler.actors.{SchemaManagerRouter, TransformationManagerActor, ViewManagerActor}
 
 /**
   * The Schedoscope object provides accessors for the various components of the schedoscope system.
@@ -25,31 +25,61 @@ import org.schedoscope.scheduler.actors.{SchemaManagerActor, TransformationManag
 object Schedoscope {
 
   /**
+    * Pluggable builder function that returns the actor system for schedoscope.
+    * The default implementation creates a new actor system.
+    */
+  var actorSystemBuilder = () => ActorSystem("schedoscope")
+
+  /**
+    * Pluggable builder function that returns the view manager actor for schedoscope.
+    * The default implementation creates a new view manager actor based on the actor system.
+    */
+  var viewManagerActorBuilder = () => actorSystem.actorOf(
+    ViewManagerActor.props(settings,
+      transformationManagerActor,
+      schemaManagerRouter), "views")
+
+  /**
+    * Pluggable builder function that returns the settings for schedoscope.
+    * The default implementation creates settings using the settings of the actor system.
+    */
+  var settingsBuilder = () => Settings()
+
+  /**
+    * Pluggable builder function that returns the transformation manager actor for schedoscope.
+    * The default implementation creates a new transformation manager actor based on the actor system.
+    */
+  var transformationManagerActorBuilder = () => actorSystem.actorOf(TransformationManagerActor.props(settings), "transformations")
+
+  /**
+    * Pluggable builder function that returns the schema manager actor for schedoscope.
+    * The default implementation creates a new schema manager router based on the actor system.
+    */
+
+  var schemaManagerRouterBuilder = () => actorSystem.actorOf(SchemaManagerRouter.props(settings), "schema")
+
+  /**
     * The Schedoscope actor system
     */
-  lazy val actorSystem = ActorSystem("schedoscope")
+  lazy val actorSystem = actorSystemBuilder()
 
   /**
     * The Schedoscope settings.
     */
-  lazy val settings = Settings()
+  lazy val settings = settingsBuilder()
 
   /**
     * A reference to the Schedoscope transformation manager logger actor
     */
-  lazy val transformationManagerActor = actorSystem.actorOf(TransformationManagerActor.props(settings), "transformations")
+  lazy val transformationManagerActor = transformationManagerActorBuilder()
 
   /**
     * A reference to the Schedoscope schema manager actor
     */
-  lazy val schemaManagerActor = actorSystem.actorOf(SchemaManagerActor.props(settings), "schema")
+  lazy val schemaManagerRouter = schemaManagerRouterBuilder()
 
   /**
     * A reference to the Schedoscope view manager actor
     */
-  lazy val viewManagerActor = actorSystem.actorOf(
-    ViewManagerActor.props(settings,
-      transformationManagerActor,
-      schemaManagerActor,
-      schemaManagerActor), "views")
+  lazy val viewManagerActor = viewManagerActorBuilder()
 }

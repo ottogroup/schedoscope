@@ -44,7 +44,8 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
   /**
     * Message handler
     */
-  def receive = LoggingReceive({
+  def receive: Receive = LoggingReceive {
+
 
     case c: CheckOrCreateTables => {
 
@@ -87,8 +88,19 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
       runningCommand = None
 
     }
-  })
+
+    case g: GetMetaDataForMaterialize => {
+
+      runningCommand = Some(g)
+
+      val metadata = schemaManager.getTransformationMetadata(List(g.view)).head
+      sender ! MetaDataForMaterialize(metadata, g.mode, g.materializeSource)
+
+      runningCommand = None
+    }
+  }
 }
+
 
 /**
   * Factory for partition creator actors
