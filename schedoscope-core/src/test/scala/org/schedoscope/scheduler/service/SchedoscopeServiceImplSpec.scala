@@ -23,7 +23,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   with Matchers
   with BeforeAndAfterAll
   with ImplicitSender
-  with MockitoSugar{
+  with MockitoSugar {
 
   override def afterAll {
     TestKit.shutdownActorSystem(system)
@@ -41,7 +41,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   val month = "01"
   val day = "01"
   val shop01 = "EC01"
-  val shop02 = "EC02"
 
   val prodBrandUrl01 = s"test.views/ProductBrand/${shop01}/${year}/${month}/${day}"
   val prodUrl01 = s"test.views/Product/${shop01}/${year}/${month}/${day}"
@@ -50,10 +49,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   val productBrandView01 = ProductBrand(p(shop01), p(year), p(month), p(day))
   val brandDependency01:View = productBrandView01.dependencies.head
   val productDependency01:View = productBrandView01.dependencies(1)
-
-  val productBrandView02 = ProductBrand(p(shop02), p(year), p(month), p(day))
-  val brandDependency02:View = productBrandView02.dependencies.head
-  val productDependency02:View = productBrandView02.dependencies(1)
 
   val TIMEOUT = 5 seconds
   // views Status along their lifecycle
@@ -161,7 +156,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       transformationManagerActor.ref)
   }
 
-
   "The ViewManagerActor" should "create a new view" in new SchedoscopeServiceWithViewManagerTest {
     initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
   }
@@ -177,7 +171,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     * overview=(true|false) - only return aggregate counts about view scheduling states and not information about individual views.
     *
     */
-
 
   it should "fail to load views due to completely invalid viewPathUrl passed" in new SchedoscopeServiceWithViewManagerTest {
 
@@ -403,6 +396,41 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   /**
+    * Testing /newdata/ViewPattern
+    *
+    * /transformations parameters:
+    *
+    * status=(running|idle) passing this parameter will further restrict the output to transformation drivers with the given state.
+    * filter=Regexp apply a regular expression filter on driver name (e.g. '?filter=.hive.')
+    *
+    */
+
+  it should "ask ViewManagerActor for View without dependencies, and send msg 'newdata' to correspondent Actor " in
+    new SchedoscopeServiceTest {
+    val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
+    val statusParam = None
+    val filterParam = None
+    val response = service.newdata(prodBrandviewUrlPath01, statusParam, filterParam)
+
+    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
+
+    viewManagerActor.reply(
+      ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+
+    prodBrandViewActor.expectMsg("newdata")
+
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map(("receive", 1))
+    response.value.get.get.views.size shouldBe 1
+    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
+    response.value.get.get.views(0).dependencies shouldBe None
+
+  }
+
+  /**
     * Testing /invalidate/ViewPattern
     *
     * /transformations parameters:
@@ -460,7 +488,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   /**
     * Testing /queues
     *
-    * /transformations parameters:
+    * /queues parameters:
     *
     * status=(running|idle) passing this parameter will further restrict the output to transformation drivers with the given state.
     * filter=Regexp apply a regular expression filter on driver name (e.g. '?filter=.hive.')
@@ -518,6 +546,4 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     response.value.get.get.overview shouldBe Map(("transforming", 1))
     response.value.get.get.transformations.size shouldBe 1
   }
-
-
 }

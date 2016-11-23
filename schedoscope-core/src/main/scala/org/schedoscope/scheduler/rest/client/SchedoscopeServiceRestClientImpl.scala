@@ -55,14 +55,16 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
       else throw HttpFailureStatusException(response.status, response.entity.asString)
   }
 
+  def sendAndReceive = sendReceive
+
   def get[T](path: String, query: Map[String, String]): Future[T] = {
     val pipeline = path match {
-      case u: String if u.startsWith("/views") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
-      case u: String if u.startsWith("/transformations") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[TransformationStatusList]
-      case u: String if u.startsWith("/queues") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[QueueStatusList]
-      case u: String if u.startsWith("/materialize") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
-      case u: String if u.startsWith("/invalidate") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
-      case u: String if u.startsWith("/newdata") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/views") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/transformations") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[TransformationStatusList]
+      case u: String if u.startsWith("/queues") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[QueueStatusList]
+      case u: String if u.startsWith("/materialize") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/invalidate") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/newdata") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
       case _ => throw new RuntimeException("Unsupported query path: " + path)
     }
     val uri = Uri.from("http", "", host, port, path) withQuery (query)
