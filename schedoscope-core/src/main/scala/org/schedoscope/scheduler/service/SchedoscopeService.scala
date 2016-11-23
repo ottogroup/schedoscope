@@ -15,6 +15,10 @@
   */
 package org.schedoscope.scheduler.service
 
+
+import scala.concurrent.Future
+
+
 case class TransformationStatus(actor: String, typ: String, status: String, runStatus: Option[RunStatus], properties: Option[Map[String, String]])
 
 case class TransformationStatusList(overview: Map[String, Int], transformations: List[TransformationStatus])
@@ -44,6 +48,7 @@ case class QueueStatusList(overview: Map[String, Int], queues: Map[String, List[
 
 case class RunStatus(description: String, targetView: String, started: String, comment: String, properties: Option[Map[String, String]])
 
+
 /**
   * Interface defining the functionality of the Schedoscope service. The services allows one to inject
   * scheduling commands into the Schedoscope actor system and obtain scheduling states or results from it.
@@ -66,7 +71,7 @@ trait SchedoscopeService {
     *
     * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
     */
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): ViewStatusList
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): Future[ViewStatusList]
 
   /**
     * Invalidate view(s). The views that are being invalidated are selected either by
@@ -78,7 +83,7 @@ trait SchedoscopeService {
     *
     * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
     */
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): ViewStatusList
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): Future[ViewStatusList]
 
   /**
     * Return view(s) and their state(s). The views for which states are being returned are selected either by
@@ -90,7 +95,7 @@ trait SchedoscopeService {
     *
     * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
     */
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): ViewStatusList
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): Future[ViewStatusList]
 
   /**
     * Return the states of the transformation drivers. Transformation driver info can be filtered by transformation state or a regexp
@@ -98,14 +103,14 @@ trait SchedoscopeService {
     *
     * Throws an InvalidArgumentException if an invalid regexp filter is passed.
     */
-  def transformations(status: Option[String], filter: Option[String]): TransformationStatusList
+  def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList]
 
   /**
     * Returns the transformations waiting in queues. These can be filtered by transformation type or a regexp.
     *
     * Throws an InvalidArgumentException if an invalid regexp filter is passed.
     */
-  def queues(typ: Option[String], filter: Option[String]): QueueStatusList
+  def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList]
 
   /**
     * Shut down Schedoscope.

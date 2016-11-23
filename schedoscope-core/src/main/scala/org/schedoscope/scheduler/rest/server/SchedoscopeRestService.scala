@@ -24,24 +24,28 @@ import akka.routing.SmallestMailboxPool
 import akka.util.Timeout
 import org.schedoscope.Schedoscope
 import org.schedoscope.scheduler.commandline.SchedoscopeCliRepl
-import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat._
-import org.schedoscope.scheduler.service.{SchedoscopeService, SchedoscopeServiceImpl}
+import org.schedoscope.scheduler.rest.SchedoscopeJsonDataFormat
+import org.schedoscope.scheduler.service._
 import org.slf4j.bridge.SLF4JBridgeHandler
 import spray.can.Http
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
-import spray.httpx.SprayJsonSupport.sprayJsonMarshaller
-import spray.httpx.marshalling.ToResponseMarshallable.isMarshallable
+
 import spray.routing.Directive.pimpApply
 import spray.routing.{ExceptionHandler, HttpService}
 import spray.util.LoggingContext
 
 import scala.language.postfixOps
 
+
 /**
   * Spray actor providing the Schedoscope REST service
   */
 class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor with HttpService {
+  import spray.httpx.SprayJsonSupport._
+  import SchedoscopeJsonDataFormat._
+
+  private implicit def ec = actorRefFactory.dispatcher
 
   def actorRefFactory = context
 
@@ -66,21 +70,21 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
     respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
       parameters("status" ?, "filter" ?, "dependencies".as[Boolean] ?, "typ" ?, "mode" ?, "overview".as[Boolean] ?, "all".as[Boolean] ?) {
         (status, filter, dependencies, typ, mode, overview, all) =>
-        path("transformations") {
-          complete(schedoscope.transformations(status, filter))
-        } ~
-          path("queues") {
-            complete(schedoscope.queues(typ, filter))
+          path("transformations") {
+            complete(schedoscope.transformations(status, filter))
           } ~
-          path("views" / Rest ?) { viewUrlPath =>
-            complete(schedoscope.views(viewUrlPath, status, filter, dependencies, overview, all))
-          } ~
-          path("materialize" / Rest ?) { viewUrlPath =>
-            complete(schedoscope.materialize(viewUrlPath, status, filter, mode))
-          } ~
-          path("invalidate" / Rest ?) { viewUrlPath =>
-            complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
-          }
+            path("queues") {
+              complete(schedoscope.queues(typ, filter))
+            } ~
+            path("views" / Rest.?) { viewUrlPath =>
+              complete(schedoscope.views(viewUrlPath, status, filter, dependencies, overview, all))
+            } ~
+            path("materialize" / Rest.?) { viewUrlPath =>
+              complete(schedoscope.materialize(viewUrlPath, status, filter, mode))
+            } ~
+            path("invalidate" / Rest.?) { viewUrlPath =>
+              complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
+            }
       }
     }
   }

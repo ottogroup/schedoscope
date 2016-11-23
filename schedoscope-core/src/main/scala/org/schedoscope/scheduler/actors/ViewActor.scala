@@ -18,13 +18,11 @@ package org.schedoscope.scheduler.actors
 import java.lang.Math.pow
 import java.security.PrivilegedAction
 
-import akka.actor.ActorSelection.toScala
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
-import org.schedoscope.AskPattern.queryActor
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.dsl.View
+import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.dsl.transformations.{NoOp, Touch}
 import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
@@ -32,64 +30,97 @@ import org.schedoscope.scheduler.states._
 
 import scala.concurrent.duration.Duration
 
-class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef) extends Actor {
+
+class ViewActor(var currentState: ViewSchedulingState,
+                settings: SchedoscopeSettings,
+                hdfs: FileSystem,
+                dependencies: Map[View, ActorRef],
+                viewManagerActor: ActorRef,
+                transformationManagerActor: ActorRef,
+                schemaManagerRouter: ActorRef) extends Actor {
 
   import context._
 
-  val log = Logging(system, this)
+  lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
 
-  var knownDependencies = currentState.view.dependencies.toSet
+  val log = Logging(system, this)
+  var knownDependencies = dependencies
 
   def receive: Receive = LoggingReceive {
-    {
 
-      case MaterializeView(mode) => stateTransition {
-        stateMachine.materialize(currentState, sender, mode)
+    case MaterializeView(mode) => stateTransition {
+      stateMachine.materialize(currentState, sender, mode)
+    }
+
+    case ReloadStateAndMaterializeView(mode) => {
+      //TODO: Ask Utz about mode? Do we even want to allow an other mode than default?
+      val currentView = currentState.view
+      //update state if external and NoOp view
+      schemaManagerRouter ! GetMetaDataForMaterialize(currentView, mode, sender)
+    }
+
+    case MetaDataForMaterialize(metadata, mode, source) => stateTransition {
+      //
+      //Got an answer about the state of an external view -> use it to execute the NoOp materialisation
+      //
+      val externalState = metadata match {
+        case (view, (version, timestamp)) =>
+          val v = if(view.isInstanceOf[ExternalView]) view else ExternalView(view)
+          ViewManagerActor.getStateFromMetadata(v, version, timestamp)
       }
+      stateMachine.materialize(externalState, source, mode)
+    }
 
-      case InvalidateView() => stateTransition {
-        stateMachine.invalidate(currentState, sender)
-      }
 
-      case ViewHasNoData(dependency) => stateTransition {
-        stateMachine.noDataAvailable(currentState.asInstanceOf[Waiting], dependency)
-      }
+    case InvalidateView() => stateTransition {
+      stateMachine.invalidate(currentState, sender)
+    }
 
-      case ViewFailed(dependency) => stateTransition {
-        stateMachine.failed(currentState.asInstanceOf[Waiting], dependency)
-      }
+    case ViewHasNoData(dependency) => stateTransition {
+      stateMachine.noDataAvailable(currentState.asInstanceOf[Waiting], dependency)
+    }
 
-      case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) => stateTransition {
-        stateMachine.materialized(currentState.asInstanceOf[Waiting], dependency, transformationTimestamp, withErrors, incomplete)
-      }
+    case ViewFailed(dependency) => stateTransition {
+      stateMachine.failed(currentState.asInstanceOf[Waiting], dependency)
+    }
 
-      case _: TransformationSuccess[_] => stateTransition {
-        stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], folderEmpty(currentState.view))
-      }
+    case ViewMaterialized(dependency, incomplete, transformationTimestamp, withErrors) => stateTransition {
+      val head = currentState.asInstanceOf[Waiting].dependenciesMaterializing.head
 
-      case _: TransformationFailure[_] => stateTransition {
-        val s = currentState.asInstanceOf[Transforming]
-        val result = stateMachine.transformationFailed(s)
-        val retry = s.retry
+      stateMachine.materialized(currentState.asInstanceOf[Waiting], dependency, transformationTimestamp, withErrors, incomplete)
+    }
 
-        result.currentState match {
-          case r: Retrying =>
-            system
-              .scheduler
-              .scheduleOnce(Duration.create(pow(2, retry).toLong, "seconds")) {
-                self ! Retry()
-              }
+    case _: TransformationSuccess[_] => stateTransition {
+      stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], folderEmpty(currentState.view))
+    }
 
-            result
+    case _: TransformationFailure[_] => stateTransition {
+      val s = currentState.asInstanceOf[Transforming]
+      val result = stateMachine.transformationFailed(s)
+      val retry = s.retry
 
-          case _ => result
-        }
-      }
+      result.currentState match {
+        case r: Retrying =>
+          system
+            .scheduler
+            .scheduleOnce(Duration.create(pow(2, retry).toLong, "seconds")) {
+              self ! Retry()
+            }
 
-      case Retry() => stateTransition {
-        stateMachine.retry(currentState.asInstanceOf[Retrying])
+          result
+
+        case _ => result
       }
     }
+
+    case Retry() => stateTransition {
+      stateMachine.retry(currentState.asInstanceOf[Retrying])
+    }
+
+    case NewViewActorRef(view: View, viewRef: ActorRef) => {
+      knownDependencies += view -> viewRef
+    }
+
   }
 
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
@@ -109,81 +140,94 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
 
     case WriteTransformationTimestamp(view, transformationTimestamp) =>
-      metadataLoggerActor ! LogTransformationTimestamp(view, transformationTimestamp)
+      if (!view.isExternal) schemaManagerRouter ! LogTransformationTimestamp(view, transformationTimestamp)
+
 
     case WriteTransformationCheckum(view) =>
-      metadataLoggerActor ! SetViewVersion(view)
+      if (!view.isExternal) schemaManagerRouter ! SetViewVersion(view)
 
     case TouchSuccessFlag(view) =>
-      touchSuccessFlag(view)
+        touchSuccessFlag(view)
 
     case Materialize(view, mode) =>
-      actorForView(view) ! MaterializeView(mode)
+      if (!view.isExternal) {
+        sendMessageToView(view, MaterializeView(mode))
+      } else {
+        sendMessageToView(view, ReloadStateAndMaterializeView(mode))
+      }
 
     case Transform(view) =>
       transformationManagerActor ! view
 
     case ReportNoDataAvailable(view, listeners) =>
       listeners.foreach {
-        _ ! ViewHasNoData(view)
+        sendMessageToListener(_, ViewHasNoData)
       }
 
     case ReportFailed(view, listeners) =>
       listeners.foreach {
-        _ ! ViewFailed(view)
+        sendMessageToListener(_, ViewFailed(view))
       }
 
     case ReportInvalidated(view, listeners) =>
       listeners.foreach {
-        _ ! ViewStatusResponse("invalidated", view, self)
+        sendMessageToListener(_, ViewStatusResponse("invalidated", view, self))
       }
 
     case ReportNotInvalidated(view, listeners) =>
-      log.warning("VIEWACTOR: Could not invalidate view ${view}")
+      log.warning(s"VIEWACTOR: Could not invalidate view ${view}")
 
     case ReportMaterialized(view, listeners, transformationTimestamp, withErrors, incomplete) =>
-      listeners.foreach {
-        _ ! ViewMaterialized(view, incomplete, transformationTimestamp, withErrors)
+      listeners.foreach { l =>
+        sendMessageToListener(l, ViewMaterialized(view, incomplete, transformationTimestamp, withErrors))
       }
   }
 
-  lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
+  def sendMessageToListener(listener: PartyInterestedInViewSchedulingStateChange, msg: AnyRef): Unit =
+    listener match {
+      case DependentView(view) => sendMessageToView(view, msg)
 
-  def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
-    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
-    case _ => new ViewSchedulingStateMachineImpl
-  }
+      case AkkaActor(actorRef) => actorRef ! msg
 
-  def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
-
-  def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
-    newState match {
-      case vss: Transforming => viewManagerActor ! ViewStatusResponse(vss.label, newState.view, self, Some(vss.withErrors), Some(vss.incomplete) )
-      case vss: Materialized => viewManagerActor ! ViewStatusResponse(vss.label, newState.view, self, Some(vss.withErrors), Some(vss.incomplete) )
-      case vss: Retrying => viewManagerActor ! ViewStatusResponse(vss.label, newState.view, self, Some(vss.withErrors), Some(vss.incomplete) )
-      case _ => viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
+      case _ => //Not supported
     }
 
-
-    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
-  }
-
-  def actorForView(view: View) = {
+  def sendMessageToView(view: View, msg: AnyRef) = {
 
     //
     // New dependencies may appear at a start of a new day. These might not yet have corresponding
     // actors created by the ViewManagerActor. Take care that a view actor is available before
     // returning an actor selection for it, as messages might end up in nirvana otherwise.
     //
-
-    if (!knownDependencies.contains(view)) {
-      queryActor[Any](viewManagerActor, view, settings.schedulingCommandTimeout)
-      knownDependencies += view
+    knownDependencies.get(view) match {
+      case Some(r: ActorRef) =>
+        r ! msg
+      case None =>
+        viewManagerActor ! DelegateMessageToView(view, msg)
     }
 
-    ViewManagerActor.actorForView(view)
+    //    ViewManagerActor.actorForView(view)
   }
 
+  def touchSuccessFlag(view: View) {
+    actorOf(Props(new Actor {
+      override def preStart() {
+        transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
+      }
+
+      def receive = {
+        case _ => context stop self
+      }
+    }))
+  }
+
+  def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
+
+  def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
+    viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
+
+    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
+  }
 
   def folderEmpty(view: View) = settings
     .userGroupInformation.doAs(
@@ -198,6 +242,11 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
       (size, status) => size + status.getLen
     } <= 0
 
+  def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
+    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
+    case _ => new ViewSchedulingStateMachineImpl
+  }
+
   def successFlagExists(view: View) = settings
     .userGroupInformation.doAs(
     new PrivilegedAction[Boolean]() {
@@ -205,24 +254,37 @@ class ViewActor(var currentState: ViewSchedulingState, settings: SchedoscopeSett
         hdfs.exists(new Path(view.fullPath + "/_SUCCESS"))
       }
     })
-
-  def touchSuccessFlag(view: View) {
-    actorOf(Props(new Actor {
-      override def preStart() {
-        transformationManagerActor ! Touch(view.fullPath + "/_SUCCESS")
-      }
-
-      def receive = {
-        case _ => context stop self
-      }
-    }))
-  }
 }
 
 object ViewActor {
+  def props(state: ViewSchedulingState,
+            settings: SchedoscopeSettings,
+            dependencies: Map[View, ActorRef],
+            viewManagerActor: ActorRef,
+            transformationManagerActor: ActorRef,
+            schemaManagerRouter: ActorRef): Props =
+    props(state,
+      settings,
+      defaultFileSystem(settings.hadoopConf),
+      dependencies,
+      viewManagerActor,
+      transformationManagerActor,
+      schemaManagerRouter)
 
-  def props(state: ViewSchedulingState, settings: SchedoscopeSettings, hdfs: FileSystem, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef): Props = Props(classOf[ViewActor], state, settings, hdfs, viewManagerActor, transformationManagerActor, metadataLoggerActor).withDispatcher("akka.actor.views-dispatcher")
-
-  def props(state: ViewSchedulingState, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef, metadataLoggerActor: ActorRef): Props = props(state, settings, defaultFileSystem(settings.hadoopConf), viewManagerActor, transformationManagerActor, metadataLoggerActor)
+  def props(state: ViewSchedulingState,
+            settings: SchedoscopeSettings,
+            hdfs: FileSystem,
+            dependencies: Map[View, ActorRef],
+            viewManagerActor: ActorRef,
+            transformationManagerActor: ActorRef,
+            schemaManagerRouter: ActorRef): Props =
+    Props(classOf[ViewActor],
+      state,
+      settings,
+      hdfs,
+      dependencies,
+      viewManagerActor,
+      transformationManagerActor,
+      schemaManagerRouter).withDispatcher("akka.actor.views-dispatcher")
 
 }
