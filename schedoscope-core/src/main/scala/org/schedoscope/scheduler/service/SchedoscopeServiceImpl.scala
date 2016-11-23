@@ -52,7 +52,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       }
   }
 
-  private def checkViewUrlPath(viewUrlPath: Option[String]):Unit = {
+  private def checkViewUrlPath(viewUrlPath: Option[String]): Unit = {
     if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty())
       try {
         viewsFromUrl(viewUrlPath.get)
@@ -70,6 +70,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   private def getViewStatus(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))
+
     Future.sequence(List(cf, cvup)).flatMap { r =>
       Future {
         val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
@@ -82,7 +83,6 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
-
     val viewStatusListWithoutViewDetails = viewStatusResponses.map {
       v =>
         ViewStatus(
@@ -220,20 +220,19 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       })
   }
 
-
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     getViewStatus(viewUrlPath, status, filter).map {
       case viewStatusResponses =>
         viewStatusResponses.map(_.actor)
-        .foreach {
-          _ ! MaterializeView(
-            try {
-              MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
-            } catch {
-              case _: NoSuchElementException => MaterializeViewMode.DEFAULT
-            })
-        }
-      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+          .foreach {
+            _ ! MaterializeView(
+              try {
+                MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
+              } catch {
+                case _: NoSuchElementException => MaterializeViewMode.DEFAULT
+              })
+          }
+        viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
     }
   }
 
@@ -260,10 +259,11 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     }
   }
 
-    def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
-      getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map { viewStatusResponses =>
-        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all)
-      }
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
+    getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map { viewStatusResponses =>
+      viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all)
+    }
+
 
   def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {
     val cf = Future(checkFilter(filter))
@@ -295,10 +295,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
           .map { case (t, queue) => (t, parseQueueElements(queue)) }
           .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
-
         val overview = queues
           .map(el => (el._1, el._2.size))
-
         QueueStatusList(overview, queues)
       }
     }

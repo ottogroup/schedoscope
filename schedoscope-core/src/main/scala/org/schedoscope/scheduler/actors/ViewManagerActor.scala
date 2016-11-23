@@ -83,7 +83,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     * @param dependencies create actors for the prerequisite views as well.
     * @return the set of corresponding view actor refs
     */
-  def initializeViewActors(vs: List[View], dependencies: Boolean = false) = {
+  def initializeViewActors(vs: List[View], dependencies: Boolean = false):Set[ActorRef] = {
     log.info(s"Initializing ${vs.size} views")
 
     val allViews = viewsToCreateActorsFor(vs, dependencies)
