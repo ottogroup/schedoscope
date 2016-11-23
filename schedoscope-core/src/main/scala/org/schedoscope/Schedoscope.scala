@@ -16,7 +16,7 @@
 package org.schedoscope
 
 import akka.actor.ActorSystem
-import org.schedoscope.scheduler.actors.{SchemaManagerActor, TransformationManagerActor, ViewManagerActor}
+import org.schedoscope.scheduler.actors.{SchemaManagerRouter, TransformationManagerActor, ViewManagerActor}
 
 /**
   * The Schedoscope object provides accessors for the various components of the schedoscope system.
@@ -36,9 +36,8 @@ object Schedoscope {
     */
   var viewManagerActorBuilder = () => actorSystem.actorOf(
     ViewManagerActor.props(settings,
-    transformationManagerActor,
-    schemaManagerActor,
-    schemaManagerActor), "views")
+      transformationManagerActor,
+      schemaManagerRouter), "views")
 
   /**
     * Pluggable builder function that returns the settings for schedoscope.
@@ -56,7 +55,8 @@ object Schedoscope {
     * Pluggable builder function that returns the schema manager actor for schedoscope.
     * The default implementation creates a new schema manager router based on the actor system.
     */
-  var schemaManagerActorBuilder = () => actorSystem.actorOf(SchemaManagerActor.props(settings), "schema")
+
+  var schemaManagerRouterBuilder = () => actorSystem.actorOf(SchemaManagerRouter.props(settings), "schema")
 
   /**
     * The Schedoscope actor system
@@ -76,7 +76,7 @@ object Schedoscope {
   /**
     * A reference to the Schedoscope schema manager actor
     */
-  lazy val schemaManagerActor = schemaManagerActorBuilder()
+  lazy val schemaManagerRouter = schemaManagerRouterBuilder()
 
   /**
     * A reference to the Schedoscope view manager actor

@@ -4,26 +4,29 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.schedoscope.scheduler.actors.{ViewActor, ViewManagerActor}
+import org.schedoscope.scheduler.driver.{DriverRunOngoing, HiveDriver}
+import org.schedoscope.scheduler.messages._
+import org.schedoscope.{Schedoscope, Settings, TestUtils}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.View
-import org.schedoscope.scheduler.messages._
-import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.transformations.HiveTransformation
-import org.schedoscope.scheduler.driver.{DriverRunOngoing, HiveDriver}
-import test.views.ProductBrand
+
+import test.views.{ProductBrand, Brand}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
+  with ImplicitSender
   with FlatSpecLike
   with Matchers
   with BeforeAndAfterAll
-  with ImplicitSender
-  with MockitoSugar {
+  with MockitoSugar
+  with ScalaFutures {
 
   override def afterAll {
     TestKit.shutdownActorSystem(system)
@@ -61,7 +64,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     // required for sending msg to actors (futures)
     implicit val timeout = Timeout(TIMEOUT)
 
-    val schemaManagerActor = TestProbe()
+    val schemaManagerRouter = TestProbe()
     val transformationManagerActor = TestProbe()
 
     Schedoscope.actorSystemBuilder = () => system
@@ -70,17 +73,16 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       ViewManagerActor.props(
             Schedoscope.settings,
             transformationManagerActor.ref,
-            schemaManagerActor.ref,
-            schemaManagerActor.ref))
+            schemaManagerRouter.ref))
 
     Schedoscope.viewManagerActorBuilder = () => viewManagerActor
 
     def initializeView(view: View): ActorRef = {
       val future = viewManagerActor ? view
-      schemaManagerActor.expectMsg(CheckOrCreateTables(List(view)))
-      schemaManagerActor.reply(SchemaActionSuccess())
-      schemaManagerActor.expectMsg(AddPartitions(List(view)))
-      schemaManagerActor.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
+      schemaManagerRouter.reply(SchemaActionSuccess())
+      schemaManagerRouter.expectMsg(AddPartitions(List(view)))
+      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true
@@ -99,18 +101,18 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     def initializeViewWithDep(view: View, brandDependency:View, productDependency:View): ActorRef = {
       val future = viewManagerActor ? view
 
-      schemaManagerActor.expectMsg(CheckOrCreateTables(List(brandDependency)))
-      schemaManagerActor.reply(SchemaActionSuccess())
-      schemaManagerActor.expectMsg(CheckOrCreateTables(List(view)))
-      schemaManagerActor.reply(SchemaActionSuccess())
-      schemaManagerActor.expectMsg(CheckOrCreateTables(List(productDependency)))
-      schemaManagerActor.reply(SchemaActionSuccess())
-      schemaManagerActor.expectMsg(AddPartitions(List(brandDependency)))
-      schemaManagerActor.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
-      schemaManagerActor.expectMsg(AddPartitions(List(view)))
-      schemaManagerActor.reply(TransformationMetadata(Map(view -> ("test", 1L))))
-      schemaManagerActor.expectMsg(AddPartitions(List(productDependency)))
-      schemaManagerActor.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
+      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(brandDependency)))
+      schemaManagerRouter.reply(SchemaActionSuccess())
+      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
+      schemaManagerRouter.reply(SchemaActionSuccess())
+      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(productDependency)))
+      schemaManagerRouter.reply(SchemaActionSuccess())
+      schemaManagerRouter.expectMsg(AddPartitions(List(brandDependency)))
+      schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
+      schemaManagerRouter.expectMsg(AddPartitions(List(view)))
+      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+      schemaManagerRouter.expectMsg(AddPartitions(List(productDependency)))
+      schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true
@@ -148,13 +150,30 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     Schedoscope.viewManagerActorBuilder = () => viewManagerActor.ref
     Schedoscope.transformationManagerActorBuilder = () => transformationManagerActor.ref
-    Schedoscope.schemaManagerActorBuilder = () => schemaManagerActor.ref
+    Schedoscope.schemaManagerRouterBuilder = () => schemaManagerActor.ref
 
     lazy val service = new SchedoscopeServiceImpl(system,
       Schedoscope.settings,
       viewManagerActor.ref,
       transformationManagerActor.ref)
   }
+
+  trait SchedoscopeServiceExternalTest {
+    lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true",
+      """schedoscope.external.internal=["prod.app.test"] """ )
+    Schedoscope.actorSystemBuilder = () => system
+
+    val viewManagerActor = TestProbe()
+    val transformationManagerActor = TestProbe()
+    Schedoscope.viewManagerActorBuilder = () => viewManagerActor.ref
+
+    lazy val service = new SchedoscopeServiceImpl(system,
+      settings,
+      viewManagerActor.ref,
+      transformationManagerActor.ref)
+
+  }
+
 
   "The ViewManagerActor" should "create a new view" in new SchedoscopeServiceWithViewManagerTest {
     initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
@@ -335,6 +354,16 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     response.isCompleted shouldBe true
     response.value.get.get.overview shouldBe Map(("receive", 3))
     response.value.get.get.views.size shouldBe 6
+  }
+
+  it should "block a call on an external view" in new SchedoscopeServiceExternalTest {
+    val testView = Brand(p("test"))
+
+    the [IllegalArgumentException] thrownBy {
+      val response = service.views(Some(testView.urlPath), None, None, None, None, None)
+      Await.result(response, TIMEOUT)
+    } should have message "Invalid view URL pattern passed: test.views/Brand/test.\n" +
+      "original Message: You can not access an external view directly"
   }
 
   /**

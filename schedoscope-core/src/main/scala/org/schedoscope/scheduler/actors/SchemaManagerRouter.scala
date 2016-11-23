@@ -15,8 +15,8 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, ActorInitializationException, ActorRef, OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy._
+import akka.actor.{Actor, ActorInitializationException, ActorRef, OneForOneStrategy, Props}
 import akka.event.Logging
 import akka.routing.RoundRobinPool
 import org.schedoscope.conf.SchedoscopeSettings
@@ -26,7 +26,7 @@ import org.schedoscope.schema.RetryableSchemaManagerException
 /**
   * Supervisor and forwarder for partition creator and metadata logger actors
   */
-class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
+class SchemaManagerRouter(settings: SchedoscopeSettings) extends Actor {
 
   import context._
 
@@ -39,11 +39,11 @@ class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
     * Supervisor strategy: Restart schema or metadata logger actors failing with SchemaManagerExceptions
     */
   override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = -1) {
-      case _: RetryableSchemaManagerException => Restart
-      case _: ActorInitializationException => Restart
-      case _ => Escalate
-    }
+  OneForOneStrategy(maxNrOfRetries = -1) {
+    case _: RetryableSchemaManagerException => Restart
+    case _: ActorInitializationException => Restart
+    case _ => Escalate
+  }
 
   override def preStart {
     metadataLoggerActor = actorOf(MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "metadata-logger")
@@ -51,6 +51,7 @@ class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
   }
 
   def receive = {
+
     case m: CheckOrCreateTables => partitionCreatorActor forward m
 
     case a: AddPartitions => partitionCreatorActor forward a
@@ -58,9 +59,12 @@ class SchemaManagerActor(settings: SchedoscopeSettings) extends Actor {
     case s: SetViewVersion => metadataLoggerActor forward s
 
     case l: LogTransformationTimestamp => metadataLoggerActor forward l
+
+    case g: GetMetaDataForMaterialize => partitionCreatorActor forward g
+
   }
 }
 
-object SchemaManagerActor {
-  def props(settings: SchedoscopeSettings) = (Props(classOf[SchemaManagerActor], settings)).withDispatcher("akka.actor.schema-manager-dispatcher")
+object SchemaManagerRouter {
+  def props(settings: SchedoscopeSettings) = (Props(classOf[SchemaManagerRouter], settings)).withDispatcher("akka.actor.schema-manager-dispatcher")
 }

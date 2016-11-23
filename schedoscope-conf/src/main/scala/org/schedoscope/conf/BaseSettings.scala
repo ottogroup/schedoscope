@@ -18,6 +18,7 @@ package org.schedoscope.conf
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.Config
+import collection.JavaConversions._
 
 import scala.concurrent.duration.Duration
 
@@ -110,13 +111,38 @@ class BaseSettings(val config: Config) {
     * The configured timeout for Schedoscope web service calls.
     */
   lazy val webserviceTimeout =
-    Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schedulingCommand", TimeUnit.MILLISECONDS),
-      TimeUnit.MILLISECONDS)
+  Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schedulingCommand", TimeUnit.MILLISECONDS),
+    TimeUnit.MILLISECONDS)
 
   /**
     * The configured number of retries before a view enters failed state.
     */
   lazy val retries = config.getInt("schedoscope.action.retry")
+
+  /**
+    * Flag for enabling usage of external dependencies
+    */
+  lazy val externalDependencies = config.getBoolean("schedoscope.external.enabled")
+
+  /**
+    * The configured list of internal packages
+    */
+  lazy val externalHome = if (externalDependencies) {
+    config.getStringList("schedoscope.external.internal").toList
+  } else {
+    List.empty[String]
+  }
+
+
+  /**
+    * Flag for disabling checks for external dependencies
+    */
+  lazy val externalChecksDisabled = if (externalDependencies) {
+    config.getBoolean("schedoscope.external.checks")
+  } else {
+    false
+  }
+
 
   /**
     * Number of parallel threads to access the metastore

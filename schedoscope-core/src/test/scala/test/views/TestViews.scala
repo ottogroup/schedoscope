@@ -15,13 +15,13 @@
   */
 package test.views
 
-import org.schedoscope.dsl.{Parameter, Structure, View}
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.views._
 import org.schedoscope.dsl.storageformats.{Avro, Parquet, TextFile}
+import org.schedoscope.dsl.transformations.Export._
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation._
-import org.schedoscope.dsl.transformations.Export._
+import org.schedoscope.dsl.views._
+import org.schedoscope.dsl.{ExternalView, Parameter, Structure, View}
 import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer
 
 import scala.util.Random
@@ -89,6 +89,30 @@ case class ProductBrand(shopCode: Parameter[String],
           AND 		p.${product().month.n} = ${this.month.v.get}
           AND 		p.${product().day.n} = ${this.day.v.get}
           """)))
+}
+
+case class ViewWithExternalDeps(shopCode: Parameter[String],
+                                year: Parameter[String],
+                                month: Parameter[String],
+                                day: Parameter[String]) extends View
+  with PointOccurrence
+  with JobMetadata
+  with DailyParameterization {
+
+  val productBrand = dependsOn(() => external(ProductBrand(shopCode,year,month,day)))
+
+  val productId = fieldOf[String]
+  val productName = fieldOf[String]
+
+  transformVia(() =>
+    HiveTransformation(insertInto(
+      this,
+      s"""SELECT * FROM ${productBrand().n}""")))
+}
+
+trait Shop {
+  val shopCode: Parameter[String]
+  require((shopCode.v.get).toUpperCase().equals(shopCode.v.get), "Put in upper case: " + shopCode.v.get)
 }
 
 case class ProductBrandMaterializeOnce(shopCode: Parameter[String],
@@ -313,11 +337,6 @@ case class HDFSInputView() extends View with Id {
   val field1 = fieldOf[String]
   tablePathBuilder = s => "/tmp/test"
   storedAs(Parquet())
-}
-
-trait Shop {
-  val shopCode: Parameter[String]
-  require((shopCode.v.get).toUpperCase().equals(shopCode.v.get), "Put in upper case: " + shopCode.v.get)
 }
 
 case class RequireView(shopCode: Parameter[String])

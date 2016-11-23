@@ -43,7 +43,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   private def getOrElse[T](o: T, d: T) = if (o != null) o else d
 
-  private def checkFilter(filter: Option[String]) = {
+  private def checkFilter(filter: Option[String]) {
     if (filter.isDefined)
       try {
         Pattern.compile(filter.get)
@@ -52,10 +52,20 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       }
   }
 
-  private def checkViewUrlPath(viewUrlPath: Option[String]): Unit = {
+  private def checkViewUrlPath(viewUrlPath: Option[String]) {
     if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty())
       try {
-        viewsFromUrl(viewUrlPath.get)
+        val views = viewsFromUrl(viewUrlPath.get)
+        //
+        // Block access to external views
+        //
+        if(settings.externalDependencies) {
+          views.foreach { v =>
+            if (!settings.externalHome.exists(v.dbName.startsWith(_)))
+              throw new UnsupportedOperationException("You can not access an external view directly")
+          }
+        }
+        views
       } catch {
         case t: Throwable => throw new IllegalArgumentException(s"Invalid view URL pattern passed: ${viewUrlPath.get}."
           + {
