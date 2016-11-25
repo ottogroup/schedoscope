@@ -105,7 +105,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         case (view, _, _) => view.hasExternalDependencies()
       }
 
-      if (containsExternalDependencies)
+      if (containsExternalDependencies && !settings.externalChecksDisabled)
         throw new UnsupportedOperationException("External dependencies are not enabled," +
           "if you are sure you wan't to use this feature enable it in the schedoscope.conf.")
     }

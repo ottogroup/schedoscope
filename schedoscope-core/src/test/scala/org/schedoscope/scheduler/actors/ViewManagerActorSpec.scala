@@ -150,5 +150,31 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
+  it should "throw no exception if external view checks are not disabled" in new ViewManagerActorExternalTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true","schedoscope.external.checks=true")
+
+    val viewWithExt = ViewWithExternalDeps(p("ec0101"),p("2016"),p("11"),p("07"))
+    val future = viewManagerActor ? viewWithExt
+    val viewE = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
+
+    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
+    schemaManagerRouter.reply(SchemaActionSuccess())
+    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewE)))
+    schemaManagerRouter.reply(SchemaActionSuccess())
+    schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
+    schemaManagerRouter.expectMsg(AddPartitions(List(viewE)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(viewE -> ("test", 1L))))
+
+    Await.result(future, 5 seconds)
+    future.isCompleted shouldBe true
+    future.value.get.isSuccess shouldBe true
+    val actorRef = future.value.get.get.asInstanceOf[ActorRef]
+
+    viewManagerActor ! DelegateMessageToView(viewE, MaterializeView())
+
+    expectMsgType[NewViewActorRef]
+  }
+
 
 }
