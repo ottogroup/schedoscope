@@ -25,7 +25,8 @@ import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.{Schedoscope, Settings, TestUtils}
-import test.views.{Brand, ProductBrand, ViewWithExternalDeps}
+import test.extviews.Shop
+import test.views._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -84,8 +85,9 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
-  trait ViewManagerActorExternalTest extends ViewManagerActorTest{
-    override lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true")
+  trait ViewManagerActorExternalTest extends ViewManagerActorTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.external-dependencies.enabled=true",
+      "schedoscope.external-dependencies.home=[\"dev.test.views\"]")
   }
 
 
@@ -118,9 +120,9 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   it should "initialize an external view" in new ViewManagerActorExternalTest {
 
-    val viewWithExt = ViewWithExternalDeps(p("ec0101"),p("2016"),p("11"),p("07"))
+    val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
     val future = viewManagerActor ? viewWithExt
-    val viewE = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
+    val viewE = ExternalView(Shop())
 
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
     schemaManagerRouter.reply(SchemaActionSuccess())
@@ -144,36 +146,42 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "throw an exception if external views are not allowed" in new ViewManagerActorTest {
 
     val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
-    an [UnsupportedOperationException] shouldBe thrownBy {
+    an[UnsupportedOperationException] shouldBe thrownBy {
       viewManagerActor.receive(viewWithExt)
     }
   }
 
-  it should "throw no exception if external view checks are not disabled" in new ViewManagerActorExternalTest {
-    override lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true","schedoscope.external.checks=true")
+  it should "throw an exception if internal views are used as external" in new ViewManagerActorExternalTest {
 
-    val viewWithExt = ViewWithExternalDeps(p("ec0101"),p("2016"),p("11"),p("07"))
-    val future = viewManagerActor ? viewWithExt
-    val viewE = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
+    val viewWithExt = ViewWithIllegalExternalDeps(p("ec0101"))
+    the[UnsupportedOperationException] thrownBy {
+      viewManagerActor.receive(viewWithExt)
+    } should have message "You are referencing an external view as internal: test.views/Brand/ec0101."
+  }
 
+  it should "throw an exception if external views are used as internal" in new ViewManagerActorExternalTest {
+
+    val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
+    the[UnsupportedOperationException] thrownBy {
+      viewManagerActor.receive(viewWithExt)
+    } should have message "You are referencing an internal view as external: test.extviews/Shop/."
+  }
+
+  "the check" should "be silenced by the setting" in new ViewManagerActorExternalTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.external-dependencies.enabled=true",
+      "schedoscope.external-dependencies.home=[\"dev.test.views\"]",
+      "schedoscope.external-dependencies.checks=false")
+
+    val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
+
+    viewManagerActor ! viewWithExt
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
     schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewE)))
+    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(Shop())))
     schemaManagerRouter.reply(SchemaActionSuccess())
     schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
     schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
-    schemaManagerRouter.expectMsg(AddPartitions(List(viewE)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(viewE -> ("test", 1L))))
-
-    Await.result(future, 5 seconds)
-    future.isCompleted shouldBe true
-    future.value.get.isSuccess shouldBe true
-    val actorRef = future.value.get.get.asInstanceOf[ActorRef]
-
-    viewManagerActor ! DelegateMessageToView(viewE, MaterializeView())
-
-    expectMsgType[NewViewActorRef]
+    schemaManagerRouter.expectMsg(AddPartitions(List(Shop())))
+    schemaManagerRouter.reply(TransformationMetadata(Map(Shop() -> ("test", 1L))))
   }
-
-
 }

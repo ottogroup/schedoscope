@@ -8,8 +8,8 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.scheduler.messages.{GetViews, ViewStatusListResponse, ViewStatusResponse}
 import org.schedoscope.{Schedoscope, Settings, TestUtils}
-import test.intviews.Shop
-import test.views.Brand
+import test.extviews.Shop
+import test.views.{Brand, ViewWithExternalDeps}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -42,8 +42,8 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   trait SchedoscopeServiceExternalTest extends SchedoscopeServiceTest {
-    override lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true",
-      """schedoscope.external.internal=["${env}.test.intviews"] """ )
+    override lazy val settings = TestUtils.createSettings("schedoscope.external-dependencies.enabled=true",
+      """schedoscope.external-dependencies.home=["${env}.test.views"] """ )
   }
 
   "the service" should "ask for status" in new SchedoscopeServiceTest {
@@ -64,16 +64,16 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   it should "block a call on an external view" in new SchedoscopeServiceExternalTest {
-    val testView = Brand(p("test"))
+    val testView = Shop()
 
     the [IllegalArgumentException] thrownBy {
       service.views(Some(testView.urlPath), None, None, None, None, None)
-    } should have message "Invalid view URL pattern passed: test.views/Brand/test.\n" +
+    } should have message "Invalid view URL pattern passed: test.extviews/Shop/.\n" +
       "original Message: You can not address an external view directly."
   }
 
   it should "allow a call on an internal view" in new SchedoscopeServiceExternalTest {
-    val testView = Shop()
+    val testView = Brand(p("test"))
     val response = Future {
       service.views(Some(testView.urlPath), None, None, None, None, None)
     }
@@ -81,7 +81,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     viewManagerActor.reply(ViewStatusListResponse(List(ViewStatusResponse("loading", testView, viewManagerActor.ref))))
 
     val expected = ViewStatusList(Map("loading" -> 1),
-      List(ViewStatus("test.intviews/Shop/",
+      List(ViewStatus("test.views/Brand/test",
         None, "loading", None, None, None, None, None, None, None, None, None, None)))
 
     whenReady(response) { result =>

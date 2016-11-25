@@ -336,6 +336,15 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * Returns true if views contains external dependencies
     */
   def hasExternalDependencies = dependencies.exists(_.isExternal)
+
+  def isInDatabases(databases: String*): Boolean = {
+    val name = dbName.replace("_",".")
+
+    databases.exists{
+      s =>
+        name.startsWith(s.replace("${env}",env))
+    }
+  }
 }
 
 /**
@@ -451,6 +460,8 @@ object View {
     registeredView.env = env
     registeredView
   }
+
+
 
 
 }

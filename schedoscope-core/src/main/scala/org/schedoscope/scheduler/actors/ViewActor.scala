@@ -142,10 +142,8 @@ class ViewActor(var currentState: ViewSchedulingState,
     case WriteTransformationTimestamp(view, transformationTimestamp) =>
       if (!view.isExternal) schemaManagerRouter ! LogTransformationTimestamp(view, transformationTimestamp)
 
-
     case WriteTransformationCheckum(view) =>
       if (!view.isExternal) schemaManagerRouter ! SetViewVersion(view)
-
 
     case TouchSuccessFlag(view) =>
       touchSuccessFlag(view)

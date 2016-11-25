@@ -23,6 +23,7 @@ import org.schedoscope.dsl.transformations.HiveTransformation._
 import org.schedoscope.dsl.views._
 import org.schedoscope.dsl.{ExternalView, Parameter, Structure, View}
 import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer
+import test.extviews.Shop
 
 import scala.util.Random
 
@@ -91,6 +92,32 @@ case class ProductBrand(shopCode: Parameter[String],
           """)))
 }
 
+case class ViewWithIllegalExternalDeps(shopCode: Parameter[String]) extends View {
+
+  val shop = dependsOn(() => external(Brand(shopCode)))
+
+  val productId = fieldOf[String]
+  val productName = fieldOf[String]
+
+  transformVia(() =>
+    HiveTransformation(insertInto(
+      this,
+      s"""SELECT * FROM ${shop().n}""")))
+}
+
+case class ViewWithIllegalInternalDeps(shopCode: Parameter[String]) extends View {
+
+  val shop = dependsOn(() => Shop())
+
+  val productId = fieldOf[String]
+  val productName = fieldOf[String]
+
+  transformVia(() =>
+    HiveTransformation(insertInto(
+      this,
+      s"""SELECT * FROM ${shop().n}""")))
+}
+
 case class ViewWithExternalDeps(shopCode: Parameter[String],
                                 year: Parameter[String],
                                 month: Parameter[String],
@@ -99,7 +126,7 @@ case class ViewWithExternalDeps(shopCode: Parameter[String],
   with JobMetadata
   with DailyParameterization {
 
-  val productBrand = dependsOn(() => external(ProductBrand(shopCode,year,month,day)))
+  val shop = dependsOn(() => external(Shop()))
 
   val productId = fieldOf[String]
   val productName = fieldOf[String]
@@ -107,7 +134,7 @@ case class ViewWithExternalDeps(shopCode: Parameter[String],
   transformVia(() =>
     HiveTransformation(insertInto(
       this,
-      s"""SELECT * FROM ${productBrand().n}""")))
+      s"""SELECT * FROM ${shop().n}""")))
 }
 
 trait Shop {

@@ -19,7 +19,6 @@ import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.AskPattern._
-import org.schedoscope.Schedoscope
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Checksum
@@ -105,9 +104,20 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         case (view, _, _) => view.hasExternalDependencies
       }
 
-      if (containsExternalDependencies && !settings.externalChecksDisabled)
+      if (containsExternalDependencies)
         throw new UnsupportedOperationException("External dependencies are not enabled," +
           "if you are sure you wan't to use this feature enable it in the schedoscope.conf.")
+    } else if (settings.externalChecksEnabled) {
+      //TODO: check if all views inside of home
+      allViews.foreach { case (view, _, _) =>
+        if (view.isInDatabases(settings.externalHome: _*)) {
+          if (view.isExternal)
+            throw new UnsupportedOperationException(s"You are referencing an external view as internal: $view.")
+        } else {
+          if (!view.isExternal)
+            throw new UnsupportedOperationException(s"You are referencing an internal view as external: $view.")
+        }
+      }
     }
 
     log.info(s"Computed ${allViews.size} views (with dependencies=${dependencies})")

@@ -61,9 +61,7 @@ case class ExternalView(view: View) extends View {
   override def namingBase = view.namingBase
   override def nameOf[F <: FieldLike[_]](f: F): Option[String] = view.nameOf(f)
 
-  override def asTableSuffix[P <: Parameter[_]](p: P): P = {
-    throw new IllegalArgumentException("you can't change the dependencies of an external view")
-  }
+  override def asTableSuffix[P <: Parameter[_]](p: P): P = view.asTableSuffix(p: P)
 
   override def dependsOn[V <: View : Manifest](df: () => V) = {
     throw new IllegalArgumentException("you can't change the dependencies of an external view")
@@ -77,15 +75,5 @@ case class ExternalView(view: View) extends View {
   override def ensureRegisteredParameters = view.ensureRegisteredParameters
   override def parameters = view.parameters
   override def materializeOnce = view.materializeOnce
-
-//  override def equals(o: scala.Any): Boolean = {
-//    o match {
-//      case view1: ExternalView =>
-//        view1.fullPath == this.fullPath
-//      case _ => false
-//    }
-//  }
-
-//  override def hashCode(): Int = fullPath.hashCode
 
 }

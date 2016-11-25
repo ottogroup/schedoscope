@@ -60,11 +60,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
         if(settings.externalDependencies) {
           views.foreach { v =>
-            val dbName = v.dbName.replace("_",".")
-            val addressesExternal = settings.externalHome.exists{
-              s => !dbName.startsWith(s.replace("${env}",v.env))
-            }
-            if (addressesExternal)
+            if (!v.isInDatabases(settings.externalHome:_*))
               throw new UnsupportedOperationException("You can not address an external view directly.")
           }
         }
