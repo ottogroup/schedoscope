@@ -52,7 +52,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       stateMachine.materialize(currentState, sender, mode)
     }
 
-    case ReloadStateAndMaterializeView(mode) => {
+    case MaterializeExternalView(mode) => {
       //TODO: Ask Utz about mode? Do we even want to allow an other mode than default?
       val currentView = currentState.view
       //update state if external and NoOp view
@@ -154,7 +154,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       if (!view.isExternal) {
         sendMessageToView(view, MaterializeView(mode))
       } else {
-        sendMessageToView(view, ReloadStateAndMaterializeView(mode))
+        sendMessageToView(view, MaterializeExternalView(mode))
       }
 
     case Transform(view) =>

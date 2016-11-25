@@ -153,7 +153,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       schemaManagerRouter.ref))
 
     actorWithExt ! MaterializeView()
-    extActor.expectMsg(ReloadStateAndMaterializeView())
+    extActor.expectMsg(MaterializeExternalView())
     extActor.reply(ViewMaterialized(extView, incomplete = false, 1L, errors = false))
     transformationManagerActor.expectMsg(viewWithExt)
     val success = mock[TransformationSuccess[HiveTransformation]]
@@ -178,7 +178,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       transformationManagerActor.ref,
       schemaManagerRouter.ref))
 
-    extActor ! ReloadStateAndMaterializeView()
+    extActor ! MaterializeExternalView()
 
     schemaManagerRouter.expectMsg(GetMetaDataForMaterialize(extView,
       MaterializeViewMode.DEFAULT,
@@ -209,7 +209,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       transformationManagerActor.ref,
       schemaManagerRouter.ref))
 
-    extActor ! ReloadStateAndMaterializeView()
+    extActor ! MaterializeExternalView()
 
     schemaManagerRouter.expectMsg(GetMetaDataForMaterialize(viewE,
       MaterializeViewMode.DEFAULT,

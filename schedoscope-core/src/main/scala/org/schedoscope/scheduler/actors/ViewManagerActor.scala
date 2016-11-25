@@ -102,7 +102,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     if (!settings.externalDependencies) {
       //external dependencies are not allowed
       val containsExternalDependencies = allViews.exists {
-        case (view, _, _) => view.hasExternalDependencies()
+        case (view, _, _) => view.hasExternalDependencies
       }
 
       if (containsExternalDependencies && !settings.externalChecksDisabled)
@@ -182,7 +182,6 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
                 newDepsActorRefs.foreach(actorRef ! _)
               case None => //actor not yet known nothing to do here
             }
-
         }
       }
 

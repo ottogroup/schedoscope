@@ -335,7 +335,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Returns true if views contains external dependencies
     */
-  def hasExternalDependencies() = dependencies.exists(v => v.isExternal)
+  def hasExternalDependencies = dependencies.exists(_.isExternal)
 }
 
 /**

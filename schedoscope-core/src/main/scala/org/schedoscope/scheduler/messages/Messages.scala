@@ -148,7 +148,7 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
   * Used for external views.
   * @param mode materialization mode
   */
-case class ReloadStateAndMaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
+case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
 /**
   * Request for the SchemaManager to
