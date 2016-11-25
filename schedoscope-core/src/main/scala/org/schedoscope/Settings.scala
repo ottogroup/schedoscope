@@ -35,6 +35,7 @@ object Settings extends ExtensionId[SchedoscopeSettings] with ExtensionIdProvide
   }
 
   def apply(config: Config) = {
+    config.resolve()
     new SchedoscopeSettings(config)
   }
 }

@@ -143,13 +143,12 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   it should "throw an exception if external views are not allowed" in new ViewManagerActorTest {
+
+    val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
     an [UnsupportedOperationException] shouldBe thrownBy {
-      val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
       viewManagerActor.receive(viewWithExt)
     }
-
   }
-
 
 
 }

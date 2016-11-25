@@ -57,10 +57,15 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         //
         // Block access to external views
         //
+
         if(settings.externalDependencies) {
           views.foreach { v =>
-            if (!settings.externalHome.exists(v.dbName.startsWith(_)))
-              throw new UnsupportedOperationException("You can not access an external view directly")
+            val dbName = v.dbName.replace("_",".")
+            val addressesExternal = settings.externalHome.exists{
+              s => !dbName.startsWith(s.replace("${env}",v.env))
+            }
+            if (addressesExternal)
+              throw new UnsupportedOperationException("You can not address an external view directly.")
           }
         }
         views

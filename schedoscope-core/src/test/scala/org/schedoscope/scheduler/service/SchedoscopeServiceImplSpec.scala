@@ -2,13 +2,13 @@ package org.schedoscope.scheduler.service
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
-import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.scheduler.messages.{GetViews, ViewStatusListResponse, ViewStatusResponse}
 import org.schedoscope.{Schedoscope, Settings, TestUtils}
+import test.intviews.Shop
 import test.views.Brand
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,8 +25,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   override def afterAll() = {
     TestKit.shutdownActorSystem(system)
   }
-
-
 
   trait SchedoscopeServiceTest {
 
@@ -45,7 +43,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
   trait SchedoscopeServiceExternalTest extends SchedoscopeServiceTest {
     override lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true",
-      """schedoscope.external.internal=["prod.app.test"] """ )
+      """schedoscope.external.internal=["${env}.test.intviews"] """ )
   }
 
   "the service" should "ask for status" in new SchedoscopeServiceTest {
@@ -71,9 +69,23 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     the [IllegalArgumentException] thrownBy {
       service.views(Some(testView.urlPath), None, None, None, None, None)
     } should have message "Invalid view URL pattern passed: test.views/Brand/test.\n" +
-      "original Message: You can not access an external view directly"
+      "original Message: You can not address an external view directly."
   }
 
+  it should "allow a call on an internal view" in new SchedoscopeServiceExternalTest {
+    val testView = Shop()
+    val response = Future {
+      service.views(Some(testView.urlPath), None, None, None, None, None)
+    }
+    viewManagerActor.expectMsg(GetViews(Some(List(testView)), None, None))
+    viewManagerActor.reply(ViewStatusListResponse(List(ViewStatusResponse("loading", testView, viewManagerActor.ref))))
 
+    val expected = ViewStatusList(Map("loading" -> 1),
+      List(ViewStatus("test.intviews/Shop/",
+        None, "loading", None, None, None, None, None, None, None, None, None, None)))
 
+    whenReady(response) { result =>
+      result shouldBe expected
+    }
+  }
 }
