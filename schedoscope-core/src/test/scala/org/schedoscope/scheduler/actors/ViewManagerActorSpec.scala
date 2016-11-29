@@ -25,7 +25,7 @@ import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.{Schedoscope, Settings, TestUtils}
-import test.extviews.Shop
+import test.extviews.ExternalShop
 import test.views._
 
 import scala.concurrent.Await
@@ -122,7 +122,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
     val future = viewManagerActor ? viewWithExt
-    val viewE = ExternalView(Shop())
+    val viewE = ExternalView(ExternalShop())
 
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
     schemaManagerRouter.reply(SchemaActionSuccess())
@@ -177,11 +177,11 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     viewManagerActor ! viewWithExt
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
     schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(Shop())))
+    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(ExternalShop())))
     schemaManagerRouter.reply(SchemaActionSuccess())
     schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
     schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
-    schemaManagerRouter.expectMsg(AddPartitions(List(Shop())))
-    schemaManagerRouter.reply(TransformationMetadata(Map(Shop() -> ("test", 1L))))
+    schemaManagerRouter.expectMsg(AddPartitions(List(ExternalShop())))
+    schemaManagerRouter.reply(TransformationMetadata(Map(ExternalShop() -> ("test", 1L))))
   }
 }

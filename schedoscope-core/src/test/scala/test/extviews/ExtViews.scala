@@ -18,7 +18,7 @@ package test.extviews
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.NoOp
 
-case class Shop() extends View {
+case class ExternalShop() extends View {
 
   transformVia(() => NoOp())
 }

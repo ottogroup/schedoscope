@@ -57,14 +57,12 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         //
         // Block access to external views
         //
-
         if(settings.externalDependencies) {
           views.foreach { v =>
             if (!v.isInDatabases(settings.externalHome:_*))
               throw new UnsupportedOperationException("You can not address an external view directly.")
           }
         }
-        views
       } catch {
         case t: Throwable => throw new IllegalArgumentException(s"Invalid view URL pattern passed: ${viewUrlPath.get}."
           + {

@@ -8,7 +8,7 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.scheduler.messages.{GetViews, ViewStatusListResponse, ViewStatusResponse}
 import org.schedoscope.{Schedoscope, Settings, TestUtils}
-import test.extviews.Shop
+import test.extviews.ExternalShop
 import test.views.{Brand, ViewWithExternalDeps}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -64,7 +64,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   it should "block a call on an external view" in new SchedoscopeServiceExternalTest {
-    val testView = Shop()
+    val testView = ExternalShop()
 
     the [IllegalArgumentException] thrownBy {
       service.views(Some(testView.urlPath), None, None, None, None, None)

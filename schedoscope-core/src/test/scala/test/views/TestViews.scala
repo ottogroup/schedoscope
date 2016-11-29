@@ -23,7 +23,7 @@ import org.schedoscope.dsl.transformations.HiveTransformation._
 import org.schedoscope.dsl.views._
 import org.schedoscope.dsl.{ExternalView, Parameter, Structure, View}
 import org.schedoscope.export.testsupport.EmbeddedFtpSftpServer
-import test.extviews.Shop
+import test.extviews.ExternalShop
 
 import scala.util.Random
 
@@ -107,7 +107,7 @@ case class ViewWithIllegalExternalDeps(shopCode: Parameter[String]) extends View
 
 case class ViewWithIllegalInternalDeps(shopCode: Parameter[String]) extends View {
 
-  val shop = dependsOn(() => Shop())
+  val shop = dependsOn(() => ExternalShop())
 
   val productId = fieldOf[String]
   val productName = fieldOf[String]
@@ -126,7 +126,7 @@ case class ViewWithExternalDeps(shopCode: Parameter[String],
   with JobMetadata
   with DailyParameterization {
 
-  val shop = dependsOn(() => external(Shop()))
+  val shop = dependsOn(() => external(ExternalShop()))
 
   val productId = fieldOf[String]
   val productName = fieldOf[String]
