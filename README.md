@@ -77,6 +77,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 11/30/2016 - Release 0.7.1
+
+We have released Version 0.7.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This release includes a fix removing bad default values for the driver setting `location` for some transformation types. Moreover, it now includes the config setting `schedoscope.hadoop.viewDataHdfsRoot` which allows one to set a root folder different from `/hdp` for view table data without having to register a new `dbPathBuilder` builder function for each view.
+
 ###### 11/01/2016 - Release 0.7.0
 
 [Spark transformations, finally](https://github.com/ottogroup/schedoscope/wiki/Spark-Transformations)! Build views based on Scala and Python Spark 1.6.0 jobs or run your Hive transformations on Spark. Test them using the Schedoscope test framework like any other transformation type. `HiveContext` is supported.
