@@ -16,11 +16,12 @@
 package org.schedoscope.dsl
 
 import com.openpojo.reflection.impl.PojoClassFactory
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.{NoOp, SeqTransformation, Transformation}
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.{ParsedView, ParsedViewAugmentor}
-import org.schedoscope.test.{WritableView}
+import org.schedoscope.test.WritableView
 
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
@@ -86,9 +87,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Pluggable builder function that returns the HDFS path representing the database of the view given an environment.
     * The default implementation does this by building a path from the lower-case-underscore format of
-    * moduleNameBuilder, replacing _ with / and prepending hdp/dev/ for the default dev environment.
+    * moduleNameBuilder, replacing _ with / and prepending /hdp/dev/ for the default dev environment.
     */
-  override var dbPathBuilder = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
+  override var dbPathBuilder = (env: String) => Schedoscope.settings.viewDataHdfsRoot + "/" + env.toLowerCase() + "/" + (moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
 
   def dbPath = dbPathBuilder(env)
 
