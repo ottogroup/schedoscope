@@ -74,6 +74,11 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
   }
 
   /**
+    * Configured view action scheduling listener handlers.
+    */
+  lazy val viewSchedulingRunCompletionHandlers = config.getStringList("schedoscope.scheduler.viewSchedulingRunCompletionHandlers").toList
+
+  /**
     * An instance of the view augmentor class
     */
   lazy val viewAugmentor = Class.forName(parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
