@@ -16,10 +16,12 @@
 package org.schedoscope.scheduler.messages
 
 import akka.actor.ActorRef
+import org.joda.time.LocalDateTime
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
+import org.schedoscope.scheduler.states.ViewSchedulingAction
 
 /**
   * Superclass for failure messages.
@@ -273,3 +275,11 @@ case class ViewHasNoData(view: View) extends CommandResponse
   * @param errors                  true if some transformations in that subtree have been failing
   */
 case class ViewMaterialized(view: View, incomplete: Boolean, transformationTimestamp: Long, errors: Boolean) extends CommandResponse
+
+
+sealed class ViewSchedulingEvent
+
+case class ViewSchedulingListenersExist(msg:Boolean) extends ViewSchedulingEvent
+
+case class ViewSchedulingNewEvent(view: View, action: Option[ViewSchedulingAction],
+                                  prevState: Option[String], newState: String) extends ViewSchedulingEvent

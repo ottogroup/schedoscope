@@ -18,10 +18,15 @@ import org.schedoscope.dsl.View
 import org.joda.time.LocalDateTime
 
 /**
-  * Handle for the view scheduling action monitored executed by a view scheduling listener actor.
+  * Handle for the view scheduling state and optionally action monitored executed
+  * by a view scheduling listener actor. It should allow external parties to monitor
+  * evolution of states for views, as well as different actions called on it.
   *
+  * Note: A view always has a new state (newState); in case the view is initiated,
+  * then previous state (prevState) is set to None
   */
-class ViewSchedulingListenerHandle(val view: View,
+case class ViewSchedulingListenerHandle(val view: View,
                                    val started: LocalDateTime,
-                                   val action: Option[ViewSchedulingAction],
-                                   val state: String)
+                                   var action: Option[ViewSchedulingAction],
+                                   var prevState: Option[String],
+                                   var newState: String)

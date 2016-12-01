@@ -37,7 +37,9 @@ class ViewActor(var currentState: ViewSchedulingState,
                 dependencies: Map[View, ActorRef],
                 viewManagerActor: ActorRef,
                 transformationManagerActor: ActorRef,
-                schemaManagerRouter: ActorRef) extends Actor {
+                schemaManagerRouter: ActorRef,
+                viewSchedulingListenerManagerActor: ActorRef
+               ) extends Actor {
 
   import context._
 
@@ -45,6 +47,16 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   val log = Logging(system, this)
   var knownDependencies = dependencies
+  var viewSchedulingListenersExist = true
+
+  /**
+    * Notify viewSchedulingListener handler actors that the system
+    * knows about this View
+    */
+  override def preStart {
+    viewSchedulingListenerManagerActor ! ViewSchedulingNewEvent(
+      currentState.view, None, None, currentState.label)
+  }
 
   def receive: Receive = LoggingReceive {
 
@@ -121,6 +133,9 @@ class ViewActor(var currentState: ViewSchedulingState,
       knownDependencies += view -> viewRef
     }
 
+    case ViewSchedulingListenersExist(answer) =>
+      viewSchedulingListenersExist = answer
+
   }
 
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
@@ -131,17 +146,31 @@ class ViewActor(var currentState: ViewSchedulingState,
       currentState = updatedState
       performSchedulingActions(actions)
 
+
+      logToViewSchedulingListeners(previousState.view, previousState, updatedState, actions)
+
       if (stateChange(previousState, updatedState))
         logStateChange(updatedState, previousState)
 
     }
   }
 
+  def logToViewSchedulingListeners(view:View,
+                                   prevState:ViewSchedulingState,
+                                   newState:ViewSchedulingState,
+                                   actions: Set[ViewSchedulingAction]) = {
+    if(viewSchedulingListenersExist && !view.isExternal)
+      actions.foreach { action =>
+          viewSchedulingListenerManagerActor ! ViewSchedulingNewEvent(view, Some(action),
+            Some(prevState.label), newState.label)
+      }
+  }
+
+
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
 
     case WriteTransformationTimestamp(view, transformationTimestamp) =>
       if (!view.isExternal) schemaManagerRouter ! LogTransformationTimestamp(view, transformationTimestamp)
-
 
     case WriteTransformationCheckum(view) =>
       if (!view.isExternal) schemaManagerRouter ! SetViewVersion(view)

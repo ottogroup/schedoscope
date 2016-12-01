@@ -1,24 +1,34 @@
 package org.schedoscope.scheduler.actors
 
-import akka.actor.SupervisorStrategy.{Escalate, Restart}
-import akka.actor.{Actor, ActorInitializationException, OneForOneStrategy, Props}
-import akka.event.{Logging, LoggingReceive}
-import org.schedoscope.conf.SchedoscopeSettings
+import akka.actor.{Actor, Props}
+import akka.event.Logging
+import org.joda.time.LocalDateTime
+import org.schedoscope.scheduler.states.{ViewSchedulingAction, ViewSchedulingListener, ViewSchedulingListenerHandle}
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.messages.ViewSchedulingNewEvent
 
-class ViewSchedulingListenerActor(view:View) extends Actor {
+class ViewSchedulingListenerActor(handlerClassName:String) extends Actor {
 
   import context._
   val log = Logging(system, ViewSchedulingListenerActor.this)
+  val viewSchedulingListenerHandler = new ViewSchedulingListener(handlerClassName)
+
+  def receive: Receive = {
+    case ViewSchedulingNewEvent(view, action, prevState, newState) =>
+      viewSchedulingListenerHandler.viewSchedulingCall(
+        ViewSchedulingListenerHandle(view, new LocalDateTime(), action, prevState, newState))
+      logStateInfo(view, prevState, newState, action)
+  }
 
 
-  def receive: Receive = LoggingReceive({
-
-  })
-
-  def logStateInfo(state: String, message: String) {
-    //viewStateChangeManagerActor ! ViewStatusResponse(state, self, driver, runHandle, runState)
-    log.info(message)
+  def logStateInfo(view:View, prevState: Option[String], newState:String, action:Option[ViewSchedulingAction]) {
+    action match {
+      case Some(a) => log.info(s"view: ${View}, prevState: ${prevState}, newState: ${newState}, action: ${a}")
+      case None => prevState match {
+        case Some(s) => log.info(s"view: ${View}, prevState: ${prevState}, newState: ${newState}")
+        case None => log.info(s"Initialized view: ${View} ==>State: ${newState}")
+      }
+    }
   }
 
 }
@@ -27,5 +37,7 @@ class ViewSchedulingListenerActor(view:View) extends Actor {
   * Factory for ViewSchedulingListenerActor actor.
   */
 object ViewSchedulingListenerActor {
-  def props(settings: SchedoscopeSettings) = Props(classOf[ViewSchedulingListenerActor], settings).withDispatcher("akka.actor.view-stage-change-listener-dispatcher")
+  def props(handlerClassName:String) =
+    Props(classOf[ViewSchedulingListenerActor], handlerClassName)
+      .withDispatcher("akka.actor.view-scheduling-listener-dispatcher")
 }

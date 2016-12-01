@@ -15,78 +15,27 @@
   */
 package org.schedoscope.scheduler.states
 
-import org.schedoscope.dsl.View
-import shapeless.TypeOperators.T
-
-trait ViewSchedulingListener {
-
-  /**
-    * Needs to be overridden to return the class names of View Action run completion handlers to apply.
-    *
-    * E.g., provide a val of the same name to the constructor of the ViewSchedulingListener implementation.
-    */
-  def viewSchedulingRunCompletionHandlerClassName: String
+class ViewSchedulingListener(viewSchedulingHandlerClassName:String) {
 
   lazy val viewSchedulingRunCompletionHandler: ViewSchedulingListenerHandler =
     Class
-      .forName(viewSchedulingRunCompletionHandlerClassName)
+      .forName(viewSchedulingHandlerClassName)
       .newInstance()
       .asInstanceOf[ViewSchedulingListenerHandler]
 
-
   /**
-    * The views actively being monitored by this Monitor at a given point.
+    * Call handler state/action related methods
+    * Note: avoids duplication => only if action did not
+    *       change state does it call viewScheduleNewAction
+    *       method
     */
-  var viewsActivelyMonitored: Set[View]
-
-  /**
-    * Get the current view run state for a given view represented by the handle.
-    */
-  def getViewSchedulingState(run: ViewSchedulingListenerHandle): ViewSchedulingState
-
-  /**
-    * Confirm if there has been a change in the current scheduled action for a given
-    * view run state for a given view represented by the handle.
-    */
-  def viewSchedulingActionChange(newRun: ViewSchedulingListenerHandle,
-                                prevRun: ViewSchedulingListenerHandle): Boolean
-
-  /**
-    * Create a view state change listener upon view initialization of a given View,
-    */
-  def init(view: View): ViewSchedulingListenerHandle
-
-  /**
-    * Actually starts the ViewScheduling Action listener upon an initialized View
-    */
-  def viewSchedulingRunStarted(newRun: ViewSchedulingListenerHandle,
-                               prevRun: ViewSchedulingListenerHandle) = {
-    if(viewSchedulingActionChange(newRun, prevRun)) {
-      viewSchedulingRunCompleted(newRun: ViewSchedulingListenerHandle)
+  def viewSchedulingCall(handle: ViewSchedulingListenerHandle): Unit = {
+    if (handle.prevState != handle.newState) {
+      viewSchedulingRunCompletionHandler.viewScheduleStateChange(handle)
     }
-    viewSchedulingRunCompletionHandler.viewScheduleActionStart(newRun)
-  }
-
-
-
-  /**
-    * Invokes completion handlers after the given driver run.
-    */
-  def viewSchedulingRunCompleted(run: ViewSchedulingListenerHandle) {
-    getViewSchedulingState(run) match {
-      case vss: CreatedByViewManager => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: Failed => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: Invalidated => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: Materialized => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: NoData => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: ReadFromSchemaManager => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: Retrying => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: Transforming => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: ViewSchedulingState => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case vss: Waiting => viewSchedulingRunCompletionHandler.viewScheduleActionCompleted(vss, run)
-      case _ => throw new RuntimeException("View Schedule state returned is not valid.")
+    else {
+      viewSchedulingRunCompletionHandler.viewScheduleNewAction(handle)
     }
   }
-
 
 }

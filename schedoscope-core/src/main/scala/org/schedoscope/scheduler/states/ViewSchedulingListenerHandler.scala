@@ -17,36 +17,21 @@ package org.schedoscope.scheduler.states
 
 /**
   * Trait for user defined code to be executed before and after a given View state.
-  * e.g. for gathering statistics
-  * and logging information about precise status of Views
+  * e.g. for gathering statistics and logging information about View status
   *
   */
 trait ViewSchedulingListenerHandler {
 
   /**
-    * This method is called immediately after a View scheduling action was started.
-    * This can be used to take measurements before the execution of View scheduling
-    * action run or other setup tasks.
+    * This method is called only if a View's State is changed
+    * For more detailed monitoring, use abstract class
     */
-  def viewScheduleActionStart(run: ViewSchedulingListenerHandle)
+  def viewScheduleStateChange(run: ViewSchedulingListenerHandle):Unit
 
   /**
-    * This method is called after scheduled action has changed
-    *
+    * This method is called after a new View scheduling Action
+    * is issued - ONLY if a View State did NOT change
     */
-  def viewScheduleActionCompleted(stateOfCompletion: ViewSchedulingState,
-                                  run: ViewSchedulingListenerHandle)
-
-}
-
-/**
-  * Default implementation of a View Scheduling Listener handler. Does nothing.
-  */
-class DoNothingViewSchedulingListenerHandler extends ViewSchedulingListenerHandler {
-
-  def viewScheduleActionStart(run: ViewSchedulingListenerHandle) {}
-
-  def viewScheduleActionCompleted(stateOfCompletion: ViewSchedulingState,
-                         run: ViewSchedulingListenerHandle) {}
+  def viewScheduleNewAction(handle: ViewSchedulingListenerHandle):Unit = {}
 
 }
