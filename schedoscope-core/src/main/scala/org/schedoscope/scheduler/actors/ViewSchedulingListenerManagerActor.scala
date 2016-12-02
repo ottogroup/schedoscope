@@ -4,10 +4,9 @@ import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor.{Actor, ActorInitializationException, ActorKilledException, OneForOneStrategy, Props}
 import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.conf.SchedoscopeSettings
+import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, ViewSchedulingListenersExist, ViewSchedulingNewEvent}
+import org.schedoscope.scheduler.states.ViewSchedulingListenerHandler
 import org.schedoscope.dsl.View
-import org.schedoscope.scheduler.messages.{ViewSchedulingListenersExist, ViewSchedulingNewEvent}
-import org.schedoscope.scheduler.states.{ViewSchedulingAction, ViewSchedulingListenerHandler}
-
 
 class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends Actor {
 
@@ -22,24 +21,28 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
       case _ => Escalate
     }
 
-  lazy val viewSchedulingListenerHandlersAndMonitoredViews = {
-    (0 until settings.viewSchedulingRunCompletionHandlers.length).foldLeft(
-    Set[String]()) {
-      (handlersMapSoFar, n) => {
-        getViewSchedulingHandlerClass(settings.viewSchedulingRunCompletionHandlers(n)) match {
-          case h: ViewSchedulingListenerHandler =>
-            handlersMapSoFar + (settings.viewSchedulingRunCompletionHandlers(n))
-        }
+  var viewsMonitored = scala.collection.mutable.Map[View, ViewSchedulingNewEvent]()
+
+  lazy val viewSchedulingListenerHandlersAndMonitoredViews =
+    if(settings.viewSchedulingRunCompletionHandlers.length > 0) {
+      val handlersMapSoFar = scala.collection.mutable.Set[String]()
+      settings.viewSchedulingRunCompletionHandlers.foreach { x =>
+        if(getViewSchedulingHandlerClass(x))
+            handlersMapSoFar + x
       }
-    }
+      handlersMapSoFar
+  } else {
+    Set[String]()
   }
 
-  private def getViewSchedulingHandlerClass(className: String) = try {
+  private def getViewSchedulingHandlerClass(className: String):Boolean = try {
     Class.forName(className).newInstance().asInstanceOf[ViewSchedulingListenerHandler]
+    true
   } catch {
     case _: ClassNotFoundException =>
       val msg = s"Class ${className} was not found. Skipping handler."
       log.error(msg)
+      false
   }
 
   /**
@@ -50,7 +53,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
     viewSchedulingListenerHandlersAndMonitoredViews.toSeq.foreach( handler =>
       actorOf(
         ViewSchedulingListenerActor.props(
-          handler), handler)
+          handler, self), handler)
     )
   }
 
@@ -60,10 +63,19 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   }
 
   def receive: Receive = LoggingReceive({
-    case ViewSchedulingNewEvent(view, action, prevState, newState) =>
-      println("TODO - forward to all Children")
+
+    case ViewSchedulingNewEvent(view, eventTime, action, prevState, newState) => {
+      // forward to all its children (aka handlers)
+      context.actorSelection("*")
+      viewsMonitored += (view -> ViewSchedulingNewEvent(view, eventTime, action, prevState, newState))
+    }
+
+    case CollectViewSchedulingStatus() =>
+      viewsMonitored.values.foreach(sender ! _)
+
     case ViewSchedulingListenersExist(_) =>
-      sender ! ViewSchedulingListenersExist(viewSchedulingListenerHandlersAndMonitoredViews.size > 0)
+      sender ! ViewSchedulingListenersExist(
+        viewSchedulingListenerHandlersAndMonitoredViews.size > 0)
   })
 
 }
@@ -74,5 +86,5 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
 object ViewSchedulingListenerManagerActor {
   def props(settings: SchedoscopeSettings) =
     Props(classOf[ViewSchedulingListenerManagerActor], settings)
-      .withDispatcher("akka.actor.view-stage-change-listener-dispatcher")
+      .withDispatcher("akka.actor.view-scheduling-listener-dispatcher ")
 }

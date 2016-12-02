@@ -277,9 +277,14 @@ case class ViewHasNoData(view: View) extends CommandResponse
 case class ViewMaterialized(view: View, incomplete: Boolean, transformationTimestamp: Long, errors: Boolean) extends CommandResponse
 
 
-sealed class ViewSchedulingEvent
+sealed class ViewSchedulingMonitoring
 
-case class ViewSchedulingListenersExist(msg:Boolean) extends ViewSchedulingEvent
+case class ViewSchedulingListenersExist(msg:Boolean) extends ViewSchedulingMonitoring
 
-case class ViewSchedulingNewEvent(view: View, action: Option[ViewSchedulingAction],
-                                  prevState: Option[String], newState: String) extends ViewSchedulingEvent
+case class CollectViewSchedulingStatus() extends ViewSchedulingMonitoring
+
+case class ViewSchedulingNewEvent(view: View,
+                                  eventTime: LocalDateTime,
+                                  action: Option[ViewSchedulingAction],
+                                  prevState: Option[String],
+                                  newState: String) extends ViewSchedulingMonitoring

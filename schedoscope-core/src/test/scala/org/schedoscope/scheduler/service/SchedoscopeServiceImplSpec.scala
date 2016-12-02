@@ -66,14 +66,15 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     val schemaManagerRouter = TestProbe()
     val transformationManagerActor = TestProbe()
-
+    val viewSchedulingListenerManagerActor = TestProbe()
     Schedoscope.actorSystemBuilder = () => system
 
     val viewManagerActor = TestActorRef(
       ViewManagerActor.props(
             Schedoscope.settings,
             transformationManagerActor.ref,
-            schemaManagerRouter.ref))
+            schemaManagerRouter.ref,
+            viewSchedulingListenerManagerActor.ref))
 
     Schedoscope.viewManagerActorBuilder = () => viewManagerActor
 

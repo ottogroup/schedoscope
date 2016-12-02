@@ -76,102 +76,107 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
   /**
     * Configured view action scheduling listener handlers.
     */
-  lazy val viewSchedulingRunCompletionHandlers = config.getStringList("schedoscope.scheduler.viewSchedulingRunCompletionHandlers").toList
-
-  /**
-    * An instance of the view augmentor class
-    */
-  lazy val viewAugmentor = Class.forName(parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
-
-  /**
-    * A suitable hadoop config to use
-    */
-  lazy val hadoopConf = {
-    val conf = new Configuration(true)
-    if (conf.get("fs.defaultFS") == null)
-      conf.set("fs.defaultFS", config.getString("schedoscope.hadoop.nameNode"))
-    conf
-  }
-
-  /**
-    * The configured HDFS namenode. The Hadoop default takes precendence.
-    */
-  lazy val nameNode = hadoopConf.get("fs.defaultFS")
-
-  /**
-    * Return the resource manager or job tracker equivalent. The Hadoop configuration takes precendence.
-    */
-  lazy val jobTrackerOrResourceManager = {
-    val yarnConf = new YarnConfiguration(hadoopConf)
-    if (yarnConf.get("yarn.resourcemanager.address") == null)
-      config.getString("schedoscope.hadoop.resourceManager")
-    else
-      yarnConf.get("yarn.resourcemanager.address")
-  }
-
-  /**
-    * The configured timeout for filesystem operations.
-    */
-  lazy val filesystemTimeout = getDriverSettings("filesystem").timeout
-
-  /**
-    * A user group information object ready to use for kerberized interactions.
-    */
-  def userGroupInformation = {
-    UserGroupInformation.setConfiguration(hadoopConf)
-    val ugi = UserGroupInformation.getCurrentUser()
-    ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
-    ugi.reloginFromKeytab()
-    ugi
-  }
-
-  /**
-    * Returns driver-specific settings from the configuration
-    *
-    * @param d driver to retrieve the settings for
-    * @return the driver settings
-    */
-  def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
-    getDriverSettings(d.transformationName)
-  }
-
-  /**
-    * Returns driver-specific settings from the configuration by transformation type
-    *
-    * @param t transformation type whose settings are of interest
-    * @return the driver settings
-    */
-  def getDriverSettings[T <: Transformation](t: T): DriverSettings = {
-    val name = t.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("\\$", "")
-    getDriverSettings(name)
-  }
-
-  /**
-    * Returns driver-specific settings by transformation type name
-    *
-    * @param transformationName the name of the transformation type (e.g. mapreduce)
-    * @return the driver settings
-    */
-  def getDriverSettings(transformationName: String): DriverSettings = {
-    if (!driverSettings.contains(transformationName)) {
-      val confName = "schedoscope.transformations." + transformationName
-      driverSettings.put(transformationName, new DriverSettings(config.getConfig(confName), transformationName))
+  lazy val viewSchedulingRunCompletionHandlers =  try {
+      config.getStringList("schedoscope.scheduler.viewSchedulingRunCompletionHandlers").toList
+    } catch {
+      case _ => List()
     }
 
-    driverSettings(transformationName)
-  }
+    /**
+      * An instance of the view augmentor class
+      */
+    lazy val viewAugmentor = Class.forName(parsedViewAugmentorClass).newInstance().asInstanceOf[ParsedViewAugmentor]
 
-  /**
-    * Retrieve a setting  for a transformation type
-    *
-    * @param transformationName the name of the transformation type (e.g. mapreduce)
-    * @param n                  the name of the setting for transformationName
-    * @return the setting's value as a string
-    */
-  def getTransformationSetting(transformationName: String, n: String) = {
-    val confName = s"schedoscope.transformations.${transformationName}.transformation.${n}"
-    config.getString(confName)
-  }
+    /**
+      * A suitable hadoop config to use
+      */
+    lazy val hadoopConf = {
+      val conf = new Configuration(true)
+      if (conf.get("fs.defaultFS") == null)
+        conf.set("fs.defaultFS", config.getString("schedoscope.hadoop.nameNode"))
+      conf
+    }
+
+    /**
+      * The configured HDFS namenode. The Hadoop default takes precendence.
+      */
+    lazy val nameNode = hadoopConf.get("fs.defaultFS")
+
+    /**
+      * Return the resource manager or job tracker equivalent. The Hadoop configuration takes precendence.
+      */
+    lazy val jobTrackerOrResourceManager = {
+      val yarnConf = new YarnConfiguration(hadoopConf)
+      if (yarnConf.get("yarn.resourcemanager.address") == null)
+        config.getString("schedoscope.hadoop.resourceManager")
+      else
+        yarnConf.get("yarn.resourcemanager.address")
+    }
+
+    /**
+      * The configured timeout for filesystem operations.
+      */
+    lazy val filesystemTimeout = getDriverSettings("filesystem").timeout
+
+    /**
+      * A user group information object ready to use for kerberized interactions.
+      */
+    def userGroupInformation = {
+      UserGroupInformation.setConfiguration(hadoopConf)
+      val ugi = UserGroupInformation.getCurrentUser()
+      ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS)
+      ugi.reloginFromKeytab()
+      ugi
+    }
+
+    /**
+      * Returns driver-specific settings from the configuration
+      *
+      * @param d driver to retrieve the settings for
+      * @return the driver settings
+      */
+    def getDriverSettings(d: Any with Driver[_]): DriverSettings = {
+      getDriverSettings(d.transformationName)
+    }
+
+    /**
+      * Returns driver-specific settings from the configuration by transformation type
+      *
+      * @param t transformation type whose settings are of interest
+      * @return the driver settings
+      */
+    def getDriverSettings[T <: Transformation](t: T): DriverSettings = {
+      val name = t.getClass.getSimpleName.toLowerCase.replaceAll("transformation", "").replaceAll("\\$", "")
+      getDriverSettings(name)
+    }
+
+    /**
+      * Returns driver-specific settings by transformation type name
+      *
+      * @param transformationName the name of the transformation type (e.g. mapreduce)
+      * @return the driver settings
+      */
+    def getDriverSettings(transformationName: String): DriverSettings = {
+      if (!driverSettings.contains(transformationName)) {
+        val confName = "schedoscope.transformations." + transformationName
+        driverSettings.put(transformationName, new DriverSettings(config.getConfig(confName), transformationName))
+      }
+
+      driverSettings(transformationName)
+    }
+
+    /**
+      * Retrieve a setting  for a transformation type
+      *
+      * @param transformationName the name of the transformation type (e.g. mapreduce)
+      * @param n                  the name of the setting for transformationName
+      * @return the setting's value as a string
+      */
+    def getTransformationSetting(transformationName: String, n: String) = {
+      val confName = s"schedoscope.transformations.${transformationName}.transformation.${n}"
+      config.getString(confName)
+    }
+
 }
 
 /**

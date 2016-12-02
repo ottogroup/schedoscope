@@ -37,7 +37,8 @@ object Schedoscope {
   var viewManagerActorBuilder = () => actorSystem.actorOf(
     ViewManagerActor.props(settings,
       transformationManagerActor,
-      schemaManagerRouter), "views")
+      schemaManagerRouter,
+      viewSchedulingListenerManagerActor), "views")
 
   /**
     * Pluggable builder function that returns the settings for schedoscope.

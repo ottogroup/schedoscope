@@ -48,6 +48,8 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val transformationManagerActor = TestProbe()
     val schemaManagerRouter = TestProbe()
+    val viewSchedulingListenerManagerActor = TestProbe()
+
     val brandViewActor = TestProbe()
     val productViewActor = TestProbe()
     val fileSystem = mock[FileSystem]
@@ -64,7 +66,8 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
         productDependency -> productViewActor.ref),
       viewManagerActor.ref,
       transformationManagerActor.ref,
-      schemaManagerRouter.ref))
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
   }
 
   "The ViewActor" should "send materialize to deps" in new ViewActorTest {
@@ -81,7 +84,8 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       Map(),
       viewManagerActor.ref,
       transformationManagerActor.ref,
-      schemaManagerRouter.ref))
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
 
     emptyDepsViewActor ! NewViewActorRef(brandDependency, brandViewActor.ref)
     emptyDepsViewActor ! NewViewActorRef(productDependency, productViewActor.ref)
@@ -100,7 +104,8 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       Map(),
       viewManagerActor.ref,
       transformationManagerActor.ref,
-      schemaManagerRouter.ref))
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
 
     emptyDepsViewActor ! MaterializeView()
 
@@ -151,7 +156,8 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       Map(extView -> extActor.ref),
       viewManagerActor.ref,
       transformationManagerActor.ref,
-      schemaManagerRouter.ref))
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
 
     actorWithExt ! MaterializeView()
     extActor.expectMsg(ReloadStateAndMaterializeView())
@@ -177,7 +183,8 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       Map(),
       viewManagerActor.ref,
       transformationManagerActor.ref,
-      schemaManagerRouter.ref))
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
 
     extActor ! ReloadStateAndMaterializeView()
 
@@ -208,7 +215,8 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       Map(),
       viewManagerActor.ref,
       transformationManagerActor.ref,
-      schemaManagerRouter.ref))
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
 
     extActor ! ReloadStateAndMaterializeView()
 

@@ -49,11 +49,13 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val schemaManagerRouter = TestProbe()
     val actionsManagerActor = TestProbe()
+    val viewSchedulingListenerManagerActor = TestProbe()
 
     val viewManagerActor = TestActorRef(ViewManagerActor.props(
       settings,
       actionsManagerActor.ref,
-      schemaManagerRouter.ref))
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
     val transformationManagerActor = TestProbe()
 
     Schedoscope.viewManagerActorBuilder = () => viewManagerActor

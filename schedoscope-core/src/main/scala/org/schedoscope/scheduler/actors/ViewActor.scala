@@ -21,6 +21,7 @@ import java.security.PrivilegedAction
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
+import org.joda.time.LocalDateTime
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.dsl.transformations.{NoOp, Touch}
@@ -51,11 +52,21 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   /**
     * Notify viewSchedulingListener handler actors that the system
-    * knows about this View
+    * knows about this View plus ask if there are any listening
+    * handlers out there
     */
   override def preStart {
     viewSchedulingListenerManagerActor ! ViewSchedulingNewEvent(
-      currentState.view, None, None, currentState.label)
+      currentState.view, new LocalDateTime(), None, None, currentState.label)
+
+    viewSchedulingListenerManagerActor ! ViewSchedulingListenersExist(viewSchedulingListenersExist)
+  }
+
+  override def postRestart(reason: Throwable) {
+    super.postRestart(reason)
+    log.info(s"Restarted because of ${reason.getMessage}")
+
+    viewSchedulingListenerManagerActor ! ViewSchedulingListenersExist(viewSchedulingListenersExist)
   }
 
   def receive: Receive = LoggingReceive {
@@ -161,8 +172,8 @@ class ViewActor(var currentState: ViewSchedulingState,
                                    actions: Set[ViewSchedulingAction]) = {
     if(viewSchedulingListenersExist && !view.isExternal)
       actions.foreach { action =>
-          viewSchedulingListenerManagerActor ! ViewSchedulingNewEvent(view, Some(action),
-            Some(prevState.label), newState.label)
+          viewSchedulingListenerManagerActor ! ViewSchedulingNewEvent(view, new LocalDateTime(),
+            Some(action), Some(prevState.label), newState.label)
       }
   }
 
@@ -291,14 +302,16 @@ object ViewActor {
             dependencies: Map[View, ActorRef],
             viewManagerActor: ActorRef,
             transformationManagerActor: ActorRef,
-            schemaManagerRouter: ActorRef): Props =
+            schemaManagerRouter: ActorRef,
+            viewSchedulingListenerManagerActor: ActorRef): Props =
     props(state,
       settings,
       defaultFileSystem(settings.hadoopConf),
       dependencies,
       viewManagerActor,
       transformationManagerActor,
-      schemaManagerRouter)
+      schemaManagerRouter,
+      viewSchedulingListenerManagerActor)
 
   def props(state: ViewSchedulingState,
             settings: SchedoscopeSettings,
@@ -306,7 +319,8 @@ object ViewActor {
             dependencies: Map[View, ActorRef],
             viewManagerActor: ActorRef,
             transformationManagerActor: ActorRef,
-            schemaManagerRouter: ActorRef): Props =
+            schemaManagerRouter: ActorRef,
+            viewSchedulingListenerManagerActor: ActorRef): Props =
     Props(classOf[ViewActor],
       state,
       settings,
@@ -314,6 +328,7 @@ object ViewActor {
       dependencies,
       viewManagerActor,
       transformationManagerActor,
-      schemaManagerRouter).withDispatcher("akka.actor.views-dispatcher")
+      schemaManagerRouter,
+      viewSchedulingListenerManagerActor).withDispatcher("akka.actor.views-dispatcher")
 
 }

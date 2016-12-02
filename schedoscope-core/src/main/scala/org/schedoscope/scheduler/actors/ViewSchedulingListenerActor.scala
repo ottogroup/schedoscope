@@ -1,23 +1,30 @@
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorRef, Props}
 import akka.event.Logging
 import org.joda.time.LocalDateTime
 import org.schedoscope.scheduler.states.{ViewSchedulingAction, ViewSchedulingListener, ViewSchedulingListenerHandle}
 import org.schedoscope.dsl.View
-import org.schedoscope.scheduler.messages.ViewSchedulingNewEvent
+import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, ViewSchedulingNewEvent}
 
-class ViewSchedulingListenerActor(handlerClassName:String) extends Actor {
+class ViewSchedulingListenerActor(handlerClassName:String,
+                                  viewSchedulingListenerManagerActor: ActorRef) extends Actor {
 
   import context._
   val log = Logging(system, ViewSchedulingListenerActor.this)
   val viewSchedulingListenerHandler = new ViewSchedulingListener(handlerClassName)
 
   def receive: Receive = {
-    case ViewSchedulingNewEvent(view, action, prevState, newState) =>
+    case ViewSchedulingNewEvent(view, eventTime, action, prevState, newState) =>
       viewSchedulingListenerHandler.viewSchedulingCall(
-        ViewSchedulingListenerHandle(view, new LocalDateTime(), action, prevState, newState))
+        ViewSchedulingListenerHandle(view, eventTime, new LocalDateTime(), action, prevState, newState))
       logStateInfo(view, prevState, newState, action)
+  }
+
+  override def postRestart(reason: Throwable) {
+    super.postRestart(reason)
+    log.info(s"Restarted because of ${reason.getMessage}.")
+    viewSchedulingListenerManagerActor ! CollectViewSchedulingStatus
   }
 
 
@@ -37,7 +44,8 @@ class ViewSchedulingListenerActor(handlerClassName:String) extends Actor {
   * Factory for ViewSchedulingListenerActor actor.
   */
 object ViewSchedulingListenerActor {
-  def props(handlerClassName:String) =
-    Props(classOf[ViewSchedulingListenerActor], handlerClassName)
+  def props(handlerClassName:String, viewSchedulingListenerManagerActor: ActorRef) =
+    Props(classOf[ViewSchedulingListenerActor],
+      handlerClassName, viewSchedulingListenerManagerActor)
       .withDispatcher("akka.actor.view-scheduling-listener-dispatcher")
 }
