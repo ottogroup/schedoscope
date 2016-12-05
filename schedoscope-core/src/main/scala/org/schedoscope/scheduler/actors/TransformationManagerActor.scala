@@ -55,15 +55,15 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   // create a queue for each driver that is not a filesystem driver
   val nonFilesystemQueues = Driver.transformationsWithDrivers.filter {
     _ != "filesystem"
-  }.foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
+  }.foldLeft(Map[String, collection.mutable.Queue[DriverCommand]]()) {
     (nonFilesystemQueuesSoFar, transformationName) =>
-      nonFilesystemQueuesSoFar + (transformationName -> new collection.mutable.Queue[CommandWithSender]())
+      nonFilesystemQueuesSoFar + (transformationName -> new collection.mutable.Queue[DriverCommand]())
   }
 
   val filesystemConcurrency = settings.getDriverSettings("filesystem").concurrency
 
-  val filesystemQueues = (0 until filesystemConcurrency).foldLeft(Map[String, collection.mutable.Queue[CommandWithSender]]()) {
-    (filesystemQueuesSoFar, n) => filesystemQueuesSoFar + (s"filesystem-${n}" -> new collection.mutable.Queue[CommandWithSender]())
+  val filesystemQueues = (0 until filesystemConcurrency).foldLeft(Map[String, collection.mutable.Queue[DriverCommand]]()) {
+    (filesystemQueuesSoFar, n) => filesystemQueuesSoFar + (s"filesystem-${n}" -> new collection.mutable.Queue[DriverCommand]())
   }
 
   val queues = nonFilesystemQueues ++ filesystemQueues
@@ -145,7 +145,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
       }
     }
 
-    case commandToExecute: CommandWithSender => {
+    case commandToExecute: DriverCommand => {
       if (commandToExecute.command.isInstanceOf[Transformation]) {
         val transformation = commandToExecute.command.asInstanceOf[Transformation]
         val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
@@ -160,11 +160,12 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
       }
     }
 
-    case viewToTransform: View => self ! CommandWithSender(viewToTransform.transformation().forView(viewToTransform), sender)
+    case viewToTransform: View =>
+      self ! DriverCommand(TransformView(viewToTransform.transformation().forView(viewToTransform), viewToTransform), sender)
 
-    case filesystemTransformation: FilesystemTransformation => self ! CommandWithSender(filesystemTransformation, sender)
+    case filesystemTransformation: FilesystemTransformation => self ! DriverCommand(filesystemTransformation, sender)
 
-    case deploy: DeployCommand => self ! CommandWithSender(deploy, sender)
+    case deploy: DeployCommand => self ! DriverCommand(deploy, sender)
   })
 }
 

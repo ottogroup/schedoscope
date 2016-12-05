@@ -123,6 +123,8 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   }
 
+
+
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
     case ResultingViewSchedulingState(updatedState, actions) => {
 
@@ -228,18 +230,6 @@ class ViewActor(var currentState: ViewSchedulingState,
     log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
   }
 
-  def folderEmpty(view: View) = settings
-    .userGroupInformation.doAs(
-    new PrivilegedAction[Array[FileStatus]]() {
-      def run() = {
-        hdfs.listStatus(new Path(view.fullPath), new PathFilter() {
-          def accept(p: Path): Boolean = !p.getName.startsWith("_")
-        })
-      }
-    })
-    .foldLeft(0l) {
-      (size, status) => size + status.getLen
-    } <= 0
 
   def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
     case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
@@ -253,6 +243,19 @@ class ViewActor(var currentState: ViewSchedulingState,
         hdfs.exists(new Path(view.fullPath + "/_SUCCESS"))
       }
     })
+
+  def folderEmpty(view: View) = settings
+    .userGroupInformation.doAs(
+    new PrivilegedAction[Array[FileStatus]]() {
+      def run() = {
+        hdfs.listStatus(new Path(view.fullPath), new PathFilter() {
+          def accept(p: Path): Boolean = !p.getName.startsWith("_")
+        })
+      }
+    })
+    .foldLeft(0l) {
+      (size, status) => size + status.getLen
+    } <= 0
 }
 
 object ViewActor {

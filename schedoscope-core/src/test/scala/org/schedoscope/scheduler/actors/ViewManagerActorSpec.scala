@@ -164,7 +164,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
     the[UnsupportedOperationException] thrownBy {
       viewManagerActor.receive(viewWithExt)
-    } should have message "You are referencing an internal view as external: test.extviews/Shop/."
+    } should have message "You are referencing an internal view as external: test.extviews/ExternalShop/."
   }
 
   "the check" should "be silenced by the setting" in new ViewManagerActorExternalTest {

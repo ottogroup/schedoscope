@@ -15,13 +15,18 @@
   */
 package org.schedoscope.scheduler.actors
 
+import java.security.PrivilegedAction
+
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.apache.commons.lang.exception.ExceptionUtils
+import org.apache.hadoop.fs._
 import org.schedoscope.conf.{DriverSettings, SchedoscopeSettings}
+import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages._
+import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.language.postfixOps
@@ -32,7 +37,12 @@ import scala.language.postfixOps
   * type agnostic. Driver actors poll the transformation tasks they execute from the transformation manager actor
   *
   */
-class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds: DriverSettings, driverConstructor: (DriverSettings) => Driver[T], pingDuration: FiniteDuration) extends Actor {
+class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
+                                       ds: DriverSettings,
+                                       driverConstructor: (DriverSettings) => Driver[T],
+                                       pingDuration: FiniteDuration,
+                                       settings: SchedoscopeSettings,
+                                       hdfs: FileSystem) extends Actor {
 
   import context._
 
@@ -40,7 +50,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
 
   var driver: Driver[T] = _
 
-  var runningCommand: Option[CommandWithSender] = None
+  var runningCommand: Option[DriverCommand] = None
 
   /**
     * Start ticking upon start.
@@ -77,7 +87,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
     * Transitions only to state running, keeps polling the action manager for new work
     */
   def receive = LoggingReceive {
-    case CommandWithSender(command, sender) => toRunning(CommandWithSender(command, sender))
+    case t: DriverCommand => toRunning(t)
 
     case "tick" => {
       transformationManagerActor ! PollCommand(driver.transformationName)
@@ -91,14 +101,14 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
     * @param runHandle      reference to the running driver
     * @param originalSender reference to the viewActor that requested the transformation (for sending back the result)
     */
-  def running(runHandle: DriverRunHandle[T], originalSender: ActorRef): Receive = LoggingReceive {
+  def running(runHandle: DriverRunHandle[T], originalSender: ActorRef, transformingView: View): Receive = LoggingReceive {
     case KillCommand() => {
       driver.killRun(runHandle)
       toReceive()
     }
     // If getting a command while being busy, reschedule it by sending it to the actionsmanager
     // Should this ever happen?
-    case c: CommandWithSender => transformationManagerActor ! c
+    case c: DriverCommand => transformationManagerActor ! c
 
     // check all 10 seconds the state of the current running driver
     case "tick" => try {
@@ -122,7 +132,13 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
             }
           }
 
-          originalSender ! TransformationSuccess(runHandle, success)
+          val viewHasData = if (runHandle.transformation.isInstanceOf[NoOp]) {
+            successFlagExists(transformingView)
+          } else {
+            !folderEmpty(transformingView)
+          }
+
+          originalSender ! TransformationSuccess(runHandle, success, viewHasData)
           toReceive()
           tick()
         }
@@ -155,6 +171,9 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
         throw t
       }
     }
+
+
+
   }
 
   /**
@@ -176,29 +195,28 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
     *
     * @param commandToRun
     */
-  def toRunning(commandToRun: CommandWithSender) {
+  def toRunning(commandToRun: DriverCommand) {
     runningCommand = Some(commandToRun)
 
     try {
-      if (commandToRun.command.isInstanceOf[DeployCommand]) {
+      commandToRun.command match {
+        case DeployCommand =>
+          logStateInfo("deploy", s"DRIVER ACTOR: Running Deploy command")
 
-        logStateInfo("deploy", s"DRIVER ACTOR: Running Deploy command")
+          driver.deployAll(ds)
+          commandToRun.sender ! DeployCommandSuccess()
 
-        driver.deployAll(ds)
-        commandToRun.sender ! DeployCommandSuccess()
+          logStateInfo("idle", "DRIVER ACTOR: becoming idle")
+          runningCommand = None
+        case TransformView(t, view) =>
+          val transformation: T = t.asInstanceOf[T]
 
-        logStateInfo("idle", "DRIVER ACTOR: becoming idle")
+          val runHandle = driver.run(transformation)
+          driver.driverRunStarted(runHandle)
 
-        runningCommand = None
-      } else {
-        val transformation: T = commandToRun.command.asInstanceOf[T]
+          logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
 
-        val runHandle = driver.run(transformation)
-        driver.driverRunStarted(runHandle)
-
-        logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
-
-        become(running(runHandle, commandToRun.sender))
+          become(running(runHandle, commandToRun.sender, view))
       }
     } catch {
       case retryableException: RetryableDriverException => {
@@ -219,12 +237,45 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef, ds:
     transformationManagerActor ! TransformationStatusResponse(state, self, driver, runHandle, runState)
     log.info(message)
   }
+
+  def successFlagExists(view: View) = settings
+    .userGroupInformation.doAs(
+    new PrivilegedAction[Boolean]() {
+      def run() = {
+        hdfs.exists(new Path(view.fullPath + "/_SUCCESS"))
+      }
+    })
+
+  def folderEmpty(view: View) = settings
+    .userGroupInformation.doAs(
+    new PrivilegedAction[Array[FileStatus]]() {
+      def run() = {
+        hdfs.listStatus(new Path(view.fullPath), new PathFilter() {
+          def accept(p: Path): Boolean = !p.getName.startsWith("_")
+        })
+      }
+    })
+    .foldLeft(0l) {
+      (size, status) => size + status.getLen
+    } <= 0
 }
 
 /**
   * Factory methods for driver actors.
   */
 object DriverActor {
+  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef, hdfs: FileSystem) =
+    Props(
+      classOf[DriverActor[_]],
+      transformationManager,
+      settings.getDriverSettings(transformationName), (ds: DriverSettings) => Driver.driverFor(ds),
+      if (transformationName == "filesystem")
+        100 milliseconds
+      else
+        5 seconds,
+      settings,
+      hdfs: FileSystem).withDispatcher("akka.actor.driver-dispatcher")
+
   def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef) =
     Props(
       classOf[DriverActor[_]],
@@ -233,6 +284,8 @@ object DriverActor {
       if (transformationName == "filesystem")
         100 milliseconds
       else
-        5 seconds).withDispatcher("akka.actor.driver-dispatcher")
+        5 seconds,
+      settings,
+      defaultFileSystem(settings.hadoopConf)).withDispatcher("akka.actor.driver-dispatcher")
 
 }
