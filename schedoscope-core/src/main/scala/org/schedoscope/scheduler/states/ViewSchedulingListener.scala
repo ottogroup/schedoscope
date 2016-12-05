@@ -30,12 +30,12 @@ class ViewSchedulingListener(viewSchedulingHandlerClassName:String) {
     *       method
     */
   def viewSchedulingCall(handle: ViewSchedulingListenerHandle): Unit = {
-    if (handle.prevState != handle.newState) {
+    if (handle.prevState == None || handle.prevState.get != handle.newState)
       viewSchedulingRunCompletionHandler.viewScheduleStateChange(handle)
-    }
-    else {
+    else
       viewSchedulingRunCompletionHandler.viewScheduleNewAction(handle)
-    }
   }
 
 }
+
+case class ViewSchedulingListenerHandlerInternalException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)

@@ -1,11 +1,17 @@
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorKilledException, ActorRef, Props}
 import akka.event.Logging
 import org.joda.time.LocalDateTime
-import org.schedoscope.scheduler.states.{ViewSchedulingAction, ViewSchedulingListener, ViewSchedulingListenerHandle}
+import org.schedoscope.scheduler.states.{ViewSchedulingAction, ViewSchedulingListener, ViewSchedulingListenerHandle, ViewSchedulingListenerHandlerInternalException}
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, ViewSchedulingNewEvent}
+
+/**
+  * Mute Actor that just serves to encapsulate in Akka
+  * external View Monitoring Handlers
+  *
+  */
 
 class ViewSchedulingListenerActor(handlerClassName:String,
                                   viewSchedulingListenerManagerActor: ActorRef) extends Actor {
@@ -16,9 +22,15 @@ class ViewSchedulingListenerActor(handlerClassName:String,
 
   def receive: Receive = {
     case ViewSchedulingNewEvent(view, eventTime, action, prevState, newState) =>
-      viewSchedulingListenerHandler.viewSchedulingCall(
-        ViewSchedulingListenerHandle(view, eventTime, new LocalDateTime(), action, prevState, newState))
-      logStateInfo(view, prevState, newState, action)
+      try {
+        viewSchedulingListenerHandler.viewSchedulingCall(
+          ViewSchedulingListenerHandle(view, eventTime, new LocalDateTime(), action, prevState, newState))
+        logStateInfo(view, prevState, newState, action)
+      } catch {
+        case e: Throwable =>
+          log.error(s"External Handler raised exception: ${e.getMessage}")
+          throw new ViewSchedulingListenerHandlerInternalException(e.getMessage)
+      }
   }
 
   override def postRestart(reason: Throwable) {

@@ -15,17 +15,18 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorRef, ActorSystem, ExtendedActorSystem, ExtensionId, ExtensionIdProvider, Props}
+import akka.testkit.EventFilter
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
+import com.typesafe.config.Config
 import org.joda.time.LocalDateTime
-import org.scalatest.{FlatSpecLike, Matchers}
-import org.scalatest.mock.MockitoSugar
-import org.scalatest.time.Minute
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 
-import scala.concurrent.duration._
+import org.scalatest.mock.MockitoSugar
+
+import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.{Schedoscope, Settings}
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.Parameter._
@@ -33,9 +34,13 @@ import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.{Materialize, ReportNoDataAvailable}
 
 import scala.concurrent.Await
+import scala.concurrent.duration._
+import com.typesafe.config.ConfigFactory
+
 import test.views.Brand
 
-class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
+class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedoscope",
+  ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")))
   with ImplicitSender
   with FlatSpecLike
   with Matchers
@@ -93,7 +98,6 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     }
   }
 
-
   "A new initialized ViewActor" should "send 2 msgs to the viewSchedulingListenerManagerActor" in
     new viewSchedulingListenerManagerActorTest {
 
@@ -102,7 +106,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
   }
 
   "A ViewActor" should "not send msgs to the viewSchedulingListenerManagerActor " +
-    " if there are no listening handlers" in new viewSchedulingListenerManagerActorTest {
+    "if there are no listening handlers" in new viewSchedulingListenerManagerActorTest {
 
     val view = Brand(p("ec01"))
 
@@ -112,7 +116,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     viewSchedulingListenerManagerActor.expectNoMsg(TIMEOUT)
   }
 
-  "A ViewActor" should "send a msgs to the viewSchedulingListenerManagerActor " +
+  "A ViewActor" should "send a ViewSchedulingNewEvent msg to the viewSchedulingListenerManagerActor " +
     "upon state change (if there are handlers listening)" in new viewSchedulingListenerManagerActorTest {
 
     val view = Brand(p("ec01"))
@@ -141,12 +145,11 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
       ViewSchedulingListenerManagerActor.props(
         Schedoscope.settings))
 
+    // for the sake of coherence with the real process, let's use a fake
+    // viewActor and another fake listenerHandlerActor
     val viewActor = TestProbe()
     val listenerHandlerActor = TestProbe()
 
-    Schedoscope.viewManagerActorBuilder = () => viewSchedulingListenerManagerActor
-
-    // for coherence to the real process, lets use a fake viewActor and another fake listenerHandlerActor
     viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingNewEvent(
       view, new LocalDateTime(), None, None, "receive"))
 
@@ -154,6 +157,52 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
 
     listenerHandlerActor.expectMsgPF() {
       case ViewSchedulingNewEvent(view, _, None, None, "receive") => ()
+    }
+  }
+
+  "A viewSchedulingListenerManager" should "initialize successfully an external handler " +
+    "class, and execute its methods" in {
+
+    class SchedoscopeSettingsMock(config: Config) extends SchedoscopeSettings(config: Config) {
+      override lazy val viewSchedulingRunCompletionHandlers = List("org.schedoscope.test.TestViewListenerHandler")
+    }
+
+    object SettingsMock extends ExtensionId[SchedoscopeSettings] with ExtensionIdProvider {
+      override def lookup = Settings
+
+      override def createExtension(system: ExtendedActorSystem) =
+        new SchedoscopeSettings(system.settings.config)
+
+      override def get(system: ActorSystem): SchedoscopeSettings = super.get(system)
+
+      def apply() = {
+        super.apply(Schedoscope.actorSystem)
+      }
+
+      def apply(config: Config) =
+        new SchedoscopeSettingsMock(config)
+    }
+
+    val viewSchedulingListenerManagerActor = TestActorRef(
+      ViewSchedulingListenerManagerActor.props(
+        SettingsMock(ConfigFactory.load())))
+
+    val viewActor = TestProbe()
+    val view = Brand(p("ec01"))
+
+    viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingListenersExist(true))
+    viewActor.expectMsg(ViewSchedulingListenersExist(true))
+
+    // state change test
+    EventFilter.info(pattern = "Cool, it works well!*", occurrences = 1) intercept {
+      viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingNewEvent(
+        view, new LocalDateTime(), None, None, "receive"))
+    }
+
+    // no state change test
+    EventFilter.info(pattern = "And the second too, we're on a lucky streak!*", occurrences = 1) intercept {
+      viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingNewEvent(
+        view, new LocalDateTime(), None, Some("receive"), "receive"))
     }
 
   }
