@@ -160,7 +160,7 @@ class ViewActor(var currentState: ViewSchedulingState,
 
     case ReportNoDataAvailable(view, listeners) =>
       listeners.foreach {
-        sendMessageToListener(_, ViewHasNoData)
+        sendMessageToListener(_, ViewHasNoData(view))
       }
 
     case ReportFailed(view, listeners) =>
