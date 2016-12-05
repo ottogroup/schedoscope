@@ -70,9 +70,6 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
         schemaManagerRouter.ref,
         viewSchedulingListenerManagerActor.ref))
 
-    Schedoscope.viewManagerActorBuilder = () => viewManagerActor
-
-
     def initializeView(view: View, listeners:Boolean): ActorRef = {
 
       val future = viewManagerActor ? view
