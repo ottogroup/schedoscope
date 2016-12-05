@@ -132,6 +132,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
             }
           }
 
+          //check if transformation produced some data
           val viewHasData = if (runHandle.transformation.isInstanceOf[NoOp]) {
             successFlagExists(transformingView)
           } else {

@@ -145,20 +145,20 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
       }
     }
 
-    case commandToExecute: DriverCommand => {
-      if (commandToExecute.command.isInstanceOf[Transformation]) {
-        val transformation = commandToExecute.command.asInstanceOf[Transformation]
-        val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
+    case commandToExecute: DriverCommand =>
+      commandToExecute.command match {
+        case TransformView(transformation, view) =>
+          val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
 
-        queues.get(queueName).get.enqueue(commandToExecute)
-        log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
-      } else {
-        queues.values.foreach {
-          _.enqueue(commandToExecute)
-        }
-        log.info("TRANSFORMATIONMANAGER ENQUEUE: Enqueued deploy action")
+          queues.get(queueName).get.enqueue(commandToExecute)
+          log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
+        case DeployCommand =>
+          queues.values.foreach {
+            _.enqueue(commandToExecute)
+          }
+          log.info("TRANSFORMATIONMANAGER ENQUEUE: Enqueued deploy action")
       }
-    }
+
 
     case viewToTransform: View =>
       self ! DriverCommand(TransformView(viewToTransform.transformation().forView(viewToTransform), viewToTransform), sender)
