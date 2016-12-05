@@ -132,31 +132,33 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
     case PollCommand(transformationType) => {
       val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
 
-      if (!queueForType.isEmpty) {
+      if (queueForType.nonEmpty) {
         val cmd = queueForType.dequeue()
 
         sender ! cmd
 
-        if (cmd.command.isInstanceOf[Transformation]) {
-          val transformation = cmd.command.asInstanceOf[Transformation]
-          log.info(s"TRANSFORMATIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
-        } else
-          log.info("TRANSFORMATIONMANAGER DEQUEUE: Dequeued deploy action")
+        cmd.command match {
+          case TransformView(transformation, _) =>
+            log.info(s"TRANSFORMATIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
+          case transformation: Transformation =>
+            log.info(s"TRANSFORMATIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
+          case DeployCommand =>
+            log.info("TRANSFORMATIONMANAGER DEQUEUE: Dequeued deploy action")
+        }
       }
     }
 
     case commandToExecute: DriverCommand =>
       commandToExecute.command match {
-        case TransformView(transformation, view) =>
-          val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
-
-          queues.get(queueName).get.enqueue(commandToExecute)
-          log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
+        case TransformView(transformation, _) =>
+          enqueueCommand(commandToExecute, transformation)
         case DeployCommand =>
           queues.values.foreach {
             _.enqueue(commandToExecute)
           }
           log.info("TRANSFORMATIONMANAGER ENQUEUE: Enqueued deploy action")
+        case transformation: Transformation =>
+          enqueueCommand(commandToExecute, transformation)
       }
 
 
@@ -167,6 +169,14 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
 
     case deploy: DeployCommand => self ! DriverCommand(deploy, sender)
   })
+
+  def enqueueCommand(commandToExecute: DriverCommand, transformation: Transformation): Unit = {
+    val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
+
+    queues(queueName).enqueue(commandToExecute)
+    log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
+  }
+
 }
 
 /**

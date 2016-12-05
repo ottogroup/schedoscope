@@ -1,15 +1,13 @@
 package org.schedoscope.scheduler.driver
 
-import org.apache.hadoop.hive.conf.HiveConf
 import org.joda.time.LocalDateTime
-import org.schedoscope.Schedoscope
 import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.test.resources.TestResources
 
 class NoOpDriver(val driverRunCompletionHandlerClassNames: List[String]) extends DriverOnBlockingApi[NoOp] {
   /**
-    * The name of the transformations executed by this driver. Must be equal to t.name for any t: T.
+    * The name of the transformations executed by this driver.
     */
   override def transformationName: String = "noop"
 

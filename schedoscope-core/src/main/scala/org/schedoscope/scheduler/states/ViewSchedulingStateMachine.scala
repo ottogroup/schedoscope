@@ -75,7 +75,7 @@ trait ViewSchedulingStateMachine {
   /**
     * Transition a view in Transforming state given a successful transformation.
     */
-  def transformationSucceeded(currentState: Transforming, folderEmpty: => Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
+  def transformationSucceeded(currentState: Transforming, viewHasNoData: Boolean, currentTime: Long = new Date().getTime): ResultingViewSchedulingState
 
   /**
     * Transition a view in Transforming state given a failed transformation.

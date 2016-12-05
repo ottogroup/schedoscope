@@ -90,8 +90,8 @@ class ViewActor(var currentState: ViewSchedulingState,
       stateMachine.materialized(currentState.asInstanceOf[Waiting], dependency, transformationTimestamp, withErrors, incomplete)
     }
 
-    case _: TransformationSuccess[_] => stateTransition {
-      stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], folderEmpty(currentState.view))
+    case s: TransformationSuccess[_] => stateTransition {
+      stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], !s.viewHasData)
     }
 
     case _: TransformationFailure[_] => stateTransition {
@@ -232,30 +232,9 @@ class ViewActor(var currentState: ViewSchedulingState,
 
 
   def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
-    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
+//    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
     case _ => new ViewSchedulingStateMachineImpl
   }
-
-  def successFlagExists(view: View) = settings
-    .userGroupInformation.doAs(
-    new PrivilegedAction[Boolean]() {
-      def run() = {
-        hdfs.exists(new Path(view.fullPath + "/_SUCCESS"))
-      }
-    })
-
-  def folderEmpty(view: View) = settings
-    .userGroupInformation.doAs(
-    new PrivilegedAction[Array[FileStatus]]() {
-      def run() = {
-        hdfs.listStatus(new Path(view.fullPath), new PathFilter() {
-          def accept(p: Path): Boolean = !p.getName.startsWith("_")
-        })
-      }
-    })
-    .foldLeft(0l) {
-      (size, status) => size + status.getLen
-    } <= 0
 }
 
 object ViewActor {

@@ -23,7 +23,7 @@ import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.hadoop.fs._
 import org.schedoscope.conf.{DriverSettings, SchedoscopeSettings}
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations._
+import org.schedoscope.dsl.transformations.{Transformation, _}
 import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
@@ -101,7 +101,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     * @param runHandle      reference to the running driver
     * @param originalSender reference to the viewActor that requested the transformation (for sending back the result)
     */
-  def running(runHandle: DriverRunHandle[T], originalSender: ActorRef, transformingView: View): Receive = LoggingReceive {
+  def running(runHandle: DriverRunHandle[T], originalSender: ActorRef, transformingView: Option[View]): Receive = LoggingReceive {
     case KillCommand() => {
       driver.killRun(runHandle)
       toReceive()
@@ -133,10 +133,15 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           }
 
           //check if transformation produced some data
-          val viewHasData = if (runHandle.transformation.isInstanceOf[NoOp]) {
-            successFlagExists(transformingView)
-          } else {
-            !folderEmpty(transformingView)
+          val viewHasData = transformingView match {
+            case Some(view) =>
+              if (runHandle.transformation.isInstanceOf[NoOp]) {
+                successFlagExists(view)
+              } else {
+                !folderEmpty(view)
+              }
+            case None =>
+              false
           }
 
           originalSender ! TransformationSuccess(runHandle, success, viewHasData)
@@ -172,7 +177,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
         throw t
       }
     }
-
 
 
   }
@@ -217,7 +221,16 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
           logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
 
-          become(running(runHandle, commandToRun.sender, view))
+          become(running(runHandle, commandToRun.sender, Some(view)))
+        case t: Transformation =>
+          val transformation: T = t.asInstanceOf[T]
+
+          val runHandle = driver.run(transformation)
+          driver.driverRunStarted(runHandle)
+
+          logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
+
+          become(running(runHandle, commandToRun.sender, None))
       }
     } catch {
       case retryableException: RetryableDriverException => {
