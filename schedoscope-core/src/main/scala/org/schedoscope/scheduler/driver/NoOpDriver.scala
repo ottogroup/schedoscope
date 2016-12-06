@@ -5,6 +5,8 @@ import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.transformations.NoOp
 import org.schedoscope.test.resources.TestResources
 
+import scala.concurrent.Future
+
 class NoOpDriver(val driverRunCompletionHandlerClassNames: List[String]) extends DriverOnBlockingApi[NoOp] {
   /**
     * The name of the transformations executed by this driver.
@@ -15,7 +17,7 @@ class NoOpDriver(val driverRunCompletionHandlerClassNames: List[String]) extends
     * Create a driver run, i.e., start the execution of the transformation asychronously.
     */
   override def run(t: NoOp): DriverRunHandle[NoOp] = {
-    new DriverRunHandle[NoOp](this, new LocalDateTime(), t, DriverRunSucceeded(this, "what did you expect?"))
+    new DriverRunHandle[NoOp](this, new LocalDateTime(), t, Future(DriverRunSucceeded(this, "what did you expect?")))
   }
 }
 
