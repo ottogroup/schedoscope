@@ -68,7 +68,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     the [IllegalArgumentException] thrownBy {
       service.views(Some(testView.urlPath), None, None, None, None, None)
-    } should have message "Invalid view URL pattern passed: test.extviews/Shop/.\n" +
+    } should have message "Invalid view URL pattern passed: test.extviews/ExternalShop/.\n" +
       "original Message: You can not address an external view directly."
   }
 
