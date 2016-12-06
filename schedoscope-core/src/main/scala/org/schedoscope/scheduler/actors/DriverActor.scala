@@ -278,28 +278,24 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   * Factory methods for driver actors.
   */
 object DriverActor {
-  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef, hdfs: FileSystem) =
+  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef, hdfs: FileSystem) : Props =
     Props(
       classOf[DriverActor[_]],
       transformationManager,
       settings.getDriverSettings(transformationName), (ds: DriverSettings) => Driver.driverFor(ds),
       if (transformationName == "filesystem")
         100 milliseconds
+      else if (transformationName == "noop")
+        10 milliseconds
       else
         5 seconds,
       settings,
       hdfs: FileSystem).withDispatcher("akka.actor.driver-dispatcher")
 
-  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef) =
-    Props(
-      classOf[DriverActor[_]],
+  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef) : Props =
+    props(settings,
+      transformationName,
       transformationManager,
-      settings.getDriverSettings(transformationName), (ds: DriverSettings) => Driver.driverFor(ds),
-      if (transformationName == "filesystem")
-        100 milliseconds
-      else
-        5 seconds,
-      settings,
-      defaultFileSystem(settings.hadoopConf)).withDispatcher("akka.actor.driver-dispatcher")
+      defaultFileSystem(settings.hadoopConf))
 
 }
