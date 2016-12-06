@@ -73,6 +73,17 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
     }
   }
 
+  /**
+    * Configured view action scheduling listener handlers.
+    */
+  lazy val viewSchedulingRunCompletionHandlers = {
+    try
+      config.getStringList("viewSchedulingRunCompletionHandlers").toList
+    catch {
+      case _: Throwable => List()
+    }
+  }
+
     /**
       * An instance of the view augmentor class
       */
@@ -255,12 +266,4 @@ class DriverSettings(val config: Config, val name: String) {
     */
   lazy val driverRunCompletionHandlers = config.getStringList("driverRunCompletionHandlers").toList
 
-  /**
-    * Configured view action scheduling listener handlers.
-    */
-  lazy val viewSchedulingRunCompletionHandlers =  try {
-    config.getStringList("viewSchedulingRunCompletionHandlers").toList
-  } catch {
-    case _: Throwable => List()
-  }
 }
