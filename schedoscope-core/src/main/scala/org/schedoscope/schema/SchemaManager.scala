@@ -96,7 +96,12 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     val ddl = HiveQl.ddl(view)
     val stmt = connection.createStatement()
 
-    stmt.execute(s"CREATE DATABASE IF NOT EXISTS ${view.dbName}")
+    try {
+      stmt.execute(s"CREATE DATABASE IF NOT EXISTS ${view.dbName}")
+    } catch {
+      case t: Throwable =>
+        log.warn(s"Could not create database ${view.dbName}. Maybe you simply do not have permission to execute CREATE TABLE statements. In this case, get an admin to create the database for you before running schedoscope.", t)
+    }
 
     stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
 

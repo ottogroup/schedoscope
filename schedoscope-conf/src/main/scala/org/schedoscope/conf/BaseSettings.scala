@@ -93,6 +93,11 @@ class BaseSettings(val config: Config) {
   lazy val hdfs = config.getString("schedoscope.hadoop.hdfs")
 
   /**
+    * The configured HDFS root folder for Schedoscope view data.
+    */
+  lazy val viewDataHdfsRoot = config.getString("schedoscope.hadoop.viewDataHdfsRoot")
+
+  /**
     * Configuration trigger whether versioning transformation is enabled.
     */
   lazy val transformationVersioning = config.getBoolean("schedoscope.versioning.transformations")
