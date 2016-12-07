@@ -55,6 +55,7 @@ object Schedoscope {
     * Pluggable builder function that returns the schema manager actor for schedoscope.
     * The default implementation creates a new schema manager router based on the actor system.
     */
+
   var schemaManagerRouterBuilder = () => actorSystem.actorOf(SchemaManagerRouter.props(settings), "schema")
 
   /**

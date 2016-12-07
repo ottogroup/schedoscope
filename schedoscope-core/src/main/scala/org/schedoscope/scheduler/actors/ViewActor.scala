@@ -146,7 +146,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       if (!view.isExternal) schemaManagerRouter ! SetViewVersion(view)
 
     case TouchSuccessFlag(view) =>
-      touchSuccessFlag(view)
+        touchSuccessFlag(view)
 
     case Materialize(view, mode) =>
       if (!view.isExternal) {

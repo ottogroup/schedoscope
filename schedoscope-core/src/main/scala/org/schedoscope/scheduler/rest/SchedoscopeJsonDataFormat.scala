@@ -21,6 +21,7 @@ import spray.json.{DefaultJsonProtocol, JsonFormat}
 /**
   * JSON SerDe for Schedoscope REST web service calls.
   */
+
 object SchedoscopeJsonDataFormat extends DefaultJsonProtocol {
   implicit val runStatusFormat = jsonFormat5(RunStatus)
   implicit val actionStatusFormat = jsonFormat5(TransformationStatus)

@@ -1,16 +1,14 @@
 package org.schedoscope.scheduler.actors
-
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
-import test.views.{Brand, ProductBrand, Shop}
 import org.schedoscope.dsl.Parameter._
-import akka.pattern.ask
 import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.messages._
+import test.views.ProductBrand
 
 class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender

@@ -55,14 +55,16 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
       else throw HttpFailureStatusException(response.status, response.entity.asString)
   }
 
+  def sendAndReceive = sendReceive
+
   def get[T](path: String, query: Map[String, String]): Future[T] = {
     val pipeline = path match {
-      case u: String if u.startsWith("/views") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
-      case u: String if u.startsWith("/transformations") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[TransformationStatusList]
-      case u: String if u.startsWith("/queues") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[QueueStatusList]
-      case u: String if u.startsWith("/materialize") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
-      case u: String if u.startsWith("/invalidate") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
-      case u: String if u.startsWith("/newdata") => sendReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/views") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/transformations") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[TransformationStatusList]
+      case u: String if u.startsWith("/queues") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[QueueStatusList]
+      case u: String if u.startsWith("/materialize") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/invalidate") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
+      case u: String if u.startsWith("/newdata") => sendAndReceive ~> catchHttpFailureStatus ~> unmarshal[ViewStatusList]
       case _ => throw new RuntimeException("Unsupported query path: " + path)
     }
     val uri = Uri.from("http", "", host, port, path) withQuery (query)
@@ -81,27 +83,27 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
     system.isTerminated
   }
 
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode))), 3600 seconds)
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): Future[ViewStatusList] = {
+    get[ViewStatusList](s"/materialize/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("mode", mode)))
   }
 
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies))), 3600 seconds)
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): Future[ViewStatusList] = {
+    get[ViewStatusList](s"/invalidate/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies)))
   }
 
-  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]): Future[ViewStatusList] = {
+    get[ViewStatusList](s"/newdata/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter)))
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): ViewStatusList = {
-    Await.result(get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies), ("overview", overview), ("all", all))), 3600 seconds)
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): Future[ViewStatusList] = {
+    get[ViewStatusList](s"/views/${viewUrlPath.getOrElse("")}", paramsFrom(("status", status), ("filter", filter), ("dependencies", dependencies), ("overview", overview), ("all", all)))
   }
 
-  def transformations(status: Option[String], filter: Option[String]): TransformationStatusList = {
-    Await.result(get[TransformationStatusList](s"/transformations", paramsFrom(("status", status), ("filter", filter))), 3600 seconds)
+  def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {
+    get[TransformationStatusList](s"/transformations", paramsFrom(("status", status), ("filter", filter)))
   }
 
-  def queues(typ: Option[String], filter: Option[String]): QueueStatusList = {
-    Await.result(get[QueueStatusList](s"/queues", paramsFrom(("typ", typ), ("filter", filter))), 3600 seconds)
+  def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList] = {
+    get[QueueStatusList](s"/queues", paramsFrom(("typ", typ), ("filter", filter)))
   }
 }
