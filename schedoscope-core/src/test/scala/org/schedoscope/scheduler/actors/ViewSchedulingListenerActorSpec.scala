@@ -23,6 +23,7 @@ import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
 import org.joda.time.LocalDateTime
 import org.schedoscope.dsl.Parameter._
+import org.schedoscope.scheduler.listeners.{RetryableViewSchedulingListenerException, ViewSchedulingListenerException}
 import org.schedoscope.scheduler.messages.{RegisterFailedListener, ViewSchedulingMonitoringEvent}
 import org.schedoscope.scheduler.states._
 import test.views.Brand

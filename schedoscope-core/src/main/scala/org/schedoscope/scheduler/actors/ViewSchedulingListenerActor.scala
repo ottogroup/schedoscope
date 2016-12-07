@@ -2,6 +2,7 @@ package org.schedoscope.scheduler.actors
 
 import akka.actor.{Actor, ActorRef, Props}
 import akka.event.Logging
+import org.schedoscope.scheduler.listeners.{RetryableViewSchedulingListenerException, ViewSchedulingListenerException, ViewSchedulingListenerHandler}
 import org.schedoscope.scheduler.states._
 import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, RegisterFailedListener, ViewSchedulingMonitoringEvent}
 

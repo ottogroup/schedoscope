@@ -15,7 +15,8 @@
   */
 package org.schedoscope.test
 
-import org.schedoscope.scheduler.states.{RetryableViewSchedulingListenerException, ViewSchedulingEvent, ViewSchedulingListener, ViewSchedulingListenerException}
+import org.schedoscope.scheduler.listeners.{RetryableViewSchedulingListenerException, ViewSchedulingListener}
+import org.schedoscope.scheduler.states.{ViewSchedulingEvent, ViewSchedulingListenerException}
 
 
 class TestViewListener extends ViewSchedulingListener {

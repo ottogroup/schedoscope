@@ -155,7 +155,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       logToViewSchedulingListeners(previousState, updatedState, actions)
 
       if (stateChange(previousState, updatedState))
-        logStateChange(updatedState, previousState)
+        communicateStateChange(updatedState, previousState)
 
     }
   }
@@ -255,7 +255,7 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
 
-  def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
+  def communicateStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
     viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
   }
 

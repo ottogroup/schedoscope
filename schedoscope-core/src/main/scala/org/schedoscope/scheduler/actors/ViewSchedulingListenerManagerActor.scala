@@ -5,8 +5,8 @@ import akka.actor.{Actor, ActorInitializationException, ActorKilledException, Ac
 import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, RegisterFailedListener, ViewSchedulingListenersExist, ViewSchedulingMonitoringEvent}
-import org.schedoscope.scheduler.states.{RetryableViewSchedulingListenerException, ViewSchedulingListener, ViewSchedulingListenerException}
 import org.schedoscope.dsl.View
+import org.schedoscope.scheduler.listeners.{RetryableViewSchedulingListenerException, ViewSchedulingListener, ViewSchedulingListenerException}
 
 class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends Actor {
 

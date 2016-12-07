@@ -13,7 +13,9 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
-package org.schedoscope.scheduler.states
+package org.schedoscope.scheduler.listeners
+
+import org.schedoscope.scheduler.states.ViewSchedulingEvent
 
 class ViewSchedulingListenerHandler(viewSchedulingHandlerClassName:String) {
 
