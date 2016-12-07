@@ -25,9 +25,9 @@ import org.joda.time.LocalDateTime
   * Note: A view always has a new state (newState); in case the view is initiated,
   * then previous state (prevState) is set to None
   */
-case class ViewSchedulingListenerHandle(view: View,
-                                   eventTime: LocalDateTime,
-                                   monitStart: LocalDateTime,
-                                   action: Option[ViewSchedulingAction],
-                                   prevState: Option[String],
-                                   newState: String)
+case class ViewSchedulingEvent(view: View,
+                               eventTime: LocalDateTime,
+                               monitStart: LocalDateTime,
+                               action: Option[ViewSchedulingAction],
+                               prevState: String,
+                               newState: String)

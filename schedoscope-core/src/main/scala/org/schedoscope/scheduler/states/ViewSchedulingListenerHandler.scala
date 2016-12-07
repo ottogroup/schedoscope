@@ -15,23 +15,27 @@
   */
 package org.schedoscope.scheduler.states
 
-/**
-  * Trait for user defined code to be executed before and after a given View state.
-  * e.g. for gathering statistics and logging information about View status
-  *
-  */
-trait ViewSchedulingListenerHandler {
+class ViewSchedulingListener(viewSchedulingHandlerClassName:String) {
+
+  lazy val viewSchedulingRunCompletionHandler: ViewSchedulingListenerHandler =
+    Class
+      .forName(viewSchedulingHandlerClassName)
+      .newInstance()
+      .asInstanceOf[ViewSchedulingListenerHandler]
 
   /**
-    * This method is called only if a View's State is changed
-    * For more detailed monitoring, use abstract class
+    * Call handler state/action related methods
+    * Note: avoids duplication => only if action did not
+    *       change state does it call viewScheduleNewAction
+    *       method
     */
-  def viewScheduleStateChange(run: ViewSchedulingListenerHandle):Unit
-
-  /**
-    * This method is called after a new View scheduling Action
-    * is issued - ONLY if a View State did NOT change
-    */
-  def viewScheduleNewAction(handle: ViewSchedulingListenerHandle):Unit = {}
+  def viewSchedulingCall(handle: ViewSchedulingListenerHandle): Unit = {
+    if (handle.prevState == None || handle.prevState.get != handle.newState)
+      viewSchedulingRunCompletionHandler.viewScheduleStateChange(handle)
+    else
+      viewSchedulingRunCompletionHandler.viewScheduleNewAction(handle)
+  }
 
 }
+
+case class ViewSchedulingListenerHandlerInternalException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
