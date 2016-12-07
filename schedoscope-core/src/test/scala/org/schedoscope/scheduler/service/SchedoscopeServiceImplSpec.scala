@@ -43,7 +43,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
   trait SchedoscopeServiceExternalTest extends SchedoscopeServiceTest {
     override lazy val settings = TestUtils.createSettings("schedoscope.external-dependencies.enabled=true",
-      """schedoscope.external-dependencies.home=["${env}.test.views"] """ )
+      """schedoscope.external-dependencies.home=["${env}.test.views"] """)
   }
 
   "the service" should "ask for status" in new SchedoscopeServiceTest {
@@ -66,7 +66,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   it should "block a call on an external view" in new SchedoscopeServiceExternalTest {
     val testView = ExternalShop()
 
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       service.views(Some(testView.urlPath), None, None, None, None, None)
     } should have message "Invalid view URL pattern passed: test.extviews/ExternalShop/.\n" +
       "original Message: You can not address an external view directly."

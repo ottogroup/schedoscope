@@ -108,7 +108,6 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         throw new UnsupportedOperationException("External dependencies are not enabled," +
           "if you are sure you wan't to use this feature enable it in the schedoscope.conf.")
     } else if (settings.externalChecksEnabled) {
-      //TODO: check if all views inside of home
       allViews.foreach { case (view, _, _) =>
         if (view.isInDatabases(settings.externalHome: _*)) {
           if (view.isExternal)

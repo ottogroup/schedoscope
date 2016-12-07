@@ -33,7 +33,8 @@ import scala.util.Random
   * transformation type. Idle driver actors poll the transformation manager for new transformations to perform.
   *
   */
-class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
+class TransformationManagerActor(settings: SchedoscopeSettings,
+                                 bootstrapDriverActors: Boolean) extends Actor {
 
   import context._
 
@@ -86,9 +87,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
     if (transformationType != "filesystem") {
       transformationType
     } else {
-      val allFilesystemQueuesEmpty = filesystemQueues.values.foldLeft(true) {
-        (emptySoFar, currentQueue) => emptySoFar && currentQueue.isEmpty
-      }
+      val allFilesystemQueuesEmpty = filesystemQueues.values.forall(currentQueue => currentQueue.isEmpty)
 
       if (allFilesystemQueuesEmpty)
         "filesystem-0"
@@ -113,8 +112,10 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
     * Create driver actors as required by configured transformation types and their concurrency.
     */
   override def preStart {
-    for (transformation <- Driver.transformationsWithDrivers; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
-      actorOf(DriverActor.props(settings, transformation, self), s"${transformation}-${c + 1}")
+    if (bootstrapDriverActors) {
+      for (transformation <- Driver.transformationsWithDrivers; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
+        actorOf(DriverActor.props(settings, transformation, self), s"${transformation}-${c + 1}")
+      }
     }
   }
 
@@ -130,7 +131,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
     case GetQueues() => sender ! QueueStatusListResponse(transformationQueueStatus)
 
     case PollCommand(transformationType) => {
-      val queueForType = queues.get(queueNameForTransformationType(transformationType)).get
+      val queueForType = queues(queueNameForTransformationType(transformationType))
 
       if (queueForType.nonEmpty) {
         val cmd = queueForType.dequeue()
@@ -142,7 +143,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
             log.info(s"TRANSFORMATIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
           case transformation: Transformation =>
             log.info(s"TRANSFORMATIONMANAGER DEQUEUE: Dequeued ${transformationType} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queueForType.size}")
-          case DeployCommand =>
+          case DeployCommand() =>
             log.info("TRANSFORMATIONMANAGER DEQUEUE: Dequeued deploy action")
         }
       }
@@ -151,30 +152,39 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
     case commandToExecute: DriverCommand =>
       commandToExecute.command match {
         case TransformView(transformation, _) =>
-          enqueueCommand(commandToExecute, transformation)
-        case DeployCommand =>
-          queues.values.foreach {
-            _.enqueue(commandToExecute)
-          }
-          log.info("TRANSFORMATIONMANAGER ENQUEUE: Enqueued deploy action")
+          enqueueTransformation(commandToExecute, transformation)
+        case DeployCommand() =>
+          enqueueDeploy(commandToExecute)
         case transformation: Transformation =>
-          enqueueCommand(commandToExecute, transformation)
+          enqueueTransformation(commandToExecute, transformation)
       }
 
 
     case viewToTransform: View =>
-      self ! DriverCommand(TransformView(viewToTransform.transformation().forView(viewToTransform), viewToTransform), sender)
+      val transformation = viewToTransform.transformation().forView(viewToTransform)
+      val commandRequest = DriverCommand(TransformView(transformation, viewToTransform), sender)
+      enqueueTransformation(commandRequest, transformation)
 
-    case filesystemTransformation: FilesystemTransformation => self ! DriverCommand(filesystemTransformation, sender)
+    case filesystemTransformation: FilesystemTransformation =>
+      val driverCommand = DriverCommand(filesystemTransformation, sender)
+      enqueueTransformation(driverCommand, filesystemTransformation)
 
-    case deploy: DeployCommand => self ! DriverCommand(deploy, sender)
+    case deploy: DeployCommand =>
+      enqueueDeploy(DriverCommand(deploy, sender))
   })
 
-  def enqueueCommand(commandToExecute: DriverCommand, transformation: Transformation): Unit = {
+  def enqueueTransformation(commandToExecute: DriverCommand, transformation: Transformation): Unit = {
     val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
 
     queues(queueName).enqueue(commandToExecute)
     log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
+  }
+
+  def enqueueDeploy(driverCommand: DriverCommand ): Unit = {
+    queues.values.foreach {
+      _.enqueue(driverCommand)
+    }
+    log.info("TRANSFORMATIONMANAGER ENQUEUE: Enqueued deploy action")
   }
 
 }
@@ -183,5 +193,9 @@ class TransformationManagerActor(settings: SchedoscopeSettings) extends Actor {
   * Factory for the actions manager actor.
   */
 object TransformationManagerActor {
-  def props(settings: SchedoscopeSettings) = Props(classOf[TransformationManagerActor], settings).withDispatcher("akka.actor.transformation-manager-dispatcher")
+  def props(settings: SchedoscopeSettings,
+            bootstrapDriverActors: Boolean = true) =
+    Props(classOf[TransformationManagerActor],
+      settings,
+      bootstrapDriverActors).withDispatcher("akka.actor.transformation-manager-dispatcher")
 }
