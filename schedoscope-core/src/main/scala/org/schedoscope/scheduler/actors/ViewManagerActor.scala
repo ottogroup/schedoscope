@@ -170,7 +170,6 @@ class ViewManagerActor(settings: SchedoscopeSettings,
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
         }
-
         log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
       }
 
@@ -189,7 +188,6 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
         }
       }
-
     }
     log.info(s"Returning actors${if (dependencies) " including dependencies."}")
 

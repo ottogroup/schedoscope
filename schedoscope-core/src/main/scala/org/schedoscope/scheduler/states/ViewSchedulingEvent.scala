@@ -14,20 +14,15 @@
   */
 package org.schedoscope.scheduler.states
 
-import org.schedoscope.dsl.View
 import org.joda.time.LocalDateTime
 
 /**
-  * Handle for the view scheduling state and optionally action monitored executed
-  * by a view scheduling listener actor. It should allow external parties to monitor
+  * Event format for view scheduling state and action monitoring executed
+  * by a view scheduling listener. It should allow external parties to monitor
   * evolution of states for views, as well as different actions called on it.
   *
-  * Note: A view always has a new state (newState); in case the view is initiated,
-  * then previous state (prevState) is set to None
   */
-case class ViewSchedulingEvent(view: View,
-                               eventTime: LocalDateTime,
-                               monitStart: LocalDateTime,
-                               action: Option[ViewSchedulingAction],
-                               prevState: String,
-                               newState: String)
+case class ViewSchedulingEvent(prevState: ViewSchedulingState,
+                               newState: ViewSchedulingState,
+                               actions: Set[ViewSchedulingAction],
+                               eventTime: LocalDateTime)

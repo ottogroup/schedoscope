@@ -15,18 +15,15 @@
   */
 package org.schedoscope.test
 
-import org.schedoscope.scheduler.states.{ViewSchedulingListenerHandle, ViewSchedulingListenerHandler, ViewSchedulingListenerHandlerInternalException}
+import org.schedoscope.scheduler.states.{RetryableViewSchedulingListenerException, ViewSchedulingEvent, ViewSchedulingListener, ViewSchedulingListenerException}
 
 
-class TestViewListenerHandler extends ViewSchedulingListenerHandler {
+class TestViewListener extends ViewSchedulingListener {
 
-  override def viewScheduleStateChange(run: ViewSchedulingListenerHandle):Unit = {
-    throw new ViewSchedulingListenerHandlerInternalException("Cool, it works well!")
-  }
-
-
-  override def viewScheduleNewAction(handle: ViewSchedulingListenerHandle):Unit = {
-    throw new ViewSchedulingListenerHandlerInternalException("And the second too, we're on a lucky streak!")
+  override def viewSchedulingEvent(event: ViewSchedulingEvent):Unit = {
+    super.viewSchedulingEvent(event)
+    if(event.prevState != event.newState) throw new IllegalArgumentException("Random throwable in thaa house")
+    else throw new RetryableViewSchedulingListenerException("And the second too, we're on a lucky streak!")
   }
 }
 

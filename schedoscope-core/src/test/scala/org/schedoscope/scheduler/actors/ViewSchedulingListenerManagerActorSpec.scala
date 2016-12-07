@@ -15,37 +15,30 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{ActorRef, ActorSystem, ExtendedActorSystem, ExtensionId, ExtensionIdProvider, Props}
-import akka.testkit.EventFilter
+import akka.actor.{ActorRef, ActorSystem, ExtendedActorSystem, ExtensionId, ExtensionIdProvider}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
 import com.typesafe.config.Config
 import org.joda.time.LocalDateTime
-
-import org.scalatest.mock.MockitoSugar
-
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.{Schedoscope, Settings}
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.states.{Materialize, ReportNoDataAvailable}
+import org.schedoscope.scheduler.states._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
-
 import test.views.Brand
 
-class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedoscope",
-  ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")))
+class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
   with FlatSpecLike
   with Matchers
-  with BeforeAndAfterAll
-  with MockitoSugar {
+  with BeforeAndAfterAll {
 
   override def afterAll() = {
     TestKit.shutdownActorSystem(system)
@@ -78,11 +71,6 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
       schemaManagerRouter.expectMsg(AddPartitions(List(view)))
       schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
 
-      // 2 main tests
-      viewSchedulingListenerManagerActor.expectMsgPF() {
-        case ViewSchedulingNewEvent(
-        view, _, None, None, "receive") => ()
-      }
 
       viewSchedulingListenerManagerActor.expectMsg(ViewSchedulingListenersExist(true))
       // reply true to make sure view
@@ -113,7 +101,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     viewSchedulingListenerManagerActor.expectNoMsg(TIMEOUT)
   }
 
-  "A ViewActor" should "send a ViewSchedulingNewEvent msg to the viewSchedulingListenerManagerActor " +
+  "A ViewActor" should "send a ViewSchedulingEvent msg to the viewSchedulingListenerManagerActor " +
     "upon state change (if there are handlers listening)" in new viewSchedulingListenerManagerActorTest {
 
     val view = Brand(p("ec01"))
@@ -122,8 +110,11 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     val futureMaterialize = brandViewActor ? MaterializeView()
 
     viewSchedulingListenerManagerActor.expectMsgPF() {
-      case ViewSchedulingNewEvent(
-      brandView, _, Some(ReportNoDataAvailable(view, _)), Some("receive"), "nodata") => ()
+      case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
+        prevState shouldBe ReadFromSchemaManager(view, "test", 1L)
+        newState shouldBe NoData(view)
+        actions.head.isInstanceOf[ReportNoDataAvailable] shouldBe true
+      }
     }
 
     Await.result(futureMaterialize, TIMEOUT)
@@ -131,8 +122,8 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     futureMaterialize.value.get.isSuccess shouldBe true
   }
 
-  "A viewSchedulingListenerManagerActor" should "cache views and their events" +
-    "upon state change (if there are handlers listening)" in {
+  "A viewSchedulingListenerManagerActor" should "cache views and their last event" +
+    "and reply to handlers that have restarted" in {
 
     implicit val timeout = Timeout(TIMEOUT)
 
@@ -147,21 +138,32 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     val viewActor = TestProbe()
     val listenerHandlerActor = TestProbe()
 
-    viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingNewEvent(
-      view, new LocalDateTime(), None, None, "receive"))
+    val prevState1 = CreatedByViewManager(view)
 
-    listenerHandlerActor.send(viewSchedulingListenerManagerActor, CollectViewSchedulingStatus())
+    viewActor.send(viewSchedulingListenerManagerActor,
+      ViewSchedulingMonitoringEvent(prevState1, prevState1, Set(Transform(view)), new LocalDateTime()))
+
+    // register handler so it can collect view Scheduling status from cache
+    val handlerClassName = "someHandlerClassName"
+    listenerHandlerActor.send(viewSchedulingListenerManagerActor, RegisterFailedListener(handlerClassName))
+    listenerHandlerActor.send(viewSchedulingListenerManagerActor, CollectViewSchedulingStatus(handlerClassName))
 
     listenerHandlerActor.expectMsgPF() {
-      case ViewSchedulingNewEvent(view, _, None, None, "receive") => ()
+      case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
+        prevState shouldBe prevState1
+        newState shouldBe prevState1
+        actions.head shouldBe Transform(view)
+      }
     }
   }
 
-  "A viewSchedulingListenerManager" should "initialize successfully an external handler " +
-    "class, and execute its methods" in {
+  "A viewSchedulingListenerManager" should "initialize listeners and " +
+    "recover each view latest event and send to restarting viewSchedulingListener Actors "  in {
+
+    val handlerClassName = "org.schedoscope.test.TestViewListener"
 
     class SchedoscopeSettingsMock(config: Config) extends SchedoscopeSettings(config: Config) {
-      override lazy val viewSchedulingRunCompletionHandlers = List("org.schedoscope.test.TestViewListenerHandler")
+      override lazy val viewSchedulingRunCompletionHandlers = List(handlerClassName)
     }
 
     object SettingsMock extends ExtensionId[SchedoscopeSettings] with ExtensionIdProvider {
@@ -183,24 +185,22 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     val viewSchedulingListenerManagerActor = TestActorRef(
       ViewSchedulingListenerManagerActor.props(
         SettingsMock(ConfigFactory.load())))
+    // confirm if initialized external listener
+    viewSchedulingListenerManagerActor.children.size shouldBe 1
 
     val viewActor = TestProbe()
+    val fakeChild = TestProbe()
     val view = Brand(p("ec01"))
 
     viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingListenersExist(true))
     viewActor.expectMsg(ViewSchedulingListenersExist(true))
 
-    // state change test
-    EventFilter.info(pattern = "Cool, it works well!*", occurrences = 1) intercept {
-      viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingNewEvent(
-        view, new LocalDateTime(), None, None, "receive"))
-    }
+    val prevState = CreatedByViewManager(view)
+    val newState = Failed(view)
+    val event = ViewSchedulingMonitoringEvent(prevState, newState, Set(Transform(view)), new LocalDateTime())
 
-    // no state change test
-    EventFilter.info(pattern = "And the second too, we're on a lucky streak!*", occurrences = 1) intercept {
-      viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingNewEvent(
-        view, new LocalDateTime(), None, Some("receive"), "receive"))
-    }
+    // confirm that on restart an actor could receive again latest events
+    viewActor.send(viewSchedulingListenerManagerActor, event)
 
   }
 

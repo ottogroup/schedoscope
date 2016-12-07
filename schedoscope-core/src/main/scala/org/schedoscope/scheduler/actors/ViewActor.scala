@@ -56,17 +56,12 @@ class ViewActor(var currentState: ViewSchedulingState,
     * handlers out there
     */
   override def preStart {
-    viewSchedulingListenerManagerActor ! ViewSchedulingNewEvent(
-      currentState.view, new LocalDateTime(), None, None, currentState.label)
-
     viewSchedulingListenerManagerActor ! ViewSchedulingListenersExist(viewSchedulingListenersExist)
   }
 
   override def postRestart(reason: Throwable) {
-    super.postRestart(reason)
     log.info(s"Restarted because of ${reason.getMessage}")
-
-    viewSchedulingListenerManagerActor ! ViewSchedulingListenersExist(viewSchedulingListenersExist)
+    super.postRestart(reason)
   }
 
   def receive: Receive = LoggingReceive {
@@ -93,7 +88,6 @@ class ViewActor(var currentState: ViewSchedulingState,
       }
       stateMachine.materialize(externalState, source, mode)
     }
-
 
     case InvalidateView() => stateTransition {
       stateMachine.invalidate(currentState, sender)
@@ -158,7 +152,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       performSchedulingActions(actions)
 
 
-      logToViewSchedulingListeners(previousState.view, previousState, updatedState, actions)
+      logToViewSchedulingListeners(previousState, updatedState, actions)
 
       if (stateChange(previousState, updatedState))
         logStateChange(updatedState, previousState)
@@ -166,15 +160,13 @@ class ViewActor(var currentState: ViewSchedulingState,
     }
   }
 
-  def logToViewSchedulingListeners(view:View,
-                                   prevState:ViewSchedulingState,
-                                   newState:ViewSchedulingState,
+  def logToViewSchedulingListeners(previousState: ViewSchedulingState,
+                                   newState: ViewSchedulingState,
                                    actions: Set[ViewSchedulingAction]) = {
-    if(viewSchedulingListenersExist && !view.isExternal)
-      actions.foreach { action =>
-          viewSchedulingListenerManagerActor ! ViewSchedulingNewEvent(view, new LocalDateTime(),
-            Some(action), Some(prevState.label), newState.label)
-      }
+    if(viewSchedulingListenersExist && !previousState.view.isExternal)
+        viewSchedulingListenerManagerActor ! ViewSchedulingMonitoringEvent(previousState, newState,
+          actions, new LocalDateTime())
+
   }
 
 
@@ -265,8 +257,6 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
     viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
-
-    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
   }
 
   def folderEmpty(view: View) = settings

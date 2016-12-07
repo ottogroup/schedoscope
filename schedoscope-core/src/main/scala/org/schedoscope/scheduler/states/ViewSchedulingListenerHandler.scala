@@ -15,13 +15,13 @@
   */
 package org.schedoscope.scheduler.states
 
-class ViewSchedulingListener(viewSchedulingHandlerClassName:String) {
+class ViewSchedulingListenerHandler(viewSchedulingHandlerClassName:String) {
 
-  lazy val viewSchedulingRunCompletionHandler: ViewSchedulingListenerHandler =
+  lazy val viewSchedulingHandler: ViewSchedulingListener =
     Class
       .forName(viewSchedulingHandlerClassName)
       .newInstance()
-      .asInstanceOf[ViewSchedulingListenerHandler]
+      .asInstanceOf[ViewSchedulingListener]
 
   /**
     * Call handler state/action related methods
@@ -29,13 +29,20 @@ class ViewSchedulingListener(viewSchedulingHandlerClassName:String) {
     *       change state does it call viewScheduleNewAction
     *       method
     */
-  def viewSchedulingCall(handle: ViewSchedulingListenerHandle): Unit = {
-    if (handle.prevState == None || handle.prevState.get != handle.newState)
-      viewSchedulingRunCompletionHandler.viewScheduleStateChange(handle)
-    else
-      viewSchedulingRunCompletionHandler.viewScheduleNewAction(handle)
+  def viewSchedulingCall(event: ViewSchedulingEvent): Unit = {
+      viewSchedulingHandler.viewSchedulingEvent(event)
   }
 
 }
 
-case class ViewSchedulingListenerHandlerInternalException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+/**
+  * Explicit exception in order to cause ViewSchedulingListener Actor's restart
+  * with latest view scheduling event per View recovery
+  */
+case class RetryableViewSchedulingListenerException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+
+/**
+  * General purpose exception, which forces ViewSchedulingListener Actor to restart
+  * without view scheduling events recovery
+  */
+case class ViewSchedulingListenerException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)

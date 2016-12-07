@@ -15,23 +15,29 @@
   */
 package org.schedoscope.scheduler.states
 
+import org.slf4j.LoggerFactory
+
 /**
   * Trait for user defined code to be executed before and after a given View state.
   * e.g. for gathering statistics and logging information about View status
   *
   */
-trait ViewSchedulingListenerHandler {
+trait ViewSchedulingListener {
+
+  private lazy val log = LoggerFactory.getLogger(getClass)
+
+  def logViewStateChangeInfo(event: ViewSchedulingEvent) =
+    if(event.prevState != event.newState)
+      log.info(s"VIEW ${event.prevState.view} STATE CHANGE ===> " +
+        s"${event.newState.label.toUpperCase()}: newState=${event.newState} " +
+        s"previousState=${event.prevState}; actions to perform: [${event.actions.toList.mkString(", ")}]")
 
   /**
-    * This method is called only if a View's State is changed
-    * For more detailed monitoring, use abstract class
+    * This method is called on every incoming View scheduling event
+    *
     */
-  def viewScheduleStateChange(run: ViewSchedulingListenerHandle):Unit
-
-  /**
-    * This method is called after a new View scheduling Action
-    * is issued - ONLY if a View State did NOT change
-    */
-  def viewScheduleNewAction(handle: ViewSchedulingListenerHandle):Unit = {}
+  def viewSchedulingEvent(event: ViewSchedulingEvent):Unit = {
+    logViewStateChangeInfo(event)
+  }
 
 }

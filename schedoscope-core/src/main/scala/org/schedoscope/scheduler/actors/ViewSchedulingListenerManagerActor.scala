@@ -1,11 +1,11 @@
 package org.schedoscope.scheduler.actors
 
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
-import akka.actor.{Actor, ActorInitializationException, ActorKilledException, OneForOneStrategy, Props}
+import akka.actor.{Actor, ActorInitializationException, ActorKilledException, ActorRef, OneForOneStrategy, Props}
 import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, ViewSchedulingListenersExist, ViewSchedulingNewEvent}
-import org.schedoscope.scheduler.states.{ViewSchedulingListenerHandler, ViewSchedulingListenerHandlerInternalException}
+import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, RegisterFailedListener, ViewSchedulingListenersExist, ViewSchedulingMonitoringEvent}
+import org.schedoscope.scheduler.states.{RetryableViewSchedulingListenerException, ViewSchedulingListener, ViewSchedulingListenerException}
 import org.schedoscope.dsl.View
 
 class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends Actor {
@@ -15,18 +15,19 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   val log = Logging(system, ViewSchedulingListenerManagerActor.this)
 
   override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = -1) {
+    OneForOneStrategy(maxNrOfRetries = 10) {
       case _: ActorInitializationException => Restart
       case _: ActorKilledException => Restart
-      case _: ViewSchedulingListenerHandlerInternalException => Restart
+      case _: RetryableViewSchedulingListenerException => Restart
+      case _: ViewSchedulingListenerException => Restart
       case _ => Escalate
     }
 
-  var viewsMonitored = scala.collection.mutable.Map[View, ViewSchedulingNewEvent]()
+  var viewsMonitored = scala.collection.mutable.Map[View, ViewSchedulingMonitoringEvent]()
+  var handlersMonitored = scala.collection.mutable.Set[String]()
 
   def viewSchedulingListenerHandlers(handlers:List[String] = settings.viewSchedulingRunCompletionHandlers) = {
     if (handlers.length > 0) {
-
       val handlersSetSoFar = scala.collection.mutable.Set[String]()
       handlers.foreach { x =>
         if (getViewSchedulingHandlerClass(x))
@@ -39,10 +40,10 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   }
 
   def getViewSchedulingHandlerClass(className: String):Boolean = try {
-    val c = Class.forName(className).newInstance().asInstanceOf[ViewSchedulingListenerHandler]
+    val c = Class.forName(className).newInstance().asInstanceOf[ViewSchedulingListener]
     true
   } catch {
-    case ex: ClassCastException =>
+    case ex: ClassCastException  =>
       log.error(ex.getMessage)
       false
     case _: ClassNotFoundException =>
@@ -68,16 +69,26 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
     log.info(s"Restarted because of ${reason.getMessage}")
   }
 
-  def receive: Receive = LoggingReceive({
-
-    case ViewSchedulingNewEvent(view, eventTime, action, prevState, newState) => {
-      // forward to all its children (aka handlers)
-      context.actorSelection("*") ! ViewSchedulingNewEvent(view, eventTime, action, prevState, newState)
-      viewsMonitored += (view -> ViewSchedulingNewEvent(view, eventTime, action, prevState, newState))
+  def collectViewSchedulingStatus(actor:ActorRef, handlerClassName:String) =
+    if(handlersMonitored contains handlerClassName) {
+      handlersMonitored -= handlerClassName
+      viewsMonitored.values.foreach(actor ! _)
     }
 
-    case CollectViewSchedulingStatus() =>
-      viewsMonitored.values.foreach(sender ! _)
+  def receive: Receive = LoggingReceive({
+
+    case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
+      // forward to all its children (aka handlers)
+      context.actorSelection("*") ! ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime)
+      viewsMonitored += (prevState.view -> ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime))
+    }
+
+    case CollectViewSchedulingStatus(handlerClassName) =>
+      collectViewSchedulingStatus(sender, handlerClassName)
+
+    case RegisterFailedListener(handlerClassName) =>
+      handlersMonitored += handlerClassName
+
 
     case ViewSchedulingListenersExist(_) =>
       sender ! ViewSchedulingListenersExist(
@@ -92,5 +103,4 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
 object ViewSchedulingListenerManagerActor {
   def props(settings: SchedoscopeSettings) =
     Props(classOf[ViewSchedulingListenerManagerActor], settings)
-      .withDispatcher("akka.actor.view-scheduling-listener-dispatcher")
 }
