@@ -15,7 +15,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   val log = Logging(system, ViewSchedulingListenerManagerActor.this)
 
   override val supervisorStrategy =
-    OneForOneStrategy(maxNrOfRetries = 10) {
+    OneForOneStrategy(maxNrOfRetries = settings.viewScheduleListenerActorsMaxRetries) {
       case _: ActorInitializationException => Restart
       case _: ActorKilledException => Restart
       case _: RetryableViewSchedulingListenerException => Restart

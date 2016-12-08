@@ -84,6 +84,14 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
     }
   }
 
+  lazy val viewScheduleListenerActorsMaxRetries = {
+    try
+      config.getInt("akka.actor.view-scheduling-listener-actor.maxRetries")
+    catch {
+      case _: Throwable => -1
+    }
+  }
+
     /**
       * An instance of the view augmentor class
       */
