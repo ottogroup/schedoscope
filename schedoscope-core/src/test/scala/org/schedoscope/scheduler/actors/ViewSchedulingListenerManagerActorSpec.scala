@@ -63,18 +63,13 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
         schemaManagerRouter.ref,
         viewSchedulingListenerManagerActor.ref))
 
-    def initializeView(view: View, listeners:Boolean): ActorRef = {
+    def initializeView(view: View): ActorRef = {
 
       val future = viewManagerActor ? view
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
       schemaManagerRouter.reply(SchemaActionSuccess())
       schemaManagerRouter.expectMsg(AddPartitions(List(view)))
       schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
-
-
-      viewSchedulingListenerManagerActor.expectMsg(ViewSchedulingListenersExist(true))
-      // reply true to make sure view
-      viewSchedulingListenerManagerActor.reply(ViewSchedulingListenersExist(listeners))
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true
@@ -83,29 +78,12 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     }
   }
 
-  "A new initialized ViewActor" should "send 2 msgs to the viewSchedulingListenerManagerActor" in
-    new viewSchedulingListenerManagerActorTest {
-
-    val view = Brand(p("ec01"))
-    val brandViewActor = initializeView(view, true)
-  }
-
-  "A ViewActor" should "not send msgs to the viewSchedulingListenerManagerActor " +
-    "if there are no listening handlers" in new viewSchedulingListenerManagerActorTest {
-
-    val view = Brand(p("ec01"))
-
-    val brandViewActor = initializeView(view, false)
-    val futureMaterialize = brandViewActor ? MaterializeView()
-
-    viewSchedulingListenerManagerActor.expectNoMsg(TIMEOUT)
-  }
 
   "A ViewActor" should "send a ViewSchedulingEvent msg to the viewSchedulingListenerManagerActor " +
     "upon state change (if there are handlers listening)" in new viewSchedulingListenerManagerActorTest {
 
     val view = Brand(p("ec01"))
-    val brandViewActor = initializeView(view, true)
+    val brandViewActor = initializeView(view)
 
     val futureMaterialize = brandViewActor ? MaterializeView()
 
@@ -191,9 +169,6 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     val viewActor = TestProbe()
     val fakeChild = TestProbe()
     val view = Brand(p("ec01"))
-
-    viewActor.send(viewSchedulingListenerManagerActor, ViewSchedulingListenersExist(true))
-    viewActor.expectMsg(ViewSchedulingListenersExist(true))
 
     val prevState = CreatedByViewManager(view)
     val newState = Failed(view)
