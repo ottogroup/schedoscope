@@ -59,7 +59,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     try {
       driver = driverConstructor(ds)
     } catch {
-      case t: Throwable => throw RetryableDriverException("Driver actor could not initialize driver because driver constructor throws exception (HINT: if Driver restarts persist, validate the transformations driver config in conf file). Restarting driver actor...", t)
+      case t: Throwable => throw RetryableDriverException("Driver actor could not initialize driver because driver constructor throws exception (HINT: if Driver Actor start failure behaviour persists, validate the respective transformation driver config in conf file). Restarting driver actor...", t)
     }
 
     logStateInfo("idle", "DRIVER ACTOR: initialized actor")
