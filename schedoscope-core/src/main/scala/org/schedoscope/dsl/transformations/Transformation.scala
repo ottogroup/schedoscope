@@ -51,7 +51,7 @@ abstract class Transformation {
   /**
     * Fluent interface to attach a configuration to a transformation.
     */
-  def configureWith(c: Map[String, Any]) = {
+  def configureWith(c: Map[String, Any]): this.type = {
     configuration ++= c
     this
   }
