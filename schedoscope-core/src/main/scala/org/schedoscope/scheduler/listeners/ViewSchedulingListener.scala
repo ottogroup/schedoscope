@@ -57,7 +57,7 @@ trait ViewSchedulingListener {
 
   def getTransformationDetails(transfChecksum: String, transfTimestamp: Option[Long]) = {
     val ts = transfTimestamp match {
-      case Some(t:Long) => s"\ttransformation-timestamp: ${t} (s)"
+      case Some(t:Long) => s"\ttransformation-timestamp: ${t}"
       case _ => ""
     }
     s"\ttransformation-checksum: ${transfChecksum}" + ts
@@ -123,10 +123,14 @@ trait ViewSchedulingListener {
   def getViewSchedulingTimeDeltaOutput(event:ViewSchedulingEvent) =
     if(latestViewEvent contains(event.prevState.view)) {
       val prevEvent = latestViewEvent.get(event.prevState.view).get
-      s"previous event was state transformation: [previous: ${prevEvent.prevState.label} " +
-        s"===> new: ${prevEvent.newState.label}] \tcurrent event is state transformation: " +
-        s"[previous: ${prevEvent.prevState.label} ===> new:${prevEvent.newState.label}] " +
-        s"\ttimestampts difference: ${getViewSchedulingTimeDelta(event)}"
+      val tStamp = if(getViewSchedulingTimeDelta(event) > 0)
+        s"\tevents timestampt difference: ${getViewSchedulingTimeDelta(event)} (s)"
+      else
+        ""
+      s"previous event state change: ['${prevEvent.prevState.label}' " +
+        s"===> '${prevEvent.newState.label}'] \tcurrent event state change: " +
+        s"['${prevEvent.prevState.label}' ===> '${prevEvent.newState.label}'] " +
+        tStamp
     } else ""
 
 }
