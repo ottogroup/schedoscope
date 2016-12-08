@@ -30,7 +30,6 @@ trait ViewSchedulingListener {
   val INIT = "MONITORING:"
   var latestViewEvent = Map[View, ViewSchedulingEvent]()
 
-
   /**
     * Called on every incoming View scheduling event
     */
@@ -58,14 +57,14 @@ trait ViewSchedulingListener {
 
   def getTransformationDetails(transfChecksum: String, transfTimestamp: Option[Long]) = {
     val ts = transfTimestamp match {
-      case Some(t:Long) => s"\ttransformation-Timestamp: ${t}"
+      case Some(t:Long) => s"\ttransformation-timestamp: ${t} (s)"
       case _ => ""
     }
-    s"\ttransformation-Checksum: ${transfChecksum}" + ts
+    s"\ttransformation-checksum: ${transfChecksum}" + ts
   }
 
   def getWithErrorsOrIncomplete(errors: Boolean, incomplete: Boolean) =
-      s"\twith-errors: ${errors}" +
+      s"\terrors: ${errors}" +
       s"\tincomplete: ${incomplete}"
 
   def getMaterializationDetails(listenersWaitingForMaterialize: scala.collection.Set[PartyInterestedInViewSchedulingStateChange],
@@ -113,21 +112,21 @@ trait ViewSchedulingListener {
   def storeNewEvent(event: ViewSchedulingEvent) =
     latestViewEvent += (event.prevState.view -> event)
 
-  def getViewSchedulingTimeDelta(event: ViewSchedulingEvent):Option[Long] = {
+  def getViewSchedulingTimeDelta(event: ViewSchedulingEvent):Long = {
     if(latestViewEvent contains(event.prevState.view)) {
       val prevT = latestViewEvent.get(event.prevState.view).get.eventTime.toDateTime.getMillis / 1000
       val t = event.eventTime.toDateTime().getMillis / 1000
-      Some(t - prevT)
-    } else None
+      t - prevT
+    } else 0
   }
 
   def getViewSchedulingTimeDeltaOutput(event:ViewSchedulingEvent) =
     if(latestViewEvent contains(event.prevState.view)) {
       val prevEvent = latestViewEvent.get(event.prevState.view).get
-      s"previous event was delta between states: [previous: ${prevEvent.prevState.label} " +
-        s"-> new:${prevEvent.newState.label}] \tnew event is delta between states: " +
-        s"[previous: ${prevEvent.prevState.label} -> new:${prevEvent.newState.label}] " +
-        s"difference in timestampts: ${getViewSchedulingTimeDelta(event)}"
+      s"previous event was state transformation: [previous: ${prevEvent.prevState.label} " +
+        s"===> new: ${prevEvent.newState.label}] \tcurrent event is state transformation: " +
+        s"[previous: ${prevEvent.prevState.label} ===> new:${prevEvent.newState.label}] " +
+        s"\ttimestampts difference: ${getViewSchedulingTimeDelta(event)}"
     } else ""
 
 }

@@ -41,13 +41,13 @@ class ViewSchedulingMonitor extends ViewSchedulingListener {
       log.info(getMonitInit(event.prevState.view) + getViewStateChangeInfo(event))
 
   def logStateDetails(event: ViewSchedulingEvent) =
-    log.info(getMonitInit(event.prevState.view) + parseAnyState(event.newState))
+    log.debug(getMonitInit(event.prevState.view) + parseAnyState(event.newState))
 
   def logScheduledActions(event: ViewSchedulingEvent) =
-    log.info(getMonitInit(event.prevState.view) +getSetOfActions(event))
+    log.debug(getMonitInit(event.prevState.view) +getSetOfActions(event))
 
   def logViewSchedulingTimeDeltaOutput(event: ViewSchedulingEvent) =
     if(latestViewEvent contains(event.prevState.view))
-      log.info(getMonitInit(event.prevState.view) + getViewSchedulingTimeDeltaOutput(event))
+      log.debug(getMonitInit(event.prevState.view) + getViewSchedulingTimeDeltaOutput(event))
 
 }
