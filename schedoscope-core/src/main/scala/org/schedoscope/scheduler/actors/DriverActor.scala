@@ -205,7 +205,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
     try {
       commandToRun.command match {
-        case DeployCommand =>
+        case DeployCommand() =>
           logStateInfo("deploy", s"DRIVER ACTOR: Running Deploy command")
 
           driver.deployAll(ds)
