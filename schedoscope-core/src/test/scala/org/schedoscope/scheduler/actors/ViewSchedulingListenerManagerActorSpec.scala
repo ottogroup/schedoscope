@@ -174,8 +174,14 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     val newState = Failed(view)
     val event = ViewSchedulingMonitoringEvent(prevState, newState, Set(Transform(view)), new LocalDateTime())
 
-    // confirm that on restart an actor could receive again latest events
+
     viewActor.send(viewSchedulingListenerManagerActor, event)
+    val someHandlerClassName = "someHandlerClassName"
+    fakeChild.send(viewSchedulingListenerManagerActor, RegisterFailedListener(someHandlerClassName))
+    fakeChild.send(viewSchedulingListenerManagerActor, CollectViewSchedulingStatus(handlerClassName))
+
+    // confirm that on restart an actor could receive again latest events
+    fakeChild.expectMsg(event)
 
   }
 
