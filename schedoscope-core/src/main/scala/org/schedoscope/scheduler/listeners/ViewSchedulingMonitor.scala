@@ -15,22 +15,39 @@
   */
 package org.schedoscope.scheduler.listeners
 
-import org.schedoscope.scheduler.states.{ViewSchedulingEvent, ViewSchedulingState}
+import org.schedoscope.scheduler.states.{ViewSchedulingEvent}
 import org.slf4j.LoggerFactory
 
 /**
-  * Listener aims to monitor view scheduling evolution for these main questions:
-  * - How long (approximately) did it take for a view to change state (ViewActor point of view)
-  * - If any, how many retries did take place for a given transformation?
-  * - What are the detail properties of a view at different scheduling states?
+  * Listener aims to monitor view scheduling evolution and
+  * their scheduling states details
+  *
   */
 class ViewSchedulingMonitor extends ViewSchedulingListener {
 
   val log = LoggerFactory.getLogger(getClass)
 
   override def viewSchedulingEvent(event: ViewSchedulingEvent): Unit = {
-    super.viewSchedulingEvent(event)
+    logStateChange(event)
+    logStateDetails(event)
+    logViewSchedulingTimeDeltaOutput(event)
+    logScheduledActions(event)
+
+    storeNewEvent(event)
   }
 
+  def logStateChange(event: ViewSchedulingEvent) =
+    if (event.prevState != event.newState)
+      log.info(getMonitInit(event.prevState.view) + getViewStateChangeInfo(event))
+
+  def logStateDetails(event: ViewSchedulingEvent) =
+    log.info(getMonitInit(event.prevState.view) + parseAnyState(event.newState))
+
+  def logScheduledActions(event: ViewSchedulingEvent) =
+    log.info(getMonitInit(event.prevState.view) +getSetOfActions(event))
+
+  def logViewSchedulingTimeDeltaOutput(event: ViewSchedulingEvent) =
+    if(latestViewEvent contains(event.prevState.view))
+      log.info(getMonitInit(event.prevState.view) + getViewSchedulingTimeDeltaOutput(event))
 
 }

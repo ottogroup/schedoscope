@@ -30,18 +30,17 @@ trait ViewSchedulingListener {
   val INIT = "MONITORING:"
   var latestViewEvent = Map[View, ViewSchedulingEvent]()
 
+
   /**
     * Called on every incoming View scheduling event
     */
   def viewSchedulingEvent(event: ViewSchedulingEvent): Unit
 
-  def getMonitInit(view: View) = s"${INIT} VIEW [${view.n}]"
+  def getMonitInit(view: View) = s"${INIT} VIEW [${view.n}] "
 
   def getViewStateChangeInfo(event: ViewSchedulingEvent) =
-    if (event.prevState != event.newState)
-      s"STATE CHANGE ===> " +
-        s"${event.newState.label.toUpperCase()}: newState=${event.newState} " +
-        s"previousState=${event.prevState}"
+    s"STATE CHANGE ===> ${event.newState.label.toUpperCase()}: " +
+      s"newState=${event.newState} previousState=${event.prevState}"
 
   def getSetOfActions(event: ViewSchedulingEvent) =
     s"scheduled actions to perform: [${event.actions.toList.mkString(", ")}]"
@@ -72,7 +71,6 @@ trait ViewSchedulingListener {
                    materializationMode: MaterializeViewMode) =
     s"\tlisteners-waiting-for-this-materialization: [${listenersWaitingForMaterialize.mkString(", ")}]" +
     s"\tmaterialization-mode: ${materializationMode}"
-
 
   def getStateMetrics(state: ViewSchedulingState) = {
     val msg = state match {
@@ -107,19 +105,27 @@ trait ViewSchedulingListener {
           getWithErrorsOrIncomplete(errors, incomplete) +
           s"\tnext-retry: ${nextRetry}"
     }
-    s"STATE DETAILS:" + msg
+    s"STATE [${state.label.toUpperCase()}] DETAILS:" + msg
   }
 
+  def storeNewEvent(event: ViewSchedulingEvent) =
+    latestViewEvent += (event.prevState.view -> event)
 
-  def logScheduledActionDetails = {}
-
-  def transFormationDuration(event: ViewSchedulingEvent) = {
-
+  def getViewSchedulingTimeDelta(event: ViewSchedulingEvent):Option[Long] = {
+    if(latestViewEvent contains(event.prevState.view)) {
+      val prevT = latestViewEvent.get(event.prevState.view).get.eventTime.toDateTime.getMillis / 1000
+      val t = event.eventTime.toDateTime().getMillis / 1000
+      Some(t - prevT)
+    } else None
   }
 
-  def transformationRunEnded(event: ViewSchedulingEvent) = {
-
-  }
-
+  def getViewSchedulingTimeDeltaOutput(event:ViewSchedulingEvent) =
+    if(latestViewEvent contains(event.prevState.view)) {
+      val prevEvent = latestViewEvent.get(event.prevState.view).get
+      s"previous event was delta between states: [previous: ${prevEvent.prevState.label} " +
+        s"-> new:${prevEvent.newState.label}] \tnew event is delta between states: " +
+        s"[previous: ${prevEvent.prevState.label} -> new:${prevEvent.newState.label}] " +
+        s"difference in timestampts: ${getViewSchedulingTimeDelta(event)}"
+    } else ""
 
 }
