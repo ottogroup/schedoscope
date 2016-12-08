@@ -37,7 +37,7 @@ class ViewSchedulingMonitor extends ViewSchedulingListener {
   }
 
   def logStateChange(event: ViewSchedulingEvent) =
-    if (event.prevState != event.newState)
+    if (event.prevState.label != event.newState.label)
       log.info(getMonitInit(event.prevState.view) + getViewStateChangeInfo(event))
 
   def logStateDetails(event: ViewSchedulingEvent) =
