@@ -26,10 +26,7 @@ class ViewSchedulingListenerHandler(viewSchedulingHandlerClassName:String) {
       .asInstanceOf[ViewSchedulingListener]
 
   /**
-    * Call handler state/action related methods
-    * Note: avoids duplication => only if action did not
-    *       change state does it call viewScheduleNewAction
-    *       method
+    * Call handler passing event data
     */
   def viewSchedulingCall(event: ViewSchedulingEvent): Unit = {
       viewSchedulingHandler.viewSchedulingEvent(event)

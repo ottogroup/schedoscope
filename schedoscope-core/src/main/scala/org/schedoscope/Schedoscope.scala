@@ -64,7 +64,7 @@ object Schedoscope {
     */
   var viewSchedulingListenerManagerActorBuilder = () => actorSystem.actorOf(
     ViewSchedulingListenerManagerActor.props(settings),
-    "ViewSchedulingListenerManagerActor")
+    "view-scheduling-listeners")
 
   /**
     * The Schedoscope actor system

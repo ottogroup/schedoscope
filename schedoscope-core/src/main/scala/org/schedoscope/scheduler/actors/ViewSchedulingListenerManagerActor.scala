@@ -27,16 +27,12 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   var handlersMonitored = scala.collection.mutable.Set[String]()
 
   def viewSchedulingListenerHandlers(handlers:List[String] = settings.viewSchedulingRunCompletionHandlers) = {
-    if (handlers.length > 0) {
-      val handlersSetSoFar = scala.collection.mutable.Set[String]()
-      handlers.foreach { x =>
-        if (getViewSchedulingHandlerClass(x))
-          handlersSetSoFar += x
-      }
-      handlersSetSoFar
-    } else {
-      Set[String]()
+    val handlersSetSoFar = scala.collection.mutable.Set[String]()
+    handlers.foreach { x =>
+      if (getViewSchedulingHandlerClass(x))
+        handlersSetSoFar += x
     }
+    handlersSetSoFar
   }
 
   def getViewSchedulingHandlerClass(className: String):Boolean = try {
