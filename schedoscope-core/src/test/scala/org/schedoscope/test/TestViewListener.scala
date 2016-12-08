@@ -16,13 +16,12 @@
 package org.schedoscope.test
 
 import org.schedoscope.scheduler.listeners.{RetryableViewSchedulingListenerException, ViewSchedulingListener}
-import org.schedoscope.scheduler.states.{ViewSchedulingEvent, ViewSchedulingListenerException}
+import org.schedoscope.scheduler.states.{ViewSchedulingEvent}
 
 
 class TestViewListener extends ViewSchedulingListener {
 
   override def viewSchedulingEvent(event: ViewSchedulingEvent):Unit = {
-    super.viewSchedulingEvent(event)
     if(event.prevState != event.newState) throw new IllegalArgumentException("Random throwable in thaa house")
     else throw new RetryableViewSchedulingListenerException("And the second too, we're on a lucky streak!")
   }

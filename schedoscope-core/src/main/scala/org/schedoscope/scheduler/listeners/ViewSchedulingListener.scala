@@ -59,6 +59,7 @@ trait ViewSchedulingListener {
   def getTransformationDetails(transfChecksum: String, transfTimestamp: Option[Long]) = {
     val ts = transfTimestamp match {
       case Some(t:Long) => s"\ttransformation-Timestamp: ${t}"
+      case _ => ""
     }
     s"\ttransformation-Checksum: ${transfChecksum}" + ts
   }
@@ -104,8 +105,9 @@ trait ViewSchedulingListener {
           getMaterializationDetails(listenersWaitingForMaterialize, materializationMode) +
           getWithErrorsOrIncomplete(errors, incomplete) +
           s"\tnext-retry: ${nextRetry}"
+      case _ => "no details available for this state"
     }
-    s"STATE [${state.label.toUpperCase()}] DETAILS:" + msg
+    s"STATE [${state.label.toUpperCase()}] DETAILS: " + msg
   }
 
   def storeNewEvent(event: ViewSchedulingEvent) =
