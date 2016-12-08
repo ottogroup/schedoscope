@@ -46,21 +46,6 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   val log = Logging(system, this)
   var knownDependencies = dependencies
-  var viewSchedulingListenersExist = true
-
-  /**
-    * Notify viewSchedulingListener handler actors that the system
-    * knows about this View plus ask if there are any listening
-    * handlers out there
-    */
-  override def preStart {
-    viewSchedulingListenerManagerActor ! ViewSchedulingListenersExist(viewSchedulingListenersExist)
-  }
-
-  override def postRestart(reason: Throwable) {
-    log.info(s"Restarted because of ${reason.getMessage}")
-    super.postRestart(reason)
-  }
 
   def receive: Receive = LoggingReceive {
 
@@ -136,9 +121,6 @@ class ViewActor(var currentState: ViewSchedulingState,
       knownDependencies += view -> viewRef
     }
 
-    case ViewSchedulingListenersExist(answer) =>
-      viewSchedulingListenersExist = answer
-
   }
 
 
@@ -152,7 +134,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       performSchedulingActions(actions)
 
 
-      logToViewSchedulingListeners(previousState, updatedState, actions)
+      notifySchedulingListeners(previousState, updatedState, actions)
 
       if (stateChange(previousState, updatedState))
         communicateStateChange(updatedState, previousState)
@@ -160,10 +142,10 @@ class ViewActor(var currentState: ViewSchedulingState,
     }
   }
 
-  def logToViewSchedulingListeners(previousState: ViewSchedulingState,
-                                   newState: ViewSchedulingState,
-                                   actions: Set[ViewSchedulingAction]) = {
-    if(viewSchedulingListenersExist && !previousState.view.isExternal)
+  def notifySchedulingListeners(previousState: ViewSchedulingState,
+                                newState: ViewSchedulingState,
+                                actions: Set[ViewSchedulingAction]) = {
+    if(!previousState.view.isExternal)
         viewSchedulingListenerManagerActor ! ViewSchedulingMonitoringEvent(previousState, newState,
           actions, new LocalDateTime())
 

@@ -29,7 +29,7 @@ class ViewSchedulingListenerActor(handlerClassName:String,
 
         case e: RetryableViewSchedulingListenerException =>
           viewSchedulingListenerManagerActor ! RegisterFailedListener(handlerClassName)
-          throw new RetryableViewSchedulingListenerException(e.getMessage, e.getCause)
+          throw e
 
         case t: Throwable =>
           throw new ViewSchedulingListenerException(t.getMessage, t.getCause)

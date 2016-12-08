@@ -294,12 +294,6 @@ sealed class ViewSchedulingMonitoring
   * Message exchanged between View Actors and ViewSchedulerManager Actor
   * to know if there are any handler classes instantiated
   */
-case class ViewSchedulingListenersExist(exists:Boolean) extends ViewSchedulingMonitoring
-
-/**
-  * Message exchanged between View Actors and ViewSchedulerManager Actor
-  * to know if there are any handler classes instantiated
-  */
 case class CollectViewSchedulingStatus(handlerClassName:String) extends ViewSchedulingMonitoring
 
 

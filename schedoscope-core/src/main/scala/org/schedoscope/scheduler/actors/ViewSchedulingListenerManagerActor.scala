@@ -4,7 +4,7 @@ import akka.actor.SupervisorStrategy.{Escalate, Restart}
 import akka.actor.{Actor, ActorInitializationException, ActorKilledException, ActorRef, OneForOneStrategy, Props}
 import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, RegisterFailedListener, ViewSchedulingListenersExist, ViewSchedulingMonitoringEvent}
+import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, RegisterFailedListener, ViewSchedulingMonitoringEvent}
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.listeners.{RetryableViewSchedulingListenerException, ViewSchedulingListener, ViewSchedulingListenerException}
 
@@ -85,10 +85,6 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
     case RegisterFailedListener(handlerClassName) =>
       handlersMonitored += handlerClassName
 
-
-    case ViewSchedulingListenersExist(_) =>
-      sender ! ViewSchedulingListenersExist(
-        viewSchedulingListenerHandlers().size > 0)
   })
 
 }
