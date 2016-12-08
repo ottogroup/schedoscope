@@ -93,6 +93,11 @@ class BaseSettings(val config: Config) {
   lazy val hdfs = config.getString("schedoscope.hadoop.hdfs")
 
   /**
+    * The configured HDFS root folder for Schedoscope view data.
+    */
+  lazy val viewDataHdfsRoot = config.getString("schedoscope.hadoop.viewDataHdfsRoot")
+
+  /**
     * Configuration trigger whether versioning transformation is enabled.
     */
   lazy val transformationVersioning = config.getBoolean("schedoscope.versioning.transformations")
@@ -122,13 +127,13 @@ class BaseSettings(val config: Config) {
   /**
     * Flag for enabling usage of external dependencies
     */
-  lazy val externalDependencies = config.getBoolean("schedoscope.external.enabled")
+  lazy val externalDependencies = config.getBoolean("schedoscope.external-dependencies.enabled")
 
   /**
     * The configured list of internal packages
     */
   lazy val externalHome = if (externalDependencies) {
-    config.getStringList("schedoscope.external.internal").toList
+    config.getStringList("schedoscope.external-dependencies.home").toList
   } else {
     List.empty[String]
   }
@@ -137,8 +142,8 @@ class BaseSettings(val config: Config) {
   /**
     * Flag for disabling checks for external dependencies
     */
-  lazy val externalChecksDisabled = if (externalDependencies) {
-    config.getBoolean("schedoscope.external.checks")
+  lazy val externalChecksEnabled = if (externalDependencies) {
+    config.getBoolean("schedoscope.external-dependencies.checks")
   } else {
     false
   }

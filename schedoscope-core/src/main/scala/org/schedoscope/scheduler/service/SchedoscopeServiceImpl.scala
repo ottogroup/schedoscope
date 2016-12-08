@@ -61,11 +61,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         //
         if(settings.externalDependencies) {
           views.foreach { v =>
-            if (!settings.externalHome.exists(v.dbName.startsWith(_)))
-              throw new UnsupportedOperationException("You can not access an external view directly")
+            if (!v.isInDatabases(settings.externalHome:_*))
+              throw new UnsupportedOperationException("You can not address an external view directly.")
           }
         }
-        views
       } catch {
         case t: Throwable => throw new IllegalArgumentException(s"Invalid view URL pattern passed: ${viewUrlPath.get}."
           + {

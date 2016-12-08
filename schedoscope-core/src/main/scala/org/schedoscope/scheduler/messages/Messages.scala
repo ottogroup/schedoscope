@@ -83,11 +83,20 @@ case class DeployCommand() extends CommandRequest
 case class PollCommand(typ: String) extends CommandRequest
 
 /**
+  * Tells a driver actor to execute a transformation.
+  * @param transformation to execute
+  * @param view to transform
+  */
+case class TransformView(transformation: Transformation, view: View) extends CommandRequest
+
+/**
   * Instructs a driver actor to perform a command, such as a transformation. It comes along
   * with the reference to the actor that requested the action. The driver actor can then
   * notify the sender about the outcome.
   */
-case class CommandWithSender(command: AnyRef, sender: ActorRef) extends CommandRequest
+case class DriverCommand(command: AnyRef, sender: ActorRef) extends CommandRequest
+
+
 
 /**
   * Request to the transformation manager to generate a summary of currently running actions
@@ -150,7 +159,7 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
   * Used for external views.
   * @param mode materialization mode
   */
-case class ReloadStateAndMaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
+case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
 /**
   * Request for the SchemaManager to
@@ -208,7 +217,7 @@ case class MetaDataForMaterialize(metadata: (View,(String,Long)), mode: Material
   * @param driverRunHandle RunHandle of the executing driver
   * @param driverRunState  return state of the driver
   */
-case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends CommandResponse
+case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T], viewHasData: Boolean) extends CommandResponse
 
 /**
   * Response message of transformation manager actor with state of queues

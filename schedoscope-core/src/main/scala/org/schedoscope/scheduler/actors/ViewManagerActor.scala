@@ -105,12 +105,22 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     if (!settings.externalDependencies) {
       //external dependencies are not allowed
       val containsExternalDependencies = allViews.exists {
-        case (view, _, _) => view.hasExternalDependencies()
+        case (view, _, _) => view.hasExternalDependencies
       }
 
       if (containsExternalDependencies)
         throw new UnsupportedOperationException("External dependencies are not enabled," +
           "if you are sure you wan't to use this feature enable it in the schedoscope.conf.")
+    } else if (settings.externalChecksEnabled) {
+      allViews.foreach { case (view, _, _) =>
+        if (view.isInDatabases(settings.externalHome: _*)) {
+          if (view.isExternal)
+            throw new UnsupportedOperationException(s"You are referencing an external view as internal: $view.")
+        } else {
+          if (!view.isExternal)
+            throw new UnsupportedOperationException(s"You are referencing an internal view as external: $view.")
+        }
+      }
     }
 
     log.info(s"Computed ${allViews.size} views (with dependencies=${dependencies})")
@@ -185,7 +195,6 @@ class ViewManagerActor(settings: SchedoscopeSettings,
                 newDepsActorRefs.foreach(actorRef ! _)
               case None => //actor not yet known nothing to do here
             }
-
         }
       }
     }

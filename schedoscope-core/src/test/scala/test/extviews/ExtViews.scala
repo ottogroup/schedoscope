@@ -1,4 +1,5 @@
 /**
+  * Copyright 2015 Otto (GmbH & Co KG)
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -12,18 +13,12 @@
   * See the License for the specific language governing permissions and
   * limitations under the License.
   */
-package org.schedoscope.scheduler.driver
+package test.extviews
 
-import org.joda.time.LocalDateTime
-import org.schedoscope.dsl.transformations.Transformation
+import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.NoOp
 
-import scala.reflect.internal.util.Statistics.View
+case class ExternalShop() extends View {
 
-/**
-  * Handle for the transformation executed by a driver, called a driver run.
-  *
-  * The real, technology-specific handle for a executions of a transformation type is kept
-  * in the property stateHandle.
-  */
-class DriverRunHandle[T <: Transformation](val driver: Driver[T], val started: LocalDateTime, val transformation: T, var stateHandle: Any)
-
+  transformVia(() => NoOp())
+}

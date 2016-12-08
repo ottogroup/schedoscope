@@ -24,6 +24,7 @@ import org.schedoscope.dsl.storageformats.{Avro, Parquet, TextFile}
 import org.schedoscope.dsl.transformations.{HiveTransformation, NoOp}
 import org.schedoscope.dsl.views.{DailyParameterization, JobMetadata, PointOccurrence}
 import org.schedoscope.schema.ddl.HiveQl._
+import test.extviews.ExternalShop
 import test.views._
 
 class DslTest extends FlatSpec with Matchers {
@@ -401,7 +402,7 @@ class DslTest extends FlatSpec with Matchers {
 
   it should "have an external dependency" in {
     val viewWithExternalDep = ViewWithExternalDeps(p("ec0106"), p("2014"), p("01"), p("01"))
-    val extView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+    val extView = ExternalShop()
 
     val dependency = viewWithExternalDep.dependencies.head
 

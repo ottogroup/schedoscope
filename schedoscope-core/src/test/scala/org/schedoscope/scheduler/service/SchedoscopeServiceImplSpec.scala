@@ -6,16 +6,16 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.mock.MockitoSugar
-import org.schedoscope.scheduler.actors.{ViewActor, ViewManagerActor}
-import org.schedoscope.scheduler.driver.{DriverRunOngoing, HiveDriver}
-import org.schedoscope.scheduler.messages._
-import org.schedoscope.{Schedoscope, Settings, TestUtils}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.HiveTransformation
-
-import test.views.{ProductBrand, Brand}
+import org.schedoscope.scheduler.actors.ViewManagerActor
+import org.schedoscope.scheduler.driver.{DriverRunOngoing, HiveDriver}
+import org.schedoscope.scheduler.messages.{GetViews, ViewStatusListResponse, ViewStatusResponse, _}
+import org.schedoscope.{Schedoscope, Settings, TestUtils}
+import test.extviews.ExternalShop
+import test.views.{Brand, ProductBrand}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -50,8 +50,8 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   val brandUrl01 = s"test.views/Brand/${shop01}"
 
   val productBrandView01 = ProductBrand(p(shop01), p(year), p(month), p(day))
-  val brandDependency01:View = productBrandView01.dependencies.head
-  val productDependency01:View = productBrandView01.dependencies(1)
+  val brandDependency01: View = productBrandView01.dependencies.head
+  val productDependency01: View = productBrandView01.dependencies(1)
 
   val TIMEOUT = 5 seconds
   // views Status along their lifecycle
@@ -99,7 +99,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       future.value.get.get.asInstanceOf[ActorRef]
     }
 
-    def initializeViewWithDep(view: View, brandDependency:View, productDependency:View): ActorRef = {
+    def initializeViewWithDep(view: View, brandDependency: View, productDependency: View): ActorRef = {
       val future = viewManagerActor ? view
 
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(brandDependency)))
@@ -135,6 +135,8 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
   trait SchedoscopeServiceTest {
 
+    lazy val settings = Settings()
+
     lazy val driver = mock[HiveDriver]
     lazy val hiveTransformation = mock[HiveTransformation]
 
@@ -154,27 +156,15 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Schedoscope.schemaManagerRouterBuilder = () => schemaManagerActor.ref
 
     lazy val service = new SchedoscopeServiceImpl(system,
-      Schedoscope.settings,
-      viewManagerActor.ref,
-      transformationManagerActor.ref)
-  }
-
-  trait SchedoscopeServiceExternalTest {
-    lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true",
-      """schedoscope.external.internal=["prod.app.test"] """ )
-    Schedoscope.actorSystemBuilder = () => system
-
-    val viewManagerActor = TestProbe()
-    val transformationManagerActor = TestProbe()
-    Schedoscope.viewManagerActorBuilder = () => viewManagerActor.ref
-
-    lazy val service = new SchedoscopeServiceImpl(system,
       settings,
       viewManagerActor.ref,
       transformationManagerActor.ref)
-
   }
 
+  trait SchedoscopeServiceExternalTest extends SchedoscopeServiceTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.external-dependencies.enabled=true",
+      """schedoscope.external-dependencies.home=["${env}.test.views"] """)
+  }
 
   "The ViewManagerActor" should "create a new view" in new SchedoscopeServiceWithViewManagerTest {
     initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
@@ -199,7 +189,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val initError = s"Invalid view URL pattern passed: ${wrongUrlPath}.\n" +
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       "\nProblem: View URL paths needs at least a package and a view class name.\n"
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
     } should have message initError + errorMsg
@@ -213,10 +203,10 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val initError = s"Invalid view URL pattern passed: ${wrongUrlPath}.\n" +
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       s"\nProblem: No class for package and view: ${packge}.${wrongClazz}\n"
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
-    }  should have message initError + errorMsg
+    } should have message initError + errorMsg
   }
 
   it should "fail to load views due to wrong package reference for View Brand " +
@@ -229,10 +219,10 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val initError = s"Invalid view URL pattern passed: ${wrongUrlPath}.\n" +
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       s"\nProblem: No class for package and view: ${packge}.${wrongClazz}\n"
-    the [IllegalArgumentException] thrownBy {
+    the[IllegalArgumentException] thrownBy {
       val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
-    }  should have message initError + errorMsg
+    } should have message initError + errorMsg
   }
 
   it should "Return only an overview of the current views" in new SchedoscopeServiceWithViewManagerTest {
@@ -243,7 +233,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 3))
+    response.value.get.get.overview shouldBe Map("receive" -> 3)
     response.value.get.get.views shouldBe List()
   }
 
@@ -261,7 +251,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 1))
+    response.value.get.get.overview shouldBe Map("receive" -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
 
@@ -283,7 +273,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 3))
+    response.value.get.get.overview shouldBe Map("receive" -> 3)
     response.value.get.get.views.size shouldBe 3
 
     response.value.get.get.views(0).status shouldBe initStatus
@@ -318,7 +308,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 3))
+    response.value.get.get.overview shouldBe Map("receive" -> 3)
     response.value.get.get.views.size shouldBe 3
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(1).status shouldBe initStatus
@@ -431,18 +421,35 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 3))
+    response.value.get.get.overview shouldBe Map("receive" -> 3)
     response.value.get.get.views.size shouldBe 6
   }
 
   it should "block a call on an external view" in new SchedoscopeServiceExternalTest {
-    val testView = Brand(p("test"))
+    val testView = ExternalShop()
 
-    the [IllegalArgumentException] thrownBy {
-      val response = service.views(Some(testView.urlPath), None, None, None, None, None)
+    val response = service.views(Some(testView.urlPath), None, None, None, None, None)
+
+    the[IllegalArgumentException] thrownBy {
       Await.result(response, TIMEOUT)
-    } should have message "Invalid view URL pattern passed: test.views/Brand/test.\n" +
-      "original Message: You can not access an external view directly"
+    } should have message "Invalid view URL pattern passed: test.extviews/ExternalShop/.\n" +
+      "original Message: You can not address an external view directly."
+  }
+
+  it should "allow a call on an internal view" in new SchedoscopeServiceExternalTest {
+    val testView = Brand(p("test"))
+    val response = service.views(Some(testView.urlPath), None, None, None, None, None)
+
+    viewManagerActor.expectMsg(GetViews(Some(List(testView)), None, None))
+    viewManagerActor.reply(ViewStatusListResponse(List(ViewStatusResponse("loading", testView, viewManagerActor.ref))))
+
+    val expected = ViewStatusList(Map("loading" -> 1),
+      List(ViewStatus("test.views/Brand/test",
+        None, "loading", None, None, None, None, None, None, None, None, None, None)))
+
+    whenReady(response) { result =>
+      result shouldBe expected
+    }
   }
 
   /**
@@ -452,9 +459,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     *
     * status=(transforming|nodata|materialized|failed|retrying|waiting) materialize all views that have a given status (e.g. 'failed')
     * mode=RESET_TRANSFORMATION_CHECKSUMS ignore transformation version checksums when detecting whether views need to be rematerialized. The new checksum overwrites the old checksum. Useful when changing the code of transformations in way that does not require recomputation.
-    *   mode=RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS perform a "dry run" where transformation checksums and timestamps are set along the usual rules, however with no actual transformations taking place. As a result, all checksums in the metastore should be current and transformation timestamps should be consistent, such that no materialization will take place upon subsequent normal materializations.
-    *   mode=TRANSFORM_ONLY materialize the given views, but without asking the views' dependencies to materialize as well. This is useful when a transformation higher up in the dependency lattice has failed and you want to retry it without potentially rematerializing all dependencies.
-    *   mode=SET_ONLY force the given views into the materialized state. No transformation is performed, and all the views' transformation timestamps and checksums are set to current.
+    * mode=RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS perform a "dry run" where transformation checksums and timestamps are set along the usual rules, however with no actual transformations taking place. As a result, all checksums in the metastore should be current and transformation timestamps should be consistent, such that no materialization will take place upon subsequent normal materializations.
+    * mode=TRANSFORM_ONLY materialize the given views, but without asking the views' dependencies to materialize as well. This is useful when a transformation higher up in the dependency lattice has failed and you want to retry it without potentially rematerializing all dependencies.
+    * mode=SET_ONLY force the given views into the materialized state. No transformation is performed, and all the views' transformation timestamps and checksums are set to current.
     *
     */
 
@@ -476,7 +483,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 1))
+    response.value.get.get.overview shouldBe Map("receive" -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
@@ -496,7 +503,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     Await.result(response, TIMEOUT)
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 1))
+    response.value.get.get.overview shouldBe Map("receive" -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
@@ -515,28 +522,28 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
   it should "ask ViewManagerActor for View without dependencies, and send msg 'newdata' to correspondent Actor " in
     new SchedoscopeServiceTest {
-    val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
-    val statusParam = None
-    val filterParam = None
-    val response = service.newdata(prodBrandviewUrlPath01, statusParam, filterParam)
+      val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
+      val statusParam = None
+      val filterParam = None
+      val response = service.newdata(prodBrandviewUrlPath01, statusParam, filterParam)
 
-    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
+      viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
 
-    viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+      viewManagerActor.reply(
+        ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
 
-    prodBrandViewActor.expectMsg("newdata")
+      prodBrandViewActor.expectMsg("newdata")
 
-    Await.result(response, TIMEOUT)
+      Await.result(response, TIMEOUT)
 
-    response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 1))
-    response.value.get.get.views.size shouldBe 1
-    response.value.get.get.views(0).status shouldBe initStatus
-    response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
-    response.value.get.get.views(0).dependencies shouldBe None
+      response.isCompleted shouldBe true
+      response.value.get.get.overview shouldBe Map("receive" -> 1)
+      response.value.get.get.views.size shouldBe 1
+      response.value.get.get.views(0).status shouldBe initStatus
+      response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
+      response.value.get.get.views(0).dependencies shouldBe None
 
-  }
+    }
 
   /**
     * Testing /invalidate/ViewPattern
@@ -566,7 +573,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 1))
+    response.value.get.get.overview shouldBe Map("receive" -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
@@ -586,7 +593,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     Await.result(response, TIMEOUT)
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 1))
+    response.value.get.get.overview shouldBe Map("receive" -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
@@ -618,7 +625,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("allFakeActors", 2))
+    response.value.get.get.overview shouldBe Map("allFakeActors" -> 2)
     response.value.get.get.queues.get("allFakeActors").get.size shouldBe 2
   }
 
@@ -642,16 +649,17 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     transformationManagerActor.expectMsg(DeployCommand())
     transformationManagerActor.expectMsg(GetTransformations())
 
-    val transfMsgStatus = TransformationStatusResponse(message="transforming",
-      transformationManagerActor.ref, driver=driver, driverRunHandle=driver.run(hiveTransformation)
-      , driverRunStatus=DriverRunOngoing(driver, driver.run(hiveTransformation)))
+    val transfMsgStatus = TransformationStatusResponse(message = "transforming",
+      transformationManagerActor.ref, driver = driver, driverRunHandle = driver.run(hiveTransformation)
+      , driverRunStatus = DriverRunOngoing(driver, driver.run(hiveTransformation)))
     transformationManagerActor.reply(
       TransformationStatusListResponse(List(transfMsgStatus)))
 
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("transforming", 1))
+    response.value.get.get.overview shouldBe Map("transforming" -> 1)
     response.value.get.get.transformations.size shouldBe 1
   }
 }
+

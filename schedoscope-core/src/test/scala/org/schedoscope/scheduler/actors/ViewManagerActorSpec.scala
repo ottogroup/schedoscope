@@ -19,14 +19,14 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.{Schedoscope, Settings, TestUtils}
-import test.views.{Brand, ProductBrand, ViewWithExternalDeps}
+import test.extviews.ExternalShop
+import test.views._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -87,8 +87,9 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
-  trait ViewManagerActorExternalTest extends ViewManagerActorTest{
-    override lazy val settings = TestUtils.createSettings("schedoscope.external.enabled=true")
+  trait ViewManagerActorExternalTest extends ViewManagerActorTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.external-dependencies.enabled=true",
+      "schedoscope.external-dependencies.home=[\"dev.test.views\"]")
   }
 
 
@@ -121,9 +122,9 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   it should "initialize an external view" in new ViewManagerActorExternalTest {
 
-    val viewWithExt = ViewWithExternalDeps(p("ec0101"),p("2016"),p("11"),p("07"))
+    val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
     val future = viewManagerActor ? viewWithExt
-    val viewE = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
+    val viewE = ExternalView(ExternalShop())
 
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
     schemaManagerRouter.reply(SchemaActionSuccess())
@@ -145,13 +146,44 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   it should "throw an exception if external views are not allowed" in new ViewManagerActorTest {
-    an [UnsupportedOperationException] shouldBe thrownBy {
-      val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
+
+    val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
+    an[UnsupportedOperationException] shouldBe thrownBy {
       viewManagerActor.receive(viewWithExt)
     }
-
   }
 
+  it should "throw an exception if internal views are used as external" in new ViewManagerActorExternalTest {
 
+    val viewWithExt = ViewWithIllegalExternalDeps(p("ec0101"))
+    the[UnsupportedOperationException] thrownBy {
+      viewManagerActor.receive(viewWithExt)
+    } should have message "You are referencing an external view as internal: test.views/Brand/ec0101."
+  }
 
+  it should "throw an exception if external views are used as internal" in new ViewManagerActorExternalTest {
+
+    val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
+    the[UnsupportedOperationException] thrownBy {
+      viewManagerActor.receive(viewWithExt)
+    } should have message "You are referencing an internal view as external: test.extviews/ExternalShop/."
+  }
+
+  "the check" should "be silenced by the setting" in new ViewManagerActorExternalTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.external-dependencies.enabled=true",
+      "schedoscope.external-dependencies.home=[\"dev.test.views\"]",
+      "schedoscope.external-dependencies.checks=false")
+
+    val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
+
+    viewManagerActor ! viewWithExt
+    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
+    schemaManagerRouter.reply(SchemaActionSuccess())
+    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(ExternalShop())))
+    schemaManagerRouter.reply(SchemaActionSuccess())
+    schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
+    schemaManagerRouter.expectMsg(AddPartitions(List(ExternalShop())))
+    schemaManagerRouter.reply(TransformationMetadata(Map(ExternalShop() -> ("test", 1L))))
+  }
 }
