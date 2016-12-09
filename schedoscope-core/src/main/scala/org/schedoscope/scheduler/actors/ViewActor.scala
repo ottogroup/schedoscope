@@ -24,9 +24,11 @@ import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
+import org.schedoscope.scheduler.messages.MaterializeViewMode._
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
+import scala.collection.Set
 import scala.concurrent.duration.Duration
 
 
@@ -223,7 +225,18 @@ class ViewActor(var currentState: ViewSchedulingState,
   def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
 
   def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
-    viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
+    val vsr = newState match {
+      case Waiting(view, _, _, _, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Transforming(view, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Materialized(view, _, _, withErrors, incomplete) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Retrying(view, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case _ => ViewStatusResponse(newState.label, newState.view, self)
+    }
+    viewManagerActor ! vsr
 
     log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
   }
