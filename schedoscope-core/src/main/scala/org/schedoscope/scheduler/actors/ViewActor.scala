@@ -20,14 +20,13 @@ import java.lang.Math.pow
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.joda.time.LocalDateTime
-import org.apache.hadoop.fs.FileSystem
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.dsl.{ExternalView, View}
-import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
+import scala.collection.Set
 import scala.concurrent.duration.Duration
 
 
@@ -66,7 +65,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       //
       val externalState = metadata match {
         case (view, (version, timestamp)) =>
-          val v = if(view.isInstanceOf[ExternalView]) view else ExternalView(view)
+          val v = if (view.isInstanceOf[ExternalView]) view else ExternalView(view)
           ViewManagerActor.getStateFromMetadata(v, version, timestamp)
       }
       stateMachine.materialize(externalState, source, mode)
@@ -124,7 +123,6 @@ class ViewActor(var currentState: ViewSchedulingState,
   }
 
 
-
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
     case ResultingViewSchedulingState(updatedState, actions) => {
 
@@ -144,10 +142,10 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   def notifySchedulingListeners(previousState: ViewSchedulingState,
                                 newState: ViewSchedulingState,
-                                actions: Set[ViewSchedulingAction]) = {
-    if(!previousState.view.isExternal)
-        viewSchedulingListenerManagerActor ! ViewSchedulingMonitoringEvent(previousState, newState,
-          actions, new LocalDateTime())
+                                actions: scala.collection.immutable.Set[ViewSchedulingAction]) = {
+    if (!previousState.view.isExternal)
+      viewSchedulingListenerManagerActor ! ViewSchedulingMonitoringEvent(previousState, newState,
+        actions, new LocalDateTime())
 
   }
 
@@ -161,7 +159,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       if (!view.isExternal) schemaManagerRouter ! SetViewVersion(view)
 
     case TouchSuccessFlag(view) =>
-        touchSuccessFlag(view)
+      touchSuccessFlag(view)
 
     case Materialize(view, mode) =>
       if (!view.isExternal) {
@@ -238,7 +236,19 @@ class ViewActor(var currentState: ViewSchedulingState,
   def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
 
   def communicateStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
-    viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
+    val vsr = newState match {
+      case Waiting(view, _, _, _, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Transforming(view, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Materialized(view, _, _, withErrors, incomplete) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Retrying(view, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case _ => ViewStatusResponse(newState.label, newState.view, self)
+
+        viewManagerActor ! vsr
+    }
   }
 }
 
@@ -260,3 +270,4 @@ object ViewActor {
       viewSchedulingListenerManagerActor).withDispatcher("akka.actor.views-dispatcher")
 
 }
+

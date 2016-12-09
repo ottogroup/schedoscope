@@ -251,7 +251,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map(initStatus -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
 
@@ -273,7 +273,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 3)
+    response.value.get.get.overview shouldBe Map(initStatus -> 3)
     response.value.get.get.views.size shouldBe 3
 
     response.value.get.get.views(0).status shouldBe initStatus
@@ -308,7 +308,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 3)
+    response.value.get.get.overview shouldBe Map(initStatus -> 3)
     response.value.get.get.views.size shouldBe 3
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(1).status shouldBe initStatus
@@ -342,7 +342,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 3))
+    response.value.get.get.overview shouldBe Map((initStatus, 3))
     response.value.get.get.views.size shouldBe 6
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(1).status shouldBe initStatus
@@ -362,9 +362,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       Some(List(prodUrl01 + s"/${year}${month}${day}"))
 
     val resultViewsList2 = List(resultViews(0), resultViews(1), resultViews(2))
-    resultViewsList2(0).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
-    resultViewsList2(1).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
-    resultViewsList2(2).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
+    resultViewsList2(0).properties shouldBe None
+    resultViewsList2(1).properties shouldBe None
+    resultViewsList2(2).properties shouldBe None
   }
 
   it should "initialize & get details for View and its dependencies with dependencies=true + all=true" in new SchedoscopeServiceWithViewManagerTest {
@@ -381,7 +381,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 3))
+    response.value.get.get.overview shouldBe Map((initStatus, 3))
     response.value.get.get.views.size shouldBe 6
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(1).status shouldBe initStatus
@@ -401,9 +401,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       Some(List(prodUrl01 + s"/${year}${month}${day}"))
 
     val resultViewsList2 = List(resultViews(0), resultViews(1), resultViews(2))
-    resultViewsList2(0).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
-    resultViewsList2(1).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
-    resultViewsList2(2).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
+    resultViewsList2(0).properties shouldBe None
+    resultViewsList2(1).properties shouldBe None
+    resultViewsList2(2).properties shouldBe None
   }
 
   it should "initialize & get details of all Views and their " +
@@ -475,19 +475,24 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
 
+    // Note: response will never be the newState => in reality,
+    // it will be always the original state; however, for testing purposes
+    // changed the artificially created different ViewStatusResponse values
     viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+      ViewStatusListResponse(List(ViewStatusResponse("materialized", productBrandView01, prodBrandViewActor.ref,
+        errors=Some(false), incomplete = Some(false)))))
 
     prodBrandViewActor.expectMsg(MaterializeView(MaterializeViewMode.DEFAULT))
 
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map("materialized" -> 1)
     response.value.get.get.views.size shouldBe 1
-    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(0).status shouldBe "materialized"
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
 
   }
 
@@ -503,11 +508,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     Await.result(response, TIMEOUT)
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map(initStatus -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe None
   }
 
   /**
@@ -537,11 +543,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       Await.result(response, TIMEOUT)
 
       response.isCompleted shouldBe true
-      response.value.get.get.overview shouldBe Map("receive" -> 1)
+      response.value.get.get.overview shouldBe Map(initStatus -> 1)
       response.value.get.get.views.size shouldBe 1
       response.value.get.get.views(0).status shouldBe initStatus
       response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
       response.value.get.get.views(0).dependencies shouldBe None
+      response.value.get.get.views(0).properties shouldBe None
 
     }
 
@@ -565,19 +572,24 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
 
+    // Note: response will never be the newState => in reality,
+    // it will be always the original state; however, for testing purposes
+    // changed the artificially created different ViewStatusResponse values
     viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+      ViewStatusListResponse(List(ViewStatusResponse("invalidated", productBrandView01, prodBrandViewActor.ref,
+        errors = Some(true), incomplete = Some(true)))))
 
     prodBrandViewActor.expectMsg(InvalidateView())
 
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map("invalidated" -> 1)
     response.value.get.get.views.size shouldBe 1
-    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(0).status shouldBe "invalidated"
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe Some(Map("errors" -> "true", "incomplete" -> "true"))
 
   }
 

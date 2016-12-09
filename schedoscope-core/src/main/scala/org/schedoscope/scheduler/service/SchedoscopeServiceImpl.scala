@@ -97,9 +97,15 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   private def viewStatusBuilder(vsr: ViewStatusResponse,
                                 viewTableName:Option[String],
                                 isTable:Option[Boolean],
-                                properties: Option[Map[String, String]],
-                                dependencies: Option[Map[String, List[String]]],
-                                overview:Boolean=true) = {
+                                dependencies: Option[Boolean],
+                                overview:Boolean=true,
+                                all:Option[Boolean]) = {
+    val properties =
+      if (vsr.errors.isDefined || vsr.incomplete.isDefined)
+        Some(Map("errors" -> vsr.errors.getOrElse(false).toString,
+          "incomplete" -> vsr.incomplete.getOrElse(false).toString))
+      else None
+
     ViewStatus(
       viewPath = vsr.view.urlPath,
       viewTableName = viewTableName,
@@ -108,7 +114,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       fields = if(overview) None else Option(vsr.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
       parameters = if(overview || vsr.view.parameters.isEmpty) None else
         Some(vsr.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList),
-      dependencies = dependencies,
+      dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !vsr.view.dependencies.isEmpty)
+        Some(vsr.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
+      else
+        None,
       transformation = if(overview) None else Option(vsr.view.registeredTransformation().viewTransformationStatus),
       export = if(overview) None else Option(viewExportStatus(vsr.view.registeredExports.map(e => e.apply()))),
       storageFormat = if(overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
@@ -125,12 +134,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       viewStatusBuilder(vsr = v
         , viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None
         , isTable = if (all.getOrElse(false)) Some(false) else None
-        , properties = None
-        , dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
-          Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
-        else
-          None
+        , dependencies = dependencies
         , overview =  true
+        , all = all
       )
     }
 
@@ -142,13 +148,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           viewStatusBuilder(vsr = v
             , viewTableName = Option(v.view.tableName)
             , isTable = Option(true)
-            , properties = Some(Map("errors" -> v.errors.getOrElse(false).toString,
-              "incomplete" -> v.incomplete.getOrElse(false).toString))
-            , dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
-              Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
-            else
-              None
+            , dependencies = dependencies
             , overview = false
+            , all = all
           )
         )
         .toList ::: viewStatusListWithoutViewDetails

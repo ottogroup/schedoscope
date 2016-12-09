@@ -31,8 +31,15 @@ trait ViewSchedulingListener {
   var latestViewEvent = Map[View, ViewSchedulingEvent]()
 
   /**
-    * Called on every incoming View scheduling event
+    * Called on every incoming view scheduling event
+    *
+    * In case a reattempt to process an event
+    * throws an exception is intended,
+    * "RetryableViewSchedulingListenerException"
+    * provides instruction for the same event
+    * to be resent to the ViewSchedulingListener
     */
+  @throws[RetryableViewSchedulingListenerException]
   def viewSchedulingEvent(event: ViewSchedulingEvent): Unit
 
   def getMonitInit(view: View) = s"${INIT} VIEW [${view.n}] "
