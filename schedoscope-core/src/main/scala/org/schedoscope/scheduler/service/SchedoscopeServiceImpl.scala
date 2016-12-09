@@ -91,55 +91,68 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     }
   }
 
+  /**
+    * Convenience method for DRYing viewStatusListFromStatusResponses
+    */
+  private def viewStatusBuilder(vsr: ViewStatusResponse,
+                                viewTableName:Option[String],
+                                isTable:Option[Boolean],
+                                dependencies: Option[Boolean],
+                                overview:Boolean=true,
+                                all:Option[Boolean]) = {
+    val properties =
+      if (vsr.errors.isDefined || vsr.incomplete.isDefined)
+        Some(Map("errors" -> vsr.errors.getOrElse(false).toString,
+          "incomplete" -> vsr.incomplete.getOrElse(false).toString))
+      else None
+
+    ViewStatus(
+      viewPath = vsr.view.urlPath,
+      viewTableName = viewTableName,
+      status = vsr.status,
+      properties = properties,
+      fields = if(overview) None else Option(vsr.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
+      parameters = if(overview || vsr.view.parameters.isEmpty) None else
+        Some(vsr.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList),
+      dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !vsr.view.dependencies.isEmpty)
+        Some(vsr.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
+      else
+        None,
+      transformation = if(overview) None else Option(vsr.view.registeredTransformation().viewTransformationStatus),
+      export = if(overview) None else Option(viewExportStatus(vsr.view.registeredExports.map(e => e.apply()))),
+      storageFormat = if(overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
+      materializeOnce = if(overview) None else Option(vsr.view.isMaterializeOnce),
+      comment = if(overview) None else Option(vsr.view.comment),
+      isTable = isTable
+    )
+
+  }
+
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
-    val viewStatusListWithoutViewDetails = viewStatusResponses.map {
-      v =>
-        ViewStatus(
-          viewPath = v.view.urlPath,
-          viewTableName = if (all.getOrElse(false))
-            Some(v.view.tableName)
-          else
-            None,
-          status = v.status,
-          properties = None,
-          fields = None,
-          parameters = None,
-          dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
-            Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
-          else
-            None,
-          transformation = None,
-          export = None,
-          storageFormat = None,
-          materializeOnce = None,
-          comment = None,
-          isTable = if (all.getOrElse(false))
-            Some(false)
-          else
-            None)
+
+    val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
+      viewStatusBuilder(vsr = v
+        , viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None
+        , isTable = if (all.getOrElse(false)) Some(false) else None
+        , dependencies = dependencies
+        , overview =  true
+        , all = all
+      )
     }
 
-    val viewStatusList = if (all.getOrElse(false))
+    lazy val viewStatusList = if (all.getOrElse(false))
       viewStatusResponses
         .groupBy(v => v.view.tableName)
         .map(e => e._2.head)
-        .map(v => ViewStatus(
-          viewPath = v.view.urlPathPrefix,
-          viewTableName = Option(v.view.tableName),
-          status = v.status,
-          properties = None,
-          fields = Option(v.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
-          parameters = if (!v.view.parameters.isEmpty)
-            Some(v.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList)
-          else
-            None,
-          dependencies = None,
-          transformation = Option(v.view.registeredTransformation().viewTransformationStatus),
-          export = Option(viewExportStatus(v.view.registeredExports.map(e => e.apply()))),
-          storageFormat = Option(v.view.storageFormat.getClass.getSimpleName),
-          materializeOnce = Option(v.view.isMaterializeOnce),
-          comment = Option(v.view.comment),
-          isTable = Option(true)))
+        .map(v =>
+          viewStatusBuilder(vsr = v
+            , viewTableName = Option(v.view.tableName)
+            , isTable = Option(true)
+            , dependencies = dependencies
+            , overview = false
+            , all = all
+          )
+        )
         .toList ::: viewStatusListWithoutViewDetails
     else
       viewStatusListWithoutViewDetails
@@ -272,7 +285,6 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map { viewStatusResponses =>
       viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all)
     }
-
 
   def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {
     val cf = Future(checkFilter(filter))

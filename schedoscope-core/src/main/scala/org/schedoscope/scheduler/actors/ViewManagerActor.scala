@@ -34,7 +34,7 @@ import scala.collection.mutable.{HashMap, HashSet}
   * the last transformation timestamps and version checksums from the metastore for already materialized
   * views.
   *
-  * It does this by cooperating with the parition creator actor and metadata logger actor.
+  * It does this by cooperating with the partition creator actor and metadata logger actor.
   */
 class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaManagerRouter: ActorRef) extends Actor {
 
