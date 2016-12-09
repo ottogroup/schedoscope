@@ -16,6 +16,7 @@
 package org.schedoscope
 
 import akka.actor.{ActorSystem, ExtendedActorSystem, ExtensionId, ExtensionIdProvider}
+import com.typesafe.config.Config
 import org.schedoscope.conf.SchedoscopeSettings
 
 /**
@@ -31,5 +32,10 @@ object Settings extends ExtensionId[SchedoscopeSettings] with ExtensionIdProvide
 
   def apply() = {
     super.apply(Schedoscope.actorSystem)
+  }
+
+  def apply(config: Config) = {
+    config.resolve()
+    new SchedoscopeSettings(config)
   }
 }
