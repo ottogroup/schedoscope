@@ -39,7 +39,6 @@ trait ViewSchedulingListener {
     * provides instruction for the same event
     * to be resent to the ViewSchedulingListener
     */
-  @throws[RetryableViewSchedulingListenerException]
   def viewSchedulingEvent(event: ViewSchedulingEvent): Unit
 
   def getMonitInit(view: View) = s"${INIT} VIEW [${view.n}] "
