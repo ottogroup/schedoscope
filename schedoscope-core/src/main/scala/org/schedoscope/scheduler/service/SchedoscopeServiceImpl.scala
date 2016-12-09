@@ -97,10 +97,15 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   private def viewStatusBuilder(vsr: ViewStatusResponse,
                                 viewTableName:Option[String],
                                 isTable:Option[Boolean],
-                                properties: Option[Map[String, String]],
                                 dependencies: Option[Boolean],
                                 overview:Boolean=true,
                                 all:Option[Boolean]) = {
+    val properties =
+      if (vsr.errors.isDefined || vsr.incomplete.isDefined)
+        Some(Map("errors" -> vsr.errors.getOrElse(false).toString,
+          "incomplete" -> vsr.incomplete.getOrElse(false).toString))
+      else None
+
     ViewStatus(
       viewPath = vsr.view.urlPath,
       viewTableName = viewTableName,
@@ -129,7 +134,6 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       viewStatusBuilder(vsr = v
         , viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None
         , isTable = if (all.getOrElse(false)) Some(false) else None
-        , properties = None
         , dependencies = dependencies
         , overview =  true
         , all = all
@@ -144,11 +148,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           viewStatusBuilder(vsr = v
             , viewTableName = Option(v.view.tableName)
             , isTable = Option(true)
-            , properties = Some(Map("errors" -> v.errors.getOrElse(false).toString,
-              "incomplete" -> v.incomplete.getOrElse(false).toString))
             , dependencies = dependencies
             , overview = false
-            , all
+            , all = all
           )
         )
         .toList ::: viewStatusListWithoutViewDetails
