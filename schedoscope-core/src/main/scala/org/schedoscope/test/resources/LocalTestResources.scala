@@ -16,7 +16,7 @@
 package org.schedoscope.test.resources
 
 import java.io.File
-import java.net.{InetAddress, URL, URLClassLoader}
+import java.net.{InetAddress, ServerSocket, URL, URLClassLoader}
 import java.nio.file.{Files, Paths}
 import java.util.Properties
 
@@ -164,41 +164,60 @@ class LocalTestResources extends TestResources {
 
 object LocalTestResources {
 
+  private def createDerbyServer: NetworkServerControl = {
+    var networkServerControl: NetworkServerControl = null
+
+    try {
+      FileUtils.deleteDirectory(new File("metastore_db"))
+      FileUtils.deleteQuietly(new File("derby.log"))
+
+      val anySocket = new ServerSocket(0)
+      val freePort = anySocket.getLocalPort
+      anySocket.close()
+
+      networkServerControl = new NetworkServerControl(InetAddress.getByName("127.0.0.1"), freePort)
+      networkServerControl.start(null)
+
+      var connectionAccepted = false
+      var retry = 0
+
+      while (!connectionAccepted && retry < 10) try {
+        Thread.sleep(10)
+        networkServerControl.ping()
+        connectionAccepted = true
+      } catch {
+        case _: Throwable => retry += 1
+      }
+
+      networkServerControl.ping()
+
+      networkServerControl
+    } catch {
+      case t: Throwable =>
+        if (networkServerControl != null)
+          try {
+            networkServerControl.shutdown()
+          } catch {
+            case _: Throwable =>
+          }
+
+        throw t
+    }
+  }
+
+
+  private def retryingCreateDerbyServer: NetworkServerControl = try {
+    createDerbyServer
+  } catch {
+    case _: Throwable =>
+      Thread.sleep(10)
+      retryingCreateDerbyServer
+  }
+
   /**
     * The derby server control object
     */
-  lazy val derbyServer = {
-
-    FileUtils.deleteDirectory(new File("metastore_db"))
-    FileUtils.deleteQuietly(new File("derby.log"))
-
-    var networkServerControl: NetworkServerControl = null
-    var port = 15270
-    var notStarted = true
-    var acceptsConnections = false
-
-    while (notStarted) {
-      try {
-        networkServerControl = new NetworkServerControl(InetAddress.getByName("127.0.0.1"), port)
-        networkServerControl.start(null)
-        notStarted = false
-      } catch {
-        case _: Throwable => port += 1
-      }
-    }
-
-    while (!acceptsConnections) {
-      try {
-        networkServerControl.ping()
-        acceptsConnections = true
-      } catch {
-        case _: Throwable => Thread.sleep(10)
-      }
-    }
-
-
-    networkServerControl
-  }
+  lazy val derbyServer = retryingCreateDerbyServer
 
   /**
     * The JDBC uri to connect to our derby instance.

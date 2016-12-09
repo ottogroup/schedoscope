@@ -67,9 +67,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Pluggable builder function that returns the HDFS path representing the database of the view given an environment.
     * The default implementation does this by building a path from the lower-case-underscore format of
-    * moduleNameBuilder, replacing _ with / and prepending hdp/dev/ for the default dev environment.
+    * moduleNameBuilder, replacing _ with / and prepending /hdp/dev/ for the default dev environment.
     */
-  override var dbPathBuilder = (env: String) => ("_hdp_" + env.toLowerCase() + "_" + moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
+
+  override var dbPathBuilder = (env: String) => Schedoscope.settings.viewDataHdfsRoot + "/" + env.toLowerCase() + "/" + (moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
+
   /**
     * Pluggable builder function that returns the HDFS path to the table the view belongs to.
     * The default implementation does this by joining dbPathBuilder and n. The latter will
@@ -234,7 +236,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     ensureRegisteredParameters
 
     val t = registeredTransformation()
-    transformVia(() => t.configureWith(Map((k, v))))
+    transformVia(() => t.configureWith(Map(k -> v)))
   }
 
   /**
@@ -271,7 +273,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def configureExport(k: String, v: Any) {
     ensureRegisteredParameters
 
-    val reconfiguredExports = registeredExports.map { e => () => e().configureWith(Map((k, v))) }
+    val reconfiguredExports = registeredExports.map { e => () => e().configureWith(Map(k -> v)) }
 
     registeredExports = reconfiguredExports
   }
@@ -335,7 +337,16 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Returns true if views contains external dependencies
     */
-  def hasExternalDependencies() = dependencies.exists(v => v.isExternal)
+  def hasExternalDependencies = dependencies.exists(_.isExternal)
+
+  def isInDatabases(databases: String*): Boolean = {
+    val name = dbName.replace("_",".")
+
+    databases.exists{
+      s =>
+        name.startsWith(s.replace("${env}",env))
+    }
+  }
 }
 
 /**
@@ -451,6 +462,8 @@ object View {
     registeredView.env = env
     registeredView
   }
+
+
 
 
 }

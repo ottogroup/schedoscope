@@ -17,18 +17,15 @@ package org.schedoscope.scheduler.actors
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
-import com.typesafe.config.ConfigFactory
-import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
-import org.mockito.Matchers._
-import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.schedoscope.Settings
 import org.schedoscope.dsl.ExternalView
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.scheduler.driver.{DriverRunHandle, DriverRunSucceeded, HiveDriver}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
-import org.schedoscope.{Schedoscope, Settings}
 import test.views.{ProductBrand, ViewWithExternalDeps}
 
 
@@ -50,7 +47,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     val schemaManagerRouter = TestProbe()
     val brandViewActor = TestProbe()
     val productViewActor = TestProbe()
-    val fileSystem = mock[FileSystem]
 
     val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     val brandDependency = view.dependencies.head
@@ -59,7 +55,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     val viewActor = TestActorRef(ViewActor.props(
       CreatedByViewManager(view),
       Settings(),
-      fileSystem,
       Map(brandDependency -> brandViewActor.ref,
         productDependency -> productViewActor.ref),
       viewManagerActor.ref,
@@ -77,7 +72,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     val emptyDepsViewActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(view),
       Settings(),
-      fileSystem,
       Map(),
       viewManagerActor.ref,
       transformationManagerActor.ref,
@@ -96,7 +90,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     val emptyDepsViewActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(view),
       Settings(),
-      fileSystem,
       Map(),
       viewManagerActor.ref,
       transformationManagerActor.ref,
@@ -120,9 +113,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   it should "materialize a view successfully" in new ViewActorTest {
 
-    when(fileSystem.listStatus(any(classOf[Path]),any(classOf[PathFilter])))
-      .thenReturn(List(new FileStatus(1L,false,1,12L,0L,new Path("test"))).toArray)
-
     viewActor ! MaterializeView()
     brandViewActor.expectMsg(MaterializeView())
     brandViewActor.reply(ViewMaterialized(brandDependency,incomplete = false, 1L, errors = false))
@@ -130,7 +120,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     productViewActor.reply(ViewMaterialized(productDependency,incomplete = false, 1L, errors = false))
 
     transformationManagerActor.expectMsg(view)
-    val success = mock[TransformationSuccess[HiveTransformation]]
+    val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],mock[DriverRunSucceeded[HiveTransformation]],true)
     transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
@@ -138,26 +128,22 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   it should "materialize an external view" in new ViewActorTest {
 
-    when(fileSystem.listStatus(any(classOf[Path]),any(classOf[PathFilter])))
-      .thenReturn(List(new FileStatus(1L,false,1,12L,0L,new Path("test"))).toArray)
-
     val viewWithExt = ViewWithExternalDeps(p("ec0101"),p("2016"),p("11"),p("07"))
     val extView = viewWithExt.dependencies.head
     val extActor = TestProbe()
     val actorWithExt = system.actorOf(ViewActor.props(
       CreatedByViewManager(viewWithExt),
       Settings(),
-      fileSystem,
       Map(extView -> extActor.ref),
       viewManagerActor.ref,
       transformationManagerActor.ref,
       schemaManagerRouter.ref))
 
     actorWithExt ! MaterializeView()
-    extActor.expectMsg(ReloadStateAndMaterializeView())
+    extActor.expectMsg(MaterializeExternalView())
     extActor.reply(ViewMaterialized(extView, incomplete = false, 1L, errors = false))
     transformationManagerActor.expectMsg(viewWithExt)
-    val success = mock[TransformationSuccess[HiveTransformation]]
+    val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],mock[DriverRunSucceeded[HiveTransformation]],true)
     transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
@@ -166,20 +152,15 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
   "A external view" should "reload it's state and ignore it's deps" in new ViewActorTest {
     val extView = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
 
-    //mock success flag lookup
-    when(fileSystem.exists(any(classOf[Path])))
-      .thenReturn(true)
-
     val extActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(extView),
       Settings(),
-      fileSystem,
       Map(),
       viewManagerActor.ref,
       transformationManagerActor.ref,
       schemaManagerRouter.ref))
 
-    extActor ! ReloadStateAndMaterializeView()
+    extActor ! MaterializeExternalView()
 
     schemaManagerRouter.expectMsg(GetMetaDataForMaterialize(extView,
       MaterializeViewMode.DEFAULT,
@@ -189,6 +170,10 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       MaterializeViewMode.DEFAULT,
       self))
 
+    transformationManagerActor.expectMsg(extView)
+    val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],mock[DriverRunSucceeded[HiveTransformation]],true)
+    transformationManagerActor.reply(success)
+
     expectMsgType[ViewMaterialized]
 
   }
@@ -197,20 +182,15 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     val viewNE = ProductBrand(p("ec0101"),p("2016"),p("11"),p("07"))
     val viewE = ExternalView(ProductBrand(p("ec0101"),p("2016"),p("11"),p("07")))
 
-    //mock success flag lookup
-    when(fileSystem.exists(any(classOf[Path])))
-      .thenReturn(true)
-
     val extActor = system.actorOf(ViewActor.props(
       CreatedByViewManager(viewE),
       Settings(),
-      fileSystem,
       Map(),
       viewManagerActor.ref,
       transformationManagerActor.ref,
       schemaManagerRouter.ref))
 
-    extActor ! ReloadStateAndMaterializeView()
+    extActor ! MaterializeExternalView()
 
     schemaManagerRouter.expectMsg(GetMetaDataForMaterialize(viewE,
       MaterializeViewMode.DEFAULT,
@@ -219,6 +199,10 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     schemaManagerRouter.reply(MetaDataForMaterialize((viewE,("checksum",1L)),
       MaterializeViewMode.DEFAULT,
       self))
+
+    transformationManagerActor.expectMsg(viewE)
+    val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],mock[DriverRunSucceeded[HiveTransformation]],true)
+    transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
 

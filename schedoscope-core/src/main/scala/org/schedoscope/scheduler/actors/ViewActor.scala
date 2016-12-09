@@ -16,14 +16,13 @@
 package org.schedoscope.scheduler.actors
 
 import java.lang.Math.pow
-import java.security.PrivilegedAction
 
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
-import org.apache.hadoop.fs.{FileStatus, FileSystem, Path, PathFilter}
+import org.apache.hadoop.fs.FileSystem
 import org.schedoscope.conf.SchedoscopeSettings
+import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.dsl.{ExternalView, View}
-import org.schedoscope.dsl.transformations.{NoOp, Touch}
 import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
@@ -33,7 +32,6 @@ import scala.concurrent.duration.Duration
 
 class ViewActor(var currentState: ViewSchedulingState,
                 settings: SchedoscopeSettings,
-                hdfs: FileSystem,
                 dependencies: Map[View, ActorRef],
                 viewManagerActor: ActorRef,
                 transformationManagerActor: ActorRef,
@@ -41,7 +39,7 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   import context._
 
-  lazy val stateMachine: ViewSchedulingStateMachine = stateMachine(currentState.view)
+  val stateMachine: ViewSchedulingStateMachine = new ViewSchedulingStateMachineImpl
 
   val log = Logging(system, this)
   var knownDependencies = dependencies
@@ -52,7 +50,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       stateMachine.materialize(currentState, sender, mode)
     }
 
-    case ReloadStateAndMaterializeView(mode) => {
+    case MaterializeExternalView(mode) => {
       //TODO: Ask Utz about mode? Do we even want to allow an other mode than default?
       val currentView = currentState.view
       //update state if external and NoOp view
@@ -90,8 +88,8 @@ class ViewActor(var currentState: ViewSchedulingState,
       stateMachine.materialized(currentState.asInstanceOf[Waiting], dependency, transformationTimestamp, withErrors, incomplete)
     }
 
-    case _: TransformationSuccess[_] => stateTransition {
-      stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], folderEmpty(currentState.view))
+    case s: TransformationSuccess[_] => stateTransition {
+      stateMachine.transformationSucceeded(currentState.asInstanceOf[Transforming], !s.viewHasData)
     }
 
     case _: TransformationFailure[_] => stateTransition {
@@ -123,6 +121,8 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   }
 
+
+
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
     case ResultingViewSchedulingState(updatedState, actions) => {
 
@@ -142,7 +142,6 @@ class ViewActor(var currentState: ViewSchedulingState,
     case WriteTransformationTimestamp(view, transformationTimestamp) =>
       if (!view.isExternal) schemaManagerRouter ! LogTransformationTimestamp(view, transformationTimestamp)
 
-
     case WriteTransformationCheckum(view) =>
       if (!view.isExternal) schemaManagerRouter ! SetViewVersion(view)
 
@@ -153,7 +152,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       if (!view.isExternal) {
         sendMessageToView(view, MaterializeView(mode))
       } else {
-        sendMessageToView(view, ReloadStateAndMaterializeView(mode))
+        sendMessageToView(view, MaterializeExternalView(mode))
       }
 
     case Transform(view) =>
@@ -161,7 +160,7 @@ class ViewActor(var currentState: ViewSchedulingState,
 
     case ReportNoDataAvailable(view, listeners) =>
       listeners.foreach {
-        sendMessageToListener(_, ViewHasNoData)
+        sendMessageToListener(_, ViewHasNoData(view))
       }
 
     case ReportFailed(view, listeners) =>
@@ -228,32 +227,6 @@ class ViewActor(var currentState: ViewSchedulingState,
 
     log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
   }
-
-  def folderEmpty(view: View) = settings
-    .userGroupInformation.doAs(
-    new PrivilegedAction[Array[FileStatus]]() {
-      def run() = {
-        hdfs.listStatus(new Path(view.fullPath), new PathFilter() {
-          def accept(p: Path): Boolean = !p.getName.startsWith("_")
-        })
-      }
-    })
-    .foldLeft(0l) {
-      (size, status) => size + status.getLen
-    } <= 0
-
-  def stateMachine(view: View): ViewSchedulingStateMachine = view.transformation() match {
-    case _: NoOp => new NoOpViewSchedulingStateMachineImpl(() => successFlagExists(view))
-    case _ => new ViewSchedulingStateMachineImpl
-  }
-
-  def successFlagExists(view: View) = settings
-    .userGroupInformation.doAs(
-    new PrivilegedAction[Boolean]() {
-      def run() = {
-        hdfs.exists(new Path(view.fullPath + "/_SUCCESS"))
-      }
-    })
 }
 
 object ViewActor {
@@ -263,25 +236,9 @@ object ViewActor {
             viewManagerActor: ActorRef,
             transformationManagerActor: ActorRef,
             schemaManagerRouter: ActorRef): Props =
-    props(state,
-      settings,
-      defaultFileSystem(settings.hadoopConf),
-      dependencies,
-      viewManagerActor,
-      transformationManagerActor,
-      schemaManagerRouter)
-
-  def props(state: ViewSchedulingState,
-            settings: SchedoscopeSettings,
-            hdfs: FileSystem,
-            dependencies: Map[View, ActorRef],
-            viewManagerActor: ActorRef,
-            transformationManagerActor: ActorRef,
-            schemaManagerRouter: ActorRef): Props =
     Props(classOf[ViewActor],
       state,
       settings,
-      hdfs,
       dependencies,
       viewManagerActor,
       transformationManagerActor,
