@@ -25,6 +25,7 @@ import org.schedoscope.scheduler.driver.{Driver, RetryableDriverException}
 import org.schedoscope.scheduler.messages._
 
 import scala.collection.JavaConversions.asScalaSet
+import scala.collection.mutable
 import scala.collection.mutable.HashMap
 import scala.util.Random
 
@@ -54,7 +55,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
 
   // create a queue for each driver that is not a filesystem driver
-  val nonFilesystemQueues = Driver.transformationsWithDrivers.filter {
+  val nonFilesystemQueues: Map[String, mutable.Queue[DriverCommand]] = Driver.transformationsWithDrivers.filter {
     _ != "filesystem"
   }.foldLeft(Map[String, collection.mutable.Queue[DriverCommand]]()) {
     (nonFilesystemQueuesSoFar, transformationName) =>
@@ -128,7 +129,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
 
     case GetTransformations() => sender ! TransformationStatusListResponse(driverStates.values.toList)
 
-    case GetQueues() => sender ! QueueStatusListResponse(transformationQueueStatus)
+    case GetQueues() => sender ! QueueStatusListResponse(transformationQueueStatus())
 
     case PollCommand(transformationType) => {
       val queueForType = queues(queueNameForTransformationType(transformationType))
