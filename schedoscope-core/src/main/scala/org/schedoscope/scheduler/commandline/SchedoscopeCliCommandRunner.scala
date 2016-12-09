@@ -18,11 +18,16 @@ package org.schedoscope.scheduler.commandline
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.service.SchedoscopeService
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
 /**
   * This class parses Schedoscope cli commands passed to it, forwards them to a Schedoscope service to execute,
   * and renders the result.
   */
 class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
+
+  lazy val TIMEOUT = 3600 seconds
 
   object Action extends Enumeration {
     val VIEWS, TRANSFORMATIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
@@ -84,19 +89,24 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
         try {
           val res = config.action.get match {
             case TRANSFORMATIONS => {
-              schedoscope.transformations(config.status, config.filter)
+              val res = schedoscope.transformations(config.status, config.filter)
+              Await.result(res, TIMEOUT)
             }
             case QUEUES => {
-              schedoscope.queues(config.typ, config.filter)
+              val res = schedoscope.queues(config.typ, config.filter)
+              Await.result(res, TIMEOUT)
             }
             case VIEWS => {
-              schedoscope.views(config.viewUrlPath, config.status, config.filter, config.dependencies, config.overview, config.all)
+              val res = schedoscope.views(config.viewUrlPath, config.status, config.filter, config.dependencies, config.overview, config.all)
+              Await.result(res, TIMEOUT)
             }
             case MATERIALIZE => {
-              schedoscope.materialize(config.viewUrlPath, config.status, config.filter, config.mode)
+              val res = schedoscope.materialize(config.viewUrlPath, config.status, config.filter, config.mode)
+              Await.result(res, TIMEOUT)
             }
             case INVALIDATE => {
-              schedoscope.invalidate(config.viewUrlPath, config.status, config.filter, config.dependencies)
+              val res = schedoscope.invalidate(config.viewUrlPath, config.status, config.filter, config.dependencies)
+              Await.result(res, TIMEOUT)
             }
             case SHUTDOWN => {
               schedoscope.shutdown()

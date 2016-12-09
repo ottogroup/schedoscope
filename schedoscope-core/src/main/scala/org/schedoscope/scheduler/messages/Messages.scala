@@ -19,6 +19,7 @@ import akka.actor.ActorRef
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.driver._
+import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
 
 /**
   * Superclass for failure messages.
@@ -80,11 +81,20 @@ case class DeployCommand() extends CommandRequest
 case class PollCommand(typ: String) extends CommandRequest
 
 /**
+  * Tells a driver actor to execute a transformation.
+  * @param transformation to execute
+  * @param view to transform
+  */
+case class TransformView(transformation: Transformation, view: View) extends CommandRequest
+
+/**
   * Instructs a driver actor to perform a command, such as a transformation. It comes along
   * with the reference to the actor that requested the action. The driver actor can then
   * notify the sender about the outcome.
   */
-case class CommandWithSender(command: AnyRef, sender: ActorRef) extends CommandRequest
+case class DriverCommand(command: AnyRef, sender: ActorRef) extends CommandRequest
+
+
 
 /**
   * Request to the transformation manager to generate a summary of currently running actions
@@ -112,6 +122,13 @@ case class GetTransformationStatusList(statusRequester: ActorRef, transformation
 case class GetViews(views: Option[List[View]], status: Option[String], filter: Option[String], dependencies: Boolean = false)
 
 /**
+  * Request to view manager to send a message to a specific view
+  * @param view target view
+  * @param message payload
+  */
+case class DelegateMessageToView(view: View, message: AnyRef) extends CommandRequest
+
+/**
   * Request to the view manager to return the state of all views.
   */
 case class GetViewStatusList(statusRequester: ActorRef, viewActors: Iterable[ActorRef]) extends CommandRequest
@@ -136,6 +153,23 @@ object MaterializeViewMode extends Enumeration {
 case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
 /**
+  * Special [[MaterializeView]] command with will refresh the metadata of a view before materializing it.
+  * Used for external views.
+  * @param mode materialization mode
+  */
+case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
+
+/**
+  * Request for the SchemaManager to
+  * @param view to be materialized
+  * @param mode materialization mode
+  * @param materializeSource sender of materialize command
+  */
+case class GetMetaDataForMaterialize(view: View,
+                                     mode: MaterializeViewMode = MaterializeViewMode.DEFAULT,
+                                     materializeSource: ActorRef) extends CommandRequest
+
+/**
   * Instructs a view actor to assume that its data needs to be recomputed.
   */
 case class InvalidateView() extends CommandRequest
@@ -156,9 +190,24 @@ sealed class CommandResponse
 case class DeployCommandSuccess() extends CommandResponse
 
 /**
+  * Notification for view actor about a new
+  * @param view
+  * @param viewRef
+  */
+case class NewViewActorRef(view: View, viewRef: ActorRef) extends CommandResponse
+
+/**
   * Schema actor or metadata logger notifying view manager actor or view actor of successful schema action.
   */
 case class SchemaActionSuccess() extends CommandResponse
+
+/**
+  * Schema actor notifying view actor about the metadata of the view
+  * @param metadata of the view
+  * @param mode transformation mode
+  * @param materializeSource sender of the [[MaterializeView]] command
+  */
+case class MetaDataForMaterialize(metadata: (View,(String,Long)), mode: MaterializeViewMode, materializeSource: ActorRef) extends CommandResponse
 
 /**
   * Driver actor notifying view actor of successful transformation.
@@ -166,7 +215,7 @@ case class SchemaActionSuccess() extends CommandResponse
   * @param driverRunHandle RunHandle of the executing driver
   * @param driverRunState  return state of the driver
   */
-case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T]) extends CommandResponse
+case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T], viewHasData: Boolean) extends CommandResponse
 
 /**
   * Response message of transformation manager actor with state of queues
@@ -178,7 +227,7 @@ case class QueueStatusListResponse(val transformationQueues: Map[String, List[An
 /**
   * Response message of transformation manager actor with state of actions
   *
-  * @param actionsStatusList List of entities of TransformationStatusResponse
+  * @param transformationStatusList List of entities of TransformationStatusResponse
   * @see TransformationStatusResponse
   */
 case class TransformationStatusListResponse(val transformationStatusList: List[TransformationStatusResponse[_]]) extends CommandResponse

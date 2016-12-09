@@ -401,7 +401,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
         ResultingViewSchedulingState(updatedWaitingState, Set())
   }
 
-  def transformationSucceeded(currentState: Transforming, folderEmpty: => Boolean, currentTime: Long = new Date().getTime) = currentState match {
+  def transformationSucceeded(currentState: Transforming, folderEmpty: Boolean, currentTime: Long = new Date().getTime) = currentState match {
     case Transforming(
     view,
     lastTransformationChecksum,
