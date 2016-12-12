@@ -98,24 +98,24 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "delegate a message to a view" in new ViewManagerActorTest {
     val actorRef = initializeView(view)
 
-    viewManagerActor ! DelegateMessageToView(view, "test")
-
-    expectMsg(NewViewActorRef(view, actorRef))
+    viewManagerActor ! DelegateMessageToView(view, InvalidateView())
+    expectMsgAllOf(NewViewActorRef(view, actorRef),
+      ViewStatusResponse("invalidated", view, actorRef))
   }
 
   it should "delegate a message to a unknown view" in new ViewManagerActorTest {
     val unknownView = Brand(p("ec0101"))
     val actorRef = initializeView(view)
-    viewManagerActor ! DelegateMessageToView(unknownView, "test")
+    viewManagerActor ! DelegateMessageToView(unknownView, InvalidateView())
 
     //if ViewManager does not know view it will start to communicate with
     //the SchemaManager
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(unknownView)))
     schemaManagerRouter.reply(SchemaActionSuccess())
     schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("test", 1L))))
+    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("checksum", 1L))))
 
-    expectMsgType[NewViewActorRef]
+    expectMsgAllClassOf(classOf[NewViewActorRef], classOf[ViewStatusResponse])
   }
 
   it should "initialize an external view" in new ViewManagerActorExternalTest {
@@ -136,7 +136,6 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(future, 5 seconds)
     future.isCompleted shouldBe true
     future.value.get.isSuccess shouldBe true
-    val actorRef = future.value.get.get.asInstanceOf[ActorRef]
 
     viewManagerActor ! DelegateMessageToView(viewE, MaterializeView())
 
