@@ -1,3 +1,18 @@
+/**
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.actors
 
 import akka.actor.SupervisorStrategy.{Escalate, Restart}
@@ -8,6 +23,22 @@ import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, Register
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.listeners.{RetryableViewSchedulingListenerException, ViewSchedulingListener, ViewSchedulingListenerException}
 
+/**
+  * The view scheduling listeners manager actor is the supervisor of listener classes implemented
+  * with the purpose of monitoring the state evolution of scheduling operations (such as
+  * materializing, invalidating, etc) upon views. It is started by default along the schedoscope
+  * actor system, and will instantiate on initialization one view scheduling listener actor per
+  * listener class implemented from org.schedoscope.scheduler.listeners.ViewSchedulingListener.
+  *
+  * The supervision strategy implemented for the listeners is designed so that only if the listener
+  * class throws a RetryableViewSchedulingListenerException will the restarting listener actor send
+  * a Message to the manager to register to receive the latest event for each View (before restart),
+  * and another post restart to collect the respective events. Otherwise, upon other exceptions the
+  * actor will simply be restarted.
+  *
+  * Finally the maximum number of retries is configurable via schedoscope.conf. If no value is specified,
+  * then default param is -1 (infinite).
+  */
 class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends Actor {
 
   import context._
