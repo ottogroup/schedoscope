@@ -95,6 +95,14 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
       }
     }
 
+    viewSchedulingListenerManagerActor.expectMsgPF() {
+      case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
+        prevState shouldBe ReadFromSchemaManager(view, "test", 1L)
+        newState shouldBe NoData(view)
+        actions.head.isInstanceOf[ReportNoDataAvailable] shouldBe true
+      }
+    }
+
     Await.result(futureMaterialize, TIMEOUT)
     futureMaterialize.isCompleted shouldBe true
     futureMaterialize.value.get.isSuccess shouldBe true
