@@ -23,11 +23,16 @@ import scala.concurrent.Future
 object SchedoscopeCliFormat {
   // FIXME: a more generic parsing would be cool...
 
-  private def formatMap(p: Option[Map[String, String]]) =
-    if (p.isDefined) {
+  private def formatMap(p: Option[Map[String, String]]) = {
+    val result = if(p.isDefined) {
       p.get.foldLeft("") { (s: String, pair: (String, String)) =>
         s + ", " + pair._1 + "=" + pair._2 }
     } else ""
+    if(result.length > 2)
+      result.drop(2)
+    else
+      result
+  }
 
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
