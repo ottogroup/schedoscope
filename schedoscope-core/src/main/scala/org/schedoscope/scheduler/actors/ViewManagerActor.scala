@@ -83,7 +83,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         case None =>
           initializeViewActors(List(view), false).head
       }
-      ref ! msg
+      ref forward msg
       sender ! NewViewActorRef(view, ref)
     }
   })
