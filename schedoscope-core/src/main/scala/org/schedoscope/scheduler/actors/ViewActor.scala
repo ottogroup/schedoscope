@@ -98,7 +98,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       val retry = s.retry
 
       result.currentState match {
-        case r: Retrying =>
+        case _: Retrying =>
           system
             .scheduler
             .scheduleOnce(Duration.create(pow(2, retry).toLong, "seconds")) {
