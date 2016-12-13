@@ -26,7 +26,7 @@ object SchedoscopeCliFormat {
   private def formatMap(p: Option[Map[String, String]]) = {
     val result = if(p.isDefined) {
       p.get.foldLeft("") { (s: String, pair: (String, String)) =>
-        s + "| " + pair._1 + "=" + pair._2 }
+        s + ", " + pair._1 + "=" + pair._2 }
     } else ""
     if(result.length > 2)
       result.drop(2)

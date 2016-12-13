@@ -107,7 +107,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                                 includeProps:Boolean
                                ) = {
     val properties =
-      if (includeProps && (vsr.errors.isDefined || vsr.incomplete.isDefined))
+      if (includeProps || vsr.errors.isDefined || vsr.incomplete.isDefined)
         Some(Map("errors" -> vsr.errors.getOrElse(false).toString,
           "incomplete" -> vsr.incomplete.getOrElse(false).toString))
       else None
@@ -146,9 +146,19 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       case _ => false
     }
 
+  private def filterForErrors(vsr: ViewStatusResponse, filter:Option[String]):Boolean = {
+    if (filter.isDefined)
+      ("incomplete=" + vsr.incomplete.getOrElse(false).toString).matches(filter.get) ||
+        ("errors=" + vsr.errors.getOrElse(false).toString).matches(filter.get)
+    else false
+  }
+
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse]
                                                 , dependencies: Option[Boolean]
-                                                , overview: Option[Boolean], all: Option[Boolean]) = {
+                                                , overview: Option[Boolean]
+                                                , all: Option[Boolean]
+                                                , filter:Option[String]=None
+                                               ) = {
 
     val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
       viewStatusBuilder(vsr = v
@@ -157,7 +167,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         , dependencies = dependencies
         , overview =  true
         , all = all
-        , matchFinalStatus(v)
+        , matchFinalStatus(v) || filterForErrors(v, filter)
       )
     }
 
@@ -172,7 +182,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
             , dependencies = dependencies
             , overview = false
             , all = all
-            , matchFinalStatus(v)
+            , matchFinalStatus(v) && filterForErrors(v, filter)
           )
         )
         .toList ::: viewStatusListWithoutViewDetails
@@ -267,16 +277,16 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
     getViewStatus(viewUrlPath, status, filter).map {
       case viewStatusResponses =>
-        viewStatusResponses.map(_.actor)
-          .foreach {
-            _ ! MaterializeView(
+        viewStatusResponses
+          .foreach { vsr =>
+            vsr.actor ! MaterializeView(
               try {
                 MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
               } catch {
                 case _: NoSuchElementException => MaterializeViewMode.DEFAULT
               })
           }
-        viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+        viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, filter)
     }
   }
 
@@ -284,28 +294,26 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map {
       case viewStatusResponses =>
         viewStatusResponses
-          .map(v => v.actor)
-          .foreach {
-            _ ! InvalidateView()
+          .foreach { vsr =>
+            vsr.actor ! InvalidateView()
           }
-        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None)
+        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None, filter)
     }
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
     getViewStatus(viewUrlPath, status, filter).map { viewStatusResponses =>
       viewStatusResponses
-        .map(_.actor)
-        .foreach {
-          _ ! "newdata"
+        .foreach { vsr =>
+          vsr.actor ! "newdata"
         }
-      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, filter)
     }
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
     getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map { viewStatusResponses =>
-      viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all)
+      viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all, filter)
     }
 
   def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {

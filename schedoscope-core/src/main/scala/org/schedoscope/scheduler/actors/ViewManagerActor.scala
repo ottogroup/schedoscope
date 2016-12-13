@@ -64,8 +64,8 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
         .filter(vs => !filter.isDefined
           || vs.view.urlPath.matches(filter.get)
-          || ("incomplete=" + vs.incomplete.toString).matches(filter.get)
-          || ("incomplete=" + vs.errors.toString).matches(filter.get)
+          || ("incomplete=" + vs.incomplete.getOrElse(false).toString).matches(filter.get)
+          || ("errors=" + vs.errors.getOrElse(false).toString).matches(filter.get)
         )
         .toList
 
