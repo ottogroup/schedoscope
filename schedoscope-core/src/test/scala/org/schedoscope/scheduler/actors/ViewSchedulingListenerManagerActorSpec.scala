@@ -50,18 +50,22 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
 
     implicit val timeout = Timeout(TIMEOUT)
 
+    val settings = Settings()
+
     val schemaManagerRouter = TestProbe()
     val transformationManagerActor = TestProbe()
     val viewSchedulingListenerManagerActor = TestProbe()
 
-    Schedoscope.actorSystemBuilder = () => system
+    //Schedoscope.actorSystemBuilder = () => system
 
     val viewManagerActor = TestActorRef(
       ViewManagerActor.props(
-        Schedoscope.settings,
+        settings,
         transformationManagerActor.ref,
         schemaManagerRouter.ref,
         viewSchedulingListenerManagerActor.ref))
+
+    Schedoscope.viewManagerActorBuilder = () => viewManagerActor
 
     def initializeView(view: View): ActorRef = {
 
@@ -90,16 +94,9 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     viewSchedulingListenerManagerActor.expectMsgPF() {
       case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
         prevState shouldBe ReadFromSchemaManager(view, "test", 1L)
-        newState shouldBe NoData(view)
-        actions.head.isInstanceOf[ReportNoDataAvailable] shouldBe true
-      }
-    }
-
-    viewSchedulingListenerManagerActor.expectMsgPF() {
-      case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
-        prevState shouldBe ReadFromSchemaManager(view, "test", 1L)
-        newState shouldBe NoData(view)
-        actions.head.isInstanceOf[ReportNoDataAvailable] shouldBe true
+        newState.label shouldBe "transforming"
+        newState.view shouldBe view
+        actions.head.isInstanceOf[Transform] shouldBe true
       }
     }
 
