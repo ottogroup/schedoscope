@@ -28,6 +28,7 @@ import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.actors.ViewManagerActor
 import org.schedoscope.scheduler.driver.{DriverRunFailed, DriverRunOngoing, DriverRunState, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
+import org.schedoscope.scheduler.states.{Failed, Materialized, Retrying}
 import org.schedoscope.schema.ddl.HiveQl
 
 import scala.concurrent.Future
@@ -76,7 +77,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   private def viewsFromUrl(viewUrlPath: String) =
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
 
-  private def getViewStatus(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
+  private def getViewStatus(viewUrlPath: Option[String]
+                            , status: Option[String]
+                            , filter: Option[String]
+                            , dependencies: Boolean = false) = {
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))
 
@@ -99,9 +103,11 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                                 isTable:Option[Boolean],
                                 dependencies: Option[Boolean],
                                 overview:Boolean=true,
-                                all:Option[Boolean]) = {
+                                all:Option[Boolean],
+                                includeProps:Boolean
+                               ) = {
     val properties =
-      if (vsr.errors.isDefined || vsr.incomplete.isDefined)
+      if (includeProps && (vsr.errors.isDefined || vsr.incomplete.isDefined))
         Some(Map("errors" -> vsr.errors.getOrElse(false).toString,
           "incomplete" -> vsr.incomplete.getOrElse(false).toString))
       else None
@@ -128,7 +134,21 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   }
 
-  private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
+  /**
+    * Used to later Filter properties showing for only
+    * important states
+    */
+  private def matchFinalStatus(vsr: ViewStatusResponse) =
+    vsr.status match {
+      case "materialized" => true
+      case "failed" => true
+      case "retrying" => true
+      case _ => false
+    }
+
+  private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse]
+                                                , dependencies: Option[Boolean]
+                                                , overview: Option[Boolean], all: Option[Boolean]) = {
 
     val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
       viewStatusBuilder(vsr = v
@@ -137,6 +157,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         , dependencies = dependencies
         , overview =  true
         , all = all
+        , matchFinalStatus(v)
       )
     }
 
@@ -151,6 +172,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
             , dependencies = dependencies
             , overview = false
             , all = all
+            , matchFinalStatus(v)
           )
         )
         .toList ::: viewStatusListWithoutViewDetails

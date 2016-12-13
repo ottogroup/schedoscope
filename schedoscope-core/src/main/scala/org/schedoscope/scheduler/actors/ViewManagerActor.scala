@@ -62,7 +62,11 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
       val viewStates = viewStatusMap.values
         .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
-        .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
+        .filter(vs => !filter.isDefined
+          || vs.view.urlPath.matches(filter.get)
+          || ("incomplete=" + vs.incomplete.toString).matches(filter.get)
+          || ("incomplete=" + vs.errors.toString).matches(filter.get)
+        )
         .toList
 
       sender ! ViewStatusListResponse(viewStates)
