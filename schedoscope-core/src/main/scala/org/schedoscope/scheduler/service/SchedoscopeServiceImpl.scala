@@ -107,7 +107,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                                 includeProps:Boolean
                                ) = {
     val properties =
-      if (includeProps || vsr.errors.isDefined || vsr.incomplete.isDefined)
+      if (includeProps || vsr.errors.getOrElse(false) || vsr.incomplete.getOrElse(false))
         Some(Map("errors" -> vsr.errors.getOrElse(false).toString,
           "incomplete" -> vsr.incomplete.getOrElse(false).toString))
       else None
@@ -146,7 +146,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       case _ => false
     }
 
-  private def filterForErrors(vsr: ViewStatusResponse, filter:Option[String]):Boolean = {
+  private def filterForIssues(vsr: ViewStatusResponse, filter:Option[String]):Boolean = {
     if (filter.isDefined)
       ("incomplete=" + vsr.incomplete.getOrElse(false).toString).matches(filter.get) ||
         ("errors=" + vsr.errors.getOrElse(false).toString).matches(filter.get)
@@ -167,7 +167,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         , dependencies = dependencies
         , overview =  true
         , all = all
-        , matchFinalStatus(v) || filterForErrors(v, filter)
+        , matchFinalStatus(v) || filterForIssues(v, filter)
       )
     }
 
@@ -182,7 +182,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
             , dependencies = dependencies
             , overview = false
             , all = all
-            , matchFinalStatus(v) && filterForErrors(v, filter)
+            , matchFinalStatus(v) || filterForIssues(v, filter)
           )
         )
         .toList ::: viewStatusListWithoutViewDetails
