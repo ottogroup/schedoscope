@@ -47,27 +47,28 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
   val TIMEOUT = 5 seconds
 
   trait viewSchedulingListenerManagerActorTest {
-
     implicit val timeout = Timeout(TIMEOUT)
 
+    lazy val settings = Settings()
+
     val schemaManagerRouter = TestProbe()
-    val transformationManagerActor = TestProbe()
+    val actionsManagerActor = TestProbe()
     val viewSchedulingListenerManagerActor = TestProbe()
 
-    Schedoscope.actorSystemBuilder = () => system
-
-    val viewManagerActor = TestActorRef(
-      ViewManagerActor.props(
-        Schedoscope.settings,
-        transformationManagerActor.ref,
-        schemaManagerRouter.ref,
-        viewSchedulingListenerManagerActor.ref))
+    val viewManagerActor = TestActorRef(ViewManagerActor.props(
+      settings,
+      actionsManagerActor.ref,
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
+    val transformationManagerActor = TestProbe()
 
     Schedoscope.viewManagerActorBuilder = () => viewManagerActor
+    val view = Brand(p("ec01"))
 
     def initializeView(view: View): ActorRef = {
 
       val future = viewManagerActor ? view
+
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
       schemaManagerRouter.reply(SchemaActionSuccess())
       schemaManagerRouter.expectMsg(AddPartitions(List(view)))
@@ -80,11 +81,9 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     }
   }
 
-
   "A ViewActor" should "send a ViewSchedulingEvent msg to the viewSchedulingListenerManagerActor " +
     "upon state change (if there are handlers listening)" in new viewSchedulingListenerManagerActorTest {
 
-    val view = Brand(p("ec01"))
     val brandViewActor = initializeView(view)
 
     val futureMaterialize = brandViewActor ? MaterializeView()
@@ -98,9 +97,6 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
       }
     }
 
-    Await.result(futureMaterialize, TIMEOUT)
-    futureMaterialize.isCompleted shouldBe true
-    futureMaterialize.value.get.isSuccess shouldBe true
   }
 
   "A viewSchedulingListenerManagerActor" should "cache views and their last event" +
@@ -136,7 +132,9 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
         actions.head shouldBe Transform(view)
       }
     }
+
   }
+
 
   "A viewSchedulingListenerManager" should "initialize listeners and " +
     "recover each view latest event and send to restarting viewSchedulingListener Actors "  in {
@@ -163,6 +161,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
         new SchedoscopeSettingsMock(config)
     }
 
+
     val viewSchedulingListenerManagerActor = TestActorRef(
       ViewSchedulingListenerManagerActor.props(
         SettingsMock(ConfigFactory.load())))
@@ -177,15 +176,14 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     val newState = Failed(view)
     val event = ViewSchedulingMonitoringEvent(prevState, newState, Set(Transform(view)), new LocalDateTime())
 
-
     viewActor.send(viewSchedulingListenerManagerActor, event)
-    val someHandlerClassName = "someHandlerClassName"
-    fakeChild.send(viewSchedulingListenerManagerActor, RegisterFailedListener(someHandlerClassName))
+
+    fakeChild.send(viewSchedulingListenerManagerActor, RegisterFailedListener(handlerClassName))
+
     fakeChild.send(viewSchedulingListenerManagerActor, CollectViewSchedulingStatus(handlerClassName))
 
     // confirm that on restart an actor could receive again latest events
     fakeChild.expectMsg(event)
-
   }
 
 

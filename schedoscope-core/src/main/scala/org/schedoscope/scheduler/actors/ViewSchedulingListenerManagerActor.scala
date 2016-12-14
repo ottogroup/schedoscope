@@ -97,7 +97,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   }
 
   def collectViewSchedulingStatus(actor:ActorRef, handlerClassName:String) =
-    if(handlersMonitored contains handlerClassName) {
+    if (handlersMonitored contains handlerClassName) {
       handlersMonitored -= handlerClassName
       viewsMonitored.values.foreach(actor ! _)
     }
@@ -112,6 +112,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
 
     case CollectViewSchedulingStatus(handlerClassName) =>
       collectViewSchedulingStatus(sender, handlerClassName)
+
 
     case RegisterFailedListener(handlerClassName) =>
       handlersMonitored += handlerClassName

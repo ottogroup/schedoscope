@@ -34,7 +34,6 @@ class ViewSchedulingListenerActor(handlerClassName:String,
   val log = Logging(system, ViewSchedulingListenerActor.this)
   val viewSchedulingListenerHandler = new ViewSchedulingListenerHandler(handlerClassName)
 
-
   def receive: Receive = {
     case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) =>
       try {

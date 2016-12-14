@@ -131,7 +131,6 @@ class ViewActor(var currentState: ViewSchedulingState,
       currentState = updatedState
       performSchedulingActions(actions)
 
-
       notifySchedulingListeners(previousState, updatedState, actions)
 
       if (stateChange(previousState, updatedState))
@@ -142,13 +141,14 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   def notifySchedulingListeners(previousState: ViewSchedulingState,
                                 newState: ViewSchedulingState,
-                                actions: scala.collection.immutable.Set[ViewSchedulingAction]) = {
-    if (!previousState.view.isExternal)
+                                actions: scala.collection.immutable.Set[ViewSchedulingAction]) =
+    if (!previousState.view.isExternal) {
+      viewManagerActor ! ViewSchedulingMonitoringEvent(previousState, newState,
+        actions, new LocalDateTime())
       viewSchedulingListenerManagerActor ! ViewSchedulingMonitoringEvent(previousState, newState,
         actions, new LocalDateTime())
 
-  }
-
+    }
 
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
 
