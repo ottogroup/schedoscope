@@ -107,7 +107,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                                 includeProps:Boolean
                                ) = {
     val properties =
-      if (includeProps && (vsr.errors.isDefined || vsr.incomplete.isDefined))
+      if (includeProps || vsr.errors.isDefined || vsr.incomplete.isDefined)
         Some(Map("errors" -> vsr.errors.getOrElse(false).toString,
           "incomplete" -> vsr.incomplete.getOrElse(false).toString))
       else None
@@ -182,7 +182,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
             , dependencies = dependencies
             , overview = false
             , all = all
-            , matchFinalStatus(v) && filterForIssues(v, filter)
+            , matchFinalStatus(v) || filterForIssues(v, filter)
           )
         )
         .toList ::: viewStatusListWithoutViewDetails

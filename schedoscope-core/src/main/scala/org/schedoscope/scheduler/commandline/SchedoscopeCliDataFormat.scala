@@ -84,7 +84,7 @@ object SchedoscopeCliFormat {
                 if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
                   fields.get(d.viewTableName.get).get.map(fieldStatus =>
                     fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") +
-                    " " + formatMap(d.properties)
+                    ", " + formatMap(d.properties)
                 } else formatMap(d.properties) )
             ).toArray
 
