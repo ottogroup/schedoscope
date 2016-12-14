@@ -234,6 +234,10 @@ class ViewActor(var currentState: ViewSchedulingState,
         ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
       case Retrying(view, _, _, _, withErrors, incomplete, _) =>
         ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Failed(view) =>
+        ViewStatusResponse(newState.label, view, self, Some(true), Some(true))
+      case NoData(view) =>
+        ViewStatusResponse(newState.label, view, self, Some(false), Some(true))
       case _ => ViewStatusResponse(newState.label, newState.view, self)
     }
     viewManagerActor ! vsr
