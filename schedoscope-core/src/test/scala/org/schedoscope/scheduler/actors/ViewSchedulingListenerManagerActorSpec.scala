@@ -50,17 +50,15 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
 
     implicit val timeout = Timeout(TIMEOUT)
 
-    val settings = Settings()
-
     val schemaManagerRouter = TestProbe()
     val transformationManagerActor = TestProbe()
     val viewSchedulingListenerManagerActor = TestProbe()
 
-    //Schedoscope.actorSystemBuilder = () => system
+    Schedoscope.actorSystemBuilder = () => system
 
     val viewManagerActor = TestActorRef(
       ViewManagerActor.props(
-        settings,
+        Schedoscope.settings,
         transformationManagerActor.ref,
         schemaManagerRouter.ref,
         viewSchedulingListenerManagerActor.ref))
