@@ -107,7 +107,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                                 includeProps:Boolean
                                ) = {
     val properties =
-      if (includeProps || vsr.errors.isDefined || vsr.incomplete.isDefined)
+      if (includeProps || vsr.errors.getOrElse(false) || vsr.incomplete.getOrElse(false))
         Some(Map("errors" -> vsr.errors.getOrElse(false).toString,
           "incomplete" -> vsr.incomplete.getOrElse(false).toString))
       else None
