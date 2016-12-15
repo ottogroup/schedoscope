@@ -189,7 +189,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       "\nProblem: View URL paths needs at least a package and a view class name.\n"
     the[IllegalArgumentException] thrownBy {
-      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
+      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
     } should have message initError + errorMsg
   }
@@ -203,7 +203,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       s"\nProblem: No class for package and view: ${packge}.${wrongClazz}\n"
     the[IllegalArgumentException] thrownBy {
-      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
+      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
     } should have message initError + errorMsg
   }
@@ -219,7 +219,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       s"\nProblem: No class for package and view: ${packge}.${wrongClazz}\n"
     the[IllegalArgumentException] thrownBy {
-      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
+      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
     } should have message initError + errorMsg
   }
@@ -228,7 +228,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
 
-    val response = service.views(Some(prodBrandUrl01), None, None, Some(true), Some(true), Some(true))
+    val response = service.views(Some(prodBrandUrl01), None, None, None, Some(true), Some(true), Some(true))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -242,11 +242,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(false)
     val overviewParam = Some(false)
     val allParam = Some(false)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -264,11 +265,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(true)
     val overviewParam = Some(false)
     val allParam = Some(false)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -299,11 +301,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = None
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(true)
     val overviewParam = Some(false)
     val allParam = Some(false)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -333,11 +336,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = None
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(false)
     val overviewParam = Some(false)
     val allParam = Some(true)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -372,11 +376,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = None
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(true)
     val overviewParam = Some(false)
     val allParam = Some(true)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -412,11 +417,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(true)
     val overviewParam = Some(false)
     val allParam = Some(true)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -427,7 +433,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   it should "block a call on an external view" in new SchedoscopeServiceExternalTest {
     val testView = ExternalShop()
 
-    val response = service.views(Some(testView.urlPath), None, None, None, None, None)
+    val response = service.views(Some(testView.urlPath), None, None, None, None, None, None)
 
     the[IllegalArgumentException] thrownBy {
       Await.result(response, TIMEOUT)
@@ -437,9 +443,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
   it should "allow a call on an internal view" in new SchedoscopeServiceExternalTest {
     val testView = Brand(p("test"))
-    val response = service.views(Some(testView.urlPath), None, None, None, None, None)
+    val response = service.views(Some(testView.urlPath), None, None, None, None, None, None)
 
-    viewManagerActor.expectMsg(GetViews(Some(List(testView)), None, None))
+    viewManagerActor.expectMsg(GetViews(Some(List(testView)), None, None, None))
     viewManagerActor.reply(ViewStatusListResponse(List(ViewStatusResponse("loading", testView, viewManagerActor.ref))))
 
     val expected = ViewStatusList(Map("loading" -> 1),
@@ -469,10 +475,11 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val modeParam = None
-    val response = service.materialize(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+    val response = service.materialize(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
 
-    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
+    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam, issueFilterParam))
 
     // Note: response will never be the newState => in reality,
     // it will be always the original state; however, for testing purposes
@@ -502,8 +509,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val modeParam = None
-    val response = service.materialize(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+    val response = service.materialize(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
 
     Await.result(response, TIMEOUT)
     response.isCompleted shouldBe true
@@ -530,9 +538,10 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
       val statusParam = None
       val filterParam = None
+      val issueFilterParam = None
       val response = service.newdata(prodBrandviewUrlPath01, statusParam, filterParam)
 
-      viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
+      viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam, issueFilterParam))
 
       viewManagerActor.reply(
         ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
@@ -566,10 +575,11 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val modeParam = None
-    val response = service.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+    val response = service.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
 
-    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
+    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam, issueFilterParam))
 
     // Note: response will never be the newState => in reality,
     // it will be always the original state; however, for testing purposes
@@ -599,8 +609,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val modeParam = None
-    val response = service.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+    val response = service.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
 
     Await.result(response, TIMEOUT)
     response.isCompleted shouldBe true

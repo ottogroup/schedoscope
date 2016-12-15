@@ -57,13 +57,13 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
   def receive = LoggingReceive({
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
-    case GetViews(views, status, filter, dependencies) => {
+    case GetViews(views, status, filter, issueFilter, dependencies) => {
       val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
       val viewStates = viewStatusMap.values
         .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
-        .filter(vs => !filter.isDefined
-          || vs.view.urlPath.matches(filter.get)
+        .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
+        .filter(vs => !issueFilter.isDefined
           || ("incomplete=" + vs.incomplete.getOrElse(false).toString).matches(filter.get)
           || ("errors=" + vs.errors.getOrElse(false).toString).matches(filter.get)
         )

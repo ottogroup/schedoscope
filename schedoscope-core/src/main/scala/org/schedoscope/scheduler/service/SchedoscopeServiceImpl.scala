@@ -80,6 +80,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   private def getViewStatus(viewUrlPath: Option[String]
                             , status: Option[String]
                             , filter: Option[String]
+                            , issueFilter: Option[String]
                             , dependencies: Boolean = false) = {
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))
@@ -89,7 +90,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
         queryActor[ViewStatusListResponse](
           viewManagerActor,
-          GetViews(resolvedViews, status, filter, dependencies),
+          GetViews(resolvedViews, status, filter, issueFilter, dependencies),
           settings.schedulingCommandTimeout).viewStatusList
       }
     }
@@ -274,8 +275,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       })
   }
 
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
-    getViewStatus(viewUrlPath, status, filter).map {
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], mode: Option[String]) = {
+    getViewStatus(viewUrlPath, status, filter, issueFilter).map {
       case viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
@@ -286,33 +287,33 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                 case _: NoSuchElementException => MaterializeViewMode.DEFAULT
               })
           }
-        viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, filter)
+        viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, issueFilter)
     }
   }
 
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
-    getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map {
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], dependencies: Option[Boolean]) = {
+    getViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map {
       case viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
             vsr.actor ! InvalidateView()
           }
-        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None, filter)
+        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None, issueFilter)
     }
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    getViewStatus(viewUrlPath, status, filter).map { viewStatusResponses =>
+    getViewStatus(viewUrlPath, status, filter, None).map { viewStatusResponses =>
       viewStatusResponses
         .foreach { vsr =>
           vsr.actor ! "newdata"
         }
-      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, filter)
+      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, None)
     }
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
-    getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map { viewStatusResponses =>
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
+    getViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map { viewStatusResponses =>
       viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all, filter)
     }
 
