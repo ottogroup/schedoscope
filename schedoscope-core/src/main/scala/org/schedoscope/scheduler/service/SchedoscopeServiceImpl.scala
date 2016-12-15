@@ -84,8 +84,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                             , dependencies: Boolean = false) = {
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))
+    val cif = Future(checkFilter(issueFilter))
 
-    Future.sequence(List(cf, cvup)).flatMap { r =>
+    Future.sequence(List(cf, cvup, cif)).flatMap { r =>
       Future {
         val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
         queryActor[ViewStatusListResponse](
@@ -147,18 +148,11 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       case _ => false
     }
 
-  private def filterForIssues(vsr: ViewStatusResponse, filter:Option[String]):Boolean = {
-    if (filter.isDefined)
-      ("incomplete=" + vsr.incomplete.getOrElse(false).toString).matches(filter.get) ||
-        ("errors=" + vsr.errors.getOrElse(false).toString).matches(filter.get)
-    else false
-  }
-
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse]
                                                 , dependencies: Option[Boolean]
                                                 , overview: Option[Boolean]
                                                 , all: Option[Boolean]
-                                                , filter:Option[String]=None
+                                                , issueFilter:Option[String]=None
                                                ) = {
 
     val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
@@ -168,7 +162,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         , dependencies = dependencies
         , overview =  true
         , all = all
-        , matchFinalStatus(v) || filterForIssues(v, filter)
+        , matchFinalStatus(v) || issueFilter.isDefined
       )
     }
 
@@ -183,7 +177,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
             , dependencies = dependencies
             , overview = false
             , all = all
-            , matchFinalStatus(v) || filterForIssues(v, filter)
+            , matchFinalStatus(v) || issueFilter.isDefined
           )
         )
         .toList ::: viewStatusListWithoutViewDetails

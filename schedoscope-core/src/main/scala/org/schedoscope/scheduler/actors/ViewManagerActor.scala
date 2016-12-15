@@ -59,14 +59,31 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 
     case GetViews(views, status, filter, issueFilter, dependencies) => {
       val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
+
       val viewStates = viewStatusMap.values
         .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
         .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
+        // match by logical "or" condition (even if user explicitly specifies it with "||")
         .filter(vs => !issueFilter.isDefined
-          || ("incomplete=" + vs.incomplete.getOrElse(false).toString).matches(filter.get)
-          || ("errors=" + vs.errors.getOrElse(false).toString).matches(filter.get)
+          || ("incomplete=" + vs.incomplete.getOrElse(false).toString).matches({
+              val a = issueFilter.get.split("\\|").filter(s => s.contains("incomplete"))
+              if(a.size > 0) a.head else issueFilter.get
+              })
+          || ("errors=" + vs.errors.getOrElse(false).toString).matches({
+              val a = issueFilter.get.split("\\|").filter(s => s.contains("errors"))
+              if(a.size > 0) a.head else issueFilter.get
+          })
         )
+        // match by logical "and" codition (user has to explicitly specify "&&" condition)
+        .filter(vs => !issueFilter.isDefined
+          || (issueFilter.get.contains("&&") && (
+          ("incomplete=" + vs.incomplete.getOrElse(false).toString + "&&" +
+          "errors=" + vs.errors.getOrElse(false).toString).matches(issueFilter.get)
+          || ("errors=" + vs.errors.getOrElse(false).toString + "&&" +
+          "incomplete=" + vs.incomplete.getOrElse(false).toString
+          ).matches(issueFilter.get))
+        ))
         .toList
 
       sender ! ViewStatusListResponse(viewStates)
