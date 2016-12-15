@@ -47,7 +47,7 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName ("<status>") text ("filter views by their status (e.g. 'transforming')"),
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName ("<regex>") text ("regular expression to filter view display (e.g. 'my.database/.*/Partition1/.*'). "),
-      opt[String]('i', "issueFilter") action { (x,c) => c.copy(issueFilter = Some(x)) } optional() valueName ("<errors/incomplete>") text ("filter views by their dependencies transformation success (e.g. 'errors=true' or 'incomplete=true')"),
+      opt[String]('i', "issueFilter") action { (x,c) => c.copy(issueFilter = Some(x)) } optional() valueName ("<errors=boolean / incomplete=boolean>") text ("filter views by their dependencies transformation success (e.g. 'errors=true' or 'incomplete=false' or 'errors=false&&incomplete=true')"),
       opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional() text ("include dependencies"),
       opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional() text ("show only overview, skip individual views"),
       opt[Unit]('a', "all") action { (_, c) => c.copy(all = Some(true)) } optional() text ("show details for views"))
