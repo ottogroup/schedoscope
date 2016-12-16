@@ -64,23 +64,22 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
         .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
-        // match by logical "or" condition (even if user explicitly specifies it with "||")
         .filter(vs => !issueFilter.isDefined
-          || ("incomplete=" + vs.incomplete.getOrElse(false).toString).equals({
-              val a = issueFilter.get.split("\\|").filter(s => s.contains("incomplete"))
-              if(a.size > 0) a.head else issueFilter.get})
-          || ("errors=" + vs.errors.getOrElse(false).toString).equals({
-              val a = issueFilter.get.split("\\|").filter(s => s.contains("errors"))
-              if(a.size > 0) a.head else issueFilter.get})
-          || (issueFilter.get.contains("&&") &&
-                (
-                  ("incomplete=" + vs.incomplete.getOrElse(false).toString + "&&" +
-                    "errors=" + vs.errors.getOrElse(false).toString).equals(issueFilter.get)
-                  || ("errors=" + vs.errors.getOrElse(false).toString + "&&" +
-                      "incomplete=" + vs.incomplete.getOrElse(false).toString
-                      ).equals(issueFilter.get)
-                )
-              )
+          || ("incomplete:" + vs.incomplete.getOrElse(false).toString).equals({
+          val a = issueFilter.get.split("OR").filter(s => s.contains("incomplete"))
+          if(a.size > 0) a.head else issueFilter.get})
+          || ("errors:" + vs.errors.getOrElse(false).toString).equals({
+          val a = issueFilter.get.split("OR").filter(s => s.contains("errors"))
+          if(a.size > 0) a.head else issueFilter.get})
+          || (issueFilter.get.contains("AND") &&
+          (
+            ("incomplete:" + vs.incomplete.getOrElse(false).toString + "AND" +
+              "errors:" + vs.errors.getOrElse(false).toString).equals(issueFilter.get)
+              || ("errors:" + vs.errors.getOrElse(false).toString + "AND" +
+              "incomplete:" + vs.incomplete.getOrElse(false).toString
+              ).equals(issueFilter.get)
+            )
+          )
         ).toList
 
       sender ! ViewStatusListResponse(viewStates)
