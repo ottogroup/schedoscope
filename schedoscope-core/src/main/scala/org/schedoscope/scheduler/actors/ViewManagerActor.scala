@@ -65,21 +65,9 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
         .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
         .filter(vs => !issueFilter.isDefined
-          || ("incomplete:" + vs.incomplete.getOrElse(false).toString).equals({
-          val a = issueFilter.get.split("OR").filter(s => s.contains("incomplete"))
-          if(a.size > 0) a.head else issueFilter.get})
-          || ("errors:" + vs.errors.getOrElse(false).toString).equals({
-          val a = issueFilter.get.split("OR").filter(s => s.contains("errors"))
-          if(a.size > 0) a.head else issueFilter.get})
-          || (issueFilter.get.contains("AND") &&
-          (
-            ("incomplete:" + vs.incomplete.getOrElse(false).toString + "AND" +
-              "errors:" + vs.errors.getOrElse(false).toString).equals(issueFilter.get)
-              || ("errors:" + vs.errors.getOrElse(false).toString + "AND" +
-              "incomplete:" + vs.incomplete.getOrElse(false).toString
-              ).equals(issueFilter.get)
-            )
-          )
+          || ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
+          || ("errors".equals(issueFilter.get) && vs.errors.getOrElse(false))
+          || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
         ).toList
 
       sender ! ViewStatusListResponse(viewStates)
