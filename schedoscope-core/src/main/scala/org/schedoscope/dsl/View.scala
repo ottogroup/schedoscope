@@ -108,6 +108,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   var registeredTransformation: () => Transformation = () => NoOp()
   var registeredExports: List[() => Transformation] = List()
   var isMaterializeOnce = false
+  var tblProperties = scala.collection.mutable.HashMap[String, String]()
 
   override def toString() = urlPath
 
