@@ -84,9 +84,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                             , dependencies: Boolean = false) = {
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))
-    val cif = Future(checkFilter(issueFilter))
 
-    Future.sequence(List(cf, cvup, cif)).flatMap { r =>
+    Future.sequence(List(cf, cvup)).flatMap { r =>
       Future {
         val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
         queryActor[ViewStatusListResponse](
