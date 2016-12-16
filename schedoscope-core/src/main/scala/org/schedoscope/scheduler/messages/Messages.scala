@@ -256,8 +256,10 @@ case class TransformationStatusResponse[T <: Transformation](val message: String
   * @param status textual description of the status
   * @param view   reference to the curresponding view
   * @param actor  actor reference to ViewActor
+  * @param errors true if some transformations in that subtree have been failing
+  * @param incomplete true of not all transitive dependencies had data available
   */
-case class ViewStatusResponse(val status: String, view: View, actor: ActorRef) extends CommandResponse
+case class ViewStatusResponse(val status: String, view: View, actor: ActorRef, errors: Option[Boolean]=None, incomplete:Option[Boolean]=None) extends CommandResponse
 
 /**
   * Schema actor returning the stored transformation metadata (version checksum, timestamp) retrieved from metadata store

@@ -250,7 +250,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map(initStatus -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
 
@@ -272,7 +272,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 3)
+    response.value.get.get.overview shouldBe Map(initStatus -> 3)
     response.value.get.get.views.size shouldBe 3
 
     response.value.get.get.views(0).status shouldBe initStatus
@@ -307,7 +307,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 3)
+    response.value.get.get.overview shouldBe Map(initStatus -> 3)
     response.value.get.get.views.size shouldBe 3
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(1).status shouldBe initStatus
@@ -325,6 +325,84 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       Some(List(s"test.views/Brand/${shop01}"))
     resultViewsList(2).dependencies.get.get(s"dev_test_views.product_${shop01.toLowerCase}") shouldBe
       Some(List(prodUrl01 + s"/${year}${month}${day}"))
+  }
+
+  it should "initialize & get details for View and its dependencies with dependencies=false + all=true" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    val prodBrandviewUrlPath01 = None
+    val statusParam = None
+    val filterParam = None
+    val dependenciesParam = Some(false)
+    val overviewParam = Some(false)
+    val allParam = Some(true)
+
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map((initStatus, 3))
+    response.value.get.get.views.size shouldBe 6
+    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(1).status shouldBe initStatus
+    response.value.get.get.views(2).status shouldBe initStatus
+
+    val resultViews = response.value.get.get.views
+    val resultViewsList = List(resultViews(3), resultViews(4), resultViews(5)).sortBy(_.viewPath)
+    resultViewsList(0).viewPath shouldBe brandUrl01
+    resultViewsList(1).viewPath shouldBe prodUrl01 + s"/${year}${month}${day}"
+    resultViewsList(2).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
+
+    resultViewsList(0).dependencies shouldBe None
+    resultViewsList(1).dependencies shouldBe None
+    resultViewsList(2).dependencies.get.get(s"dev_test_views.brand_${shop01.toLowerCase}") shouldBe
+      Some(List(s"test.views/Brand/${shop01}"))
+    resultViewsList(2).dependencies.get.get(s"dev_test_views.product_${shop01.toLowerCase}") shouldBe
+      Some(List(prodUrl01 + s"/${year}${month}${day}"))
+
+    val resultViewsList2 = List(resultViews(0), resultViews(1), resultViews(2))
+    resultViewsList2(0).properties shouldBe None
+    resultViewsList2(1).properties shouldBe None
+    resultViewsList2(2).properties shouldBe None
+  }
+
+  it should "initialize & get details for View and its dependencies with dependencies=true + all=true" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    val prodBrandviewUrlPath01 = None
+    val statusParam = None
+    val filterParam = None
+    val dependenciesParam = Some(true)
+    val overviewParam = Some(false)
+    val allParam = Some(true)
+
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map((initStatus, 3))
+    response.value.get.get.views.size shouldBe 6
+    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(1).status shouldBe initStatus
+    response.value.get.get.views(2).status shouldBe initStatus
+
+    val resultViews = response.value.get.get.views
+    val resultViewsList = List(resultViews(3), resultViews(4), resultViews(5)).sortBy(_.viewPath)
+    resultViewsList(0).viewPath shouldBe brandUrl01
+    resultViewsList(1).viewPath shouldBe prodUrl01 + s"/${year}${month}${day}"
+    resultViewsList(2).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
+
+    resultViewsList(0).dependencies shouldBe None
+    resultViewsList(1).dependencies shouldBe None
+    resultViewsList(2).dependencies.get.get(s"dev_test_views.brand_${shop01.toLowerCase}") shouldBe
+      Some(List(s"test.views/Brand/${shop01}"))
+    resultViewsList(2).dependencies.get.get(s"dev_test_views.product_${shop01.toLowerCase}") shouldBe
+      Some(List(prodUrl01 + s"/${year}${month}${day}"))
+
+    val resultViewsList2 = List(resultViews(0), resultViews(1), resultViews(2))
+    resultViewsList2(0).properties shouldBe None
+    resultViewsList2(1).properties shouldBe None
+    resultViewsList2(2).properties shouldBe None
   }
 
   it should "initialize & get details of all Views and their " +
@@ -396,19 +474,24 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
 
+    // Note: response will never be the newState => in reality,
+    // it will be always the original state; however, for testing purposes
+    // changed the artificially created different ViewStatusResponse values
     viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+      ViewStatusListResponse(List(ViewStatusResponse("materialized", productBrandView01, prodBrandViewActor.ref,
+        errors=Some(false), incomplete = Some(false)))))
 
     prodBrandViewActor.expectMsg(MaterializeView(MaterializeViewMode.DEFAULT))
 
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map("materialized" -> 1)
     response.value.get.get.views.size shouldBe 1
-    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(0).status shouldBe "materialized"
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
 
   }
 
@@ -424,11 +507,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     Await.result(response, TIMEOUT)
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map(initStatus -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe None
   }
 
   /**
@@ -458,11 +542,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       Await.result(response, TIMEOUT)
 
       response.isCompleted shouldBe true
-      response.value.get.get.overview shouldBe Map("receive" -> 1)
+      response.value.get.get.overview shouldBe Map(initStatus -> 1)
       response.value.get.get.views.size shouldBe 1
       response.value.get.get.views(0).status shouldBe initStatus
       response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
       response.value.get.get.views(0).dependencies shouldBe None
+      response.value.get.get.views(0).properties shouldBe None
 
     }
 
@@ -486,19 +571,24 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
 
+    // Note: response will never be the newState => in reality,
+    // it will be always the original state; however, for testing purposes
+    // changed the artificially created different ViewStatusResponse values
     viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+      ViewStatusListResponse(List(ViewStatusResponse("invalidated", productBrandView01, prodBrandViewActor.ref,
+        errors = Some(true), incomplete = Some(true)))))
 
     prodBrandViewActor.expectMsg(InvalidateView())
 
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map("invalidated" -> 1)
     response.value.get.get.views.size shouldBe 1
-    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(0).status shouldBe "invalidated"
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe Some(Map("errors" -> "true", "incomplete" -> "true"))
 
   }
 
