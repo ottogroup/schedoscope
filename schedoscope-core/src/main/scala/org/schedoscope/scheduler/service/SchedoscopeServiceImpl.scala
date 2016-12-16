@@ -307,7 +307,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
     getViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map { viewStatusResponses =>
-      viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all, filter)
+      viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all, issueFilter)
     }
 
   def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {
