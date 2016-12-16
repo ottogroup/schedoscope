@@ -59,7 +59,6 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 
     case GetViews(views, status, filter, issueFilter, dependencies) => {
       val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
-      val viewStatesTest = viewStatusMap.values
       val viewStates = viewStatusMap.values
         .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
         .filter(vs => !status.isDefined || status.get.equals(vs.status))
