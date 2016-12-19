@@ -45,9 +45,9 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     * Supervisor strategy: Escalate any problems because view actor failures are not recoverable.
     */
   override val supervisorStrategy =
-  OneForOneStrategy(maxNrOfRetries = -1) {
-    case _ => Escalate
-  }
+    OneForOneStrategy(maxNrOfRetries = -1) {
+      case _ => Escalate
+    }
   val log = Logging(system, ViewManagerActor.this)
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
@@ -60,20 +60,23 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     case GetViews(views, status, filter, issueFilter, dependencies) => {
       val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
       val viewStates = viewStatusMap.values
-        .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
-        .filter(vs => !status.isDefined || status.get.equals(vs.status))
-        .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
-        .filter(vs => !issueFilter.isDefined
-          || ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
-          || ("errors".equals(issueFilter.get) && vs.errors.getOrElse(false))
-          || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
+        .filter(vs => views.isEmpty || viewActors.contains(vs.actor))
+        .filter(vs => status.isEmpty || status.get.equals(vs.status))
+        .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
+        .filter(vs => issueFilter.isEmpty || (
+          List("materialized", "failed").contains(vs.status) && (
+                 ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
+              || ("errors".equals(issueFilter.get) && vs.errors.getOrElse(false))
+              || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
+            )
+          )
         ).toList
 
       sender ! ViewStatusListResponse(viewStates)
     }
 
     case v: View => {
-      sender ! initializeViewActors(List(v), false).head
+      sender ! initializeViewActors(List(v), dependencies = false).head
     }
 
     case DelegateMessageToView(view, msg) => {
@@ -97,7 +100,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     * @param dependencies create actors for the prerequisite views as well.
     * @return the set of corresponding view actor refs
     */
-  def initializeViewActors(vs: List[View], dependencies: Boolean = false):Set[ActorRef] = {
+  def initializeViewActors(vs: List[View], dependencies: Boolean = false): Set[ActorRef] = {
     log.info(s"Initializing ${vs.size} views")
 
     val allViews = viewsToCreateActorsFor(vs, dependencies)
