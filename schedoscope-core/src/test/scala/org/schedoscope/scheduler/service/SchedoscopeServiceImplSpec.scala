@@ -799,7 +799,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     response.value.get.get.views(0).status shouldBe "invalidated"
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
-    response.value.get.get.views(0).properties shouldBe Some(Map("errors" -> "true", "incomplete" -> "true"))
+    response.value.get.get.views(0).properties shouldBe None
 
   }
 
