@@ -60,9 +60,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         //
         // Block access to external views
         //
-        if(settings.externalDependencies) {
+        if (settings.externalDependencies) {
           views.foreach { v =>
-            if (!v.isInDatabases(settings.externalHome:_*))
+            if (!v.isInDatabases(settings.externalHome: _*))
               throw new UnsupportedOperationException("You can not address an external view directly.")
           }
         }
@@ -77,11 +77,11 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   private def viewsFromUrl(viewUrlPath: String) =
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
 
-  private def getViewStatus(viewUrlPath: Option[String]
-                            , status: Option[String]
-                            , filter: Option[String]
-                            , issueFilter: Option[String]
-                            , dependencies: Boolean = false) = {
+  private def getViewStatus(viewUrlPath: Option[String],
+                            status: Option[String],
+                            filter: Option[String],
+                            issueFilter: Option[String],
+                            dependencies: Boolean = false) = {
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))
 
@@ -100,12 +100,12 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     * Convenience method for DRYing viewStatusListFromStatusResponses
     */
   private def viewStatusBuilder(vsr: ViewStatusResponse,
-                                viewTableName:Option[String],
-                                isTable:Option[Boolean],
+                                viewTableName: Option[String],
+                                isTable: Option[Boolean],
                                 dependencies: Option[Boolean],
-                                overview:Boolean=true,
-                                all:Option[Boolean],
-                                includeProps:Boolean
+                                overview: Boolean = true,
+                                all: Option[Boolean],
+                                includeProps: Boolean
                                ) = {
     val properties =
       if (includeProps || vsr.errors.getOrElse(false) || vsr.incomplete.getOrElse(false))
@@ -118,25 +118,25 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       viewTableName = viewTableName,
       status = vsr.status,
       properties = properties,
-      fields = if(overview) None else Option(vsr.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
-      parameters = if(overview || vsr.view.parameters.isEmpty) None else
+      fields = if (overview) None else Option(vsr.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
+      parameters = if (overview || vsr.view.parameters.isEmpty) None else
         Some(vsr.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList),
       dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !vsr.view.dependencies.isEmpty)
         Some(vsr.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
       else
         None,
-      transformation = if(overview) None else Option(vsr.view.registeredTransformation().viewTransformationStatus),
-      export = if(overview) None else Option(viewExportStatus(vsr.view.registeredExports.map(e => e.apply()))),
-      storageFormat = if(overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
-      materializeOnce = if(overview) None else Option(vsr.view.isMaterializeOnce),
-      comment = if(overview) None else Option(vsr.view.comment),
+      transformation = if (overview) None else Option(vsr.view.registeredTransformation().viewTransformationStatus),
+      export = if (overview) None else Option(viewExportStatus(vsr.view.registeredExports.map(e => e.apply()))),
+      storageFormat = if (overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
+      materializeOnce = if (overview) None else Option(vsr.view.isMaterializeOnce),
+      comment = if (overview) None else Option(vsr.view.comment),
       isTable = isTable
     )
 
   }
 
   /**
-    * Used to later Filter properties showing for only
+    * Used to later filter properties showing for only
     * important states
     */
   private def matchFinalStatus(vsr: ViewStatusResponse) =
@@ -147,11 +147,11 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       case _ => false
     }
 
-  private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse]
-                                                , dependencies: Option[Boolean]
-                                                , overview: Option[Boolean]
-                                                , all: Option[Boolean]
-                                                , issueFilter:Option[String]=None
+  private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse],
+                                                dependencies: Option[Boolean],
+                                                overview: Option[Boolean],
+                                                all: Option[Boolean],
+                                                issueFilter: Option[String] = None
                                                ) = {
 
     val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
@@ -159,7 +159,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         , viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None
         , isTable = if (all.getOrElse(false)) Some(false) else None
         , dependencies = dependencies
-        , overview =  true
+        , overview = true
         , all = all
         , matchFinalStatus(v) || issueFilter.isDefined
       )
@@ -229,15 +229,11 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   }
 
-  private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = {
-    q.map(o =>
-      if (o.isInstanceOf[Transformation]) {
-        val trans = o.asInstanceOf[Transformation]
+  private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = q.map {
+      case trans: Transformation => RunStatus(trans.description, trans.getView(), "", "", None)
+      case other => RunStatus(other.toString, "", "", "", None)
+    }
 
-        RunStatus(trans.description, trans.getView(), "", "", None)
-      } else
-        RunStatus(o.toString, "", "", "", None))
-  }
 
 
   private def viewExportStatus(exports: List[Transformation]): List[ViewTransformationStatus] = {
@@ -268,9 +264,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       })
   }
 
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], mode: Option[String]) = {
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], mode: Option[String]) = {
     getViewStatus(viewUrlPath, status, filter, issueFilter).map {
-      case viewStatusResponses =>
+      viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
             vsr.actor ! MaterializeView(
@@ -284,9 +280,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     }
   }
 
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], dependencies: Option[Boolean]) = {
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], dependencies: Option[Boolean]) = {
     getViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map {
-      case viewStatusResponses =>
+      viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
             vsr.actor ! InvalidateView()
@@ -305,7 +301,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     }
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
     getViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map { viewStatusResponses =>
       viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all, issueFilter)
     }
@@ -318,8 +314,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
         val actions = result.transformationStatusList
           .map(a => parseActionStatus(a))
-          .filter(a => !status.isDefined || status.get.equals(a.status))
-          .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
+          .filter(a => status.isEmpty || status.get.equals(a.status))
+          .filter(a => filter.isEmpty || a.actor.matches(filter.get))
+        // FIXME: is the actor name a good filter criterion?
         val overview = actions
           .groupBy(_.status)
           .map(el => (el._1, el._2.size))
