@@ -112,7 +112,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   /**
     * Convenience method for DRYing viewStatusListFromStatusResponses
     */
-  private def buildViewStatusOutput(vsr: ViewStatusResponse,
+  private def viewStatusOutput(vsr: ViewStatusResponse,
                                     viewTableName: Option[String],
                                     isTable: Option[Boolean],
                                     dependencies: Option[Boolean],
@@ -157,7 +157,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                                                ) = {
 
     val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
-      buildViewStatusOutput(vsr = v,
+      viewStatusOutput(vsr = v,
         viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None,
         isTable = if (all.getOrElse(false)) Some(false) else None,
         dependencies = dependencies,
@@ -172,7 +172,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         .groupBy(v => v.view.tableName)
         .map(e => e._2.head)
         .map(v =>
-          buildViewStatusOutput(vsr = v,
+          viewStatusOutput(vsr = v,
             viewTableName = Option(v.view.tableName),
             isTable = Option(true),
             dependencies = dependencies,
@@ -190,7 +190,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     ViewStatusList(statusOverview, if (overview.getOrElse(false)) List() else viewStatusList)
   }
 
-  private def parseActionStatus(a: TransformationStatusResponse[_]): TransformationStatus = {
+  private def runStatusFromTransformationStatusResponse(a: TransformationStatusResponse[_]): TransformationStatus = {
 
     val actor = getOrElse(a.actor.path.toStringWithoutAddress, "unknown")
     val typ = if (a.driver != null) getOrElse(a.driver.transformationName, "unknown") else "unknown"
@@ -239,7 +239,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
 
-  private def retrieveViewStatus(viewUrlPath: Option[String],
+  private def queryViewStatus(viewUrlPath: Option[String],
                                  status: Option[String],
                                  filter: Option[String],
                                  issueFilter: Option[String],
@@ -260,7 +260,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], mode: Option[String]) = {
-    retrieveViewStatus(viewUrlPath, status, filter, issueFilter).map {
+    queryViewStatus(viewUrlPath, status, filter, issueFilter).map {
       viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
@@ -276,7 +276,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], dependencies: Option[Boolean]) = {
-    retrieveViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map {
+    queryViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map {
       viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
@@ -287,7 +287,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    retrieveViewStatus(viewUrlPath, status, filter, None).map { viewStatusResponses =>
+    queryViewStatus(viewUrlPath, status, filter, None).map { viewStatusResponses =>
       viewStatusResponses
         .foreach { vsr =>
           vsr.actor ! "newdata"
@@ -297,7 +297,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
-    retrieveViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map { viewStatusResponses =>
+    queryViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map { viewStatusResponses =>
       viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all, issueFilter)
     }
 
@@ -308,7 +308,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         val result = queryActor[TransformationStatusListResponse](
           transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
         val actions = result.transformationStatusList
-          .map(a => parseActionStatus(a))
+          .map(a => runStatusFromTransformationStatusResponse(a))
           .filter(a => status.isEmpty || status.get.equals(a.status))
           .filter(a => filter.isEmpty || a.actor.matches(filter.get))
         // FIXME: is the actor name a good filter criterion?
