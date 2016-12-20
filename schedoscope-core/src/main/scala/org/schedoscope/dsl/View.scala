@@ -161,7 +161,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def isPartition(p: Parameter[_]) = parameters.contains(p)
 
   /**
-    * Checks wether a given parameter is implemented using a table name suffix.
+    * Checks whether a given parameter is implemented using a table name suffix.
     */
   def isSuffixPartition(p: Parameter[_]) = suffixPartitions.contains(p)
 

@@ -119,7 +119,7 @@ case class GetTransformationStatusList(statusRequester: ActorRef, transformation
   * @param filter       filter the result by regular expression on the view name
   * @param dependencies also return all dependent views
   */
-case class GetViews(views: Option[List[View]], status: Option[String], filter: Option[String], dependencies: Boolean = false)
+case class GetViews(views: Option[List[View]], status: Option[String], issueFilter:Option[String], filter: Option[String], dependencies: Boolean = false)
 
 /**
   * Request to view manager to send a message to a specific view
@@ -256,8 +256,10 @@ case class TransformationStatusResponse[T <: Transformation](val message: String
   * @param status textual description of the status
   * @param view   reference to the curresponding view
   * @param actor  actor reference to ViewActor
+  * @param errors true if some transformations in that subtree have been failing
+  * @param incomplete true of not all transitive dependencies had data available
   */
-case class ViewStatusResponse(val status: String, view: View, actor: ActorRef) extends CommandResponse
+case class ViewStatusResponse(val status: String, view: View, actor: ActorRef, errors: Option[Boolean]=None, incomplete:Option[Boolean]=None) extends CommandResponse
 
 /**
   * Schema actor returning the stored transformation metadata (version checksum, timestamp) retrieved from metadata store
