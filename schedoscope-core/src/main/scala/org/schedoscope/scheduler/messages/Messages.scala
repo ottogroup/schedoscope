@@ -313,5 +313,5 @@ case class RegisterFailedListener(handlerClassName:String) extends ViewSchedulin
   */
 case class ViewSchedulingMonitoringEvent(prevState: ViewSchedulingState,
                                          newState: ViewSchedulingState,
-                                         actions: scala.collection.immutable.Set[ViewSchedulingAction],
+                                         actions: Set[ViewSchedulingAction],
                                          eventTime: LocalDateTime) extends ViewSchedulingMonitoring
