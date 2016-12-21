@@ -81,8 +81,8 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     }
   }
 
-  "A ViewActor" should "send a ViewSchedulingEvent msg to the viewSchedulingListenerManagerActor " +
-    "upon state change (if there are handlers listening)" in new viewSchedulingListenerManagerActorTest {
+  "A ViewActor" should "send a ViewSchedulingEvent msg to the viewSchedulingListenerManagerActor" in
+    new viewSchedulingListenerManagerActorTest {
 
     val brandViewActor = initializeView(view)
 
@@ -99,8 +99,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
 
   }
 
-  "A viewSchedulingListenerManagerActor" should "cache views and their last event" +
-    "and reply to handlers that have restarted" in {
+  it should "cache views along with their last event and reply to listeners that have been restarted" in {
 
     implicit val timeout = Timeout(TIMEOUT)
 
@@ -136,8 +135,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
   }
 
 
-  "A viewSchedulingListenerManager" should "initialize listeners and " +
-    "recover each view latest event and send to restarting viewSchedulingListener Actors "  in {
+  it should "initialize listeners, and be able to recover each view's latest event" in {
 
     val handlerClassName = "org.schedoscope.test.TestViewListener"
 
