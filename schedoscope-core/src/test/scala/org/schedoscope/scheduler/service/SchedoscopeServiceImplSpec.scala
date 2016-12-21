@@ -189,7 +189,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       "\nProblem: View URL paths needs at least a package and a view class name.\n"
     the[IllegalArgumentException] thrownBy {
-      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
+      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
     } should have message initError + errorMsg
   }
@@ -203,7 +203,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       s"\nProblem: No class for package and view: ${packge}.${wrongClazz}\n"
     the[IllegalArgumentException] thrownBy {
-      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
+      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
     } should have message initError + errorMsg
   }
@@ -219,7 +219,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       s"original Message: Error while parsing view(s) ${wrongUrlPath} : ${wrongUrlPath}\n" +
       s"\nProblem: No class for package and view: ${packge}.${wrongClazz}\n"
     the[IllegalArgumentException] thrownBy {
-      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(true), Some(true), Some(true))
+      val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
     } should have message initError + errorMsg
   }
@@ -228,7 +228,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
 
-    val response = service.views(Some(prodBrandUrl01), None, None, Some(true), Some(true), Some(true))
+    val response = service.views(Some(prodBrandUrl01), None, None, None, Some(true), Some(true), Some(true))
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -242,15 +242,16 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(false)
     val overviewParam = Some(false)
     val allParam = Some(false)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map(initStatus -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
 
@@ -264,15 +265,16 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(true)
     val overviewParam = Some(false)
     val allParam = Some(false)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 3)
+    response.value.get.get.overview shouldBe Map(initStatus -> 3)
     response.value.get.get.views.size shouldBe 3
 
     response.value.get.get.views(0).status shouldBe initStatus
@@ -299,15 +301,16 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = None
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(true)
     val overviewParam = Some(false)
     val allParam = Some(false)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 3)
+    response.value.get.get.overview shouldBe Map(initStatus -> 3)
     response.value.get.get.views.size shouldBe 3
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(1).status shouldBe initStatus
@@ -327,6 +330,86 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       Some(List(prodUrl01 + s"/${year}${month}${day}"))
   }
 
+  it should "initialize & get details for View and its dependencies with dependencies=false + all=true" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    val prodBrandviewUrlPath01 = None
+    val statusParam = None
+    val filterParam = None
+    val issueFilterParam = None
+    val dependenciesParam = Some(false)
+    val overviewParam = Some(false)
+    val allParam = Some(true)
+
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map((initStatus, 3))
+    response.value.get.get.views.size shouldBe 6
+    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(1).status shouldBe initStatus
+    response.value.get.get.views(2).status shouldBe initStatus
+
+    val resultViews = response.value.get.get.views
+    val resultViewsList = List(resultViews(3), resultViews(4), resultViews(5)).sortBy(_.viewPath)
+    resultViewsList(0).viewPath shouldBe brandUrl01
+    resultViewsList(1).viewPath shouldBe prodUrl01 + s"/${year}${month}${day}"
+    resultViewsList(2).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
+
+    resultViewsList(0).dependencies shouldBe None
+    resultViewsList(1).dependencies shouldBe None
+    resultViewsList(2).dependencies.get.get(s"dev_test_views.brand_${shop01.toLowerCase}") shouldBe
+      Some(List(s"test.views/Brand/${shop01}"))
+    resultViewsList(2).dependencies.get.get(s"dev_test_views.product_${shop01.toLowerCase}") shouldBe
+      Some(List(prodUrl01 + s"/${year}${month}${day}"))
+
+    val resultViewsList2 = List(resultViews(0), resultViews(1), resultViews(2))
+    resultViewsList2(0).properties shouldBe None
+    resultViewsList2(1).properties shouldBe None
+    resultViewsList2(2).properties shouldBe None
+  }
+
+  it should "initialize & get details for View and its dependencies with dependencies=true + all=true" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    val prodBrandviewUrlPath01 = None
+    val statusParam = None
+    val filterParam = None
+    val issueFilterParam = None
+    val dependenciesParam = Some(true)
+    val overviewParam = Some(false)
+    val allParam = Some(true)
+
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map((initStatus, 3))
+    response.value.get.get.views.size shouldBe 6
+    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(1).status shouldBe initStatus
+    response.value.get.get.views(2).status shouldBe initStatus
+
+    val resultViews = response.value.get.get.views
+    val resultViewsList = List(resultViews(3), resultViews(4), resultViews(5)).sortBy(_.viewPath)
+    resultViewsList(0).viewPath shouldBe brandUrl01
+    resultViewsList(1).viewPath shouldBe prodUrl01 + s"/${year}${month}${day}"
+    resultViewsList(2).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
+
+    resultViewsList(0).dependencies shouldBe None
+    resultViewsList(1).dependencies shouldBe None
+    resultViewsList(2).dependencies.get.get(s"dev_test_views.brand_${shop01.toLowerCase}") shouldBe
+      Some(List(s"test.views/Brand/${shop01}"))
+    resultViewsList(2).dependencies.get.get(s"dev_test_views.product_${shop01.toLowerCase}") shouldBe
+      Some(List(prodUrl01 + s"/${year}${month}${day}"))
+
+    val resultViewsList2 = List(resultViews(0), resultViews(1), resultViews(2))
+    resultViewsList2(0).properties shouldBe None
+    resultViewsList2(1).properties shouldBe None
+    resultViewsList2(2).properties shouldBe None
+  }
+
   it should "initialize & get details of all Views and their " +
     "dependencies - view provided, and all=true" in new SchedoscopeServiceWithViewManagerTest {
 
@@ -334,11 +417,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(true)
     val overviewParam = Some(false)
     val allParam = Some(true)
 
-    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = service.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -349,7 +433,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   it should "block a call on an external view" in new SchedoscopeServiceExternalTest {
     val testView = ExternalShop()
 
-    val response = service.views(Some(testView.urlPath), None, None, None, None, None)
+    val response = service.views(Some(testView.urlPath), None, None, None, None, None, None)
 
     the[IllegalArgumentException] thrownBy {
       Await.result(response, TIMEOUT)
@@ -359,9 +443,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
   it should "allow a call on an internal view" in new SchedoscopeServiceExternalTest {
     val testView = Brand(p("test"))
-    val response = service.views(Some(testView.urlPath), None, None, None, None, None)
+    val response = service.views(Some(testView.urlPath), None, None, None, None, None, None)
 
-    viewManagerActor.expectMsg(GetViews(Some(List(testView)), None, None))
+    viewManagerActor.expectMsg(GetViews(Some(List(testView)), None, None, None))
     viewManagerActor.reply(ViewStatusListResponse(List(ViewStatusResponse("loading", testView, viewManagerActor.ref))))
 
     val expected = ViewStatusList(Map("loading" -> 1),
@@ -371,6 +455,207 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     whenReady(response) { result =>
       result shouldBe expected
     }
+  }
+
+  it should "filter views by dependencies and status param" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    // note - actor would in reality be incorrect, using it just for testing purposes
+    val brandVSRmsg = ViewStatusResponse(status="materialized", view=brandDependency01,
+      actor=prodBrandViewActor, errors=Some(false), incomplete=Some(false))
+    val prodVSRmsg = ViewStatusResponse(status="materialized", view=productDependency01,
+      actor=prodBrandViewActor, errors=Some(false), incomplete=Some(false))
+
+    val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"false", "incomplete"-> "false")),
+      fields = None, parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"false", "incomplete"-> "false")),
+      fields = None , parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    viewManagerActor ? brandVSRmsg
+    viewManagerActor ? prodVSRmsg
+
+    val response = service.views(Some(prodBrandUrl01), Some("materialized"), None, None,
+      Some(true), Some(false), Some(false))
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map("materialized" -> 2)
+    response.value.get.get.views should contain(brandExpected)
+    response.value.get.get.views should contain(prodExpected)
+  }
+
+  it should "filter views by dependencies and status = materialized and issues with error=true AND incomplete=true" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    // note - actor would in reality be incorrect, using it just for testing purposes
+    val brandVSRmsg = ViewStatusResponse(status="transforming", view=brandDependency01,
+      actor=prodBrandViewActor, errors=Some(true), incomplete=Some(true))
+    val prodVSRmsg = ViewStatusResponse(status="materialized", view=productDependency01,
+      actor=prodBrandViewActor, errors=Some(true), incomplete=Some(true))
+
+    val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"true", "incomplete"-> "true")),
+      fields = None, parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"true", "incomplete"-> "true")),
+      fields = None , parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    viewManagerActor ? brandVSRmsg
+    viewManagerActor ? prodVSRmsg
+
+    val response = service.views(Some(prodBrandUrl01), Some("materialized"), None, Some("errorsANDincomplete"),
+      Some(true), Some(false), Some(false))
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map("materialized" -> 1)
+    response.value.get.get.views.head shouldBe prodExpected
+  }
+
+  it should "filter views by dependencies and issues with error=true AND incomplete=true and " +
+    "return List of 2 elements" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    // note - actor would in reality be incorrect, using it just for testing purposes
+    val brandVSRmsg = ViewStatusResponse(status="materialized", view=brandDependency01,
+      actor=prodBrandViewActor, errors=Some(true), incomplete=Some(true))
+    val prodVSRmsg = ViewStatusResponse(status="materialized", view=productDependency01,
+      actor=prodBrandViewActor, errors=Some(true), incomplete=Some(true))
+
+    val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"true", "incomplete"-> "true")),
+      fields = None, parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"true", "incomplete"-> "true")),
+      fields = None , parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    viewManagerActor ? brandVSRmsg
+    viewManagerActor ? prodVSRmsg
+
+    val response = service.views(Some(prodBrandUrl01), None, None, Some("errorsANDincomplete"),
+      Some(true), Some(false), Some(false))
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map("materialized" -> 2)
+    response.value.get.get.views should contain(brandExpected)
+    response.value.get.get.views should contain(prodExpected)
+  }
+
+  it should "filter views by dependencies and issues with error=true AND incomplete=true " +
+    "and return list of 1 element" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    // note - actor would in reality be incorrect, using it just for testing purposes
+    val brandVSRmsg = ViewStatusResponse(status="materialized", view=brandDependency01,
+      actor=prodBrandViewActor, errors=Some(false), incomplete=Some(true))
+    val prodVSRmsg = ViewStatusResponse(status="materialized", view=productDependency01,
+      actor=prodBrandViewActor, errors=Some(true), incomplete=Some(true))
+
+    val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"true", "incomplete"-> "true")),
+      fields = None, parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"true", "incomplete"-> "true")),
+      fields = None , parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    viewManagerActor ? brandVSRmsg
+    viewManagerActor ? prodVSRmsg
+
+    val response = service.views(Some(prodBrandUrl01), None, None, Some("errorsANDincomplete"),
+      Some(true), Some(false), Some(false))
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map("materialized" -> 1)
+    response.value.get.get.views.head shouldBe prodExpected
+  }
+
+  it should "filter views by dependencies and issues with error=false AND incomplete=true" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    // note - actor would in reality be incorrect, using it just for testing purposes
+    val brandVSRmsg = ViewStatusResponse(status="materialized", view=brandDependency01,
+      actor=prodBrandViewActor, errors=Some(false), incomplete=Some(true))
+    val prodVSRmsg = ViewStatusResponse(status="materialized", view=productDependency01,
+      actor=prodBrandViewActor, errors=Some(false), incomplete=Some(true))
+
+    val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"false", "incomplete"-> "true")),
+      fields = None, parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
+      viewTableName = None, status = "materialized",
+      properties = Some(Map("errors"->"false", "incomplete"-> "true")),
+      fields = None , parameters = None, dependencies = None, transformation = None,
+      export = None, storageFormat = None, materializeOnce = None, comment = None,
+      isTable = None)
+
+    viewManagerActor ? brandVSRmsg
+    viewManagerActor ? prodVSRmsg
+
+    val response = service.views(Some(prodBrandUrl01), None, None, Some("incomplete"),
+      Some(true), Some(false), Some(false))
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview shouldBe Map("materialized" -> 2)
+    response.value.get.get.views should contain(brandExpected)
+    response.value.get.get.views should contain(prodExpected)
+  }
+
+  it should "filter views by dependencies and issues with error=true and return empty list" in new SchedoscopeServiceWithViewManagerTest {
+
+    val prodBrandViewActor = initializeViewWithDep(productBrandView01, brandDependency01, productDependency01)
+    // note - actor would in reality be incorrect, using it just for testing purposes
+    val brandVSRmsg = ViewStatusResponse(status="materialized", view=brandDependency01,
+      actor=prodBrandViewActor, errors=Some(false), incomplete=Some(true))
+    val prodVSRmsg = ViewStatusResponse(status="materialized", view=productDependency01,
+      actor=prodBrandViewActor, errors=Some(false), incomplete=Some(true))
+
+    viewManagerActor ? brandVSRmsg
+    viewManagerActor ? prodVSRmsg
+
+    val response = service.views(Some(prodBrandUrl01), None, None, Some("errors"),
+      Some(true), Some(false), Some(false))
+    Await.result(response, TIMEOUT)
+
+    response.isCompleted shouldBe true
+    response.value.get.get.overview.size shouldBe 0
+    response.value.get.get.views.size shouldBe 0
   }
 
   /**
@@ -391,24 +676,30 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val modeParam = None
-    val response = service.materialize(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+    val response = service.materialize(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
 
-    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
+    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam, issueFilterParam))
 
+    // Note: response will never be the newState => in reality,
+    // it will be always the original state; however, for testing purposes
+    // changed the artificially created different ViewStatusResponse values
     viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+      ViewStatusListResponse(List(ViewStatusResponse("materialized", productBrandView01, prodBrandViewActor.ref,
+        errors=Some(false), incomplete = Some(false)))))
 
     prodBrandViewActor.expectMsg(MaterializeView(MaterializeViewMode.DEFAULT))
 
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map("materialized" -> 1)
     response.value.get.get.views.size shouldBe 1
-    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(0).status shouldBe "materialized"
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe Some(Map("errors" -> "false", "incomplete" -> "false"))
 
   }
 
@@ -419,16 +710,18 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val modeParam = None
-    val response = service.materialize(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+    val response = service.materialize(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
 
     Await.result(response, TIMEOUT)
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map(initStatus -> 1)
     response.value.get.get.views.size shouldBe 1
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe None
   }
 
   /**
@@ -446,9 +739,10 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
       val statusParam = None
       val filterParam = None
+      val issueFilterParam = None
       val response = service.newdata(prodBrandviewUrlPath01, statusParam, filterParam)
 
-      viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
+      viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam, issueFilterParam))
 
       viewManagerActor.reply(
         ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
@@ -458,11 +752,12 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       Await.result(response, TIMEOUT)
 
       response.isCompleted shouldBe true
-      response.value.get.get.overview shouldBe Map("receive" -> 1)
+      response.value.get.get.overview shouldBe Map(initStatus -> 1)
       response.value.get.get.views.size shouldBe 1
       response.value.get.get.views(0).status shouldBe initStatus
       response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
       response.value.get.get.views(0).dependencies shouldBe None
+      response.value.get.get.views(0).properties shouldBe None
 
     }
 
@@ -481,24 +776,30 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val modeParam = None
-    val response = service.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+    val response = service.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
 
-    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam))
+    viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam, issueFilterParam))
 
+    // Note: response will never be the newState => in reality,
+    // it will be always the original state; however, for testing purposes
+    // changed the artificially created different ViewStatusResponse values
     viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+      ViewStatusListResponse(List(ViewStatusResponse("invalidated", productBrandView01, prodBrandViewActor.ref,
+        errors = Some(true), incomplete = Some(true)))))
 
     prodBrandViewActor.expectMsg(InvalidateView())
 
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("receive" -> 1)
+    response.value.get.get.overview shouldBe Map("invalidated" -> 1)
     response.value.get.get.views.size shouldBe 1
-    response.value.get.get.views(0).status shouldBe initStatus
+    response.value.get.get.views(0).status shouldBe "invalidated"
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
+    response.value.get.get.views(0).properties shouldBe None
 
   }
 
@@ -509,8 +810,9 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val modeParam = None
-    val response = service.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+    val response = service.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
 
     Await.result(response, TIMEOUT)
     response.isCompleted shouldBe true

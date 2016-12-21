@@ -17,7 +17,7 @@ package org.schedoscope.scheduler.rest.server
 
 import java.util.logging.{Level, LogManager, Logger}
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorContext, ActorRef, ActorSystem, Props}
 import akka.io.IO
 import akka.pattern.ask
 import akka.routing.SmallestMailboxPool
@@ -30,11 +30,11 @@ import org.slf4j.bridge.SLF4JBridgeHandler
 import spray.can.Http
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
-
 import spray.routing.Directive.pimpApply
-import spray.routing.{ExceptionHandler, HttpService}
+import spray.routing.{ExceptionHandler, HttpService, Route}
 import spray.util.LoggingContext
 
+import scala.concurrent.ExecutionContextExecutor
 import scala.language.postfixOps
 
 
@@ -42,16 +42,13 @@ import scala.language.postfixOps
   * Spray actor providing the Schedoscope REST service
   */
 class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor with HttpService {
+
   import spray.httpx.SprayJsonSupport._
   import SchedoscopeJsonDataFormat._
 
-  private implicit def ec = actorRefFactory.dispatcher
+  implicit def executionContext: ExecutionContextExecutor = actorRefFactory.dispatcher
 
-  def actorRefFactory = context
-
-  def receive = runRoute(route)
-
-  implicit def myExceptionHandler(implicit log: LoggingContext) =
+  implicit def restExceptionHandler(implicit log: LoggingContext) =
     ExceptionHandler {
       case e: IllegalArgumentException =>
         requestUri { uri =>
@@ -62,32 +59,34 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
       case t: Throwable =>
         requestUri { uri =>
           log.warning("General exception caught while processing scheduling request: {} Problem: {}", uri, t)
-          complete(InternalServerError, s"Server encountered exception: ${t}")
+          complete(InternalServerError, s"Server encountered exception: $t")
         }
     }
 
-  val route = get {
+  override def actorRefFactory: ActorContext = context
+
+  override def receive: Receive = runRoute(get {
     respondWithHeader(RawHeader("Access-Control-Allow-Origin", "*")) {
-      parameters("status" ?, "filter" ?, "dependencies".as[Boolean] ?, "typ" ?, "mode" ?, "overview".as[Boolean] ?, "all".as[Boolean] ?) {
-        (status, filter, dependencies, typ, mode, overview, all) =>
+      parameters("status" ?, "filter" ?, "issueFilter" ?, "dependencies".as[Boolean] ?, "typ" ?, "mode" ?, "overview".as[Boolean] ?, "all".as[Boolean] ?) {
+        (status, filter, issueFilter, dependencies, typ, mode, overview, all) =>
           path("transformations") {
             complete(schedoscope.transformations(status, filter))
           } ~
-            path("queues") {
-              complete(schedoscope.queues(typ, filter))
-            } ~
-            path("views" / Rest.?) { viewUrlPath =>
-              complete(schedoscope.views(viewUrlPath, status, filter, dependencies, overview, all))
-            } ~
-            path("materialize" / Rest.?) { viewUrlPath =>
-              complete(schedoscope.materialize(viewUrlPath, status, filter, mode))
-            } ~
-            path("invalidate" / Rest.?) { viewUrlPath =>
-              complete(schedoscope.invalidate(viewUrlPath, status, filter, dependencies))
-            }
+          path("queues") {
+            complete(schedoscope.queues(typ, filter))
+          } ~
+          path("views" / Rest.?) { viewUrlPath =>
+            complete(schedoscope.views(viewUrlPath, status, filter, issueFilter, dependencies, overview, all))
+          } ~
+          path("materialize" / Rest.?) { viewUrlPath =>
+            complete(schedoscope.materialize(viewUrlPath, status, filter, issueFilter, mode))
+          } ~
+          path("invalidate" / Rest.?) { viewUrlPath =>
+            complete(schedoscope.invalidate(viewUrlPath, status, filter, issueFilter, dependencies))
+          }
       }
     }
-  }
+  })
 }
 
 /**
@@ -95,29 +94,18 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
   */
 object SchedoscopeRestService {
 
-  LogManager.getLogManager().reset()
+  LogManager.getLogManager.reset()
   SLF4JBridgeHandler.removeHandlersForRootLogger()
   SLF4JBridgeHandler.install()
   Logger.getLogger("global").setLevel(Level.FINEST)
 
-  case class Config(shell: Boolean = false)
-
-  val parser = new scopt.OptionParser[Config]("schedoscope-rest-service") {
-    override def showUsageOnError = true
-
-    head("schedoscope-rest-service")
-    help("help") text ("print usage")
-    opt[Unit]('s', "shell") action { (_, c) => c.copy(shell = true) } optional() text ("start an interactive shell with direct schedoscope access.")
-  }
-
-  implicit val actorSystem = Schedoscope.actorSystem
-
   import Schedoscope._
 
-  implicit val timeout = Timeout(settings.webserviceTimeout)
+  implicit val actorSystem: ActorSystem = Schedoscope.actorSystem
+  implicit val timeout: Timeout = Timeout(settings.webserviceTimeout)
 
-  val schedoscope = new SchedoscopeServiceImpl(actorSystem, settings, viewManagerActor, transformationManagerActor)
-  val service = actorSystem.actorOf(new SmallestMailboxPool(settings.restApiConcurrency).props(Props(classOf[SchedoscopeRestServiceActor], schedoscope)), "schedoscope-webservice-actor")
+  val schedoscope: SchedoscopeService = new SchedoscopeServiceImpl(actorSystem, settings, viewManagerActor, transformationManagerActor)
+  val service: ActorRef = actorSystem.actorOf(new SmallestMailboxPool(settings.restApiConcurrency).props(Props(classOf[SchedoscopeRestServiceActor], schedoscope)), "schedoscope-webservice-actor")
 
   def start(config: Config) {
     IO(Http) ? Http.Bind(service, interface = settings.host, port = settings.port)
@@ -131,6 +119,16 @@ object SchedoscopeRestService {
 
   def stop(): Boolean = {
     schedoscope.shutdown()
+  }
+
+  case class Config(shell: Boolean = false)
+
+  val parser = new scopt.OptionParser[Config]("schedoscope-rest-service") {
+    override def showUsageOnError = true
+
+    head("schedoscope-rest-service")
+    help("help") text "print usage"
+    opt[Unit]('s', "shell") action { (_, c) => c.copy(shell = true) } optional() text "start an interactive shell with direct schedoscope access."
   }
 
   def main(args: Array[String]) {
