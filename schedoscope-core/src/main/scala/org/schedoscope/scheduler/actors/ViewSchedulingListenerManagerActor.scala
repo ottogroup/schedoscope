@@ -54,11 +54,11 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
       case _ => Escalate
     }
 
-  var viewsMonitored = scala.collection.mutable.Map[View, ViewSchedulingMonitoringEvent]()
-  var handlersMonitored = scala.collection.mutable.Set[String]()
+  var viewsMonitored = Map[View, ViewSchedulingMonitoringEvent]()
+  var handlersMonitored = Set[String]()
 
   def viewSchedulingListenerHandlers(handlers:List[String] = settings.viewSchedulingRunCompletionHandlers) = {
-    val handlersSetSoFar = scala.collection.mutable.Set[String]()
+    var handlersSetSoFar = Set[String]()
     handlers.foreach { x =>
       if (getViewSchedulingHandlerClass(x))
         handlersSetSoFar += x
