@@ -66,18 +66,16 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
     handlersSetSoFar
   }
 
-  def getViewSchedulingHandlerClass(className: String):Boolean = try {
-    val c = Class.forName(className).newInstance().asInstanceOf[ViewSchedulingListener]
-    true
-  } catch {
-    case ex: ClassCastException  =>
-      log.error(ex.getMessage)
-      false
-    case _: ClassNotFoundException =>
-      val msg = s"Class ${className} was not found. Skipping handler."
-      log.error(msg)
-      false
-  }
+  def getViewSchedulingHandlerClass(className: String):Boolean =
+    try {
+      val c = Class.forName(className).newInstance().asInstanceOf[ViewSchedulingListener]
+      true
+    } catch {
+      case _: ClassNotFoundException =>
+        val msg = s"Class ${className} was not found. Skipping listener creation."
+        log.error(msg)
+        false
+    }
 
   /**
     * Create viewSchedulingListener handler actors ONLY if there are any
@@ -104,11 +102,9 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
 
   def receive: Receive = LoggingReceive({
 
-    case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
-      // forward to all its children (aka handlers)
+    case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) =>
       context.actorSelection("*") ! ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime)
       viewsMonitored += (prevState.view -> ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime))
-    }
 
     case CollectViewSchedulingStatus(handlerClassName) =>
       collectViewSchedulingStatus(sender, handlerClassName)
