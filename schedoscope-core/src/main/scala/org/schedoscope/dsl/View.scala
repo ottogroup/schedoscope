@@ -230,6 +230,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     this.additionalStoragePathSuffix = Option(additionalStoragePathSuffix)
   }
 
+  def tblProperties(tblProps: Map[String, String]) =
+    tblProperties = tblProps
+
+
+
   /**
     * Postfactum configuration of the registered transformation. Useful to override transformation configs within a test.
     */
