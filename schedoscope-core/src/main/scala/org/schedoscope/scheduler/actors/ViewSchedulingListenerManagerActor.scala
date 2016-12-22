@@ -57,7 +57,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   var viewsMonitored = Map[View, ViewSchedulingMonitoringEvent]()
   var handlersMonitored = Set[String]()
 
-  def viewSchedulingListenerHandlers(handlers:List[String] = settings.viewSchedulingRunCompletionHandlers) =
+  def viewSchedulingListenerHandlers(handlers:List[String] = settings.viewSchedulingListeners) =
     handlers.filter(getViewSchedulingHandlerClass).toSet
 
   def getViewSchedulingHandlerClass(className: String):Boolean =

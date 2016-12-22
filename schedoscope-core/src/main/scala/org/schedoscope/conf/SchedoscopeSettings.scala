@@ -76,9 +76,9 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
   /**
     * Configured view action scheduling listener handlers.
     */
-  lazy val viewSchedulingRunCompletionHandlers = {
+  lazy val viewSchedulingListeners = {
     try
-      config.getStringList("schedoscope.scheduler.schedulingStateChangeListeners").toList
+      config.getStringList("schedoscope.scheduler.viewSchedulingListeners").toList
     catch {
       case _: Throwable => List()
     }

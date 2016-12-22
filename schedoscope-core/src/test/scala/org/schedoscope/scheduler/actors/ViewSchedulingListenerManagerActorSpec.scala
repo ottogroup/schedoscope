@@ -140,7 +140,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
     val handlerClassName = "org.schedoscope.test.TestViewListener"
 
     class SchedoscopeSettingsMock(config: Config) extends SchedoscopeSettings(config: Config) {
-      override lazy val viewSchedulingRunCompletionHandlers = List(handlerClassName)
+      override lazy val viewSchedulingListeners = List(handlerClassName)
     }
 
     object SettingsMock extends ExtensionId[SchedoscopeSettings] with ExtensionIdProvider {
