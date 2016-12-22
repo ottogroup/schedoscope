@@ -21,18 +21,7 @@ package org.schedoscope.dsl.storageformats
 abstract sealed class StorageFormat
 
 /**
-  * Store a view's data as a Hive textfile (default)
-  *
-  * @param fieldTerminator          separator for fields, default is \001
-  * @param collectionItemTerminator separator for items in collections, default is \002
-  * @param mapKeyTerminator         char for separating map keys and values, default is \003
-  * @param lineTerminator           default is \n
-  */
-case class TextFile(val fieldTerminator: String = null, collectionItemTerminator: String = null, mapKeyTerminator: String = null, lineTerminator: String = null) extends StorageFormat
-
-/**
   * Store a view's data as Parquet
-  *
   */
 case class Parquet() extends StorageFormat
 
@@ -43,3 +32,69 @@ case class Parquet() extends StorageFormat
   *
   */
 case class Avro(schemaPath: String) extends StorageFormat
+
+/**
+  * Store a view's data as ORC
+  */
+case class OptimizedRowColumnar() extends StorageFormat
+
+/**
+  * Store a view's data as RCFile
+  */
+case class RecordColumnarFile() extends StorageFormat
+
+/**
+  * Store a view's data as SequenceFile
+  * @param fieldTerminator          separator for fields, default is \001
+  * @param collectionItemTerminator separator for items in collections, default is \002
+  * @param mapKeyTerminator         char for separating map keys and values, default is \003
+  * @param lineTerminator           default is \n
+  */
+case class SequenceFile(val fieldTerminator: String = null, collectionItemTerminator: String = null, mapKeyTerminator: String = null, lineTerminator: String = null) extends StorageFormat
+
+/**
+  * Store a view's data as a Hive textfile (default)
+  *
+  * @param fieldTerminator          separator for fields, default is \001
+  * @param collectionItemTerminator separator for items in collections, default is \002
+  * @param mapKeyTerminator         char for separating map keys and values, default is \003
+  * @param lineTerminator           default is \n
+  */
+case class TextFile(val fieldTerminator: String = null, collectionItemTerminator: String = null, mapKeyTerminator: String = null, lineTerminator: String = null) extends StorageFormat
+
+/**
+  * Convenience case class to store a view's data
+  * as TextFile, but automatically setting ROW FORMAT SERDE
+  * RegexSerde and SERDEPROPERTIES
+  */
+case class TextfileWithRegEx(inputRegex: String) extends StorageFormat
+
+/**
+  * Convenience case class to store a view's data
+  * as TextFile, but automatically setting ROW FORMAT SERDE
+  * JsonSerDe
+  */
+case class Json() extends StorageFormat
+
+
+/**
+  * Convenience case class to store a view's data
+  * as TextFile, but automatically setting ROW FORMAT SERDE
+  * OpenCSVSerde
+  * Note: valid for both Comma/Tab Separated (CSV/TSV) formats
+  */
+case class Csv() extends StorageFormat
+
+/**
+  * Generic input Output specifier
+  * Store a view's data by specifying INPUT and OUTPUT format
+  *
+  * This case class is only present to allow support any format,
+  * it is translated to a STORED AS INPUTFORMAT _ OUTPUTFORMAT _
+  * clause
+  * In the case of serDe value present, the ROW FORMAT SERDE _
+  * is also present
+  *
+  * Example use case: LZO compression
+  */
+case class InOutputFormat(input: String, output: String, serDe: Option[String] = None) extends StorageFormat

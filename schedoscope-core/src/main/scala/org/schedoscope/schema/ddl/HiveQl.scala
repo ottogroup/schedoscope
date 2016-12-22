@@ -76,26 +76,72 @@ object HiveQl {
       ""
   }
 
-  def storedAsDdl(
-                   view: View) = view.storageFormat match {
-    case Parquet() => "STORED AS PARQUET"
+  def serDePropertiesDdl(view: View) =
+    if (view.serDeProperties.isEmpty)
+      ""
+    else {
+      val serDeProps = new StringBuilder()
+      serDeProps.append("\nWITH SERDEPROPERTIES (\n")
+      for ((key, value) <- view.serDeProperties)
+        serDeProps.append(s"\t\t '${key}' = '${value}'\n")
+      serDeProps.append("\t)\n")
+      serDeProps.toString()
+    }
 
-    case Avro(schemaPath) => s"""ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
-\tWITH SERDEPROPERTIES (
-\t\t'avro.schema.url' = '${view.avroSchemaPathPrefix}/${schemaPath}'
-\t)
-\tSTORED AS
-\t\tINPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
-\t\tOUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'"""
+  def rowFormatSerDeDdl(view: View) =
+      view.serDe match {
+          case Some(s) => s"ROW FORMAT SERDE '${s}'" + serDePropertiesDdl(view)
+          case _ => ""
+      }
 
-    case TextFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) => s"""${if ((fieldTerminator != null) || (collectionItemTerminator != null) || (mapKeyTerminator != null) || (lineTerminator != null)) "ROW FORMAT DELIMITED" else ""}
+  def rowFormatDelimitedDdl(fieldTerminator: String = null,
+                         collectionItemTerminator: String = null,
+                         mapKeyTerminator: String = null,
+                         lineTerminator: String = null) = {
+    s"""${if ((fieldTerminator != null) || (collectionItemTerminator != null) || (mapKeyTerminator != null) || (lineTerminator != null)) "ROW FORMAT DELIMITED" else ""}
 ${if (fieldTerminator != null) s"\tFIELDS TERMINATED BY '${fieldTerminator}'" else ""}
 ${if (lineTerminator != null) s"\tLINES TERMINATED BY '${lineTerminator}'" else ""}
 ${if (collectionItemTerminator != null) s"\tCOLLECTION ITEMS TERMINATED BY '${collectionItemTerminator}'" else ""}
 ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'" else ""}
-\tSTORED AS TEXTFILE"""
-    case _ => "STORED AS TEXTFILE"
+    """
   }
+
+  def inOutputFormatDdl(view: View) =
+    "\n\tSTORED AS" +
+      s"\n\t\tINPUTFORMAT '${view.inOutputformat.get("input")}'" +
+      s"\n\t\tOUTPUTFORMAT '${view.inOutputformat.get("output")}'"
+
+  def storedAsDdl(view: View) =  view.storageFormat match {
+
+    case TextFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
+      val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
+      // TODO: better collision validation ?
+      val rowFormat = if (rfd.length > 0) rfd else rowFormatSerDeDdl(view)
+      rowFormat  + inOutputFormatDdl(view)
+
+    case SequenceFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
+      val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
+      // TODO: better collision validation ?
+      val rowFormat = if (rfd.length > 0) rfd else rowFormatSerDeDdl(view)
+      rowFormat + inOutputFormatDdl(view)
+
+    case Parquet() | Avro(_) | OptimizedRowColumnar() | TextfileWithRegEx(_) | Json() | Csv() | InOutputFormat(_,_,_) =>
+      rowFormatSerDeDdl(view) + inOutputFormatDdl(view)
+
+    case _ => inOutputFormatDdl(view)
+  }
+
+  def tblPropertiesDdl(view: View) =
+    if (view.tblProperties.isEmpty)
+      ""
+    else {
+      val tblProps = new StringBuilder()
+      tblProps.append("\nTBLPROPERTIES (\n")
+      for ((key, value) <- view.serDeProperties)
+        tblProps.append(s"\t\t '${key}' = '${value}'\n")
+      tblProps.append("\t)\n")
+      tblProps.toString()
+    }
 
   def locationDdl(view: View): String = view.tablePath match {
     case "" => ""
@@ -108,6 +154,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 \t${commentDdl(view)}
 \t${partitionDdl(view)}
 \t${storedAsDdl(view)}
+\t${tblPropertiesDdl(view)}
 \t${locationDdl(view)}
 \t
 """.replaceAll("(?m)^[ \t]*\r?\n", "")
