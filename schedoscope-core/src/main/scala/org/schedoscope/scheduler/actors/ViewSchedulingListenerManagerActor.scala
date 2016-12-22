@@ -57,18 +57,12 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   var viewsMonitored = Map[View, ViewSchedulingMonitoringEvent]()
   var handlersMonitored = Set[String]()
 
-  def viewSchedulingListenerHandlers(handlers:List[String] = settings.viewSchedulingRunCompletionHandlers) = {
-    var handlersSetSoFar = Set[String]()
-    handlers.foreach { x =>
-      if (getViewSchedulingHandlerClass(x))
-        handlersSetSoFar += x
-    }
-    handlersSetSoFar
-  }
+  def viewSchedulingListenerHandlers(handlers:List[String] = settings.viewSchedulingRunCompletionHandlers) =
+    handlers.filter(getViewSchedulingHandlerClass).toSet
 
   def getViewSchedulingHandlerClass(className: String):Boolean =
     try {
-      val c = Class.forName(className).newInstance().asInstanceOf[ViewSchedulingListener]
+      Class.forName(className).newInstance().asInstanceOf[ViewSchedulingListener]
       true
     } catch {
       case _: ClassNotFoundException =>
@@ -82,7 +76,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
     * Monitoring classes.
     */
   override def preStart {
-    viewSchedulingListenerHandlers().toSeq.foreach( handler =>
+    viewSchedulingListenerHandlers().foreach( handler =>
       actorOf(
         ViewSchedulingListenerActor.props(
           handler, self), handler)

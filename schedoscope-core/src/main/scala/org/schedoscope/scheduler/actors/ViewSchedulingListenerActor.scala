@@ -46,7 +46,7 @@ class ViewSchedulingListenerActor(handlerClassName:String,
           throw e
 
         case t: Throwable =>
-          throw new ViewSchedulingListenerException(t.getMessage, t.getCause)
+          throw ViewSchedulingListenerException(t.getMessage, t.getCause)
       }
   }
 
