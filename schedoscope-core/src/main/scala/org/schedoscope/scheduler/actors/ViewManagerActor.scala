@@ -36,7 +36,11 @@ import scala.collection.mutable.{HashMap, HashSet}
   *
   * It does this by cooperating with the partition creator actor and metadata logger actor.
   */
-class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaManagerRouter: ActorRef) extends Actor {
+class ViewManagerActor(settings: SchedoscopeSettings,
+                       actionsManagerActor: ActorRef,
+                       schemaManagerRouter: ActorRef,
+                       viewSchedulingListenerManagerActor: ActorRef
+                      ) extends Actor {
 
   import ViewManagerActor._
   import context._
@@ -178,11 +182,11 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
               Map.empty[View, ActorRef],
               self,
               actionsManagerActor,
-              schemaManagerRouter), actorNameForView(view))
+              schemaManagerRouter,
+              viewSchedulingListenerManagerActor), actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
         }
-
         log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
       }
 
@@ -200,7 +204,6 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
             }
         }
       }
-
     }
     log.info(s"Returning actors${if (dependencies) " including dependencies."}")
 
@@ -250,7 +253,11 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 object ViewManagerActor {
   def props(settings: SchedoscopeSettings,
             actionsManagerActor: ActorRef,
-            schemaManagerRouter: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaManagerRouter).withDispatcher("akka.actor.view-manager-dispatcher")
+            schemaManagerRouter: ActorRef,
+            viewSchedulingListenerManagerActor: ActorRef): Props =
+    Props(classOf[ViewManagerActor], settings: SchedoscopeSettings,
+      actionsManagerActor, schemaManagerRouter, viewSchedulingListenerManagerActor)
+      .withDispatcher("akka.actor.view-manager-dispatcher")
 
   /**
     * Helper to convert state to MetaData
