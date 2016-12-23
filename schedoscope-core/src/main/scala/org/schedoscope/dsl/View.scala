@@ -49,28 +49,38 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   val isExternal = false
   val suffixPartitions = new HashSet[Parameter[_]]()
   private val deferredDependencies = ListBuffer[() => Seq[View]]()
+
   /**
     * Pluggable builder function that returns the name of the module the view belongs to.
     * The default implemementation returns the view's package in database-friendly lower-case underscore format, replacing all . with _.
     */
   override var moduleNameBuilder = () => lowerCasePackageName.replaceAll("[.]", "_")
+
   /**
     * Pluggable builder function that returns the database name for the view given an environment.
     * The default implementation prepends the environment to the result of moduleNameBuilder with an underscore.
     */
   override var dbNameBuilder = (env: String) => env.toLowerCase() + "_" + moduleNameBuilder()
+
   /**
     * Pluggable builder function that returns the table name for the view given an environment.
     * The default implementation appends the view's name n to the result of dbNameBuilder.
     */
   override var tableNameBuilder = (env: String) => dbNameBuilder(env) + "." + n
+
   /**
-    * Pluggable builder function that returns the HDFS path representing the database of the view given an environment.
+    * Pluggable builder function that returns either the HDFS or AWS S3 path representing
+    * the database of the view given an environment
     * The default implementation does this by building a path from the lower-case-underscore format of
     * moduleNameBuilder, replacing _ with / and prepending /hdp/dev/ for the default dev environment.
     */
-
-  override var dbPathBuilder = (env: String) => Schedoscope.settings.viewDataHdfsRoot + "/" + env.toLowerCase() + "/" + (moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
+  override var dbPathBuilder = (env: String) =>
+    (if (s3Bucket.isDefined && s3UriScheme.isDefined)
+      s3BucketPathBuilder(s3Bucket.get, s3UriScheme.get)
+    else
+      Schedoscope.settings.viewDataHdfsRoot) + "/" + env.toLowerCase() +
+    "/" + moduleNameBuilder()
+      .replaceFirst("app", "applications").replaceAll("_", "/")
 
   /**
     * Pluggable builder function that returns the HDFS path to the table the view belongs to.
@@ -113,7 +123,16 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   var inOutputformat = HashMap[String, String]()
   var serDe: Option[String] = None
-  var serDeProperties = Map[String, String]()
+  var serDeProperties = HashMap[String, String]()
+
+
+  /**
+    * Optional use of S3 to store hive data
+    */
+  var s3Bucket: Option[String] = None
+  var s3UriScheme: Option[String] = None
+
+  var s3BucketPathBuilder = (bucketName: String, uriScheme: String) => s"${uriScheme}://${bucketName}"
 
   override def toString() = urlPath
 
@@ -235,6 +254,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     this.additionalStoragePathSuffix = Option(additionalStoragePathSuffix)
     f match {
 
+      case S3(bucketName, storageFormat, uriScheme) =>
+        s3Bucket = Some(bucketName)
+        s3UriScheme = Some(uriScheme)
+        storedAs(storageFormat, additionalStoragePathPrefix, additionalStoragePathSuffix)
+
       case Avro(schemaPath) =>
         rowFormat("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
         serDeProperties(Map("avro.schema.url" -> s"${avroSchemaPathPrefix}/${schemaPath}"))
@@ -303,7 +327,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Specify table properties of a view, which is implemented in Hive as clause TBLPROPERTIES
     */
-  def tblProperties(m: Map[String, String]) = tblProperties ++ m
+  def tblProperties(m: Map[String, String]):Unit = tblProperties ++= m
 
   /**
     * Specify custom SerDe
@@ -311,11 +335,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def rowFormat(serde: String) = serDe = Some(serde)
 
 
-  def inOutputformat(m: Map[String, String]) = inOutputformat ++= m
+  def inOutputformat(m: Map[String, String]):Unit = inOutputformat ++= m
   /**
     * Specify custom SerDe properties
     */
-  def serDeProperties(m: Map[String, String]) = serDeProperties ++= m
+  def serDeProperties(m: Map[String, String]):Unit = serDeProperties ++= m
 
   /**
     * Postfactum configuration of the registered transformation. Useful to override transformation configs within a test.

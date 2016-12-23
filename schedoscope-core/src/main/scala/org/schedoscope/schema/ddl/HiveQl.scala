@@ -19,7 +19,7 @@ package org.schedoscope.schema.ddl
 import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.Checksum
 import org.schedoscope.dsl.{FieldLike, Structure, View}
-
+import scala.collection.mutable.HashMap
 import scala.util.matching.Regex
 
 /**
@@ -76,17 +76,20 @@ object HiveQl {
       ""
   }
 
+  private def mapToString(m: HashMap[String, String]) = {
+    val result = m.foldLeft("") { (s: String, pair: (String, String)) =>
+        s + "\n\t\t '" + pair._1 + "'" + " = " + "'" + pair._2 + "'" + "," }
+    if(result.length > 0)
+      result.dropRight(1)
+    else
+      result
+  }
+
   def serDePropertiesDdl(view: View) =
     if (view.serDeProperties.isEmpty)
       ""
-    else {
-      val serDeProps = new StringBuilder()
-      serDeProps.append("\nWITH SERDEPROPERTIES (\n")
-      for ((key, value) <- view.serDeProperties)
-        serDeProps.append(s"\t\t '${key}' = '${value}'\n")
-      serDeProps.append("\t)\n")
-      serDeProps.toString()
-    }
+    else
+      "\n\tWITH SERDEPROPERTIES (\n" + mapToString(view.serDeProperties) + "\n\t)\n"
 
   def rowFormatSerDeDdl(view: View) =
       view.serDe match {
@@ -108,8 +111,8 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 
   def inOutputFormatDdl(view: View) =
     "\n\tSTORED AS" +
-      s"\n\t\tINPUTFORMAT '${view.inOutputformat.get("input")}'" +
-      s"\n\t\tOUTPUTFORMAT '${view.inOutputformat.get("output")}'"
+      s"\n\t\tINPUTFORMAT '${view.inOutputformat("input")}'" +
+      s"\n\t\tOUTPUTFORMAT '${view.inOutputformat("output")}'"
 
   def storedAsDdl(view: View) =  view.storageFormat match {
 
@@ -134,14 +137,8 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
   def tblPropertiesDdl(view: View) =
     if (view.tblProperties.isEmpty)
       ""
-    else {
-      val tblProps = new StringBuilder()
-      tblProps.append("\nTBLPROPERTIES (\n")
-      for ((key, value) <- view.serDeProperties)
-        tblProps.append(s"\t\t '${key}' = '${value}'\n")
-      tblProps.append("\t)\n")
-      tblProps.toString()
-    }
+    else
+      "TBLPROPERTIES (\n" + mapToString(view.tblProperties) + "\n\t)"
 
   def locationDdl(view: View): String = view.tablePath match {
     case "" => ""

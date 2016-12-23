@@ -98,3 +98,17 @@ case class Csv() extends StorageFormat
   * Example use case: LZO compression
   */
 case class InOutputFormat(input: String, output: String, serDe: Option[String] = None) extends StorageFormat
+
+
+/**
+  * Convenience case class to store a view's data
+  * as any Storage Format, but automatically setting
+  * LOCATION 'S3-Bucket'
+  *
+  * @param bucketName     the unique AWS S3 bucket name
+  * @param storageFormat  the type of files to use (e.g. parquet/avro/textFile ...)
+  * @param uriScheme      URI scheme associated with hadoop version used, as well AWS region;
+  *                       with default value "s3n"; for more information, please check
+  *                       https://wiki.apache.org/hadoop/AmazonS3
+  */
+case class S3(bucketName: String, storageFormat: StorageFormat, uriScheme: String = "s3n") extends StorageFormat
