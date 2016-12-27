@@ -78,7 +78,7 @@ object HiveQl {
 
   private def mapToString(m: HashMap[String, String]) = {
     val result = m.foldLeft("") { (s: String, pair: (String, String)) =>
-        s + "\n\t\t '" + pair._1 + "'" + " = " + "'" + pair._2 + "'" + "," }
+        s + "\n\t\t '" + pair._1 + "'" + " = " + "'" + pair._2 + "' ," }
     if(result.length > 0)
       result.dropRight(1)
     else
