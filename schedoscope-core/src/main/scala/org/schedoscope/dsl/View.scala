@@ -121,7 +121,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   var tblProperties = HashMap[String, String]()
 
-  var inOutputformat = HashMap[String, String]()
+  var inOutputformat = HashMap[String, String]("input" -> "org.apache.hadoop.mapred.SequenceFileInputFormat",
+    "output" -> "org.apache.hadoop.mapred.SequenceFileOutputFormat")
   var serDe: Option[String] = None
   var serDeProperties = HashMap[String, String]()
 
@@ -248,7 +249,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Specify the storage format of the view, with TextFile being the default. One can optionally specify storage path prefixes and suffixes.
     */
-  def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) {
+  def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) = {
     storageFormat = f
     this.additionalStoragePathPrefix = Option(additionalStoragePathPrefix)
     this.additionalStoragePathSuffix = Option(additionalStoragePathSuffix)
@@ -262,72 +263,73 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       case Avro(schemaPath) =>
         rowFormat("org.apache.hadoop.hive.serde2.avro.AvroSerDe")
         serDeProperties(Map("avro.schema.url" -> s"${avroSchemaPathPrefix}/${schemaPath}"))
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
 
         // TODO: confirm if nice to have
-        tblProperties(Map("avro.schema.url" -> s"${avroSchemaPathPrefix}/${schemaPath}"))
+        setTblProperties(Map("avro.schema.url" -> s"${avroSchemaPathPrefix}/${schemaPath}"))
 
       case OptimizedRowColumnar() =>
         rowFormat("org.apache.hadoop.hive.ql.io.orc.OrcSerde")
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat"))
 
       case Parquet() =>
         rowFormat("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe")
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"))
 
       case TextfileWithRegEx(inputRegex) =>
         rowFormat("org.apache.hadoop.hive.serde2.RegexSerDe")
         serDeProperties(Map("input.regex" -> s"${inputRegex}"))
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.mapred.TextInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat"))
 
       case Json() =>
         rowFormat("org.apache.hive.hcatalog.data.JsonSerDe")
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.mapred.TextInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat"))
 
       case Csv() =>
         rowFormat("org.apache.hadoop.hive.serde2.OpenCSVSerde")
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.mapred.TextInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat"))
 
       case InOutputFormat(input, output, serDe) =>
         if (serDe.isDefined)
           rowFormat(serDe.get)
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> input,
             "output" -> output))
 
       case SequenceFile(_,_,_,_) =>
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.mapred.SequenceFileInputFormat",
             "output" -> "org.apache.hadoop.mapred.SequenceFileOutputFormat"))
 
       case TextFile(_,_,_,_) =>
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.mapred.TextInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat"))
 
       case RecordColumnarFile() =>
-        inOutputformat(
+        setInOutputformat(
           Map("input" -> "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat"))
     }
+
   }
 
   /**
     * Specify table properties of a view, which is implemented in Hive as clause TBLPROPERTIES
     */
-  def tblProperties(m: Map[String, String]):Unit = tblProperties ++= m
+  def setTblProperties(m: Map[String, String]):Unit = tblProperties ++= m
 
   /**
     * Specify custom SerDe
@@ -335,7 +337,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def rowFormat(serde: String) = serDe = Some(serde)
 
 
-  def inOutputformat(m: Map[String, String]):Unit = inOutputformat ++= m
+  def setInOutputformat(m: Map[String, String]):Unit = inOutputformat ++= m
   /**
     * Specify custom SerDe properties
     */

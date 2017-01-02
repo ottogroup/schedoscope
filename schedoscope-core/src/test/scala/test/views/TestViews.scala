@@ -376,7 +376,7 @@ case class ArticleViewParquet() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("orc.compress"->"ZLIB", "transactional" -> "true"))
+  setTblProperties(Map("orc.compress"->"ZLIB", "transactional" -> "true"))
   storedAs(Parquet())
 }
 
@@ -384,7 +384,7 @@ case class ArticleViewAvro() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("immutable"->"true"))
+  setTblProperties(Map("immutable"->"true"))
   storedAs(Avro("myPath"))
 }
 
@@ -392,7 +392,7 @@ case class ArticleViewJson() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("transactional"->"true"))
+  setTblProperties(Map("transactional"->"true"))
   storedAs(Json())
 }
 
@@ -400,7 +400,7 @@ case class ArticleViewInOutput() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("EXTERNAL"->"TRUE"))
+  setTblProperties(Map("EXTERNAL"->"TRUE"))
   storedAs(InOutputFormat("org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
     "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat",
     Some("org.apache.hadoop.hive.ql.io.orc.OrcSerde")))
@@ -410,6 +410,6 @@ case class ArticleViewS3() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("orc.compress"->"ZLIB", "transactional" -> "true"))
+  setTblProperties(Map("orc.compress"->"ZLIB", "transactional" -> "true"))
   storedAs(S3("schedoscope-bucket-test", OptimizedRowColumnar(), "s3a"))
 }

@@ -114,25 +114,26 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
       s"\n\t\tINPUTFORMAT '${view.inOutputformat("input")}'" +
       s"\n\t\tOUTPUTFORMAT '${view.inOutputformat("output")}'"
 
-  def storedAsDdl(view: View) =  view.storageFormat match {
+  def storedAsDdl(view: View) = view.storageFormat match {
 
-    case TextFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
-      val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
-      // TODO: better collision validation ?
-      val rowFormat = if (rfd.length > 0) rfd else rowFormatSerDeDdl(view)
-      rowFormat  + inOutputFormatDdl(view)
+      case TextFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
+        val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
+        // TODO: better collision validation ?
+        val rowFormat = if (rfd.length > 0) rfd else rowFormatSerDeDdl(view)
+        rowFormat + inOutputFormatDdl(view)
 
-    case SequenceFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
-      val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
-      // TODO: better collision validation ?
-      val rowFormat = if (rfd.length > 0) rfd else rowFormatSerDeDdl(view)
-      rowFormat + inOutputFormatDdl(view)
+      case SequenceFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
+        val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
+        // TODO: better collision validation ?
+        val rowFormat = if (rfd.length > 0) rfd else rowFormatSerDeDdl(view)
+        rowFormat + inOutputFormatDdl(view)
 
-    case Parquet() | Avro(_) | OptimizedRowColumnar() | TextfileWithRegEx(_) | Json() | Csv() | InOutputFormat(_,_,_) =>
-      rowFormatSerDeDdl(view) + inOutputFormatDdl(view)
+      case Parquet() | Avro(_) | OptimizedRowColumnar() | TextfileWithRegEx(_) | Json() | Csv() | InOutputFormat(_, _, _) =>
+        rowFormatSerDeDdl(view) + inOutputFormatDdl(view)
 
-    case _ => inOutputFormatDdl(view)
-  }
+      case _ => inOutputFormatDdl(view)
+    }
+
 
   def tblPropertiesDdl(view: View) =
     if (view.tblProperties.isEmpty)
@@ -174,11 +175,11 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
   }
 
   def ddlChecksum(view: View) = Checksum.digest(
-    view.storageFormat match {
-      case Avro(schemaPath) => ddl(view).replaceAll(Regex.quoteReplacement(s"${view.avroSchemaPathPrefix}/${schemaPath}"), "")
-      case _ => ddl(view)
-    }
-  )
+      view.storageFormat match {
+        case Avro(schemaPath) => ddl(view).replaceAll(Regex.quoteReplacement(s"${view.avroSchemaPathPrefix}/${schemaPath}"), "")
+        case _ => ddl(view)
+      }
+    )
 
   def selectAll(view: View): String = s"SELECT * FROM ${view.tableName} ${partitionWhereClause(view)}"
 
