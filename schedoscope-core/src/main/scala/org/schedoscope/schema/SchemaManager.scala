@@ -107,7 +107,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
     } catch {
       case t: Throwable =>
-        log.warn(s"Failed to drop existing table ${view.dbName}.${view.n}.", t)
+        log.warn(s"Failed to drop existing table ${view.dbName}.${view.n}.")
         throw t
     }
 
