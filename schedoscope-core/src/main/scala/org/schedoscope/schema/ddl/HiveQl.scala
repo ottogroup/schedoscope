@@ -120,15 +120,21 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
         val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
         // TODO: better collision validation ?
         val rowFormat = if (rfd.length > 0) rfd else rowFormatSerDeDdl(view)
-        rowFormat + inOutputFormatDdl(view)
+        rowFormat + "\n\tSTORED AS TEXTFILE"
 
       case SequenceFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
         val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
         // TODO: better collision validation ?
         val rowFormat = if (rfd.length > 0) rfd else rowFormatSerDeDdl(view)
-        rowFormat + inOutputFormatDdl(view)
+        rowFormat + "\n\tSTORED AS SEQUENCEFILE"
 
-      case Parquet() | Avro(_) | OptimizedRowColumnar() | TextfileWithRegEx(_) | Json() | Csv() | InOutputFormat(_, _, _) =>
+      case Parquet() =>
+        rowFormatSerDeDdl(view) + "\n\tSTORED AS PARQUET"
+
+      case OptimizedRowColumnar() =>
+        rowFormatSerDeDdl(view) + "\n\tSTORED AS ORC"
+
+      case Avro(_) | Json() | Csv() | TextfileWithRegEx(_) | InOutputFormat(_, _, _) =>
         rowFormatSerDeDdl(view) + inOutputFormatDdl(view)
 
       case _ => inOutputFormatDdl(view)

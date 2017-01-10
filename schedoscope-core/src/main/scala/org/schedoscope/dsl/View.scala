@@ -267,17 +267,14 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
           Map("input" -> "org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
 
-        // TODO: confirm if nice to have
         setTblProperties(Map("avro.schema.url" -> s"${avroSchemaPathPrefix}/${schemaPath}"))
 
       case OptimizedRowColumnar() =>
-        rowFormat("org.apache.hadoop.hive.ql.io.orc.OrcSerde")
         setInOutputformat(
           Map("input" -> "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat"))
 
       case Parquet() =>
-        rowFormat("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe")
         setInOutputformat(
           Map("input" -> "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"))

@@ -67,10 +67,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		name STRING,
         |		number INT
         |	)
-        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
-        |	STORED AS
-        |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat'
-        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+        |	STORED AS PARQUET
         |	TBLPROPERTIES (
         |		 'orc.compress' = 'ZLIB',
         |		 'transactional' = 'true'
@@ -142,10 +139,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		name STRING,
         |		number INT
         |	)
-        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.orc.OrcSerde'
-        |	STORED AS
-        |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'
-        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
+        |	STORED AS ORC
         |	TBLPROPERTIES (
         |		 'orc.compress' = 'ZLIB',
         |		 'transactional' = 'true'
