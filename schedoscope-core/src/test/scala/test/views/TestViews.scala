@@ -388,6 +388,14 @@ case class ArticleViewAvro() extends View {
   storedAs(Avro("myPath"))
 }
 
+case class ArticleViewOrc() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  setTblProperties(Map("immutable"->"false"))
+  storedAs(OptimizedRowColumnar())
+}
+
 case class ArticleViewCsv() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
@@ -410,6 +418,29 @@ case class ArticleViewJson() extends View {
 
   setTblProperties(Map("transactional"->"true"))
   storedAs(Json())
+}
+
+case class ArticleViewTextFile1() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  setTblProperties(Map("what"->"ever"))
+  storedAs(TextFile(fieldTerminator = """\\001""",
+    collectionItemTerminator = """\002""",
+    mapKeyTerminator = """\003""",
+    lineTerminator = """\n"""
+  ))
+}
+
+case class ArticleViewTextFile2() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  setTblProperties(Map("what"->"buh"))
+  storedAs(TextFile())
+  rowFormat("org.apache.hadoop.hive.serde2.OpenCSVSerde")
+  serDeProperties(Map("separatorChar"->"""\t""",
+    "escapeChar"->"""\\"""))
 }
 
 case class ArticleViewInOutput() extends View {

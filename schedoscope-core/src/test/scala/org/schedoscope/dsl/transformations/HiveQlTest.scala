@@ -96,6 +96,62 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |""".stripMargin
   }
 
+  it should "generate ORC row format and tblproperties sql statement" in {
+    val view = ArticleViewOrc()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_orc (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS ORC
+        |	TBLPROPERTIES (
+        |		 'immutable' = 'false'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_orc'
+        |""".stripMargin
+  }
+
+  it should "generate TextFile row format and tblproperties sql statement" in {
+    val view = ArticleViewTextFile1()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_text_file1 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT DELIMITED
+        |	FIELDS TERMINATED BY '\\001'
+        |	LINES TERMINATED BY '\n'
+        |	COLLECTION ITEMS TERMINATED BY '\002'
+        |	MAP KEYS TERMINATED BY '\003'
+        |	STORED AS TEXTFILE
+        |	TBLPROPERTIES (
+        |		 'what' = 'ever'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file1'
+        |""".stripMargin
+  }
+
+  it should "generate TextFile2 row format and tblproperties sql statement" in {
+    val view = ArticleViewTextFile2()
+    println(HiveQl.ddl(view))
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_text_file2 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+        |	WITH SERDEPROPERTIES (
+        |		 'escapeChar' = '\\',
+        |		 'separatorChar' = '\t'
+        |	)
+        |	STORED AS TEXTFILE
+        |	TBLPROPERTIES (
+        |		 'what' = 'buh'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file2'
+        |""".stripMargin
+  }
+
   it should "generate json row format and tblproperties sql statement" in {
     val view = ArticleViewJson()
     HiveQl.ddl(view) shouldEqual
