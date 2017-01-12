@@ -318,8 +318,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
       case RecordColumnarFile() =>
         setInOutputformat(
-          Map("input" -> "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
-            "output" -> "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat"))
+          Map("input" -> "org.apache.hadoop.hive.ql.io.RCFileInputFormat",
+            "output" -> "org.apache.hadoop.hive.ql.io.RCFileOutputFormat"))
     }
 
   }

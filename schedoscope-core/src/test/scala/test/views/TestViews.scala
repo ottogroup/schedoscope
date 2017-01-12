@@ -396,6 +396,14 @@ case class ArticleViewOrc() extends View {
   storedAs(OptimizedRowColumnar())
 }
 
+case class ArticleViewRc() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  setTblProperties(Map("scalable"->"true"))
+  storedAs(RecordColumnarFile())
+}
+
 case class ArticleViewCsv() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]

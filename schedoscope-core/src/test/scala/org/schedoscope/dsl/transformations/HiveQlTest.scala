@@ -133,7 +133,6 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
 
   it should "generate TextFile2 row format and tblproperties sql statement" in {
     val view = ArticleViewTextFile2()
-    println(HiveQl.ddl(view))
     HiveQl.ddl(view) shouldEqual
       """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_text_file2 (
         |		name STRING,
@@ -149,6 +148,21 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'what' = 'buh'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_text_file2'
+        |""".stripMargin
+  }
+
+  it should "generate Record Columnar format and tblproperties sql statement" in {
+    val view = ArticleViewRc()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_rc (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS RCFILE
+        |	TBLPROPERTIES (
+        |		 'scalable' = 'true'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_rc'
         |""".stripMargin
   }
 

@@ -132,6 +132,9 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
       case OptimizedRowColumnar() =>
         rowFormatSerDeDdl(view) + "\n\tSTORED AS ORC"
 
+      case RecordColumnarFile() =>
+        rowFormatSerDeDdl(view) + "\n\tSTORED AS RCFILE"
+
       case Json() | Csv() | TextfileWithRegEx(_) =>
         rowFormatSerDeDdl(view) + "\n\tSTORED AS TEXTFILE"
 
