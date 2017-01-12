@@ -104,13 +104,45 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		number INT
         |	)
         |	ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
-        |	STORED AS
-        |		INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
-        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+        |	STORED AS TEXTFILE
         |	TBLPROPERTIES (
         |		 'transactional' = 'true'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_json'
+        |""".stripMargin
+  }
+
+  it should "generate custom serde with properties and stored as textfile" in {
+    val view = ArticleViewCsv()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_csv (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+        |	WITH SERDEPROPERTIES (
+        |		 'quoteChar' = ''',
+        |		 'escapeChar' = '\\',
+        |		 'separatorChar' = '\t'
+        |	)
+        |	STORED AS TEXTFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_csv'
+        |""".stripMargin
+  }
+
+  it should "generate custom RegEx serde with properties and stored as textfile" in {
+    val view = ArticleViewRegEx()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_reg_ex (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.RegexSerDe'
+        |	WITH SERDEPROPERTIES (
+        |		 'input.regex' = 'test'
+        |	)
+        |	STORED AS TEXTFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_reg_ex'
         |""".stripMargin
   }
 

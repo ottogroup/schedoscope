@@ -388,6 +388,22 @@ case class ArticleViewAvro() extends View {
   storedAs(Avro("myPath"))
 }
 
+case class ArticleViewCsv() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  serDeProperties(Map("separatorChar"->"""\t""",
+    "quoteChar"->"'", "escapeChar"->"""\\"""))
+  storedAs(Csv())
+}
+
+case class ArticleViewRegEx() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(TextfileWithRegEx("test"))
+}
+
 case class ArticleViewJson() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]

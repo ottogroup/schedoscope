@@ -134,10 +134,13 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
       case OptimizedRowColumnar() =>
         rowFormatSerDeDdl(view) + "\n\tSTORED AS ORC"
 
-      case Avro(_) | Json() | Csv() | TextfileWithRegEx(_) | InOutputFormat(_, _, _) =>
+      case Json() | Csv() | TextfileWithRegEx(_) =>
+        rowFormatSerDeDdl(view) + "\n\tSTORED AS TEXTFILE"
+
+      case Avro(_) | InOutputFormat(_, _, _) =>
         rowFormatSerDeDdl(view) + inOutputFormatDdl(view)
 
-      case _ => inOutputFormatDdl(view)
+      case _ => rowFormatSerDeDdl(view) + inOutputFormatDdl(view)
     }
 
 
