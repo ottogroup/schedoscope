@@ -76,6 +76,18 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |""".stripMargin
   }
 
+  it should "generate Sequence file row format" in {
+    val view = ArticleViewSequence()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_sequence (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS SEQUENCEFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_sequence'
+        |""".stripMargin
+  }
+
   it should "generate avro row format and tblproperties sql statement" in {
     val view = ArticleViewAvro()
     val hack = ""

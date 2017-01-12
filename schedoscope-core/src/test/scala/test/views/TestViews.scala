@@ -380,6 +380,13 @@ case class ArticleViewParquet() extends View {
   storedAs(Parquet())
 }
 
+case class ArticleViewSequence() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(SequenceFile())
+}
+
 case class ArticleViewAvro() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
