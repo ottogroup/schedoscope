@@ -268,7 +268,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
           Map("input" -> "org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat",
             "output" -> "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat"))
 
-        setTblProperties(Map("avro.schema.url" -> s"${avroSchemaPathPrefix}/${schemaPath}"))
+        tblProperties(Map("avro.schema.url" -> s"${avroSchemaPathPrefix}/${schemaPath}"))
 
       case OptimizedRowColumnar() =>
         setInOutputformat(
@@ -327,7 +327,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Specify table properties of a view, which is implemented in Hive as clause TBLPROPERTIES
     */
-  def setTblProperties(m: Map[String, String]):Unit = tblProperties ++= m
+  def tblProperties(m: Map[String, String]):Unit = tblProperties ++= m
 
   /**
     * Specify custom SerDe
