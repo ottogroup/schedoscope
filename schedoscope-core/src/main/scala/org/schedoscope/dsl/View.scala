@@ -121,8 +121,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   var tblProperties = HashMap[String, String]()
 
-  var inOutputformat = HashMap[String, String]("input" -> "org.apache.hadoop.mapred.SequenceFileInputFormat",
-    "output" -> "org.apache.hadoop.mapred.SequenceFileOutputFormat")
+  var inOutputformat = HashMap[String, String](
+    "input" -> "org.apache.hadoop.mapred.TextInputFormat",
+    "output" -> "org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat")
   var serDe: Option[String] = None
   var serDeProperties = HashMap[String, String]()
 
