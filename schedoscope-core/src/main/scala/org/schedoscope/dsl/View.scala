@@ -112,6 +112,12 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   override def toString() = urlPath
 
   /**
+    * Proposed name for the transformation materializing this view
+    * @return
+    */
+  def jobName = s"${dbName}.${n}/${partitionValues(false).mkString("/")}"
+
+  /**
     * The URL path syntax identifying the present view.
     */
   def urlPath = s"${urlPathPrefix}/${partitionValues(false).mkString("/")}"

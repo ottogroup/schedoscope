@@ -43,7 +43,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
         def run(): DriverRunHandle[MapreduceTransformation] = {
           t.configure
           t.directoriesToDelete.foreach(d => fileSystemDriver.delete(d, true))
-
+          t.job.setJobName(t.getJobName())
           t.job.submit()
 
           new DriverRunHandle[MapreduceTransformation](driver, new LocalDateTime(), t, t.job)
