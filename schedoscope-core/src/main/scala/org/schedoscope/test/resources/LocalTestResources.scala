@@ -31,7 +31,7 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars._
 import scala.Array.canBuildFrom
 
 class LocalTestResources extends TestResources {
-  setupLocalHadoop()
+  setupLocalHadoop
 
   override lazy val hiveConf: HiveConf = {
     // we don't directly instantiate a new HiveConf(), because then hive-site.xml
@@ -41,7 +41,7 @@ class LocalTestResources extends TestResources {
     conf.put(METASTOREWAREHOUSE.toString, hiveWarehouseDir)
     conf.put(LOCALMODEAUTO.toString, "true")
     conf.put(METASTORECONNECTURLKEY.toString, metastoreUri + ";create=true")
-    conf.put(HIVEAUXJARS.toString, compiledClassesPath())
+    conf.put(HIVEAUXJARS.toString, compiledClassesPath)
     conf.put(LOCALMODEMAXINPUTFILES.toString, "20")
     conf.put(LOCALMODEMAXBYTES.toString, "1342177280L")
     conf.put(SCRATCHDIR.toString, hiveScratchDir)
@@ -56,7 +56,7 @@ class LocalTestResources extends TestResources {
   override lazy val hiveWarehouseDir: String = {
     val dir = Paths.get("target/hive-warehouse").toAbsolutePath
     if (Files.exists(dir)) {
-      FileUtils.deleteDirectory(dir.toFile
+      FileUtils.deleteDirectory(dir.toFile)
     }
     val d = Files.createDirectory(dir).toString.replaceAll("\\\\", "/")
 
@@ -67,7 +67,7 @@ class LocalTestResources extends TestResources {
     val dir = Paths.get("target/hive-scratch").toAbsolutePath
 
     if (Files.exists(dir)) {
-      FileUtils.deleteDirectory(dir.toFile
+      FileUtils.deleteDirectory(dir.toFile)
     }
 
     val dirUrl = "file:///" + dir.toString.replaceAll("\\\\", "/")
@@ -155,8 +155,8 @@ class LocalTestResources extends TestResources {
   }
 
   def delayedInit(body: => Unit) {
-    body
     schemaManager.wipeMetastore
+    body
   }
 
 }
