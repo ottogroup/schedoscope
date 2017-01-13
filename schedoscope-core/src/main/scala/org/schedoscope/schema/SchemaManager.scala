@@ -88,6 +88,31 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
   }
 
   /**
+    * Drop all databases in metastore, dropping tables, and deleting data within
+    */
+  def wipeMetastore: Unit = {
+
+    val dbNames = try {
+      metastoreClient.getAllDatabases
+    } catch {
+      case t: Throwable => {
+        log.warn("Schema Manager unable to read databases to wipe.", t)
+        return
+      }
+    }
+
+    dbNames.foreach(
+      db => try {
+        metastoreClient.dropDatabase(db, true, true, true)
+      } catch {
+        case t: Throwable => {
+          log.warn(s"Schema Manager failed to wipe database ${db}. Continuing.", t)
+        }
+      }
+    )
+  }
+
+  /**
     * Execute create database and table for view, dropping the table should it exist already.
     *
     * It throws a RetryableSchemaManagerException in case of any problem, encapsulating the original exception.
