@@ -50,7 +50,8 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     */
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
-      executeHiveQuery(t.udfs, replaceParameters(t.sql, t.configuration.toMap))
+      executeHiveQuery(t.udfs,
+        s"-- ${t.getJobName()}\n" + replaceParameters(t.sql, t.configuration.toMap))
     })
 
   /**
