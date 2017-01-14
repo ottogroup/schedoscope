@@ -153,12 +153,6 @@ class LocalTestResources extends TestResources {
         FileUtils.copyFile(source, target)
     }
   }
-
-  def delayedInit(body: => Unit) {
-    schemaManager.wipeMetastore
-    body
-  }
-
 }
 
 /**
