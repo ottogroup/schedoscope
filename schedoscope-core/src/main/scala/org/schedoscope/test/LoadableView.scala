@@ -48,20 +48,13 @@ trait LoadableView extends WritableView {
   /**
     * Adds dependencies for this view
     */
-  protected def basedOn(wipeMetastoreFirst: Boolean, d: View with WritableView*) {
-    if (wipeMetastoreFirst)
-      resources.schemaManager.wipeMetastore
-
+  def basedOn(d: View with WritableView*) {
     d.foreach { el =>
       el.resources = resources
       el.createViewTable()
     }
     //check
     inputFixtures ++= d
-  }
-
-  def basedOn(d: View with WritableView*) {
-    basedOn(true, d:_*)
   }
 
   /**
@@ -197,8 +190,4 @@ trait test extends LoadableView with AccessRowData {
 /**
   * Syntactic sugar for [[ReusableHiveSchema]] tests
   */
-trait OutputSchema extends LoadableView {
-  override def basedOn(d: View with WritableView*) {
-    basedOn(false, d:_*)
-  }
-}
+trait OutputSchema extends LoadableView

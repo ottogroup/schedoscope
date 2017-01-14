@@ -22,6 +22,7 @@ import java.util.Properties
 
 import net.lingala.zip4j.core.ZipFile
 import org.apache.commons.io.FileUtils
+import org.apache.commons.io.filefilter.WildcardFileFilter
 import org.apache.derby.drda.NetworkServerControl
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, FileUtil, Path}
@@ -29,6 +30,7 @@ import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars._
 
 import scala.Array.canBuildFrom
+import scala.collection.JavaConversions._
 
 class LocalTestResources extends TestResources {
   setupLocalHadoop
@@ -56,11 +58,13 @@ class LocalTestResources extends TestResources {
   override lazy val hiveWarehouseDir: String = {
     val dir = Paths.get("target/hive-warehouse").toAbsolutePath
     if (Files.exists(dir)) {
-      FileUtils.deleteDirectory(dir.toFile)
+      val filesToDelete = FileUtils.listFiles(dir.toFile, new WildcardFileFilter("*"), new WildcardFileFilter("*"))
+      filesToDelete.foreach(_.delete)
+    } else {
+      Files.createDirectory(dir)
     }
-    val d = Files.createDirectory(dir).toString.replaceAll("\\\\", "/")
 
-    new Path("file:///", d).toString
+    new Path("file:///", dir.toString.replaceAll("\\\\", "/")).toString
   }
 
   override lazy val hiveScratchDir: String = {
