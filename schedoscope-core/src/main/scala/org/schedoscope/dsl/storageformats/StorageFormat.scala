@@ -118,6 +118,13 @@ case class TextFile(fieldTerminator: String = null, collectionItemTerminator: St
   *
   * @param serDe                  custom SerDe
   * @param serDeProperties        specify optionally SERDEPROPERTIES
+  * @param fullRowFormatCreateTblStmt for hive versions prior to 0.13,
+  *                                   instead of using STORED AS TEXTFILE,
+  *                                   expands CREATE TABLE with hive
+  *                                   with:
+  *                                   STORED AS
+  *                                             INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+  *                                             OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
   *
   */
 case class Json(serDe: String = "org.apache.hive.hcatalog.data.JsonSerDe", serDeProperties: Map[String, String] = null, fullRowFormatCreateTblStmt:Boolean=false) extends StorageFormat
@@ -130,6 +137,13 @@ case class Json(serDe: String = "org.apache.hive.hcatalog.data.JsonSerDe", serDe
   *
   * @param serDe                  custom SerDe
   * @param serDeProperties        specify optionally SERDEPROPERTIES
+  * @param fullRowFormatCreateTblStmt for hive versions prior to 0.13,
+  *                                   instead of using STORED AS TEXTFILE,
+  *                                   expands CREATE TABLE with hive
+  *                                   with:
+  *                                   STORED AS
+  *                                             INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+  *                                             OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
   * Note: valid for both Comma/Tab Separated (CSV/TSV) formats
   */
 case class Csv(serDe: String = "org.apache.hadoop.hive.serde2.OpenCSVSerde", serDeProperties: Map[String, String] = null, fullRowFormatCreateTblStmt:Boolean=false) extends StorageFormat
