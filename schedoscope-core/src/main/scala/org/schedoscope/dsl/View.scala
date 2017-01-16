@@ -253,9 +253,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
         s3UriScheme = Some(uriScheme)
         storedAs(storageFormat, additionalStoragePathPrefix, additionalStoragePathSuffix)
 
-      case Avro(schemaPath, _) =>
-        tblProperties(Map("avro.schema.url" -> s"${avroSchemaPathPrefix}/${schemaPath}"))
-
       case _ =>
         // do nothing ..
 

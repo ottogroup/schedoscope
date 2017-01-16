@@ -101,8 +101,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
         |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
         |	TBLPROPERTIES (
-        |		 'immutable' = 'true',
-        |		 'avro.schema.url' = 'hdfs:///hdp/dev/global/datadictionary/schema/avro/myPath'
+        |		 'immutable' = 'true'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_avro'
         |""".stripMargin
