@@ -143,7 +143,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
           val remainingStatement = statement.trim.substring(commandType.length)
 
           val result = CommandProcessorFactory.get(commandType) match {
-            case statementDriver: org.apache.hadoop.hive.ql.Driver => statementDriver.run(s"--$jobName\n + ${statement}")
+            case statementDriver: org.apache.hadoop.hive.ql.Driver => statementDriver.run(s"--$jobName\n ${statement}")
 
             case otherProcessor: CommandProcessor => otherProcessor.run(remainingStatement)
           }
