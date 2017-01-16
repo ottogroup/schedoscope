@@ -120,8 +120,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     val dbPath = dbName
       .split("_").takeRight(2)
       .map(_.substring(0,1))
-      .mkString("_")
-    s"${dbPath}.${n}/${partitionValues(false).mkString("/")}"
+      .mkString(".")
+    s"${dbPath}/${namingBase.replaceAll("[^a-zA-Z0-9]","")}/${partitionValues(false).mkString("/")}"
   }
 
   /**
