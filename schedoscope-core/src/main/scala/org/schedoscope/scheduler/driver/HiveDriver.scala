@@ -51,7 +51,8 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
       executeHiveQuery(t.udfs,
-        s"-- ${t.getJobName()}\n" + replaceParameters(t.sql, t.configuration.toMap))
+        replaceParameters(t.sql , t.configuration.toMap),
+        t.getJobName())
     })
 
   /**
@@ -72,7 +73,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
   /**
     * Actually perform the given query - after registering required functions - and return a run state after completion.
     */
-  def executeHiveQuery(functionsToRegister: List[Function], sql: String): DriverRunState[HiveTransformation] = {
+  def executeHiveQuery(functionsToRegister: List[Function], sql: String, jobName: String): DriverRunState[HiveTransformation] = {
 
     //
     // Setup session state
@@ -97,7 +98,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     //
     // Enhance sql with any necessary create function statements
     //
-
+    //TODO: do something here
     val sqlPlusCreateFunctions = functionsToRegister
       .foldLeft(sql) {
 
@@ -142,7 +143,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
           val remainingStatement = statement.trim.substring(commandType.length)
 
           val result = CommandProcessorFactory.get(commandType) match {
-            case statementDriver: org.apache.hadoop.hive.ql.Driver => statementDriver.run(statement)
+            case statementDriver: org.apache.hadoop.hive.ql.Driver => statementDriver.run(s"--$jobName\n + ${statement}")
 
             case otherProcessor: CommandProcessor => otherProcessor.run(remainingStatement)
           }
