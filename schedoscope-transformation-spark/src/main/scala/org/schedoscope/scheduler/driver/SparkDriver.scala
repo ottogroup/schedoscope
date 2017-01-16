@@ -61,7 +61,7 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
         l.setMaster(master)
 
         //set name for the job
-        l.setConf("spark.app.name",t.getJobName())
+        l.setConf("spark.app.name",t.getViewUrl())
 
         if (master.startsWith("local"))
           l.setDeployMode("client")

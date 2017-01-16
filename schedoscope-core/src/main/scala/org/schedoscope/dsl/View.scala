@@ -116,7 +116,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     *
     * @return
     */
-  def jobName = {
+  def shortUrlPath = {
     val dbPath = dbName
       .split("_").takeRight(2)
       .map(_.substring(0,1))

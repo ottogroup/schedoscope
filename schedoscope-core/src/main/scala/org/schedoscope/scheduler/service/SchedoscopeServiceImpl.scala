@@ -180,7 +180,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
     if (drh != null) {
       val desc = drh.transformation.asInstanceOf[Transformation].description
-      val view = drh.transformation.asInstanceOf[Transformation].getView()
+      val view = drh.transformation.asInstanceOf[Transformation].getViewUrl()
       val started = drh.started
       val runStatus = RunStatus(getOrElse(desc, "no-desc"), getOrElse(view, "no-view"), getOrElse(formatDate(started), ""), comment, None)
 
@@ -195,7 +195,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       if (o.isInstanceOf[Transformation]) {
         val trans = o.asInstanceOf[Transformation]
 
-        RunStatus(trans.description, trans.getView(), "", "", None)
+        RunStatus(trans.description, trans.getViewUrl(), "", "", None)
       } else
         RunStatus(o.toString, "", "", "", None))
   }

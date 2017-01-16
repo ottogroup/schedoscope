@@ -52,7 +52,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
       executeHiveQuery(t.udfs,
         replaceParameters(t.sql , t.configuration.toMap),
-        t.getJobName())
+        t.getShortName())
     })
 
   /**

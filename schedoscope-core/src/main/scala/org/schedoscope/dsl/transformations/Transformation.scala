@@ -35,9 +35,9 @@ abstract class Transformation {
     */
   var definedVersion: Option[String] = None
 
-  def getView() = if (view.isDefined) view.get.urlPath else "no-view"
+  def getViewUrl() = if (view.isDefined) view.get.urlPath else "no-view"
 
-  def getJobName() = if (view.isDefined) view.get.jobName else "no-view"
+  def getShortName() = if (view.isDefined) view.get.shortUrlPath else "no-view"
 
   /**
     * Name of the transformation type.
