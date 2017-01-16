@@ -380,6 +380,13 @@ case class ArticleViewParquet() extends View {
   storedAs(Parquet())
 }
 
+case class ArticleViewParquet2() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(Parquet(fullRowFormatCreateTblStmt = true))
+}
+
 case class ArticleViewSequence() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
@@ -395,12 +402,27 @@ case class ArticleViewAvro() extends View {
   storedAs(Avro("myPath"))
 }
 
+case class ArticleViewAvro2() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("immutable"->"true"))
+  storedAs(Avro("myPath", fullRowFormatCreateTblStmt = false))
+}
+
 case class ArticleViewOrc() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
   tblProperties(Map("immutable"->"false"))
   storedAs(OptimizedRowColumnar())
+}
+
+case class ArticleViewOrc2() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(OptimizedRowColumnar(fullRowFormatCreateTblStmt = true))
 }
 
 case class ArticleViewRc() extends View {
@@ -455,6 +477,14 @@ case class ArticleViewTextFile2() extends View {
   storedAs(TextFile(serDe = "org.apache.hadoop.hive.serde2.OpenCSVSerde",
     serDeProperties = Map("separatorChar"->"""\t""",
     "escapeChar"->"""\\""")))
+}
+
+case class ArticleViewTextFile3() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("what"->"buh"))
+  storedAs(TextFile(fullRowFormatCreateTblStmt = true))
 }
 
 case class ArticleViewInOutput() extends View {

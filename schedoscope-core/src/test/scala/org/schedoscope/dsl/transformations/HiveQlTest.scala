@@ -76,6 +76,21 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |""".stripMargin
   }
 
+  it should "generate Parquet row format sql statement" in {
+    val view = ArticleViewParquet2()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_parquet2 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
+        |	STORED AS
+        |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat'
+        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+        |	LOCATION '/hdp/dev/test/views/article_view_parquet2'
+        |""".stripMargin
+  }
+
   it should "generate Sequence file row format" in {
     val view = ArticleViewSequence()
     HiveQl.ddl(view) shouldEqual
@@ -107,6 +122,19 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |""".stripMargin
   }
 
+  it should "generate avro consise format" in {
+    val view = ArticleViewAvro2()
+    val hack = ""
+    HiveQl.ddl(view) shouldEqual
+      s"""	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_avro2 ${hack}
+          |	STORED AS AVRO
+          |	TBLPROPERTIES (
+          |		 'immutable' = 'true'
+          |	)
+          |	LOCATION '/hdp/dev/test/views/article_view_avro2'
+          |""".stripMargin
+  }
+
   it should "generate ORC row format and tblproperties sql statement" in {
     val view = ArticleViewOrc()
     HiveQl.ddl(view) shouldEqual
@@ -119,6 +147,21 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'immutable' = 'false'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_orc'
+        |""".stripMargin
+  }
+
+  it should "generate ORC row format sql statement" in {
+    val view = ArticleViewOrc2()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_orc2 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.orc.OrcSerde'
+        |	STORED AS
+        |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'
+        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
+        |	LOCATION '/hdp/dev/test/views/article_view_orc2'
         |""".stripMargin
   }
 
@@ -159,6 +202,23 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'what' = 'buh'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_text_file2'
+        |""".stripMargin
+  }
+
+  it should "generate TextFile3 in row format" in {
+    val view = ArticleViewTextFile3()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_text_file3 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS
+        |		INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+        |	TBLPROPERTIES (
+        |		 'what' = 'buh'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file3'
         |""".stripMargin
   }
 
