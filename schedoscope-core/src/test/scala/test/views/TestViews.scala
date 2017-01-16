@@ -415,16 +415,16 @@ case class ArticleViewCsv() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  serDeProperties(Map("separatorChar"->"""\t""",
-    "quoteChar"->"'", "escapeChar"->"""\\"""))
-  storedAs(Csv())
+  storedAs(Csv(serDeProperties = Map("separatorChar"->"""\t""",
+    "quoteChar"->"'", "escapeChar"->"""\\""")))
 }
 
 case class ArticleViewRegEx() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  storedAs(TextfileWithRegEx("test"))
+  storedAs(TextFile(serDe = "org.apache.hadoop.hive.serde2.RegexSerDe",
+    serDeProperties = Map("input.regex"-> "test")))
 }
 
 case class ArticleViewJson() extends View {
@@ -452,10 +452,9 @@ case class ArticleViewTextFile2() extends View {
   val number = fieldOf[Int]
 
   tblProperties(Map("what"->"buh"))
-  storedAs(TextFile())
-  rowFormat("org.apache.hadoop.hive.serde2.OpenCSVSerde")
-  serDeProperties(Map("separatorChar"->"""\t""",
-    "escapeChar"->"""\\"""))
+  storedAs(TextFile(serDe = "org.apache.hadoop.hive.serde2.OpenCSVSerde",
+    serDeProperties = Map("separatorChar"->"""\t""",
+    "escapeChar"->"""\\""")))
 }
 
 case class ArticleViewInOutput() extends View {
@@ -463,9 +462,9 @@ case class ArticleViewInOutput() extends View {
   val number = fieldOf[Int]
 
   tblProperties(Map("EXTERNAL"->"TRUE"))
-  storedAs(InOutputFormat("org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
-    "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat",
-    Some("org.apache.hadoop.hive.ql.io.orc.OrcSerde")))
+  storedAs(InOutputFormat(input = "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
+    output = "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat",
+    serDe = "org.apache.hadoop.hive.ql.io.orc.OrcSerde"))
 }
 
 case class ArticleViewS3() extends View {

@@ -76,7 +76,7 @@ object HiveQl {
       ""
   }
 
-  private def mapToString(m: HashMap[String, String]) = {
+  private def mapToString(m: Map[String, String]) = {
     val result = m.foldLeft("") { (s: String, pair: (String, String)) =>
         s + "\n\t\t '" + pair._1 + "'" + " = " + "'" + pair._2 + "'," }
     if(result.length > 0)
@@ -85,17 +85,17 @@ object HiveQl {
       result
   }
 
-  def serDePropertiesDdl(view: View) =
-    if (view.serDeProperties.isEmpty)
-      ""
+  def serDePropertiesDdl(serDeProperties: Map[String, String] = null) =
+    if (serDeProperties != null)
+      "\n\tWITH SERDEPROPERTIES (\n" + mapToString(serDeProperties) + "\n\t)\n"
     else
-      "\n\tWITH SERDEPROPERTIES (\n" + mapToString(view.serDeProperties) + "\n\t)\n"
+      ""
 
-  def rowFormatSerDeDdl(view: View) =
-      view.serDe match {
-          case Some(s) => s"ROW FORMAT SERDE '${s}'" + serDePropertiesDdl(view)
-          case _ => ""
-      }
+  def rowFormatSerDeDdl(serDe: String = null, serDeProperties: Map[String, String] = null) =
+    if (serDe != null)
+      s"ROW FORMAT SERDE '${serDe}'" + serDePropertiesDdl(serDeProperties)
+    else
+      ""
 
   def rowFormatDelimitedDdl(fieldTerminator: String = null,
                          collectionItemTerminator: String = null,
@@ -109,39 +109,85 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
     """
   }
 
-  def inOutputFormatDdl(view: View) =
+  def inOutputFormatDdl(input: String, output:String) =
     "\n\tSTORED AS" +
-      s"\n\t\tINPUTFORMAT '${view.inOutputformat("input")}'" +
-      s"\n\t\tOUTPUTFORMAT '${view.inOutputformat("output")}'"
+      s"\n\t\tINPUTFORMAT '${input}'" +
+      s"\n\t\tOUTPUTFORMAT '${output}'"
 
   def storedAsDdl(view: View) = view.storageFormat match {
 
-      case TextFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
+      case TextFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator, serDe, serDeProperties, fullRowFormatCreateTblStmt) =>
         val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
-        val rowFormat = if (rfd.replaceAll("""(?m)\s+$""", "").length > 0) rfd else rowFormatSerDeDdl(view)
-        rowFormat + "\n\tSTORED AS TEXTFILE"
+        val rowFormat = if (rfd.replaceAll("""(?m)\s+$""", "").length > 0) rfd else rowFormatSerDeDdl(serDe, serDeProperties)
+        rowFormat +
+          s"${if(fullRowFormatCreateTblStmt)
+              inOutputFormatDdl("org.apache.hadoop.mapred.TextInputFormat",
+                "org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat")
+            else
+            "\n\tSTORED AS TEXTFILE"}"
 
-      case SequenceFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator) =>
+      case SequenceFile(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator, fullRowFormatCreateTblStmt) =>
         val rfd = rowFormatDelimitedDdl(fieldTerminator, collectionItemTerminator, mapKeyTerminator, lineTerminator)
-        val rowFormat = if (rfd.replaceAll("""(?m)\s+$""", "").length > 0) rfd else rowFormatSerDeDdl(view)
-        rowFormat + "\n\tSTORED AS SEQUENCEFILE"
+        val rowFormat = if (rfd.replaceAll("""(?m)\s+$""", "").length > 0) rfd else ""
+        rowFormat +
+          s"${if(fullRowFormatCreateTblStmt)
+            inOutputFormatDdl("org.apache.hadoop.mapred.SequenceFileInputFormat",
+              "org.apache.hadoop.mapred.SequenceFileOutputFormat")
+          else "\n\tSTORED AS SEQUENCEFILE" }"
 
-      case Parquet() =>
-        rowFormatSerDeDdl(view) + "\n\tSTORED AS PARQUET"
+      case Parquet(fullRowFormatCreateTblStmt) =>
+        if(fullRowFormatCreateTblStmt)
+          rowFormatSerDeDdl("org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe") +
+          inOutputFormatDdl("org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat",
+            "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat")
+        else
+          "\n\tSTORED AS PARQUET"
 
-      case OptimizedRowColumnar() =>
-        rowFormatSerDeDdl(view) + "\n\tSTORED AS ORC"
+      case OptimizedRowColumnar(fullRowFormatCreateTblStmt) =>
+        if(fullRowFormatCreateTblStmt)
+          rowFormatSerDeDdl("org.apache.hadoop.hive.ql.io.orc.OrcSerde") +
+            inOutputFormatDdl("org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
+              "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat")
+        else
+          "\n\tSTORED AS ORC"
 
-      case RecordColumnarFile() =>
-        rowFormatSerDeDdl(view) + "\n\tSTORED AS RCFILE"
+      case RecordColumnarFile(fullRowFormatCreateTblStmt) =>
+        if(fullRowFormatCreateTblStmt)
+            inOutputFormatDdl("org.apache.hadoop.hive.ql.io.RCFileInputFormat",
+              "org.apache.hadoop.hive.ql.io.RCFileOutputFormat")
+        else
+          "\n\tSTORED AS RCFILE"
 
-      case Json() | Csv() | TextfileWithRegEx(_) =>
-        rowFormatSerDeDdl(view) + "\n\tSTORED AS TEXTFILE"
+      case Json(serDe, serDeProperties, fullRowFormatCreateTblStmt) =>
+        rowFormatSerDeDdl(serDe, serDeProperties) +
+          s"${if(fullRowFormatCreateTblStmt)
+            inOutputFormatDdl("org.apache.hadoop.mapred.TextInputFormat",
+              "org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat")
+          else
+            "\n\tSTORED AS TEXTFILE"}"
 
-      case Avro(_) | InOutputFormat(_, _, _) =>
-        rowFormatSerDeDdl(view) + inOutputFormatDdl(view)
+      case Csv(serDe, serDeProperties, fullRowFormatCreateTblStmt) =>
+        rowFormatSerDeDdl(serDe, serDeProperties) +
+          s"${if(fullRowFormatCreateTblStmt)
+            inOutputFormatDdl("org.apache.hadoop.mapred.TextInputFormat",
+              "org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat")
+          else
+            "\n\tSTORED AS TEXTFILE"}"
 
-      case _ => rowFormatSerDeDdl(view) + inOutputFormatDdl(view)
+      case Avro(schemaPath, fullRowFormatCreateTblStmt) =>
+        if(fullRowFormatCreateTblStmt)
+          rowFormatSerDeDdl("org.apache.hadoop.hive.serde2.avro.AvroSerDe",
+            Map("avro.schema.url" -> s"${view.avroSchemaPathPrefix}/${schemaPath}")) +
+            inOutputFormatDdl("org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat",
+              "org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat")
+        else
+          "\n\tSTORED AS AVRO"
+
+      case InOutputFormat(input, output, serDe, serDeProperties) =>
+        rowFormatSerDeDdl(serDe, serDeProperties) + inOutputFormatDdl(input, output)
+
+      case _ => "\n\tSTORED AS TEXTFILE"
+
     }
 
 
@@ -149,7 +195,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
     if (view.tblProperties.isEmpty)
       ""
     else
-      "TBLPROPERTIES (\n" + mapToString(view.tblProperties) + "\n\t)"
+      "TBLPROPERTIES (\n" + mapToString(view.tblProperties.toMap) + "\n\t)"
 
   def locationDdl(view: View): String = view.tablePath match {
     case "" => ""
@@ -186,7 +232,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 
   def ddlChecksum(view: View) = Checksum.digest(
       view.storageFormat match {
-        case Avro(schemaPath) => ddl(view).replaceAll(Regex.quoteReplacement(s"${view.avroSchemaPathPrefix}/${schemaPath}"), "")
+        case Avro(schemaPath, _) => ddl(view).replaceAll(Regex.quoteReplacement(s"${view.avroSchemaPathPrefix}/${schemaPath}"), "")
         case _ => ddl(view)
       }
     )

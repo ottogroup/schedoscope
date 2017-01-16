@@ -152,8 +152,8 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	)
         |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
         |	WITH SERDEPROPERTIES (
-        |		 'escapeChar' = '\\',
-        |		 'separatorChar' = '\t'
+        |		 'separatorChar' = '\t',
+        |		 'escapeChar' = '\\'
         |	)
         |	STORED AS TEXTFILE
         |	TBLPROPERTIES (
@@ -203,9 +203,9 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	)
         |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
         |	WITH SERDEPROPERTIES (
+        |		 'separatorChar' = '\t',
         |		 'quoteChar' = ''',
-        |		 'escapeChar' = '\\',
-        |		 'separatorChar' = '\t'
+        |		 'escapeChar' = '\\'
         |	)
         |	STORED AS TEXTFILE
         |	LOCATION '/hdp/dev/test/views/article_view_csv'
