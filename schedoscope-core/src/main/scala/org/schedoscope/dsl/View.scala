@@ -117,10 +117,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * @return
     */
   def jobName = {
-    val dbPath = dbName.split("_").toList.splitAt(2)
-    val shortDbName = dbPath._1.map(_.substring(0, 1)).mkString("_") +
-      "_" + dbPath._2.mkString("_")
-    s"${shortDbName}.${n}/${partitionValues(false).mkString("/")}"
+    val dbPath = dbName
+      .split("_").takeRight(2)
+      .map(_.substring(0,1))
+      .mkString("_")
+    s"${dbPath}.${n}/${partitionValues(false).mkString("/")}"
   }
 
   /**
