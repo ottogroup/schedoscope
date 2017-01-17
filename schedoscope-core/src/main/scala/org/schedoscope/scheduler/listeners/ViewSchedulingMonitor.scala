@@ -32,8 +32,7 @@ class ViewSchedulingMonitor extends ViewSchedulingListener {
     logStateDetails(event)
     logViewSchedulingTimeDeltaOutput(event)
     logScheduledActions(event)
-
-    storeNewEvent(event)
+    
   }
 
   def logStateChange(event: ViewSchedulingEvent) =
