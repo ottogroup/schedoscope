@@ -18,7 +18,7 @@ package org.schedoscope.scheduler.actors
 import akka.actor.{Actor, ActorInitializationException, ActorRef, OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy._
 import akka.event.{Logging, LoggingReceive}
-import akka.routing.{ActorRefRoutee, BalancingPool, Router}
+import akka.routing.{ActorRefRoutee, BalancingPool, RoundRobinRouter, Router}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{FilesystemTransformation, Transformation}
@@ -137,9 +137,9 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
 
       for(transformation <- Driver.transformationsWithDrivers) {
         actorOf(
-          BalancingPool(settings.getDriverSettings(transformation).concurrency,
-            supervisorStrategy = driverManagersupervisorStrategy
-          ).props(routeeProps = DriverActor.props(settings, transformation, self)),
+          BalancingPool(nrOfInstances = settings.getDriverSettings(transformation).concurrency,
+            supervisorStrategy = driverManagersupervisorStrategy, routerDispatcher = "driver-dispatcher")
+            .props(routeeProps = DriverActor.props(settings, transformation, self)),
           s"${transformation}-router")
       }
     }
@@ -207,7 +207,6 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
 
     case deploy: DeployCommand =>
       //// TODO: forward!
-      println(s"yo: sender ${sender().path}")
       context.actorSelection(s"${self.path}/*-router") forward DriverCommand(deploy, sender)
       //enqueueDeploy(DriverCommand(deploy, sender))
   })
