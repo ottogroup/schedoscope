@@ -49,7 +49,7 @@ object TestUtils {
     view.createViewTable()
 
     if (view.isPartitioned()) {
-      resources.crate.createPartition(view)
+      resources.schemaManager.createPartition(view)
     }
 
     val declaredTransformation = view.registeredTransformation()

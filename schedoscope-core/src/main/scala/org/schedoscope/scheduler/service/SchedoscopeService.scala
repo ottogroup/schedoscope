@@ -63,7 +63,8 @@ trait SchedoscopeService {
 
   /**
     * Materialize view(s). The views that are being materialized are selected either by
-    * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
+    * passing a view URL pattern, a status selector, a regexp filter on view URLs, a
+    * issues filter (e.g. failed dependency errors or incomplete data), or a combination of those.
     *
     * Additionally, a MaterializeViewMode can be passed.
     *
@@ -71,11 +72,12 @@ trait SchedoscopeService {
     *
     * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
     */
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]): Future[ViewStatusList]
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], mode: Option[String]): Future[ViewStatusList]
 
   /**
     * Invalidate view(s). The views that are being invalidated are selected either by
-    * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
+    * passing a view URL pattern, a status selector, a regexp filter on view URLs, a
+    * issues filter (e.g. failed dependency errors or incomplete data), or a combination of those.
     *
     * Additionally, it can also be specified whether children are to be invalidated as well.
     *
@@ -83,11 +85,12 @@ trait SchedoscopeService {
     *
     * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
     */
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]): Future[ViewStatusList]
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], dependencies: Option[Boolean]): Future[ViewStatusList]
 
   /**
     * Return view(s) and their state(s). The views for which states are being returned are selected either by
-    * passing a view URL pattern, a status selector, a regexp filter on view URLs, or a combination of those.
+    * passing a view URL pattern, a status selector, a regexp filter on view URLs, a
+    * issues filter (e.g. failed dependency errors or incomplete data), or a combination of those.
     *
     * Additionally, it can also be specified whether view states should recursively carry the states of their dependendencies.
     *
@@ -95,7 +98,7 @@ trait SchedoscopeService {
     *
     * Throws an InvalidArgumentException if an invalid view URL pattern or regexp filter are passed.
     */
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): Future[ViewStatusList]
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter:Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]): Future[ViewStatusList]
 
   /**
     * Return the states of the transformation drivers. Transformation driver info can be filtered by transformation state or a regexp

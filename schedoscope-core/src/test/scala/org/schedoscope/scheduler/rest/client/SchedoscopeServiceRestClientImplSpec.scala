@@ -69,11 +69,12 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(false)
     val overviewParam = Some(false)
     val allParam = Some(false)
 
-    val response = dummyClient.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = dummyClient.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
     response.isCompleted shouldBe true
@@ -117,11 +118,12 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val statusParam = None
     val filterParam = None
+    val issueFilterParam = None
     val dependenciesParam = Some(true)
     val overviewParam = Some(false)
     val allParam = Some(false)
 
-    val response = dummyClient.views(prodBrandviewUrlPath01, statusParam, filterParam, dependenciesParam, overviewParam, allParam)
+    val response = dummyClient.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
     Await.result(response, TIMEOUT)
 
       response.isCompleted shouldBe true
@@ -196,9 +198,10 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
       val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
       val statusParam = None
       val filterParam = None
+      val issueFilterParam = None
       val modeParam = None
 
-      val response = dummyClient.materialize(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+      val response = dummyClient.materialize(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
       Await.result(response, TIMEOUT)
 
       response.isCompleted shouldBe true
@@ -229,8 +232,9 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
       val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
       val statusParam = None
       val filterParam = None
+      val issueFilterParam = None
       val modeParam = None
-      val response = dummyClient.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, modeParam)
+      val response = dummyClient.invalidate(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, modeParam)
       Await.result(response, TIMEOUT)
 
       response.isCompleted shouldBe true

@@ -101,7 +101,7 @@ abstract class TestResources {
 
   lazy val database = new Database(connection, jdbcUrl)
 
-  lazy val crate: SchemaManager = SchemaManager(metastoreClient, connection)
+  lazy val schemaManager: SchemaManager = SchemaManager(metastoreClient, connection)
 
   def driverFor[T <: Transformation](driverName: String) = Driver.driverFor[T](driverName, Some(this))
 

@@ -19,14 +19,14 @@ import java.lang.Math.pow
 
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
-import org.apache.hadoop.fs.FileSystem
+import org.joda.time.LocalDateTime
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.dsl.{ExternalView, View}
-import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
+import scala.collection.Set
 import scala.concurrent.duration.Duration
 
 
@@ -35,7 +35,9 @@ class ViewActor(var currentState: ViewSchedulingState,
                 dependencies: Map[View, ActorRef],
                 viewManagerActor: ActorRef,
                 transformationManagerActor: ActorRef,
-                schemaManagerRouter: ActorRef) extends Actor {
+                schemaManagerRouter: ActorRef,
+                viewSchedulingListenerManagerActor: ActorRef
+               ) extends Actor {
 
   import context._
 
@@ -63,12 +65,11 @@ class ViewActor(var currentState: ViewSchedulingState,
       //
       val externalState = metadata match {
         case (view, (version, timestamp)) =>
-          val v = if(view.isInstanceOf[ExternalView]) view else ExternalView(view)
+          val v = if (view.isInstanceOf[ExternalView]) view else ExternalView(view)
           ViewManagerActor.getStateFromMetadata(v, version, timestamp)
       }
       stateMachine.materialize(externalState, source, mode)
     }
-
 
     case InvalidateView() => stateTransition {
       stateMachine.invalidate(currentState, sender)
@@ -98,7 +99,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       val retry = s.retry
 
       result.currentState match {
-        case r: Retrying =>
+        case _: Retrying =>
           system
             .scheduler
             .scheduleOnce(Duration.create(pow(2, retry).toLong, "seconds")) {
@@ -122,7 +123,6 @@ class ViewActor(var currentState: ViewSchedulingState,
   }
 
 
-
   def stateTransition(messageApplication: ResultingViewSchedulingState) = messageApplication match {
     case ResultingViewSchedulingState(updatedState, actions) => {
 
@@ -131,11 +131,24 @@ class ViewActor(var currentState: ViewSchedulingState,
       currentState = updatedState
       performSchedulingActions(actions)
 
+      notifySchedulingListeners(previousState, updatedState, actions)
+
       if (stateChange(previousState, updatedState))
-        logStateChange(updatedState, previousState)
+        communicateStateChange(updatedState, previousState)
 
     }
   }
+
+  def notifySchedulingListeners(previousState: ViewSchedulingState,
+                                newState: ViewSchedulingState,
+                                actions: scala.collection.immutable.Set[ViewSchedulingAction]) =
+    if (!previousState.view.isExternal) {
+      viewManagerActor ! ViewSchedulingMonitoringEvent(previousState, newState,
+        actions, new LocalDateTime())
+      viewSchedulingListenerManagerActor ! ViewSchedulingMonitoringEvent(previousState, newState,
+        actions, new LocalDateTime())
+
+    }
 
   def performSchedulingActions(actions: Set[ViewSchedulingAction]) = actions.foreach {
 
@@ -146,7 +159,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       if (!view.isExternal) schemaManagerRouter ! SetViewVersion(view)
 
     case TouchSuccessFlag(view) =>
-        touchSuccessFlag(view)
+      touchSuccessFlag(view)
 
     case Materialize(view, mode) =>
       if (!view.isExternal) {
@@ -222,10 +235,20 @@ class ViewActor(var currentState: ViewSchedulingState,
 
   def stateChange(currentState: ViewSchedulingState, updatedState: ViewSchedulingState) = currentState.getClass != updatedState.getClass
 
-  def logStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
-    viewManagerActor ! ViewStatusResponse(newState.label, newState.view, self)
+  def communicateStateChange(newState: ViewSchedulingState, previousState: ViewSchedulingState) {
+    val vsr = newState match {
+      case Waiting(view, _, _, _, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Transforming(view, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Materialized(view, _, _, withErrors, incomplete) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case Retrying(view, _, _, _, withErrors, incomplete, _) =>
+        ViewStatusResponse(newState.label, view, self, Some(withErrors), Some(incomplete))
+      case _ => ViewStatusResponse(newState.label, newState.view, self)
+    }
 
-    log.info(s"VIEWACTOR STATE CHANGE ===> ${newState.label.toUpperCase()}: newState=${newState} previousState=${previousState}")
+    viewManagerActor ! vsr
   }
 }
 
@@ -235,13 +258,16 @@ object ViewActor {
             dependencies: Map[View, ActorRef],
             viewManagerActor: ActorRef,
             transformationManagerActor: ActorRef,
-            schemaManagerRouter: ActorRef): Props =
+            schemaManagerRouter: ActorRef,
+            viewSchedulingListenerManagerActor: ActorRef): Props =
     Props(classOf[ViewActor],
       state,
       settings,
       dependencies,
       viewManagerActor,
       transformationManagerActor,
-      schemaManagerRouter).withDispatcher("akka.actor.views-dispatcher")
+      schemaManagerRouter,
+      viewSchedulingListenerManagerActor).withDispatcher("akka.actor.views-dispatcher")
 
 }
+

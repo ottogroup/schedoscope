@@ -34,9 +34,13 @@ import scala.collection.mutable.{HashMap, HashSet}
   * the last transformation timestamps and version checksums from the metastore for already materialized
   * views.
   *
-  * It does this by cooperating with the parition creator actor and metadata logger actor.
+  * It does this by cooperating with the partition creator actor and metadata logger actor.
   */
-class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: ActorRef, schemaManagerRouter: ActorRef) extends Actor {
+class ViewManagerActor(settings: SchedoscopeSettings,
+                       actionsManagerActor: ActorRef,
+                       schemaManagerRouter: ActorRef,
+                       viewSchedulingListenerManagerActor: ActorRef
+                      ) extends Actor {
 
   import ViewManagerActor._
   import context._
@@ -45,9 +49,9 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     * Supervisor strategy: Escalate any problems because view actor failures are not recoverable.
     */
   override val supervisorStrategy =
-  OneForOneStrategy(maxNrOfRetries = -1) {
-    case _ => Escalate
-  }
+    OneForOneStrategy(maxNrOfRetries = -1) {
+      case _ => Escalate
+    }
   val log = Logging(system, ViewManagerActor.this)
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
@@ -57,19 +61,26 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
   def receive = LoggingReceive({
     case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
-    case GetViews(views, status, filter, dependencies) => {
+    case GetViews(views, status, filter, issueFilter, dependencies) => {
       val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
       val viewStates = viewStatusMap.values
-        .filter(vs => !views.isDefined || viewActors.contains(vs.actor))
-        .filter(vs => !status.isDefined || status.get.equals(vs.status))
-        .filter(vs => !filter.isDefined || vs.view.urlPath.matches(filter.get))
-        .toList
+        .filter(vs => views.isEmpty || viewActors.contains(vs.actor))
+        .filter(vs => status.isEmpty || status.get.equals(vs.status))
+        .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
+        .filter(vs => issueFilter.isEmpty || (
+          List("materialized", "failed").contains(vs.status) && (
+                 ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
+              || ("errors".equals(issueFilter.get) && vs.errors.getOrElse(false))
+              || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
+            )
+          )
+        ).toList
 
       sender ! ViewStatusListResponse(viewStates)
     }
 
     case v: View => {
-      sender ! initializeViewActors(List(v), false).head
+      sender ! initializeViewActors(List(v), dependencies = false).head
     }
 
     case DelegateMessageToView(view, msg) => {
@@ -93,7 +104,7 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
     * @param dependencies create actors for the prerequisite views as well.
     * @return the set of corresponding view actor refs
     */
-  def initializeViewActors(vs: List[View], dependencies: Boolean = false):Set[ActorRef] = {
+  def initializeViewActors(vs: List[View], dependencies: Boolean = false): Set[ActorRef] = {
     log.info(s"Initializing ${vs.size} views")
 
     val allViews = viewsToCreateActorsFor(vs, dependencies)
@@ -171,11 +182,11 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
               Map.empty[View, ActorRef],
               self,
               actionsManagerActor,
-              schemaManagerRouter), actorNameForView(view))
+              schemaManagerRouter,
+              viewSchedulingListenerManagerActor), actorNameForView(view))
             viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
           }
         }
-
         log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
       }
 
@@ -193,7 +204,6 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
             }
         }
       }
-
     }
     log.info(s"Returning actors${if (dependencies) " including dependencies."}")
 
@@ -243,7 +253,11 @@ class ViewManagerActor(settings: SchedoscopeSettings, actionsManagerActor: Actor
 object ViewManagerActor {
   def props(settings: SchedoscopeSettings,
             actionsManagerActor: ActorRef,
-            schemaManagerRouter: ActorRef): Props = Props(classOf[ViewManagerActor], settings: SchedoscopeSettings, actionsManagerActor, schemaManagerRouter).withDispatcher("akka.actor.view-manager-dispatcher")
+            schemaManagerRouter: ActorRef,
+            viewSchedulingListenerManagerActor: ActorRef): Props =
+    Props(classOf[ViewManagerActor], settings: SchedoscopeSettings,
+      actionsManagerActor, schemaManagerRouter, viewSchedulingListenerManagerActor)
+      .withDispatcher("akka.actor.view-manager-dispatcher")
 
   /**
     * Helper to convert state to MetaData

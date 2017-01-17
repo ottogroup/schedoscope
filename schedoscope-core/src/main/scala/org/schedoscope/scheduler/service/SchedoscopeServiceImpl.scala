@@ -19,7 +19,6 @@ import java.util.regex.Pattern
 
 import akka.actor.{ActorRef, ActorSystem, actorRef2Scala}
 import akka.event.Logging
-import org.joda.time.LocalDateTime
 import org.joda.time.format.DateTimeFormat
 import org.schedoscope.AskPattern._
 import org.schedoscope.conf.SchedoscopeSettings
@@ -53,15 +52,15 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   private def checkViewUrlPath(viewUrlPath: Option[String]) {
-    if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty())
+    if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty)
       try {
         val views = viewsFromUrl(viewUrlPath.get)
         //
         // Block access to external views
         //
-        if(settings.externalDependencies) {
+        if (settings.externalDependencies) {
           views.foreach { v =>
-            if (!v.isInDatabases(settings.externalHome:_*))
+            if (!v.isInDatabases(settings.externalHome: _*))
               throw new UnsupportedOperationException("You can not address an external view directly.")
           }
         }
@@ -76,70 +75,112 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   private def viewsFromUrl(viewUrlPath: String) =
     View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
 
-  private def getViewStatus(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Boolean = false) = {
-    val cf = Future(checkFilter(filter))
-    val cvup = Future(checkViewUrlPath(viewUrlPath))
 
-    Future.sequence(List(cf, cvup)).flatMap { r =>
-      Future {
-        val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty()) Some(viewsFromUrl(viewUrlPath.get)) else None
-        queryActor[ViewStatusListResponse](
-          viewManagerActor,
-          GetViews(resolvedViews, status, filter, dependencies),
-          settings.schedulingCommandTimeout).viewStatusList
-      }
-    }
+  private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = q.map {
+    case trans: Transformation => RunStatus(trans.description, trans.getViewUrl(), "", "", None)
+    case other => RunStatus(other.toString, "", "", "", None)
   }
 
-  private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) = {
-    val viewStatusListWithoutViewDetails = viewStatusResponses.map {
-      v =>
-        ViewStatus(
-          viewPath = v.view.urlPath,
-          viewTableName = if (all.getOrElse(false))
-            Some(v.view.tableName)
-          else
-            None,
-          status = v.status,
-          properties = None,
-          fields = None,
-          parameters = None,
-          dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && !v.view.dependencies.isEmpty)
-            Some(v.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
-          else
-            None,
-          transformation = None,
-          export = None,
-          storageFormat = None,
-          materializeOnce = None,
-          comment = None,
-          isTable = if (all.getOrElse(false))
-            Some(false)
-          else
-            None)
+  private def viewExportStatus(exports: List[Transformation]): List[ViewTransformationStatus] = {
+    exports.map(e =>
+      if (e.configuration.contains("schedoscope.export.jdbcConnection")) {
+        ViewTransformationStatus("JDBC", Some(Map(
+          "JDBC Url" -> e.configuration.get("schedoscope.export.jdbcConnection").get.toString,
+          "User" -> e.configuration.get("schedoscope.export.dbUser").get.toString,
+          "Storage Engine" -> e.configuration.get("schedoscope.export.storageEngine").get.toString,
+          "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString,
+          "Batch Size" -> e.configuration.get("schedoscope.export.commitSize").get.toString)))
+      } else if (e.configuration.contains("schedoscope.export.redisHost")) {
+        ViewTransformationStatus("Redis", Some(Map(
+          "Host" -> e.configuration.get("schedoscope.export.redisHost").get.toString,
+          "Port" -> e.configuration.get("schedoscope.export.redisPort").get.toString,
+          "Key Space" -> e.configuration.get("schedoscope.export.redisKeySpace").get.toString,
+          "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString,
+          "Pipeline" -> e.configuration.get("schedoscope.export.pipeline").get.toString)))
+      } else if (e.configuration.contains("schedoscope.export.kafkaHosts")) {
+        ViewTransformationStatus("Kafka", Some(Map(
+          "Hosts" -> e.configuration.get("schedoscope.export.kafkaHosts").get.toString,
+          "Zookeeper" -> e.configuration.get("schedoscope.export.zookeeperHosts").get.toString,
+          "Partitions" -> e.configuration.get("schedoscope.export.numPartitions").get.toString,
+          "Replication Factor" -> e.configuration.get("schedoscope.export.replicationFactor").get.toString,
+          "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString)))
+      } else {
+        ViewTransformationStatus(e.name, None)
+      })
+  }
+
+  /**
+    * Convenience method for DRYing viewStatusListFromStatusResponses
+    */
+  private def viewStatusOutput(vsr: ViewStatusResponse,
+                                    viewTableName: Option[String],
+                                    isTable: Option[Boolean],
+                                    dependencies: Option[Boolean],
+                                    overview: Boolean = true,
+                                    all: Option[Boolean],
+                                    issueFilter: Option[String]
+                                   ) =
+
+    ViewStatus(
+      viewPath = vsr.view.urlPath,
+      viewTableName = viewTableName,
+      status = vsr.status,
+      properties = vsr.status match {
+        case "materialized" | "failed" => Some(
+          Map(
+            "errors" -> vsr.errors.getOrElse(false).toString,
+            "incomplete" -> vsr.incomplete.getOrElse(false).toString
+          ))
+        case _ => None
+      },
+      fields = if (overview) None else Option(vsr.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
+      parameters = if (overview || vsr.view.parameters.isEmpty) None
+      else
+        Some(vsr.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList),
+      dependencies = if ((dependencies.getOrElse(false) || all.getOrElse(false)) && vsr.view.dependencies.nonEmpty)
+        Some(vsr.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
+      else
+        None,
+      transformation = if (overview) None else Option(vsr.view.registeredTransformation().viewTransformationStatus),
+      export = if (overview) None else Option(viewExportStatus(vsr.view.registeredExports.map(e => e.apply()))),
+      storageFormat = if (overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
+      materializeOnce = if (overview) None else Option(vsr.view.isMaterializeOnce),
+      comment = if (overview) None else Option(vsr.view.comment),
+      isTable = isTable
+    )
+
+  private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse],
+                                                dependencies: Option[Boolean],
+                                                overview: Option[Boolean],
+                                                all: Option[Boolean],
+                                                issueFilter: Option[String]
+                                               ) = {
+
+    val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
+      viewStatusOutput(vsr = v,
+        viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None,
+        isTable = if (all.getOrElse(false)) Some(false) else None,
+        dependencies = dependencies,
+        overview = true,
+        all = all,
+        issueFilter
+      )
     }
 
-    val viewStatusList = if (all.getOrElse(false))
+    lazy val viewStatusList = if (all.getOrElse(false))
       viewStatusResponses
         .groupBy(v => v.view.tableName)
         .map(e => e._2.head)
-        .map(v => ViewStatus(
-          viewPath = v.view.urlPathPrefix,
-          viewTableName = Option(v.view.tableName),
-          status = v.status,
-          properties = None,
-          fields = Option(v.view.fields.map(f => FieldStatus(f.n, HiveQl.typeDdl(f.t), f.comment)).toList),
-          parameters = if (!v.view.parameters.isEmpty)
-            Some(v.view.parameters.map(p => FieldStatus(p.n, p.t.runtimeClass.getSimpleName, None)).toList)
-          else
-            None,
-          dependencies = None,
-          transformation = Option(v.view.registeredTransformation().viewTransformationStatus),
-          export = Option(viewExportStatus(v.view.registeredExports.map(e => e.apply()))),
-          storageFormat = Option(v.view.storageFormat.getClass.getSimpleName),
-          materializeOnce = Option(v.view.isMaterializeOnce),
-          comment = Option(v.view.comment),
-          isTable = Option(true)))
+        .map(v =>
+          viewStatusOutput(vsr = v,
+            viewTableName = Option(v.view.tableName),
+            isTable = Option(true),
+            dependencies = dependencies,
+            overview = false,
+            all = all,
+            issueFilter
+          )
+        )
         .toList ::: viewStatusListWithoutViewDetails
     else
       viewStatusListWithoutViewDetails
@@ -149,10 +190,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     ViewStatusList(statusOverview, if (overview.getOrElse(false)) List() else viewStatusList)
   }
 
-  private def formatDate(d: LocalDateTime): String =
-    if (d != null) DateTimeFormat.shortDateTime().print(d) else ""
+  private def runStatusFromTransformationStatusResponse(a: TransformationStatusResponse[_]): TransformationStatus = {
 
-  private def parseActionStatus(a: TransformationStatusResponse[_]): TransformationStatus = {
     val actor = getOrElse(a.actor.path.toStringWithoutAddress, "unknown")
     val typ = if (a.driver != null) getOrElse(a.driver.transformationName, "unknown") else "unknown"
     var drh = a.driverRunHandle
@@ -162,27 +201,36 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     if (a.driverRunStatus != null) {
       a.driverRunStatus.asInstanceOf[DriverRunState[Any with Transformation]] match {
 
-        case s: DriverRunSucceeded[_] => {
-          comment = getOrElse(s.comment, "no-comment");
+        case s: DriverRunSucceeded[_] =>
+          comment = getOrElse(s.comment, "no-comment")
           status = "succeeded"
-        }
 
-        case f: DriverRunFailed[_] => {
-          comment = getOrElse(f.reason, "no-reason");
+
+        case f: DriverRunFailed[_] =>
+          comment = getOrElse(f.reason, "no-reason")
           status = "failed"
-        }
 
-        case o: DriverRunOngoing[_] => {
+
+        case o: DriverRunOngoing[_] =>
           drh = o.runHandle
-        }
+
       }
     }
 
     if (drh != null) {
       val desc = drh.transformation.asInstanceOf[Transformation].description
       val view = drh.transformation.asInstanceOf[Transformation].getViewUrl()
-      val started = drh.started
-      val runStatus = RunStatus(getOrElse(desc, "no-desc"), getOrElse(view, "no-view"), getOrElse(formatDate(started), ""), comment, None)
+
+      val runStatus = RunStatus(
+        getOrElse(desc, "no-desc"),
+        getOrElse(view, "no-view"),
+        if (drh.started != null)
+          DateTimeFormat.shortDateTime().print(drh.started)
+        else
+          "",
+        comment,
+        None
+      )
 
       TransformationStatus(actor, typ, status, Some(runStatus), None)
     } else
@@ -190,89 +238,68 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
   }
 
-  private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = {
-    q.map(o =>
-      if (o.isInstanceOf[Transformation]) {
-        val trans = o.asInstanceOf[Transformation]
 
-        RunStatus(trans.description, trans.getViewUrl(), "", "", None)
-      } else
-        RunStatus(o.toString, "", "", "", None))
+  private def queryViewStatus(viewUrlPath: Option[String],
+                                 status: Option[String],
+                                 filter: Option[String],
+                                 issueFilter: Option[String],
+                                 dependencies: Boolean = false) = {
+
+    val cf = Future(checkFilter(filter))
+    val cvup = Future(checkViewUrlPath(viewUrlPath))
+
+    Future.sequence(List(cf, cvup)).flatMap { r =>
+      Future {
+        val resolvedViews = if (viewUrlPath.isDefined && !viewUrlPath.get.isEmpty) Some(viewsFromUrl(viewUrlPath.get)) else None
+        queryActor[ViewStatusListResponse](
+          viewManagerActor,
+          GetViews(resolvedViews, status, filter, issueFilter, dependencies),
+          settings.schedulingCommandTimeout).viewStatusList
+      }
+    }
   }
 
-
-  private def viewExportStatus(exports: List[Transformation]): List[ViewTransformationStatus] = {
-    exports.map(e =>
-      if (e.configuration.contains("schedoscope.export.jdbcConnection")) {
-        ViewTransformationStatus("JDBC", Some(Map(
-          "JDBC Url" -> e.configuration.get("schedoscope.export.jdbcConnection").get.toString(),
-          "User" -> e.configuration.get("schedoscope.export.dbUser").get.toString(),
-          "Storage Engine" -> e.configuration.get("schedoscope.export.storageEngine").get.toString(),
-          "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString(),
-          "Batch Size" -> e.configuration.get("schedoscope.export.commitSize").get.toString())))
-      } else if (e.configuration.contains("schedoscope.export.redisHost")) {
-        ViewTransformationStatus("Redis", Some(Map(
-          "Host" -> e.configuration.get("schedoscope.export.redisHost").get.toString(),
-          "Port" -> e.configuration.get("schedoscope.export.redisPort").get.toString(),
-          "Key Space" -> e.configuration.get("schedoscope.export.redisKeySpace").get.toString(),
-          "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString(),
-          "Pipeline" -> e.configuration.get("schedoscope.export.pipeline").get.toString())))
-      } else if (e.configuration.contains("schedoscope.export.kafkaHosts")) {
-        ViewTransformationStatus("Kafka", Some(Map(
-          "Hosts" -> e.configuration.get("schedoscope.export.kafkaHosts").get.toString(),
-          "Zookeeper" -> e.configuration.get("schedoscope.export.zookeeperHosts").get.toString(),
-          "Partitions" -> e.configuration.get("schedoscope.export.numPartitions").get.toString(),
-          "Replication Factor" -> e.configuration.get("schedoscope.export.replicationFactor").get.toString(),
-          "Reducers" -> e.configuration.get("schedoscope.export.numReducers").get.toString())))
-      } else {
-        ViewTransformationStatus(e.name, None)
-      })
-  }
-
-  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], mode: Option[String]) = {
-    getViewStatus(viewUrlPath, status, filter).map {
-      case viewStatusResponses =>
-        viewStatusResponses.map(_.actor)
-          .foreach {
-            _ ! MaterializeView(
+  def materialize(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], mode: Option[String]) = {
+    queryViewStatus(viewUrlPath, status, filter, issueFilter).map {
+      viewStatusResponses =>
+        viewStatusResponses
+          .foreach { vsr =>
+            vsr.actor ! MaterializeView(
               try {
                 MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
               } catch {
                 case _: NoSuchElementException => MaterializeViewMode.DEFAULT
               })
           }
-        viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+        viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, issueFilter)
     }
   }
 
-  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean]) = {
-    getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map {
-      case viewStatusResponses =>
+  def invalidate(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], dependencies: Option[Boolean]) = {
+    queryViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map {
+      viewStatusResponses =>
         viewStatusResponses
-          .map(v => v.actor)
-          .foreach {
-            _ ! InvalidateView()
+          .foreach { vsr =>
+            vsr.actor ! InvalidateView()
           }
-        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None)
+        viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None, issueFilter)
     }
   }
 
   def newdata(viewUrlPath: Option[String], status: Option[String], filter: Option[String]) = {
-    getViewStatus(viewUrlPath, status, filter).map { viewStatusResponses =>
+    queryViewStatus(viewUrlPath, status, filter, None).map { viewStatusResponses =>
       viewStatusResponses
-        .map(_.actor)
-        .foreach {
-          _ ! "newdata"
+        .foreach { vsr =>
+          vsr.actor ! "newdata"
         }
-      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None)
+      viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, None)
     }
   }
 
-  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
-    getViewStatus(viewUrlPath, status, filter, dependencies.getOrElse(false)).map { viewStatusResponses =>
-      viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all)
+  def views(viewUrlPath: Option[String], status: Option[String], filter: Option[String], issueFilter: Option[String], dependencies: Option[Boolean], overview: Option[Boolean], all: Option[Boolean]) =
+    queryViewStatus(viewUrlPath, status, filter, issueFilter, dependencies.getOrElse(false)).map { viewStatusResponses =>
+      viewStatusListFromStatusResponses(viewStatusResponses, dependencies, overview, all, issueFilter)
     }
-
 
   def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList] = {
     val cf = Future(checkFilter(filter))
@@ -281,9 +308,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         val result = queryActor[TransformationStatusListResponse](
           transformationManagerActor, GetTransformations(), settings.schedulingCommandTimeout)
         val actions = result.transformationStatusList
-          .map(a => parseActionStatus(a))
-          .filter(a => !status.isDefined || status.get.equals(a.status))
-          .filter(a => !filter.isDefined || a.actor.matches(filter.get)) // FIXME: is the actor name a good filter criterion?
+          .map(a => runStatusFromTransformationStatusResponse(a))
+          .filter(a => status.isEmpty || status.get.equals(a.status))
+          .filter(a => filter.isEmpty || a.actor.matches(filter.get))
+        // FIXME: is the actor name a good filter criterion?
         val overview = actions
           .groupBy(_.status)
           .map(el => (el._1, el._2.size))
@@ -301,9 +329,9 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           transformationManagerActor, GetQueues(), settings.schedulingCommandTimeout)
 
         val queues = result.transformationQueues
-          .filterKeys(t => !typ.isDefined || t.startsWith(typ.get))
+          .filterKeys(t => typ.isEmpty || t.startsWith(typ.get))
           .map { case (t, queue) => (t, parseQueueElements(queue)) }
-          .map { case (t, queue) => (t, queue.filter(el => !filter.isDefined || el.targetView.matches(filter.get))) }
+          .map { case (t, queue) => (t, queue.filter(el => filter.isEmpty || el.targetView.matches(filter.get))) }
         val overview = queues
           .map(el => (el._1, el._2.size))
         QueueStatusList(overview, queues)

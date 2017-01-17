@@ -27,7 +27,7 @@ import scala.concurrent.duration._
   */
 class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
 
-  lazy val TIMEOUT = 3600 seconds
+  lazy val TIMEOUT: FiniteDuration = 3600 seconds
 
   object Action extends Enumeration {
     val VIEWS, TRANSFORMATIONS, QUEUES, MATERIALIZE, COMMANDS, INVALIDATE, NEWDATA, SHUTDOWN = Value
@@ -35,83 +35,90 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
 
   import Action._
 
-  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None, mode: Option[String] = None, overview: Option[Boolean] = None, all: Option[Boolean] = None)
+  case class Config(action: Option[Action.Value] = None, viewUrlPath: Option[String] = None, status: Option[String] = None, typ: Option[String] = None, dependencies: Option[Boolean] = Some(false), filter: Option[String] = None, issueFilter:Option[String] = None, mode: Option[String] = None, overview: Option[Boolean] = None, all: Option[Boolean] = None)
 
   val parser = new scopt.OptionParser[Config]("schedoscope-control") {
     override def showUsageOnError = true
 
     head("schedoscope-control")
-    help("help") text ("print usage")
+    help("help") text "print usage"
 
-    cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text ("lists all view actors, along with their status") children(
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName ("<status>") text ("filter views by their status (e.g. 'transforming')"),
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName ("<regex>") text ("regular expression to filter view display (e.g. 'my.database/.*/Partition1/.*'). "),
-      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional() text ("include dependencies"),
-      opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional() text ("show only overview, skip individual views"),
-      opt[Unit]('a', "all") action { (_, c) => c.copy(all = Some(true)) } optional() text ("show details for views"))
+    cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text "lists all view actors, along with their status" children(
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName "<status>" text "filter views by their status (e.g. 'transforming')",
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName "<viewUrlPath>" text "view url path (e.g. 'my.database/MyView/Partition1/Partition2'). ",
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName "<regex>" text "regular expression to filter view display (e.g. 'my.database/.*/Partition1/.*'). ",
+      opt[String]('i', "issueFilter") action { (x,c) => c.copy(issueFilter = Some(x)) } optional() valueName "<errors|incomplete>" text "filter views by the dependencies that had issues when transforming (e.g. 'errors' or 'incomplete' or 'errorsANDincomplete')",
+      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional() text "include dependencies",
+      opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional() text "show only overview, skip individual views",
+      opt[Unit]('a', "all") action { (_, c) => c.copy(all = Some(true)) } optional() text "show details for views")
 
-    cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text ("show transformation status") children(
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName ("<status>") text ("filter transformations by their status (e.g. 'queued, running, idle')"),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName ("<regex>") text ("regular expression to filter transformation display (e.g. '.*hive-1.*'). "))
+    cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text "show transformation status" children(
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName "<status>" text "filter transformations by their status (e.g. 'queued, running, idle')",
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName "<regex>" text "regular expression to filter transformation display (e.g. '.*hive-1.*'). ")
 
-    cmd("queues") action { (_, c) => c.copy(action = Some(QUEUES)) } text ("list queued actions") children(
-      opt[String]('t', "typ") action { (x, c) => c.copy(typ = Some(x)) } optional() valueName ("<type>") text ("filter queued actions by their type (e.g. 'oozie', 'filesystem', ...)"),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName ("<regex>") text ("regular expression to filter queued actions (e.g. '.*my.dabatase/myView.*'). "))
+    cmd("queues") action { (_, c) => c.copy(action = Some(QUEUES)) } text "list queued actions" children(
+      opt[String]('t', "typ") action { (x, c) => c.copy(typ = Some(x)) } optional() valueName "<type>" text "filter queued actions by their type (e.g. 'oozie', 'filesystem', ...)",
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName "<regex>" text "regular expression to filter queued actions (e.g. '.*my.dabatase/myView.*'). ")
 
-    cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text ("materialize view(s)") children(
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName ("<status>") text ("filter views to be materialized by their status (e.g. 'failed')"),
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName ("<regex>") text ("regular expression to filter views to be materialized (e.g. 'my.database/.*/Partition1/.*'). "),
-      opt[String]('m', "mode") action { (x, c) => c.copy(mode = Some(x)) } optional() valueName ("<mode>") text ("materialization mode. Supported modes are currently 'RESET_TRANSFORMATION_CHECKSUMS, RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS'"))
+    cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text "materialize view(s)" children(
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName "<status>" text "filter views to be materialized by their status (e.g. 'failed')",
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName "<viewUrlPath>" text "view url path (e.g. 'my.database/MyView/Partition1/Partition2'). ",
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName "<regex>" text "regular expression to filter views to be materialized (e.g. 'my.database/.*/Partition1/.*'). ",
+      opt[String]('i', "issueFilter") action { (x,c) => c.copy(issueFilter = Some(x)) } optional() valueName "<errors|incomplete>" text "materialize views that have other dependencies marked with errors or incomplete data (e.g. 'errors' or 'incomplete' or 'errorsANDincomplete')",
+      opt[String]('m', "mode") action { (x, c) => c.copy(mode = Some(x)) } optional() valueName "<mode>" text "materialization mode. Supported modes are currently 'RESET_TRANSFORMATION_CHECKSUMS, RESET_TRANSFORMATION_CHECKSUMS_AND_TIMESTAMPS'")
 
-    cmd("invalidate") action { (_, c) => c.copy(action = Some(INVALIDATE)) } text ("invalidate view(s)") children(
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName ("<status>") text ("filter views to be invalidated by their status (e.g. 'transforming')"),
-      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName ("<viewUrlPath>") text ("view url path (e.g. 'my.database/MyView/Partition1/Partition2'). "),
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName ("<regex>") text ("regular expression to filter views to be invalidated (e.g. 'my.database/.*/Partition1/.*'). "),
-      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional() text ("invalidate dependencies as well"))
+    cmd("invalidate") action { (_, c) => c.copy(action = Some(INVALIDATE)) } text "invalidate view(s)" children(
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName "<status>" text "filter views to be invalidated by their status (e.g. 'transforming')",
+      opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName "<viewUrlPath>" text "view url path (e.g. 'my.database/MyView/Partition1/Partition2'). ",
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName "<regex>" text "regular expression to filter views to be invalidated (e.g. 'my.database/.*/Partition1/.*'). ",
+      opt[String]('i', "issueFilter") action { (x,c) => c.copy(issueFilter = Some(x)) } optional() valueName "<errors|incomplete>" text "invalidate views that have other dependencies marked with errors or incomplete data (e.g. 'errors' or 'incomplete' or 'errorsANDincomplete')",
+      opt[Unit]('d', "dependencies") action { (_, c) => c.copy(dependencies = Some(true)) } optional() text "invalidate dependencies as well")
 
-    cmd("shutdown") action { (_, c) => c.copy(action = Some(SHUTDOWN)) } text ("shutdown program")
+    cmd("shutdown") action { (_, c) => c.copy(action = Some(SHUTDOWN)) } text "shutdown program"
 
     checkConfig { c =>
-      if (!c.action.isDefined) failure("A command is required")
+      if (c.action.isEmpty) failure("A command is required")
       else if (c.action.get == MATERIALIZE && c.mode.isDefined && !MaterializeViewMode.values.map {
         _.toString
       }.contains(c.mode.get)) failure(s"mode ${c.mode.get} not supported. Supported are: '${MaterializeViewMode.values.map(_.toString())}'")
-      else success
+      else
+        success
     }
   }
 
   def run(args: Array[String]) {
     parser.parse(args, Config()) match {
-      case Some(config) => {
+
+      case Some(config) =>
+
         println("Starting " + config.action.get.toString + " ...")
+
         try {
           val res = config.action.get match {
-            case TRANSFORMATIONS => {
+            case TRANSFORMATIONS =>
               val res = schedoscope.transformations(config.status, config.filter)
               Await.result(res, TIMEOUT)
-            }
-            case QUEUES => {
+
+            case QUEUES =>
               val res = schedoscope.queues(config.typ, config.filter)
               Await.result(res, TIMEOUT)
-            }
-            case VIEWS => {
-              val res = schedoscope.views(config.viewUrlPath, config.status, config.filter, config.dependencies, config.overview, config.all)
+
+            case VIEWS =>
+              val res = schedoscope.views(config.viewUrlPath, config.status, config.filter, config.issueFilter, config.dependencies, config.overview, config.all)
               Await.result(res, TIMEOUT)
-            }
-            case MATERIALIZE => {
-              val res = schedoscope.materialize(config.viewUrlPath, config.status, config.filter, config.mode)
+
+            case MATERIALIZE =>
+              val res = schedoscope.materialize(config.viewUrlPath, config.status, config.filter, config.issueFilter, config.mode)
               Await.result(res, TIMEOUT)
-            }
-            case INVALIDATE => {
-              val res = schedoscope.invalidate(config.viewUrlPath, config.status, config.filter, config.dependencies)
+
+            case INVALIDATE =>
+              val res = schedoscope.invalidate(config.viewUrlPath, config.status, config.filter, config.issueFilter, config.dependencies)
               Await.result(res, TIMEOUT)
-            }
-            case SHUTDOWN => {
+
+            case SHUTDOWN =>
               schedoscope.shutdown()
               System.exit(0)
-            }
+
             case _ => {
               println("Unsupported Action: " + config.action.get.toString)
             }
@@ -121,7 +128,7 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
         } catch {
           case t: Throwable => println(s"\nERROR: ${t.getMessage}\n")
         }
-      }
+
       case None => // usage information has already been displayed
     }
   }

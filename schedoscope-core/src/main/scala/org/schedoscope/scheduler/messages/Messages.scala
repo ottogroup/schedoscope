@@ -16,10 +16,12 @@
 package org.schedoscope.scheduler.messages
 
 import akka.actor.ActorRef
+import org.joda.time.LocalDateTime
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
+import org.schedoscope.scheduler.states.{ViewSchedulingAction, ViewSchedulingState}
 
 /**
   * Superclass for failure messages.
@@ -119,7 +121,7 @@ case class GetTransformationStatusList(statusRequester: ActorRef, transformation
   * @param filter       filter the result by regular expression on the view name
   * @param dependencies also return all dependent views
   */
-case class GetViews(views: Option[List[View]], status: Option[String], filter: Option[String], dependencies: Boolean = false)
+case class GetViews(views: Option[List[View]], status: Option[String], issueFilter:Option[String], filter: Option[String], dependencies: Boolean = false)
 
 /**
   * Request to view manager to send a message to a specific view
@@ -256,8 +258,10 @@ case class TransformationStatusResponse[T <: Transformation](val message: String
   * @param status textual description of the status
   * @param view   reference to the curresponding view
   * @param actor  actor reference to ViewActor
+  * @param errors true if some transformations in that subtree have been failing
+  * @param incomplete true of not all transitive dependencies had data available
   */
-case class ViewStatusResponse(val status: String, view: View, actor: ActorRef) extends CommandResponse
+case class ViewStatusResponse(val status: String, view: View, actor: ActorRef, errors: Option[Boolean]=None, incomplete:Option[Boolean]=None) extends CommandResponse
 
 /**
   * Schema actor returning the stored transformation metadata (version checksum, timestamp) retrieved from metadata store
@@ -280,3 +284,34 @@ case class ViewHasNoData(view: View) extends CommandResponse
   * @param errors                  true if some transformations in that subtree have been failing
   */
 case class ViewMaterialized(view: View, incomplete: Boolean, transformationTimestamp: Long, errors: Boolean) extends CommandResponse
+
+/**
+  * Superclass for all related view scheduling monitoring messages exchanged by actors.
+  */
+sealed class ViewSchedulingMonitoring
+
+/**
+  * Message exchanged between View Actors and ViewSchedulerManager Actor
+  * to know if there are any handler classes instantiated
+  */
+case class CollectViewSchedulingStatus(handlerClassName:String) extends ViewSchedulingMonitoring
+
+
+/**
+  * Message sent from ViewSchedulingListener Actors on
+  * RetryableViewSchedulingListenerException to register
+  * on ViewSchedulingManagerActor to recover latest event
+  * per view on PostRestart
+  *
+  */
+case class RegisterFailedListener(handlerClassName:String) extends ViewSchedulingMonitoring
+
+
+/**
+  * Message exchanged between View Actors and ViewSchedulerManager Actor
+  * to know if there are any handler classes instantiated
+  */
+case class ViewSchedulingMonitoringEvent(prevState: ViewSchedulingState,
+                                         newState: ViewSchedulingState,
+                                         actions: Set[ViewSchedulingAction],
+                                         eventTime: LocalDateTime) extends ViewSchedulingMonitoring

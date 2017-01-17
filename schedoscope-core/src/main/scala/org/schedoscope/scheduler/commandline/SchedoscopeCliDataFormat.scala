@@ -23,6 +23,17 @@ import scala.concurrent.Future
 object SchedoscopeCliFormat {
   // FIXME: a more generic parsing would be cool...
 
+  private def formatMap(p: Option[Map[String, String]]) = {
+    val result = if(p.isDefined) {
+      p.get.foldLeft("") { (s: String, pair: (String, String)) =>
+        s + ", " + pair._1 + "=" + pair._2 }
+    } else ""
+    if(result.length > 2)
+      result.drop(2)
+    else
+      result
+  }
+
   def serialize(o: Any): String = {
     val sb = new StringBuilder()
     o match {
@@ -36,7 +47,7 @@ object SchedoscopeCliFormat {
               } else {
                 ("", "", "")
               }
-            Array(p.actor, p.status, s, d, t, p.properties.mkString(","))
+            Array(p.actor, p.status, s, d, t, formatMap(p.properties))
           }).toArray
           sb.append(ASCIITable.getInstance.getTable(header, running))
           sb.append(s"Total: ${running.size}\n")
@@ -47,7 +58,9 @@ object SchedoscopeCliFormat {
       case qs: QueueStatusList => {
         if (qs.queues.flatMap(q => q._2).size > 0) {
           val header = Array("TYP", "DESC", "TARGET_VIEW", "PROPS")
-          val queued = qs.queues.flatMap(q => q._2.map(e => Array(q._1, e.description, e.targetView, e.properties.getOrElse("").toString))).toArray
+          val queued = qs.queues.flatMap(q => q._2.map(e =>
+            Array(q._1, e.description, e.targetView, formatMap(e.properties))
+          )).toArray
           sb.append(ASCIITable.getInstance.getTable(header, queued))
           sb.append(s"Total: ${queued.size}")
         }
@@ -68,11 +81,12 @@ object SchedoscopeCliFormat {
           val data = vl.views
             .filter(!_.isTable.getOrElse(false))
             .map(d => Array(d.viewPath, d.status,
-              if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
-                fields.get(d.viewTableName.get).get.map(fieldStatus => fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") + " " + d.properties.mkString(",")
-              } else {
-                d.properties.mkString(",")
-              })).toArray
+                if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
+                  fields.get(d.viewTableName.get).get.map(fieldStatus =>
+                    fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") +
+                    ", " + formatMap(d.properties)
+                } else formatMap(d.properties) )
+            ).toArray
 
           sb.append(ASCIITable.getInstance.getTable(header, data))
           sb.append(s"Total: ${data.size}\n")

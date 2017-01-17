@@ -88,14 +88,14 @@ trait WritableView extends View {
   }
 
   def createViewTable() {
-    val d = resources.crate
+    val d = resources.schemaManager
     if (!d.schemaExists(this)) {
       d.dropAndCreateTableSchema(this)
     }
   }
 
   def writeData() {
-    val d = resources.crate
+    val d = resources.schemaManager
     val partitionFilePath = if (this.isPartitioned())
       new Path(new URI(d.createPartition(this).getSd.getLocation).getPath)
     else
