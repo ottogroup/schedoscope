@@ -18,6 +18,7 @@ package org.schedoscope.scheduler.actors
 import akka.actor.{Actor, ActorInitializationException, ActorRef, OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy._
 import akka.event.{Logging, LoggingReceive}
+import akka.routing.{ActorRefRoutee, BalancingPool, Router}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{FilesystemTransformation, Transformation}
@@ -52,9 +53,18 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
       case _ => Escalate
     }
 
+  // used for determining BalancingDispatcher children' Supervision
+  lazy val driverManagersupervisorStrategy = OneForOneStrategy(maxNrOfRetries = -1) {
+    case _: RetryableDriverException => Restart
+    case _: ActorInitializationException => Restart
+    case _ => Escalate
+  }
+
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
 
   // create a queue for each driver that is not a filesystem driver
+
+  /*
   val nonFilesystemQueues: Map[String, mutable.Queue[DriverCommand]] = Driver.transformationsWithDrivers.filter {
     _ != "filesystem"
   }.foldLeft(Map[String, collection.mutable.Queue[DriverCommand]]()) {
@@ -108,16 +118,32 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
   def transformationQueueStatus() = {
     queues.map(q => (q._1, q._2.map(c => c.command).toList))
   }
+  */
 
   /**
     * Create driver actors as required by configured transformation types and their concurrency.
     */
   override def preStart {
+    /*
     if (bootstrapDriverActors) {
       for (transformation <- Driver.transformationsWithDrivers; c <- 0 until settings.getDriverSettings(transformation).concurrency) {
         actorOf(DriverActor.props(settings, transformation, self), s"${transformation}-${c + 1}")
       }
     }
+    */
+
+    // TODO: self? | routees namespace ?
+    if(bootstrapDriverActors) {
+
+      for(transformation <- Driver.transformationsWithDrivers) {
+        actorOf(
+          BalancingPool(settings.getDriverSettings(transformation).concurrency,
+            supervisorStrategy = driverManagersupervisorStrategy
+          ).props(routeeProps = DriverActor.props(settings, transformation, self)),
+          s"${transformation}-router")
+      }
+    }
+
   }
 
   /**
@@ -129,6 +155,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
 
     case GetTransformations() => sender ! TransformationStatusListResponse(driverStates.values.toList)
 
+    /*
     case GetQueues() => sender ! QueueStatusListResponse(transformationQueueStatus())
 
     case PollCommand(transformationType) => {
@@ -149,31 +176,43 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
         }
       }
     }
+    */
 
     case commandToExecute: DriverCommand =>
       commandToExecute.command match {
-        case TransformView(transformation, _) =>
-          enqueueTransformation(commandToExecute, transformation)
+        case TransformView(transformation, view) =>
+          context.actorSelection(s"${self.path}/${transformation}-router") forward commandToExecute
+          //enqueueTransformation(commandToExecute, transformation)
         case DeployCommand() =>
-          enqueueDeploy(commandToExecute)
+          context.actorSelection(s"${self.path}/*-router") forward commandToExecute
+          //enqueueDeploy(commandToExecute)
         case transformation: Transformation =>
-          enqueueTransformation(commandToExecute, transformation)
+          context.actorSelection(s"${self.path}/${transformation.name}-router") forward commandToExecute
+          //enqueueTransformation(commandToExecute, transformation)
       }
 
 
     case viewToTransform: View =>
       val transformation = viewToTransform.transformation().forView(viewToTransform)
       val commandRequest = DriverCommand(TransformView(transformation, viewToTransform), sender)
-      enqueueTransformation(commandRequest, transformation)
+      // TODO: forward!
+      context.actorSelection(s"${self.path}/${transformation.name}-router") forward commandRequest
+      //enqueueTransformation(commandRequest, transformation)
 
     case filesystemTransformation: FilesystemTransformation =>
       val driverCommand = DriverCommand(filesystemTransformation, sender)
-      enqueueTransformation(driverCommand, filesystemTransformation)
+      // TODO: forward!
+      context.actorSelection(s"${self.path}/${filesystemTransformation.name}-router") forward driverCommand
+      //enqueueTransformation(driverCommand, filesystemTransformation)
 
     case deploy: DeployCommand =>
-      enqueueDeploy(DriverCommand(deploy, sender))
+      //// TODO: forward!
+      println(s"yo: sender ${sender().path}")
+      context.actorSelection(s"${self.path}/*-router") forward DriverCommand(deploy, sender)
+      //enqueueDeploy(DriverCommand(deploy, sender))
   })
 
+  /*
   def enqueueTransformation(commandToExecute: DriverCommand, transformation: Transformation): Unit = {
     val queueName = queueNameForTransformation(transformation, commandToExecute.sender)
 
@@ -187,6 +226,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
     }
     log.info("TRANSFORMATIONMANAGER ENQUEUE: Enqueued deploy action")
   }
+  */
 
 }
 
