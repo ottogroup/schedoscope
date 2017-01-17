@@ -50,7 +50,7 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
       additionalFiles,
       propertiesFile
       ) =>
-        l.setAppName(applicationName)
+        l.setAppName(if(applicationName.isEmpty) t.getViewUrl() else applicationName)
         l.setAppResource(mainJarOrPy)
 
         if (mainClass != null)
@@ -59,9 +59,6 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
         l.addAppArgs(applicationArgs: _*)
 
         l.setMaster(master)
-
-        //set name for the job
-        l.setConf("spark.app.name",t.getViewUrl())
 
         if (master.startsWith("local"))
           l.setDeployMode("client")
