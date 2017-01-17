@@ -17,6 +17,7 @@ package org.schedoscope
 
 import akka.actor.ActorSystem
 import org.schedoscope.scheduler.actors.{SchemaManagerRouter, TransformationManagerActor, ViewManagerActor, ViewSchedulingListenerManagerActor}
+import akka.pattern.BackoffSupervisor
 
 /**
   * The Schedoscope object provides accessors for the various components of the schedoscope system.
@@ -29,6 +30,15 @@ object Schedoscope {
     * The default implementation creates a new actor system.
     */
   var actorSystemBuilder = () => ActorSystem("schedoscope")
+
+  val supervisor = BackoffSupervisor.props(
+    Backoff.onStop(
+      childProps,
+      childName = "myEcho",
+      minBackoff = 3.seconds,
+      maxBackoff = 30.seconds,
+      randomFactor = 0.2 // adds 20% "noise" to vary the intervals slightly
+    ))
 
   /**
     * Pluggable builder function that returns the view manager actor for schedoscope.
