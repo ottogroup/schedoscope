@@ -101,7 +101,7 @@ object HiveTransformation {
     val queryPrelude = new StringBuffer()
 
     queryPrelude
-      .append(settingStatements(settings ++  Map("schedoscope.viewname" -> view.urlPath)))
+      .append(settingStatements(settings))
       .append(insertStatement(view))
 
     if (partition && view.partitionParameters.nonEmpty) {

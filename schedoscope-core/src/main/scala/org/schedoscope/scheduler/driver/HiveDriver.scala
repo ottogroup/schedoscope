@@ -51,7 +51,7 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
   def run(t: HiveTransformation): DriverRunHandle[HiveTransformation] =
     new DriverRunHandle[HiveTransformation](this, new LocalDateTime(), t, Future {
       executeHiveQuery(t.udfs,
-        replaceParameters(t.sql , t.configuration.toMap),
+        replaceParameters(s"SET schedoscope.viewname=${t.getViewUrl()}\n${t.sql}",  t.configuration.toMap),
         t.getShortName())
     })
 
@@ -98,7 +98,6 @@ class HiveDriver(val driverRunCompletionHandlerClassNames: List[String], val con
     //
     // Enhance sql with any necessary create function statements
     //
-    //TODO: do something here
     val sqlPlusCreateFunctions = functionsToRegister
       .foldLeft(sql) {
 
