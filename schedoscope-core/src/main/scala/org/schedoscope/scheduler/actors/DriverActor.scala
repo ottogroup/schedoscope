@@ -64,7 +64,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
     logStateInfo("idle", "DRIVER ACTOR: initialized actor")
 
-    tick()
+    //tick()
   }
 
   /**
@@ -89,10 +89,12 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   def receive = LoggingReceive {
     case t: DriverCommand => toRunning(t)
 
+    /*
     case "tick" => {
       transformationManagerActor ! PollCommand(driver.transformationName)
       tick()
     }
+    */
   }
 
   /**
@@ -128,7 +130,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
               log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}, trace ${ExceptionUtils.getStackTrace(t)}")
               originalSender ! TransformationFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t))
               toReceive()
-              tick()
             }
           }
 
@@ -146,7 +147,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
           originalSender ! TransformationSuccess(runHandle, success, viewHasData)
           toReceive()
-          tick()
         }
 
         case failure: DriverRunFailed[T] => {
@@ -163,7 +163,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
           originalSender ! TransformationFailure(runHandle, failure)
           toReceive()
-          tick()
         }
       }
     } catch {
@@ -220,7 +219,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           driver.driverRunStarted(runHandle)
 
           logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
-
+          tick()
           become(running(runHandle, commandToRun.sender, Some(view)))
         case t: Transformation =>
           val transformation: T = t.asInstanceOf[T]
@@ -229,7 +228,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           driver.driverRunStarted(runHandle)
 
           logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
-
+          tick()
           become(running(runHandle, commandToRun.sender, None))
       }
     } catch {

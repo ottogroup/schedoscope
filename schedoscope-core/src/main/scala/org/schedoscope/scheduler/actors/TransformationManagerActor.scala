@@ -30,6 +30,7 @@ import scala.collection.mutable
 import scala.collection.mutable.HashMap
 import scala.util.Random
 
+
 /**
   * The transformation manager actor queues transformation requests it receives from view actors by
   * transformation type. Idle driver actors poll the transformation manager for new transformations to perform.
@@ -138,7 +139,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
       for(transformation <- Driver.transformationsWithDrivers) {
         actorOf(
           BalancingPool(nrOfInstances = settings.getDriverSettings(transformation).concurrency,
-            supervisorStrategy = driverManagersupervisorStrategy, routerDispatcher = "driver-dispatcher")
+            supervisorStrategy = driverManagersupervisorStrategy, routerDispatcher = "akka.actor.driver-dispatcher")
             .props(routeeProps = DriverActor.props(settings, transformation, self)),
           s"${transformation}-router")
       }
