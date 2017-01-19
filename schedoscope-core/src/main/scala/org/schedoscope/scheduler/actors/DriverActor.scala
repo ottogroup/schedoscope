@@ -52,8 +52,10 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   var runningCommand: Option[DriverCommand] = None
 
+  val driverRouter = context.parent
+
   /**
-    * Start ticking upon start.
+    * Log state upon start.
     */
   override def preStart() {
     try {
@@ -61,10 +63,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     } catch {
       case t: Throwable => throw RetryableDriverException("Driver actor could not initialize driver because driver constructor throws exception (HINT: if Driver Actor start failure behaviour persists, validate the respective transformation driver config in conf file). Restarting driver actor...", t)
     }
-
     logStateInfo("idle", "DRIVER ACTOR: initialized actor")
-
-    //tick()
   }
 
   /**
@@ -72,7 +71,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
-      transformationManagerActor ! runningCommand.get
+      driverRouter ! runningCommand.get
   }
 
   /**
@@ -88,13 +87,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     */
   def receive = LoggingReceive {
     case t: DriverCommand => toRunning(t)
-
-    /*
-    case "tick" => {
-      transformationManagerActor ! PollCommand(driver.transformationName)
-      tick()
-    }
-    */
   }
 
   /**
@@ -110,7 +102,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     }
     // If getting a command while being busy, reschedule it by sending it to the actionsmanager
     // Should this ever happen?
-    case c: DriverCommand => transformationManagerActor ! c
+    case c: DriverCommand => driverRouter ! c
 
     // check all 10 seconds the state of the current running driver
     case "tick" => try {
@@ -281,7 +273,8 @@ object DriverActor {
     Props(
       classOf[DriverActor[_]],
       transformationManager,
-      settings.getDriverSettings(transformationName), (ds: DriverSettings) => Driver.driverFor(ds),
+      settings.getDriverSettings(transformationName),
+      (ds: DriverSettings) => Driver.driverFor(ds),
       if (transformationName == "filesystem")
         100 milliseconds
       else if (transformationName == "noop")
@@ -296,5 +289,6 @@ object DriverActor {
       transformationName,
       transformationManager,
       defaultFileSystem(settings.hadoopConf))
+
 
 }
