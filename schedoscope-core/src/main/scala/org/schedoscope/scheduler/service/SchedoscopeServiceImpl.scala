@@ -321,6 +321,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     }
   }
 
+  /*
   def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList] = {
     val cf = Future(checkFilter(filter))
     cf.flatMap { r =>
@@ -338,6 +339,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       }
     }
   }
+  */
 
   def shutdown(): Boolean = {
     actorSystem.shutdown()

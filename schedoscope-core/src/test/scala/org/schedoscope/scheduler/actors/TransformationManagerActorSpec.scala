@@ -142,7 +142,6 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     transformationManagerActor ! GetTransformations()
     expectMsgPF() {
       case TransformationStatusListResponse(statusList) => {
-        println(statusList)
         statusList.size should be > 0
       }
     }

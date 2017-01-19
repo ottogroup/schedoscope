@@ -833,7 +833,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     * filter=Regexp apply a regular expression filter on driver name (e.g. '?filter=.hive.')
     *
     */
-
+  /*
   it should "ask transformationManagerActor for ongoing queues" in new SchedoscopeServiceTest {
     val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
     val typParam = None
@@ -852,6 +852,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     response.value.get.get.overview shouldBe Map("allFakeActors" -> 2)
     response.value.get.get.queues.get("allFakeActors").get.size shouldBe 2
   }
+  */
 
   /**
     * Testing /transformations

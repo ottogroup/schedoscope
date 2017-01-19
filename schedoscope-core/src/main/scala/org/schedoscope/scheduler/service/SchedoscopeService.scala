@@ -113,7 +113,7 @@ trait SchedoscopeService {
     *
     * Throws an InvalidArgumentException if an invalid regexp filter is passed.
     */
-  def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList]
+  //def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList]
 
   /**
     * Shut down Schedoscope.

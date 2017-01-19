@@ -98,10 +98,11 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
             case TRANSFORMATIONS =>
               val res = schedoscope.transformations(config.status, config.filter)
               Await.result(res, TIMEOUT)
-
+            /*
             case QUEUES =>
               val res = schedoscope.queues(config.typ, config.filter)
               Await.result(res, TIMEOUT)
+            */
 
             case VIEWS =>
               val res = schedoscope.views(config.viewUrlPath, config.status, config.filter, config.issueFilter, config.dependencies, config.overview, config.all)
