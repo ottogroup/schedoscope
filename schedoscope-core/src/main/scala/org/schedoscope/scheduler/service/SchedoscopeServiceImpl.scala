@@ -321,26 +321,6 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     }
   }
 
-  /*
-  def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList] = {
-    val cf = Future(checkFilter(filter))
-    cf.flatMap { r =>
-      Future {
-        val result = queryActor[QueueStatusListResponse](
-          transformationManagerActor, GetQueues(), settings.schedulingCommandTimeout)
-
-        val queues = result.transformationQueues
-          .filterKeys(t => typ.isEmpty || t.startsWith(typ.get))
-          .map { case (t, queue) => (t, parseQueueElements(queue)) }
-          .map { case (t, queue) => (t, queue.filter(el => filter.isEmpty || el.targetView.matches(filter.get))) }
-        val overview = queues
-          .map(el => (el._1, el._2.size))
-        QueueStatusList(overview, queues)
-      }
-    }
-  }
-  */
-
   def shutdown(): Boolean = {
     actorSystem.shutdown()
     actorSystem.awaitTermination(5 seconds)
