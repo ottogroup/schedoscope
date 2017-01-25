@@ -15,7 +15,7 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{Actor, ActorRef, ActorSystem}
 import akka.testkit.{TestActorRef, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import test.views.ProductBrand
@@ -26,8 +26,6 @@ import org.schedoscope.schema.ddl.HiveQl
 import org.schedoscope.Settings
 
 import scala.util.Random
-import scala.concurrent.duration._
-
 
 class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
   with FlatSpecLike
@@ -42,8 +40,6 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
   val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
   val settings = Settings()
   val transformationManagerActor = TestProbe()
-  val brandViewActor = TestProbe()
-  val productViewActor = TestProbe()
 
 
   trait HiveActorTest {
@@ -89,7 +85,7 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
-  "All Drivers" should "run DeployCommand" in new DriverActorTest {
+  "All Driver Actors" should "run DeployCommand" in new DriverActorTest {
       val cmd = DriverCommand(DeployCommand(), transformationManagerActor.ref)
       transformationManagerActor.send(driverActor1, cmd)
       transformationManagerActor.expectMsgPF() {
@@ -158,13 +154,6 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
         actor shouldBe hivedriverActor
       }
     }
-    // A command wrongly sent from transformation manager should be re-enqueued;
-    val cmdThoughBusy = DriverCommand(DeployCommand(), transformationManagerActor.ref)
-    transformationManagerActor.send(hivedriverActor, cmdThoughBusy)
-    transformationManagerActor.expectMsg(cmdThoughBusy)
-
-    // should do nothing!
-    transformationManagerActor.expectNoMsg(3 seconds)
     // pseudo kill op
     transformationManagerActor.send(hivedriverActor, KillCommand())
 
@@ -177,6 +166,13 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
-
+  "Driver Actors" should "should reply to their original command senders" in {
+    val msgSender = TestProbe()
+    val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
+      bootstrapDriverActors = true))
+    val cmd = DriverCommand(DeployCommand(), msgSender.ref)
+    system.actorSelection("akka://schedoscope/user/*") ! cmd
+    msgSender.expectMsg(DeployCommandSuccess())
+  }
 
 }
