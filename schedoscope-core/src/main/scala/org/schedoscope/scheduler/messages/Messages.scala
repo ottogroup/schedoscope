@@ -78,11 +78,6 @@ case class KillCommand() extends CommandRequest
 case class DeployCommand() extends CommandRequest
 
 /**
-  * Used by driver actors to poll the transformation manager actor for a new piece of work to be executed.
-  */
-case class PollCommand(typ: String) extends CommandRequest
-
-/**
   * Tells a driver actor to execute a transformation.
   * @param transformation to execute
   * @param view to transform
