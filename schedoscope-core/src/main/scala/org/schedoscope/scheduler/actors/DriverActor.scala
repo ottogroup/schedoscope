@@ -34,7 +34,8 @@ import scala.language.postfixOps
 /**
   * A driver actor manages the executions of transformations using hive, oozie etc. The actual
   * execution is done using a driver trait implementation. The driver actor code itself is transformation
-  * type agnostic. Driver actors poll the transformation tasks they execute from the transformation manager actor
+  * type agnostic. Driver actors receive the transformation tasks they execute from the transformation manager actor
+  * via intermediate driver router actor
   *
   */
 class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
@@ -67,7 +68,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   }
 
   /**
-    * If the driver actor is being restarted by the transformation manager actor, the currently running action is reenqueued so it does not get lost.
+    * If the driver actor is being restarted by the driver router actor, the currently running action is re-distributed to driver router for load balancing to another worker, and so it does not get lost.
     */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
@@ -83,7 +84,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   /**
     * Message handler for the default state.
-    * Transitions only to state running, keeps polling the action manager for new work
+    * Transitions only to state running
     */
   def receive = LoggingReceive {
     case t: DriverCommand => toRunning(t)
@@ -100,8 +101,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
       driver.killRun(runHandle)
       toReceive()
     }
-    // If getting a command while being busy, reschedule it by sending it to the actionsmanager
-    // Should this ever happen?
+    // If getting a command while being busy, reschedule it by sending it to the driver router for load balancing
     case c: DriverCommand => driverRouter ! c
 
     // check all 10 seconds the state of the current running driver

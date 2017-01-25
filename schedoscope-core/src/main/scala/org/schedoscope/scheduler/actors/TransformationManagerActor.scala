@@ -30,8 +30,9 @@ import scala.collection.mutable.HashMap
 
 
 /**
-  * The transformation manager actor queues transformation requests it receives from view actors by
-  * transformation type. Idle driver actors poll the transformation manager for new transformations to perform.
+  * The transformation manager actor serves as a factory for all transformation requests, which are sent by view actors.
+  * It pushes all requests to the correspondent transformation type driver router, which, in turn, load balances work
+  * among its children, the Driver Actors.
   *
   */
 class TransformationManagerActor(settings: SchedoscopeSettings,
@@ -62,7 +63,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
 
   /**
-    * Create driver actors as required by configured transformation types and their concurrency.
+    * Create one driver router per transformation type, which themselves spawn driver actors as required by configured transformation concurrency.
     */
   override def preStart {
 

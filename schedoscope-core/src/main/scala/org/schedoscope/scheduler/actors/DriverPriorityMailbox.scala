@@ -20,6 +20,13 @@ import akka.dispatch.PriorityGenerator
 import akka.dispatch.UnboundedPriorityMailbox
 import com.typesafe.config.Config
 
+/**
+  * A driver actor requires prioritization of tick messages,
+  * in order to guarantee successful progress tracking, and
+  * to new Mailbox successful moving forward to Mailbox queued
+  * transformation tasks
+  *
+  */
 class DriverPriorityMailbox(settings: ActorSystem.Settings, config: Config)
   extends UnboundedPriorityMailbox (
     // Note: lower prio means more important
