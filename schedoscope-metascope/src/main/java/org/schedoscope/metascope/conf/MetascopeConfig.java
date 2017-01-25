@@ -79,7 +79,7 @@ public class MetascopeConfig {
 
         this.port = config.metascopePort();
 
-        this.schedoscopeHost = "localhost";
+        this.schedoscopeHost = config.host();
         this.schedoscopePort = config.port();
 
         this.authenticationMethod = getString(config.metascopeAuthMethod());
