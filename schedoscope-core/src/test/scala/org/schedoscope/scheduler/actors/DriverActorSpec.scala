@@ -166,13 +166,4 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
-  "Driver Actors" should "should reply to their original command senders" in {
-    val msgSender = TestProbe()
-    val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
-      bootstrapDriverActors = true))
-    val cmd = DriverCommand(DeployCommand(), msgSender.ref)
-    system.actorSelection("akka://schedoscope/user/*") ! cmd
-    msgSender.expectMsg(DeployCommandSuccess())
-  }
-
 }

@@ -6,7 +6,7 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.{FilesystemTransformation, Touch}
-import org.schedoscope.scheduler.driver.HiveDriver
+import org.schedoscope.scheduler.driver.{HiveDriver, Driver}
 import org.schedoscope.scheduler.messages._
 import test.views.ProductBrand
 
@@ -17,6 +17,10 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   with Matchers
   with BeforeAndAfterAll
   with MockitoSugar {
+
+  override def afterAll() {
+    TestKit.shutdownActorSystem(system)
+  }
 
   // common vars
   val testView = ProductBrand(p("1"), p("2"), p("3"), p("4"))
@@ -81,33 +85,6 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
       hiveDriverRouter.expectNoMsg(3 seconds)
     }
 
-  it should "multicast deployCommand to routers" in
-    new TransformationManagerActorTest {
-      val msgSender = TestProbe()
-      val cmd = DriverCommand(DeployCommand(), msgSender.ref)
-      //val command = DriverCommand(cmd, self)
-      msgSender.send(transformationManagerActor, DeployCommand())
-      hiveDriverRouter.expectMsg(cmd)
-      hiveDriverRouter.reply(DeployCommandSuccess())
-
-      mapRedDriverRouter.expectMsg(cmd)
-      mapRedDriverRouter.reply(DeployCommandSuccess())
-      msgSender.expectMsg(DeployCommandSuccess())
-
-      noopDriverRouter.expectMsg(cmd)
-      noopDriverRouter.reply(DeployCommandSuccess())
-      msgSender.expectMsg(DeployCommandSuccess())
-
-      seqDriverRouter.expectMsg(cmd)
-      seqDriverRouter.reply(DeployCommandSuccess())
-      msgSender.expectMsg(DeployCommandSuccess())
-
-      fsDriverRouter.expectMsg(cmd)
-      fsDriverRouter.reply(DeployCommandSuccess())
-      msgSender.expectMsg(DeployCommandSuccess())
-
-    }
-
   it should "return the status of transformations (no running transformations)" in
     new TransformationManagerActorTest {
       val msgSender = TestProbe()
@@ -153,13 +130,21 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
 
   // integration test transformationManager + DriverRouter + Drivers
-  it should "should forward to driver commands without changing the recepient" in {
+  it should "should directly broadcast to all driver actors, instead of using driver router" in {
     val msgSender = TestProbe()
     val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
       bootstrapDriverActors = true))
     val cmd = DriverCommand(DeployCommand(), msgSender.ref)
     msgSender.send(transformationManagerActor, cmd)
-    msgSender.expectMsg(DeployCommandSuccess())
+    val numberOfMessages = Driver
+      .transformationsWithDrivers
+      .toArray
+      .map {
+        case t: String => settings.getDriverSettings(t).concurrency
+        case _ => 0
+      }
+      .sum
+    msgSender.receiveN(numberOfMessages, 3 seconds)
   }
 
 }

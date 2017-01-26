@@ -93,7 +93,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
         case TransformView(transformation, view) =>
           context.actorSelection(s"${self.path}/${transformation}-router") forward commandToExecute
         case DeployCommand() =>
-          context.actorSelection(s"${self.path}/*-router") forward commandToExecute
+          context.actorSelection(s"${self.path}/*-router/*") forward commandToExecute
         case transformation: Transformation =>
           context.actorSelection(s"${self.path}/${transformation.name}-router") forward commandToExecute
       }
@@ -108,7 +108,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
       context.actorSelection(s"${self.path}/${filesystemTransformation.name}-router") forward driverCommand
 
     case deploy: DeployCommand =>
-      context.actorSelection(s"${self.path}/*-router") forward DriverCommand(deploy, sender)
+      context.actorSelection(s"${self.path}/*-router/*") forward DriverCommand(deploy, sender)
   })
 
 }
