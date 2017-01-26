@@ -84,7 +84,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
         val backOffSlotTime = settings.getDriverSettings(transformation).backOffSlotTime millis
         val backOffDelay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
 
-        val backOff = ExponentialBackOff(backOffSlotTime = backOffSlotTime, constanteDelay = backOffDelay)
+        val backOff = ExponentialBackOff(backOffSlotTime = backOffSlotTime, constantDelay = backOffDelay)
         log.debug(s"TRANFORMATION MANAGER ACTOR: Set initial back-off waiting " +
           s"time to value ${backOff.backOffWaitTime} for booted actor ${asr.actor.path.toStringWithoutAddress}; " +
           s"(retries=${backOff.retries}, resets=${backOff.resets}, total-retries=${backOff.totalRetries})")
