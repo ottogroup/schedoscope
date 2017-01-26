@@ -90,6 +90,8 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     case "tick" => toActiveReceive()
 
     case c: DriverCommand => driverRouter ! c
+
+    case "reboot" => throw new RetryableDriverException()
   }
 
   /**
@@ -99,6 +101,8 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     */
   def activeReceive = LoggingReceive {
     case t: DriverCommand => toRunning(t)
+
+    case "reboot" => throw new RetryableDriverException()
   }
 
   /**
@@ -180,6 +184,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
       }
     }
 
+    case "reboot" => throw new RetryableDriverException()
 
   }
 

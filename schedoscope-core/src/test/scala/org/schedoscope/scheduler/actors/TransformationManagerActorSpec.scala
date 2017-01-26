@@ -1,22 +1,30 @@
 package org.schedoscope.scheduler.actors
-import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.testkit.{TestActorRef, TestKit, TestProbe}
+import akka.testkit.EventFilter
+import com.typesafe.config.ConfigFactory
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.{FilesystemTransformation, Touch}
-import org.schedoscope.scheduler.driver.HiveDriver
+import org.schedoscope.scheduler.driver.{HiveDriver, Driver}
 import org.schedoscope.scheduler.messages._
 import test.views.ProductBrand
 
 import scala.concurrent.duration._
 
-class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
+class TransformationManagerActorSpec extends
+  TestKit(ActorSystem("schedoscope",
+    ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")))
   with FlatSpecLike
   with Matchers
   with BeforeAndAfterAll
   with MockitoSugar {
+
+  override def afterAll() {
+    TestKit.shutdownActorSystem(system)
+  }
 
   // common vars
   val testView = ProductBrand(p("1"), p("2"), p("3"), p("4"))
@@ -162,18 +170,24 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     msgSender.expectMsg(DeployCommandSuccess())
   }
 
-  // TODO: integration test transformationManager + DriverRouter + Drivers
   it should "should set an exponential backoff time for restarting drivers" in {
     val msgSender = TestProbe()
     val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
       bootstrapDriverActors = true))
-    Thread.sleep(3000)
-    val cmd = DriverCommand(DeployCommand(), msgSender.ref)
-    msgSender.send(transformationManagerActor, cmd)
 
-    // kill drivers
-    //system.actorSelection("") ! PoisonPill
-    msgSender.expectMsg(DeployCommandSuccess())
+    val totalCountDrivers = Driver
+      .transformationsWithDrivers
+      .toArray
+      .map {
+        case t: String => settings.getDriverSettings(t).concurrency
+        case _ => 0
+      }
+      .sum
+
+    EventFilter.info(pattern = "TRANFORMATION MANAGER ACTOR: Set new back-off waiting time to value *",
+      occurrences = totalCountDrivers) intercept {
+      system.actorSelection(s"${transformationManagerActor.path}/*-router/*") ! "reboot"
+    }
   }
 
 }

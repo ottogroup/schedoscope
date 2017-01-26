@@ -75,9 +75,15 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
         val newBackOff = driverBackOffWaitTime(asr.actor.path.toStringWithoutAddress).nextBackOff
         scheduleTick(asr.actor, newBackOff.backOffWaitTime)
         driverBackOffWaitTime.put(asr.actor.path.toStringWithoutAddress, newBackOff)
+        log.info(s"TRANFORMATION MANAGER ACTOR: Set new back-off waiting " +
+          s"time to value ${newBackOff.backOffWaitTime} for rebooted actor ${asr.actor.path.toStringWithoutAddress}; " +
+          s"(retries=${newBackOff.retries}, resets=${newBackOff.resets}, total-retries=${newBackOff.totalRetries})")
       } else {
         asr.actor ! "tick"
         val backOff = ExponentialBackOff(5 seconds)
+        log.debug(s"TRANFORMATION MANAGER ACTOR: Set initial back-off waiting " +
+          s"time to value ${backOff.backOffWaitTime} for booted actor ${asr.actor.path.toStringWithoutAddress}; " +
+          s"(retries=${backOff.retries}, resets=${backOff.resets}, total-retries=${backOff.totalRetries})")
         driverBackOffWaitTime.put(asr.actor.path.toStringWithoutAddress, backOff)
       }
     }

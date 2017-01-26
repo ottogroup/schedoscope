@@ -71,7 +71,7 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     def shuffleTransformations:Seq[String] = {
       val transformations = List("filesystem", "hive",
-        "mapreduce", "noop", "seq", "spark")
+        "mapreduce", "noop", "seq")
       val q = Random.shuffle(transformations)
         .foldLeft(new collection.mutable.Queue[String]()) {
           (growingQueue, transformation) =>
