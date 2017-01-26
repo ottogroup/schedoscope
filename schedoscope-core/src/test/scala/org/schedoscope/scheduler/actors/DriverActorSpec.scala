@@ -26,6 +26,7 @@ import org.schedoscope.schema.ddl.HiveQl
 import org.schedoscope.Settings
 
 import scala.util.Random
+import scala.concurrent.duration._
 
 class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
   with FlatSpecLike
@@ -48,6 +49,14 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
     transformationManagerActor.expectMsgPF() {
       case TransformationStatusResponse(msg, actor, driver,
       driverHandle, driverRunStatus) => {
+        msg shouldBe "booted"
+        actor shouldBe hivedriverActor
+      }
+    }
+    transformationManagerActor.send(hivedriverActor, "tick")
+    transformationManagerActor.expectMsgPF() {
+      case TransformationStatusResponse(msg, actor, driver,
+      driverHandle, driverRunStatus) => {
         msg shouldBe "idle"
         actor shouldBe hivedriverActor
       }
@@ -62,7 +71,7 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     def shuffleTransformations:Seq[String] = {
       val transformations = List("filesystem", "hive",
-        "mapreduce", "noop", "seq")
+        "mapreduce", "noop", "seq", "spark")
       val q = Random.shuffle(transformations)
         .foldLeft(new collection.mutable.Queue[String]()) {
           (growingQueue, transformation) =>
@@ -72,17 +81,40 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
 
     def launchDriverActor(transformation:String):ActorRef = {
-      val a = TestActorRef(DriverActor.props(settings,
+      val driverActor = TestActorRef(DriverActor.props(settings,
         transformation, transformationManagerActor.ref))
       transformationManagerActor.expectMsgPF() {
         case TransformationStatusResponse(msg, actor, driver,
         driverHandle, driverRunStatus) => {
-          msg shouldBe "idle"
-          actor shouldBe a
+          msg shouldBe "booted"
+          actor shouldBe driverActor
         }
       }
-      a
+      transformationManagerActor.send(driverActor, "tick")
+      transformationManagerActor.expectMsgPF() {
+        case TransformationStatusResponse(msg, actor, driver,
+        driverHandle, driverRunStatus) => {
+          msg shouldBe "idle"
+          actor shouldBe driverActor
+        }
+      }
+      driverActor
     }
+  }
+
+  it should "should not execute commands before changing to activeReceive state" in {
+    val hivedriverActor = TestActorRef(DriverActor.props(settings,
+      "hive", transformationManagerActor.ref))
+    transformationManagerActor.expectMsgPF() {
+      case TransformationStatusResponse(msg, actor, driver,
+      driverHandle, driverRunStatus) => {
+        msg shouldBe "booted"
+        actor shouldBe hivedriverActor
+      }
+    }
+    val cmd = DriverCommand(DeployCommand(), transformationManagerActor.ref)
+    transformationManagerActor.send(hivedriverActor, cmd)
+    transformationManagerActor.expectNoMsg(3 seconds)
   }
 
   "All Driver Actors" should "run DeployCommand" in new DriverActorTest {

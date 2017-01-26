@@ -106,7 +106,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
     */
   def receive = LoggingReceive({
 
-    case asr: TransformationStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
+    case asr: TransformationStatusResponse[_] => manageDriverLifeCycle(asr)
 
     case GetTransformations() => sender ! TransformationStatusListResponse(driverStates.values.toList)
 

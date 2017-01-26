@@ -87,7 +87,9 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     * Transitions only to state active running
     */
   def receive = LoggingReceive {
-    case t: DriverCommand => toRunning(t)
+    case "tick" => toActiveReceive()
+
+    case c: DriverCommand => driverRouter ! c
   }
 
   /**
@@ -108,7 +110,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   def running(runHandle: DriverRunHandle[T], originalSender: ActorRef, transformingView: Option[View]): Receive = LoggingReceive {
     case KillCommand() => {
       driver.killRun(runHandle)
-      toReceive()
+      toActiveReceive()
     }
     // If getting a command while being busy, reschedule it by sending it to the driver router for load balancing
     case c: DriverCommand => driverRouter ! c
@@ -130,7 +132,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
             case t: Throwable => {
               log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}, trace ${ExceptionUtils.getStackTrace(t)}")
               originalSender ! TransformationFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t))
-              toReceive()
+              toActiveReceive()
             }
           }
 
@@ -147,7 +149,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           }
 
           originalSender ! TransformationSuccess(runHandle, success, viewHasData)
-          toReceive()
+          toActiveReceive()
         }
 
         case failure: DriverRunFailed[T] => {
@@ -163,7 +165,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           }
 
           originalSender ! TransformationFailure(runHandle, failure)
-          toReceive()
+          toActiveReceive()
         }
       }
     } catch {
@@ -184,12 +186,12 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   /**
     * State transition to default state.
     */
-  def toReceive() {
+  def toActiveReceive() {
     runningCommand = None
 
     logStateInfo("idle", "DRIVER ACTOR: becoming idle")
 
-    become(receive)
+    become(activeReceive)
   }
 
   /**

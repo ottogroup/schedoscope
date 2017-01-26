@@ -1,5 +1,5 @@
 package org.schedoscope.scheduler.actors
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
@@ -153,12 +153,26 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
 
   // integration test transformationManager + DriverRouter + Drivers
-  it should "should forward to driver commands without changing the recepient" in {
+  it should "should forward to driver commands without changing the recipient" in {
     val msgSender = TestProbe()
     val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
       bootstrapDriverActors = true))
     val cmd = DriverCommand(DeployCommand(), msgSender.ref)
     msgSender.send(transformationManagerActor, cmd)
+    msgSender.expectMsg(DeployCommandSuccess())
+  }
+
+  // TODO: integration test transformationManager + DriverRouter + Drivers
+  it should "should set an exponential backoff time for restarting drivers" in {
+    val msgSender = TestProbe()
+    val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
+      bootstrapDriverActors = true))
+    Thread.sleep(3000)
+    val cmd = DriverCommand(DeployCommand(), msgSender.ref)
+    msgSender.send(transformationManagerActor, cmd)
+
+    // kill drivers
+    //system.actorSelection("") ! PoisonPill
     msgSender.expectMsg(DeployCommandSuccess())
   }
 
