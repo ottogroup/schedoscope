@@ -24,9 +24,11 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{FilesystemTransformation, Transformation}
 import org.schedoscope.scheduler.driver.{Driver, RetryableDriverException}
 import org.schedoscope.scheduler.messages._
+import org.schedoscope.scheduler.utils.ExponentialBackOff
 
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
+import scala.concurrent.duration._
 
 
 /**
@@ -61,6 +63,26 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
   }
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
+  val driverBackOffWaitTime = HashMap[String, ExponentialBackOff]()
+
+  def scheduleTick(driverActor: ActorRef, backOffTime: FiniteDuration) {
+    system.scheduler.scheduleOnce(backOffTime, driverActor, "tick")
+  }
+
+  def manageDriverLifeCycle(asr: TransformationStatusResponse[_]) {
+    if(asr.message == "booted") {
+      if(driverBackOffWaitTime.contains(asr.actor.path.toStringWithoutAddress)) {
+        val newBackOff = driverBackOffWaitTime(asr.actor.path.toStringWithoutAddress).nextBackOff
+        scheduleTick(asr.actor, newBackOff.backOffWaitTime)
+        driverBackOffWaitTime.put(asr.actor.path.toStringWithoutAddress, newBackOff)
+      } else {
+        asr.actor ! "tick"
+        val backOff = ExponentialBackOff(5 seconds)
+        driverBackOffWaitTime.put(asr.actor.path.toStringWithoutAddress, backOff)
+      }
+    }
+    driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
+  }
 
   /**
     * Create one driver router per transformation type, which themselves spawn driver actors as required by configured transformation concurrency.

@@ -64,7 +64,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     } catch {
       case t: Throwable => throw RetryableDriverException("Driver actor could not initialize driver because driver constructor throws exception (HINT: if Driver Actor start failure behaviour persists, validate the respective transformation driver config in conf file). Restarting driver actor...", t)
     }
-    logStateInfo("idle", "DRIVER ACTOR: initialized actor")
+    logStateInfo("booted", "DRIVER ACTOR: booted")
   }
 
   /**
@@ -84,9 +84,18 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   /**
     * Message handler for the default state.
-    * Transitions only to state running
+    * Transitions only to state active running
     */
   def receive = LoggingReceive {
+    case t: DriverCommand => toRunning(t)
+  }
+
+  /**
+    * Message handler for the actively processing
+    * DriverCommand messages.
+    * Transitions only to state active running
+    */
+  def activeReceive = LoggingReceive {
     case t: DriverCommand => toRunning(t)
   }
 
