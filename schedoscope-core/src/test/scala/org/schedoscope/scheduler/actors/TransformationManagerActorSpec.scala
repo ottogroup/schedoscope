@@ -1,106 +1,165 @@
 package org.schedoscope.scheduler.actors
-import akka.actor.ActorSystem
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.Touch
+import org.schedoscope.dsl.transformations.{FilesystemTransformation, Touch}
 import org.schedoscope.scheduler.driver.HiveDriver
 import org.schedoscope.scheduler.messages._
 import test.views.ProductBrand
 
+import scala.concurrent.duration._
+
 class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
-  with ImplicitSender
   with FlatSpecLike
   with Matchers
   with BeforeAndAfterAll
   with MockitoSugar {
 
+  // common vars
+  val testView = ProductBrand(p("1"), p("2"), p("3"), p("4"))
+  lazy val settings = Settings()
+
+  class ForwardChildActor(to: ActorRef) extends Actor {
+    def receive = {
+      case x => to.forward(x)
+    }
+  }
+
   trait TransformationManagerActorTest {
-    lazy val settings = Settings()
 
-    val transformationManagerActor = TestActorRef(TransformationManagerActor.props(settings,
-      bootstrapDriverActors = false))
+    val hiveDriverRouter = TestProbe()
+    val mapRedDriverRouter = TestProbe()
+    val noopDriverRouter = TestProbe()
+    val seqDriverRouter = TestProbe()
+    val fsDriverRouter = TestProbe()
 
-    val hiveDriverActor = TestProbe()
+    val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
+      bootstrapDriverActors = false) {
+      override def preStart {
+        context.actorOf(Props(new ForwardChildActor(hiveDriverRouter.ref)), "hive-router")
+        context.actorOf(Props(new ForwardChildActor(mapRedDriverRouter.ref)), "mapreduce-router")
+        context.actorOf(Props(new ForwardChildActor(noopDriverRouter.ref)), "noop-router")
+        context.actorOf(Props(new ForwardChildActor(seqDriverRouter.ref)), "seq-router")
+        context.actorOf(Props(new ForwardChildActor(fsDriverRouter.ref)), "filesystem-router")
+      }
+    })
+
+    val idleHiveStatus = TransformationStatusResponse("idle", hiveDriverRouter.ref, null, null, null)
+    hiveDriverRouter.send(transformationManagerActor, idleHiveStatus)
+    val idleMapRedStatus = TransformationStatusResponse("idle", mapRedDriverRouter.ref, null, null, null)
+    mapRedDriverRouter.send(transformationManagerActor, idleMapRedStatus)
+    val idleNoopStatus = TransformationStatusResponse("idle", noopDriverRouter.ref, null, null, null)
+    noopDriverRouter.send(transformationManagerActor, idleNoopStatus)
+    val idleSeqStatus = TransformationStatusResponse("idle", seqDriverRouter.ref, null, null, null)
+    seqDriverRouter.send(transformationManagerActor, idleSeqStatus)
+    val idleFSStatus = TransformationStatusResponse("idle", fsDriverRouter.ref, null, null, null)
+    fsDriverRouter.send(transformationManagerActor, idleFSStatus)
+
   }
 
-  "the TransformationManagerActor" should "enqueue a transformation" in new TransformationManagerActorTest {
-    val testView = ProductBrand(p("1"), p("2"), p("3"), p("4"))
-    transformationManagerActor ! testView
-    transformationManagerActor ! GetQueues()
-    expectMsg(QueueStatusListResponse(Map("filesystem-0" -> List(),
-      "mapreduce" -> List(),
-      "noop" -> List(),
-      "hive" -> List(TransformView(testView.transformation(), testView)),
-      "seq" -> List())))
-  }
+  it should "forward transformations to the correct DriverManager based on incoming View" in
+    new TransformationManagerActorTest {
+      val msgSender = TestProbe()
+      val cmd = DriverCommand(TransformView(testView.transformation(), testView),
+        msgSender.ref)
+      msgSender.send(transformationManagerActor,testView)
+      hiveDriverRouter.expectMsg(cmd)
+    }
 
-  it should "enqueue a deploy command" in new TransformationManagerActorTest {
-    transformationManagerActor ! DeployCommand()
-    transformationManagerActor ! GetQueues()
-    expectMsg(QueueStatusListResponse(Map("filesystem-0" -> List(DeployCommand()),
-      "mapreduce" -> List(DeployCommand()),
-      "noop" -> List(DeployCommand()),
-      "hive" -> List(DeployCommand()),
-      "seq" -> List(DeployCommand()))))
-  }
+  it should "forward transformations to the correct DriverManager based on incoming Transformation" in
+    new TransformationManagerActorTest {
+      val msgSender = TestProbe()
+      val filesystemTransformation = new FilesystemTransformation
+      val cmd = DriverCommand(filesystemTransformation,
+        msgSender.ref)
+      //val command = DriverCommand(cmd, self)
+      msgSender.send(transformationManagerActor, filesystemTransformation)
+      fsDriverRouter.expectMsg(cmd)
+      hiveDriverRouter.expectNoMsg(3 seconds)
+    }
 
-  it should "enqueue a filesystem transformation" in new TransformationManagerActorTest {
-    transformationManagerActor ! Touch("test")
-    transformationManagerActor ! GetQueues()
-    expectMsg(QueueStatusListResponse(Map("filesystem-0" -> List(Touch("test")),
-      "mapreduce" -> List(),
-      "noop" -> List(),
-      "hive" -> List(),
-      "seq" -> List())))
-  }
+  it should "multicast deployCommand to routers" in
+    new TransformationManagerActorTest {
+      val msgSender = TestProbe()
+      val cmd = DriverCommand(DeployCommand(), msgSender.ref)
+      //val command = DriverCommand(cmd, self)
+      msgSender.send(transformationManagerActor, DeployCommand())
+      hiveDriverRouter.expectMsg(cmd)
+      hiveDriverRouter.reply(DeployCommandSuccess())
 
-  it should "dequeue a transformation" in new TransformationManagerActorTest {
-    val testView = ProductBrand(p("1"), p("2"), p("3"), p("4"))
-    transformationManagerActor ! testView
-    val command = DriverCommand(TransformView(testView.transformation(), testView), self)
-    transformationManagerActor ! PollCommand("hive")
-    expectMsg(command)
-  }
+      mapRedDriverRouter.expectMsg(cmd)
+      mapRedDriverRouter.reply(DeployCommandSuccess())
+      msgSender.expectMsg(DeployCommandSuccess())
 
-  it should "dequeue a deploy command" in new TransformationManagerActorTest {
-    transformationManagerActor ! DeployCommand()
-    val command = DriverCommand(DeployCommand(), self)
-    transformationManagerActor ! PollCommand("hive")
-    expectMsg(command)
-  }
+      noopDriverRouter.expectMsg(cmd)
+      noopDriverRouter.reply(DeployCommandSuccess())
+      msgSender.expectMsg(DeployCommandSuccess())
 
-  it should "dequeue a filesystem transformation" in new TransformationManagerActorTest {
-    transformationManagerActor ! Touch("test")
-    val command = DriverCommand(Touch("test"), self)
-    transformationManagerActor ! PollCommand("filesystem-0")
-    expectMsg(command)
-  }
+      seqDriverRouter.expectMsg(cmd)
+      seqDriverRouter.reply(DeployCommandSuccess())
+      msgSender.expectMsg(DeployCommandSuccess())
+
+      fsDriverRouter.expectMsg(cmd)
+      fsDriverRouter.reply(DeployCommandSuccess())
+      msgSender.expectMsg(DeployCommandSuccess())
+
+    }
 
   it should "return the status of transformations (no running transformations)" in
     new TransformationManagerActorTest {
-      val testView = ProductBrand(p("1"), p("2"), p("3"), p("4"))
-      transformationManagerActor ! testView
-      transformationManagerActor ! GetTransformations()
-      expectMsg(TransformationStatusListResponse(List()))
+      val msgSender = TestProbe()
+      msgSender.send(transformationManagerActor, GetTransformations())
+
+      msgSender.expectMsgPF() {
+        case TransformationStatusListResponse(statusList) => {
+          statusList.size shouldBe 5
+          statusList should contain(idleHiveStatus)
+          statusList should contain(idleFSStatus)
+          statusList should contain(idleSeqStatus)
+          statusList should contain(idleNoopStatus)
+          statusList should contain(idleMapRedStatus)
+        }
+      }
     }
 
   it should "return the status of transformations" in
     new TransformationManagerActorTest {
-      val testView = ProductBrand(p("1"), p("2"), p("3"), p("4"))
-      val command = DriverCommand(TransformView(testView.transformation(), testView), self)
-      transformationManagerActor ! testView
-      transformationManagerActor ! PollCommand("hive")
-      expectMsg(command)
-      transformationManagerActor ! GetTransformations()
-      expectMsg(TransformationStatusListResponse(List()))
-      val transformationStatusResponse = TransformationStatusResponse("running", hiveDriverActor.ref, HiveDriver(settings.getDriverSettings("hive")), null, null)
-      transformationManagerActor ! transformationStatusResponse
-      transformationManagerActor ! GetTransformations()
-      expectMsg(TransformationStatusListResponse(List(transformationStatusResponse)))
+      val msgSender = TestProbe()
+      val command = DriverCommand(TransformView(testView.transformation(), testView),
+        msgSender.ref)
+
+      msgSender.send(transformationManagerActor, testView)
+      hiveDriverRouter.expectMsg(command)
+
+      val busyHiveStatus = TransformationStatusResponse("running", hiveDriverRouter.ref,
+        HiveDriver(settings.getDriverSettings("hive")), null, null)
+      hiveDriverRouter.send(transformationManagerActor, busyHiveStatus)
+
+      msgSender.send(transformationManagerActor, GetTransformations())
+
+      msgSender.expectMsgPF() {
+        case TransformationStatusListResponse(statusList) => {
+          statusList.size shouldBe 5
+          statusList should contain(busyHiveStatus)
+          statusList should contain(idleFSStatus)
+          statusList should contain(idleSeqStatus)
+          statusList should contain(idleNoopStatus)
+          statusList should contain(idleMapRedStatus)
+        }
+      }
     }
 
+  // integration test transformationManager + DriverRouter + Drivers
+  it should "should forward to driver commands without changing the recepient" in {
+    val msgSender = TestProbe()
+    val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
+      bootstrapDriverActors = true))
+    val cmd = DriverCommand(DeployCommand(), msgSender.ref)
+    msgSender.send(transformationManagerActor, cmd)
+    msgSender.expectMsg(DeployCommandSuccess())
+  }
 
 }

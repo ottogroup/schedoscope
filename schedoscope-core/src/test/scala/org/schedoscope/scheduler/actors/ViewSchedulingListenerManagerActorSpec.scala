@@ -15,7 +15,7 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{ActorRef, ActorSystem, ExtendedActorSystem, ExtensionId, ExtensionIdProvider}
+import akka.actor.{Actor, ActorRef, ActorSystem, ExtendedActorSystem, ExtensionId, ExtensionIdProvider, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
@@ -42,6 +42,13 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
 
   override def afterAll() = {
     TestKit.shutdownActorSystem(system)
+  }
+
+  class ForwardChildActor(to: ActorRef) extends Actor {
+
+    def receive = {
+      case x => to.forward(x)
+    }
   }
 
   val TIMEOUT = 5 seconds
@@ -96,6 +103,34 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
         actions.head.isInstanceOf[Transform] shouldBe true
       }
     }
+
+  }
+
+  it should "forward ViewSchedulingEvent messages to viewSchedulingListenerManagerActors" in {
+
+    implicit val timeout = Timeout(TIMEOUT)
+
+    val view = Brand(p("ec01"))
+
+    val fakeListenerHandlerChild = TestProbe()
+    val handlerClassName = "someHandlerClassName"
+
+    val viewSchedulingListenerManagerActor = TestActorRef(
+      new ViewSchedulingListenerManagerActor(Schedoscope.settings) {
+        override def preStart {
+          context.actorOf(Props(new ForwardChildActor(fakeListenerHandlerChild.ref)), handlerClassName)
+        }
+      })
+
+    // for the sake of coherence with the real process, let's use a fake
+    // viewActor and another fake listenerHandlerActor
+    val viewActor = TestProbe()
+
+    val prevState1 = CreatedByViewManager(view)
+    val vsme = ViewSchedulingMonitoringEvent(prevState1, prevState1, Set(Transform(view)), new LocalDateTime())
+
+    viewActor.send(viewSchedulingListenerManagerActor, vsme)
+    fakeListenerHandlerChild.expectMsg(vsme)
 
   }
 

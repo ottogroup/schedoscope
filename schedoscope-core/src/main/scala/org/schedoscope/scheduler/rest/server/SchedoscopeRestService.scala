@@ -72,9 +72,6 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
           path("transformations") {
             complete(schedoscope.transformations(status, filter))
           } ~
-          path("queues") {
-            complete(schedoscope.queues(typ, filter))
-          } ~
           path("views" / Rest.?) { viewUrlPath =>
             complete(schedoscope.views(viewUrlPath, status, filter, issueFilter, dependencies, overview, all))
           } ~

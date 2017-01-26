@@ -34,7 +34,8 @@ import scala.language.postfixOps
 /**
   * A driver actor manages the executions of transformations using hive, oozie etc. The actual
   * execution is done using a driver trait implementation. The driver actor code itself is transformation
-  * type agnostic. Driver actors poll the transformation tasks they execute from the transformation manager actor
+  * type agnostic. Driver actors receive the transformation tasks they execute from the transformation manager actor
+  * via intermediate driver router actor
   *
   */
 class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
@@ -52,8 +53,10 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   var runningCommand: Option[DriverCommand] = None
 
+  val driverRouter = context.parent
+
   /**
-    * Start ticking upon start.
+    * Log state upon start.
     */
   override def preStart() {
     try {
@@ -61,18 +64,15 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     } catch {
       case t: Throwable => throw RetryableDriverException("Driver actor could not initialize driver because driver constructor throws exception (HINT: if Driver Actor start failure behaviour persists, validate the respective transformation driver config in conf file). Restarting driver actor...", t)
     }
-
     logStateInfo("idle", "DRIVER ACTOR: initialized actor")
-
-    tick()
   }
 
   /**
-    * If the driver actor is being restarted by the transformation manager actor, the currently running action is reenqueued so it does not get lost.
+    * If the driver actor is being restarted by the driver router actor, the currently running action is re-distributed to driver router for load balancing to another worker, and so it does not get lost.
     */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
-      transformationManagerActor ! runningCommand.get
+      driverRouter ! runningCommand.get
   }
 
   /**
@@ -84,15 +84,10 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   /**
     * Message handler for the default state.
-    * Transitions only to state running, keeps polling the action manager for new work
+    * Transitions only to state running
     */
   def receive = LoggingReceive {
     case t: DriverCommand => toRunning(t)
-
-    case "tick" => {
-      transformationManagerActor ! PollCommand(driver.transformationName)
-      tick()
-    }
   }
 
   /**
@@ -106,9 +101,8 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
       driver.killRun(runHandle)
       toReceive()
     }
-    // If getting a command while being busy, reschedule it by sending it to the actionsmanager
-    // Should this ever happen?
-    case c: DriverCommand => transformationManagerActor ! c
+    // If getting a command while being busy, reschedule it by sending it to the driver router for load balancing
+    case c: DriverCommand => driverRouter ! c
 
     // check all 10 seconds the state of the current running driver
     case "tick" => try {
@@ -128,7 +122,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
               log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}, trace ${ExceptionUtils.getStackTrace(t)}")
               originalSender ! TransformationFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t))
               toReceive()
-              tick()
             }
           }
 
@@ -146,7 +139,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
           originalSender ! TransformationSuccess(runHandle, success, viewHasData)
           toReceive()
-          tick()
         }
 
         case failure: DriverRunFailed[T] => {
@@ -163,7 +155,6 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
           originalSender ! TransformationFailure(runHandle, failure)
           toReceive()
-          tick()
         }
       }
     } catch {
@@ -220,7 +211,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           driver.driverRunStarted(runHandle)
 
           logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
-
+          tick()
           become(running(runHandle, commandToRun.sender, Some(view)))
         case t: Transformation =>
           val transformation: T = t.asInstanceOf[T]
@@ -229,7 +220,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           driver.driverRunStarted(runHandle)
 
           logStateInfo("running", s"DRIVER ACTOR: Running transformation ${transformation}, configuration=${transformation.configuration}, runHandle=${runHandle}", runHandle, driver.getDriverRunState(runHandle))
-
+          tick()
           become(running(runHandle, commandToRun.sender, None))
       }
     } catch {
@@ -282,7 +273,8 @@ object DriverActor {
     Props(
       classOf[DriverActor[_]],
       transformationManager,
-      settings.getDriverSettings(transformationName), (ds: DriverSettings) => Driver.driverFor(ds),
+      settings.getDriverSettings(transformationName),
+      (ds: DriverSettings) => Driver.driverFor(ds),
       if (transformationName == "filesystem")
         100 milliseconds
       else if (transformationName == "noop")
@@ -297,5 +289,6 @@ object DriverActor {
       transformationName,
       transformationManager,
       defaultFileSystem(settings.hadoopConf))
+
 
 }
