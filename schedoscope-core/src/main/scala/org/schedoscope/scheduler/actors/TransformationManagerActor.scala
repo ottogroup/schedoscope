@@ -80,7 +80,11 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
           s"(retries=${newBackOff.retries}, resets=${newBackOff.resets}, total-retries=${newBackOff.totalRetries})")
       } else {
         asr.actor ! "tick"
-        val backOff = ExponentialBackOff(5 seconds)
+        val transformation = getTransformationType(asr.actor)
+        val backOffSlotTime = settings.getDriverSettings(transformation).backOffSlotTime millis
+        val backOffDelay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
+
+        val backOff = ExponentialBackOff(backOffSlotTime = backOffSlotTime, constanteDelay = backOffDelay)
         log.debug(s"TRANFORMATION MANAGER ACTOR: Set initial back-off waiting " +
           s"time to value ${backOff.backOffWaitTime} for booted actor ${asr.actor.path.toStringWithoutAddress}; " +
           s"(retries=${backOff.retries}, resets=${backOff.resets}, total-retries=${backOff.totalRetries})")
@@ -88,6 +92,14 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
       }
     }
     driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
+  }
+
+  def getTransformationType(actor: ActorRef): String = {
+    val router = actor.path.toString
+      .slice(self.path.toString.size, actor.path.toString.size)
+      .split("/")(1)
+    val transformation = router.split("-")(0)
+    transformation
   }
 
   /**
@@ -121,7 +133,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
         case TransformView(transformation, view) =>
           context.actorSelection(s"${self.path}/${transformation}-router") forward commandToExecute
         case DeployCommand() =>
-          context.actorSelection(s"${self.path}/*-router") forward commandToExecute
+          context.actorSelection(s"${self.path}/*-router/*") forward commandToExecute
         case transformation: Transformation =>
           context.actorSelection(s"${self.path}/${transformation.name}-router") forward commandToExecute
       }
@@ -136,7 +148,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
       context.actorSelection(s"${self.path}/${filesystemTransformation.name}-router") forward driverCommand
 
     case deploy: DeployCommand =>
-      context.actorSelection(s"${self.path}/*-router") forward DriverCommand(deploy, sender)
+      context.actorSelection(s"${self.path}/*-router/*") forward DriverCommand(deploy, sender)
   })
 
 }

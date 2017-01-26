@@ -25,6 +25,7 @@ import scala.util.Random
   * @param backOffSlotTime    the time value of a slot; in wikipedia network example, this would be the 51.2 microseconds
   * @param backOffSlot        counter for exponential growth; in wikipedia example, this would be the collisions count
   * @param backOffWaitTime    the actual waiting time for a given iteration
+  * @param constantDelay     add, optionally, variant to algorithm to allow guarantee of minimum delay > 0
   * @param ceiling            optionally define an upper limit for the max number of collisions multiplier
   * @param resetOnCeiling     reset algorithm collision count if ceiling reached
   * @param retries            counter for number of retries/collisions occurred
@@ -34,13 +35,14 @@ import scala.util.Random
 case class ExponentialBackOff(backOffSlotTime: FiniteDuration,
                               backOffSlot: Int = 1,
                               backOffWaitTime: FiniteDuration = Duration.Zero,
+                              constantDelay: FiniteDuration = Duration.Zero,
                               ceiling: Int = 10,
                               resetOnCeiling: Boolean = false,
                               retries: Int = 0,
                               resets: Int = 0,
                               totalRetries: Long = 0) {
 
-  private def updateTime = backOffSlotTime * expectedBackOff(backOffSlot)
+  private def updateTime = backOffSlotTime * expectedBackOff(backOffSlot) + constantDelay
 
   private def expectedBackOff(backOffSlot: Int) = {
     val rand = new Random().nextInt(backOffSlot + 1)

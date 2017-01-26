@@ -16,7 +16,7 @@
 package org.schedoscope.scheduler.actors
 
 import akka.actor.{Actor, ActorRef, ActorSystem}
-import akka.testkit.{TestActorRef, TestKit, TestProbe}
+import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import test.views.ProductBrand
 import org.schedoscope.dsl.Parameter._
@@ -29,6 +29,7 @@ import scala.util.Random
 import scala.concurrent.duration._
 
 class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
+  with ImplicitSender
   with FlatSpecLike
   with Matchers
   with BeforeAndAfterAll {
@@ -196,15 +197,6 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
         actor shouldBe hivedriverActor
       }
     }
-  }
-
-  "Driver Actors" should "should reply to their original command senders" in {
-    val msgSender = TestProbe()
-    val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
-      bootstrapDriverActors = true))
-    val cmd = DriverCommand(DeployCommand(), msgSender.ref)
-    system.actorSelection("akka://schedoscope/user/*") ! cmd
-    msgSender.expectMsg(DeployCommandSuccess())
   }
 
 }

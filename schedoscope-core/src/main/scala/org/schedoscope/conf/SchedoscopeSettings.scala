@@ -215,6 +215,16 @@ class DriverSettings(val config: Config, val name: String) {
   lazy val concurrency = config.getInt("concurrency")
 
   /**
+    * Backoff time slot for driver actor restart.
+    */
+  lazy val backOffSlotTime = config.getInt("driver-actor-backoff-slot-time")
+
+  /**
+    * Backoff time slot for driver actor restart.
+    */
+  lazy val backOffMinimumDelay = config.getInt("driver-actor-backoff-minimum-delay")
+
+  /**
     * Do the driver respective resource need unpacking
     */
   lazy val unpack = config.getBoolean("unpack")

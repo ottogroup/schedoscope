@@ -55,6 +55,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   val driverRouter = context.parent
 
+
   /**
     * Log state upon start.
     */
@@ -84,7 +85,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   /**
     * Message handler for the default state.
-    * Transitions only to state active running
+    * Transitions only to state activeReceive
     */
   def receive = LoggingReceive {
     case "tick" => toActiveReceive()
