@@ -1,6 +1,7 @@
 #!/bin/bash
 CP=""
 for D in lib/*.jar; do CP=${CP}:${D}; done
+CP=${CP}:`hadoop classpath`
 CP=${CP}:metascope.jar
 
 if [ -z "$1" ]; then
