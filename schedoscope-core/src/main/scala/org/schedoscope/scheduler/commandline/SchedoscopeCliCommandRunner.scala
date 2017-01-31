@@ -43,7 +43,7 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
     head("schedoscope-control")
     help("help") text "print usage"
 
-    cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text "lists all view actors, along with their status" children(
+    cmd("views") action { (_, c) => c.copy(action = Some(VIEWS)) } text "lists all views, along with their status" children(
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName "<status>" text "filter views by their status (e.g. 'transforming')",
       opt[String]('v', "viewUrlPath") action { (x, c) => c.copy(viewUrlPath = Some(x)) } optional() valueName "<viewUrlPath>" text "view url path (e.g. 'my.database/MyView/Partition1/Partition2'). ",
       opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName "<regex>" text "regular expression to filter view display (e.g. 'my.database/.*/Partition1/.*'). ",
@@ -52,9 +52,9 @@ class SchedoscopeCliCommandRunner(schedoscope: SchedoscopeService) {
       opt[Unit]('o', "overview") action { (_, c) => c.copy(overview = Some(true)) } optional() text "show only overview, skip individual views",
       opt[Unit]('a', "all") action { (_, c) => c.copy(all = Some(true)) } optional() text "show details for views")
 
-    cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text "show transformation status" children(
-      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName "<status>" text "filter transformations by their status (e.g. 'queued, running, idle')",
-      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName "<regex>" text "regular expression to filter transformation display (e.g. '.*hive-1.*'). ")
+    cmd("transformations") action { (_, c) => c.copy(action = Some(TRANSFORMATIONS)) } text "show status of transformation drivers" children(
+      opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName "<status>" text "filter transformation drivers by their status (e.g. 'running, idle')",
+      opt[String]('f', "filter") action { (x, c) => c.copy(filter = Some(x)) } optional() valueName "<regex>" text "regular expression to filter transformation driver display (e.g. '.*hive.*'). ")
 
     cmd("materialize") action { (_, c) => c.copy(action = Some(MATERIALIZE)) } text "materialize view(s)" children(
       opt[String]('s', "status") action { (x, c) => c.copy(status = Some(x)) } optional() valueName "<status>" text "filter views to be materialized by their status (e.g. 'failed')",
