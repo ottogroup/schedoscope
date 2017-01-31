@@ -33,11 +33,11 @@ class SparkDriverTest extends FlatSpec with Matchers with BeforeAndAfter {
 
   lazy val successfulSparkTransformation = driver.rigTransformationForTest(
     SparkTransformation(
-    classNameOf(SimpleFileWriter),
-    jarOf(SimpleFileWriter),
-    classNameOf(SimpleFileWriter),
-    List(outpath, "one argument", "another argument")
-  ), testResources)
+      classNameOf(SimpleFileWriter),
+      jarOf(SimpleFileWriter),
+      classNameOf(SimpleFileWriter),
+      List(outpath, "one argument", "another argument")
+    ), testResources)
 
   lazy val failingSparkTransformation = driver.rigTransformationForTest(
     SparkTransformation(

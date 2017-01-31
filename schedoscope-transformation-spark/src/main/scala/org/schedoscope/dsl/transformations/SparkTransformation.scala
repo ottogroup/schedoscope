@@ -44,7 +44,7 @@ import org.schedoscope.scheduler.driver.FilesystemDriver
   * @param propertiesFile  Path to an optional properties file.
   */
 case class SparkTransformation(
-                                applicationName: String, mainJarOrPy: String, mainClass: String = null,
+                                applicationName: String = "", mainJarOrPy: String, mainClass: String = null,
                                 applicationArgs: List[String] = List(),
                                 master: String = "yarn-cluster", deployMode: String = "cluster",
                                 additionalJars: List[String] = List(),

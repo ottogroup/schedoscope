@@ -77,7 +77,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
 
   private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = q.map {
-    case trans: Transformation => RunStatus(trans.description, trans.getView(), "", "", None)
+    case trans: Transformation => RunStatus(trans.description, trans.getViewUrl(), "", "", None)
     case other => RunStatus(other.toString, "", "", "", None)
   }
 
@@ -219,7 +219,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
     if (drh != null) {
       val desc = drh.transformation.asInstanceOf[Transformation].description
-      val view = drh.transformation.asInstanceOf[Transformation].getView()
+      val view = drh.transformation.asInstanceOf[Transformation].getViewUrl()
 
       val runStatus = RunStatus(
         getOrElse(desc, "no-desc"),
