@@ -78,11 +78,6 @@ case class KillCommand() extends CommandRequest
 case class DeployCommand() extends CommandRequest
 
 /**
-  * Used by driver actors to poll the transformation manager actor for a new piece of work to be executed.
-  */
-case class PollCommand(typ: String) extends CommandRequest
-
-/**
   * Tells a driver actor to execute a transformation.
   *
   * @param transformation to execute
@@ -97,16 +92,11 @@ case class TransformView(transformation: Transformation, view: View) extends Com
   */
 case class DriverCommand(command: AnyRef, sender: ActorRef) extends CommandRequest
 
-
 /**
   * Request to the transformation manager to generate a summary of currently running actions
   */
 case class GetTransformations() extends CommandRequest
 
-/**
-  * Request to the tranformation manager to retrieve the contents and size of the transformation queues
-  */
-case class GetQueues() extends CommandRequest
 
 /**
   * Request to the transformation manager to return the state of all driver actors
@@ -223,13 +213,6 @@ case class MetaDataForMaterialize(metadata: (View, (String, Long)), mode: Materi
   * @param driverRunState  return state of the driver
   */
 case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunSucceeded[T], viewHasData: Boolean) extends CommandResponse
-
-/**
-  * Response message of transformation manager actor with state of queues
-  *
-  * @param transformationQueues List of queue states of type
-  */
-case class QueueStatusListResponse(val transformationQueues: Map[String, List[AnyRef]]) extends CommandResponse
 
 /**
   * Response message of transformation manager actor with state of actions

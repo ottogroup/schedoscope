@@ -109,13 +109,6 @@ trait SchedoscopeService {
   def transformations(status: Option[String], filter: Option[String]): Future[TransformationStatusList]
 
   /**
-    * Returns the transformations waiting in queues. These can be filtered by transformation type or a regexp.
-    *
-    * Throws an InvalidArgumentException if an invalid regexp filter is passed.
-    */
-  def queues(typ: Option[String], filter: Option[String]): Future[QueueStatusList]
-
-  /**
     * Shut down Schedoscope.
     */
   def shutdown(): Boolean

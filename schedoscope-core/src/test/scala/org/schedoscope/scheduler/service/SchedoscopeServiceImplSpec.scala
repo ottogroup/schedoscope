@@ -144,7 +144,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val schemaManagerActor = TestProbe()
     val transformationManagerActor = TestProbe()
 
-    // view actors (spawn by ViewManagerActor
+    // view actors (spawn by ViewManagerActor)
     lazy val prodBrandViewActor = TestProbe()
     lazy val prodViewActor = TestProbe()
     lazy val brandViewActor = TestProbe()
@@ -822,35 +822,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     response.value.get.get.views(0).status shouldBe initStatus
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
-  }
-
-  /**
-    * Testing /queues
-    *
-    * /queues parameters:
-    *
-    * status=(running|idle) passing this parameter will further restrict the output to transformation drivers with the given state.
-    * filter=Regexp apply a regular expression filter on driver name (e.g. '?filter=.hive.')
-    *
-    */
-
-  it should "ask transformationManagerActor for ongoing queues" in new SchedoscopeServiceTest {
-    val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
-    val typParam = None
-    val filterParam = None
-    val response = service.queues(typParam, filterParam)
-
-    transformationManagerActor.expectMsg(DeployCommand())
-    transformationManagerActor.expectMsg(GetQueues())
-
-    val queueMsgStatus = QueueStatusListResponse(Map("allFakeActors" -> List(TestProbe().ref, TestProbe().ref)))
-    transformationManagerActor.reply(queueMsgStatus)
-
-    Await.result(response, TIMEOUT)
-
-    response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map("allFakeActors" -> 2)
-    response.value.get.get.queues.get("allFakeActors").get.size shouldBe 2
   }
 
   /**
