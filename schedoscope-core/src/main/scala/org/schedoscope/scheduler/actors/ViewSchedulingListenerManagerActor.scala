@@ -97,7 +97,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   def receive: Receive = LoggingReceive({
 
     case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) =>
-      context.actorSelection("*") ! ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime)
+      context.actorSelection(s"${self.path}/*") ! ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime)
       viewsMonitored += (prevState.view -> ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime))
 
     case CollectViewSchedulingStatus(handlerClassName) =>
