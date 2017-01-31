@@ -100,6 +100,7 @@ object SparkTransformation {
 
   /**
     * Return an absolute path for a resource on the classpath so that it can be passed as the mainJarOrPy of a Spark transformation.
+    *
     * @param resourcePath The path to the resource. Needs to start with "classpath://"
     * @return the absolute path to the resource.
     */
@@ -107,7 +108,8 @@ object SparkTransformation {
 
   /**
     * Constructs a Spark transformation of out of a Hive transformation by taking its query and passing it to SparkSQLRunner.
-    * @param t  the Hive transformation to run on Spark
+    *
+    * @param t               the Hive transformation to run on Spark
     * @param master          Spark master setting. Defaults to "yarn-cluster".
     * @param deployMode      Spark deployment mode setting. Defaults to "cluster"
     * @param additionalJars  A list of optional JAR files to deploy with the job. Defaults to an empty list.
@@ -135,5 +137,5 @@ object SparkTransformation {
       additionalFiles,
       propertiesFile
     )
-  
+
 }

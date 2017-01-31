@@ -56,7 +56,6 @@ trait WritableView extends View {
       (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
 
 
-
   // unify storage format
   storedAs(resources.textStorage)
 

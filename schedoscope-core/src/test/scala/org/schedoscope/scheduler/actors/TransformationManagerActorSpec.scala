@@ -1,4 +1,5 @@
 package org.schedoscope.scheduler.actors
+
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar

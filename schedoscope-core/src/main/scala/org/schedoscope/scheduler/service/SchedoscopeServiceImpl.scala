@@ -113,13 +113,13 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     * Convenience method for DRYing viewStatusListFromStatusResponses
     */
   private def viewStatusOutput(vsr: ViewStatusResponse,
-                                    viewTableName: Option[String],
-                                    isTable: Option[Boolean],
-                                    dependencies: Option[Boolean],
-                                    overview: Boolean = true,
-                                    all: Option[Boolean],
-                                    issueFilter: Option[String]
-                                   ) =
+                               viewTableName: Option[String],
+                               isTable: Option[Boolean],
+                               dependencies: Option[Boolean],
+                               overview: Boolean = true,
+                               all: Option[Boolean],
+                               issueFilter: Option[String]
+                              ) =
 
     ViewStatus(
       viewPath = vsr.view.urlPath,
@@ -240,10 +240,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
 
   private def queryViewStatus(viewUrlPath: Option[String],
-                                 status: Option[String],
-                                 filter: Option[String],
-                                 issueFilter: Option[String],
-                                 dependencies: Boolean = false) = {
+                              status: Option[String],
+                              filter: Option[String],
+                              issueFilter: Option[String],
+                              dependencies: Boolean = false) = {
 
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))

@@ -24,11 +24,12 @@ object SchedoscopeCliFormat {
   // FIXME: a more generic parsing would be cool...
 
   private def formatMap(p: Option[Map[String, String]]) = {
-    val result = if(p.isDefined) {
+    val result = if (p.isDefined) {
       p.get.foldLeft("") { (s: String, pair: (String, String)) =>
-        s + ", " + pair._1 + "=" + pair._2 }
+        s + ", " + pair._1 + "=" + pair._2
+      }
     } else ""
-    if(result.length > 2)
+    if (result.length > 2)
       result.drop(2)
     else
       result
@@ -81,11 +82,11 @@ object SchedoscopeCliFormat {
           val data = vl.views
             .filter(!_.isTable.getOrElse(false))
             .map(d => Array(d.viewPath, d.status,
-                if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
-                  fields.get(d.viewTableName.get).get.map(fieldStatus =>
-                    fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") +
-                    ", " + formatMap(d.properties)
-                } else formatMap(d.properties) )
+              if (d.viewTableName.isDefined && fields.get(d.viewTableName.get).isDefined) {
+                fields.get(d.viewTableName.get).get.map(fieldStatus =>
+                  fieldStatus.name + "::" + fieldStatus.fieldtype).mkString(", ") +
+                  ", " + formatMap(d.properties)
+              } else formatMap(d.properties))
             ).toArray
 
           sb.append(ASCIITable.getInstance.getTable(header, data))

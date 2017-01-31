@@ -57,10 +57,10 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
   var viewsMonitored = Map[View, ViewSchedulingMonitoringEvent]()
   var handlersMonitored = Set[String]()
 
-  def viewSchedulingListenerHandlers(handlers:List[String] = settings.viewSchedulingListeners) =
+  def viewSchedulingListenerHandlers(handlers: List[String] = settings.viewSchedulingListeners) =
     handlers.filter(getViewSchedulingHandlerClass).toSet
 
-  def getViewSchedulingHandlerClass(className: String):Boolean =
+  def getViewSchedulingHandlerClass(className: String): Boolean =
     try {
       Class.forName(className).newInstance().asInstanceOf[ViewSchedulingListener]
       true
@@ -76,7 +76,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
     * Monitoring classes.
     */
   override def preStart {
-    viewSchedulingListenerHandlers().foreach( handler =>
+    viewSchedulingListenerHandlers().foreach(handler =>
       actorOf(
         ViewSchedulingListenerActor.props(
           handler, self), handler)
@@ -88,7 +88,7 @@ class ViewSchedulingListenerManagerActor(settings: SchedoscopeSettings) extends 
     log.info(s"Restarted because of ${reason.getMessage}")
   }
 
-  def collectViewSchedulingStatus(actor:ActorRef, handlerClassName:String) =
+  def collectViewSchedulingStatus(actor: ActorRef, handlerClassName: String) =
     if (handlersMonitored contains handlerClassName) {
       handlersMonitored -= handlerClassName
       viewsMonitored.values.foreach(actor ! _)

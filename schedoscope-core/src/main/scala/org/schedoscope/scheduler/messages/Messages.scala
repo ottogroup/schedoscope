@@ -84,8 +84,9 @@ case class PollCommand(typ: String) extends CommandRequest
 
 /**
   * Tells a driver actor to execute a transformation.
+  *
   * @param transformation to execute
-  * @param view to transform
+  * @param view           to transform
   */
 case class TransformView(transformation: Transformation, view: View) extends CommandRequest
 
@@ -95,7 +96,6 @@ case class TransformView(transformation: Transformation, view: View) extends Com
   * notify the sender about the outcome.
   */
 case class DriverCommand(command: AnyRef, sender: ActorRef) extends CommandRequest
-
 
 
 /**
@@ -121,11 +121,12 @@ case class GetTransformationStatusList(statusRequester: ActorRef, transformation
   * @param filter       filter the result by regular expression on the view name
   * @param dependencies also return all dependent views
   */
-case class GetViews(views: Option[List[View]], status: Option[String], issueFilter:Option[String], filter: Option[String], dependencies: Boolean = false)
+case class GetViews(views: Option[List[View]], status: Option[String], issueFilter: Option[String], filter: Option[String], dependencies: Boolean = false)
 
 /**
   * Request to view manager to send a message to a specific view
-  * @param view target view
+  *
+  * @param view    target view
   * @param message payload
   */
 case class DelegateMessageToView(view: View, message: AnyRef) extends CommandRequest
@@ -157,14 +158,16 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
 /**
   * Special [[MaterializeView]] command with will refresh the metadata of a view before materializing it.
   * Used for external views.
+  *
   * @param mode materialization mode
   */
 case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
 /**
   * Request for the SchemaManager to
-  * @param view to be materialized
-  * @param mode materialization mode
+  *
+  * @param view              to be materialized
+  * @param mode              materialization mode
   * @param materializeSource sender of materialize command
   */
 case class GetMetaDataForMaterialize(view: View,
@@ -193,6 +196,7 @@ case class DeployCommandSuccess() extends CommandResponse
 
 /**
   * Notification for view actor about a new
+  *
   * @param view
   * @param viewRef
   */
@@ -205,11 +209,12 @@ case class SchemaActionSuccess() extends CommandResponse
 
 /**
   * Schema actor notifying view actor about the metadata of the view
-  * @param metadata of the view
-  * @param mode transformation mode
+  *
+  * @param metadata          of the view
+  * @param mode              transformation mode
   * @param materializeSource sender of the [[MaterializeView]] command
   */
-case class MetaDataForMaterialize(metadata: (View,(String,Long)), mode: MaterializeViewMode, materializeSource: ActorRef) extends CommandResponse
+case class MetaDataForMaterialize(metadata: (View, (String, Long)), mode: MaterializeViewMode, materializeSource: ActorRef) extends CommandResponse
 
 /**
   * Driver actor notifying view actor of successful transformation.
@@ -255,13 +260,13 @@ case class TransformationStatusResponse[T <: Transformation](val message: String
 /**
   * View actor responding to the view manager actor with the state of the view
   *
-  * @param status textual description of the status
-  * @param view   reference to the curresponding view
-  * @param actor  actor reference to ViewActor
-  * @param errors true if some transformations in that subtree have been failing
+  * @param status     textual description of the status
+  * @param view       reference to the curresponding view
+  * @param actor      actor reference to ViewActor
+  * @param errors     true if some transformations in that subtree have been failing
   * @param incomplete true of not all transitive dependencies had data available
   */
-case class ViewStatusResponse(val status: String, view: View, actor: ActorRef, errors: Option[Boolean]=None, incomplete:Option[Boolean]=None) extends CommandResponse
+case class ViewStatusResponse(val status: String, view: View, actor: ActorRef, errors: Option[Boolean] = None, incomplete: Option[Boolean] = None) extends CommandResponse
 
 /**
   * Schema actor returning the stored transformation metadata (version checksum, timestamp) retrieved from metadata store
@@ -294,7 +299,7 @@ sealed class ViewSchedulingMonitoring
   * Message exchanged between View Actors and ViewSchedulerManager Actor
   * to know if there are any handler classes instantiated
   */
-case class CollectViewSchedulingStatus(handlerClassName:String) extends ViewSchedulingMonitoring
+case class CollectViewSchedulingStatus(handlerClassName: String) extends ViewSchedulingMonitoring
 
 
 /**
@@ -304,7 +309,7 @@ case class CollectViewSchedulingStatus(handlerClassName:String) extends ViewSche
   * per view on PostRestart
   *
   */
-case class RegisterFailedListener(handlerClassName:String) extends ViewSchedulingMonitoring
+case class RegisterFailedListener(handlerClassName: String) extends ViewSchedulingMonitoring
 
 
 /**

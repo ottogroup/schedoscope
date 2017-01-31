@@ -91,20 +91,20 @@ class FilesystemDriver(val driverRunCompletionHandlerClassNames: List[String], v
     * Writes all bytes from an given InputStream to a file in the view locationPath
     */
   def storeFromStream(inputStream: InputStream, to: String): DriverRunState[FilesystemTransformation] = try {
-      val streamInFile = FilesystemDriver.inputStreamToFile(inputStream)
+    val streamInFile = FilesystemDriver.inputStreamToFile(inputStream)
 
-      val fromFS = fileSystem(streamInFile)
-      val toFS = fileSystem(to)
+    val fromFS = fileSystem(streamInFile)
+    val toFS = fileSystem(to)
 
-      toFS.mkdirs(new Path(to))
+    toFS.mkdirs(new Path(to))
 
-      FileUtil.copy(fromFS, new Path(streamInFile), toFS, new Path(to), false, true, conf)
+    FileUtil.copy(fromFS, new Path(streamInFile), toFS, new Path(to), false, true, conf)
 
-      DriverRunSucceeded(this, s"Storing from InputStream to ${to} succeeded")
-    } catch {
-      case i: IOException => DriverRunFailed(this, s"Caught IO exception while storing InputStream to ${to}", i)
-      case t: Throwable => throw RetryableDriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
-    }
+    DriverRunSucceeded(this, s"Storing from InputStream to ${to} succeeded")
+  } catch {
+    case i: IOException => DriverRunFailed(this, s"Caught IO exception while storing InputStream to ${to}", i)
+    case t: Throwable => throw RetryableDriverException(s"Runtime exception caught while copying InputStream to ${to}", t)
+  }
 
 
   /**

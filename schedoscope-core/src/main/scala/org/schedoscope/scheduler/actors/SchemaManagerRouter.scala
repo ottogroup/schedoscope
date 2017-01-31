@@ -39,11 +39,11 @@ class SchemaManagerRouter(settings: SchedoscopeSettings) extends Actor {
     * Supervisor strategy: Restart schema or metadata logger actors failing with SchemaManagerExceptions
     */
   override val supervisorStrategy =
-  OneForOneStrategy(maxNrOfRetries = -1) {
-    case _: RetryableSchemaManagerException => Restart
-    case _: ActorInitializationException => Restart
-    case _ => Escalate
-  }
+    OneForOneStrategy(maxNrOfRetries = -1) {
+      case _: RetryableSchemaManagerException => Restart
+      case _: ActorInitializationException => Restart
+      case _ => Escalate
+    }
 
   override def preStart {
     metadataLoggerActor = actorOf(MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "metadata-logger")

@@ -101,9 +101,15 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     } catch {
       case t: Throwable =>
         log.warn(s"Could not create database ${view.dbName}. Maybe you simply do not have permission to execute CREATE TABLE statements. In this case, get an admin to create the database for you before running schedoscope.", t)
+        throw t
     }
-
-    stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
+    try {
+      stmt.execute(s"DROP TABLE IF EXISTS ${view.dbName}.${view.n}")
+    } catch {
+      case t: Throwable =>
+        log.warn(s"Failed to drop existing table ${view.dbName}.${view.n}.")
+        throw t
+    }
 
     log.info(s"Creating table:\n${ddl}")
 
@@ -111,6 +117,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
     stmt.close()
 
+    log.info(s"Successfully created table ${view.dbName}.${view.n}; now adding Checksum '${HiveQl.ddlChecksum(view)}' to table properties.")
     setTableProperty(view.dbName, view.n, Checksum.SchemaChecksum.checksumProperty, HiveQl.ddlChecksum(view))
   } catch {
     case t: Throwable => {

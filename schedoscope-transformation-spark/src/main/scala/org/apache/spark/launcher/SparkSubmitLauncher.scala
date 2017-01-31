@@ -230,10 +230,11 @@ case class ExitCodeAwareChildProcAppHandle(childProcAppHandle: ChildProcAppHandl
     childProcAppHandle.setChildProc(childProc, loggerName)
   }
 
-  def getExitCode = childProc.flatMap { p => try {
-    Some(p.exitValue())
-  } catch {
-    case t: IllegalThreadStateException => None
-  }
+  def getExitCode = childProc.flatMap { p =>
+    try {
+      Some(p.exitValue())
+    } catch {
+      case t: IllegalThreadStateException => None
+    }
   }
 }

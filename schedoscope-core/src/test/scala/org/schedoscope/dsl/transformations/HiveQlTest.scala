@@ -22,6 +22,9 @@ import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.transformations.HiveTransformation.queryFromResource
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.schedoscope.dsl.{Parameter, Structure, View}
+import org.schedoscope.schema.ddl.HiveQl
+import test.views._
+
 
 case class Article() extends Structure {
   val name = fieldOf[String]
@@ -56,6 +59,267 @@ case class OrderAll(year: Parameter[Int], month: Parameter[Int], day: Parameter[
 }
 
 class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
+
+  it should "generate Parquet row format and tblproperties sql statement" in {
+    val view = ArticleViewParquet()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_parquet (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS PARQUET
+        |	TBLPROPERTIES (
+        |		 'orc.compress' = 'ZLIB',
+        |		 'transactional' = 'true'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_parquet'
+        |""".stripMargin
+  }
+
+  it should "generate Parquet row format sql statement" in {
+    val view = ArticleViewParquet2()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_parquet2 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
+        |	STORED AS
+        |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat'
+        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
+        |	LOCATION '/hdp/dev/test/views/article_view_parquet2'
+        |""".stripMargin
+  }
+
+  it should "generate Sequence file row format" in {
+    val view = ArticleViewSequence()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_sequence (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS SEQUENCEFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_sequence'
+        |""".stripMargin
+  }
+
+  it should "generate avro row format and tblproperties sql statement" in {
+    val view = ArticleViewAvro()
+    val hack = ""
+    HiveQl.ddl(view) shouldEqual
+      s"""	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_avro ${hack}
+         |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+         |	WITH SERDEPROPERTIES (
+         |		 'avro.schema.url' = 'hdfs:///hdp/dev/global/datadictionary/schema/avro/myPath'
+         |	)
+         |	STORED AS
+         |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+         |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+         |	TBLPROPERTIES (
+         |		 'immutable' = 'true'
+         |	)
+         |	LOCATION '/hdp/dev/test/views/article_view_avro'
+         |""".stripMargin
+  }
+
+  it should "generate avro consise format" in {
+    val view = ArticleViewAvro2()
+    val hack = ""
+    HiveQl.ddl(view) shouldEqual
+      s"""	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_avro2 ${hack}
+         |	STORED AS AVRO
+         |	TBLPROPERTIES (
+         |		 'immutable' = 'true'
+         |	)
+         |	LOCATION '/hdp/dev/test/views/article_view_avro2'
+         |""".stripMargin
+  }
+
+  it should "generate ORC row format and tblproperties sql statement" in {
+    val view = ArticleViewOrc()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_orc (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS ORC
+        |	TBLPROPERTIES (
+        |		 'immutable' = 'false'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_orc'
+        |""".stripMargin
+  }
+
+  it should "generate ORC row format sql statement" in {
+    val view = ArticleViewOrc2()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_orc2 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.orc.OrcSerde'
+        |	STORED AS
+        |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'
+        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
+        |	LOCATION '/hdp/dev/test/views/article_view_orc2'
+        |""".stripMargin
+  }
+
+  it should "generate TextFile row format and tblproperties sql statement" in {
+    val view = ArticleViewTextFile1()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_text_file1 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT DELIMITED
+        |	FIELDS TERMINATED BY '\\001'
+        |	LINES TERMINATED BY '\n'
+        |	COLLECTION ITEMS TERMINATED BY '\002'
+        |	MAP KEYS TERMINATED BY '\003'
+        |	STORED AS TEXTFILE
+        |	TBLPROPERTIES (
+        |		 'what' = 'ever'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file1'
+        |""".stripMargin
+  }
+
+  it should "generate TextFile2 row format and tblproperties sql statement" in {
+    val view = ArticleViewTextFile2()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_text_file2 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+        |	WITH SERDEPROPERTIES (
+        |		 'separatorChar' = '\t',
+        |		 'escapeChar' = '\\'
+        |	)
+        |	STORED AS TEXTFILE
+        |	TBLPROPERTIES (
+        |		 'what' = 'buh'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file2'
+        |""".stripMargin
+  }
+
+  it should "generate TextFile3 in row format" in {
+    val view = ArticleViewTextFile3()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_text_file3 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS
+        |		INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
+        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+        |	TBLPROPERTIES (
+        |		 'what' = 'buh'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file3'
+        |""".stripMargin
+  }
+
+  it should "generate Record Columnar format and tblproperties sql statement" in {
+    val view = ArticleViewRc()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_rc (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS RCFILE
+        |	TBLPROPERTIES (
+        |		 'scalable' = 'true'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_rc'
+        |""".stripMargin
+  }
+
+  it should "generate json row format and tblproperties sql statement" in {
+    val view = ArticleViewJson()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_json (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
+        |	STORED AS TEXTFILE
+        |	TBLPROPERTIES (
+        |		 'transactional' = 'true'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_json'
+        |""".stripMargin
+  }
+
+  it should "generate custom serde with properties and stored as textfile" in {
+    val view = ArticleViewCsv()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_csv (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+        |	WITH SERDEPROPERTIES (
+        |		 'separatorChar' = '\t',
+        |		 'quoteChar' = ''',
+        |		 'escapeChar' = '\\'
+        |	)
+        |	STORED AS TEXTFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_csv'
+        |""".stripMargin
+  }
+
+  it should "generate custom RegEx serde with properties and stored as textfile" in {
+    val view = ArticleViewRegEx()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_reg_ex (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.RegexSerDe'
+        |	WITH SERDEPROPERTIES (
+        |		 'input.regex' = 'test'
+        |	)
+        |	STORED AS TEXTFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_reg_ex'
+        |""".stripMargin
+  }
+
+  it should "generate inputOutput row format and tblproperties sql statement" in {
+    val view = ArticleViewInOutput()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_in_output (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.orc.OrcSerde'
+        |	STORED AS
+        |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'
+        |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
+        |	TBLPROPERTIES (
+        |		 'EXTERNAL' = 'TRUE'
+        |	)
+        |	LOCATION '/hdp/dev/test/views/article_view_in_output'
+        |""".stripMargin
+  }
+
+  it should "generate S3 row format and tblproperties sql statement" in {
+    val view = ArticleViewS3()
+    HiveQl.ddl(view) shouldEqual
+      """	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_s3 (
+        |		name STRING,
+        |		number INT
+        |	)
+        |	STORED AS ORC
+        |	TBLPROPERTIES (
+        |		 'orc.compress' = 'ZLIB',
+        |		 'transactional' = 'true'
+        |	)
+        |	LOCATION 's3a://schedoscope-bucket-test/dev/test/views/article_view_s3'
+        |""".stripMargin
+  }
 
   "HiveTransformation.insertInto" should "generate correct static partitioning prefix by default" in {
     val orderAll = OrderAll(p(2014), p(10), p(12))

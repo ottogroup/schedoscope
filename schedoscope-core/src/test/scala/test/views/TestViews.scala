@@ -16,7 +16,7 @@
 package test.views
 
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.storageformats.{Avro, Parquet, TextFile}
+import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.Export._
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.HiveTransformation._
@@ -372,3 +372,135 @@ case class RequireView(shopCode: Parameter[String])
   val field1 = fieldOf[String]
 }
 
+case class ArticleViewParquet() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("orc.compress" -> "ZLIB", "transactional" -> "true"))
+  storedAs(Parquet())
+}
+
+case class ArticleViewParquet2() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(Parquet(fullRowFormatCreateTblStmt = true))
+}
+
+case class ArticleViewSequence() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(SequenceFile())
+}
+
+case class ArticleViewAvro() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("immutable" -> "true"))
+  storedAs(Avro("myPath"))
+}
+
+case class ArticleViewAvro2() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("immutable" -> "true"))
+  storedAs(Avro("myPath", fullRowFormatCreateTblStmt = false))
+}
+
+case class ArticleViewOrc() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("immutable" -> "false"))
+  storedAs(OptimizedRowColumnar())
+}
+
+case class ArticleViewOrc2() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(OptimizedRowColumnar(fullRowFormatCreateTblStmt = true))
+}
+
+case class ArticleViewRc() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("scalable" -> "true"))
+  storedAs(RecordColumnarFile())
+}
+
+case class ArticleViewCsv() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(Csv(serDeProperties = Map("separatorChar" ->"""\t""",
+    "quoteChar" -> "'", "escapeChar" ->"""\\""")))
+}
+
+case class ArticleViewRegEx() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  storedAs(TextFile(serDe = "org.apache.hadoop.hive.serde2.RegexSerDe",
+    serDeProperties = Map("input.regex" -> "test")))
+}
+
+case class ArticleViewJson() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("transactional" -> "true"))
+  storedAs(Json())
+}
+
+case class ArticleViewTextFile1() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("what" -> "ever"))
+  storedAs(TextFile(fieldTerminator = """\\001""",
+    collectionItemTerminator = """\002""",
+    mapKeyTerminator = """\003""",
+    lineTerminator = """\n"""
+  ))
+}
+
+case class ArticleViewTextFile2() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("what" -> "buh"))
+  storedAs(TextFile(serDe = "org.apache.hadoop.hive.serde2.OpenCSVSerde",
+    serDeProperties = Map("separatorChar" ->"""\t""",
+      "escapeChar" ->"""\\""")))
+}
+
+case class ArticleViewTextFile3() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("what" -> "buh"))
+  storedAs(TextFile(fullRowFormatCreateTblStmt = true))
+}
+
+case class ArticleViewInOutput() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("EXTERNAL" -> "TRUE"))
+  storedAs(InOutputFormat(input = "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
+    output = "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat",
+    serDe = "org.apache.hadoop.hive.ql.io.orc.OrcSerde"))
+}
+
+case class ArticleViewS3() extends View {
+  val name = fieldOf[String]
+  val number = fieldOf[Int]
+
+  tblProperties(Map("orc.compress" -> "ZLIB", "transactional" -> "true"))
+  storedAs(S3("schedoscope-bucket-test", OptimizedRowColumnar(), "s3a"))
+}
