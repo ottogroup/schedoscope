@@ -17,7 +17,7 @@ package org.schedoscope.scheduler.actors
 
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.testkit.{TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
@@ -60,11 +60,11 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
       bootstrapDriverActors = false) {
       override def preStart {
-        context.actorOf(Props(new ForwardChildActor(hiveDriverRouter.ref)), "hive-router")
-        context.actorOf(Props(new ForwardChildActor(mapRedDriverRouter.ref)), "mapreduce-router")
-        context.actorOf(Props(new ForwardChildActor(noopDriverRouter.ref)), "noop-router")
-        context.actorOf(Props(new ForwardChildActor(seqDriverRouter.ref)), "seq-router")
-        context.actorOf(Props(new ForwardChildActor(fsDriverRouter.ref)), "filesystem-router")
+        context.actorOf(Props(new ForwardChildActor(hiveDriverRouter.ref)), "hive-driver")
+        context.actorOf(Props(new ForwardChildActor(mapRedDriverRouter.ref)), "mapreduce-driver")
+        context.actorOf(Props(new ForwardChildActor(noopDriverRouter.ref)), "noop-driver")
+        context.actorOf(Props(new ForwardChildActor(seqDriverRouter.ref)), "seq-driver")
+        context.actorOf(Props(new ForwardChildActor(fsDriverRouter.ref)), "filesystem-driver")
       }
     })
 
