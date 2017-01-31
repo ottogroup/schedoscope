@@ -132,6 +132,19 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   override def toString() = urlPath
 
   /**
+    * Proposed name for the transformation materializing this view
+    *
+    * @return
+    */
+  def shortUrlPath = {
+    val dbPath = dbName
+      .split("_").takeRight(2)
+      .map(_.substring(0,1))
+      .mkString(".")
+    s"${dbPath}/${namingBase.replaceAll("[^a-zA-Z0-9]","")}/${partitionValues(false).mkString("/")}"
+  }
+
+  /**
     * The URL path syntax identifying the present view.
     */
   def urlPath = s"${urlPathPrefix}/${partitionValues(false).mkString("/")}"
