@@ -376,7 +376,7 @@ case class ArticleViewParquet() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("orc.compress"->"ZLIB", "transactional" -> "true"))
+  tblProperties(Map("orc.compress" -> "ZLIB", "transactional" -> "true"))
   storedAs(Parquet())
 }
 
@@ -398,7 +398,7 @@ case class ArticleViewAvro() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("immutable"->"true"))
+  tblProperties(Map("immutable" -> "true"))
   storedAs(Avro("myPath"))
 }
 
@@ -406,7 +406,7 @@ case class ArticleViewAvro2() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("immutable"->"true"))
+  tblProperties(Map("immutable" -> "true"))
   storedAs(Avro("myPath", fullRowFormatCreateTblStmt = false))
 }
 
@@ -414,7 +414,7 @@ case class ArticleViewOrc() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("immutable"->"false"))
+  tblProperties(Map("immutable" -> "false"))
   storedAs(OptimizedRowColumnar())
 }
 
@@ -429,7 +429,7 @@ case class ArticleViewRc() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("scalable"->"true"))
+  tblProperties(Map("scalable" -> "true"))
   storedAs(RecordColumnarFile())
 }
 
@@ -437,8 +437,8 @@ case class ArticleViewCsv() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  storedAs(Csv(serDeProperties = Map("separatorChar"->"""\t""",
-    "quoteChar"->"'", "escapeChar"->"""\\""")))
+  storedAs(Csv(serDeProperties = Map("separatorChar" ->"""\t""",
+    "quoteChar" -> "'", "escapeChar" ->"""\\""")))
 }
 
 case class ArticleViewRegEx() extends View {
@@ -446,14 +446,14 @@ case class ArticleViewRegEx() extends View {
   val number = fieldOf[Int]
 
   storedAs(TextFile(serDe = "org.apache.hadoop.hive.serde2.RegexSerDe",
-    serDeProperties = Map("input.regex"-> "test")))
+    serDeProperties = Map("input.regex" -> "test")))
 }
 
 case class ArticleViewJson() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("transactional"->"true"))
+  tblProperties(Map("transactional" -> "true"))
   storedAs(Json())
 }
 
@@ -461,7 +461,7 @@ case class ArticleViewTextFile1() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("what"->"ever"))
+  tblProperties(Map("what" -> "ever"))
   storedAs(TextFile(fieldTerminator = """\\001""",
     collectionItemTerminator = """\002""",
     mapKeyTerminator = """\003""",
@@ -473,17 +473,17 @@ case class ArticleViewTextFile2() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("what"->"buh"))
+  tblProperties(Map("what" -> "buh"))
   storedAs(TextFile(serDe = "org.apache.hadoop.hive.serde2.OpenCSVSerde",
-    serDeProperties = Map("separatorChar"->"""\t""",
-    "escapeChar"->"""\\""")))
+    serDeProperties = Map("separatorChar" ->"""\t""",
+      "escapeChar" ->"""\\""")))
 }
 
 case class ArticleViewTextFile3() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("what"->"buh"))
+  tblProperties(Map("what" -> "buh"))
   storedAs(TextFile(fullRowFormatCreateTblStmt = true))
 }
 
@@ -491,7 +491,7 @@ case class ArticleViewInOutput() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("EXTERNAL"->"TRUE"))
+  tblProperties(Map("EXTERNAL" -> "TRUE"))
   storedAs(InOutputFormat(input = "org.apache.hadoop.hive.ql.io.orc.OrcInputFormat",
     output = "org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat",
     serDe = "org.apache.hadoop.hive.ql.io.orc.OrcSerde"))
@@ -501,6 +501,6 @@ case class ArticleViewS3() extends View {
   val name = fieldOf[String]
   val number = fieldOf[Int]
 
-  tblProperties(Map("orc.compress"->"ZLIB", "transactional" -> "true"))
+  tblProperties(Map("orc.compress" -> "ZLIB", "transactional" -> "true"))
   storedAs(S3("schedoscope-bucket-test", OptimizedRowColumnar(), "s3a"))
 }

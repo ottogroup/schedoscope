@@ -79,7 +79,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       s3BucketPathBuilder(s3Bucket.get, s3UriScheme.get)
     else
       Schedoscope.settings.viewDataHdfsRoot) + "/" + env.toLowerCase() +
-    "/" + moduleNameBuilder()
+      "/" + moduleNameBuilder()
       .replaceFirst("app", "applications").replaceAll("_", "/")
 
   /**
@@ -147,10 +147,10 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * Returns a list of partition values in order the parameter weights. Such lists are necessary for communicating with the metastore.
     */
   def partitionValues(ignoreSuffixPartitions: Boolean = true) =
-  (if (ignoreSuffixPartitions)
-    partitionParameters
-  else
-    parameters).map(p => p.v.getOrElse("").toString).toList
+    (if (ignoreSuffixPartitions)
+      partitionParameters
+    else
+      parameters).map(p => p.v.getOrElse("").toString).toList
 
   /**
     * Returns all parameters that are not suffix parameters (i.e., real partitioning parameters) of the present view
@@ -254,7 +254,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
         storedAs(storageFormat, additionalStoragePathPrefix, additionalStoragePathSuffix)
 
       case _ =>
-        // do nothing ..
+      // do nothing ..
 
     }
 
@@ -263,7 +263,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Specify table properties of a view, which is implemented in Hive as clause TBLPROPERTIES
     */
-  def tblProperties(m: Map[String, String]):Unit = tblProperties ++= m
+  def tblProperties(m: Map[String, String]): Unit = tblProperties ++= m
 
   /**
     * Postfactum configuration of the registered transformation. Useful to override transformation configs within a test.
@@ -376,11 +376,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def hasExternalDependencies = dependencies.exists(_.isExternal)
 
   def isInDatabases(databases: String*): Boolean = {
-    val name = dbName.replace("_",".")
+    val name = dbName.replace("_", ".")
 
-    databases.exists{
+    databases.exists {
       s =>
-        name.startsWith(s.replace("${env}",env))
+        name.startsWith(s.replace("${env}", env))
     }
   }
 }
@@ -418,24 +418,24 @@ object View {
     * Instantiate views given an environment and view URL path. A parsed view augmentor can further modify the created views.
     */
   def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] =
-  try {
-    ViewUrlParser
-      .parse(env, viewUrlPath)
-      .map {
-        parsedViewAugmentor.augment(_)
-      }
-      .filter {
-        _ != null
-      }
-      .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
-  } catch {
-    case t: Throwable =>
-      if (t.isInstanceOf[java.lang.reflect.InvocationTargetException]) {
-        throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getCause().getMessage}")
-      } else {
-        throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
-      }
-  }
+    try {
+      ViewUrlParser
+        .parse(env, viewUrlPath)
+        .map {
+          parsedViewAugmentor.augment(_)
+        }
+        .filter {
+          _ != null
+        }
+        .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
+    } catch {
+      case t: Throwable =>
+        if (t.isInstanceOf[java.lang.reflect.InvocationTargetException]) {
+          throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getCause().getMessage}")
+        } else {
+          throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
+        }
+    }
 
   /**
     * Instantiate a new view given its class name, an environment, and a list of parameter values.
@@ -498,8 +498,6 @@ object View {
     registeredView.env = env
     registeredView
   }
-
-
 
 
 }

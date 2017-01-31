@@ -17,7 +17,7 @@ package org.schedoscope.scheduler.listeners
 
 import org.schedoscope.scheduler.states.ViewSchedulingEvent
 
-class ViewSchedulingListenerHandler(viewSchedulingHandlerClassName:String) {
+class ViewSchedulingListenerHandler(viewSchedulingHandlerClassName: String) {
 
   lazy val viewSchedulingListener: ViewSchedulingListener =
     Class
@@ -29,7 +29,7 @@ class ViewSchedulingListenerHandler(viewSchedulingHandlerClassName:String) {
     * Call handler passing event data
     */
   def viewSchedulingCall(event: ViewSchedulingEvent): Unit = {
-      viewSchedulingListener.viewSchedulingEvent(event)
+    viewSchedulingListener.viewSchedulingEvent(event)
   }
 
 }

@@ -69,7 +69,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
         .filter(vs => issueFilter.isEmpty || (
           List("materialized", "failed").contains(vs.status) && (
-                 ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
+            ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
               || ("errors".equals(issueFilter.get) && vs.errors.getOrElse(false))
               || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
             )
@@ -99,7 +99,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     * Convenience "private" method to validate external Views and their dependencies
     * prior to actor initialization
     */
-  def validateExternalViews(allViews: List[(View, Boolean, Int)]):Unit =
+  def validateExternalViews(allViews: List[(View, Boolean, Int)]): Unit =
     if (!settings.externalDependencies) {
       //external dependencies are not allowed
       val containsExternalDependencies = allViews.exists {

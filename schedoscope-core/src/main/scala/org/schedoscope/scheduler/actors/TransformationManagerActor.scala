@@ -181,7 +181,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
     log.info(s"TRANSFORMATIONMANAGER ENQUEUE: Enqueued ${queueName} transformation${if (transformation.view.isDefined) s" for view ${transformation.view.get}" else ""}; queue size is now: ${queues.get(queueName).get.size}")
   }
 
-  def enqueueDeploy(driverCommand: DriverCommand ): Unit = {
+  def enqueueDeploy(driverCommand: DriverCommand): Unit = {
     queues.values.foreach {
       _.enqueue(driverCommand)
     }

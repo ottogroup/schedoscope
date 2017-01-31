@@ -84,20 +84,20 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
   "A ViewActor" should "send a ViewSchedulingEvent msg to the viewSchedulingListenerManagerActor" in
     new viewSchedulingListenerManagerActorTest {
 
-    val brandViewActor = initializeView(view)
+      val brandViewActor = initializeView(view)
 
-    val futureMaterialize = brandViewActor ? MaterializeView()
+      val futureMaterialize = brandViewActor ? MaterializeView()
 
-    viewSchedulingListenerManagerActor.expectMsgPF() {
-      case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
-        prevState shouldBe ReadFromSchemaManager(view, "test", 1L)
-        newState.label shouldBe "transforming"
-        newState.view shouldBe view
-        actions.head.isInstanceOf[Transform] shouldBe true
+      viewSchedulingListenerManagerActor.expectMsgPF() {
+        case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
+          prevState shouldBe ReadFromSchemaManager(view, "test", 1L)
+          newState.label shouldBe "transforming"
+          newState.view shouldBe view
+          actions.head.isInstanceOf[Transform] shouldBe true
+        }
       }
-    }
 
-  }
+    }
 
   it should "cache views along with their last event and reply to listeners that have been restarted" in {
 

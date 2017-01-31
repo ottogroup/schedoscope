@@ -9,9 +9,10 @@ case class HiveView() extends View {
   val f = fieldOf[String]
 
   transformVia {
-    () => HiveTransformation(
-      insertInto(this, "select * from view"))
-      .defineVersion("v2.2")
+    () =>
+      HiveTransformation(
+        insertInto(this, "select * from view"))
+        .defineVersion("v2.2")
   }
 
 }

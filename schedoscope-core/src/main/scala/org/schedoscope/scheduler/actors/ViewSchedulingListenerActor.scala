@@ -27,10 +27,11 @@ import org.schedoscope.scheduler.messages.{CollectViewSchedulingStatus, Register
   *
   */
 
-class ViewSchedulingListenerActor(handlerClassName:String,
+class ViewSchedulingListenerActor(handlerClassName: String,
                                   viewSchedulingListenerManagerActor: ActorRef) extends Actor {
 
   import context._
+
   val log = Logging(system, ViewSchedulingListenerActor.this)
   val viewSchedulingListenerHandler = new ViewSchedulingListenerHandler(handlerClassName)
 
@@ -61,7 +62,7 @@ class ViewSchedulingListenerActor(handlerClassName:String,
   * Factory for ViewSchedulingListenerActor actor.
   */
 object ViewSchedulingListenerActor {
-  def props(handlerClassName:String, viewSchedulingListenerManagerActor: ActorRef) =
+  def props(handlerClassName: String, viewSchedulingListenerManagerActor: ActorRef) =
     Props(classOf[ViewSchedulingListenerActor],
       handlerClassName, viewSchedulingListenerManagerActor)
 }

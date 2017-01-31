@@ -21,8 +21,8 @@ import org.schedoscope.scheduler.states.{ViewSchedulingEvent}
 
 class TestViewListener extends ViewSchedulingListener {
 
-  override def viewSchedulingEvent(event: ViewSchedulingEvent):Unit = {
-    if(event.prevState != event.newState) throw new IllegalArgumentException("Randomly chosen throwable out")
+  override def viewSchedulingEvent(event: ViewSchedulingEvent): Unit = {
+    if (event.prevState != event.newState) throw new IllegalArgumentException("Randomly chosen throwable out")
     else throw new RetryableViewSchedulingListenerException("Second randomly chosen throwable out")
   }
 }
