@@ -43,7 +43,6 @@ class SparkSubmitLauncherTest extends FlatSpec with BeforeAndAfter with Matchers
   }
 
 
-
   after {
     FileUtils.deleteDirectory(new File(outpath))
   }

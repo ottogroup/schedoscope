@@ -139,9 +139,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def shortUrlPath = {
     val dbPath = dbName
       .split("_").takeRight(2)
-      .map(_.substring(0,1))
+      .map(_.substring(0, 1))
       .mkString(".")
-    s"${dbPath}/${namingBase.replaceAll("[^a-zA-Z0-9]","")}/${partitionValues(false).mkString("/")}"
+    s"${dbPath}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}/${partitionValues(false).mkString("/")}"
   }
 
   /**

@@ -50,7 +50,7 @@ class SparkDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
       additionalFiles,
       propertiesFile
       ) =>
-        l.setAppName(if(applicationName.isEmpty) t.getViewUrl() else applicationName)
+        l.setAppName(if (applicationName.isEmpty) t.getViewUrl() else applicationName)
         l.setAppResource(mainJarOrPy)
 
         if (mainClass != null)
