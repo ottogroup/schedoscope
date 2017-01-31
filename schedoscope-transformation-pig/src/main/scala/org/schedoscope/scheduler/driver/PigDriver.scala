@@ -42,8 +42,9 @@ class PigDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi:
   def run(t: PigTransformation): DriverRunHandle[PigTransformation] =
     new DriverRunHandle[PigTransformation](this, new LocalDateTime(), t, Future {
       // FIXME: future work: custom functions
-      executePigTransformation(t.latin, t.dirsToDelete, t.defaultLibraries, t.configuration.toMap, t.getView())
+      executePigTransformation(t.latin, t.dirsToDelete, t.defaultLibraries, t.configuration.toMap, t.getViewUrl())
     })
+
 
   /**
     * Rig Pig transformations prior to test by tweaking UDF path references to local classpath references.
