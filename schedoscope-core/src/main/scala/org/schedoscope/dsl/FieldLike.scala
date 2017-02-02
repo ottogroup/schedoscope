@@ -51,4 +51,21 @@ abstract class FieldLike[T: Manifest] extends Named {
     case Some(s) => s.nameOf(this).getOrElse(t.runtimeClass.getSimpleName)
     case None => t.runtimeClass.getSimpleName
   }
+
+  override def equals(obj: scala.Any): Boolean = obj match {
+    case f: FieldLike[T] => assignedStructure -> f.assignedStructure match {
+      case (Some(struct1), Some(struct2)) => struct1.nameOf(this) == struct2.nameOf(f)
+      case _ => false
+    }
+  }
+
+  override def hashCode(): Int = assignedStructure match {
+    case Some(struct) => struct.nameOf(this).hashCode()
+    case _ => super.hashCode()
+  }
+
+  override def toString: String = assignedStructure match {
+    case Some(view: View) => s"${view.tableName}.${view.nameOf(this).getOrElse("")}"
+    case _ => namingBase
+  }
 }
