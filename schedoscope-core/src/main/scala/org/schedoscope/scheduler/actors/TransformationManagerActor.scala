@@ -107,14 +107,16 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
     */
   override def preStart {
 
-    if(bootstrapDriverActors) {
-      for(transformation <- Driver.transformationsWithDrivers) {
+    if (bootstrapDriverActors) {
+      for (transformation <- Driver.transformationsWithDrivers) {
         actorOf(
-          SmallestMailboxPool(nrOfInstances = settings.getDriverSettings(transformation).concurrency,
+          SmallestMailboxPool(
+            nrOfInstances = settings.getDriverSettings(transformation).concurrency,
             supervisorStrategy = driverRouterSupervisorStrategy,
-            routerDispatcher = "akka.actor.driver-router-dispatcher")
-            .props(routeeProps = DriverActor.props(settings, transformation, self)),
-          s"${transformation}-router")
+            routerDispatcher = "akka.actor.driver-router-dispatcher"
+          ).props(routeeProps = DriverActor.props(settings, transformation, self)),
+          s"${transformation}-driver"
+        )
       }
     }
   }
@@ -131,26 +133,25 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
     case commandToExecute: DriverCommand =>
       commandToExecute.command match {
         case TransformView(transformation, view) =>
-          context.actorSelection(s"${self.path}/${transformation}-router") forward commandToExecute
+          context.actorSelection(s"${self.path}/${transformation}-driver") forward commandToExecute
         case DeployCommand() =>
-          context.actorSelection(s"${self.path}/*-router/*") forward commandToExecute
+          context.actorSelection(s"${self.path}/*-driver/*") forward commandToExecute
         case transformation: Transformation =>
-          context.actorSelection(s"${self.path}/${transformation.name}-router") forward commandToExecute
+          context.actorSelection(s"${self.path}/${transformation.name}-driver") forward commandToExecute
       }
 
     case viewToTransform: View =>
       val transformation = viewToTransform.transformation().forView(viewToTransform)
       val commandRequest = DriverCommand(TransformView(transformation, viewToTransform), sender)
-      context.actorSelection(s"${self.path}/${transformation.name}-router") forward commandRequest
+      context.actorSelection(s"${self.path}/${transformation.name}-driver") forward commandRequest
 
     case filesystemTransformation: FilesystemTransformation =>
       val driverCommand = DriverCommand(filesystemTransformation, sender)
-      context.actorSelection(s"${self.path}/${filesystemTransformation.name}-router") forward driverCommand
+      context.actorSelection(s"${self.path}/${filesystemTransformation.name}-driver") forward driverCommand
 
     case deploy: DeployCommand =>
-      context.actorSelection(s"${self.path}/*-router/*") forward DriverCommand(deploy, sender)
+      context.actorSelection(s"${self.path}/*-driver/*") forward DriverCommand(deploy, sender)
   })
-
 }
 
 /**

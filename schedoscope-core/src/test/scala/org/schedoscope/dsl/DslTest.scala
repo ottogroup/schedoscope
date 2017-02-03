@@ -47,6 +47,12 @@ class DslTest extends FlatSpec with Matchers {
     productBrandView.module shouldEqual "test_views"
   }
 
+  it should "have a job name which is defined by its package and class" in {
+    val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+
+    productBrandView.shortUrlPath shouldEqual "t.v/ProductBrand/ec0106/2014/01/01/20140101"
+  }
+
   it should "be commentable" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 

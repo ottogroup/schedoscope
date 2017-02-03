@@ -1,7 +1,23 @@
+/**
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.scheduler.actors
+
+
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.testkit.{TestActorRef, TestKit, TestProbe}
-import akka.testkit.EventFilter
+import akka.testkit.{TestActorRef, TestKit, TestProbe, EventFilter}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
@@ -47,11 +63,11 @@ class TransformationManagerActorSpec extends
     val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
       bootstrapDriverActors = false) {
       override def preStart {
-        context.actorOf(Props(new ForwardChildActor(hiveDriverRouter.ref)), "hive-router")
-        context.actorOf(Props(new ForwardChildActor(mapRedDriverRouter.ref)), "mapreduce-router")
-        context.actorOf(Props(new ForwardChildActor(noopDriverRouter.ref)), "noop-router")
-        context.actorOf(Props(new ForwardChildActor(seqDriverRouter.ref)), "seq-router")
-        context.actorOf(Props(new ForwardChildActor(fsDriverRouter.ref)), "filesystem-router")
+        context.actorOf(Props(new ForwardChildActor(hiveDriverRouter.ref)), "hive-driver")
+        context.actorOf(Props(new ForwardChildActor(mapRedDriverRouter.ref)), "mapreduce-driver")
+        context.actorOf(Props(new ForwardChildActor(noopDriverRouter.ref)), "noop-driver")
+        context.actorOf(Props(new ForwardChildActor(seqDriverRouter.ref)), "seq-driver")
+        context.actorOf(Props(new ForwardChildActor(fsDriverRouter.ref)), "filesystem-driver")
       }
     })
 
@@ -167,8 +183,9 @@ class TransformationManagerActorSpec extends
 
     EventFilter.info(pattern = "TRANFORMATION MANAGER ACTOR: Set new back-off waiting time to value *",
       occurrences = totalCountDrivers) intercept {
-      system.actorSelection(s"${transformationManagerActor.path}/*-router/*") ! "reboot"
+      system.actorSelection(s"${transformationManagerActor.path}/*-driver/*") ! "reboot"
     }
+
 
   }
 

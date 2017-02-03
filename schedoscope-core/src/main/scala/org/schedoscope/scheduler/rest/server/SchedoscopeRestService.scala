@@ -72,15 +72,15 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
           path("transformations") {
             complete(schedoscope.transformations(status, filter))
           } ~
-          path("views" / Rest.?) { viewUrlPath =>
-            complete(schedoscope.views(viewUrlPath, status, filter, issueFilter, dependencies, overview, all))
-          } ~
-          path("materialize" / Rest.?) { viewUrlPath =>
-            complete(schedoscope.materialize(viewUrlPath, status, filter, issueFilter, mode))
-          } ~
-          path("invalidate" / Rest.?) { viewUrlPath =>
-            complete(schedoscope.invalidate(viewUrlPath, status, filter, issueFilter, dependencies))
-          }
+            path("views" / Rest.?) { viewUrlPath =>
+              complete(schedoscope.views(viewUrlPath, status, filter, issueFilter, dependencies, overview, all))
+            } ~
+            path("materialize" / Rest.?) { viewUrlPath =>
+              complete(schedoscope.materialize(viewUrlPath, status, filter, issueFilter, mode))
+            } ~
+            path("invalidate" / Rest.?) { viewUrlPath =>
+              complete(schedoscope.invalidate(viewUrlPath, status, filter, issueFilter, dependencies))
+            }
       }
     }
   })

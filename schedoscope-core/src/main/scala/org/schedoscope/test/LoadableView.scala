@@ -167,8 +167,8 @@ trait test extends LoadableView with AccessRowData {
   /**
     * Execute the hive query in test on previously specified test fixtures.
     *
-    * @param sortedBy               sort the table by field
-    * @param disableDependencyCheck disable dependency checks
+    * @param sortedBy                        sort the table by field
+    * @param disableDependencyCheck          disable dependency checks
     * @param disableTransformationValidation disable transformation validation
     */
   def `then`(sortedBy: FieldLike[_] = null,

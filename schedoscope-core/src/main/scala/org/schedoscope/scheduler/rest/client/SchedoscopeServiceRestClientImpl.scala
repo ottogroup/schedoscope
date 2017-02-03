@@ -47,7 +47,7 @@ class SchedoscopeServiceRestClientImpl(val host: String, val port: Int) extends 
 
   case class HttpFailureStatusException(status: StatusCode, message: String) extends RuntimeException(
     s"""Received HTTP Status Code ${status}
-        |${message}""".stripMargin)
+       |${message}""".stripMargin)
 
   def catchHttpFailureStatus: HttpResponse => HttpResponse = {
     response =>

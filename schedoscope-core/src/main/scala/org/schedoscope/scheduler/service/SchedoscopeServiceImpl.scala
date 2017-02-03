@@ -77,7 +77,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
 
   private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = q.map {
-    case trans: Transformation => RunStatus(trans.description, trans.getView(), "", "", None)
+    case trans: Transformation => RunStatus(trans.description, trans.getViewUrl(), "", "", None)
     case other => RunStatus(other.toString, "", "", "", None)
   }
 
@@ -113,13 +113,13 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
     * Convenience method for DRYing viewStatusListFromStatusResponses
     */
   private def viewStatusOutput(vsr: ViewStatusResponse,
-                                    viewTableName: Option[String],
-                                    isTable: Option[Boolean],
-                                    dependencies: Option[Boolean],
-                                    overview: Boolean = true,
-                                    all: Option[Boolean],
-                                    issueFilter: Option[String]
-                                   ) =
+                               viewTableName: Option[String],
+                               isTable: Option[Boolean],
+                               dependencies: Option[Boolean],
+                               overview: Boolean = true,
+                               all: Option[Boolean],
+                               issueFilter: Option[String]
+                              ) =
 
     ViewStatus(
       viewPath = vsr.view.urlPath,
@@ -219,7 +219,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
     if (drh != null) {
       val desc = drh.transformation.asInstanceOf[Transformation].description
-      val view = drh.transformation.asInstanceOf[Transformation].getView()
+      val view = drh.transformation.asInstanceOf[Transformation].getViewUrl()
 
       val runStatus = RunStatus(
         getOrElse(desc, "no-desc"),
@@ -240,10 +240,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
 
 
   private def queryViewStatus(viewUrlPath: Option[String],
-                                 status: Option[String],
-                                 filter: Option[String],
-                                 issueFilter: Option[String],
-                                 dependencies: Boolean = false) = {
+                              status: Option[String],
+                              filter: Option[String],
+                              issueFilter: Option[String],
+                              dependencies: Boolean = false) = {
 
     val cf = Future(checkFilter(filter))
     val cvup = Future(checkViewUrlPath(viewUrlPath))

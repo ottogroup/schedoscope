@@ -63,20 +63,20 @@ trait ViewSchedulingListener {
 
   def getTransformationDetails(transfChecksum: String, transfTimestamp: Option[Long]) = {
     val ts = transfTimestamp match {
-      case Some(t:Long) => s"\ttransformation-timestamp: ${t}"
+      case Some(t: Long) => s"\ttransformation-timestamp: ${t}"
       case _ => ""
     }
     s"\ttransformation-checksum: ${transfChecksum}" + ts
   }
 
   def getWithErrorsOrIncomplete(errors: Boolean, incomplete: Boolean) =
-      s"\terrors: ${errors}" +
+    s"\terrors: ${errors}" +
       s"\tincomplete: ${incomplete}"
 
   def getMaterializationDetails(listenersWaitingForMaterialize: scala.collection.Set[PartyInterestedInViewSchedulingStateChange],
-                   materializationMode: MaterializeViewMode) =
+                                materializationMode: MaterializeViewMode) =
     s"\tlisteners-waiting-for-this-materialization: [${listenersWaitingForMaterialize.mkString(", ")}]" +
-    s"\tmaterialization-mode: ${materializationMode}"
+      s"\tmaterialization-mode: ${materializationMode}"
 
   def getStateMetrics(state: ViewSchedulingState) = {
     val msg = state match {
@@ -88,8 +88,8 @@ trait ViewSchedulingListener {
         getTransformationDetails(transfChecksum, Some(transfTimestamp))
 
       case Waiting(view, transfChecksum, transfTimestamp, dependenciesMaterializing,
-        listenersWaitingForMaterialize, materializationMode, oneDependencyReturnedData,
-        errors, incomplete, dependenciesFreshness) =>
+      listenersWaitingForMaterialize, materializationMode, oneDependencyReturnedData,
+      errors, incomplete, dependenciesFreshness) =>
         getTransformationDetails(transfChecksum, Some(transfTimestamp)) +
           s"\tdependencies-materializing: ${dependenciesMaterializing.mkString(", ")}" +
           getMaterializationDetails(listenersWaitingForMaterialize, materializationMode) +
@@ -98,15 +98,15 @@ trait ViewSchedulingListener {
           s"\tdependencies-freshness: ${dependenciesFreshness}"
 
       case Transforming(view, transfChecksum, listenersWaitingForMaterialize,
-        materializationMode, errors, incomplete, retries) =>
+      materializationMode, errors, incomplete, retries) =>
         getTransformationDetails(transfChecksum, None) +
           getMaterializationDetails(listenersWaitingForMaterialize, materializationMode) +
           getWithErrorsOrIncomplete(errors, incomplete) +
           s"\tretries: ${retries}"
 
       case Retrying(view, transfChecksum, listenersWaitingForMaterialize,
-        materializationMode, errors, incomplete, nextRetry) =>
-          getTransformationDetails(transfChecksum, None) +
+      materializationMode, errors, incomplete, nextRetry) =>
+        getTransformationDetails(transfChecksum, None) +
           getMaterializationDetails(listenersWaitingForMaterialize, materializationMode) +
           getWithErrorsOrIncomplete(errors, incomplete) +
           s"\tnext-retry: ${nextRetry}"
@@ -118,18 +118,18 @@ trait ViewSchedulingListener {
   def storeNewEvent(event: ViewSchedulingEvent) =
     latestViewEvent += (event.prevState.view -> event)
 
-  def getViewSchedulingTimeDelta(event: ViewSchedulingEvent):Long = {
-    if(latestViewEvent contains(event.prevState.view)) {
+  def getViewSchedulingTimeDelta(event: ViewSchedulingEvent): Long = {
+    if (latestViewEvent contains (event.prevState.view)) {
       val prevT = latestViewEvent.get(event.prevState.view).get.eventTime.toDateTime.getMillis / 1000
       val t = event.eventTime.toDateTime().getMillis / 1000
       t - prevT
     } else 0
   }
 
-  def getViewSchedulingTimeDeltaOutput(event:ViewSchedulingEvent) =
-    if(latestViewEvent contains(event.prevState.view)) {
+  def getViewSchedulingTimeDeltaOutput(event: ViewSchedulingEvent) =
+    if (latestViewEvent contains (event.prevState.view)) {
       val prevEvent = latestViewEvent.get(event.prevState.view).get
-      val tStamp = if(getViewSchedulingTimeDelta(event) > 0)
+      val tStamp = if (getViewSchedulingTimeDelta(event) > 0)
         s"\tevents timestampt difference: ${getViewSchedulingTimeDelta(event)} (s)"
       else
         ""

@@ -69,7 +69,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
         .filter(vs => issueFilter.isEmpty || (
           List("materialized", "failed").contains(vs.status) && (
-                 ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
+            ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
               || ("errors".equals(issueFilter.get) && vs.errors.getOrElse(false))
               || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
             )
@@ -95,20 +95,11 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     }
   })
 
-
   /**
-    * Initialize view actors for a list of views. If a view actor has been produced for a view
-    * previously, that one is returned.
-    *
-    * @param vs           the views to create actors for
-    * @param dependencies create actors for the prerequisite views as well.
-    * @return the set of corresponding view actor refs
+    * Convenience "private" method to validate external Views and their dependencies
+    * prior to actor initialization
     */
-  def initializeViewActors(vs: List[View], dependencies: Boolean = false): Set[ActorRef] = {
-    log.info(s"Initializing ${vs.size} views")
-
-    val allViews = viewsToCreateActorsFor(vs, dependencies)
-
+  def validateExternalViews(allViews: List[(View, Boolean, Int)]): Unit =
     if (!settings.externalDependencies) {
       //external dependencies are not allowed
       val containsExternalDependencies = allViews.exists {
@@ -129,6 +120,21 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         }
       }
     }
+
+  /**
+    * Initialize view actors for a list of views. If a view actor has been produced for a view
+    * previously, that one is returned.
+    *
+    * @param vs           the views to create actors for
+    * @param dependencies create actors for the prerequisite views as well.
+    * @return the set of corresponding view actor refs
+    */
+  def initializeViewActors(vs: List[View], dependencies: Boolean = false): Set[ActorRef] = {
+    log.info(s"Initializing ${vs.size} views")
+
+    val allViews = viewsToCreateActorsFor(vs, dependencies)
+
+    validateExternalViews(allViews)
 
     log.info(s"Computed ${allViews.size} views (with dependencies=${dependencies})")
 

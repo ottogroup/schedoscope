@@ -28,7 +28,7 @@ import com.typesafe.config.Config
   *
   */
 class DriverPriorityMailbox(settings: ActorSystem.Settings, config: Config)
-  extends UnboundedPriorityMailbox (
+  extends UnboundedPriorityMailbox(
     // Note: lower prio means more important
     PriorityGenerator {
       // prioritize tick for progress tracking

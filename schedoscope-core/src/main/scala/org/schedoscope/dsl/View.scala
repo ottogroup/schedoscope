@@ -49,28 +49,38 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   val isExternal = false
   val suffixPartitions = new HashSet[Parameter[_]]()
   private val deferredDependencies = ListBuffer[() => Seq[View]]()
+
   /**
     * Pluggable builder function that returns the name of the module the view belongs to.
     * The default implemementation returns the view's package in database-friendly lower-case underscore format, replacing all . with _.
     */
   override var moduleNameBuilder = () => lowerCasePackageName.replaceAll("[.]", "_")
+
   /**
     * Pluggable builder function that returns the database name for the view given an environment.
     * The default implementation prepends the environment to the result of moduleNameBuilder with an underscore.
     */
   override var dbNameBuilder = (env: String) => env.toLowerCase() + "_" + moduleNameBuilder()
+
   /**
     * Pluggable builder function that returns the table name for the view given an environment.
     * The default implementation appends the view's name n to the result of dbNameBuilder.
     */
   override var tableNameBuilder = (env: String) => dbNameBuilder(env) + "." + n
+
   /**
-    * Pluggable builder function that returns the HDFS path representing the database of the view given an environment.
+    * Pluggable builder function that returns either the HDFS or AWS S3 path representing
+    * the database of the view given an environment
     * The default implementation does this by building a path from the lower-case-underscore format of
     * moduleNameBuilder, replacing _ with / and prepending /hdp/dev/ for the default dev environment.
     */
-
-  override var dbPathBuilder = (env: String) => Schedoscope.settings.viewDataHdfsRoot + "/" + env.toLowerCase() + "/" + (moduleNameBuilder().replaceFirst("app", "applications")).replaceAll("_", "/")
+  override var dbPathBuilder = (env: String) =>
+    (if (s3Bucket.isDefined && s3UriScheme.isDefined)
+      s3BucketPathBuilder(s3Bucket.get, s3UriScheme.get)
+    else
+      Schedoscope.settings.viewDataHdfsRoot) + "/" + env.toLowerCase() +
+      "/" + moduleNameBuilder()
+      .replaceFirst("app", "applications").replaceAll("_", "/")
 
   /**
     * Pluggable builder function that returns the HDFS path to the table the view belongs to.
@@ -109,7 +119,30 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   var registeredExports: List[() => Transformation] = List()
   var isMaterializeOnce = false
 
+  var tblProperties = HashMap[String, String]()
+
+  /**
+    * Optional use of S3 to store hive data
+    */
+  var s3Bucket: Option[String] = None
+  var s3UriScheme: Option[String] = None
+
+  var s3BucketPathBuilder = (bucketName: String, uriScheme: String) => s"${uriScheme}://${bucketName}"
+
   override def toString() = urlPath
+
+  /**
+    * Proposed name for the transformation materializing this view
+    *
+    * @return
+    */
+  def shortUrlPath = {
+    val dbPath = dbName
+      .split("_").takeRight(2)
+      .map(_.substring(0, 1))
+      .mkString(".")
+    s"${dbPath}/${namingBase.replaceAll("[^a-zA-Z0-9]", "")}/${partitionValues(false).mkString("/")}"
+  }
 
   /**
     * The URL path syntax identifying the present view.
@@ -127,10 +160,10 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * Returns a list of partition values in order the parameter weights. Such lists are necessary for communicating with the metastore.
     */
   def partitionValues(ignoreSuffixPartitions: Boolean = true) =
-  (if (ignoreSuffixPartitions)
-    partitionParameters
-  else
-    parameters).map(p => p.v.getOrElse("").toString).toList
+    (if (ignoreSuffixPartitions)
+      partitionParameters
+    else
+      parameters).map(p => p.v.getOrElse("").toString).toList
 
   /**
     * Returns all parameters that are not suffix parameters (i.e., real partitioning parameters) of the present view
@@ -221,13 +254,29 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }
 
   /**
-    * Specifiy the storage format of the view, with TextFile being the default. One can optionally specify storage path prefixes and suffixes.
+    * Specify the storage format of the view, with TextFile being the default. One can optionally specify storage path prefixes and suffixes.
     */
   def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) {
     storageFormat = f
     this.additionalStoragePathPrefix = Option(additionalStoragePathPrefix)
     this.additionalStoragePathSuffix = Option(additionalStoragePathSuffix)
+    f match {
+      case S3(bucketName, storageFormat, uriScheme) =>
+        s3Bucket = Some(bucketName)
+        s3UriScheme = Some(uriScheme)
+        storedAs(storageFormat, additionalStoragePathPrefix, additionalStoragePathSuffix)
+
+      case _ =>
+      // do nothing ..
+
+    }
+
   }
+
+  /**
+    * Specify table properties of a view, which is implemented in Hive as clause TBLPROPERTIES
+    */
+  def tblProperties(m: Map[String, String]): Unit = tblProperties ++= m
 
   /**
     * Postfactum configuration of the registered transformation. Useful to override transformation configs within a test.
@@ -340,11 +389,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def hasExternalDependencies = dependencies.exists(_.isExternal)
 
   def isInDatabases(databases: String*): Boolean = {
-    val name = dbName.replace("_",".")
+    val name = dbName.replace("_", ".")
 
-    databases.exists{
+    databases.exists {
       s =>
-        name.startsWith(s.replace("${env}",env))
+        name.startsWith(s.replace("${env}", env))
     }
   }
 }
@@ -382,24 +431,24 @@ object View {
     * Instantiate views given an environment and view URL path. A parsed view augmentor can further modify the created views.
     */
   def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] =
-  try {
-    ViewUrlParser
-      .parse(env, viewUrlPath)
-      .map {
-        parsedViewAugmentor.augment(_)
-      }
-      .filter {
-        _ != null
-      }
-      .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
-  } catch {
-    case t: Throwable =>
-      if (t.isInstanceOf[java.lang.reflect.InvocationTargetException]) {
-        throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getCause().getMessage}")
-      } else {
-        throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
-      }
-  }
+    try {
+      ViewUrlParser
+        .parse(env, viewUrlPath)
+        .map {
+          parsedViewAugmentor.augment(_)
+        }
+        .filter {
+          _ != null
+        }
+        .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
+    } catch {
+      case t: Throwable =>
+        if (t.isInstanceOf[java.lang.reflect.InvocationTargetException]) {
+          throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getCause().getMessage}")
+        } else {
+          throw new RuntimeException(s"Error while parsing view(s) ${viewUrlPath} : ${t.getMessage}")
+        }
+    }
 
   /**
     * Instantiate a new view given its class name, an environment, and a list of parameter values.
@@ -462,8 +511,6 @@ object View {
     registeredView.env = env
     registeredView
   }
-
-
 
 
 }

@@ -78,7 +78,6 @@ class SeqDriver(val driverRunCompletionHandlerClassNames: List[String], driverFo
     val driverForSecondTransformation = driverFor(run.transformation.thenThatTransformation.name)
 
 
-
     run.stateHandle.asInstanceOf[SeqDriverStateHandle] match {
 
       case FirstTransformationOngoing(firstRunHandle) => {

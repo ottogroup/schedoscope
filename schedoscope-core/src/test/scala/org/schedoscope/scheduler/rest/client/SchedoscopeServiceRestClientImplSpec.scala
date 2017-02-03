@@ -34,14 +34,14 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
   when(mockStatus.isSuccess).thenReturn(true)
 
   trait schedoscopeClientTest {
-    def initialize(json: String, host:String=Schedoscope.settings.host,
-                   port:Int=Schedoscope.settings.port) = {
+    def initialize(json: String, host: String = Schedoscope.settings.host,
+                   port: Int = Schedoscope.settings.port) = {
       val body = HttpEntity(ContentTypes.`application/json`, json.getBytes())
       when(mockResponse.entity).thenReturn(body)
       val dummyClient = new SchedoscopeServiceRestClientImpl(host, port) {
         override def sendAndReceive = {
 
-          (req:HttpRequest) => Promise.successful(mockResponse).future
+          (req: HttpRequest) => Promise.successful(mockResponse).future
         }
       }
       dummyClient
@@ -51,8 +51,8 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
 
   it should "correctly parse /views request and unmarshal json ProductBrand object with single view" in
     new schedoscopeClientTest {
-    val json =
-      s"""
+      val json =
+        s"""
            {
              "overview": {
                "receive": 1
@@ -65,30 +65,30 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
             ]
           }
       """
-    val dummyClient = initialize(json)
-    val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
-    val statusParam = None
-    val filterParam = None
-    val issueFilterParam = None
-    val dependenciesParam = Some(false)
-    val overviewParam = Some(false)
-    val allParam = Some(false)
+      val dummyClient = initialize(json)
+      val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
+      val statusParam = None
+      val filterParam = None
+      val issueFilterParam = None
+      val dependenciesParam = Some(false)
+      val overviewParam = Some(false)
+      val allParam = Some(false)
 
-    val response = dummyClient.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
-    Await.result(response, TIMEOUT)
+      val response = dummyClient.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
+      Await.result(response, TIMEOUT)
 
-    response.isCompleted shouldBe true
-    response.value.get.get.overview shouldBe Map(("receive", 1))
-    response.value.get.get.views.size shouldBe 1
-    response.value.get.get.views(0).status shouldBe "receive"
-    response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
-    response.value.get.get.views(0).dependencies shouldBe None
-  }
+      response.isCompleted shouldBe true
+      response.value.get.get.overview shouldBe Map(("receive", 1))
+      response.value.get.get.views.size shouldBe 1
+      response.value.get.get.views(0).status shouldBe "receive"
+      response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
+      response.value.get.get.views(0).dependencies shouldBe None
+    }
 
   it should "correctly parse /views request and unmarshal json ProductBrand object with single view and its dependencies" in
     new schedoscopeClientTest {
-    val json =
-      s"""
+      val json =
+        s"""
            {
              "overview": {
                "waiting": 1,
@@ -114,17 +114,17 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
             ]
           }
       """
-    val dummyClient = initialize(json)
-    val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
-    val statusParam = None
-    val filterParam = None
-    val issueFilterParam = None
-    val dependenciesParam = Some(true)
-    val overviewParam = Some(false)
-    val allParam = Some(false)
+      val dummyClient = initialize(json)
+      val prodBrandviewUrlPath01 = Some(prodBrandUrl01)
+      val statusParam = None
+      val filterParam = None
+      val issueFilterParam = None
+      val dependenciesParam = Some(true)
+      val overviewParam = Some(false)
+      val allParam = Some(false)
 
-    val response = dummyClient.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
-    Await.result(response, TIMEOUT)
+      val response = dummyClient.views(prodBrandviewUrlPath01, statusParam, filterParam, issueFilterParam, dependenciesParam, overviewParam, allParam)
+      Await.result(response, TIMEOUT)
 
       response.isCompleted shouldBe true
       response.value.get.get.overview shouldBe Map(("waiting", 1), ("materializing", 2))
@@ -144,7 +144,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
         Some(List(brandUrl01))
       response.value.get.get.views(2).dependencies.get.get(s"dev_test_views.product_${shop01.toLowerCase}") shouldBe
         Some(List(prodUrl01 + s"/${year}${month}${day}"))
-  }
+    }
 
   it should "correctly parse /newdata request and unmarshal json ProductBrand object with " +
     "single view without dependencies listing" in new schedoscopeClientTest {
@@ -330,12 +330,12 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
       response.isCompleted shouldBe true
       response.value.get.get.overview shouldBe Map(("hive", 1), ("oozie", 1), ("spark", 2))
       response.value.get.get.queues.get("hive").get shouldBe List(
-        RunStatus("hiveDescription","hiveTargetView","started","hiveComment",None))
+        RunStatus("hiveDescription", "hiveTargetView", "started", "hiveComment", None))
       response.value.get.get.queues.get("oozie").get shouldBe List(
-        RunStatus("oozieDescription","oozieTargetView","started","oozieComment",None))
+        RunStatus("oozieDescription", "oozieTargetView", "started", "oozieComment", None))
       response.value.get.get.queues.get("spark").get shouldBe List(
-        RunStatus("sparkDescription","sparkTargetView","started","sparkComment",None),
-        RunStatus("sparkDescription","sparkTargetView","started","sparkComment",None)
+        RunStatus("sparkDescription", "sparkTargetView", "started", "sparkComment", None),
+        RunStatus("sparkDescription", "sparkTargetView", "started", "sparkComment", None)
       )
     }
 

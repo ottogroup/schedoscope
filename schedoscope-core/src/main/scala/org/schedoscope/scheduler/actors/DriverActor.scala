@@ -286,7 +286,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   * Factory methods for driver actors.
   */
 object DriverActor {
-  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef, hdfs: FileSystem) : Props =
+  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef, hdfs: FileSystem): Props =
     Props(
       classOf[DriverActor[_]],
       transformationManager,
@@ -301,7 +301,7 @@ object DriverActor {
       settings,
       hdfs: FileSystem).withDispatcher("akka.actor.driver-dispatcher")
 
-  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef) : Props =
+  def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef): Props =
     props(settings,
       transformationName,
       transformationManager,

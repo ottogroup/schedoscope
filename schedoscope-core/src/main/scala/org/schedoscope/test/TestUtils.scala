@@ -77,9 +77,9 @@ object TestUtils {
       .driverFor(finalTransformationToRun)
       .runAndWait(finalTransformationToRun)
 
-    if(sortedBy != null) {
+    if (sortedBy != null) {
       view.populate(Some(sortedBy))
-    }else{
+    } else {
       view.populate(view.sortedBy)
     }
 
