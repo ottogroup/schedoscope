@@ -80,7 +80,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
           s"(retries=${newBackOff.retries}, resets=${newBackOff.resets}, total-retries=${newBackOff.totalRetries})")
       } else {
         asr.actor ! "tick"
-        val transformation = getTransformationType(asr.actor)
+        val transformation = getTransformationName(asr.actor)
         val backOffSlotTime = settings.getDriverSettings(transformation).backOffSlotTime millis
         val backOffDelay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
 
@@ -94,7 +94,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
     driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
   }
 
-  def getTransformationType(actor: ActorRef): String = {
+  def getTransformationName(actor: ActorRef): String = {
     val router = actor.path.toString
       .slice(self.path.toString.size, actor.path.toString.size)
       .split("/")(1)

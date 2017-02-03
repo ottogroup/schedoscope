@@ -15,8 +15,8 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, ActorRef, ActorSystem}
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.actor.{ActorRef, ActorSystem}
+import akka.testkit.{TestActorRef, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import test.views.ProductBrand
 import org.schedoscope.dsl.Parameter._
@@ -29,7 +29,6 @@ import scala.util.Random
 import scala.concurrent.duration._
 
 class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
-  with ImplicitSender
   with FlatSpecLike
   with Matchers
   with BeforeAndAfterAll {
