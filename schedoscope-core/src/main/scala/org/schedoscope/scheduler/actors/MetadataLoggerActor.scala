@@ -31,6 +31,16 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
 
   val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
+  val schemaRouter = context.parent
+
+  /**
+    * Before MetadataLoggerActor can become active, it depends on
+    * SchemaManager's BackOffStrategy
+    */
+  override def preStart() {
+    log.info("METADATA LOGGER ACTOR: booted.")
+    schemaRouter ! "tick"
+  }
 
   /**
     * Before the actor gets restarted, reenqueue the running write command with the schema root actor
@@ -41,10 +51,16 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
       self forward runningCommand.get
   }
 
+  def receive: Receive = LoggingReceive {
+    case "tick" => becomeActive()
+
+    case c: CommandRequest => schemaRouter forward c
+  }
+
   /**
     * Message handler.
     */
-  def receive = LoggingReceive({
+  def activeReceive = LoggingReceive({
 
     case s: SetViewVersion => {
       runningCommand = Some(s)
@@ -60,6 +76,11 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
       runningCommand = None
     }
   })
+
+  def becomeActive() {
+    log.info("METADATA LOGGER  ACTOR: changed to active state.")
+    become(activeReceive)
+  }
 }
 
 /**

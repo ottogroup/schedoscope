@@ -17,22 +17,21 @@ package org.schedoscope.scheduler.actors
 
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.testkit.{TestActorRef, TestKit, TestProbe, EventFilter}
-import com.typesafe.config.ConfigFactory
+import akka.testkit.{TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.{FilesystemTransformation, Touch}
+import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.scheduler.driver.{HiveDriver, Driver}
 import org.schedoscope.scheduler.messages._
 import test.views.ProductBrand
 
 import scala.concurrent.duration._
 
-class TransformationManagerActorSpec extends
-  TestKit(ActorSystem("schedoscope",
-    ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")))
+//ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")
+
+class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   with FlatSpecLike
   with Matchers
   with BeforeAndAfterAll
@@ -167,26 +166,25 @@ class TransformationManagerActorSpec extends
     msgSender.receiveN(numberOfMessages, 3 seconds)
   }
 
-  it should "should set an exponential backoff time for restarting drivers" in {
-    val msgSender = TestProbe()
-    val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
-      bootstrapDriverActors = true))
 
-    val totalCountDrivers = Driver
-      .transformationsWithDrivers
-      .toArray
-      .map {
-        case t: String => settings.getDriverSettings(t).concurrency
-        case _ => 0
-      }
-      .sum
-
-    EventFilter.info(pattern = "TRANFORMATION MANAGER ACTOR: Set new back-off waiting time to value *",
-      occurrences = totalCountDrivers) intercept {
-      system.actorSelection(s"${transformationManagerActor.path}/*-driver/*") ! "reboot"
-    }
-
-
-  }
+//  it should "should set an exponential backoff time for restarting drivers" in {
+//    val msgSender = TestProbe()
+//    val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
+//      bootstrapDriverActors = true))
+//
+//    val totalCountDrivers = Driver
+//      .transformationsWithDrivers
+//      .toArray
+//      .map {
+//        case t: String => settings.getDriverSettings(t).concurrency
+//        case _ => 0
+//      }
+//      .sum
+//
+//    EventFilter.info(pattern = "TRANFORMATION MANAGER ACTOR: Set new back-off waiting time to value *",
+//      occurrences = totalCountDrivers) intercept {
+//      system.actorSelection(s"${transformationManagerActor.path}/*-driver/*") ! "reboot"
+//    }
+//  }
 
 }

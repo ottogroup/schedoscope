@@ -24,7 +24,7 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{FilesystemTransformation, Transformation}
 import org.schedoscope.scheduler.driver.{Driver, RetryableDriverException}
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.utils.ExponentialBackOff
+import org.schedoscope.scheduler.utils.{BackOffSupervision, ExponentialBackOff}
 
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
@@ -64,12 +64,27 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
   val driverBackOffWaitTime = HashMap[String, ExponentialBackOff]()
+  val driverActorsBackOffSupervision = new BackOffSupervision(
+    managerName = "TRANFORMATION MANAGER ACTOR",
+    system = context.system)
 
   def scheduleTick(driverActor: ActorRef, backOffTime: FiniteDuration) {
     system.scheduler.scheduleOnce(backOffTime, driverActor, "tick")
   }
 
   def manageDriverLifeCycle(asr: TransformationStatusResponse[_]) {
+
+    if(asr.message == "booted") {
+      val transformation = getTransformationName(asr.actor)
+      val backOffSlotTime = settings.getDriverSettings(transformation).backOffSlotTime millis
+      val backOffMinimumDelay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
+
+      driverActorsBackOffSupervision.manageActorLifecycle(managedActor = asr.actor,
+        backOffSlotTime = backOffSlotTime,
+        backOffMinimumDelay = backOffMinimumDelay)
+    }
+
+    /*
     if(asr.message == "booted") {
       if(driverBackOffWaitTime.contains(asr.actor.path.toStringWithoutAddress)) {
         val newBackOff = driverBackOffWaitTime(asr.actor.path.toStringWithoutAddress).nextBackOff
@@ -89,9 +104,12 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
           s"time to value ${backOff.backOffWaitTime} for booted actor ${asr.actor.path.toStringWithoutAddress}; " +
           s"(retries=${backOff.retries}, resets=${backOff.resets}, total-retries=${backOff.totalRetries})")
         driverBackOffWaitTime.put(asr.actor.path.toStringWithoutAddress, backOff)
+
       }
     }
+    */
     driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
+
   }
 
   def getTransformationName(actor: ActorRef): String = {

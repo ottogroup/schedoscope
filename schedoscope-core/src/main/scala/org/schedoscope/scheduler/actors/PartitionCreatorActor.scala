@@ -31,6 +31,17 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
 
   val schemaManager = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
+  val schemaRouter = context.parent
+
+
+  /**
+    * Before PartitionCreatorActor can become active, it depends on
+    * SchemaManager's BackOffStrategy
+    */
+  override def preStart() {
+    log.info("PARTITION CREATOR ACTOR: booted.")
+    schemaRouter ! "tick"
+  }
 
   /**
     * Before the actor gets restarted, reenqueue the running write command with the schema root actor
@@ -41,11 +52,16 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
       self forward runningCommand.get
   }
 
+  def receive: Receive = LoggingReceive {
+    case "tick" => becomeActive()
+
+    case c: CommandRequest => schemaRouter forward c
+  }
+
   /**
     * Message handler
     */
-  def receive: Receive = LoggingReceive {
-
+  def activeReceive: Receive = LoggingReceive {
 
     case c: CheckOrCreateTables => {
 
@@ -98,6 +114,12 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
 
       runningCommand = None
     }
+  }
+
+
+  def becomeActive() {
+    log.info("PARTITION CREATOR ACTOR: changed to active state.")
+    become(activeReceive)
   }
 }
 
