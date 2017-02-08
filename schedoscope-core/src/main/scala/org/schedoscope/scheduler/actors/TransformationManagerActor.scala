@@ -63,7 +63,6 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
   }
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
-  val driverBackOffWaitTime = HashMap[String, ExponentialBackOff]()
   val driverActorsBackOffSupervision = new BackOffSupervision(
     managerName = "TRANFORMATION MANAGER ACTOR",
     system = context.system)

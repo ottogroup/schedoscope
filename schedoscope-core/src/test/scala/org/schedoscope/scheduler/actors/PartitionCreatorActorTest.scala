@@ -22,7 +22,7 @@ class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
   val settings = Schedoscope.settings
 
 
-  case class toPCA(msg: String)
+  case class ToPCA(msg: String)
 
   class TestRouter(to: ActorRef) extends Actor {
     val pca = TestActorRef(new PartitionCreatorActor("","","") {
@@ -33,7 +33,7 @@ class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
     })
 
     def receive = {
-      case toPCA(m) => pca forward(m)
+      case ToPCA(m) => pca forward(m)
 
       case "tick" => to forward "tick"
     }
@@ -48,7 +48,7 @@ class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
     val router = TestActorRef(new TestRouter(msgHub.ref))
 
     EventFilter.info(message="PARTITION CREATOR ACTOR: changed to active state.", occurrences = 1) intercept {
-      msgHub.send(router, toPCA("tick"))
+      msgHub.send(router, ToPCA("tick"))
     }
   }
 
