@@ -55,6 +55,7 @@ abstract class FieldLike[T: Manifest] extends Named {
   override def equals(obj: scala.Any): Boolean = obj match {
     case f: FieldLike[T] => assignedStructure -> f.assignedStructure match {
       case (Some(struct1), Some(struct2)) => struct1.nameOf(this) == struct2.nameOf(f)
+      case (None, None) => true
       case _ => false
     }
   }
