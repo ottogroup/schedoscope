@@ -15,6 +15,7 @@
   */
 package test.views
 
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFSoundex
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.storageformats.{Avro, Parquet, TextFile, _}
 import org.schedoscope.dsl.transformations.Export._
@@ -81,15 +82,16 @@ case class ProductBrand(shopCode: Parameter[String],
           		p.${product().occurredAt.n} AS ${this.occurredAt.n},
       				p.${product().id.n} AS ${this.productId.n},
           		b.${brand().name.n} AS ${this.brandName.n},
-          		'some date time' AS ${this.createdAt.n}
-          		${"ProductBrand"} AS ${this.createdBy.n}
-          FROM 		${product().n} p
-          JOIN 		${brand().n} b
+          		'some date time' AS ${this.createdAt.n},
+          		'${"ProductBrand"}' AS ${this.createdBy.n}
+          FROM 		${product().tableName} p
+          JOIN 		${brand().tableName} b
           ON		p.${product().brandId.n} = b.${brand().id.n}
-          WHERE 	p.${product().year.n} = ${this.year.v.get}
-          AND 		p.${product().month.n} = ${this.month.v.get}
-          AND 		p.${product().day.n} = ${this.day.v.get}
-          """)))
+          WHERE 	p.${product().year.n} = "${this.year.v.get}"
+          AND 		p.${product().month.n} = "${this.month.v.get}"
+          AND 		p.${product().day.n} = "${this.day.v.get}"
+          """),
+      withFunctions(this, Map("soundex" -> classOf[GenericUDFSoundex]))))
 }
 
 case class ViewWithIllegalExternalDeps(shopCode: Parameter[String]) extends View {
