@@ -59,9 +59,9 @@ class SchedoscopeOperatorTable(views: Traversable[View]) extends SqlOperatorTabl
   override lazy val getOperatorList: util.List[SqlOperator] = udfs.map(
     func => func.getFunctionName -> Class.forName(func.getClassName).newInstance()
   ).flatMap {
-    case (name, _: GenericUDF) => Some(HiveQlFunction(name).asInstanceOf)
-    case (name, _: GenericUDTF) => Some(HiveQlFunction(name).asInstanceOf)
-    case (name, _: GenericUDAFResolver) => Some(HiveQlAggFunction(name).asInstanceOf)
+    case (name, _: GenericUDF) => Some(HiveQlFunction(name).asInstanceOf[SqlOperator])
+    case (name, _: GenericUDTF) => Some(HiveQlFunction(name).asInstanceOf[SqlOperator])
+    case (name, _: GenericUDAFResolver) => Some(HiveQlAggFunction(name).asInstanceOf[SqlOperator])
     case _ => None
   }.toList.asJava
 }
