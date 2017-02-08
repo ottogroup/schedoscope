@@ -264,12 +264,12 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
-            vsr.actor ! MaterializeView(
+            vsr.actor ! CommandForView(None, vsr.view, MaterializeView(
               try {
                 MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
               } catch {
                 case _: NoSuchElementException => MaterializeViewMode.DEFAULT
-              })
+              }))
           }
         viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, issueFilter)
     }
@@ -280,7 +280,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
-            vsr.actor ! InvalidateView()
+            vsr.actor ! CommandForView(None, vsr.view, InvalidateView())
           }
         viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None, issueFilter)
     }

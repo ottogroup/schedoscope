@@ -181,11 +181,11 @@ class ViewManagerActor(settings: SchedoscopeSettings,
           case (view, (version, timestamp)) => {
 
             val initialState = getStateFromMetadata(view, version, timestamp)
-
-            val actorRef = actorOf(ViewActor.props(
-              initialState,
+            //TODO: change
+            val actorRef = actorOf(TableActor.props(
+              Map(view -> initialState),
               settings,
-              Map.empty[View, ActorRef],
+              Map.empty[String, ActorRef],
               self,
               actionsManagerActor,
               schemaManagerRouter,

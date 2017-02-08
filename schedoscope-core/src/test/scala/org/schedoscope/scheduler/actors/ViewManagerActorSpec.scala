@@ -100,7 +100,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "delegate a message to a view" in new ViewManagerActorTest {
     val actorRef = initializeView(view)
 
-    viewManagerActor ! DelegateMessageToView(view, InvalidateView())
+    viewManagerActor ! DelegateMessageToView(view, CommandForView(None, view, InvalidateView()))
     expectMsgAllOf(NewViewActorRef(view, actorRef),
       ViewStatusResponse("invalidated", view, actorRef))
   }
@@ -108,7 +108,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "delegate a message to a unknown view" in new ViewManagerActorTest {
     val unknownView = Brand(p("ec0101"))
     val actorRef = initializeView(view)
-    viewManagerActor ! DelegateMessageToView(unknownView, InvalidateView())
+    viewManagerActor ! DelegateMessageToView(unknownView, CommandForView(None, unknownView, InvalidateView()))
 
     //if ViewManager does not know view it will start to communicate with
     //the SchemaManager
@@ -139,7 +139,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     future.isCompleted shouldBe true
     future.value.get.isSuccess shouldBe true
 
-    viewManagerActor ! DelegateMessageToView(viewE, MaterializeView())
+    viewManagerActor ! DelegateMessageToView(viewE, CommandForView(None, viewE, MaterializeView()))
 
     expectMsgType[NewViewActorRef]
   }
@@ -157,7 +157,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     val viewWithExt = ViewWithIllegalExternalDeps(p("ec0101"))
     the[UnsupportedOperationException] thrownBy {
       viewManagerActor.receive(viewWithExt)
-    } should have message "You are referencing an external view as internal: test.views/Brand/ec0101."
+    } should have message "You are referencing an external view as internal: external(test.views/Brand/ec0101)."
   }
 
   it should "throw an exception if external views are used as internal" in new ViewManagerActorExternalTest {

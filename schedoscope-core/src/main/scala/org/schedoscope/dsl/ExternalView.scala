@@ -109,4 +109,6 @@ case class ExternalView(view: View) extends View {
 
   override def materializeOnce = view.materializeOnce
 
+  override def toString(): String = s"external(${super.toString()})"
+
 }

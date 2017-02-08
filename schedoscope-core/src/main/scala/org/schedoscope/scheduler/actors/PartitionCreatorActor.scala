@@ -94,7 +94,7 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
       runningCommand = Some(g)
 
       val metadata = schemaManager.getTransformationMetadata(List(g.view)).head
-      sender ! MetaDataForMaterialize(metadata, g.mode, g.materializeSource)
+      sender ! CommandForView(None, g.view,MetaDataForMaterialize(metadata, g.mode, g.materializeSource))
 
       runningCommand = None
     }

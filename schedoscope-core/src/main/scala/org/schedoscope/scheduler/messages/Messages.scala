@@ -21,7 +21,10 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
-import org.schedoscope.scheduler.states.{ViewSchedulingAction, ViewSchedulingState}
+import org.schedoscope.scheduler.states.{PartyInterestedInViewSchedulingStateChange, ViewSchedulingAction, ViewSchedulingState}
+
+
+case class CommandForView(sender: Option[View], receiver: View, anyRef: AnyRef)
 
 /**
   * Superclass for failure messages.
@@ -162,7 +165,7 @@ case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode
   */
 case class GetMetaDataForMaterialize(view: View,
                                      mode: MaterializeViewMode = MaterializeViewMode.DEFAULT,
-                                     materializeSource: ActorRef) extends CommandRequest
+                                     materializeSource: PartyInterestedInViewSchedulingStateChange) extends CommandRequest
 
 /**
   * Instructs a view actor to assume that its data needs to be recomputed.
@@ -204,7 +207,7 @@ case class SchemaActionSuccess() extends CommandResponse
   * @param mode              transformation mode
   * @param materializeSource sender of the [[MaterializeView]] command
   */
-case class MetaDataForMaterialize(metadata: (View, (String, Long)), mode: MaterializeViewMode, materializeSource: ActorRef) extends CommandResponse
+case class MetaDataForMaterialize(metadata: (View, (String, Long)), mode: MaterializeViewMode, materializeSource: PartyInterestedInViewSchedulingStateChange) extends CommandResponse
 
 /**
   * Driver actor notifying view actor of successful transformation.

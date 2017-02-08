@@ -93,7 +93,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
 
       val brandViewActor = initializeView(view)
 
-      val futureMaterialize = brandViewActor ? MaterializeView()
+      val futureMaterialize = brandViewActor ? CommandForView(None, view, MaterializeView())
 
       viewSchedulingListenerManagerActor.expectMsgPF() {
         case ViewSchedulingMonitoringEvent(prevState, newState, actions, eventTime) => {
