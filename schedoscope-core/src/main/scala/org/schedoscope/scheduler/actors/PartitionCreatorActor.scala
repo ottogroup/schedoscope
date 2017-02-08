@@ -15,10 +15,10 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, Props, actorRef2Scala}
+import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.schema.SchemaManager
+import org.schedoscope.schema.{RetryableSchemaManagerException, SchemaManager}
 
 /**
   * Parition creator actors are responsible for creating tables and partitions in the metastore.
@@ -26,13 +26,10 @@ import org.schedoscope.schema.SchemaManager
 class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
 
   import context._
-
   val log = Logging(system, this)
 
-  val schemaManager = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  val schemaManager = getSchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
-  val schemaRouter = context.parent
-
 
   /**
     * Before PartitionCreatorActor can become active, it depends on
@@ -114,6 +111,8 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
 
       runningCommand = None
     }
+
+    case "reboot" => throw new RetryableSchemaManagerException(s"Received reboot command from ${sender.path.toStringWithoutAddress}")
   }
 
 
@@ -121,6 +120,13 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
     log.info("PARTITION CREATOR ACTOR: changed to active state.")
     become(activeReceive)
   }
+
+  def getSchemaManager(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
+    SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  }
+
+  def schemaRouter = context.parent
+
 }
 
 

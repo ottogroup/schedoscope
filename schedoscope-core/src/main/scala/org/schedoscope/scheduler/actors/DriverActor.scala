@@ -185,7 +185,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
       }
     }
 
-    case "reboot" => throw new RetryableDriverException()
+    case "reboot" => throw new RetryableDriverException(s"Received reboot command from ${sender.path.toStringWithoutAddress}")
 
   }
 

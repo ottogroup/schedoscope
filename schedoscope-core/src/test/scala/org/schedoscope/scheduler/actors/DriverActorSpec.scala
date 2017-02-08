@@ -15,8 +15,8 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{ActorRef, ActorSystem}
-import akka.testkit.{TestActorRef, TestKit, TestProbe}
+import akka.actor.{Actor, ActorRef, ActorSystem}
+import akka.testkit.{EventFilter, TestActorRef, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import test.views.ProductBrand
 import org.schedoscope.dsl.Parameter._
@@ -41,7 +41,6 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
   val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
   val settings = Settings()
   val transformationManagerActor = TestProbe()
-
 
   trait HiveActorTest {
     val hivedriverActor = TestActorRef(DriverActor.props(settings,

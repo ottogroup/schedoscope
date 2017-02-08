@@ -76,38 +76,14 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
 
     if(asr.message == "booted") {
       val transformation = getTransformationName(asr.actor)
-      val backOffSlotTime = settings.getDriverSettings(transformation).backOffSlotTime millis
-      val backOffMinimumDelay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
+      val slot = settings.getDriverSettings(transformation).backOffSlotTime millis
+      val delay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
 
-      driverActorsBackOffSupervision.manageActorLifecycle(managedActor = asr.actor,
-        backOffSlotTime = backOffSlotTime,
-        backOffMinimumDelay = backOffMinimumDelay)
+      driverActorsBackOffSupervision.manageActorLifecycle(
+        managedActor = asr.actor,
+        backOffSlotTime = slot,
+        backOffMinimumDelay = delay)
     }
-
-    /*
-    if(asr.message == "booted") {
-      if(driverBackOffWaitTime.contains(asr.actor.path.toStringWithoutAddress)) {
-        val newBackOff = driverBackOffWaitTime(asr.actor.path.toStringWithoutAddress).nextBackOff
-        scheduleTick(asr.actor, newBackOff.backOffWaitTime)
-        driverBackOffWaitTime.put(asr.actor.path.toStringWithoutAddress, newBackOff)
-        log.info(s"TRANFORMATION MANAGER ACTOR: Set new back-off waiting " +
-          s"time to value ${newBackOff.backOffWaitTime} for rebooted actor ${asr.actor.path.toStringWithoutAddress}; " +
-          s"(retries=${newBackOff.retries}, resets=${newBackOff.resets}, total-retries=${newBackOff.totalRetries})")
-      } else {
-        asr.actor ! "tick"
-        val transformation = getTransformationName(asr.actor)
-        val backOffSlotTime = settings.getDriverSettings(transformation).backOffSlotTime millis
-        val backOffDelay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
-
-        val backOff = ExponentialBackOff(backOffSlotTime = backOffSlotTime, constantDelay = backOffDelay)
-        log.debug(s"TRANFORMATION MANAGER ACTOR: Set initial back-off waiting " +
-          s"time to value ${backOff.backOffWaitTime} for booted actor ${asr.actor.path.toStringWithoutAddress}; " +
-          s"(retries=${backOff.retries}, resets=${backOff.resets}, total-retries=${backOff.totalRetries})")
-        driverBackOffWaitTime.put(asr.actor.path.toStringWithoutAddress, backOff)
-
-      }
-    }
-    */
     driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
   }

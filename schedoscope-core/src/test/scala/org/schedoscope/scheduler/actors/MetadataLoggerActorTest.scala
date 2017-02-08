@@ -1,13 +1,13 @@
 package org.schedoscope.scheduler.actors
 
 import akka.actor.{Actor, ActorRef, ActorSystem}
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
-import org.schedoscope.Schedoscope
-import akka.testkit.EventFilter
+import akka.testkit.{EventFilter, ImplicitSender, TestActorRef, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
+import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, FunSuite, Matchers}
+import org.schedoscope.Schedoscope
 
-class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
+
+class MetadataLoggerActorTest extends TestKit(ActorSystem("schedoscope",
   ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")))
   with ImplicitSender
   with FlatSpecLike
@@ -25,7 +25,7 @@ class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
   case class toPCA(msg: String)
 
   class TestRouter(to: ActorRef) extends Actor {
-    val pca = TestActorRef(new PartitionCreatorActor("","","") {
+    val pca = TestActorRef(new MetadataLoggerActor("","","") {
       override def getSchemaManager(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
         null
       }
@@ -47,7 +47,7 @@ class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
   it should "change to active state upon receive of tick msg" in {
     val router = TestActorRef(new TestRouter(msgHub.ref))
 
-    EventFilter.info(message="PARTITION CREATOR ACTOR: changed to active state.", occurrences = 1) intercept {
+    EventFilter.info(message="METADATA LOGGER ACTOR: changed to active state.", occurrences = 1) intercept {
       msgHub.send(router, toPCA("tick"))
     }
   }

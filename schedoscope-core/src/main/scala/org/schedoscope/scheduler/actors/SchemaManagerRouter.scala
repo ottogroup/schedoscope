@@ -64,13 +64,13 @@ class SchemaManagerRouter(settings: SchedoscopeSettings) extends Actor {
 
 
   def manageActorLifecycle(metastoreActor: ActorRef) {
-    val backOffSlotTime = settings.backOffSlotTime millis
-    val backOffMinimumDelay = settings.backOffMinimumDelay millis
+    val slot = settings.backOffSlotTime millis
+    val delay = settings.backOffMinimumDelay millis
 
     metastoreActorsBackOffSupervision.manageActorLifecycle(
       managedActor = metastoreActor,
-      backOffSlotTime = backOffSlotTime,
-      backOffMinimumDelay = backOffMinimumDelay)
+      backOffSlotTime = slot,
+      backOffMinimumDelay = delay)
   }
 
 

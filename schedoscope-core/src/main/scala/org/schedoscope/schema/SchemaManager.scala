@@ -338,7 +338,6 @@ object SchemaManager {
           DriverManager.getConnection(jdbcUrl)
         }
       })
-
     val conf = new HiveConf()
     conf.set("hive.metastore.local", "false");
     conf.setVar(HiveConf.ConfVars.METASTOREURIS, metaStoreUri.trim());
