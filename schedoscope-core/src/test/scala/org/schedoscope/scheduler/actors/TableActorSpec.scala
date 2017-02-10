@@ -29,7 +29,7 @@ import org.schedoscope.scheduler.states.CreatedByViewManager
 import test.views.{ProductBrand, ViewWithExternalDeps}
 
 
-class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
+class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
   with FlatSpecLike
   with Matchers
@@ -40,7 +40,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     TestKit.shutdownActorSystem(system)
   }
 
-  trait ViewActorTest {
+  trait TableActorTest {
     val viewManagerActor = TestProbe()
 
     val transformationManagerActor = TestProbe()
@@ -65,15 +65,15 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       viewSchedulingListenerManagerActor.ref))
   }
 
-  "The ViewActor" should "send materialize to deps" in new ViewActorTest {
+  "The TableActor" should "send materialize to deps" in new TableActorTest {
     viewActor ! CommandForView(None, view, MaterializeView())
     info(s"${view.tableName}")
-    //TODO: protocol is not followed!
-    brandViewActor.expectMsg(MaterializeView())
-    productViewActor.expectMsg(MaterializeView())
+
+    brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
+    productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
   }
 
-  it should "add new dependencies" in new ViewActorTest {
+  it should "add new dependencies" in new TableActorTest {
     val emptyDepsViewActor = system.actorOf(TableActor.props(
       Map(view -> CreatedByViewManager(view)),
       Settings(),
@@ -83,16 +83,16 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       schemaManagerRouter.ref,
       viewSchedulingListenerManagerActor.ref))
 
-    emptyDepsViewActor ! NewViewActorRef(brandDependency, brandViewActor.ref)
-    emptyDepsViewActor ! NewViewActorRef(productDependency, productViewActor.ref)
+    emptyDepsViewActor ! NewTableActorRef(brandDependency, brandViewActor.ref)
+    emptyDepsViewActor ! NewTableActorRef(productDependency, productViewActor.ref)
 
     emptyDepsViewActor ! CommandForView(None, view, MaterializeView())
-    //TODO: protocol is not followed!
-    brandViewActor.expectMsg(MaterializeView())
-    productViewActor.expectMsg(MaterializeView())
+
+    brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
+    productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
   }
 
-  it should "ask if he doesn't know another ViewActor" in new ViewActorTest {
+  it should "ask if he doesn't know another ViewActor" in new TableActorTest {
     val emptyDepsViewActor = system.actorOf(TableActor.props(
       Map(view -> CreatedByViewManager(view)),
       Settings(),
@@ -110,7 +110,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
       CommandForView(Some(view), productDependency, MaterializeView())))
   }
 
-  it should "send a message to the transformation actor when ready to transform" in new ViewActorTest {
+  it should "send a message to the transformation actor when ready to transform" in new TableActorTest {
     viewActor ! CommandForView(None, view, MaterializeView())
     brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
     brandViewActor.reply(CommandForView(Some(brandDependency), view, ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
@@ -120,7 +120,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     transformationManagerActor.expectMsg(view)
   }
 
-  it should "materialize a view successfully" in new ViewActorTest {
+  it should "materialize a view successfully" in new TableActorTest {
 
     viewActor ! CommandForView(None, view, MaterializeView())
     brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
@@ -135,7 +135,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgType[ViewMaterialized]
   }
 
-  it should "materialize a view successfully (message from view)" in new ViewActorTest {
+  it should "materialize a view successfully (message from view)" in new TableActorTest {
 
     viewActor ! CommandForView(Some(brandDependency), view, MaterializeView())
     brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
@@ -151,7 +151,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgType[CommandForView]
   }
 
-  it should "materialize an external view" in new ViewActorTest {
+  it should "materialize an external view" in new TableActorTest {
 
     val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
     val extView = viewWithExt.dependencies.head
@@ -175,7 +175,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgType[ViewMaterialized]
   }
 
-  "A external view" should "reload it's state and ignore it's deps" in new ViewActorTest {
+  "A external view" should "reload it's state and ignore it's deps" in new TableActorTest {
     val extView = ExternalView(ProductBrand(p("ec0101"), p("2016"), p("11"), p("07")))
 
     val extActor = system.actorOf(TableActor.props(
@@ -205,7 +205,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   }
 
-  "A view" should "should reload it's state and ignore it's deps when called view external materialize" in new ViewActorTest {
+  "A view" should "should reload it's state and ignore it's deps when called view external materialize" in new TableActorTest {
     val viewNE = ProductBrand(p("ec0101"), p("2016"), p("11"), p("07"))
     val viewE = ExternalView(ProductBrand(p("ec0101"), p("2016"), p("11"), p("07")))
 
@@ -235,5 +235,8 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgType[ViewMaterialized]
 
   }
+
+  //TODO: test creation of new views
+  //TODO: test multi view actors
 
 }

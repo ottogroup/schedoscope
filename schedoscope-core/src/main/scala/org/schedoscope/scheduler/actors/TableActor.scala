@@ -20,6 +20,7 @@ import java.lang.Math.pow
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.joda.time.LocalDateTime
+import org.schedoscope.AskPattern.{queryActor, queryActors}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.transformations.Touch
 import org.schedoscope.dsl.{ExternalView, View}
@@ -54,7 +55,11 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
     case CommandForView(sourceView, targetView, command) => {
 
       //mark the currentState as implicit for calling the stateTransition
-      implicit val currentState = viewStates(targetView.urlPath)
+      implicit val currentState = viewStates.get(targetView.urlPath) match {
+        case Some(state) => state
+        case None =>
+          initializeViews(List(targetView)).head._2
+      }
 
       val senderRef = AkkaActor(sourceView, sender)
 
@@ -128,8 +133,12 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
       }
     }
 
-    case NewViewActorRef(view: View, viewRef: ActorRef) => {
+    case NewTableActorRef(view: View, viewRef: ActorRef) => {
       knownDependencies += view.tableName -> viewRef
+    }
+
+    case InitializeViewActors(views, dependencies) => {
+      initializeViews(views)
     }
 
     case other =>
@@ -281,6 +290,41 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
     viewManagerActor ! vsr
   }
+
+  def initializeViews(views: List[View]): Map[View, ViewSchedulingState] = {
+
+    //Check which views have to be initialized
+    val viewsToCreate = views.filterNot(v => viewStates.contains(v.urlPath))
+
+    if (viewsToCreate.nonEmpty) {
+      //If no views have been initialized the table schema should be created.
+      if (viewStates.isEmpty) {
+        log.info(s"Submitting tables to check or create to schema actor")
+        queryActor[Any](schemaManagerRouter, CheckOrCreateTables(viewsToCreate), settings.schemaTimeout)
+      }
+
+      //Add the partitions
+      val viewsWithMetadataToCreate = queryActor[TransformationMetadata](schemaManagerRouter,
+        AddPartitions(viewsToCreate),
+        settings.schemaTimeout)
+
+      log.info(s"Partitions created, initializing views")
+      val newViews = viewsWithMetadataToCreate.metadata.map {
+        case (view, (version, timestamp)) => {
+          val initialState = ViewManagerActor.getStateFromMetadata(view, version, timestamp)
+          viewStates.put(view.urlPath, initialState)
+          (view,initialState)
+        }
+      }
+      log.info(s"Created actors for view table ${viewsWithMetadataToCreate.metadata.head._1.dbName}.${viewsWithMetadataToCreate.metadata.head._1.n}")
+      //TODO: maybe answer the viewManagerActor so he can update the vsm
+      newViews
+    } else {
+      Map.empty[View,ViewSchedulingState]
+    }
+
+  }
+
 }
 
 object TableActor {

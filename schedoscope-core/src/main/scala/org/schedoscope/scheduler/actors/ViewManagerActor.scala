@@ -23,7 +23,7 @@ import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Checksum
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.states.{CreatedByViewManager, ReadFromSchemaManager}
+import org.schedoscope.scheduler.states.{CreatedByViewManager, ReadFromSchemaManager, ViewSchedulingState}
 
 import scala.collection.mutable.{HashMap, HashSet}
 
@@ -88,10 +88,10 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         case Some(actorRef) =>
           actorRef
         case None =>
-          initializeViewActors(List(view), false).head
+          initializeViews(List(view), false).head
       }
       ref forward msg
-      sender ! NewViewActorRef(view, ref)
+      sender ! NewTableActorRef(view, ref)
     }
   })
 
@@ -120,6 +120,56 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         }
       }
     }
+
+
+  def initializeViews(vs: List[View], dependencies: Boolean = false): Set[ActorRef] = {
+
+    val dependentViews = viewsToCreateActorsFor(vs, includeExistingActors = true)
+
+    val viewsPerTableName = dependentViews
+      .map { case (view, _, _) => view }
+      .groupBy(_.urlPathPrefix)
+
+    //    viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
+
+    //sendViewsToTableActors / createMissingTableActor
+    val actors = viewsPerTableName.map {
+      case (table, views) =>
+        actorForView(views.head) match {
+          case Some(tableActorRef) =>
+            tableActorRef ! InitializeViewActors(views)
+            tableActorRef
+          case None =>
+            // create actor
+            val actorRef = actorOf(TableActor.props(
+              Map.empty[View, ViewSchedulingState],
+              settings,
+              Map.empty[String, ActorRef],
+              self,
+              actionsManagerActor,
+              schemaManagerRouter,
+              viewSchedulingListenerManagerActor), actorNameForView(views.head))
+            //TODO: viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
+            // send to actor
+            actorRef ! InitializeViewActors(views)
+            actorRef
+        }
+    }.toSet
+
+    //TODO: Think about this!
+    viewsPerTableName.flatMap(_._2).foreach { view =>
+        val newDepsActorRefs = view
+          .dependencies
+          .flatMap(v => actorForView(v).map(NewTableActorRef(v, _)))
+
+        actorForView(view) match {
+          case Some(actorRef) =>
+            newDepsActorRefs.foreach(actorRef ! _)
+          case None => //actor not yet known nothing to do here
+        }
+    }
+    actors
+  }
 
   /**
     * Initialize view actors for a list of views. If a view actor has been produced for a view
@@ -172,7 +222,9 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     if (partitionsToCreate.nonEmpty) {
       log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")
 
-      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaManagerRouter, partitionsToCreate, settings.schemaTimeout)
+      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaManagerRouter,
+        partitionsToCreate,
+        settings.schemaTimeout)
 
       log.info(s"Partitions created, initializing actors")
 
@@ -181,7 +233,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
           case (view, (version, timestamp)) => {
 
             val initialState = getStateFromMetadata(view, version, timestamp)
-            //TODO: change
+            //            TODO: change
             val actorRef = actorOf(TableActor.props(
               Map(view -> initialState),
               settings,
@@ -190,7 +242,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
               actionsManagerActor,
               schemaManagerRouter,
               viewSchedulingListenerManagerActor), actorNameForView(view))
-            viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
+
           }
         }
         log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
@@ -201,7 +253,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
           case (view, _) =>
             val newDepsActorRefs = view
               .dependencies
-              .flatMap(v => actorForView(v).map(NewViewActorRef(v, _)))
+              .flatMap(v => actorForView(v).map(NewTableActorRef(v, _)))
 
             actorForView(view) match {
               case Some(actorRef) =>
@@ -230,17 +282,17 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     actors
   }
 
-  def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
+  def viewsToCreateActorsFor(views: List[View], includeExistingActors: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
     views.flatMap {
       v =>
         if (visited.contains(v))
           List()
         else if (child(actorNameForView(v)).isEmpty) {
           visited += v
-          (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
-        } else if (dependencies) {
+          (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, includeExistingActors, depth + 1, visited)
+        } else if (includeExistingActors) {
           visited += v
-          (v, false, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
+          (v, false, depth) :: viewsToCreateActorsFor(v.dependencies.toList, includeExistingActors, depth + 1, visited)
         } else {
           visited += v
           List((v, false, depth))
@@ -280,5 +332,5 @@ object ViewManagerActor {
       CreatedByViewManager(view)
   }
 
-  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
+  def actorNameForView(view: View) = view.urlPathPrefix.replaceAll("/", ":")
 }

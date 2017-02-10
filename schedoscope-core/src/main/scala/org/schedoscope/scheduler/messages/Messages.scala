@@ -144,6 +144,13 @@ object MaterializeViewMode extends Enumeration {
 }
 
 /**
+  * Intructs a table actor to initialize a list of views. If not yet initialized.
+  * @param vs List of views to
+  * @param dependencies
+  */
+case class InitializeViewActors(vs: List[View], dependencies: Boolean = false) extends CommandRequest
+
+/**
   * Instructs a view actor to materialize itself
   */
 case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
@@ -193,7 +200,7 @@ case class DeployCommandSuccess() extends CommandResponse
   * @param view
   * @param viewRef
   */
-case class NewViewActorRef(view: View, viewRef: ActorRef) extends CommandResponse
+case class NewTableActorRef(view: View, viewRef: ActorRef) extends CommandResponse
 
 /**
   * Schema actor or metadata logger notifying view manager actor or view actor of successful schema action.

@@ -101,23 +101,32 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     val actorRef = initializeView(view)
 
     viewManagerActor ! DelegateMessageToView(view, CommandForView(None, view, InvalidateView()))
-    expectMsgAllOf(NewViewActorRef(view, actorRef),
+    expectMsgAllOf(NewTableActorRef(view, actorRef),
       ViewStatusResponse("invalidated", view, actorRef))
   }
 
-  it should "delegate a message to a unknown view" in new ViewManagerActorTest {
+  it should "delegate a message to a unknown view with known table" in new ViewManagerActorTest {
     val unknownView = Brand(p("ec0101"))
     val actorRef = initializeView(view)
     viewManagerActor ! DelegateMessageToView(unknownView, CommandForView(None, unknownView, InvalidateView()))
 
-    //if ViewManager does not know view it will start to communicate with
-    //the SchemaManager
+    schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("checksum", 1L))))
+
+    expectMsgAllClassOf(classOf[NewTableActorRef], classOf[ViewStatusResponse])
+  }
+
+  it should "delegate a message to a unknown view with unknown table" in new ViewManagerActorTest {
+    val unknownView = Click(p("ec0101"), p("2999"), p("12"), p("31"))
+    val actorRef = initializeView(view)
+    viewManagerActor ! DelegateMessageToView(unknownView, CommandForView(None, unknownView, InvalidateView()))
+
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(unknownView)))
     schemaManagerRouter.reply(SchemaActionSuccess())
     schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
     schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("checksum", 1L))))
 
-    expectMsgAllClassOf(classOf[NewViewActorRef], classOf[ViewStatusResponse])
+    expectMsgAllClassOf(classOf[NewTableActorRef], classOf[ViewStatusResponse])
   }
 
   it should "initialize an external view" in new ViewManagerActorExternalTest {
@@ -141,7 +150,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewManagerActor ! DelegateMessageToView(viewE, CommandForView(None, viewE, MaterializeView()))
 
-    expectMsgType[NewViewActorRef]
+    expectMsgType[NewTableActorRef]
   }
 
   it should "throw an exception if external views are not allowed" in new ViewManagerActorTest {
