@@ -15,24 +15,27 @@
  */
 package org.schedoscope.metascope.service;
 
-import org.schedoscope.metascope.model.TableEntity;
-import org.schedoscope.metascope.model.ViewEntity;
-import org.schedoscope.metascope.repository.ViewEntityRepository;
+import org.schedoscope.metascope.model.MetascopeMetadata;
+import org.schedoscope.metascope.repository.MetascopeMetadataRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class ViewEntityService {
+public class MetascopeMetadataService {
 
-    @Autowired
-    private ViewEntityRepository viewRepository;
+  @Autowired
+  private MetascopeMetadataRepository metascopeMetadataRepository;
 
-    public ViewEntity findByUrlPath(String urlPath) {
-        return viewRepository.findByUrlPath(urlPath);
+  public String getMetadataValue(String key) {
+    MetascopeMetadata metadata = metascopeMetadataRepository.findOne(key);
+    if (metadata == null) {
+      return null;
     }
+    return metadata.getMetadataValue();
+  }
 
-    public int getPartitionCount(TableEntity tableEntity) {
-        return viewRepository.getPartitionCountForFqdn(tableEntity.getFqdn());
-    }
+  public void save(String key, String value) {
+    metascopeMetadataRepository.save(new MetascopeMetadata(key, value));
+  }
 
 }
