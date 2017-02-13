@@ -108,10 +108,18 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * By default, this is hdfs:///hdp/$\{env\}/global/datadictionary/schema/avro
     */
   override var avroSchemaPathPrefixBuilder = (env: String) => s"hdfs:///hdp/${env}/global/datadictionary/schema/avro"
+
   /**
     * The view's environment.
     */
-  var env = "dev"
+  private var _env: String = "dev"
+
+  def env: String = _env
+
+  def env_=(env: String): Unit = {
+    _env = env
+  }
+
   var storageFormat: StorageFormat = TextFile()
   var additionalStoragePathPrefix: Option[String] = None
   var additionalStoragePathSuffix: Option[String] = None

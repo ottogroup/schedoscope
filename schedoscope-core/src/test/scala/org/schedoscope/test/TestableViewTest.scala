@@ -18,9 +18,11 @@ package org.schedoscope.test
 
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field.v
-import org.schedoscope.dsl.View
+import org.schedoscope.dsl.Parameter.p
+import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.transformations.{HiveTransformation, InvalidTransformationException}
+import test.views.ProductBrand
 
 case class View1() extends View {
   val v1 = fieldOf[String]
@@ -193,6 +195,16 @@ class TestableViewTest extends FlatSpec with Matchers {
       basedOn(view2i1, view2i2, view3)
       then(disableTransformationValidation = true)
     }
+  }
+
+  it should "forward the test environment to external views" in {
+    val productBrand = ProductBrand(p("ec0101"), p("2016"), p("11"), p("07"))
+    val externalProductBrand = ExternalView(productBrand)
+
+    externalProductBrand.env = "test"
+
+    productBrand.env shouldBe "test"
+    externalProductBrand.env shouldBe "test"
   }
 
 }
