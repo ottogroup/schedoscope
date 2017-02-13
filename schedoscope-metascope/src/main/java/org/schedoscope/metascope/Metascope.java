@@ -17,74 +17,40 @@ package org.schedoscope.metascope;
 
 import com.typesafe.config.ConfigFactory;
 import org.schedoscope.conf.BaseSettings;
-import org.schedoscope.metascope.conf.MetascopeConfig;
-import org.schedoscope.metascope.index.SolrFacade;
-import org.schedoscope.metascope.tasks.MetascopeTask;
-import org.schedoscope.metascope.tasks.SchedoscopeStatusTask;
-import org.schedoscope.metascope.tasks.repository.RepositoryDAO;
-import org.schedoscope.metascope.util.SchedoscopeUtil;
+import org.schedoscope.metascope.config.MetascopeConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
-import javax.sql.DataSource;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
 @SpringBootApplication
 public class Metascope {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Metascope.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Metascope.class);
 
-    private ConfigurableApplicationContext applicationContext;
-    private ScheduledThreadPoolExecutor executor;
+  private ConfigurableApplicationContext ctx;
 
-    public void start(String[] args) {
+  public static void main(String[] args) {
+    new Metascope().start(args);
+  }
+
+  public void start(String[] args) {
     /* set some mandatory configs before application start */
-        MetascopeConfig config = new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
-        System.setProperty("server.port", String.valueOf(config.getPort()));
-        System.setProperty("spring.jpa.database-platform", config.getRepositoryDialect());
-        System.setProperty("logging.level.org.schedoscope", config.getLogLevel());
-        System.setProperty("logging.file", config.getLogfilePath());
-        System.setProperty("spring.profiles.active", "production");
+    MetascopeConfig config = new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
+    System.setProperty("server.port", String.valueOf(config.getPort()));
+    System.setProperty("spring.jpa.database-platform", config.getRepositoryDialect());
+    System.setProperty("logging.level.org.schedoscope", config.getLogLevel());
+    System.setProperty("logging.file", config.getLogfilePath());
+    System.setProperty("spring.profiles.active", "production");
 
     /* start metascope spring boot application */
-        this.applicationContext = SpringApplication.run(Metascope.class, args);
+    this.ctx = SpringApplication.run(Metascope.class, args);
+    LOG.info("Metascope webservice started.");
+  }
 
-        SolrFacade solr = applicationContext.getBean(SolrFacade.class);
-        RepositoryDAO repo = applicationContext.getBean(RepositoryDAO.class);
-        DataSource dataSource = applicationContext.getBean(DataSource.class);
-        SchedoscopeUtil schedoscopeUtil = applicationContext.getBean(SchedoscopeUtil.class);
-
-    /* start metascope task */
-        MetascopeTask metascopeTask = new MetascopeTask(repo, dataSource, solr, config, schedoscopeUtil);
-        SchedoscopeStatusTask statusTask = new SchedoscopeStatusTask(repo, dataSource, solr, schedoscopeUtil);
-
-        this.executor = new ScheduledThreadPoolExecutor(1);
-        ScheduledFuture<?> metascopeTaskFuture = executor.schedule(metascopeTask, 5, TimeUnit.SECONDS);
-        ScheduledFuture<?> statusTaskFuture = executor.scheduleAtFixedRate(statusTask, 5, 5, TimeUnit.SECONDS);
-
-    /* MetascopeTask schedules itself dynamically */
-        metascopeTask.setExecutor(executor);
-
-        try {
-            metascopeTaskFuture.get();
-            statusTaskFuture.get();
-        } catch (Throwable t) {
-            LOG.error("Exception in future tasks", t);
-        }
-    }
-
-    public void stop() throws InterruptedException {
-        this.applicationContext.stop();
-        this.executor.awaitTermination(5, TimeUnit.SECONDS);
-    }
-
-    public static void main(String[] args) {
-        new Metascope().start(args);
-    }
+  public void stop() {
+    ctx.stop();
+  }
 
 }
