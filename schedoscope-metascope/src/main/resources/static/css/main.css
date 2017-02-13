@@ -12,7 +12,47 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ 
+ */
+
+.loader {
+    border: 5px solid #f3f3f3; /* Light grey */
+    border-top: 5px solid #fc2a2a; /* Blue */
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.triangle-close {
+    display: inline-block;
+    font-style: normal;
+    position: relative;
+    top: 0pt;
+    width: 0.6em;
+    height: 0.6em;
+    border-right: 0.2em solid black;
+    border-top: 0.2em solid black;
+    transform: rotate(135deg);
+    pointer-events: none;
+}
+
+.triangle-open {
+    display: inline-block;
+    font-style: normal;
+    position: relative;
+    top: 2pt;
+    width: 0.6em;
+    height: 0.6em;
+    border-right: 0.2em solid black;
+    border-top: 0.2em solid black;
+    transform: rotate(315deg);
+    pointer-events: none;
+}
 
 .well {
   background: #fafafa;	
@@ -244,9 +284,9 @@ html {
 }
 body {
   margin-bottom: 50px;
-  margin-top: 75px;
+  margin-top: 60px;
   background-repeat: no-repeat;
-  font-family: "Segoe UI Light", "Segoe UI", "Segoe WP", "Helvetica Neue", sans-serif;
+  font-family: "Segoe UI", "Tahoma", "Trebuchet MS", "Calibri", sans-serif;
   padding-right: 0px !important;
   margin-right:0px !important;
   height:100%;
