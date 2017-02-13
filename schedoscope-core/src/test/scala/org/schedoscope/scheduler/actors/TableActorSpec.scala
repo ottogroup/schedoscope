@@ -20,9 +20,9 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
-import org.schedoscope.dsl.ExternalView
+import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.dsl.transformations.{HiveTransformation, Touch}
 import org.schedoscope.scheduler.driver.{DriverRunHandle, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
@@ -63,6 +63,33 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
       transformationManagerActor.ref,
       schemaManagerRouter.ref,
       viewSchedulingListenerManagerActor.ref))
+
+    def materializeProductBrandView(pbView : ProductBrand): Unit ={
+      val brandDep = pbView.brand()
+      val productDep = pbView.product()
+
+      viewActor ! CommandForView(None, pbView, MaterializeView())
+
+      brandViewActor.expectMsg(CommandForView(Some(pbView), brandDep, MaterializeView()))
+      brandViewActor.reply(CommandForView(Some(brandDep),
+        pbView,
+        ViewMaterialized(brandDep, incomplete = false, 1L, errors = false)))
+
+      productViewActor.expectMsg(CommandForView(Some(pbView), productDep, MaterializeView()))
+      productViewActor.reply(CommandForView(Some(productDep),
+        pbView,
+        ViewMaterialized(productDep, incomplete = false, 1L, errors = false)))
+
+      transformationManagerActor.expectMsg(pbView)
+      val success = CommandForView(None, pbView, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],
+        mock[DriverRunSucceeded[HiveTransformation]],
+        true))
+      transformationManagerActor.reply(success)
+
+      expectMsgType[ViewMaterialized]
+
+      transformationManagerActor.expectMsg(Touch(pbView.fullPath + "/_SUCCESS"))
+    }
   }
 
   "The TableActor" should "send materialize to deps" in new TableActorTest {
@@ -113,9 +140,13 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "send a message to the transformation actor when ready to transform" in new TableActorTest {
     viewActor ! CommandForView(None, view, MaterializeView())
     brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
-    brandViewActor.reply(CommandForView(Some(brandDependency), view, ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
+    brandViewActor.reply(CommandForView(Some(brandDependency),
+      view,
+      ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
     productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
-    productViewActor.reply(CommandForView(Some(productDependency), view, ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
+    productViewActor.reply(CommandForView(Some(productDependency),
+      view,
+      ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
 
     transformationManagerActor.expectMsg(view)
   }
@@ -124,12 +155,18 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewActor ! CommandForView(None, view, MaterializeView())
     brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
-    brandViewActor.reply(CommandForView(Some(brandDependency), view, ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
+    brandViewActor.reply(CommandForView(Some(brandDependency),
+      view,
+      ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
     productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
-    productViewActor.reply(CommandForView(Some(productDependency), view, ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
+    productViewActor.reply(CommandForView(Some(productDependency),
+      view,
+      ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
 
     transformationManagerActor.expectMsg(view)
-    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]], mock[DriverRunSucceeded[HiveTransformation]], true))
+    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],
+      mock[DriverRunSucceeded[HiveTransformation]],
+      true))
     transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
@@ -139,12 +176,18 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewActor ! CommandForView(Some(brandDependency), view, MaterializeView())
     brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
-    brandViewActor.reply(CommandForView(Some(brandDependency), view, ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
+    brandViewActor.reply(CommandForView(Some(brandDependency),
+      view,
+      ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
     productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
-    productViewActor.reply(CommandForView(Some(productDependency), view, ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
+    productViewActor.reply(CommandForView(Some(productDependency),
+      view,
+      ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
 
     transformationManagerActor.expectMsg(view)
-    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]], mock[DriverRunSucceeded[HiveTransformation]], true))
+    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],
+      mock[DriverRunSucceeded[HiveTransformation]],
+      true))
     transformationManagerActor.reply(success)
 
     //the view should reply with an command for view if the materialize message came from a view
@@ -175,6 +218,26 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgType[ViewMaterialized]
   }
 
+  it should "initialize a new view" in new TableActorTest {
+    val newView = ProductBrand(p("ec0106"), p("2017"), p("12"), p("13"))
+    viewActor ! InitializeViews(List(newView))
+    schemaManagerRouter.expectMsg(AddPartitions(List(newView)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(newView -> ("test", 1L))))
+    //TODO: answer
+  }
+
+  it should "materialize multiple views" in new TableActorTest {
+    //start two new views
+    val newView = ProductBrand(p("ec0106"), p("2017"), p("12"), p("13"))
+    viewActor ! InitializeViews(List(newView))
+    schemaManagerRouter.expectMsg(AddPartitions(List(newView)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(newView -> ("test", 1L))))
+    //TODO: answer
+
+   materializeProductBrandView(view)
+   materializeProductBrandView(newView)
+  }
+
   "A external view" should "reload it's state and ignore it's deps" in new TableActorTest {
     val extView = ExternalView(ProductBrand(p("ec0101"), p("2016"), p("11"), p("07")))
 
@@ -198,7 +261,9 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
       self)))
 
     transformationManagerActor.expectMsg(extView)
-    val success = CommandForView(None, extView, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]], mock[DriverRunSucceeded[HiveTransformation]], true))
+    val success = CommandForView(None, extView, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],
+      mock[DriverRunSucceeded[HiveTransformation]],
+      true))
     transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
@@ -236,7 +301,7 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   }
 
-  //TODO: test creation of new views
+
   //TODO: test multi view actors
 
 }

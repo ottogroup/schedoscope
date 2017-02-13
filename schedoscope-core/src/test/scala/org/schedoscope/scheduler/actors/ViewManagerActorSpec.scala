@@ -67,18 +67,46 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
       val future = viewManagerActor ? view
 
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(productDependency)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(brandDependency)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(AddPartitions(List(view)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
-      schemaManagerRouter.expectMsg(AddPartitions(List(productDependency)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
-      schemaManagerRouter.expectMsg(AddPartitions(List(brandDependency)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
+      var messageSum = 0
+
+      def acceptMessage: PartialFunction[Any, _] = {
+        case AddPartitions(List(`brandDependency`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
+          messageSum += 1
+        case AddPartitions(List(`productDependency`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
+          messageSum += 2
+        case AddPartitions(List(`view`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+          messageSum += 3
+        case CheckOrCreateTables(List(`brandDependency`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 4
+        case CheckOrCreateTables(List(`productDependency`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 5
+        case CheckOrCreateTables(List(`view`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 6
+      }
+
+      val msgs = schemaManagerRouter.receiveWhile(messages = 6)(acceptMessage)
+      msgs.size shouldBe 6
+      messageSum shouldBe 21
+
+      //
+      //      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
+      //      schemaManagerRouter.reply(SchemaActionSuccess())
+      //      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(productDependency)))
+      //      schemaManagerRouter.reply(SchemaActionSuccess())
+      //      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(brandDependency)))
+      //      schemaManagerRouter.reply(SchemaActionSuccess())
+      //      schemaManagerRouter.expectMsg(AddPartitions(List(view)))
+      //      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+      //      schemaManagerRouter.expectMsg(AddPartitions(List(productDependency)))
+      //      schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
+      //      schemaManagerRouter.expectMsg(AddPartitions(List(brandDependency)))
+      //      schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
 
       Await.result(future, 5 seconds)
       future.isCompleted shouldBe true
@@ -135,14 +163,17 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     val future = viewManagerActor ? viewWithExt
     val viewE = ExternalView(ExternalShop())
 
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewE)))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
-    schemaManagerRouter.expectMsg(AddPartitions(List(viewE)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(viewE -> ("test", 1L))))
+    schemaManagerRouter.receiveWhile(messages = 4) {
+      case CheckOrCreateTables(List(`viewWithExt`)) =>
+        schemaManagerRouter.reply(SchemaActionSuccess())
+      case CheckOrCreateTables(List(`viewE`)) =>
+        schemaManagerRouter.reply(SchemaActionSuccess())
+      case AddPartitions(List(`viewWithExt`)) =>
+        schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
+      case AddPartitions(List(`viewE`)) =>
+        schemaManagerRouter.reply(TransformationMetadata(Map(viewE -> ("test", 1L))))
+    }
+
 
     Await.result(future, 5 seconds)
     future.isCompleted shouldBe true
@@ -150,6 +181,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewManagerActor ! DelegateMessageToView(viewE, CommandForView(None, viewE, MaterializeView()))
 
+//    expectMsgType[ViewStatusResponse]
     expectMsgType[NewTableActorRef]
   }
 
@@ -185,13 +217,17 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
 
     viewManagerActor ! viewWithExt
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(ExternalShop())))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
-    schemaManagerRouter.expectMsg(AddPartitions(List(ExternalShop())))
-    schemaManagerRouter.reply(TransformationMetadata(Map(ExternalShop() -> ("test", 1L))))
+
+    schemaManagerRouter.receiveWhile(messages = 4) {
+      case CheckOrCreateTables(List(`viewWithExt`)) =>
+        schemaManagerRouter.reply(SchemaActionSuccess())
+      case CheckOrCreateTables(List(ExternalShop())) =>
+        schemaManagerRouter.reply(SchemaActionSuccess())
+       case AddPartitions(List(viewWithExt)) =>
+        schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
+      case AddPartitions(List(ExternalShop())) =>
+        schemaManagerRouter.reply(TransformationMetadata(Map(ExternalShop() -> ("test", 1L))))
+    }
+
   }
 }

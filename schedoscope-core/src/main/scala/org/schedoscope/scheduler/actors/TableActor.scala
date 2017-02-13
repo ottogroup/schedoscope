@@ -137,7 +137,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
       knownDependencies += view.tableName -> viewRef
     }
 
-    case InitializeViewActors(views, dependencies) => {
+    case InitializeViews(views) => {
       initializeViews(views)
     }
 
@@ -313,6 +313,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
         case (view, (version, timestamp)) => {
           val initialState = ViewManagerActor.getStateFromMetadata(view, version, timestamp)
           viewStates.put(view.urlPath, initialState)
+//          sender ! ViewStatusResponse("receive", view, self)
           (view,initialState)
         }
       }

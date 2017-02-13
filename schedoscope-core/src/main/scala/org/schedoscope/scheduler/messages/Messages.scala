@@ -144,11 +144,10 @@ object MaterializeViewMode extends Enumeration {
 }
 
 /**
-  * Intructs a table actor to initialize a list of views. If not yet initialized.
-  * @param vs List of views to
-  * @param dependencies
+  * Instructs a table actor to initialize a list of views. If not yet initialized.
+  * @param vs List of views to initialize
   */
-case class InitializeViewActors(vs: List[View], dependencies: Boolean = false) extends CommandRequest
+case class InitializeViews(vs: List[View]) extends CommandRequest
 
 /**
   * Instructs a view actor to materialize itself

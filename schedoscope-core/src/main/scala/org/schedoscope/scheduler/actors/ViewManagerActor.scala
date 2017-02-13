@@ -40,6 +40,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
                        actionsManagerActor: ActorRef,
                        schemaManagerRouter: ActorRef,
                        viewSchedulingListenerManagerActor: ActorRef
+//                       createChildActor: String => ActorRef
                       ) extends Actor {
 
   import ViewManagerActor._
@@ -59,7 +60,8 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     * Message handler.
     */
   def receive = LoggingReceive({
-    case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
+    case vsr: ViewStatusResponse =>
+      viewStatusMap.put(vsr.view.fullPath, vsr)
 
     case GetViews(views, status, filter, issueFilter, dependencies) => {
       val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
@@ -80,7 +82,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     }
 
     case v: View => {
-      sender ! initializeViewActors(List(v), dependencies = false).head
+      sender ! initializeViews(List(v), dependencies = false).head
     }
 
     case DelegateMessageToView(view, msg) => {
@@ -126,6 +128,8 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
     val dependentViews = viewsToCreateActorsFor(vs, includeExistingActors = true)
 
+    validateExternalViews(dependentViews)
+
     val viewsPerTableName = dependentViews
       .map { case (view, _, _) => view }
       .groupBy(_.urlPathPrefix)
@@ -135,9 +139,9 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     //sendViewsToTableActors / createMissingTableActor
     val actors = viewsPerTableName.map {
       case (table, views) =>
-        actorForView(views.head) match {
+        val actorRef = actorForView(views.head) match {
           case Some(tableActorRef) =>
-            tableActorRef ! InitializeViewActors(views)
+            tableActorRef ! InitializeViews(views)
             tableActorRef
           case None =>
             // create actor
@@ -149,12 +153,18 @@ class ViewManagerActor(settings: SchedoscopeSettings,
               actionsManagerActor,
               schemaManagerRouter,
               viewSchedulingListenerManagerActor), actorNameForView(views.head))
-            //TODO: viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
             // send to actor
-            actorRef ! InitializeViewActors(views)
+            actorRef ! InitializeViews(views)
             actorRef
         }
+        views.foreach{ v =>
+          if(!viewStatusMap.contains(v.fullPath)) {
+            viewStatusMap.put(v.fullPath,ViewStatusResponse("receive",v,actorRef))
+          }
+        }
+        actorRef
     }.toSet
+
 
     //TODO: Think about this!
     viewsPerTableName.flatMap(_._2).foreach { view =>
@@ -169,6 +179,10 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         }
     }
     actors
+  }
+
+  def createTableActor(): Unit = {
+
   }
 
   /**
