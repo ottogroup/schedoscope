@@ -15,27 +15,35 @@
  */
 package org.schedoscope.metascope.controller;
 
-import org.schedoscope.metascope.service.SchedoscopeCommandService;
+import org.schedoscope.metascope.index.SolrFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Controller
-public class SchedoscopeController {
+public class MetascopeSearchController {
 
-    @Autowired
-    private SchedoscopeCommandService schedoscopeCommandService;
+  @Autowired
+  private SolrFacade solrIndex;
 
-    @RequestMapping("/admin/schedoscope")
-    public String invalidate(HttpServletRequest request, String action, String urlPath) {
-        if (action.equals(SchedoscopeCommandService.INVALIDATE_COMMAND)) {
-            this.schedoscopeCommandService.invalidateView(urlPath);
-        } else if (action.equals(SchedoscopeCommandService.MATERIALIZE_COMMAND)) {
-            this.schedoscopeCommandService.materializeView(urlPath);
+  @RequestMapping(value = "/solr/suggest", method = RequestMethod.GET)
+  @ResponseBody
+  public String suggest(String userInput) {
+    String result = "[";
+    if (userInput != null && userInput.length() > 2) {
+      List<String> suggestions = solrIndex.suggest(userInput);
+      for (int i = 0; i < suggestions.size(); i++) {
+        result += "\"" + suggestions.get(i) + "\"";
+        if (i < suggestions.size() - 1) {
+          result += ", ";
         }
-        return "redirect:" + request.getHeader("Referer");
+      }
     }
+    return result + "]";
+  }
 
 }
