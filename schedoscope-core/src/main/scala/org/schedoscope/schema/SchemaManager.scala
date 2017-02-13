@@ -355,7 +355,12 @@ object SchemaManager {
     case te: TException => {
       throw RetryableSchemaManagerException(s"Schema Manager initialization facing Thrift protocol exception.", te)
     }
-
+    case hql: org.apache.hive.service.cli.HiveSQLException => {
+      throw new RetryableSchemaManagerException(s"Schema Manager failed to connect to Hive Metastore: ${hql.getMessage}.", hql)
+    }
+    case jse: java.security.PrivilegedActionException => {
+      throw new RetryableSchemaManagerException(s"Schema Manager failed to connect to Hive Metastore.", jse)
+    }
     case t: Throwable => {
       throw FatalSchemaManagerException(s"Schema Manager facing unrecoverable exception while initializing.", t)
     }
