@@ -15,14 +15,11 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.ActivityEntity;
-import org.schedoscope.metascope.model.key.ActivityEntityKey;
+import org.schedoscope.metascope.model.MetascopeTaxonomy;
 import org.springframework.data.repository.CrudRepository;
 
-import java.util.List;
+public interface MetascopeTaxonomyRepository extends CrudRepository<MetascopeTaxonomy, Long> {
 
-public interface ActivityEntityRepository extends CrudRepository<ActivityEntity, ActivityEntityKey> {
-
-    public List<ActivityEntity> findFirst10ByOrderByTimestampDesc();
+  public MetascopeTaxonomy findByName(String name);
 
 }

@@ -15,10 +15,9 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.TaxonomyEntity;
+import org.schedoscope.metascope.model.MetascopeMetadata;
 import org.springframework.data.repository.CrudRepository;
 
-public interface TaxonomyEntityRepository extends CrudRepository<TaxonomyEntity, Long> {
+public interface MetascopeMetadataRepository extends CrudRepository<MetascopeMetadata, String> {
 
-    public TaxonomyEntity findByName(String name);
 }

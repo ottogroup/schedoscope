@@ -15,9 +15,13 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.CommentEntity;
+import org.schedoscope.metascope.model.MetascopeDataDistribution;
 import org.springframework.data.repository.CrudRepository;
 
-public interface CommentEntityRepository extends CrudRepository<CommentEntity, Long> {
+import java.util.List;
+
+public interface MetascopeDataDistributionRepository extends CrudRepository<MetascopeDataDistribution, String> {
+
+  public List<MetascopeDataDistribution> findByFqdn(String fqdn);
 
 }

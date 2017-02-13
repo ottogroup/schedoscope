@@ -15,10 +15,13 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.ViewDependencyEntity;
-import org.schedoscope.metascope.model.key.DependencyEntityKey;
+import org.schedoscope.metascope.model.MetascopeActivity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface ViewDependencyEntityRepository extends CrudRepository<ViewDependencyEntity, DependencyEntityKey> {
+import java.util.List;
+
+public interface MetascopeActivityRepository extends CrudRepository<MetascopeActivity, String> {
+
+  public List<MetascopeActivity> findFirst10ByOrderByTimestampDesc();
 
 }

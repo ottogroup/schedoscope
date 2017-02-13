@@ -15,10 +15,10 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.SuccessorEntity;
-import org.schedoscope.metascope.model.key.SuccessorEntityKey;
+import org.schedoscope.metascope.model.MetascopeExport;
+import org.schedoscope.metascope.model.MetascopeMetadata;
 import org.springframework.data.repository.CrudRepository;
 
-public interface SuccessorEntityRepository extends CrudRepository<SuccessorEntity, SuccessorEntityKey> {
+public interface MetascopeExportRepository extends CrudRepository<MetascopeExport, String> {
 
 }

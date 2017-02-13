@@ -15,10 +15,9 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.TransformationEntity;
-import org.schedoscope.metascope.model.key.TransformationEntityKey;
+import org.schedoscope.metascope.model.MetascopeCategoryObject;
 import org.springframework.data.repository.CrudRepository;
 
-public interface TransformationEntityRepository extends CrudRepository<TransformationEntity, TransformationEntityKey> {
+public interface MetascopeCategoryObjectRepository extends CrudRepository<MetascopeCategoryObject, Long> {
 
 }

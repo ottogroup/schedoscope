@@ -15,10 +15,15 @@
  */
 package org.schedoscope.metascope.repository;
 
-import org.schedoscope.metascope.model.JobMetadataEntity;
-import org.schedoscope.metascope.model.key.JobMetadataEntityKey;
+import org.schedoscope.metascope.model.MetascopeUser;
 import org.springframework.data.repository.CrudRepository;
 
-public interface JobMetadataEntityRepository extends CrudRepository<JobMetadataEntity, JobMetadataEntityKey> {
+public interface MetascopeUserRepository extends CrudRepository<MetascopeUser, Long> {
+
+  public MetascopeUser findByUsername(String username);
+
+  public MetascopeUser findByEmail(String email);
+
+  public MetascopeUser findByFullname(String fullname);
 
 }
