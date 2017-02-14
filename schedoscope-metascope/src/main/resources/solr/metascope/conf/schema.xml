@@ -21,9 +21,11 @@
     <field name="_root_" type="string" indexed="true" stored="false"/>
     <field name="text" type="text_multi" indexed="true" stored="false" multiValued="true"/>
     <field name="type" type="text_general" indexed="true" stored="true"/>
+    <field name="schedoscopeId" type="text_general" indexed="true" stored="true"/>
     <field name="databaseName" type="text_general" indexed="true" stored="true"/>
     <field name="tableName" type="text_general" indexed="true" stored="true"/>
     <field name="fields" type="text_multi" indexed="true" stored="true" multiValued="true"/>
+    <field name="parameters" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="transformation" type="text_multi" indexed="true" stored="true"/>
     <field name="storageFormat" type="text_general" indexed="true" stored="true"/>
     <field name="materializeOnce" type="boolean" indexed="true" stored="true"/>
@@ -46,6 +48,7 @@
     <field name="commentId" type="text_general" indexed="true" stored="true"/>
     <field name="commentText" type="text_general" indexed="true" stored="true"/>
 
+    <copyField source="schedoscopeId" dest="text"/>
     <copyField source="tableName" dest="text"/>
     <copyField source="databaseName" dest="text"/>
     <copyField source="fields" dest="text"/>

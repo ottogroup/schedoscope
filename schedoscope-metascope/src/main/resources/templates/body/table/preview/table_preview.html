@@ -15,7 +15,7 @@
  */  -->
 
 <div data-th-fragment="table(table)">
-    <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
+    <div class="panel panel-default">
         <div class="panel-heading">
             <div class="row">
                 <form data-th-action="@{/table/favourite}" method="POST">
@@ -27,13 +27,17 @@
                            th:text="${table.isPartitioned()} ?
                ${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')' :
                ${table.databaseName} + ' :: ' + ${table.tableName}"
-                           th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a> <span class="pull-right"
-                                                                                                  data-th-text="${table.status}"></span>
+                           th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a>
+                        <span th:attr="data-qualifier=${table.viewPath}" class="loader statusentity pull-right" title="Loading table status ..."></span>
                     </div>
                 </form>
             </div>
         </div>
         <table id="identityTable" class="table table-reflow">
+            <tr style="border-bottom: 1px solid lightgrey;">
+                <td width="20%"><b>Instance</b></td>
+                <td width="80%" data-th-text="${table.schedoscopeId}"></td>
+            </tr>
             <tr style="border-bottom: 1px solid lightgrey;">
                 <td width="20%"><b>Database</b></td>
                 <td width="80%" data-th-text="${table.databaseName}"></td>
@@ -60,11 +64,6 @@
                 style="border-bottom: 1px solid lightgrey;">
                 <td width="20%"><b>Last Partition created</b></td>
                 <td width="80%" th:with="value=${util.getTime(table.lastPartitionCreated)}"
-                    data-th-text="${value == null} ? '-' : ${value}"></td>
-            </tr>
-            <tr data-th-if="${table.lastSchemaChange > 0}" style="border-bottom: 1px solid lightgrey;">
-                <td width="20%"><b>Last Schema change</b></td>
-                <td width="80%" th:with="value=${util.getTime(table.lastSchemaChange)}"
                     data-th-text="${value == null} ? '-' : ${value}"></td>
             </tr>
         </table>

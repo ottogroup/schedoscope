@@ -20,10 +20,20 @@
     <nav data-th-replace="header/header :: navigation"></nav>
 </div>
 
+<div class="col-md-12" style="padding-bottom: 5px; min-height: 25px;">
+    <a href="/">Home</a>
+    <span data-th-if="${searchResultBreadcrumb != null}"> >
+        <a th:href="${searchResultBreadcrumb}" data-th-text="'Search Results'"></a>
+    </span>
+    <span> >
+        <span data-th-text="${table.fqdn}"></span>
+    </span>
+</div>
+
 <div class="col-md-12" data-th-fragment="table">
     <div class="row">
         <div class="col-md-12">
-            <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
+            <div class="panel panel-default">
                 <div class="panel-heading">
                     <div class="row">
                         <form data-th-action="@{/table/favourite}" method="POST">
@@ -39,11 +49,16 @@
                                         class="btn btn-link pull-right">
                                     <span id="minimizeButtonCaret" class="glyphicon glyphicon-triangle-top"></span>
                                 </button>
+                                <span th:attr="data-qualifier=${table.viewPath}" class="loader statusentity pull-right" title="Loading table status ..."></span>
                             </div>
                         </form>
                     </div>
                 </div>
                 <table id="identityTable" class="table table-reflow">
+                    <tr style="border-bottom: 1px solid lightgrey;">
+                        <td width="20%"><b>Instance</b></td>
+                        <td width="80%" data-th-text="${table.schedoscopeId}"></td>
+                    </tr>
                     <tr style="border-bottom: 1px solid lightgrey;">
                         <td width="20%"><b>Database</b></td>
                         <td width="80%" data-th-text="${table.databaseName}"></td>

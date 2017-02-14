@@ -16,66 +16,32 @@
 
 <div data-th-fragment="partition(partition)">
 
-    <div th:class="'panel panel-' + ${util.getColorForPanel(partition.status)}">
+    <div class="panel panel-default">
         <div class="panel-heading">
             <div class="row">
                 <div class="col-md-12">
                     <a
-                            th:href="'table?fqdn=' + ${partition.fqdn} + '&amp;partitionPage=' + ${urlService.getPartitionPage(partition.fqdn, partition.internalViewId)}
-            	+ '#partitionsContent-' + ${partition.internalViewId}"
-                            th:text="${!partition.parameters.isEmpty()} ?
-               ${partition.urlPath} + ' (' + ${partition.parameterString} + ')' :
-               ${partition.urlPath}"></a>
-                    <div data-th-if="${admin}" class="dropdown pull-right">
-                        <a class="btn-link dropdown-toggle" id="actions" data-toggle="dropdown" aria-haspopup="true"
-                           aria-expanded="true" style="color: inherit;">
-                            <em data-th-text="${partition.status}" style="padding-right: 5px;"></em> <span
-                                class="caret"></span>
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="actions">
-                            <li class="dropdown-header">Actions</li>
-                            <li data-th-if="${!partition.status.equals('materialized') and !partition.status.equals('invalidated') }"
-                                class="dropdown-header">No
-                                actions available
-                            </li>
-                            <li data-th-if="${partition.status.equals('materialized')}"><a href="javascript:void(0)"
-                                                                                           onclick="$(this).next().submit();">Invalidate</a>
-                                <form action="/admin/schedoscope" method="get">
-                                    <input type="hidden" name="action" value="invalidate"/> <input type="hidden"
-                                                                                                   name="urlPath"
-                                                                                                   th:value="${partition.urlPath}"/>
-                                </form>
-                            </li>
-                            <li data-th-if="${partition.status.equals('invalidated')}"><a href="javascript:void(0)"
-                                                                                          onclick="$(this).next().submit();">Materialize</a>
-                                <form action="/admin/schedoscope" method="get">
-                                    <input type="hidden" name="action" value="materialize"/> <input type="hidden"
-                                                                                                    name="urlPath"
-                                                                                                    th:value="${partition.urlPath}"/>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
-                    <span data-th-if="${!admin}" class="pull-right" style="color: inherit;"
-                          data-th-text="${partition.status}"> </span>
+                            th:href="'table?fqdn=' + ${partition.table.fqdn} + '&amp;partitionPage=' + ${urlService.getPartitionPage(partition.table.fqdn, partition.internalViewId())}
+            	+ '#partitionsContent-' + ${partition.internalViewId()}"
+                            th:text="${!partition.getParameters().isEmpty()} ?
+               ${partition.viewUrl} + ' (' + ${partition.parameterString} + ')' :
+               ${partition.viewUrl}"></a>
+                    <span th:attr="data-qualifier=${partition.viewUrl}" class="loader statusentity pull-right" title="Loading view status ..."></span>
                 </div>
             </div>
         </div>
         <table id="partitionPreviewTable" class="table table-reflow">
             <tr style="border-bottom: 1px solid lightgrey;">
-                <td width="20%"><b>Status</b></td>
-                <td width="80%" data-th-text="${partition.status}"></td>
-            </tr>
-            <tr style="border-bottom: 1px solid lightgrey;">
                 <td width="20%"><b>Table</b></td>
-                <td width="80%"><a data-th-text="${partition.fqdn}" th:href="'table?fqdn=' + ${partition.fqdn}"></a>
+                <td width="80%"><a data-th-text="${partition.table.databaseName + '.' + partition.table.tableName}"
+                                   th:href="'table?fqdn=' + ${partition.table.fqdn}"></a>
                 </td>
             </tr>
-            <tr data-th-if="${partition.transformationEnd != 0}" style="border-bottom: 1px solid lightgrey;">
+            <tr data-th-if="${partition.lastTransformation != 0}" style="border-bottom: 1px solid lightgrey;">
                 <td width="20%"><b>Last Transformation</b></td>
-                <td width="80%" data-th-text="${util.getTime(partition.transformationEnd)}"></td>
+                <td width="80%" data-th-text="${util.getTime(partition.lastTransformation)}"></td>
             </tr>
-            <tr data-th-each="parameter : ${partition.parameters}" style="border-bottom: 1px solid lightgrey;">
+            <tr data-th-each="parameter : ${partition.getParameters()}" style="border-bottom: 1px solid lightgrey;">
                 <td width="20%"><b data-th-text="${parameter.key}"></b></td>
                 <td width="80%" data-th-text="${parameter.value}"></td>
             </tr>

@@ -20,7 +20,7 @@
             <div class="control-group">
                 <div style="display: flex;">
                     <p class="control-label" for="categories">
-                        Documentation for <b data-th-text="${field.name}"></b>
+                        Documentation for <b data-th-text="${field.fieldName}"></b>
                     </p>
                     <div data-th-if="${table.hasDocumentation()}"
                          th:with="userEntity=${userEntityService.findByUsername(table.comment.username)}">
@@ -35,24 +35,24 @@
         </div>
         <div class="pull-right" style="padding-right: 20px;">
             <form class="form" data-th-action="@{/field/documentation}" method="post">
-                <button th:id="${field.name} + 'DocuEditButton'" type="button"
-                        th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'"
+                <button th:id="${field.fieldName} + 'DocuEditButton'" type="button"
+                        th:onclick="'toggleEditDocu(\'' + ${field.fieldName} + '\')'"
                         data-th-if="${field.hasDocumentation()}" class="btn btn-default show-elem">Edit Documentation
                 </button>
-                <button th:id="${field.name} + 'DocuEditButton'" type="button"
-                        th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'"
+                <button th:id="${field.fieldName} + 'DocuEditButton'" type="button"
+                        th:onclick="'toggleEditDocu(\'' + ${field.fieldName} + '\')'"
                         data-th-if="${!field.hasDocumentation()}" class="btn btn-default show-elem">Create Documentation
                 </button>
                 <input type="hidden" name="fqdn" th:value="${table.fqdn}"/> <input type="hidden" name="fieldname"
-                                                                                   th:value="${field.name}"/> <input
-                    type="hidden" name="parameter" th:value="${field.parameterField}"/> <input type="hidden"
+                                                                                   th:value="${field.fieldName}"/> <input
+                    type="hidden" name="parameter" th:value="${field.isParameter()}"/> <input type="hidden"
                                                                                                name="documentation"
-                                                                                               th:id="${field.name} + 'Input'"/>
-                <button th:id="${field.name} + 'SubmitDocuButton'" class="btn btn-success hide-elem" type="submit"
+                                                                                               th:id="${field.fieldName} + 'Input'"/>
+                <button th:id="${field.fieldName} + 'SubmitDocuButton'" class="btn btn-success hide-elem" type="submit"
                         style="display: none;">Save
                 </button>
-                <button th:id="${field.name} + 'CancelDocuButton'"
-                        th:onclick="'toggleEditDocu(\'' + ${field.name} + '\')'" class="btn btn-default hide-elem"
+                <button th:id="${field.fieldName} + 'CancelDocuButton'"
+                        th:onclick="'toggleEditDocu(\'' + ${field.fieldName} + '\')'" class="btn btn-default hide-elem"
                         type="button" style="display: none;">Cancel
                 </button>
             </form>
@@ -60,11 +60,11 @@
     </div>
     <div class="row">
         <div class="col-md-12">
-            <div th:id="${field.name} + 'EditorWrapper'" style="display: none;" class="hide-elem">
-                <div th:id="${field.name} + 'Editor'" class="fieldEditor"
+            <div th:id="${field.fieldName} + 'EditorWrapper'" style="display: none;" class="hide-elem">
+                <div th:id="${field.fieldName} + 'Editor'" class="fieldEditor"
                      th:utext="${field.hasDocumentation() ? field.comment.text : ''}"></div>
             </div>
-            <div th:id="${field.name} + 'TextWrapper'" class="well">
+            <div th:id="${field.fieldName} + 'TextWrapper'" class="well">
                 <div data-th-if="${field.hasDocumentation()}" th:remove="tag" th:utext="${field.comment.text}"></div>
             </div>
         </div>
@@ -73,7 +73,7 @@
     <div style="display: flex;" data-th-if="${field.hasDocumentation()}">
         <p style="font-size: 14; margin: 0px; padding-right: 5px;"
            data-th-text="${field.comments.size()} + ' Comments &bull;'"/>
-        <a href="javascript:void(0)" th:onclick="'expandFunction(\'' + ${field.name} + '\')'"
+        <a href="javascript:void(0)" th:onclick="'expandFunction(\'' + ${field.fieldName} + '\')'"
            data-th-text="'Write a comment'"></a>
     </div>
 
@@ -88,7 +88,7 @@
                               style="display: inline">
                             <input type="hidden" name="commentID" th:value="${comment.id}"/> <input type="hidden"
                                                                                                     name="fieldname"
-                                                                                                    th:value="${field.name}"/>
+                                                                                                    th:value="${field.fieldName}"/>
                             <input
                                     type="hidden" name="parameter" th:value="${field.parameterField}"/> <input
                                 type="hidden" name="commentText"
@@ -119,7 +119,7 @@
                                     <form class="form" data-th-action="@{/field/documentation/comment/delete}"
                                           method="post" style="display: inline">
                                         <input type="hidden" name="commentID" th:value="${comment.id}"/> <input
-                                            type="hidden" name="fieldname" th:value="${field.name}"/>
+                                            type="hidden" name="fieldname" th:value="${field.fieldName}"/>
                                         <input type="hidden" name="parameter" th:value="${field.parameterField}"/> <a
                                             href="javascript:void()"
                                             onclick="$(this).closest('form').submit()"><span
@@ -132,18 +132,17 @@
                 </div>
                 <br/>
                 <div class="row">
-                    <div class="col-md-12 hide-elem" th:id="${field.name} + 'CommentEditorSection'"
+                    <div class="col-md-12 hide-elem" th:id="${field.fieldName} + 'CommentEditorSection'"
                          style="display: none;">
-                        <div th:id="${field.name} + 'CommentEditor'" class="fieldCommentEditor"
-                             th:attr="data-fieldname=${field.name}"></div>
+                        <div th:id="${field.fieldName} + 'CommentEditor'" class="fieldCommentEditor"
+                             th:attr="data-fieldname=${field.fieldName}"></div>
                         <form class="form" data-th-action="@{/field/documentation/comment/add}" method="post">
                             <input type="hidden" name="fqdn" th:value="${table.fqdn}"/> <input type="hidden"
                                                                                                name="fieldname"
-                                                                                               th:value="${field.name}"/>
-                            <input
-                                    type="hidden" name="parameter" th:value="${field.parameterField}"/> <input
+                                                                                               th:value="${field.fieldName}"/>
+<input
                                 type="hidden" name="comment"
-                                th:id="${field.name} + 'CommentInput'"/>
+                                th:id="${field.fieldName} + 'CommentInput'"/>
                             <button id="createCommentButton" type="submit" class="btn btn-success pull-right">Create
                                 Comment
                             </button>
