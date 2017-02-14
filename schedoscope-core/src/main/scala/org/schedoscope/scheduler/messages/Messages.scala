@@ -229,7 +229,7 @@ case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRun
   * @param transformationStatusList List of entities of TransformationStatusResponse
   * @see TransformationStatusResponse
   */
-case class TransformationStatusListResponse(val transformationStatusList: List[TransformationStatusResponse[_]]) extends CommandResponse
+case class TransformationStatusListResponse(transformationStatusList: List[TransformationStatusResponse[_]]) extends CommandResponse
 
 /**
   * Response message of view manager actor with state of view actors
@@ -247,7 +247,7 @@ case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) exte
   * @param driverRunHandle runHandle of a running transformation
   * @param driverRunStatus state of a running transformation
   */
-case class TransformationStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
+case class TransformationStatusResponse[T <: Transformation](message: String, actor: ActorRef, driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
 
 /**
   * View actor responding to the view manager actor with the state of the view
@@ -258,7 +258,7 @@ case class TransformationStatusResponse[T <: Transformation](val message: String
   * @param errors     true if some transformations in that subtree have been failing
   * @param incomplete true of not all transitive dependencies had data available
   */
-case class ViewStatusResponse(val status: String, view: View, actor: ActorRef, errors: Option[Boolean] = None, incomplete: Option[Boolean] = None) extends CommandResponse
+case class ViewStatusResponse(status: String, view: View, actor: ActorRef, errors: Option[Boolean] = None, incomplete: Option[Boolean] = None) extends CommandResponse
 
 /**
   * Schema actor returning the stored transformation metadata (version checksum, timestamp) retrieved from metadata store
