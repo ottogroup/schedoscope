@@ -19,17 +19,13 @@ package org.schedoscope.lineage
 import java.util
 
 import org.apache.calcite.sql._
-import org.apache.hadoop.hive.metastore.api.Function
 import org.apache.hadoop.hive.ql.udf.generic.{GenericUDAFResolver, GenericUDF, GenericUDTF}
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.HiveTransformation
 
 import scala.collection.JavaConverters._
 
 /**
-  * SqlOperatorTable for registered [[Function]]s in Schedoscope [[HiveTransformation]]s.
-  *
-  * @see [[HiveTransformation.withFunctions()]]
+  * SqlOperatorTable for registered [[org.apache.hadoop.hive.metastore.api.Function]]s in Schedoscope [[org.schedoscope.dsl.transformations.HiveTransformation]]s.
   *
   * @author Jan Hicken (jhicken)
   */

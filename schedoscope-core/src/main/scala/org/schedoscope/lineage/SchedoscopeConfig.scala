@@ -40,12 +40,8 @@ import scala.collection.JavaConverters._
 case class SchedoscopeConfig(view: View) extends FrameworkConfig {
   override val getDefaultSchema: SchemaPlus = {
     val rootSchema = Frameworks.createRootSchema(false)
-    view.recursiveDependencies.groupBy(
-      _.dbName
-    ).map {
-      case (dbName, dbViews) => dbName -> SchedoscopeSchema(dbViews)
-    }.foreach {
-      case (dbName, schema) => rootSchema.add(dbName, schema)
+    view.recursiveDependencies.groupBy(_.dbName).foreach {
+      case (dbName, dbViews) => rootSchema.add(dbName, SchedoscopeSchema(dbViews))
     }
 
     rootSchema

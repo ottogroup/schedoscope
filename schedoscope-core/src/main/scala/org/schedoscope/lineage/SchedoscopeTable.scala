@@ -25,58 +25,74 @@ import org.schedoscope.dsl.{Structure, View}
 import scala.collection.JavaConverters._
 
 /**
-  * Table based on reflection over [[View]]s.
+  * Table based on reflection over [[org.schedoscope.dsl.View]]s.
   * <p>
   * Uses the following field type conversions:
   * <table>
-  *   <tr>
-  *     <th>ScalaType</th>
-  *     <th>RelDataType</th>
-  *   </tr>
-  *   <tr>
-  *     <td>Byte</td>
-  *     <td>SMALLINT</td>
-  *   </tr>
-  *   <tr>
-  *     <td>Int</td>
-  *     <td>INTEGER</td>
-  *   </tr>
-  *   <tr>
-  *     <td>Long</td>
-  *     <td>BIGINT</td>
-  *   </tr>
-  *   <tr>
-  *     <td>Boolean</td>
-  *     <td>BOOLEAN</td>
-  *   </tr>
-  *   <tr>
-  *     <td>Double</td>
-  *     <td>DOUBLE</td>
-  *   </tr>
-  *   <tr>
-  *     <td>Float</td>
-  *     <td>FLOAT</td>
-  *   </tr>
-  *   <tr>
-  *     <td>String</td>
-  *     <td>VARCHAR</td>
-  *   </tr>
-  *   <tr>
-  *     <td>List[A]</td>
-  *     <td>RelRecordType[A]<br></td>
-  *   </tr>
-  *   <tr>
-  *     <td>Map[K,V]</td>
-  *     <td>MapSqlType[K,V]</td>
-  *   </tr>
-  *   <tr>
-  *     <td>Structure<br></td>
-  *     <td>RelRecordType<br></td>
-  *   </tr>
-  *   <tr>
-  *     <td>_<br></td>
-  *     <td>ANY<br></td>
-  *   </tr>
+  * <thead>
+  * <tr>
+  * <th>ScalaType</th>
+  * <th>→</th>
+  * <th>RelDataType</th>
+  * </tr>
+  * </thead>
+  * <tbody>
+  * <tr>
+  * <td>Byte</td>
+  * <td>→</td>
+  * <td>SMALLINT</td>
+  * </tr>
+  * <tr>
+  * <td>Int</td>
+  * <td>→</td>
+  * <td>INTEGER</td>
+  * </tr>
+  * <tr>
+  * <td>Long</td>
+  * <td>→</td>
+  * <td>BIGINT</td>
+  * </tr>
+  * <tr>
+  * <td>Boolean</td>
+  * <td>→</td>
+  * <td>BOOLEAN</td>
+  * </tr>
+  * <tr>
+  * <td>Double</td>
+  * <td>→</td>
+  * <td>DOUBLE</td>
+  * </tr>
+  * <tr>
+  * <td>Float</td>
+  * <td>→</td>
+  * <td>FLOAT</td>
+  * </tr>
+  * <tr>
+  * <td>String</td>
+  * <td>→</td>
+  * <td>VARCHAR</td>
+  * </tr>
+  * <tr>
+  * <td>List[A]</td>
+  * <td>→</td>
+  * <td>ArraySqlType[A]</td>
+  * </tr>
+  * <tr>
+  * <td>Map[K,V]</td>
+  * <td>→</td>
+  * <td>MapSqlType[K,V]</td>
+  * </tr>
+  * <tr>
+  * <td>Structure</td>
+  * <td>→</td>
+  * <td>RelRecordType</td>
+  * </tr>
+  * <tr>
+  * <td>_</td>
+  * <td>→</td>
+  * <td>ANY</td>
+  * </tr>
+  * </tbody>
   * </table>
   *
   * @author Jan Hicken (jhicken)

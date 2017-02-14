@@ -26,22 +26,22 @@ import scala.language.implicitConversions
   */
 package object lineage {
   /**
-    * Maps [[FieldLike]]s to its dependencies
+    * Maps [[org.schedoscope.dsl.FieldLike]]s to its dependencies
     */
   type DependencyMap = Map[FieldLike[_], FieldSet]
   /**
-    * A set of [[FieldLike]]s
+    * A set of [[org.schedoscope.dsl.FieldLike]]s
     */
   type FieldSet = Set[FieldLike[_]]
 
   /**
-    * Wrapper class for a [[View]] to facilitate access to a specified [[HiveTransformation]].
+    * Wrapper class for a [[org.schedoscope.dsl.View]] to facilitate access to a specified [[org.schedoscope.dsl.transformations.HiveTransformation]].
     *
     * @param view a view
     */
   implicit class ViewWithHiveTransformation(val view: View) extends AnyVal {
     /**
-      * Searches all transformations of a view specified by [[View.transformVia()]] for a [[HiveTransformation]].
+      * Searches all transformations of a view specified by ```transformVia()``` for a [[org.schedoscope.dsl.transformations.HiveTransformation]].
       *
       * @return a HiveTransformation, if found
       */
@@ -52,7 +52,7 @@ package object lineage {
     }
 
     /**
-      * Recursive helper function to handle the recursive [[SeqTransformation]] data structure.
+      * Recursive helper function to handle the recursive [[org.schedoscope.dsl.transformations.SeqTransformation]] data structure.
       *
       * @param st a SeqTransformation
       * @return a HiveTransformation, if found

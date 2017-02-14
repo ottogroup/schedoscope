@@ -41,19 +41,56 @@ object DependencyAnalyzer {
   /**
     * A function providing an ordered list of dependency sets for a relation
     */
-  type DependencyFunction = (RelNode) => List[FieldSet]
+  private type DependencyFunction = (RelNode) => List[FieldSet]
   /**
     * A cache for dependency information grouped by a key
     */
-  type DependencyCache = mutable.Map[String, DependencyMap]
+  private type DependencyCache = mutable.Map[String, DependencyMap]
 
-  def analyzeDependencies(view: View, recurse: Boolean = false): DependencyMap = {
-    analyze(view, recurse, dependenciesOf)
-  }
+  /**
+    * Provides ''extended Where-Provenance'' information for a [[org.schedoscope.dsl.View]].
+    *
+    * ''Extended Where-Provenance'' means, that in addition to the ordinary Where-Provenance dependencies, the
+    * following mechanisms are applied:
+    *   - JOIN, FILTER: the corresponding condition's lineage is added to each field's lineage
+    *   - AGGREGATE: each field grouped by is added to each field's lineage
+    *
+    * The view must either
+    *   - declare a [[org.schedoscope.dsl.transformations.HiveTransformation]]; or
+    *   - declare the lineage manually with `affects()`
+    *
+    * If the corresponding HiveQL statement cannot be processed or the view does not declare one of
+    * the above, ''blackbox lineage'' is returned instead. This assumes, that each output field is dependent
+    * on ''any'' input field.
+    *
+    * Currently, neither `LATERAL TABLE` nor user-defined table functions (UDTFs) can be processed. Thus,
+    * if lineage is not defined explicitly, ''blackbox lineage'' will be returned.
+    *
+    * @param view    a view to analyze
+    * @param recurse true, if a recursive analysis should be done
+    * @return a map, that assigns a set of dependencies to each field
+    */
+  def analyzeDependencies(view: View, recurse: Boolean = false): DependencyMap = analyze(view, recurse, dependenciesOf)
 
-  def analyzeLineage(view: View, recurse: Boolean = false): DependencyMap = {
-    analyze(view, recurse, lineageOf)
-  }
+  /**
+    * Provides ''Where-Provenance'' information for a [[org.schedoscope.dsl.View]].
+    *
+    * The view must either
+    *   - declare a [[org.schedoscope.dsl.transformations.HiveTransformation]]; or
+    *   - declare the lineage manually with `affects()`
+    *
+    * If the corresponding HiveQL statement cannot be processed or the view does not declare one of
+    * the above, ''blackbox lineage'' is returned instead. This assumes, that each output field is dependent
+    * on ''any'' input field.
+    *
+    * Currently, neither `LATERAL TABLE` nor user-defined table functions (UDTFs) can be processed. Thus,
+    * if lineage is not defined explicitly, ''blackbox lineage'' will be returned.
+    *
+    * @param view    a view to analyze
+    * @param recurse true, if a recursive analysis should be done
+    * @return a map, that assigns a set of dependencies to each field
+    */
+  def analyzeLineage(view: View, recurse: Boolean = false): DependencyMap = analyze(view, recurse, lineageOf)
 
   private def analyze(view: View, recurse: Boolean, depFunc: DependencyFunction,
                       cache: DependencyCache = mutable.Map()): DependencyMap = {
@@ -170,7 +207,7 @@ object DependencyAnalyzer {
       val aggColDeps = agg.getAggCallList.asScala
         .map(_.getArgList)
         .map(_.asScala.flatMap(i => inputDepList(i)).toSet)
-        .map(_ ++ groupedColDeps.reduce(_ ++ _))
+        .map(_ ++ groupedColDeps.flatten)
       List() ++ groupedColDeps ++ aggColDeps
     case join: Join =>
       val inputDepList = dependenciesOf(join.getLeft) ++ dependenciesOf(join.getRight)

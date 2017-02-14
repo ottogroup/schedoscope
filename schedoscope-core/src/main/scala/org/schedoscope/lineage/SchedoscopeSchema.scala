@@ -25,7 +25,7 @@ import org.schedoscope.dsl.View
 import scala.collection.JavaConverters._
 
 /**
-  * Schema based on reflection over [[View]]s.
+  * Schema based on reflection over [[org.schedoscope.dsl.View]]s.
   *
   * @author Jan Hicken (jhicken)
   */
