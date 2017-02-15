@@ -4253,7 +4253,6 @@ SqlIdentifier ReservedFunctionName() :
         | <CHAR_LENGTH>
         | <CHARACTER_LENGTH>
         | <COALESCE>
-        | <COLLECT>
         | <COVAR_POP>
         | <COVAR_SAMP>
         | <CUME_DIST>
@@ -4599,7 +4598,6 @@ SqlPostfixOperator PostfixRowOperator() :
     | < COLLATION_CATALOG: "COLLATION_CATALOG" >
     | < COLLATION_NAME: "COLLATION_NAME" >
     | < COLLATION_SCHEMA: "COLLATION_SCHEMA" >
-    | < COLLECT: "COLLECT" >
     | < COLUMN: "COLUMN" >
     | < COLUMN_NAME: "COLUMN_NAME" >
     | < COMMAND_FUNCTION: "COMMAND_FUNCTION" >
@@ -5130,6 +5128,7 @@ String CommonNonReservedKeyWord() :
         | <DATA>
         | <DATETIME_INTERVAL_CODE>
         | <DATETIME_INTERVAL_PRECISION>
+        | <DAY>
         | <DEFAULTS>
         | <DEFERRABLE>
         | <DEFERRED>
@@ -5161,6 +5160,7 @@ String CommonNonReservedKeyWord() :
         | <GO>
         | <GOTO>
         | <GRANTED>
+        | <HOUR>
         | <HIERARCHY>
         | <IMMEDIATE>
         | <IMPLEMENTATION>
@@ -5190,7 +5190,10 @@ String CommonNonReservedKeyWord() :
         | <MESSAGE_LENGTH>
         | <MESSAGE_OCTET_LENGTH>
         | <MESSAGE_TEXT>
+        | <METHOD>
+        | <MINUTE>
         | <MINVALUE>
+        | <MONTH>
         | <MORE_KW>
         | <MUMPS>
         | <NAME>
@@ -5249,6 +5252,7 @@ String CommonNonReservedKeyWord() :
         | <SCOPE_CATALOGS>
         | <SCOPE_NAME>
         | <SCOPE_SCHEMA>
+        | <SECOND>
         | <SECTION>
         | <SECURITY>
         | <SELF>
@@ -5292,12 +5296,14 @@ String CommonNonReservedKeyWord() :
         | <USER_DEFINED_TYPE_CODE>
         | <USER_DEFINED_TYPE_NAME>
         | <USER_DEFINED_TYPE_SCHEMA>
+        | <VALUE>
         | <VERSION>
         | <VIEW>
         | <WRAPPER>
         | <WORK>
         | <WRITE>
         | <XML>
+        | <YEAR>
         | <ZONE>
     )
     {
@@ -5374,7 +5380,7 @@ String CommonNonReservedKeyWord() :
 
 <DEFAULT, DQID, BTID> TOKEN :
 {
-    < EQ: "=" >
+    < EQ: "=" | "==">
     | < GT: ">" >
     | < LT: "<" >
     | < HOOK: "?" >

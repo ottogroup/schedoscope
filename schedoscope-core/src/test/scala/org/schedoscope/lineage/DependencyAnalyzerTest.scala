@@ -73,17 +73,6 @@ class DependencyAnalyzerTest extends FlatSpec with Matchers with PrivateMethodTe
     )
   }
 
-  val reservedKeywords = Table("keyword", "YEAR", "MONTH", "DAY", "HOUR", "MINUTE", "SECOND")
-  it should "pre-process SQL by quoting reserved keywords used as function calls" in {
-    forAll(reservedKeywords) { (keyword: String) =>
-      val nonQuotedSql = s"SELECT id, $keyword(date) FROM tbl1 WHERE $keyword(date) = 3"
-      val quotedSql = s"""SELECT id, `$keyword`(date) FROM tbl1 WHERE `$keyword`(date) = 3"""
-
-      DependencyAnalyzer invokePrivate preprocessSql(nonQuotedSql) shouldEqual quotedSql
-      DependencyAnalyzer invokePrivate preprocessSql(quotedSql) shouldEqual quotedSql
-    }
-  }
-
   it should "pre-process SQL by emptying double quoted strings" in {
     val badSql = """regexp_replace(csv_line_to_array.field_array[0] , "\"", "")"""
     val goodSql = """regexp_replace(csv_line_to_array.field_array[0] , '', '')"""
@@ -101,13 +90,6 @@ class DependencyAnalyzerTest extends FlatSpec with Matchers with PrivateMethodTe
   it should "pre-process SQL by emptying strings with escaped single quotes" in {
     val badSql = """unix_timestamp(last_value(wl.occurred_at) OVER session, 'yyyy-MM-dd\'T\'HH:mm:ss.SSSXXX')"""
     val goodSql = "unix_timestamp(last_value(wl.occurred_at) OVER session, '')"
-
-    DependencyAnalyzer invokePrivate preprocessSql(badSql) shouldEqual goodSql
-  }
-
-  it should "pre-process SQL by replacing == with =" in {
-    val badSql = "WHEN xx == 21 THEN"
-    val goodSql = "WHEN xx = 21 THEN"
 
     DependencyAnalyzer invokePrivate preprocessSql(badSql) shouldEqual goodSql
   }

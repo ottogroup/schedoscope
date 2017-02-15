@@ -315,13 +315,7 @@ object DependencyAnalyzer {
     Seq(
       """"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'""".r -> { (_: Match) =>
         "''"
-      }, // replace all double or single quoted strings by empty single quoted strings
-      """(?i)([\(\)\.,\s])(year|month|day|hour|minute|second|method)([=\(\)\.,\s])""".r -> { (m: Match) =>
-        s"${m.group(1)}`${m.group(2)}`${m.group(3)}"
-      }, // escape reserved keywords
-      "==".r -> { (_: Match) =>
-        "="
-      } // replace == with =
+      } // replace all double or single quoted strings by empty single quoted strings
     ).foldLeft(sql) {
       case (str, (regex, replacer)) => regex.replaceAllIn(str, replacer)
     }
