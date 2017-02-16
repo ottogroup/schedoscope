@@ -19,7 +19,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import scala.concurrent.duration.FiniteDuration
 import scala.collection.mutable.HashMap
 import org.slf4j.LoggerFactory
-import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 
 /**
   * A partial implementation of a BackOffStrategy available in
@@ -37,28 +37,24 @@ class BackOffSupervision(managerName: String,
 
   val actorBackOffWaitTime = HashMap[String, ExponentialBackOff]()
 
-  def scheduleTick(actor: ActorRef, backOffTime: FiniteDuration)(implicit executor: ExecutionContext) {
-    system.scheduler.scheduleOnce(backOffTime, actor, "tick")
-  }
-  def manageActorLifecycle(managedActor: ActorRef, backOffSlotTime: FiniteDuration = null, backOffMinimumDelay: FiniteDuration = null)(implicit executor: ExecutionContext) {
+  def manageActorLifecycle(managedActor: ActorRef, backOffSlotTime: FiniteDuration = null, backOffMinimumDelay: FiniteDuration = null): FiniteDuration = {
     if(actorBackOffWaitTime.contains(managedActor.path.toStringWithoutAddress)) {
 
       val newBackOff = actorBackOffWaitTime(managedActor.path.toStringWithoutAddress).nextBackOff
-
-      scheduleTick(managedActor, newBackOff.backOffWaitTime)
       actorBackOffWaitTime.put(managedActor.path.toStringWithoutAddress, newBackOff)
       log.warn(s"$managerName: Set new back-off waiting " +
         s"time to value ${newBackOff.backOffWaitTime} for rebooted actor ${managedActor.path.toStringWithoutAddress}; " +
         s"(retries=${newBackOff.retries}, resets=${newBackOff.resets}, total-retries=${newBackOff.totalRetries})")
-
+      newBackOff.backOffWaitTime
     } else {
-      managedActor ! "tick"
+      //managedActor ! "tick"
       val backOff = ExponentialBackOff(backOffSlotTime = backOffSlotTime, constantDelay = backOffMinimumDelay)
       log.debug(s"$managerName: Set initial back-off waiting " +
         s"time to value ${backOff.backOffWaitTime} for booted actor ${managedActor.path.toStringWithoutAddress}; " +
         s"(retries=${backOff.retries}, resets=${backOff.resets}, total-retries=${backOff.totalRetries})")
-
       actorBackOffWaitTime.put(managedActor.path.toStringWithoutAddress, backOff)
+      //schedule immediate tick response
+      0 millis
     }
   }
 

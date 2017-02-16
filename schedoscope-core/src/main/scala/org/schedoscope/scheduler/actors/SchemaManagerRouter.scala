@@ -62,15 +62,20 @@ class SchemaManagerRouter(settings: SchedoscopeSettings) extends Actor {
       "partition-creator")
   }
 
+  def scheduleTick(managedActor: ActorRef, backOffTime: FiniteDuration) {
+    system.scheduler.scheduleOnce(backOffTime, managedActor, "tick")
+  }
 
   def manageActorLifecycle(metaActor: ActorRef) {
     val slot = settings.backOffSlotTime millis
     val delay = settings.backOffMinimumDelay millis
 
-    metastoreActorsBackOffSupervision.manageActorLifecycle(
+    val backOffTime = metastoreActorsBackOffSupervision.manageActorLifecycle(
       managedActor = metaActor,
       backOffSlotTime = slot,
       backOffMinimumDelay = delay)
+
+    scheduleTick(metaActor, backOffTime)
   }
 
 

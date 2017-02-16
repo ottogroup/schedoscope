@@ -28,6 +28,7 @@ import org.schedoscope.scheduler.utils.{BackOffSupervision, ExponentialBackOff}
 
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 
@@ -67,6 +68,10 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
     managerName = "TRANSFORMATION MANAGER ACTOR",
     system = context.system)
 
+  def scheduleTick(managedActor: ActorRef, backOffTime: FiniteDuration) {
+    system.scheduler.scheduleOnce(backOffTime, managedActor, "tick")
+  }
+
   def manageDriverLifeCycle(asr: TransformationStatusResponse[_]) {
 
     if(asr.message == "booted") {
@@ -74,10 +79,12 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
       val slot = settings.getDriverSettings(transformation).backOffSlotTime millis
       val delay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
 
-      driverActorsBackOffSupervision.manageActorLifecycle(
+      val backOffTime = driverActorsBackOffSupervision.manageActorLifecycle(
         managedActor = asr.actor,
         backOffSlotTime = slot,
         backOffMinimumDelay = delay)
+
+      scheduleTick(asr.actor, backOffTime)
     }
     driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
 
