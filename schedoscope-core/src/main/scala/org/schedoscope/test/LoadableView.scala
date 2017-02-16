@@ -15,7 +15,10 @@
   */
 package org.schedoscope.test
 
+
+import java.io.File
 import org.apache.hadoop.fs.Path
+import org.schedoscope.dsl.storageformats.Avro
 import org.schedoscope.dsl.{FieldLike, View}
 
 import scala.collection.mutable.ListBuffer
@@ -183,6 +186,17 @@ trait test extends LoadableView with AccessRowData {
 
   override def numRows() = {
     rowData.size
+  }
+
+  override def avroSchemaPathPrefix = storageFormat match {
+    case Avro(testPath, _) => avroSchemaPathTestPath(testPath)
+    case _ => avroSchemaPathPrefixBuilder(env)
+  }
+
+  private def avroSchemaPathTestPath(testPath: String) = {
+    val path = getClass.getResource(testPath).toString
+    println("PATH IS: AAA "+path)
+    path
   }
 
 }

@@ -3,7 +3,8 @@ package org.schedoscope.test
 import org.apache.hadoop.fs.Path
 import org.schedoscope.dsl.Field._
 import org.schedoscope.dsl.Parameter._
-import test.views.{Click, ClickOfEC0101}
+import org.schedoscope.dsl.storageformats._
+import test.views._
 
 
 class TestSchedoscopeSpec extends SchedoscopeSpec {
@@ -39,6 +40,35 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     }
   }
 
+  val clickAvro = putViewUnderTest {
+    new ClickOfEC0101Avro(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+      withResource("test" -> "src/test/resources/test.sql")
+    }
+  }
+
+  val clickORC = putViewUnderTest {
+    new ClickOfEC0101ORC(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+      withResource("test" -> "src/test/resources/test.sql")
+    }
+  }
+
+  val clickParquet = putViewUnderTest {
+    new ClickOfEC0101Parquet(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+      withResource("test" -> "src/test/resources/test.sql")
+    }
+  }
+
+  val clickJson = putViewUnderTest {
+    new ClickOfEC0101Json(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+      withResource("test" -> "src/test/resources/test.sql")
+    }
+  }
+
+
   //import the view under test to access it in the tests
   import click._
 
@@ -64,6 +94,25 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     val target = new Path(s"${click.resources.remoteTestDirectory}/test.sql")
     fs.exists(target) shouldBe true
   }
+
+  it should "not change output/goal view storage format Parquet" in {
+    clickParquet.storageFormat shouldBe Parquet()
+  }
+
+  // Confirm for rest of storage formats
+
+  it should "not change output/goal view storage format JSON" in {
+    clickJson.storageFormat shouldBe Json()
+  }
+
+  it should "not change output/goal view storage format ORC" in {
+    clickORC.storageFormat shouldBe OptimizedRowColumnar()
+  }
+
+  it should "not change output/goal view storage format Avro" in {
+    clickAvro.storageFormat shouldBe Avro("testing")
+  }
+
 }
 
 class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {

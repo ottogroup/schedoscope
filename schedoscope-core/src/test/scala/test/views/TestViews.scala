@@ -240,14 +240,11 @@ case class Click(shopCode: Parameter[String],
   val url = fieldOf[String]
 }
 
-case class ClickOfEC0101(year: Parameter[String],
-                         month: Parameter[String],
-                         day: Parameter[String]) extends View
+trait ClickOfEC extends View
   with Id
   with DailyParameterization {
 
   val url = fieldOf[String]
-
   val click = dependsOn(() => Click(p("EC0101"), year, month, day))
 
   transformVia(
@@ -257,6 +254,41 @@ case class ClickOfEC0101(year: Parameter[String],
             SELECT ${click().id.n}, ${click().url.n}
             FROM ${click().tableName}
             WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+}
+
+case class ClickOfEC0101(year: Parameter[String],
+                         month: Parameter[String],
+                         day: Parameter[String]) extends ClickOfEC
+   {
+  storedAs(TextFile())
+}
+
+case class ClickOfEC0101Json(year: Parameter[String],
+                         month: Parameter[String],
+                         day: Parameter[String]) extends ClickOfEC
+{
+  storedAs(Json())
+}
+
+case class ClickOfEC0101ORC(year: Parameter[String],
+                         month: Parameter[String],
+                         day: Parameter[String]) extends ClickOfEC
+{
+  storedAs(OptimizedRowColumnar())
+}
+
+case class ClickOfEC0101Parquet(year: Parameter[String],
+                                month: Parameter[String],
+                                day: Parameter[String]) extends ClickOfEC
+{
+  storedAs(Parquet())
+}
+
+case class ClickOfEC0101Avro(year: Parameter[String],
+                                month: Parameter[String],
+                                day: Parameter[String]) extends ClickOfEC
+{
+  storedAs(Avro("avro_schemas"))
 }
 
 case class ClickOfEC0101WithJdbcExport(year: Parameter[String],

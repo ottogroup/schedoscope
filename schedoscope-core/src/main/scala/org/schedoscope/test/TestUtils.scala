@@ -45,7 +45,6 @@ object TestUtils {
     val inputFixtures = view.inputFixtures
 
     inputFixtures.foreach(_.writeData())
-
     view.createViewTable()
 
     if (view.isPartitioned()) {
@@ -77,11 +76,13 @@ object TestUtils {
       .driverFor(finalTransformationToRun)
       .runAndWait(finalTransformationToRun)
 
+
     if (sortedBy != null) {
       view.populate(Some(sortedBy))
     } else {
       view.populate(view.sortedBy)
     }
+
 
   }
 }
