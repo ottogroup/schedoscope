@@ -25,7 +25,7 @@ class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
   case class ToPCA(msg: String)
 
   class TestRouter(to: ActorRef) extends Actor {
-    val pca = TestActorRef(new PartitionCreatorActor("","","") {
+    val pca = TestActorRef(new PartitionCreatorActor("","","", msgHub.ref) {
       override def getSchemaManager(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
         null
       }

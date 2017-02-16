@@ -64,12 +64,8 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
   val driverActorsBackOffSupervision = new BackOffSupervision(
-    managerName = "TRANFORMATION MANAGER ACTOR",
+    managerName = "TRANSFORMATION MANAGER ACTOR",
     system = context.system)
-
-  def scheduleTick(driverActor: ActorRef, backOffTime: FiniteDuration) {
-    system.scheduler.scheduleOnce(backOffTime, driverActor, "tick")
-  }
 
   def manageDriverLifeCycle(asr: TransformationStatusResponse[_]) {
 

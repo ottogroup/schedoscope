@@ -23,7 +23,7 @@ import org.schedoscope.schema.{RetryableSchemaManagerException, SchemaManager}
 /**
   * Parition creator actors are responsible for creating tables and partitions in the metastore.
   */
-class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
+class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String, schemaManagerRouter: ActorRef) extends Actor {
 
   import context._
   val log = Logging(system, this)
@@ -125,7 +125,7 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
     SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   }
 
-  def schemaRouter = context.parent
+  def schemaRouter = schemaManagerRouter
 
 }
 
@@ -134,5 +134,5 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
   * Factory for partition creator actors
   */
 object PartitionCreatorActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[PartitionCreatorActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withDispatcher("akka.actor.partition-creator-dispatcher")
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String, schemaManagerRouter: ActorRef) = Props(classOf[PartitionCreatorActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal, schemaManagerRouter).withDispatcher("akka.actor.partition-creator-dispatcher")
 }

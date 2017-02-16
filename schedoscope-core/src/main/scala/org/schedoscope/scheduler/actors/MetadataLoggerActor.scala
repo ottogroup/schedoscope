@@ -29,7 +29,7 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
 
   val log = Logging(system, MetadataLoggerActor.this)
 
-  val crate = getSchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  lazy val crate = getSchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
 
   /**

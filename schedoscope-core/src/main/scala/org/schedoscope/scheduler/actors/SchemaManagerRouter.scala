@@ -57,18 +57,18 @@ class SchemaManagerRouter(settings: SchedoscopeSettings) extends Actor {
       MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal),
       "metadata-logger")
     partitionCreatorActor = actorOf(
-      PartitionCreatorActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal)
+      PartitionCreatorActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal, self)
         .withRouter(new RoundRobinPool(settings.metastoreConcurrency)),
       "partition-creator")
   }
 
 
-  def manageActorLifecycle(metastoreActor: ActorRef) {
+  def manageActorLifecycle(metaActor: ActorRef) {
     val slot = settings.backOffSlotTime millis
     val delay = settings.backOffMinimumDelay millis
 
     metastoreActorsBackOffSupervision.manageActorLifecycle(
-      managedActor = metastoreActor,
+      managedActor = metaActor,
       backOffSlotTime = slot,
       backOffMinimumDelay = delay)
   }
