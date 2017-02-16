@@ -28,7 +28,7 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
   import context._
   val log = Logging(system, this)
 
-  val schemaManager = getSchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  lazy val schemaManager = getSchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
 
   /**
