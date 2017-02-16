@@ -260,6 +260,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     storageFormat = f
     this.additionalStoragePathPrefix = Option(additionalStoragePathPrefix)
     this.additionalStoragePathSuffix = Option(additionalStoragePathSuffix)
+
     f match {
       case S3(bucketName, storageFormat, uriScheme) =>
         s3Bucket = Some(bucketName)

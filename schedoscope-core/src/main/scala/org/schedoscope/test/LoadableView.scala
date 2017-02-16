@@ -188,14 +188,16 @@ trait test extends LoadableView with AccessRowData {
     rowData.size
   }
 
-  override def avroSchemaPathPrefix = storageFormat match {
-    case Avro(testPath, _) => avroSchemaPathTestPath(testPath)
-    case _ => avroSchemaPathPrefixBuilder(env)
+  override def tablePath = storageFormat match {
+    case Avro(testPath, _) => getClass.getResource("/"+testPath).getPath
+
+    case _ => tablePathBuilder(env)
   }
 
-  private def avroSchemaPathTestPath(testPath: String) = {
-    val path = getClass.getResource(testPath).toString
-    path
+  override def avroSchemaPathPrefix = storageFormat match {
+    case Avro(testPath, _) => new File(getClass.getResource("/").getPath).getAbsolutePath
+
+    case _ => avroSchemaPathPrefixBuilder(env)
   }
 
 }

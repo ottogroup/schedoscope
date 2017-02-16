@@ -110,7 +110,6 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
         log.warn(s"Failed to drop existing table ${view.dbName}.${view.n}.")
         throw t
     }
-    //println(s"Creating table:\n${ddl}")
     log.info(s"Creating table:\n${ddl}")
 
     stmt.execute(ddl)
