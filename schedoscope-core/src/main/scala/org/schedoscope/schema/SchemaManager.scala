@@ -110,13 +110,12 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
         log.warn(s"Failed to drop existing table ${view.dbName}.${view.n}.")
         throw t
     }
-
+    //println(s"Creating table:\n${ddl}")
     log.info(s"Creating table:\n${ddl}")
 
     stmt.execute(ddl)
 
     stmt.close()
-
     log.info(s"Successfully created table ${view.dbName}.${view.n}; now adding Checksum '${HiveQl.ddlChecksum(view)}' to table properties.")
     setTableProperty(view.dbName, view.n, Checksum.SchemaChecksum.checksumProperty, HiveQl.ddlChecksum(view))
   } catch {
@@ -134,7 +133,6 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     */
   def schemaExists(view: View): Boolean = try {
     val d = HiveQl.ddlChecksum(view)
-
     log.info(s"Checking whether table exists: view ${view.dbName}.${view.n} -- Checksum: ${d}")
 
     if (existingSchemas.contains(d)) {

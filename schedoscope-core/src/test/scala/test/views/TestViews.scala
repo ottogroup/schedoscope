@@ -285,10 +285,10 @@ case class ClickOfEC0101Parquet(year: Parameter[String],
 }
 
 case class ClickOfEC0101Avro(year: Parameter[String],
-                                month: Parameter[String],
-                                day: Parameter[String]) extends ClickOfEC
+                             month: Parameter[String],
+                             day: Parameter[String]) extends ClickOfEC
 {
-  storedAs(Avro("avro_schemas"))
+  storedAs(Avro("avro_schemas/click_of_e_c0101_avro.avsc"))
 }
 
 case class ClickOfEC0101WithJdbcExport(year: Parameter[String],

@@ -33,15 +33,20 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
       v(url, "http://ec0106.com/url3"))
   }
 
-  val click = putViewUnderTest {
-    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
+  val clickAvro = putViewUnderTest {
+    new ClickOfEC0101Avro(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       withResource("test" -> "src/test/resources/test.sql")
     }
   }
 
-  val clickAvro = putViewUnderTest {
-    new ClickOfEC0101Avro(p("2014"), p("01"), p("01")) with test {
+  it should "not change output/goal view storage format Avro" in {
+    clickAvro.storageFormat shouldBe Avro("avro_schemas/click_of_e_c0101_avro.avsc")
+  }
+
+  /*
+  val click = putViewUnderTest {
+    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       withResource("test" -> "src/test/resources/test.sql")
     }
@@ -109,9 +114,7 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     clickORC.storageFormat shouldBe OptimizedRowColumnar()
   }
 
-  it should "not change output/goal view storage format Avro" in {
-    clickAvro.storageFormat shouldBe Avro("testing")
-  }
+  */
 
 }
 

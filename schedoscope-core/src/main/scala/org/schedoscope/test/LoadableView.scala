@@ -195,7 +195,6 @@ trait test extends LoadableView with AccessRowData {
 
   private def avroSchemaPathTestPath(testPath: String) = {
     val path = getClass.getResource(testPath).toString
-    println("PATH IS: AAA "+path)
     path
   }
 
