@@ -3520,8 +3520,6 @@ SqlIdentifier CompoundIdentifier() :
         return new SqlIdentifier(list, null, pos, posList);
     }
 }
-<#else>
-  <#include "/@includes/compoundIdentifier.ftl" />
 </#if>
 
 /**
