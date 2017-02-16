@@ -36,7 +36,7 @@ case class NodesWithGeohash() extends View {
 
   val stageNodes = dependsOn { () =>
     schedoscope.example.osm.stage.Nodes()
-      .affects(n => Map(
+      .affects(n => Seq(
         n.id -> id,
         n.version -> version,
         n.userId -> userId,

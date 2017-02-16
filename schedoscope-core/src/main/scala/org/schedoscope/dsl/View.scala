@@ -386,7 +386,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def fieldsAndParameters: Seq[FieldLike[_]] = Seq[FieldLike[_]]() ++ fields ++ partitionParameters
 
   var explicitLineage: Map[FieldLike[_], mutable.Set[FieldLike[_]]] = Map()
-  def affects(influenceFunc: this.type => Map[FieldLike[_], FieldLike[_]]): this.type = {
+
+  def affects(influenceFunc: this.type => Traversable[(FieldLike[_], FieldLike[_])]): this.type = {
     influenceFunc(this).foreach {
       case (influencer, influencee) =>
         val ownerView: View = influencee.assignedStructure.get.asInstanceOf[View]
