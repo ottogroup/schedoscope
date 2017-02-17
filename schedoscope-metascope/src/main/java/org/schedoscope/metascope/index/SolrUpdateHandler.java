@@ -42,6 +42,7 @@ public class SolrUpdateHandler {
   public static final String CATEGORIE_OBJECTSS = "categoryObjects";
   public static final String STORAGE_FORMAT = "storageFormat";
   public static final String TRANSFORMATION = "transformation";
+  public static final String PERSON_RESPONSIBLE = "personResponsible";
   public static final String EXPORTS = "exports";
   public static final String TRANSFORMATIONTIMESTAMP = "transformationTimestamp";
   public static final String MATERIALIZE_ONCE = "materializeOnce";
@@ -78,6 +79,7 @@ public class SolrUpdateHandler {
     doc.setField(FIELDS, table.getFieldNames());
     doc.setField(PARAMETERS, table.getParameterNames());
     doc.setField(TRANSFORMATION, table.getTransformation().getTransformationType().split(" -> ")[0]);
+    doc.setField(PERSON_RESPONSIBLE, table.getPersonResponsible());
     doc.setField(EXPORTS, table.getExportNames());
     doc.setField(STORAGE_FORMAT, table.getStorageFormat());
     doc.setField(MATERIALIZE_ONCE, table.isMaterializeOnce());
