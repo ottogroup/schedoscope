@@ -36,7 +36,12 @@ case class Restaurants() extends View
 
   dependsOn { () =>
     for ((year, month) <- allMonths())
-      yield Nodes(p(year), p(month))
+      yield Nodes(p(year), p(month)).affects(n => Seq(
+        n.id -> id,
+        n.tags -> restaurantName,
+        n.tags -> restaurantType,
+        n.geohash -> area
+      ))
   }
 
   transformVia { () =>

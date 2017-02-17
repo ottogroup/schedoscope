@@ -35,7 +35,19 @@ case class NodesWithGeohash() extends View {
   val latitude = fieldOf[Double]("Latitude of the node")
   val geohash = fieldOf[String]("A geoencoded area string")
 
-  val stageNodes = dependsOn { () => schedoscope.example.osm.stage.Nodes() }
+  val stageNodes = dependsOn { () =>
+    schedoscope.example.osm.stage.Nodes()
+      .affects(n => Seq(
+        n.id -> id,
+        n.version -> version,
+        n.userId -> userId,
+        n.tstamp -> tstamp,
+        n.longitude -> longitude,
+        n.longitude -> geohash,
+        n.latitude -> latitude,
+        n.latitude -> geohash
+      ))
+  }
 
   transformVia(() =>
     MapreduceTransformation(
