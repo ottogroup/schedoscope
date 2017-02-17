@@ -16,7 +16,7 @@
 
 <div data-th-fragment="table(obj)">
     <div th:with="table=${obj.resultEntity}">
-        <div th:class="'panel panel-' + ${util.getColorForPanel(table.status)}">
+        <div class="panel panel-default">
             <div class="panel-heading">
                 <div class="row">
                     <form data-th-action="@{/table/favourite}" method="POST">
@@ -30,13 +30,19 @@
                  ${table.databaseName} + ' :: ' + ${table.tableName}"
                                th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a> <span
                                 style="padding-left: 10px;"
-                                data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span> <span
-                                class="pull-right" data-th-text="${table.status}"></span>
+                                data-th-text="'Found ' + ${obj.getSize()} + ' match(es)'"></span>
+                            <span th:attr="data-qualifier=${table.viewPath}" class="loader statusentity pull-right" title="Loading table status ..."></span>
                         </div>
                     </form>
                 </div>
             </div>
             <table id="identityTable" class="table table-reflow">
+                <div th:with="e=${obj.highlightings.get('schedoscopeId')}">
+                    <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
+                        <td width="20%"><b data-th-text="'Instance'"></b></td>
+                        <td width="80%"><span th:utext="${e.get(0)}"></span></td>
+                    </tr>
+                </div>
                 <div th:with="e=${obj.highlightings.get('tableName')}">
                     <tr style="border-bottom: 1px solid lightgrey;" data-th-if="${e != null and !e.isEmpty()}">
                         <td width="20%"><b data-th-text="'Table'"></b></td>

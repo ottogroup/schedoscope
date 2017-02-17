@@ -15,28 +15,24 @@
  */  -->
 
 <div class="tab-pane" id="partitionsContent" data-th-fragment="partitions(table,util)">
-    <div th:with="totalPages=${(partitionCount/20) + 1}">
+    <div th:with="totalPages=${(table.viewCount/20) + 1}">
         <div id="loadingViewsLabel">
             <em th:utext="'Loading partitions ...'"></em>
         </div>
         <div id="partitionSection" style="display: none;">
             <div th:with="to=${(partitionPage-1) * 20 + 20}">
                 <em
-                        th:text="'Showing ' + ${(partitionPage-1) * 20 + 1} + ' to ' + ${to > partitionCount ? partitionCount : to} + ' of ' + ${partitionCount} + ' results'"></em>
+                        th:text="'Showing ' + ${(partitionPage-1) * 20 + 1} + ' to ' + ${to >= table.viewsSize ? table.viewsSize : to} + ' of ' + ${table.viewsSize} + ' results'"></em>
             </div>
             <table class="table table-bordered table-striped tablesorter-default" id="partitionsTable">
                 <thead>
                 <tr class="info">
-                    <th data-th-each="parameter:${table.parameters}" data-th-text="${parameter.name}"></th>
+                    <th data-th-each="parameter:${table.parameters}" data-th-text="${parameter.fieldName}"></th>
                     <td data-th-if="${table.parameters.size() == 0}"></td>
                     <th data-th-if="${table.dependencies.size() > 0}">Based On</th>
-                    <th data-th-if="${(successors != null and successors.size() > 0) or (transitiveSuccessors != null and transitiveSuccessors.size() > 0)}">
-                        Used
-                        By
-                    </th>
+                    <th data-th-if="${table.successors.size() > 0}">Used By</th>
                     <th>Status</th>
                     <th>Last Transformation</th>
-                    <th>Transformation time (hh:mm:ss)</th>
                 </tr>
                 </thead>
                 <tbody id="partitionsBody"></tbody>
