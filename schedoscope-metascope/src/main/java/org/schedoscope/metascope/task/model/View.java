@@ -36,6 +36,7 @@ public class View {
   private String status;
   private List<ViewField> fields;
   private List<ViewField> parameters;
+  private Map<String, List<String>> lineage;
   private Map<String, List<String>> dependencies;
   private ViewTransformation transformation;
   private List<ViewTransformation> export;
@@ -55,6 +56,7 @@ public class View {
     this.fields = new ArrayList<ViewField>();
     this.parameters = new ArrayList<ViewField>();
     this.dependencies = new HashMap<String, List<String>>();
+    this.lineage = new HashMap<String, List<String>>();
   }
 
   public String getName() {
@@ -128,6 +130,14 @@ public class View {
 
   public void setParameters(List<ViewField> parameters) {
     this.parameters = parameters;
+  }
+
+  public Map<String, List<String>> getLineage() {
+    return lineage;
+  }
+
+  public void setLineage(Map<String, List<String>> lineage) {
+    this.lineage = lineage;
   }
 
   public Map<String, List<String>> getDependencies() {

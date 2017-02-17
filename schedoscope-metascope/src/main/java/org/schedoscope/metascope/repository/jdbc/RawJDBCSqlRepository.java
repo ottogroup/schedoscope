@@ -3,6 +3,7 @@ package org.schedoscope.metascope.repository.jdbc;
 import org.apache.commons.dbutils.DbUtils;
 
 import org.schedoscope.metascope.model.MetascopeView;
+import org.schedoscope.metascope.task.model.FieldDependency;
 import org.schedoscope.metascope.task.model.ViewDependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,34 @@ public class RawJDBCSqlRepository {
     }
   }
 
-  public void insertDependencies(Connection connection, List<ViewDependency> viewDependencies) {
+  public void insertFieldDependencies(Connection connection, List<FieldDependency> fieldDependencies) {
+    String sql = "insert into metascope_field_relationship (successor, dependency) values (?, ?) "
+            + "on duplicate key update successor=values(successor), dependency=values(dependency)";
+    PreparedStatement stmt = null;
+    try {
+      int batch = 0;
+      disableChecks(connection);
+      stmt = connection.prepareStatement(sql);
+      for (FieldDependency fieldDependency : fieldDependencies) {
+        stmt.setString(1, fieldDependency.getDependency());
+        stmt.setString(2, fieldDependency.getSuccessor());
+        stmt.addBatch();
+        batch++;
+        if (batch % 1024 == 0) {
+          stmt.executeBatch();
+        }
+      }
+      stmt.executeBatch();
+      connection.commit();
+      enableChecks(connection);
+    } catch (SQLException e) {
+      LOG.error("Could not save view", e);
+    } finally {
+      DbUtils.closeQuietly(stmt);
+    }
+  }
+
+  public void insertViewDependencies(Connection connection, List<ViewDependency> viewDependencies) {
     String sql = "insert into metascope_view_relationship (successor, dependency) values (?, ?) "
             + "on duplicate key update successor=values(successor), dependency=values(dependency)";
     PreparedStatement stmt = null;

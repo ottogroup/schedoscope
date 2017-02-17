@@ -15,6 +15,7 @@
  */
 package org.schedoscope.metascope.controller;
 
+import org.hibernate.Hibernate;
 import org.schedoscope.metascope.config.MetascopeConfig;
 import org.schedoscope.metascope.model.*;
 import org.schedoscope.metascope.service.*;
@@ -102,6 +103,9 @@ public class MetascopeTableController {
       taxonomyNames.add(taxonomyEntity.getName());
     }
 
+    Map<String, Map<String, List<MetascopeField>>> fieldDeps = metascopeTableService.getFieldDependencies(tableEntity);
+    Map<String, Map<String, List<MetascopeField>>> fieldSucs = metascopeTableService.getFieldSuccessors(tableEntity);
+
     Map<String, CategoryMap> tableTaxonomies = metascopeTableService.getTableTaxonomies(tableEntity);
 
     /* get all users for user management and owner auto completion */
@@ -186,6 +190,8 @@ public class MetascopeTableController {
     mav.addObject("partitionPage", partitionPage);
     mav.addObject("users", users);
     mav.addObject("owner", owner);
+    mav.addObject("fieldDependencyMap", fieldDeps);
+    mav.addObject("fieldSuccessorMap", fieldSucs);
     mav.addObject("taxonomies", taxonomies);
     mav.addObject("taxonomyNames", taxonomyNames);
     mav.addObject("tableTaxonomies", tableTaxonomies);
