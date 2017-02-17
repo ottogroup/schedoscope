@@ -64,7 +64,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       viewStatusMap.put(vsr.view.fullPath, vsr)
 
     case GetViews(views, status, filter, issueFilter, dependencies) => {
-      val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
+      val viewActors: Set[ActorRef] = if (views.isDefined) initializeViews(views.get, dependencies) else Set()
       val viewStates = viewStatusMap.values
         .filter(vs => views.isEmpty || viewActors.contains(vs.actor))
         .filter(vs => status.isEmpty || status.get.equals(vs.status))
@@ -193,108 +193,108 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     * @param dependencies create actors for the prerequisite views as well.
     * @return the set of corresponding view actor refs
     */
-  def initializeViewActors(vs: List[View], dependencies: Boolean = false): Set[ActorRef] = {
-    log.info(s"Initializing ${vs.size} views")
-
-    val allViews = viewsToCreateActorsFor(vs, dependencies)
-
-    validateExternalViews(allViews)
-
-    log.info(s"Computed ${allViews.size} views (with dependencies=${dependencies})")
-
-    val actorsToCreate = allViews
-      .filter { case (_, needsCreation, _) => needsCreation }
-
-    log.info(s"Need to create ${actorsToCreate.size} actors")
-
-    val viewsPerTableName = actorsToCreate
-      .map { case (view, _, _) => view }
-      .distinct
-      .groupBy {
-        _.tableName
-      }
-      .values
-      .toList
-
-    val tablesToCreate = viewsPerTableName
-      .map {
-        CheckOrCreateTables(_)
-      }
-
-    if (tablesToCreate.nonEmpty) {
-      log.info(s"Submitting tables to check or create to schema actor")
-      tablesToCreate.foreach {
-        queryActor[Any](schemaManagerRouter, _, settings.schemaTimeout)
-      }
-    }
-
-    val partitionsToCreate = viewsPerTableName
-      .map {
-        AddPartitions(_)
-      }
-
-    if (partitionsToCreate.nonEmpty) {
-      log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")
-
-      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaManagerRouter,
-        partitionsToCreate,
-        settings.schemaTimeout)
-
-      log.info(s"Partitions created, initializing actors")
-
-      viewsWithMetadataToCreate.foreach { t =>
-        t.metadata.foreach {
-          case (view, (version, timestamp)) => {
-
-            val initialState = getStateFromMetadata(view, version, timestamp)
-            //            TODO: change
-            val actorRef = actorOf(TableActor.props(
-              Map(view -> initialState),
-              settings,
-              Map.empty[String, ActorRef],
-              self,
-              actionsManagerActor,
-              schemaManagerRouter,
-              viewSchedulingListenerManagerActor), actorNameForView(view))
-
-          }
-        }
-        log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
-      }
-
-      viewsWithMetadataToCreate.foreach { t =>
-        t.metadata.foreach {
-          case (view, _) =>
-            val newDepsActorRefs = view
-              .dependencies
-              .flatMap(v => actorForView(v).map(NewTableActorRef(v, _)))
-
-            actorForView(view) match {
-              case Some(actorRef) =>
-                newDepsActorRefs.foreach(actorRef ! _)
-              case None => //actor not yet known nothing to do here
-            }
-        }
-      }
-    }
-    log.info(s"Returning actors${if (dependencies) " including dependencies."}")
-
-    val viewsToReturnActorRefsFor = if (dependencies)
-      allViews.map { case (view, _, _) => view }.toSet
-    else
-      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => view }.toSet
-
-    log.info(s"Fetching ${viewsToReturnActorRefsFor.size} actors")
-
-    val actors = viewsToReturnActorRefsFor.map {
-      view =>
-        child(actorNameForView(view)).get
-    }
-
-    log.info(s"Returned ${actors.size} actors")
-
-    actors
-  }
+//  def initializeViewActors(vs: List[View], dependencies: Boolean = false): Set[ActorRef] = {
+//    log.info(s"Initializing ${vs.size} views")
+//
+//    val allViews = viewsToCreateActorsFor(vs, dependencies)
+//
+//    validateExternalViews(allViews)
+//
+//    log.info(s"Computed ${allViews.size} views (with dependencies=${dependencies})")
+//
+//    val actorsToCreate = allViews
+//      .filter { case (_, needsCreation, _) => needsCreation }
+//
+//    log.info(s"Need to create ${actorsToCreate.size} actors")
+//
+//    val viewsPerTableName = actorsToCreate
+//      .map { case (view, _, _) => view }
+//      .distinct
+//      .groupBy {
+//        _.tableName
+//      }
+//      .values
+//      .toList
+//
+//    val tablesToCreate = viewsPerTableName
+//      .map {
+//        CheckOrCreateTables(_)
+//      }
+//
+//    if (tablesToCreate.nonEmpty) {
+//      log.info(s"Submitting tables to check or create to schema actor")
+//      tablesToCreate.foreach {
+//        queryActor[Any](schemaManagerRouter, _, settings.schemaTimeout)
+//      }
+//    }
+//
+//    val partitionsToCreate = viewsPerTableName
+//      .map {
+//        AddPartitions(_)
+//      }
+//
+//    if (partitionsToCreate.nonEmpty) {
+//      log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")
+//
+//      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaManagerRouter,
+//        partitionsToCreate,
+//        settings.schemaTimeout)
+//
+//      log.info(s"Partitions created, initializing actors")
+//
+//      viewsWithMetadataToCreate.foreach { t =>
+//        t.metadata.foreach {
+//          case (view, (version, timestamp)) => {
+//
+//            val initialState = getStateFromMetadata(view, version, timestamp)
+//            //            TODO: change
+//            val actorRef = actorOf(TableActor.props(
+//              Map(view -> initialState),
+//              settings,
+//              Map.empty[String, ActorRef],
+//              self,
+//              actionsManagerActor,
+//              schemaManagerRouter,
+//              viewSchedulingListenerManagerActor), actorNameForView(view))
+//
+//          }
+//        }
+//        log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
+//      }
+//
+//      viewsWithMetadataToCreate.foreach { t =>
+//        t.metadata.foreach {
+//          case (view, _) =>
+//            val newDepsActorRefs = view
+//              .dependencies
+//              .flatMap(v => actorForView(v).map(NewTableActorRef(v, _)))
+//
+//            actorForView(view) match {
+//              case Some(actorRef) =>
+//                newDepsActorRefs.foreach(actorRef ! _)
+//              case None => //actor not yet known nothing to do here
+//            }
+//        }
+//      }
+//    }
+//    log.info(s"Returning actors${if (dependencies) " including dependencies."}")
+//
+//    val viewsToReturnActorRefsFor = if (dependencies)
+//      allViews.map { case (view, _, _) => view }.toSet
+//    else
+//      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => view }.toSet
+//
+//    log.info(s"Fetching ${viewsToReturnActorRefsFor.size} actors")
+//
+//    val actors = viewsToReturnActorRefsFor.map {
+//      view =>
+//        child(actorNameForView(view)).get
+//    }
+//
+//    log.info(s"Returned ${actors.size} actors")
+//
+//    actors
+//  }
 
   def viewsToCreateActorsFor(views: List[View], includeExistingActors: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
     views.flatMap {
