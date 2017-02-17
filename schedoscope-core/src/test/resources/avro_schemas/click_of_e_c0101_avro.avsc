@@ -1,14 +1,9 @@
 {
-  "name": "click_of_e_c0101_avro",
+  "name": "ClickOfEC0101Avro",
   "type": "record",
   "fields": [
-     {"name":"id", "type": "string"}
-    ,{"name": "year", "type": "string"}
-    ,{"name":"month", "type": "string"}
-    ,{"name":"day", "type": "string"}
-    ,{"name":"dateId", "type": "string"}
-
-    ,{"name":"url", "type": "string"}
+     {"name":"id", "type": "string"},
+     {"name":"url", "type": "string"}
     ],
     "namespace": "org.schedoscope.test_test_views.click_of_e_c0101_avro"
 }

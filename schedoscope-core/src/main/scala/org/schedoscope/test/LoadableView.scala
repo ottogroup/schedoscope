@@ -189,7 +189,7 @@ trait test extends LoadableView with AccessRowData {
   }
 
   override def tablePath = storageFormat match {
-    case Avro(testPath, _) => getClass.getResource("/"+testPath).getPath
+    case Avro(testPath, _) => new File(getClass.getResource("/"+testPath).getPath).getParentFile.getAbsolutePath
 
     case _ => tablePathBuilder(env)
   }

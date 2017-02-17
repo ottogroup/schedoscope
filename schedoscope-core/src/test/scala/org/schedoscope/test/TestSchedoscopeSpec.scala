@@ -44,7 +44,7 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     clickAvro.storageFormat shouldBe Avro("avro_schemas/click_of_e_c0101_avro.avsc")
   }
 
-  /*
+
   val click = putViewUnderTest {
     new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
@@ -113,8 +113,6 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
   it should "not change output/goal view storage format ORC" in {
     clickORC.storageFormat shouldBe OptimizedRowColumnar()
   }
-
-  */
 
 }
 

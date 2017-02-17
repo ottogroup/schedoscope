@@ -111,7 +111,6 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
         throw t
     }
     log.info(s"Creating table:\n${ddl}")
-
     stmt.execute(ddl)
 
     stmt.close()
