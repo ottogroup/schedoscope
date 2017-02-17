@@ -61,15 +61,16 @@ var initTablesorter = function() {
 /**
  * sets a cookie for a filter (open / closed state)
  */
-var setFilterStatus = function(e, filterName) {
+var setFilterStatus = function(filterName) {
   var open = !$('#' + filterName).is(':visible');
   if (open) {
     $.cookie(filterName, "open");
-    $('#' + e.id).children().eq(1).replaceWith(
-        '<span id="#' + filterName + 'Caret" class="dropup"><span class="caret"></span></span>')
+    $('#' + filterName + 'Caret').removeClass('triangle-close');
+    $('#' + filterName + 'Caret').addClass('triangle-open');
   } else {
     $.cookie(filterName, "closed");
-    $('#' + e.id).children().eq(1).replaceWith('<span id="#' + filterName + 'Caret" class="caret"></span>')
+    $('#' + filterName + 'Caret').addClass('triangle-close');
+    $('#' + filterName + 'Caret').removeClass('triangle-open');
   }
 }
 
@@ -442,6 +443,20 @@ var successToast = function(title, message) {
   });
 }
 
+var errorToast = function(title, message) {
+  $.toast({
+    text : message,
+    heading : title,
+    icon : 'error',
+    showHideTransition : 'fade',
+    allowToastClose : true,
+    hideAfter : 2500,
+    position : 'top-center',
+    textAlign : 'left',
+    loader : false
+  });
+}
+
 /**
  * Draws a VisJS network graph respresenting the data lineage of an entity
  */
@@ -458,7 +473,7 @@ var drawLineage = function(data) {
       },
       layout : {
         hierarchical : {
-          direction : "RL"
+          direction : "LR"
         }
       },
       groups : {
@@ -492,7 +507,8 @@ var drawLineage = function(data) {
     var nodes = dataFA.nodes;
     for (var i = 0; i < nodes.length; i++) {
       var obj = nodes[i];
-      if (obj.label == $("#lineageFqdn").val()) {
+      var thisFqdn = $("#lineageFqdn").val().replace(".", "\n")
+      if (obj.label == thisFqdn) {
         nodeID = obj.id;
         fqdn = obj.fqdn;
         type = obj.group;
@@ -555,4 +571,63 @@ var selectNode = function(fqdn, type) {
 
 var setLineageDetail = function(data) {
   $("#lineageDetail").html(data);
+}
+
+var getPanelColor = function(status) {
+  switch (status) {
+    case "failed":
+        return "panel-danger";
+      case "receive":
+      case "materialized":
+        return "panel-success";
+      case "transforming":
+      case "invalidated":
+        return "panel-warning";
+      case "retrying":
+      case "waiting":
+      case "nodata":
+        return "panel-info";
+      default:
+        return "panel-default";
+  }
+}
+
+var autosave = function() {
+  $.ajax({
+    url : '/table/documentation/autosave',
+    type : 'POST',
+    data : "fqdn=" + $('#documentationFqdn').val() + "&documentation=" + $('#tableDocumentationInput').val(),
+    success : updateDraftText
+  });
+}
+
+var updateDraftText = function(data) {
+  if (data) {
+    var dt = new Date();
+
+    var year = dt.getFullYear();
+    var month = dt.getMonth()+1;
+    var day = dt.getDate();
+    var hours = dt.getHours();
+    var minutes = dt.getMinutes();
+    var seconds = dt.getSeconds();
+
+    var output = (day<10 ? '0' : '') + day + "." + (month<10 ? '0' : '') + month + '.' + year + " "
+                  + (hours<10 ? '0' : '') + hours + ":" + (minutes<10 ? '0' : '') + minutes + ":" + (seconds<10 ? '0' : '') + seconds;
+    $('#draftLabel').text("Draft autosave: " + output)
+  }
+}
+
+var getDraft = function() {
+  $.ajax({
+    url : '/table/documentation/autosave/get',
+    type : 'GET',
+    data : "fqdn=" + $('#documentationFqdn').val(),
+    success : updateDocumentationText
+  });
+}
+
+var updateDocumentationText = function(data) {
+  $('#tableEditor').code(data);
+  $('#tableDocumentationInput').val($('#tableEditor').code());
 }

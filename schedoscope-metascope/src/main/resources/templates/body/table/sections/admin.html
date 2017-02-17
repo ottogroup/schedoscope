@@ -28,9 +28,9 @@
                             <select class="form-control" name="dataTimestampField">
                                 <option style="display: none" selected="selected" th:value="null">Select field ...
                                 </option>
-                                <option th:selected="${table.timestampField != null and table.timestampField.equals(field.name)}"
-                                        data-th-each="field : ${table.fields}" data-th-text="${field.name}"
-                                        th:value="${field.name}"></option>
+                                <option th:selected="${table.timestampField != null and table.timestampField.equals(field.fieldName)}"
+                                        data-th-each="field : ${table.fields}" data-th-text="${field.fieldName}"
+                                        th:value="${field.fieldName}"></option>
                             </select>
                         </div>
                     </div>

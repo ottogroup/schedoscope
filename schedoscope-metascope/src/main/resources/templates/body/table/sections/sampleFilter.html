@@ -26,13 +26,13 @@
             <div class="row">
                 <div class="col-md-12">
                     <div class="control-group">
-                        <label class="control-label" th:for="${parameter.name}"
-                               data-th-text="${parameter.name}"></label>
+                        <label class="control-label" th:for="${parameter.fieldName}"
+                               data-th-text="${parameter.fieldName}"></label>
                         <div class="controls">
                             <div class="row">
                                 <div class="col-md-9" style="padding-right: 0px;">
-                                    <input style="width: 100%;" th:id="${parameter.name} + 'Filter'"
-                                           th:name="${parameter.name}" type="text"/>
+                                    <input style="width: 100%;" th:id="${parameter.fieldName} + 'Filter'"
+                                           th:name="${parameter.fieldName}" type="text"/>
                                 </div>
                                 <div class="col-md-3" style="padding-top: 1px; padding-left: 0px;">
                                     <a class="btn btn-primary dropdown-toggle" style="height: 25px; padding-top: 10px;"
@@ -41,9 +41,9 @@
                                     </a>
                                     <ul class="dropdown-menu"
                                         style="left: auto; right: 65%; max-height: 300px; overflow: auto;">
-                                        <li data-th-each="val : ${parameterValues.get(parameter.name)}"><a
+                                        <li data-th-each="val : ${parameterValues.get(parameter.fieldName)}"><a
                                                 href="javascript:void(0)"
-                                                th:onclick="'setSampleFilter(\'' + ${parameter.name} + 'Filter\',\'' + ${val} + '\')'"
+                                                th:onclick="'setSampleFilter(\'' + ${parameter.fieldName} + 'Filter\',\'' + ${val} + '\')'"
                                                 data-th-text="${val}"></a></li>
                                     </ul>
                                 </div>

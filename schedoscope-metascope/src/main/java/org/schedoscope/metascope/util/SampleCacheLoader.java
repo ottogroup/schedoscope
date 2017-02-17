@@ -16,46 +16,48 @@
 package org.schedoscope.metascope.util;
 
 import com.google.common.cache.CacheLoader;
-import org.schedoscope.metascope.model.FieldEntity;
-import org.schedoscope.metascope.model.TableEntity;
-import org.schedoscope.metascope.service.TableEntityService;
+import org.schedoscope.metascope.model.MetascopeField;
+import org.schedoscope.metascope.model.MetascopeTable;
+import org.schedoscope.metascope.service.MetascopeTableService;
+import org.schedoscope.metascope.util.model.HiveQueryResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class SampleCacheLoader extends CacheLoader<String, HiveQueryResult> {
 
-    private TableEntityService tableEntityService;
-    private HiveQueryExecutor hiveUtil;
+  private MetascopeTableService metascopeTableService;
+  private HiveQueryExecutor hiveQueryExecutor;
 
-    public SampleCacheLoader(TableEntityService tableEntityService, HiveQueryExecutor hiveUtil) {
-        this.tableEntityService = tableEntityService;
-        this.hiveUtil = hiveUtil;
-    }
+  public SampleCacheLoader(MetascopeTableService metascopeTableService, HiveQueryExecutor hiveQueryExecutor) {
+    this.metascopeTableService = metascopeTableService;
+    this.hiveQueryExecutor = hiveQueryExecutor;
+  }
 
-    @Override
-    @Transactional
-    public HiveQueryResult load(String fqdn) throws Exception {
-        return getSample(fqdn);
-    }
+  @Override
+  @Transactional
+  public HiveQueryResult load(String fqdn) throws Exception {
+    return getSample(fqdn);
+  }
 
-    public HiveQueryResult getSample(String fqdn) {
-        TableEntity tableEntity = tableEntityService.findByFqdn(fqdn);
-        if (tableEntity == null) {
-            return new HiveQueryResult("Internal error");
-        }
-        Map<String, String> params = new HashMap<String, String>();
-        List<FieldEntity> parameters = tableEntity.getParameters();
-        if (parameters.size() > 0) {
-            FieldEntity parameter = parameters.get(0);
-            String parameterValue = tableEntityService.getRandomParameterValue(tableEntity, parameter);
-            params.put(parameter.getName(), parameterValue);
-        }
-        HiveQueryResult queryResult = hiveUtil.executeQuery(fqdn, tableEntity.getFieldsCommaDelimited(),
-                tableEntity.getParameters(), params);
-        return queryResult;
+  public HiveQueryResult getSample(String fqdn) {
+    MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
+    if (table == null) {
+      return new HiveQueryResult("Internal error");
     }
+    Map<String, String> params = new HashMap<String, String>();
+    Set<MetascopeField> parameters = table.getParameters();
+    if (parameters.size() > 0) {
+      MetascopeField parameter = parameters.iterator().next();
+      String parameterValue = metascopeTableService.getRandomParameterValue(table, parameter);
+      params.put(parameter.getFieldName(), parameterValue);
+    }
+    HiveQueryResult queryResult = hiveQueryExecutor.executeQuery(table.getDatabaseName(), table.getTableName(),
+            table.getFieldsCommaDelimited(), table.getParameters(), params);
+    return queryResult;
+  }
 
 }

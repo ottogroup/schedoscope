@@ -20,49 +20,49 @@ import java.util.List;
 
 public class SolrFacetQuery {
 
-    private String displayName;
-    private String name;
-    private List<SolrHourRange> ranges;
+  private String displayName;
+  private String name;
+  private List<SolrHourRange> ranges;
 
-    public SolrFacetQuery(String displayName, String name) {
-        this.displayName = displayName;
-        this.name = name;
-        this.ranges = new ArrayList<SolrHourRange>();
-    }
+  public SolrFacetQuery(String displayName, String name) {
+    this.displayName = displayName;
+    this.name = name;
+    this.ranges = new ArrayList<SolrHourRange>();
+  }
 
-    public SolrFacetQuery(String displayName, String name, List<SolrHourRange> ranges) {
-        this.displayName = displayName;
-        this.name = name;
-        this.ranges = ranges;
-    }
+  public SolrFacetQuery(String displayName, String name, List<SolrHourRange> ranges) {
+    this.displayName = displayName;
+    this.name = name;
+    this.ranges = ranges;
+  }
 
-    public String getDisplayName() {
-        return displayName;
-    }
+  public String getDisplayName() {
+    return displayName;
+  }
 
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
-    }
+  public void setDisplayName(String displayName) {
+    this.displayName = displayName;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public List<SolrHourRange> getRanges() {
-        return ranges;
-    }
+  public List<SolrHourRange> getRanges() {
+    return ranges;
+  }
 
-    public void setRanges(List<SolrHourRange> ranges) {
-        this.ranges = ranges;
-    }
+  public void setRanges(List<SolrHourRange> ranges) {
+    this.ranges = ranges;
+  }
 
-    public SolrFacetQuery withRange(SolrHourRange range) {
-        this.ranges.add(range);
-        return this;
-    }
+  public SolrFacetQuery withRange(SolrHourRange range) {
+    this.ranges.add(range);
+    return this;
+  }
 
 }

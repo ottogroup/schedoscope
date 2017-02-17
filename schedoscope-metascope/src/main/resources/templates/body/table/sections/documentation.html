@@ -27,7 +27,7 @@
                            onfocus="javascript:$(this).autocomplete('search','');"></input> <input
                         data-th-if="${user != null}" th:value="${user.fullname}"
                         name="person" id="personResponsibleField"
-                        onfocus="javascript:$(this).autocomplete('search','');"></input> <input type="hidden"
+                        onfocus="javascript:$(this).autocomplete('search','');"></input> <input id="documentationFqdn" type="hidden"
                                                                                                 name="fqdn"
                                                                                                 th:value="${table.fqdn}"/>
                 </div>
@@ -51,7 +51,7 @@
     </form>
     <hr/>
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-10">
             <div class="control-group">
                 <div style="display: flex;">
                     <label class="control-label" for="categories">Documentation</label>
@@ -62,6 +62,9 @@
                                data-th-text="'last edit: ' +  ${util.getTime(table.comment.lastEdit)} + ' by ' + ${username}"></p>
                         </div>
                     </div>
+                    <span data-th-if="${!draft}" style="padding-left: 40px" id="draftLabel"></span>
+                    <a data-th-if="${draft}" href="javascript:void(0)" onclick="toggleEditDocu('table'); getDraft();"
+                       style="color: red; padding-left: 40px" id="draftLabel">Draft available. Click here to load</a>
                 </div>
                 <br/>
             </div>

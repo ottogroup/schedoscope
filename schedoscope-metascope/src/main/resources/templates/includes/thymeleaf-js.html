@@ -21,18 +21,28 @@
       var filterNames = [[${solrQuery.filters}]];
       filterNames.push({name: "type"});
       filterNames.push({name: "favourite"});
+      filterNames.push({name: "top5"});
       
       for (var i in filterNames) {
         var filterName = filterNames[i].name + "Toggle";
         var filterStatus = $.cookie(filterName);
         if (filterStatus == 'open') {
           $('#' + filterName).addClass("in");
-          $('#' + filterName + 'Label').children().eq(1).replaceWith('<span class="dropup"><span class="caret"></span></span>');
+          $('#' + filterName + 'Caret').removeClass('triangle-close');
+          $('#' + filterName + 'Caret').addClass('triangle-open');
         } else if (filterStatus == 'closed') {
           $('#' + filterName).removeClass("in");
-          $('#' + filterName + 'Label').children().eq(1).replaceWith('<span class="caret"></span>');
+          $('#' + filterName + 'Caret').addClass('triangle-close');
+          $('#' + filterName + 'Caret').removeClass('triangle-open');
         }
       }
+    }
+
+    var schedoscopesyncToast = [[${schedoscopesync}]];
+    if (schedoscopesyncToast == "failed") {
+      errorToast("Schedoscope Sync", "Scheduling failed because sync is already in progress.");
+    } else if (schedoscopesyncToast == "success") {
+      successToast("Schedoscope Sync", "Sync task scheduled successfuly. Check logs for progress.");
     }
   /*]]>*/
 
@@ -50,41 +60,43 @@
     var personResponsibleToast = [[${personResponsible}]]; 
     var documentationToast = [[${documentation}]];
     var commentToast = [[${comment}]];
-    var taxonomyToast = [[${taxonomy}]]; 
+    var taxonomyToast = [[${taxonomy}]];
+    var schedoscopesyncToast = [[${schedoscopesync}]];
     var _comment = [[${table.comment}]];
     var comment = "";
     if (_comment != null) {
       comment = _comment.text;
     }
-    
-    // when page has been rendered
-    $(document).ready(function() {
+
       // send ajax request for content
       getSample(fqdn);
       getViews(fqdn, viewPage);
       getParameterValue(fqdn, first);
-      
-      // move tags into tagsinput
-      $('.bootstrap-tagsinput').each(function(i, t) {
-        var tagsinput = $(t);
-        var divWithTags = tagsinput.next();
-        divWithTags.children().each(function(i2, a) {
-          tagsinput.children().last().before(a);
-        })
-      });
-      
-      // some tagsinput (popover) configuration
-      $('[data-toggle="tooltip"]').tooltip()
-      $('[data-toggle="popover"]').popover({ trigger: "hover" })
-      for (var i = 0; i < taxonomies.length; i++) {
-        var taxonomy = taxonomies[i];
-        $("[id='" + taxonomy + "Div']").find(".bootstrap-tagsinput").find("input").prop("readonly", true);
-        $("[id='" + taxonomy + "Div']").find("span").on('click', function() {
-          var text = $(this).parent().text();
-          $(this).parent().remove();
-          $('[role="tooltip"]').remove();
-        });
-      }
+
+      $(function()   {
+
+          // move tags into tagsinput
+          $('.bootstrap-tagsinput').each(function(i, t) {
+            var tagsinput = $(t);
+            var divWithTags = tagsinput.next();
+            divWithTags.children().each(function(i2, a) {
+              tagsinput.children().last().before(a);
+            })
+          });
+
+          // some tagsinput (popover) configuration
+          $('[data-toggle="tooltip"]').tooltip()
+          $('[data-toggle="popover"]').popover({ trigger: "hover" })
+          for (var i = 0; i < taxonomies.length; i++) {
+            var taxonomy = taxonomies[i];
+            $("[id='" + taxonomy + "Div']").find(".bootstrap-tagsinput").find("input").prop("readonly", true);
+            $("[id='" + taxonomy + "Div']").find("span").on('click', function() {
+              var text = $(this).parent().text();
+              $(this).parent().remove();
+              $('[role="tooltip"]').remove();
+            });
+          }
+      })
       
       $("#taxonomySubmitButton").on('click', function() {
         for (var i = 0; i < taxonomies.length; i++) {
@@ -140,7 +152,6 @@
       $('#tableCommentEditor').on('summernote.change', function(customEvent, contents, $editable) {
         $('#tableCommentInput').val($('#tableCommentEditor').code());
       });
-    })
     
     $('#myTabs a').click(function (e) {
       e.preventDefault()
@@ -164,8 +175,10 @@
       successToast("Comment", "The comment has been " + commentToast);
     }
     
-    if (taxonomyToast) {
-      successToast("Taxonomy", "The taxonomy has been changed successfuly");
+    if (schedoscopesyncToast == "failed") {
+      successToast("Schedoscope Sync", "Scheduling failed because sync is already in progress.");
+    } else if (schedoscopesyncToast == "success") {
+      successToast("Schedoscope Sync", "Sync task scheduled successfuly. Check logs for progress.");
     }
   /*]]>*/
 
