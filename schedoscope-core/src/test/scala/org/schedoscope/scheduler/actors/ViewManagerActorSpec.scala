@@ -174,7 +174,6 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
         schemaManagerRouter.reply(TransformationMetadata(Map(viewE -> ("test", 1L))))
     }
 
-
     Await.result(future, 5 seconds)
     future.isCompleted shouldBe true
     future.value.get.isSuccess shouldBe true
