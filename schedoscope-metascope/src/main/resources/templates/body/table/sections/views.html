@@ -52,6 +52,6 @@
             </ul>
         </div>
     </td>
-    <td data-th-text="${'unknown'}"/>
+    <td data-th-text="${statusService.getStatus(partition.viewUrl)}"/>
     <td data-th-text="${util.getTime(partition.lastTransformation)}"/>
 </tr>

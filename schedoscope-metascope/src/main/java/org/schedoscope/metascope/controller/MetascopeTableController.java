@@ -63,6 +63,8 @@ public class MetascopeTableController {
   @Autowired
   private MetascopeDataDistributionService metascopeDataDistributionService;
   @Autowired
+  private MetascopeStatusService metascopeStatusService;
+  @Autowired
   private MetascopeConfig config;
   @Autowired
   private HTMLUtil htmlUtil;
@@ -370,6 +372,7 @@ public class MetascopeTableController {
     mav.addObject("table", table);
     mav.addObject("views", views);
     mav.addObject("util", htmlUtil);
+    mav.addObject("statusService", metascopeStatusService);
     return mav;
   }
 
