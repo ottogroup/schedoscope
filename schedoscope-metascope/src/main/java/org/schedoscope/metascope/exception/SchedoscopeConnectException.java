@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,6 @@
  */
 package org.schedoscope.metascope.exception;
 
-/**
- * @author kassem
- */
 public class SchedoscopeConnectException extends Exception {
 
   private static final long serialVersionUID = 853889137952803512L;
