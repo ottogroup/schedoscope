@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,8 @@ public class MetascopeTableController {
   private MetascopeDocumentationService metascopeDocumentationService;
   @Autowired
   private MetascopeDataDistributionService metascopeDataDistributionService;
+  @Autowired
+  private MetascopeStatusService metascopeStatusService;
   @Autowired
   private MetascopeConfig config;
   @Autowired
@@ -376,6 +378,7 @@ public class MetascopeTableController {
     mav.addObject("table", table);
     mav.addObject("views", views);
     mav.addObject("util", htmlUtil);
+    mav.addObject("statusService", metascopeStatusService);
     return mav;
   }
 

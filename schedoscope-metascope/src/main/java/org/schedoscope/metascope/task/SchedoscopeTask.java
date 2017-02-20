@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.schedoscope.metascope.task;
-
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.schedoscope.metascope.config.MetascopeConfig;
