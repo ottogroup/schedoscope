@@ -123,7 +123,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         }
       }
     }
-  
+
   def initializeViews(vs: List[View], includeExistingActors: Boolean = false): Set[ActorRef] = {
 
     val dependentViews = viewsToCreateActorsFor(vs, includeExistingActors)

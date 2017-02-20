@@ -141,6 +141,10 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
       initializeViews(views)
     }
 
+    case SchemaActionSuccess() => {
+      //do nothing
+    }
+
     case other =>
       log.error(s"Illegal Message received by TableActor: $other")
       //TODO: maybe delete after debug phase
