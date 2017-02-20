@@ -157,18 +157,17 @@ object DependencyAnalyzer {
       replaceParameters(_, ht.configuration.toMap)
     ).map(sql =>
       replaceParameters(sql, parseHiveVars(sql))
-    ).map { sql =>
-      val sqlSelect = sql.substring(sql.indexOfSlice("SELECT"))
-
-      """[^\\];""".r.findFirstMatchIn(sqlSelect) match {
-        case Some(m) => sqlSelect.substring(0, m.start + 1)
-        case None => sqlSelect
-      }
-    }.map(
+    ).map(
       preprocessSql
-    ).map(
-      planner.parse
-    ).map(
+    ).map { sql =>
+      """[^\\];""".r.findFirstMatchIn(sql) match {
+        case Some(m) => sql.substring(0, m.start + 1)
+        case None => sql
+      }
+    }.map { sql =>
+      log.debug("Parsing SQL:\n{}", sql)
+      planner.parse(sql)
+    }.map(
       planner.validate
     ).map(
       planner.convert
@@ -315,7 +314,10 @@ object DependencyAnalyzer {
     Seq(
       """"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'""".r -> { (_: Match) =>
         "''"
-      } // replace all double or single quoted strings by empty single quoted strings
+      }, // replace all double or single quoted strings by empty single quoted strings
+      """(?i)SET .+?=.+?;""".r -> { (_: Match) =>
+        ""
+      }
     ).foldLeft(sql) {
       case (str, (regex, replacer)) => regex.replaceAllIn(str, replacer)
     }
