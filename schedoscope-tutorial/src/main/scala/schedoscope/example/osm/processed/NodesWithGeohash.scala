@@ -26,6 +26,7 @@ import org.schedoscope.dsl.transformations.MapreduceTransformation
 import schedoscope.example.osm.mapreduce.GeohashMapper
 
 case class NodesWithGeohash() extends View {
+
   val id = fieldOf[Long]("The node ID")
   val version = fieldOf[Int]("OSM version - ignored")
   val userId = fieldOf[Int]("OSM user ID - ignored")

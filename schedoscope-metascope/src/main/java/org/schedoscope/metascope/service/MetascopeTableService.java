@@ -81,6 +81,11 @@ public class MetascopeTableService {
     return metascopeTableRepository.findByComment(comment);
   }
 
+  @Transactional
+  public void save(MetascopeTable table) {
+    this.metascopeTableRepository.save(table);
+  }
+
   public Map<String, CategoryMap> getTableTaxonomies(MetascopeTable table) {
     Map<String, CategoryMap> taxonomies = new LinkedHashMap<String, CategoryMap>();
 

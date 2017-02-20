@@ -84,10 +84,13 @@ public class MetascopeConfig {
     this.port = config.metascopePort();
 
     this.schedoscopeInstances = new ArrayList<>();
-    for (ConfigValue val : config.metascopeSchedoscopeInstances()) {
-      Map<String, Object> props = (Map<String, Object>) val.unwrapped();
-      schedoscopeInstances.add(new SchedoscopeInstance(String.valueOf(props.get("id")),
-              String.valueOf(props.get("host")), (int) props.get("port")));
+
+    if (config.metascopeSchedoscopeInstances() != null) {
+      for (ConfigValue val : config.metascopeSchedoscopeInstances()) {
+        Map<String, Object> props = (Map<String, Object>) val.unwrapped();
+        schedoscopeInstances.add(new SchedoscopeInstance(String.valueOf(props.get("id")),
+          String.valueOf(props.get("host")), (int) props.get("port")));
+      }
     }
 
     this.authenticationMethod = getString(config.metascopeAuthMethod());
@@ -120,6 +123,9 @@ public class MetascopeConfig {
   }
 
   private String getString(String value) {
+    if (value == null) {
+      return null;
+    }
     return value.replace(METASCOPE_JAR_LOCATION, classLocations).trim();
   }
 

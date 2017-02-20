@@ -28,7 +28,7 @@ public class MetascopeDataDistributionController {
       MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
       if (table != null) {
         MetascopeDataDistributionService.Status status = metascopeDataDistributionService.checkStatus(table);
-        if (status.equals(MetascopeDataDistributionService.Status.NotAvailable)) {
+        if (status != null && status.equals(MetascopeDataDistributionService.Status.NotAvailable)) {
           metascopeDataDistributionService.calculateDistribution(table);
         }
       }
