@@ -48,7 +48,8 @@ trait StructureDsl extends Named with Commentable {
   def fieldOf[T: Manifest](orderWeight: Int = 100, comment: String = null, overrideName: String = null) = {
     val f = Field[T](orderWeight, if (overrideName != null) Some(overrideName) else None)
 
-    f.comment = if (comment != null) Some(comment) else None
+    if (comment != null)
+      f.comment(comment)
 
     registerField(f)
     f
