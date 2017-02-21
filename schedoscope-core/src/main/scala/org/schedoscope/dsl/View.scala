@@ -227,7 +227,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Return all dependencies of this view recursively
     */
-  lazy val recursiveDependencies: Set[View] = View.recursiveDependenciesOf(this)
+  lazy val recursiveDependencies: Set[View] = View.recursiveDependenciesOf(this).toSet
 
   /**
     * Returns true if the present view is partitionend.
@@ -546,23 +546,10 @@ object View {
     registeredView
   }
 
-  /**
-    * Return all dependencies of the view recursively
-    */
-  def recursiveDependenciesOf(view: View): Set[View] = {
-    val deps = mutable.Set[View]()
-    recursiveDependenciesOf(view, deps)
-
-    deps.toSet
-  }
-
-  private def recursiveDependenciesOf(view: View, soFar: mutable.Set[View]): Unit = {
-    if (view.dependencies.isEmpty) {
-      soFar.add(view)
-    } else if (!soFar.contains(view)) {
-      soFar.add(view)
+  private def recursiveDependenciesOf(view: View, soFar: mutable.Set[View] = mutable.Set[View]()): mutable.Set[View] = {
+    if (soFar.add(view))
       view.dependencies.foreach(recursiveDependenciesOf(_, soFar))
-    }
+    soFar
   }
 }
 

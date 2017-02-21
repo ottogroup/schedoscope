@@ -18,13 +18,12 @@ package org.schedoscope.lineage
 
 import org.apache.calcite.sql._
 import org.apache.calcite.sql.`type`._
-import org.apache.calcite.sql.parser.SqlParserPos
 
 /**
   * @author Jan Hicken (jhicken)
   */
-case class HiveQlAggFunction(name: String) extends SqlAggFunction(name, new SqlIdentifier(name, SqlParserPos.ZERO),
-  SqlKind.OTHER_FUNCTION, ReturnTypes.explicit(SqlTypeName.ANY), InferTypes.RETURN_TYPE, OperandTypes.ANY,
+case class HiveQlAggFunction(name: String) extends SqlAggFunction(name.toUpperCase, SqlKind.OTHER_FUNCTION,
+  ReturnTypes.explicit(SqlTypeName.ANY), InferTypes.RETURN_TYPE, OperandTypes.ANY,
   SqlFunctionCategory.USER_DEFINED_FUNCTION) {
 
   override def getOperandCountRange: SqlOperandCountRange = SqlOperandCountRanges.any()

@@ -638,6 +638,11 @@ SqlNode OrderedQueryOrExpr(ExprContext exprContext) :
     (
         e = QueryOrExpr(exprContext)
     )
+    (
+        [ DistributeBy() ] [ SortBy() ]
+        |
+        ClusterBy()
+    )
     [
         // use the syntactic type of the expression we just parsed
         // to decide whether ORDER BY makes sense
@@ -1453,9 +1458,9 @@ SqlLiteral JoinType() :
     |
         <INNER> <JOIN> { joinType = JoinType.INNER; }
     |
-        <LEFT> [ <OUTER> ] <JOIN> { joinType = JoinType.LEFT; }
+        <LEFT> [ <OUTER> | <SEMI> ] <JOIN> { joinType = JoinType.LEFT; }
     |
-        <RIGHT> [ <OUTER> ] <JOIN> { joinType = JoinType.RIGHT; }
+        <RIGHT> [ <OUTER> | <SEMI> ] <JOIN> { joinType = JoinType.RIGHT; }
     |
         <FULL> [ <OUTER> ] <JOIN> { joinType = JoinType.FULL; }
     |
@@ -2006,7 +2011,11 @@ SqlNode GroupingElement() :
     <LPAREN> <RPAREN> {
         return new SqlNodeList(getPos());
     }
-|   e = Expression(ExprContext.ACCEPT_SUBQUERY) {
+|   e = Expression(ExprContext.ACCEPT_SUBQUERY)
+    [
+        <GROUPING> <SETS> <LPAREN> GroupingElementList() <RPAREN>
+    ]
+    {
         return e;
     }
 }
@@ -2213,6 +2222,48 @@ SqlNode WindowRange() :
 }
 
 /**
+ * Parses an DISTRIBUTE BY clause.
+ */
+SqlNode DistributeBy() :
+{
+    SqlNode e;
+}
+{
+    <DISTRIBUTE> <BY> e = Expression(ExprContext.ACCEPT_SUBQUERY)
+    {
+        return e;
+    }
+}
+
+/**
+ * Parses an SORT BY clause.
+ */
+SqlNode SortBy() :
+{
+    SqlNode e;
+}
+{
+    <SORT> <BY> e = Expression(ExprContext.ACCEPT_SUBQUERY)
+    {
+        return e;
+    }
+}
+
+/**
+ * Parses an CLUSTER BY clause.
+ */
+SqlNode ClusterBy() :
+{
+    SqlNode e;
+}
+{
+    <CLUSTER> <BY> e = Expression(ExprContext.ACCEPT_SUBQUERY)
+    {
+        return e;
+    }
+}
+
+/**
  * Parses an ORDER BY clause.
  */
 SqlNodeList OrderBy(boolean accept) :
@@ -2317,6 +2368,18 @@ SqlNode QueryOrExpr(ExprContext exprContext) :
     [
         withList = WithList()
     ]
+    [
+        <INSERT>
+        (
+            <INTO>
+        |
+            <OVERWRITE>
+        )
+        <TABLE> CompoundIdentifier()
+    ]
+    [
+        PartitionIdentifier()
+    ]
     (
         e = LeafQueryOrExpr(exprContext)
     )
@@ -2352,6 +2415,28 @@ SqlNode QueryOrExpr(ExprContext exprContext) :
         }
         return e;
     }
+}
+
+void PartitionIdentifier() :
+{
+}
+{
+    <PARTITION>
+    <LPAREN>
+    PartitionParameter()
+    (
+        <COMMA> PartitionParameter()
+    ) *
+    <RPAREN>
+}
+
+void PartitionParameter() :
+{
+}
+{
+    Identifier()
+    <EQ>
+    Literal()
 }
 
 SqlNodeList WithList() :
@@ -4260,7 +4345,6 @@ SqlIdentifier ReservedFunctionName() :
         | <CURRENT_TIMESTAMP>
         | <DENSE_RANK>
         | <ELEMENT>
-        | <EXP>
         | <FIRST_VALUE>
         | <FUSION>
         | <GROUPING>
@@ -4450,6 +4534,8 @@ SqlBinaryOperator BinaryRowOperator() :
     { return SqlStdOperatorTable.GREATER_THAN_OR_EQUAL; }
     | <NE>
     { return SqlStdOperatorTable.NOT_EQUALS; }
+    | <NEQ>
+    { return SqlStdOperatorTable.NOT_EQUALS; }
     | <PLUS>
     { return SqlStdOperatorTable.PLUS; }
     | <MINUS>
@@ -4457,6 +4543,8 @@ SqlBinaryOperator BinaryRowOperator() :
     | <STAR>
     { return SqlStdOperatorTable.MULTIPLY; }
     | <SLASH>
+    { return SqlStdOperatorTable.DIVIDE; }
+    | <MODULO>
     { return SqlStdOperatorTable.DIVIDE; }
     | <CONCAT>
     { return SqlStdOperatorTable.CONCAT; }
@@ -4486,6 +4574,7 @@ SqlPrefixOperator PrefixRowOperator() :
     <PLUS> { return SqlStdOperatorTable.UNARY_PLUS; }
     | <MINUS> { return SqlStdOperatorTable.UNARY_MINUS; }
     | <NOT> { return SqlStdOperatorTable.NOT; }
+    | <EXCLAMATION_MARK> { return SqlStdOperatorTable.NOT; }
     | <EXISTS> { return SqlStdOperatorTable.EXISTS; }
 }
 
@@ -4589,6 +4678,7 @@ SqlPostfixOperator PostfixRowOperator() :
     | < CLASS_ORIGIN: "CLASS_ORIGIN" >
     | < CLOB: "CLOB" >
     | < CLOSE: "CLOSE" >
+    | < CLUSTER: "CLUSTER" >
     | < COALESCE: "COALESCE" >
     | < COBOL: "COBOL" >
     | < COLLATE: "COLLATE" >
@@ -4670,6 +4760,7 @@ SqlPostfixOperator PostfixRowOperator() :
     | < DISCONNECT: "DISCONNECT" >
     | < DISPATCH: "DISPATCH" >
     | < DISTINCT: "DISTINCT" >
+    | < DISTRIBUTE: "DISTRIBUTE" >
     | < DOMAIN: "DOMAIN" >
     | < DOUBLE: "DOUBLE" >
     | < DROP: "DROP" >
@@ -4844,6 +4935,7 @@ SqlPostfixOperator PostfixRowOperator() :
     | < OVERLAPS: "OVERLAPS" >
     | < OVERLAY: "OVERLAY" >
     | < OVERRIDING: "OVERRIDING" >
+    | < OVERWRITE: "OVERWRITE" >
     | < PAD: "PAD" >
     | < PARAMETER: "PARAMETER" >
     | < PARAMETER_MODE: "PARAMETER_MODE" >
@@ -4930,6 +5022,7 @@ SqlPostfixOperator PostfixRowOperator() :
     | < SECOND: "SECOND" >
     | < SECTION: "SECTION" >
     | < SECURITY: "SECURITY" >
+    | < SEMI: "SEMI" >
     | < SELECT: "SELECT" >
     | < SELF: "SELF" >
     | < SENSITIVE: "SENSITIVE" >
@@ -4946,6 +5039,7 @@ SqlPostfixOperator PostfixRowOperator() :
     | < SIZE: "SIZE" >
     | < SMALLINT: "SMALLINT" >
     | < SOME: "SOME" >
+    | < SORT: "SORT" >
     | < SOURCE: "SOURCE" >
     | < SPACE: "SPACE" >
     | < SPECIFIC: "SPECIFIC" >
@@ -5147,6 +5241,7 @@ String CommonNonReservedKeyWord() :
         | <EXCEPTION>
         | <EXCLUDE>
         | <EXCLUDING>
+        | <EXP>
         | <FINAL>
         | <FIRST>
         | <FOLLOWING>
@@ -5250,6 +5345,7 @@ String CommonNonReservedKeyWord() :
         | <SCOPE_CATALOGS>
         | <SCOPE_NAME>
         | <SCOPE_SCHEMA>
+        | <SEARCH>
         | <SECOND>
         | <SECTION>
         | <SECURITY>
@@ -5288,6 +5384,7 @@ String CommonNonReservedKeyWord() :
         | <UNBOUNDED>
         | <UNCOMMITTED>
         | <UNDER>
+        | <UNION>
         | <UNNAMED>
         | <USAGE>
         | <USER_DEFINED_TYPE_CATALOG>
@@ -5386,6 +5483,7 @@ String CommonNonReservedKeyWord() :
     | < LE: "<=" >
     | < GE: ">=" >
     | < NE: "<>" >
+    | < NEQ: "!=" >
     | < PLUS: "+" >
     | < MINUS: "-" >
     | < STAR: "*" >
@@ -5394,6 +5492,8 @@ String CommonNonReservedKeyWord() :
     | < DOUBLE_PERIOD: ".." >
     | < QUOTE: "'" >
     | < DOUBLE_QUOTE: "\"" >
+    | < MODULO: "%" >
+    | < EXCLAMATION_MARK: "!" >
 }
 
 
