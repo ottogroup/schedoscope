@@ -706,7 +706,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       ViewStatusListResponse(List(ViewStatusResponse("materialized", productBrandView01, prodBrandViewActor.ref,
         errors = Some(false), incomplete = Some(false)))))
 
-    //TODO: fix
     prodBrandViewActor.expectMsg(CommandForView(None, productBrandView01, MaterializeView(MaterializeViewMode.DEFAULT)))
 
     Await.result(response, TIMEOUT)

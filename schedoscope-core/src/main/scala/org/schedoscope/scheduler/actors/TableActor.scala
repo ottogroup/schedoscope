@@ -156,7 +156,6 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
     case other =>
       log.error(s"Illegal Message received by TableActor: $other")
-      //TODO: maybe delete after debug phase
       throw new IllegalArgumentException(s"Illegal Message received by TableActor")
 
   }
@@ -331,7 +330,6 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
         }
       }
       log.info(s"Created actors for view table ${viewsWithMetadataToCreate.metadata.head._1.dbName}.${viewsWithMetadataToCreate.metadata.head._1.n}")
-      //TODO: maybe answer the viewManagerActor so he can update the vsm
       newViews
     } else {
       Map.empty[View, ViewSchedulingState]

@@ -223,7 +223,6 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     viewActor ! InitializeViews(List(newView))
     schemaManagerRouter.expectMsg(AddPartitions(List(newView)))
     schemaManagerRouter.reply(TransformationMetadata(Map(newView -> ("test", 1L))))
-    //TODO: answer
   }
 
   it should "materialize multiple views" in new TableActorTest {
@@ -232,7 +231,6 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     viewActor ! InitializeViews(List(newView))
     schemaManagerRouter.expectMsg(AddPartitions(List(newView)))
     schemaManagerRouter.reply(TransformationMetadata(Map(newView -> ("test", 1L))))
-    //TODO: answer
 
    materializeProductBrandView(view)
    materializeProductBrandView(newView)
