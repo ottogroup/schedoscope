@@ -104,6 +104,8 @@ case class ExternalView(view: View) extends View {
 
   override def transformVia(ft: () => Transformation) = {}
 
+  override def comment = view.comment
+
   override def exportTo(export: () => Transformation) = {}
 
   override def configureExport(k: String, v: Any) = {}

@@ -260,12 +260,6 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
       MaterializeViewMode.DEFAULT,
       self)))
 
-    transformationManagerActor.expectMsg(extView)
-    val success = CommandForView(None, extView, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],
-      mock[DriverRunSucceeded[HiveTransformation]],
-      true))
-    transformationManagerActor.reply(success)
-
     expectMsgType[ViewMaterialized]
 
   }
@@ -292,10 +286,6 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     schemaManagerRouter.reply(CommandForView(None, viewE, MetaDataForMaterialize((viewE, ("checksum", 1L)),
       MaterializeViewMode.DEFAULT,
       self)))
-
-    transformationManagerActor.expectMsg(viewE)
-    val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]], mock[DriverRunSucceeded[HiveTransformation]], true)
-    transformationManagerActor.reply(CommandForView(None, viewE, success))
 
     expectMsgType[ViewMaterialized]
 

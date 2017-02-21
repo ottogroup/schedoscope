@@ -36,7 +36,7 @@
   <div data-th-if="${dataDistStatus.equals('finished')}">
 
     <div style="overflow: auto;">
-      <span data-th-text="${'Total count of lines: ' + ddMap.get('agg_rows').value}"/>
+      <span data-th-if="${ddMap.get('agg_rows') != null}" data-th-text="${'Total count of lines: ' + ddMap.get('agg_rows').value}"/>
       <hr/>
       <table class="table table-bordered table-striped">
         <tr>

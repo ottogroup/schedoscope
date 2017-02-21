@@ -22,12 +22,17 @@ trait Commentable {
   /**
     * An optional comment about the named entity.
     */
-  var comment: Option[String] = None
+  private var _comment: Option[String] = None
+
+  /**
+    * Return the comment
+    */
+  def comment = _comment
 
   /**
     * Provide a comment describing the named entity's purpose.
     */
   def comment(aComment: String) {
-    comment = Some(aComment)
+    _comment = Some(aComment)
   }
 }

@@ -27,6 +27,7 @@
     <field name="fields" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="parameters" type="text_multi" indexed="true" stored="true" multiValued="true"/>
     <field name="transformation" type="text_multi" indexed="true" stored="true"/>
+    <field name="personResponsible" type="text_general" indexed="true" stored="true"/>
     <field name="storageFormat" type="text_general" indexed="true" stored="true"/>
     <field name="materializeOnce" type="boolean" indexed="true" stored="true"/>
     <field name="external" type="boolean" indexed="true" stored="true"/>
@@ -53,6 +54,7 @@
     <copyField source="databaseName" dest="text"/>
     <copyField source="fields" dest="text"/>
     <copyField source="transformation" dest="text"/>
+    <copyField source="personResponsible" dest="text"/>
     <copyField source="storageFormat" dest="text"/>
     <copyField source="owner" dest="text"/>
     <copyField source="description" dest="text"/>

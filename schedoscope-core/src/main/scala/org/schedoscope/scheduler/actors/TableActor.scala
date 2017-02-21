@@ -27,7 +27,8 @@ import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
-import scala.collection.{Set, mutable}
+import scala.collection.mutable
+import scala.language.implicitConversions
 import scala.concurrent.duration.Duration
 
 class TableActor(currentStates: Map[View, ViewSchedulingState],
@@ -82,9 +83,17 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
           val externalState = metadata match {
             case (view, (version, timestamp)) =>
               val v = if (view.isInstanceOf[ExternalView]) view else ExternalView(view)
-              ViewManagerActor.getStateFromMetadata(v, version, timestamp)
+              ViewManagerActor.getStateFromMetadata(v, v.transformation().checksum, timestamp)
           }
-          stateMachine.materialize(externalState, source, mode)
+
+          externalState match {
+            case CreatedByViewManager(v) =>
+              ResultingViewSchedulingState(
+                NoData(v),
+                Set(ReportNoDataAvailable(v, Set(source))))
+
+            case _ => stateMachine.materialize(externalState, source, mode)
+          }
         }
 
         case InvalidateView() => stateTransition {
@@ -317,15 +326,15 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
         case (view, (version, timestamp)) => {
           val initialState = ViewManagerActor.getStateFromMetadata(view, version, timestamp)
           viewStates.put(view.urlPath, initialState)
-//          sender ! ViewStatusResponse("receive", view, self)
-          (view,initialState)
+          //          sender ! ViewStatusResponse("receive", view, self)
+          (view, initialState)
         }
       }
       log.info(s"Created actors for view table ${viewsWithMetadataToCreate.metadata.head._1.dbName}.${viewsWithMetadataToCreate.metadata.head._1.n}")
       //TODO: maybe answer the viewManagerActor so he can update the vsm
       newViews
     } else {
-      Map.empty[View,ViewSchedulingState]
+      Map.empty[View, ViewSchedulingState]
     }
 
   }
