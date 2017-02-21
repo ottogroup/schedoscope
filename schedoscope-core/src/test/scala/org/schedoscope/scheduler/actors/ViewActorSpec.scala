@@ -155,7 +155,7 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgType[ViewMaterialized]
   }
 
-  "A external view" should "reload it's state and ignore it's deps" in new ViewActorTest {
+  "An external view" should "reload it's state and ignore it's deps" in new ViewActorTest {
     val extView = ExternalView(ProductBrand(p("ec0101"), p("2016"), p("11"), p("07")))
 
     val extActor = system.actorOf(ViewActor.props(
@@ -176,10 +176,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     schemaManagerRouter.reply(MetaDataForMaterialize((extView, ("checksum", 1L)),
       MaterializeViewMode.DEFAULT,
       self))
-
-    transformationManagerActor.expectMsg(extView)
-    val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]], mock[DriverRunSucceeded[HiveTransformation]], true)
-    transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
 
@@ -207,10 +203,6 @@ class ViewActorSpec extends TestKit(ActorSystem("schedoscope"))
     schemaManagerRouter.reply(MetaDataForMaterialize((viewE, ("checksum", 1L)),
       MaterializeViewMode.DEFAULT,
       self))
-
-    transformationManagerActor.expectMsg(viewE)
-    val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]], mock[DriverRunSucceeded[HiveTransformation]], true)
-    transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
 
