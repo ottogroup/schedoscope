@@ -16,6 +16,7 @@
 package org.schedoscope.test
 
 import org.schedoscope.dsl.FieldLike
+import org.schedoscope.lineage.NoHiveTransformationException
 
 import scala.util.{Failure, Success}
 
@@ -46,7 +47,10 @@ object TestUtils {
     if (!disableLineageValidation && view.explicitLineage.isEmpty && view.dependencies.nonEmpty) {
       view.tryLineage match {
         case Success(_) =>
-        case Failure(ex) => throw ex
+        case Failure(ex) => ex match {
+          case _: NoHiveTransformationException =>
+          case _ => throw ex
+        }
       }
     }
 

@@ -19,7 +19,6 @@ package org.schedoscope.lineage
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core._
 import org.apache.calcite.rex._
-import org.apache.calcite.tools.Frameworks
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.schedoscope.dsl.{FieldLike, View}
@@ -92,14 +91,14 @@ object DependencyAnalyzer {
   private def analyze(view: View, depFunc: DependencyFunction): Try[DependencyMap] = {
     view.hiveTransformation match {
       case Some(ht) => Try(getMap(view, ht, depFunc))
-      case _ => Failure(NoHiveTransformationException)
+      case _ => Failure(new NoHiveTransformationException())
     }
   }
 
   private def getMap(view: View, ht: HiveTransformation, depFunc: DependencyFunction): DependencyMap = {
     log.debug("Processing lineage of {}", view)
 
-    val planner = Frameworks.getPlanner(SchedoscopeConfig(view))
+    val planner = new NonFlatteningPlannerImpl(SchedoscopeConfig(view))
 
     (((Some(ht.sql)
       map (replaceParameters(_, ht.configuration.toMap))
