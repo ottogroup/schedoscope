@@ -29,8 +29,8 @@ import scala.collection.JavaConverters._
   *
   * @author Jan Hicken (jhicken)
   */
-class SchedoscopeOperatorTable(views: Traversable[View]) extends SqlOperatorTable {
-  private val udfs = views.groupBy(_.getClass).flatMap(_._2.head.hiveTransformation).flatMap(_.udfs)
+class SchedoscopeOperatorTable(view: View) extends SqlOperatorTable {
+  private val udfs = view.hiveTransformation.get.udfs
 
   override def lookupOperatorOverloads(opName: SqlIdentifier, category: SqlFunctionCategory, syntax: SqlSyntax,
                                        operatorList: util.List[SqlOperator]): Unit = {

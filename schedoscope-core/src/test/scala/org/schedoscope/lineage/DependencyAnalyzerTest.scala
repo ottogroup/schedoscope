@@ -32,7 +32,7 @@ class DependencyAnalyzerTest extends FlatSpec with Matchers with PrivateMethodTe
   "The dependency analyzer" should "analyze lineage for ProductBrand correctly" in {
     val v = ProductBrand(p("EC0101"), today._1, today._2, today._3)
 
-    analyzeLineage(v) shouldEqual Map(
+    analyzeLineage(v).get shouldEqual Map(
       v.occurredAt → Set(v.product().occurredAt),
       v.productId → Set(v.product().id),
       v.brandName → Set(v.brand().name),
@@ -44,7 +44,7 @@ class DependencyAnalyzerTest extends FlatSpec with Matchers with PrivateMethodTe
   it should "analyze dependencies for ProductBrand correctly" in {
     val v = ProductBrand(p("EC0201"), today._1, today._2, today._3)
 
-    analyzeDependencies(v) shouldEqual Map(
+    analyzeDependencies(v).get shouldEqual Map(
       v.occurredAt → Set(v.product().occurredAt, v.product().year, v.product().month, v.product().day,
         v.product().brandId, v.brand().id),
       v.productId → Set(v.product().id, v.product().year, v.product().month, v.product().day, v.product().brandId,
@@ -59,7 +59,7 @@ class DependencyAnalyzerTest extends FlatSpec with Matchers with PrivateMethodTe
   it should "analyze lineage for ClickOfEC0101 correctly" in {
     val v = ClickOfEC0101(today._1, today._2, today._3)
 
-    analyzeLineage(v) shouldEqual Map(
+    analyzeLineage(v).get shouldEqual Map(
       v.id → Set(v.click().id),
       v.url → Set(v.click().url)
     )
@@ -68,7 +68,7 @@ class DependencyAnalyzerTest extends FlatSpec with Matchers with PrivateMethodTe
   it should "analyze dependencies for ClickOfEC0101 correctly" in {
     val v = ClickOfEC0101(today._1, today._2, today._3)
 
-    analyzeDependencies(v) shouldEqual Map(
+    analyzeDependencies(v).get shouldEqual Map(
       v.id → Set(v.click().id, v.click().shopCode),
       v.url → Set(v.click().url, v.click().shopCode)
     )

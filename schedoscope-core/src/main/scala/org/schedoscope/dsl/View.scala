@@ -219,11 +219,6 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
   /**
-    * Return all dependencies of this view recursively
-    */
-  lazy val recursiveDependencies: Set[View] = View.recursiveDependenciesOf(this).toSet
-
-  /**
     * Returns true if the present view is partitionend.
     */
   def isPartitioned() = partitionParameters.nonEmpty
@@ -545,12 +540,6 @@ object View {
     }
     registeredView.env = env
     registeredView
-  }
-
-  private def recursiveDependenciesOf(view: View, soFar: mutable.Set[View] = mutable.Set[View]()): mutable.Set[View] = {
-    if (soFar.add(view))
-      view.dependencies.foreach(recursiveDependenciesOf(_, soFar))
-    soFar
   }
 }
 

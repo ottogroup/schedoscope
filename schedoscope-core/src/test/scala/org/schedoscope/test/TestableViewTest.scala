@@ -183,7 +183,7 @@ class TestableViewTest extends FlatSpec with Matchers {
     an[InvalidTransformationException] should be thrownBy {
       new IllegalJoinOnView with test {
         basedOn(view2i1, view2i2, view3)
-        then()
+        then(disableLineageValidation = true)
       }
     }
   }
@@ -191,7 +191,7 @@ class TestableViewTest extends FlatSpec with Matchers {
   it should "not throw an exception for IllegalJoin if check is disabled" in {
     new IllegalJoinOnView with test {
       basedOn(view2i1, view2i2, view3)
-      then(disableTransformationValidation = true)
+      then(disableTransformationValidation = true, disableLineageValidation = true)
     }
   }
 

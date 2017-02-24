@@ -40,7 +40,7 @@ import scala.collection.JavaConverters._
 case class SchedoscopeConfig(view: View) extends FrameworkConfig {
   override val getDefaultSchema: SchemaPlus = {
     val rootSchema = Frameworks.createRootSchema(false)
-    view.recursiveDependencies.groupBy(_.dbName).foreach {
+    view.dependencies.groupBy(_.dbName).foreach {
       case (dbName, dbViews) => rootSchema.add(dbName, SchedoscopeSchema(dbViews))
     }
 
@@ -56,7 +56,7 @@ case class SchedoscopeConfig(view: View) extends FrameworkConfig {
   override val getTypeSystem: RelDataTypeSystem = new HiveTypeSystemImpl
 
   override val getOperatorTable: SqlOperatorTable = new ChainedSqlOperatorTable(List(
-    new SchedoscopeOperatorTable(view.recursiveDependencies),
+    new SchedoscopeOperatorTable(view),
     HiveQlOperatorTable,
     SqlStdOperatorTable.instance,
     DummyOperatorTable
