@@ -173,8 +173,10 @@ trait test extends LoadableView with AccessRowData {
     */
   def `then`(sortedBy: FieldLike[_] = null,
              disableDependencyCheck: Boolean = false,
-             disableTransformationValidation: Boolean = false) {
-    TestUtils.loadView(this, sortedBy, disableDependencyCheck, disableTransformationValidation)
+             disableTransformationValidation: Boolean = false,
+             disableLineageValidation: Boolean = false) {
+    TestUtils.loadView(this, sortedBy, disableDependencyCheck, disableTransformationValidation,
+      disableLineageValidation)
   }
 
   override def rowId() = {

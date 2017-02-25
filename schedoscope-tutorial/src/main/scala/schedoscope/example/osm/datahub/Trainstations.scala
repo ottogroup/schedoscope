@@ -34,7 +34,11 @@ case class Trainstations() extends View
 
   val nodes = dependsOn(() =>
     for ((year, month) <- allMonths())
-      yield Nodes(p(year), p(month)))
+      yield Nodes(p(year), p(month)).affects(n => Seq(
+        n.id -> id,
+        n.tags -> stationName,
+        n.geohash -> area
+      )))
 
   transformVia(() =>
     PigTransformation(
