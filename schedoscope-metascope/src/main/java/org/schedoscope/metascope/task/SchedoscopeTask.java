@@ -18,6 +18,7 @@ package org.schedoscope.metascope.task;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.schedoscope.metascope.config.MetascopeConfig;
+import org.schedoscope.metascope.exception.SchedoscopeConnectException;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.*;
 import org.schedoscope.metascope.repository.MetascopeExportRepository;
@@ -26,7 +27,6 @@ import org.schedoscope.metascope.repository.MetascopeTableRepository;
 import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
 import org.schedoscope.metascope.service.MetascopeMetadataService;
 import org.schedoscope.metascope.task.model.*;
-import org.schedoscope.metascope.exception.SchedoscopeConnectException;
 import org.schedoscope.metascope.util.SchedoscopeUtil;
 import org.schedoscope.metascope.util.model.SchedoscopeInstance;
 import org.slf4j.Logger;

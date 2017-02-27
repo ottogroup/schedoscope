@@ -2,10 +2,6 @@ package org.schedoscope.metascope.service;
 
 import org.junit.Before;
 import org.junit.Test;
-
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
-
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.schedoscope.metascope.model.MetascopeActivity;
@@ -16,6 +12,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.*;
 
 public class MetascopeActivityServiceTest {
 

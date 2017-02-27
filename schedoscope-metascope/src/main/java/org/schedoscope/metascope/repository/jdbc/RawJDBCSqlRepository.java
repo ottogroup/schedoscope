@@ -1,7 +1,6 @@
 package org.schedoscope.metascope.repository.jdbc;
 
 import org.apache.commons.dbutils.DbUtils;
-
 import org.schedoscope.metascope.model.MetascopeView;
 import org.schedoscope.metascope.task.model.ViewDependency;
 import org.slf4j.Logger;

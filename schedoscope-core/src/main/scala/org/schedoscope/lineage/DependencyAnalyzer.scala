@@ -50,12 +50,12 @@ object DependencyAnalyzer {
     *
     * ''Extended Where-Provenance'' means, that in addition to the ordinary Where-Provenance dependencies, the
     * following mechanisms are applied:
-    *   - JOIN, FILTER: the corresponding condition's lineage is added to each field's lineage
-    *   - AGGREGATE: each field grouped by is added to each field's lineage
+    * - JOIN, FILTER: the corresponding condition's lineage is added to each field's lineage
+    * - AGGREGATE: each field grouped by is added to each field's lineage
     *
     * The view must either
-    *   - declare a [[org.schedoscope.dsl.transformations.HiveTransformation]]; or
-    *   - declare the lineage manually with `affects()`
+    * - declare a [[org.schedoscope.dsl.transformations.HiveTransformation]]; or
+    * - declare the lineage manually with `affects()`
     *
     * If the corresponding HiveQL statement cannot be processed or the view does not declare one of
     * the above, ''blackbox lineage'' is returned instead. This assumes, that each output field is dependent
@@ -64,7 +64,7 @@ object DependencyAnalyzer {
     * Currently, neither `LATERAL TABLE` nor user-defined table functions (UDTFs) can be processed. Thus,
     * if lineage is not defined explicitly, ''blackbox lineage'' will be returned.
     *
-    * @param view    a view to analyze
+    * @param view a view to analyze
     * @return a map, that assigns a set of dependencies to each field
     */
   def analyzeDependencies(view: View): Try[DependencyMap] = analyze(view, dependenciesOf)
@@ -73,8 +73,8 @@ object DependencyAnalyzer {
     * Provides ''Where-Provenance'' information for a [[org.schedoscope.dsl.View]].
     *
     * The view must either
-    *   - declare a [[org.schedoscope.dsl.transformations.HiveTransformation]]; or
-    *   - declare the lineage manually with `affects()`
+    * - declare a [[org.schedoscope.dsl.transformations.HiveTransformation]]; or
+    * - declare the lineage manually with `affects()`
     *
     * If the corresponding HiveQL statement cannot be processed or the view does not declare one of
     * the above, ''blackbox lineage'' is returned instead. This assumes, that each output field is dependent
@@ -83,7 +83,7 @@ object DependencyAnalyzer {
     * Currently, neither `LATERAL TABLE` nor user-defined table functions (UDTFs) can be processed. Thus,
     * if lineage is not defined explicitly, ''blackbox lineage'' will be returned.
     *
-    * @param view    a view to analyze
+    * @param view a view to analyze
     * @return a map, that assigns a set of dependencies to each field
     */
   def analyzeLineage(view: View): Try[DependencyMap] = analyze(view, lineageOf)
@@ -123,8 +123,8 @@ object DependencyAnalyzer {
     * <p>
     * In addition to all dependencies found by [[DependencyAnalyzer.lineageOf()]], the following dependencies are added:
     * <ul>
-    *   <li>`JOIN`, `FILTER`: Lineage of the condition's [[RexNode]] is added to all output attributes' lineage</li>
-    *   <li>`AGGREGATE`: Lineage of all group set members is added to all aggregated attributes' lineage</li>
+    * <li>`JOIN`, `FILTER`: Lineage of the condition's [[RexNode]] is added to all output attributes' lineage</li>
+    * <li>`AGGREGATE`: Lineage of all group set members is added to all aggregated attributes' lineage</li>
     * </ul>
     *
     * @param node the node to analyze
@@ -167,12 +167,12 @@ object DependencyAnalyzer {
     * Provides lineage information for a [[RelNode]].
     * <p>
     * <ul>
-    *   <li>`TABLESCAN`: Trivial leaf case, each attribute depends on itself</li>
-    *   <li>`PROJECT`: Each output attribute depends on the lineage of all its input attributes</li>
-    *   <li>`AGGREGATE`: A grouped attribute depends on itself, an aggregated attribute depends on all operands given to the aggregation function</li>
-    *   <li>`JOIN`: Concatenate the left and right hand side's lineage of the join</li>
-    *   <li>`FILTER`, `SORT`: Copies the lineage of the input relation</li>
-    *   <li>`UNION`: Concatenate the lineage sets of the nth field from each union</li>
+    * <li>`TABLESCAN`: Trivial leaf case, each attribute depends on itself</li>
+    * <li>`PROJECT`: Each output attribute depends on the lineage of all its input attributes</li>
+    * <li>`AGGREGATE`: A grouped attribute depends on itself, an aggregated attribute depends on all operands given to the aggregation function</li>
+    * <li>`JOIN`: Concatenate the left and right hand side's lineage of the join</li>
+    * <li>`FILTER`, `SORT`: Copies the lineage of the input relation</li>
+    * <li>`UNION`: Concatenate the lineage sets of the nth field from each union</li>
     * </ul>
     *
     * @param node the node to analyze

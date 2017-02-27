@@ -18,7 +18,6 @@ package org.schedoscope.metascope.config;
 import com.typesafe.config.ConfigFactory;
 import org.schedoscope.conf.BaseSettings;
 import org.schedoscope.metascope.index.SolrFacade;
-
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.*;
 import org.springframework.context.annotation.ComponentScan.Filter;

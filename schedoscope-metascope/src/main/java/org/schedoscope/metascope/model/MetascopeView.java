@@ -1,9 +1,5 @@
 package org.schedoscope.metascope.model;
 
-import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.LazyCollection;
-import org.hibernate.annotations.LazyCollectionOption;
-
 import javax.persistence.*;
 import java.util.*;
 

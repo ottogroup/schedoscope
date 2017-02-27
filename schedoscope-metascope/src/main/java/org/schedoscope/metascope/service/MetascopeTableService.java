@@ -28,8 +28,6 @@ import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static org.apache.solr.handler.component.StatsField.Stat.distinctValues;
-
 @Service
 public class MetascopeTableService {
 

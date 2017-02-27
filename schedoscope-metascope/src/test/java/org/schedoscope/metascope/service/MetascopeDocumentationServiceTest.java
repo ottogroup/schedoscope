@@ -20,7 +20,10 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.schedoscope.metascope.index.SolrFacade;
-import org.schedoscope.metascope.model.*;
+import org.schedoscope.metascope.model.MetascopeActivity;
+import org.schedoscope.metascope.model.MetascopeComment;
+import org.schedoscope.metascope.model.MetascopeTable;
+import org.schedoscope.metascope.model.MetascopeUser;
 import org.schedoscope.metascope.repository.MetascopeCommentRepository;
 import org.schedoscope.metascope.repository.MetascopeFieldRepository;
 import org.schedoscope.metascope.repository.MetascopeTableRepository;
@@ -29,8 +32,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
 
 public class MetascopeDocumentationServiceTest {
 

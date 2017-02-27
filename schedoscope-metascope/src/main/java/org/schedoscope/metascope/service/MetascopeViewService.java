@@ -1,6 +1,5 @@
 package org.schedoscope.metascope.service;
 
-import org.schedoscope.metascope.model.MetascopeTable;
 import org.schedoscope.metascope.model.MetascopeView;
 import org.schedoscope.metascope.repository.MetascopeViewRepository;
 import org.springframework.beans.factory.annotation.Autowired;

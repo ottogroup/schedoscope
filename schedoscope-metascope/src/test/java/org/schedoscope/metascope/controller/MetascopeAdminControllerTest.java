@@ -2,7 +2,6 @@ package org.schedoscope.metascope.controller;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.schedoscope.metascope.index.SolrFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -14,7 +13,8 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @ActiveProfiles(value = "test")
 @RunWith(SpringRunner.class)

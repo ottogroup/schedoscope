@@ -1,7 +1,7 @@
 package org.schedoscope.metascope.util;
 
-import org.schedoscope.metascope.util.model.Node;
 import org.schedoscope.metascope.model.MetascopeTable;
+import org.schedoscope.metascope.util.model.Node;
 
 import java.util.*;
 

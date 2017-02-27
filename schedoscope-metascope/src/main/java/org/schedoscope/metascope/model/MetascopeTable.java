@@ -2,10 +2,12 @@ package org.schedoscope.metascope.model;
 
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
-import org.schedoscope.metascope.Metascope;
 
 import javax.persistence.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by kas on 22.11.16.
