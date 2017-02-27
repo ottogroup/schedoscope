@@ -17,7 +17,7 @@ package org.schedoscope.test
 
 import java.io.{OutputStream, PrintStream}
 
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec, Matchers, Suite}
+import org.scalatest._
 import org.schedoscope.dsl.{Field, FieldLike}
 import org.schedoscope.test.resources.{LocalTestResources, TestResources}
 
@@ -123,17 +123,18 @@ trait ReusableHiveSchema
     */
   def then(view: LoadableView, sortedBy: FieldLike[_] = null,
            disableDependencyCheck: Boolean = false,
-           disableTransformationValidation: Boolean = false) {
+           disableTransformationValidation: Boolean = false,
+           disableLineageValidation: Boolean = false) {
 
     view.resources = resources
     view.inputFixtures.foreach { v =>
       v.resources = resources
     }
 
-    TestUtils.loadView(view,
-      null,
-      disableDependencyCheck = false,
-      disableTransformationValidation = false)
+    TestUtils.loadView(view, null,
+      disableDependencyCheck,
+      disableTransformationValidation,
+      disableLineageValidation)
     view.localResources.clear()
 
     rowData.appendAll(view.rowData)
