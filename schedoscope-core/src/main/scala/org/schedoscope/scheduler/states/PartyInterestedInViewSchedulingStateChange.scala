@@ -27,14 +27,14 @@ import scala.language.implicitConversions
   *
   * For informing, one needs to provide an adequate message sending ! operator
   */
-sealed trait PartyInterestedInViewSchedulingStateChange{
+sealed trait PartyInterestedInViewSchedulingStateChange {
   val view: Option[View]
 }
 
 /**
   * A view depending on a given view with a state change.
   */
-case class DependentView(dependentView: View) extends PartyInterestedInViewSchedulingStateChange{
+case class DependentView(dependentView: View) extends PartyInterestedInViewSchedulingStateChange {
   val view = Some(dependentView)
 }
 

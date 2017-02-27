@@ -292,7 +292,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
-      partitions.map(p => (partitionToView(tablePrototype, p) -> (Checksum.defaultDigest, 0.toLong))).toMap
+      partitions.map(p => (partitionToView(tablePrototype, p) ->(Checksum.defaultDigest, 0.toLong))).toMap
     }
   } catch {
     case are: AlreadyExistsException => throw are

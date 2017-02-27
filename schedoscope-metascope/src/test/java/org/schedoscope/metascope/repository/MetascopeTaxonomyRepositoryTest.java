@@ -19,27 +19,27 @@ import static org.junit.Assert.*;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class MetascopeTaxonomyRepositoryTest {
 
-  @Autowired
-  private TestEntityManager entityManager;
+    @Autowired
+    private TestEntityManager entityManager;
 
-  @Autowired
-  private MetascopeTaxonomyRepository metascopeTaxonomyRepository;
+    @Autowired
+    private MetascopeTaxonomyRepository metascopeTaxonomyRepository;
 
-  private MetascopeTaxonomy metascopeTaxonomy;
+    private MetascopeTaxonomy metascopeTaxonomy;
 
-  @Before
-  public void setup() {
-    MetascopeTaxonomy tmpMetascopeTaxonomy = new MetascopeTaxonomy();
-    tmpMetascopeTaxonomy.setName("GBI");
-    this.metascopeTaxonomy = this.entityManager.persist(tmpMetascopeTaxonomy);
-  }
+    @Before
+    public void setup() {
+        MetascopeTaxonomy tmpMetascopeTaxonomy = new MetascopeTaxonomy();
+        tmpMetascopeTaxonomy.setName("GBI");
+        this.metascopeTaxonomy = this.entityManager.persist(tmpMetascopeTaxonomy);
+    }
 
-  @Test
-  public void findByNameTest() {
-    MetascopeTaxonomy taxonomy = metascopeTaxonomyRepository.findByName("GBI");
+    @Test
+    public void findByNameTest() {
+        MetascopeTaxonomy taxonomy = metascopeTaxonomyRepository.findByName("GBI");
 
-    assertNotNull(taxonomy);
-    assertEquals("GBI", taxonomy.getName());
-  }
+        assertNotNull(taxonomy);
+        assertEquals("GBI", taxonomy.getName());
+    }
 
 }

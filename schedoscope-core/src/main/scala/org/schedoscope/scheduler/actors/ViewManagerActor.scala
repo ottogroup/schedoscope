@@ -40,7 +40,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
                        actionsManagerActor: ActorRef,
                        schemaManagerRouter: ActorRef,
                        viewSchedulingListenerManagerActor: ActorRef
-//                       createChildActor: String => ActorRef
+                       //                       createChildActor: String => ActorRef
                       ) extends Actor {
 
   import ViewManagerActor._
@@ -63,7 +63,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     case vsr: ViewStatusResponse =>
       viewStatusMap.put(vsr.view.fullPath, vsr)
 
-      //TODO: Review this part!
+    //TODO: Review this part!
     case GetViews(views, status, filter, issueFilter, dependencies) => {
       val viewActors: Set[ActorRef] = if (views.isDefined) initializeViews(views.get, dependencies) else Set()
       val viewStates = viewStatusMap.values
@@ -157,9 +157,9 @@ class ViewManagerActor(settings: SchedoscopeSettings,
             actorRef ! InitializeViews(views)
             actorRef
         }
-        views.foreach{ v =>
-          if(!viewStatusMap.contains(v.fullPath)) {
-            viewStatusMap.put(v.fullPath,ViewStatusResponse("receive",v,actorRef))
+        views.foreach { v =>
+          if (!viewStatusMap.contains(v.fullPath)) {
+            viewStatusMap.put(v.fullPath, ViewStatusResponse("receive", v, actorRef))
           }
         }
         actorRef
@@ -168,15 +168,15 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
     //TODO: Think about this!
     viewsPerTableName.flatMap(_._2).foreach { view =>
-        val newDepsActorRefs = view
-          .dependencies
-          .flatMap(v => actorForView(v).map(NewTableActorRef(v, _)))
+      val newDepsActorRefs = view
+        .dependencies
+        .flatMap(v => actorForView(v).map(NewTableActorRef(v, _)))
 
-        actorForView(view) match {
-          case Some(actorRef) =>
-            newDepsActorRefs.foreach(actorRef ! _)
-          case None => //actor not yet known nothing to do here
-        }
+      actorForView(view) match {
+        case Some(actorRef) =>
+          newDepsActorRefs.foreach(actorRef ! _)
+        case None => //actor not yet known nothing to do here
+      }
     }
     actors
   }

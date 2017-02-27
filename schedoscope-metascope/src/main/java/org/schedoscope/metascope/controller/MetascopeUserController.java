@@ -33,67 +33,67 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class MetascopeUserController {
 
-  private static final String ADMIN_TEMPLATE = "body/admin/user";
+    private static final String ADMIN_TEMPLATE = "body/admin/user";
 
-  @Autowired
-  private MetascopeUserService metascopeUserService;
-  @Autowired
-  private SessionRegistry sessionRegistry;
-  @Autowired
-  private MetascopeMetadataService metascopeMetadataService;
-  @Autowired
-  private MetascopeConfig config;
+    @Autowired
+    private MetascopeUserService metascopeUserService;
+    @Autowired
+    private SessionRegistry sessionRegistry;
+    @Autowired
+    private MetascopeMetadataService metascopeMetadataService;
+    @Autowired
+    private MetascopeConfig config;
 
-  @RequestMapping(value = "/admin/users", method = RequestMethod.GET)
-  public ModelAndView getUserManagement(HttpServletRequest request) {
-    ModelAndView mav = new ModelAndView("body/admin/user/user_management");
+    @RequestMapping(value = "/admin/users", method = RequestMethod.GET)
+    public ModelAndView getUserManagement(HttpServletRequest request) {
+        ModelAndView mav = new ModelAndView("body/admin/user/user_management");
 
-    boolean admin = metascopeUserService.isAdmin();
-    boolean withUserManagement = config.withUserManagement();
-    String schedoscopeTimestamp = metascopeMetadataService.getMetadataValue("timestamp");
-    Iterable<MetascopeUser> users = metascopeUserService.getAllUser();
+        boolean admin = metascopeUserService.isAdmin();
+        boolean withUserManagement = config.withUserManagement();
+        String schedoscopeTimestamp = metascopeMetadataService.getMetadataValue("timestamp");
+        Iterable<MetascopeUser> users = metascopeUserService.getAllUser();
 
-    mav.addObject("schedoscopeTimestamp", schedoscopeTimestamp);
-    mav.addObject("userEntityService", metascopeUserService);
-    mav.addObject("admin", admin);
-    mav.addObject("userMgmnt", withUserManagement);
-    mav.addObject("users", users);
+        mav.addObject("schedoscopeTimestamp", schedoscopeTimestamp);
+        mav.addObject("userEntityService", metascopeUserService);
+        mav.addObject("admin", admin);
+        mav.addObject("userMgmnt", withUserManagement);
+        mav.addObject("users", users);
 
-    return mav;
-  }
+        return mav;
+    }
 
-  @RequestMapping(value = "/admin/user/create", method = RequestMethod.POST)
-  public ModelAndView createUser(HttpServletRequest request, String username, String email, String fullname,
+    @RequestMapping(value = "/admin/user/create", method = RequestMethod.POST)
+    public ModelAndView createUser(HttpServletRequest request, String username, String email, String fullname,
+                                   String password, boolean admin, String group) {
+        ModelAndView mav = new ModelAndView("body/admin/user/index");
+
+        if (email != null && !EmailValidator.getInstance().isValid(email)) {
+            return mav.addObject("invalidEmail", true).addObject("service", metascopeUserService);
+        }
+
+        if (metascopeUserService.userExists(username)) {
+            return mav.addObject("userExists", true).addObject("service", metascopeUserService);
+        } else if (metascopeUserService.emailExists(email)) {
+            return mav.addObject("emailExists", true).addObject("service", metascopeUserService);
+        }
+
+        this.metascopeUserService.createUser(username, email, fullname, password, admin, group);
+        return new ModelAndView(new RedirectView(request.getHeader("Referer")));
+    }
+
+    @RequestMapping(value = "/admin/user/edit", method = RequestMethod.POST)
+    public ModelAndView editUser(HttpServletRequest request, String username, String email, String fullname,
                                  String password, boolean admin, String group) {
-    ModelAndView mav = new ModelAndView("body/admin/user/index");
-
-    if (email != null && !EmailValidator.getInstance().isValid(email)) {
-      return mav.addObject("invalidEmail", true).addObject("service", metascopeUserService);
+        this.metascopeUserService.editUser(username, email, fullname, password, admin, group);
+        this.metascopeUserService.logoutUser(sessionRegistry, username);
+        return new ModelAndView(new RedirectView(request.getHeader("Referer")));
     }
 
-    if (metascopeUserService.userExists(username)) {
-      return mav.addObject("userExists", true).addObject("service", metascopeUserService);
-    } else if (metascopeUserService.emailExists(email)) {
-      return mav.addObject("emailExists", true).addObject("service", metascopeUserService);
+    @RequestMapping(value = "/admin/user/delete", method = RequestMethod.POST)
+    public ModelAndView deleteUser(HttpServletRequest request, String username) {
+        this.metascopeUserService.deleteUser(username);
+        this.metascopeUserService.logoutUser(sessionRegistry, username);
+        return new ModelAndView(new RedirectView(request.getHeader("Referer")));
     }
-
-    this.metascopeUserService.createUser(username, email, fullname, password, admin, group);
-    return new ModelAndView(new RedirectView(request.getHeader("Referer")));
-  }
-
-  @RequestMapping(value = "/admin/user/edit", method = RequestMethod.POST)
-  public ModelAndView editUser(HttpServletRequest request, String username, String email, String fullname,
-                               String password, boolean admin, String group) {
-    this.metascopeUserService.editUser(username, email, fullname, password, admin, group);
-    this.metascopeUserService.logoutUser(sessionRegistry, username);
-    return new ModelAndView(new RedirectView(request.getHeader("Referer")));
-  }
-
-  @RequestMapping(value = "/admin/user/delete", method = RequestMethod.POST)
-  public ModelAndView deleteUser(HttpServletRequest request, String username) {
-    this.metascopeUserService.deleteUser(username);
-    this.metascopeUserService.logoutUser(sessionRegistry, username);
-    return new ModelAndView(new RedirectView(request.getHeader("Referer")));
-  }
 
 }

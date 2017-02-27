@@ -22,53 +22,53 @@ import java.util.List;
 @Entity
 public class MetascopeCategory {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private long categoryId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private long categoryId;
 
-  @ManyToOne
-  private MetascopeTaxonomy taxonomy;
+    @ManyToOne
+    private MetascopeTaxonomy taxonomy;
 
-  @Column(columnDefinition = "varchar(32672)")
-  private String name;
+    @Column(columnDefinition = "varchar(32672)")
+    private String name;
 
-  @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  private List<MetascopeCategoryObject> categoryObjects;
+    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MetascopeCategoryObject> categoryObjects;
 
-  public MetascopeCategory() {
-    this.categoryObjects = new ArrayList<MetascopeCategoryObject>();
-  }
+    public MetascopeCategory() {
+        this.categoryObjects = new ArrayList<MetascopeCategoryObject>();
+    }
 
-  public long getCategoryId() {
-    return categoryId;
-  }
+    public long getCategoryId() {
+        return categoryId;
+    }
 
-  public void setCategoryId(long categoryId) {
-    this.categoryId = categoryId;
-  }
+    public void setCategoryId(long categoryId) {
+        this.categoryId = categoryId;
+    }
 
-  public MetascopeTaxonomy getTaxonomy() {
-    return taxonomy;
-  }
+    public MetascopeTaxonomy getTaxonomy() {
+        return taxonomy;
+    }
 
-  public void setTaxonomy(MetascopeTaxonomy taxonomy) {
-    this.taxonomy = taxonomy;
-  }
+    public void setTaxonomy(MetascopeTaxonomy taxonomy) {
+        this.taxonomy = taxonomy;
+    }
 
-  public String getName() {
-    return name;
-  }
+    public String getName() {
+        return name;
+    }
 
-  public void setName(String name) {
-    this.name = name;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-  public List<MetascopeCategoryObject> getCategoryObjects() {
-    return categoryObjects;
-  }
+    public List<MetascopeCategoryObject> getCategoryObjects() {
+        return categoryObjects;
+    }
 
-  public void setCategoryObjects(List<MetascopeCategoryObject> categoryObjects) {
-    this.categoryObjects = categoryObjects;
-  }
+    public void setCategoryObjects(List<MetascopeCategoryObject> categoryObjects) {
+        this.categoryObjects = categoryObjects;
+    }
 
 }

@@ -79,7 +79,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
       schemaManagerRouter.reply(SchemaActionSuccess())
       schemaManagerRouter.expectMsg(AddPartitions(List(view)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+      schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true

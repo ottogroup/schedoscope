@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class MetascopeViewService {
 
-  @Autowired
-  private MetascopeViewRepository metascopeViewRepository;
+    @Autowired
+    private MetascopeViewRepository metascopeViewRepository;
 
-  public MetascopeView findByViewId(String viewId) {
-    return metascopeViewRepository.findOne(viewId);
-  }
+    public MetascopeView findByViewId(String viewId) {
+        return metascopeViewRepository.findOne(viewId);
+    }
 
 }

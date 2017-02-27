@@ -23,19 +23,19 @@ import org.springframework.stereotype.Service;
 @Service
 public class MetascopeMetadataService {
 
-  @Autowired
-  private MetascopeMetadataRepository metascopeMetadataRepository;
+    @Autowired
+    private MetascopeMetadataRepository metascopeMetadataRepository;
 
-  public String getMetadataValue(String key) {
-    MetascopeMetadata metadata = metascopeMetadataRepository.findOne(key);
-    if (metadata == null) {
-      return null;
+    public String getMetadataValue(String key) {
+        MetascopeMetadata metadata = metascopeMetadataRepository.findOne(key);
+        if (metadata == null) {
+            return null;
+        }
+        return metadata.getMetadataValue();
     }
-    return metadata.getMetadataValue();
-  }
 
-  public void save(String key, String value) {
-    metascopeMetadataRepository.save(new MetascopeMetadata(key, value));
-  }
+    public void save(String key, String value) {
+        metascopeMetadataRepository.save(new MetascopeMetadata(key, value));
+    }
 
 }

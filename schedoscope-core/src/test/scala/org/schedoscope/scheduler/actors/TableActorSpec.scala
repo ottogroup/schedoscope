@@ -64,7 +64,7 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
       schemaManagerRouter.ref,
       viewSchedulingListenerManagerActor.ref))
 
-    def materializeProductBrandView(pbView : ProductBrand): Unit ={
+    def materializeProductBrandView(pbView: ProductBrand): Unit = {
       val brandDep = pbView.brand()
       val productDep = pbView.product()
 
@@ -222,7 +222,7 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     val newView = ProductBrand(p("ec0106"), p("2017"), p("12"), p("13"))
     viewActor ! InitializeViews(List(newView))
     schemaManagerRouter.expectMsg(AddPartitions(List(newView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(newView -> ("test", 1L))))
+    schemaManagerRouter.reply(TransformationMetadata(Map(newView ->("test", 1L))))
   }
 
   it should "materialize multiple views" in new TableActorTest {
@@ -230,10 +230,10 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     val newView = ProductBrand(p("ec0106"), p("2017"), p("12"), p("13"))
     viewActor ! InitializeViews(List(newView))
     schemaManagerRouter.expectMsg(AddPartitions(List(newView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(newView -> ("test", 1L))))
+    schemaManagerRouter.reply(TransformationMetadata(Map(newView ->("test", 1L))))
 
-   materializeProductBrandView(view)
-   materializeProductBrandView(newView)
+    materializeProductBrandView(view)
+    materializeProductBrandView(newView)
   }
 
   "A external view" should "reload it's state and ignore it's deps" in new TableActorTest {

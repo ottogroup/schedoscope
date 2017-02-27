@@ -33,12 +33,9 @@ public class HCatUtils {
     /**
      * This function checks if the key type is a primitive type.
      *
-     * @param schema
-     *            The HCatSchema.
-     * @param fieldName
-     *            The name of the field to check.
-     * @throws IOException
-     *             Is thrown in case of errors.
+     * @param schema    The HCatSchema.
+     * @param fieldName The name of the field to check.
+     * @throws IOException Is thrown in case of errors.
      */
     public static void checkKeyType(HCatSchema schema, String fieldName)
             throws IOException {
@@ -54,12 +51,9 @@ public class HCatUtils {
     /**
      * This function checks the type category of the value.
      *
-     * @param schema
-     *            The HCatSchema.
-     * @param fieldName
-     *            The name of the field to check.
-     * @throws IOException
-     *             Is thrown in case of errors.
+     * @param schema    The HCatSchema.
+     * @param fieldName The name of the field to check.
+     * @throws IOException Is thrown in case of errors.
      */
     public static void checkValueType(HCatSchema schema, String fieldName)
             throws IOException {
@@ -95,14 +89,10 @@ public class HCatUtils {
      * This function checks if a given fields should be anonymized and computes
      * the md5 if in a provided list.
      *
-     * @param fieldName
-     *            The name of the field, will be checked against a provided list
-     * @param fieldValue
-     *            The value for which to compute the md5 sum.
-     * @param anonFields
-     *            A list of fields for which to compute the md5.
-     * @param salt
-     *            An optional salt to use when anonymizing fields.
+     * @param fieldName  The name of the field, will be checked against a provided list
+     * @param fieldValue The value for which to compute the md5 sum.
+     * @param anonFields A list of fields for which to compute the md5.
+     * @param salt       An optional salt to use when anonymizing fields.
      * @return The md5 of the field value
      */
     public static String getHashValueIfInList(String fieldName,

@@ -12,27 +12,27 @@ import java.util.List;
 @Service
 public class MetascopeFieldService {
 
-  @Autowired
-  private MetascopeFieldRepository metascopeFieldRepository;
+    @Autowired
+    private MetascopeFieldRepository metascopeFieldRepository;
 
-  public List<String> findDistinctParameters() {
-    List<String> list = new ArrayList<String>();
-    List<Object[]> parameters = metascopeFieldRepository.findDistinctParameters();
-    for (Object[] field : parameters) {
-      list.add((String) field[0]);
+    public List<String> findDistinctParameters() {
+        List<String> list = new ArrayList<String>();
+        List<Object[]> parameters = metascopeFieldRepository.findDistinctParameters();
+        for (Object[] field : parameters) {
+            list.add((String) field[0]);
+        }
+        return list;
     }
-    return list;
-  }
 
-  public MetascopeField findById(String id) {
-    return metascopeFieldRepository.findOne(id);
-  }
+    public MetascopeField findById(String id) {
+        return metascopeFieldRepository.findOne(id);
+    }
 
-  public MetascopeField findByComment(MetascopeComment commentEntity) {
-    return metascopeFieldRepository.findByComment(commentEntity);
-  }
+    public MetascopeField findByComment(MetascopeComment commentEntity) {
+        return metascopeFieldRepository.findByComment(commentEntity);
+    }
 
-  public void setMetascopeFieldRepository(MetascopeFieldRepository metascopeFieldRepository) {
-    this.metascopeFieldRepository = metascopeFieldRepository;
-  }
+    public void setMetascopeFieldRepository(MetascopeFieldRepository metascopeFieldRepository) {
+        this.metascopeFieldRepository = metascopeFieldRepository;
+    }
 }

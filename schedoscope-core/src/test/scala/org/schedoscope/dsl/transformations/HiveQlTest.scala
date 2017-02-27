@@ -73,7 +73,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'transactional' = 'true'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_parquet'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate Parquet row format sql statement" in {
@@ -88,7 +88,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat'
         |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat'
         |	LOCATION '/hdp/dev/test/views/article_view_parquet2'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate Sequence file row format" in {
@@ -100,7 +100,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	)
         |	STORED AS SEQUENCEFILE
         |	LOCATION '/hdp/dev/test/views/article_view_sequence'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate avro row format and tblproperties sql statement" in {
@@ -108,18 +108,18 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
     val hack = ""
     HiveQl.ddl(view) shouldEqual
       s"""	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_avro ${hack}
-         |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
-         |	WITH SERDEPROPERTIES (
-         |		 'avro.schema.url' = 'hdfs:///hdp/dev/global/datadictionary/schema/avro/myPath'
-         |	)
-         |	STORED AS
-         |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
-         |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
-         |	TBLPROPERTIES (
-         |		 'immutable' = 'true'
-         |	)
-         |	LOCATION '/hdp/dev/test/views/article_view_avro'
-         |""".stripMargin
+          |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+          |	WITH SERDEPROPERTIES (
+          |		 'avro.schema.url' = 'hdfs:///hdp/dev/global/datadictionary/schema/avro/myPath'
+          |	)
+          |	STORED AS
+          |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+          |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+          |	TBLPROPERTIES (
+          |		 'immutable' = 'true'
+          |	)
+          |	LOCATION '/hdp/dev/test/views/article_view_avro'
+          |""".stripMargin
   }
 
   it should "generate avro consise format" in {
@@ -127,12 +127,12 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
     val hack = ""
     HiveQl.ddl(view) shouldEqual
       s"""	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_avro2 ${hack}
-         |	STORED AS AVRO
-         |	TBLPROPERTIES (
-         |		 'immutable' = 'true'
-         |	)
-         |	LOCATION '/hdp/dev/test/views/article_view_avro2'
-         |""".stripMargin
+          |	STORED AS AVRO
+          |	TBLPROPERTIES (
+          |		 'immutable' = 'true'
+          |	)
+          |	LOCATION '/hdp/dev/test/views/article_view_avro2'
+          |""".stripMargin
   }
 
   it should "generate ORC row format and tblproperties sql statement" in {
@@ -147,7 +147,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'immutable' = 'false'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_orc'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate ORC row format sql statement" in {
@@ -162,7 +162,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'
         |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
         |	LOCATION '/hdp/dev/test/views/article_view_orc2'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate TextFile row format and tblproperties sql statement" in {
@@ -182,7 +182,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'what' = 'ever'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_text_file1'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate TextFile2 row format and tblproperties sql statement" in {
@@ -202,7 +202,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'what' = 'buh'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_text_file2'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate TextFile3 in row format" in {
@@ -219,7 +219,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'what' = 'buh'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_text_file3'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate Record Columnar format and tblproperties sql statement" in {
@@ -234,7 +234,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'scalable' = 'true'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_rc'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate json row format and tblproperties sql statement" in {
@@ -250,7 +250,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'transactional' = 'true'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_json'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate custom serde with properties and stored as textfile" in {
@@ -268,7 +268,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	)
         |	STORED AS TEXTFILE
         |	LOCATION '/hdp/dev/test/views/article_view_csv'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate custom RegEx serde with properties and stored as textfile" in {
@@ -284,7 +284,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	)
         |	STORED AS TEXTFILE
         |	LOCATION '/hdp/dev/test/views/article_view_reg_ex'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate inputOutput row format and tblproperties sql statement" in {
@@ -302,7 +302,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'EXTERNAL' = 'TRUE'
         |	)
         |	LOCATION '/hdp/dev/test/views/article_view_in_output'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   it should "generate S3 row format and tblproperties sql statement" in {
@@ -318,7 +318,7 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'transactional' = 'true'
         |	)
         |	LOCATION 's3a://schedoscope-bucket-test/dev/test/views/article_view_s3'
-        |""".stripMargin
+        | """.stripMargin
   }
 
   "HiveTransformation.insertInto" should "generate correct static partitioning prefix by default" in {

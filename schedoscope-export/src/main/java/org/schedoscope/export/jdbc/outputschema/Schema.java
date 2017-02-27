@@ -27,7 +27,6 @@ import java.util.Map;
  * particular database technology, e.g. mysql, postgresql, etc. It hold
  * information about database connection settings and creates the SQL
  * statements, provides the JDBC connection.
- *
  */
 public interface Schema {
 
@@ -54,28 +53,17 @@ public interface Schema {
     /**
      * Initializes a {@link Schema} with the given parameter.
      *
-     * @param connectionString
-     *            The JDBC connection string.
-     * @param username
-     *            The database user name.
-     * @param password
-     *            The database password.
-     * @param outputTable
-     *            The table name.
-     * @param inputFilter
-     *            The input filter (optional).
-     * @param outputNumberOfPartitions
-     *            The number of partitions.
-     * @param outputCommitSize
-     *            The commit size.
-     * @param storageEngine
-     *            The storage engine for MySQL.
-     * @param distributedBy
-     *            An optional clause for Exasol.
-     * @param columnNames
-     *            The column names.
-     * @param columnsTypes
-     *            The column types.
+     * @param connectionString         The JDBC connection string.
+     * @param username                 The database user name.
+     * @param password                 The database password.
+     * @param outputTable              The table name.
+     * @param inputFilter              The input filter (optional).
+     * @param outputNumberOfPartitions The number of partitions.
+     * @param outputCommitSize         The commit size.
+     * @param storageEngine            The storage engine for MySQL.
+     * @param distributedBy            An optional clause for Exasol.
+     * @param columnNames              The column names.
+     * @param columnsTypes             The column types.
      */
     public void setOutput(String connectionString, String username,
                           String password, String outputTable, String inputFilter,
@@ -134,10 +122,8 @@ public interface Schema {
      * Returns the underlying JDBC connection object.
      *
      * @return The JDBC connection.
-     * @throws ClassNotFoundException
-     *             Exception thrown if JDBC driver can't be initialized.
-     * @throws SQLException
-     *             Exception thrown if SQL error occurs.
+     * @throws ClassNotFoundException Exception thrown if JDBC driver can't be initialized.
+     * @throws SQLException           Exception thrown if SQL error occurs.
      */
     public Connection getConnection() throws ClassNotFoundException,
             SQLException;

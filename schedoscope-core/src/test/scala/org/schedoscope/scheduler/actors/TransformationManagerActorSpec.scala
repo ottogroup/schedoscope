@@ -86,7 +86,7 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
       val msgSender = TestProbe()
       val cmd = DriverCommand(TransformView(testView.transformation(), testView),
         msgSender.ref)
-      msgSender.send(transformationManagerActor,testView)
+      msgSender.send(transformationManagerActor, testView)
       hiveDriverRouter.expectMsg(cmd)
     }
 

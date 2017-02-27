@@ -83,7 +83,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
       schemaManagerRouter.reply(SchemaActionSuccess())
       schemaManagerRouter.expectMsg(AddPartitions(List(view)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+      schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true
@@ -106,13 +106,13 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
       def acceptMessage: PartialFunction[Any, _] = {
         case AddPartitions(List(`brandDependency`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency ->("test", 1L))))
           messageSum += 1
         case AddPartitions(List(`productDependency`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency-> ("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency ->("test", 1L))))
           messageSum += 2
         case AddPartitions(List(`view`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
           messageSum += 3
         case CheckOrCreateTables(List(`brandDependency`)) =>
           schemaManagerRouter.reply(SchemaActionSuccess())
@@ -129,7 +129,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       msgs.size shouldBe 6
       messageSum shouldBe 21
 
-//      Thread.sleep(2)
+      //      Thread.sleep(2)
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true
