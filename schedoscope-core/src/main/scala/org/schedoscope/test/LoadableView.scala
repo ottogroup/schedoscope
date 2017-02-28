@@ -161,7 +161,8 @@ trait test extends LoadableView with AccessRowData {
   def `then`() {
     `then`(null,
       disableDependencyCheck = false,
-      disableTransformationValidation = false)
+      disableTransformationValidation = false,
+      disableLineageValidation = true)
   }
 
   /**

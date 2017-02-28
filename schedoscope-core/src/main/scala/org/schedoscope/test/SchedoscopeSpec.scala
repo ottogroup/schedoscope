@@ -120,11 +120,12 @@ trait ReusableHiveSchema
     * @param sortedBy                        sorting of the results
     * @param disableDependencyCheck          disable the check for based on
     * @param disableTransformationValidation disable validation of transformations
+    * @param disableLineageValidation        disable validation of data lineage
     */
   def then(view: LoadableView, sortedBy: FieldLike[_] = null,
            disableDependencyCheck: Boolean = false,
            disableTransformationValidation: Boolean = false,
-           disableLineageValidation: Boolean = false) {
+           disableLineageValidation: Boolean = true) {
 
     view.resources = resources
     view.inputFixtures.foreach { v =>
