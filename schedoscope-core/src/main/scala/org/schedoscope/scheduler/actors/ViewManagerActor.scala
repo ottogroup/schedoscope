@@ -28,13 +28,9 @@ import org.schedoscope.scheduler.states.{CreatedByViewManager, ReadFromSchemaMan
 import scala.collection.mutable.{HashMap, HashSet}
 
 /**
-  * The view manager actor is the factory and import org.schedoscope.scheduler.actors.ViewActor
-  * supervisor of view actors. Upon creation of view actors
-  * it is responsible for creating non-existing tables or partitions in the Hive metastore, for reading
-  * the last transformation timestamps and version checksums from the metastore for already materialized
-  * views.
+  * The view manager actor is the factory and supervisor of table actors managing all views of a table. It also serves
+  * as the central access point for the schedoscope service.
   *
-  * It does this by cooperating with the partition creator actor and metadata logger actor.
   */
 class ViewManagerActor(settings: SchedoscopeSettings,
                        actionsManagerActor: ActorRef,
@@ -216,21 +212,6 @@ object ViewManagerActor {
     Props(classOf[ViewManagerActor], settings: SchedoscopeSettings,
       actionsManagerActor, schemaManagerRouter, viewSchedulingListenerManagerActor)
       .withDispatcher("akka.actor.view-manager-dispatcher")
-
-  /**
-    * Helper to convert state to MetaData
-    *
-    * @param view
-    * @param version
-    * @param timestamp
-    * @return current [[org.schedoscope.scheduler.states.ViewSchedulingState]] of the view
-    */
-  def getStateFromMetadata(view: View, version: String, timestamp: Long) = {
-    if ((version != Checksum.defaultDigest) || (timestamp > 0))
-      ReadFromSchemaManager(view, version, timestamp)
-    else
-      CreatedByViewManager(view)
-  }
 
   def actorNameForView(view: View) = view.urlPathPrefix.replaceAll("/", ":")
 }

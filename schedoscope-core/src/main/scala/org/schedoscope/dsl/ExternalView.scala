@@ -41,10 +41,6 @@ case class ExternalView(view: View) extends View {
   registeredExports = view.registeredExports
   isMaterializeOnce = view.isMaterializeOnce
 
-  override def hashCode() = view.hashCode()
-
-  override def equals(o: Any) = view.equals(o)
-
   override def fields = view.fields
 
   override def urlPath = view.urlPath
@@ -95,11 +91,9 @@ case class ExternalView(view: View) extends View {
 
   override def asTableSuffix[P <: Parameter[_]](p: P): P = view.asTableSuffix(p: P)
 
-  override def dependsOn[V <: View : Manifest](df: () => V) = {
+  override def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
     throw new IllegalArgumentException("you can't change the dependencies of an external view")
   }
-
-  override def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {}
 
   override def dependencies: List[View] = List()
 

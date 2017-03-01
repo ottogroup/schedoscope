@@ -445,7 +445,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   * View helpers. Also a registry of created views ensuring that there are no duplicate objects representing the same view.
   */
 object View {
-  private val knownViews = HashMap[View, View]()
+  private val knownViews = HashMap[String, View]()
 
   /**
     * Return all views from a given package.
@@ -542,12 +542,12 @@ object View {
   }
 
   private def register[V <: View : Manifest](env: String, v: V): V = this.synchronized {
-    val registeredView = knownViews.get(v) match {
+    val registeredView = knownViews.get(v.urlPath) match {
       case Some(registeredView) => {
         registeredView.asInstanceOf[V]
       }
       case None => {
-        knownViews.put(v, v)
+        knownViews.put(v.urlPath, v)
         v
       }
     }

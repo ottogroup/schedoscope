@@ -77,6 +77,7 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
       runningCommand = Some(a)
 
       val views = a.views
+
       log.info(s"Creating / loading ${views.size} partitions for table ${views.head.tableName}")
 
       val metadata = schemaManager.getTransformationMetadata(views)
@@ -93,8 +94,14 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
 
       runningCommand = Some(g)
 
-      val metadata = schemaManager.getTransformationMetadata(List(g.view)).head
-      sender ! CommandForView(None, g.view, MetaDataForMaterialize(metadata, g.mode, g.materializeSource))
+      val view = g.view
+
+      log.info(s"Getting partition / table metadata for $view")
+
+      val metadata = schemaManager.getTransformationMetadata(List(view)).head
+      sender ! CommandForView(None, view, MetaDataForMaterialize(metadata, g.mode, g.materializeSource))
+
+      log.info(s"Got partition / table metadata for $view")
 
       runningCommand = None
     }

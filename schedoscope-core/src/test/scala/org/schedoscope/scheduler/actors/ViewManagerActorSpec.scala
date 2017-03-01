@@ -200,14 +200,6 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     } should have message "You are referencing an external view as internal: external(test.views/Brand/ec0101)."
   }
 
-  it should "throw an exception if external views are used as internal" in new ViewManagerActorExternalTest {
-
-    val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
-    the[UnsupportedOperationException] thrownBy {
-      viewManagerActor.receive(viewWithExt)
-    } should have message "You are referencing an internal view as external: test.extviews/ExternalShop/."
-  }
-
   "the check" should "be silenced by the setting" in new ViewManagerActorExternalTest {
     override lazy val settings = TestUtils.createSettings("schedoscope.external-dependencies.enabled=true",
       "schedoscope.external-dependencies.home=[\"dev.test.views\"]",

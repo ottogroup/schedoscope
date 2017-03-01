@@ -164,7 +164,7 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
 case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
 /**
-  * Request for the SchemaManager to
+  * Request for the SchemaManager to retrieve partition / table metadta for view.
   *
   * @param view              to be materialized
   * @param mode              materialization mode
