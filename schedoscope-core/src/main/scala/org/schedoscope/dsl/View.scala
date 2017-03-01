@@ -422,9 +422,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Return all dependencies of the view in the order they have been declared.
     */
-  def dependencies = deferredDependencies.flatMap {
-    _ ()
-  }.distinct
+  def dependencies: List[View] = deferredDependencies.flatMap {
+    _()
+  }.distinct.toList
 
   /**
     * Returns true if views contains external dependencies

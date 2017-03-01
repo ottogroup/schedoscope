@@ -41,6 +41,10 @@ case class ExternalView(view: View) extends View {
   registeredExports = view.registeredExports
   isMaterializeOnce = view.isMaterializeOnce
 
+  override def hashCode() = view.hashCode()
+
+  override def equals(o: Any) = view.equals(o)
+
   override def fields = view.fields
 
   override def urlPath = view.urlPath
@@ -96,6 +100,8 @@ case class ExternalView(view: View) extends View {
   }
 
   override def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {}
+
+  override def dependencies: List[View] = List()
 
   override def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) = {}
 

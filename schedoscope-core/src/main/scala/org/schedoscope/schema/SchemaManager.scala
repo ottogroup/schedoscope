@@ -241,6 +241,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     *
     */
   def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = try {
+
     val tablePrototype = views.head
 
     log.info(s"Reading partition names for view: ${tablePrototype.module}.${tablePrototype.n}")

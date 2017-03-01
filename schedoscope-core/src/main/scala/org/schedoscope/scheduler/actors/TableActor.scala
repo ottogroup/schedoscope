@@ -82,8 +82,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
           //
           val externalState = metadata match {
             case (view, (version, timestamp)) =>
-              val v = if (view.isInstanceOf[ExternalView]) view else ExternalView(view)
-              ViewManagerActor.getStateFromMetadata(v, v.transformation().checksum, timestamp)
+              ViewManagerActor.getStateFromMetadata(view, view.transformation().checksum, timestamp)
           }
 
           externalState match {
@@ -321,20 +320,23 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
         settings.schemaTimeout)
 
       log.info(s"Partitions created, initializing views")
+
       val newViews = viewsWithMetadataToCreate.metadata.map {
         case (view, (version, timestamp)) => {
+
           val initialState = ViewManagerActor.getStateFromMetadata(view, version, timestamp)
           viewStates.put(view.urlPath, initialState)
           //          sender ! ViewStatusResponse("receive", view, self)
           (view, initialState)
         }
       }
+
       log.info(s"Created actors for view table ${viewsWithMetadataToCreate.metadata.head._1.dbName}.${viewsWithMetadataToCreate.metadata.head._1.n}")
+
       newViews
     } else {
       Map.empty[View, ViewSchedulingState]
     }
-
   }
 
 }
