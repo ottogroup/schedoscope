@@ -23,7 +23,12 @@ import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
 import org.schedoscope.scheduler.states.{PartyInterestedInViewSchedulingStateChange, ViewSchedulingAction, ViewSchedulingState}
 
-
+/**
+  * Wrapper for messages to a specific view managed by a table actor
+  * @param sender view sending the command
+  * @param receiver target view of the command
+  * @param anyRef command
+  */
 case class CommandForView(sender: Option[View], receiver: View, anyRef: AnyRef)
 
 /**
@@ -32,12 +37,12 @@ case class CommandForView(sender: Option[View], receiver: View, anyRef: AnyRef)
 sealed class Failure
 
 /**
-  * View actor signals its materialization failure to a waiting view actor
+  * View signals its materialization failure to a waiting view
   */
 case class ViewFailed(view: View) extends Failure
 
 /**
-  * Driver actor signaling a failure of a transfomation that requires a retry by the receiving view actor.
+  * Driver actor signaling a failure of a transfomation that requires a retry by the receiving view.
   */
 case class TransformationFailure[T <: Transformation](driverRunHandle: DriverRunHandle[T], driverRunState: DriverRunFailed[T]) extends Failure
 
@@ -151,7 +156,7 @@ object MaterializeViewMode extends Enumeration {
 case class InitializeViews(vs: List[View]) extends CommandRequest
 
 /**
-  * Instructs a view actor to materialize itself
+  * Instructs a table actor to materialize itself
   */
 case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
@@ -175,7 +180,7 @@ case class GetMetaDataForMaterialize(view: View,
                                      materializeSource: PartyInterestedInViewSchedulingStateChange) extends CommandRequest
 
 /**
-  * Instructs a view actor to assume that its data needs to be recomputed.
+  * Instructs a actor to assume that its data needs to be recomputed.
   */
 case class InvalidateView() extends CommandRequest
 
@@ -195,7 +200,7 @@ sealed class CommandResponse
 case class DeployCommandSuccess() extends CommandResponse
 
 /**
-  * Notification for view actor about a new
+  * Notification for actor about a new
   *
   * @param view
   * @param viewRef
@@ -203,12 +208,12 @@ case class DeployCommandSuccess() extends CommandResponse
 case class NewTableActorRef(view: View, viewRef: ActorRef) extends CommandResponse
 
 /**
-  * Schema actor or metadata logger notifying view manager actor or view actor of successful schema action.
+  * Schema actor or metadata logger notifying view manager actor or actor of successful schema action.
   */
 case class SchemaActionSuccess() extends CommandResponse
 
 /**
-  * Schema actor notifying view actor about the metadata of the view
+  * Schema actor notifying actor about the metadata of the view
   *
   * @param metadata          of the view
   * @param mode              transformation mode
@@ -217,7 +222,7 @@ case class SchemaActionSuccess() extends CommandResponse
 case class MetaDataForMaterialize(metadata: (View, (String, Long)), mode: MaterializeViewMode, materializeSource: PartyInterestedInViewSchedulingStateChange) extends CommandResponse
 
 /**
-  * Driver actor notifying view actor of successful transformation.
+  * Driver actor notifying actor of successful transformation.
   *
   * @param driverRunHandle RunHandle of the executing driver
   * @param driverRunState  return state of the driver
@@ -233,7 +238,7 @@ case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRun
 case class TransformationStatusListResponse(transformationStatusList: List[TransformationStatusResponse[_]]) extends CommandResponse
 
 /**
-  * Response message of view manager actor with state of view actors
+  * Response message of view manager actor with state of actors
   *
   * @param viewStatusList list of view metadata
   * @see ViewStatusResponse
@@ -269,12 +274,12 @@ case class ViewStatusResponse(status: String, view: View, actor: ActorRef, error
 case class TransformationMetadata(metadata: Map[View, (String, Long)]) extends CommandResponse
 
 /**
-  * A view actor notifying a depending view that it has no data available
+  * A view notifying a depending view that it has no data available
   */
 case class ViewHasNoData(view: View) extends CommandResponse
 
 /**
-  * A view actor notifying a depending view that it has materialized
+  * A view notifying a depending view that it has materialized
   *
   * @param view                    View that has been changed
   * @param incomplete              true of not all transitive dependencies had data available
