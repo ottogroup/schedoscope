@@ -31,6 +31,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -53,13 +54,15 @@ public class SolrFacade {
   private SolrUpdateHandler solrUpdateHandler;
   private SolrQueryExecutor solrQueryExecutor;
 
+  public SolrFacade() {}
+
   public SolrFacade(String solrUrl) {
     this.solrUrl = solrUrl;
   }
 
   @PostConstruct
   public void init() {
-    if (solrClient == null) {
+    if (solrClient == null && solrUrl != null) {
       String url = solrUrl;
       if (url.startsWith(SOLR_HTTP_PREFIX)) {
         initSolrFacade(new HttpSolrClient(url));

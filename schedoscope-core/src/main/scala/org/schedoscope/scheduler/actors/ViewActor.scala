@@ -26,7 +26,7 @@ import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
-import scala.collection.Set
+import scala.language.implicitConversions
 import scala.concurrent.duration.Duration
 
 
@@ -56,6 +56,7 @@ class ViewActor(var currentState: ViewSchedulingState,
       //TODO: Ask Utz about mode? Do we even want to allow an other mode than default?
       val currentView = currentState.view
       //update state if external and NoOp view
+
       schemaManagerRouter ! GetMetaDataForMaterialize(currentView, mode, sender)
     }
 
@@ -66,9 +67,17 @@ class ViewActor(var currentState: ViewSchedulingState,
       val externalState = metadata match {
         case (view, (version, timestamp)) =>
           val v = if (view.isInstanceOf[ExternalView]) view else ExternalView(view)
-          ViewManagerActor.getStateFromMetadata(v, version, timestamp)
+          ViewManagerActor.getStateFromMetadata(v, v.transformation().checksum, timestamp)
       }
-      stateMachine.materialize(externalState, source, mode)
+
+      externalState match {
+        case CreatedByViewManager(v) =>
+          ResultingViewSchedulingState(
+            NoData(v),
+            Set(ReportNoDataAvailable(v, Set(source))))
+
+        case _ => stateMachine.materialize(externalState, source, mode)
+      }
     }
 
     case InvalidateView() => stateTransition {

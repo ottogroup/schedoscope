@@ -28,7 +28,8 @@ class SchedoscopeCliRepl(val schedoscope: SchedoscopeService) {
     val ctrl = new SchedoscopeCliCommandRunner(schedoscope)
     val reader = new ConsoleReader()
     val history = new History()
-    history.setHistoryFile(new File(System.getenv("HOME") + "/.schedoscope_history"))
+    val histFileDir = Option(System.getenv("XDG_CACHE_HOME")).getOrElse(System.getenv("HOME") + "/.cache")
+    history.setHistoryFile(new File(histFileDir + "/schedoscope_history"))
     reader.setHistory(history)
     while (true) {
       try {
