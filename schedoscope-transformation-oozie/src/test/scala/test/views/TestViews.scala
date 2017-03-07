@@ -47,4 +47,5 @@ case class ClickOfEC0101ViaOozie(year: Parameter[String],
     () => OozieTransformation(
       "bundle", "click",
       oozieWFPath("bundle", "click")))
+
 }

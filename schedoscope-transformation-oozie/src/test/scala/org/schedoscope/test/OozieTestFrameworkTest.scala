@@ -18,6 +18,7 @@ package org.schedoscope.test
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
+import org.schedoscope.dsl.storageformats.TextFile
 import test.views.{Click, ClickOfEC0101ViaOozie}
 
 class OozieTestFrameworkTest extends FlatSpec with Matchers {
@@ -48,11 +49,13 @@ class OozieTestFrameworkTest extends FlatSpec with Matchers {
   "Oozie test framework" should "execute oozie workflows in MiniOozie cluster" in {
     new ClickOfEC0101ViaOozie(p("2014"), p("01"), p("01")) with oozieTest {
       basedOn(ec0101Clicks, ec0106Clicks)
+      storedAs(TextFile(fieldTerminator = "\\t", collectionItemTerminator = "\u0002", mapKeyTerminator = "\u0003"))
       withConfiguration(
         ("jobTracker" -> cluster.getJobTrackerUri),
         ("nameNode" -> cluster.getNameNodeUri),
         ("input" -> s"${ec0101Clicks.fullPath}/*"),
         ("output" -> s"${this.fullPath}/"))
+
       `then`()
       numRows shouldBe 3
       row(v(id) shouldBe "event01",

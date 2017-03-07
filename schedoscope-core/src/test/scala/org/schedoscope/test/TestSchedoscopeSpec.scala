@@ -33,6 +33,13 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
       v(url, "http://ec0106.com/url3"))
   }
 
+  val click = putViewUnderTest {
+    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+      withResource("test" -> "src/test/resources/test.sql")
+    }
+  }
+
   val clickAvro = putViewUnderTest {
     new ClickOfEC0101Avro(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
@@ -45,18 +52,15 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
   }
 
 
-  val click = putViewUnderTest {
-    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
-      basedOn(ec0101Clicks, ec0106Clicks)
-      withResource("test" -> "src/test/resources/test.sql")
-    }
-  }
-
   val clickORC = putViewUnderTest {
     new ClickOfEC0101ORC(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       withResource("test" -> "src/test/resources/test.sql")
     }
+  }
+
+  it should "not change output/goal view storage format ORC" in {
+    clickORC.storageFormat shouldBe OptimizedRowColumnar()
   }
 
   val clickParquet = putViewUnderTest {
@@ -66,11 +70,19 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     }
   }
 
+  it should "not change output/goal view storage format Parquet" in {
+    clickParquet.storageFormat shouldBe Parquet()
+  }
+
   val clickJson = putViewUnderTest {
     new ClickOfEC0101Json(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       withResource("test" -> "src/test/resources/test.sql")
     }
+  }
+
+  it should "not change output/goal view storage format JSON" in {
+    clickJson.storageFormat shouldBe Json()
   }
 
 
@@ -98,20 +110,6 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     val fs = click.resources.fileSystem
     val target = new Path(s"${click.resources.remoteTestDirectory}/test.sql")
     fs.exists(target) shouldBe true
-  }
-
-  it should "not change output/goal view storage format Parquet" in {
-    clickParquet.storageFormat shouldBe Parquet()
-  }
-
-  // Confirm for rest of storage formats
-
-  it should "not change output/goal view storage format JSON" in {
-    clickJson.storageFormat shouldBe Json()
-  }
-
-  it should "not change output/goal view storage format ORC" in {
-    clickORC.storageFormat shouldBe OptimizedRowColumnar()
   }
 
 }

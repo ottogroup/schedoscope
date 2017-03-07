@@ -260,7 +260,7 @@ case class ClickOfEC0101(year: Parameter[String],
                          month: Parameter[String],
                          day: Parameter[String]) extends ClickOfEC
    {
-  storedAs(TextFile())
+  //storedAs(TextFile())
 }
 
 case class ClickOfEC0101Json(year: Parameter[String],
