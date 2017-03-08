@@ -293,7 +293,7 @@ case class ClickEC01Avro(year: Parameter[String],
   storedAs(Avro("avro_schemas/click_of_e_c0101_avro.avsc"))
 }
 
-case class ClickOfEC01WithJdbcExport(year: Parameter[String],
+case class ClickOfEC0101WithJdbcExport(year: Parameter[String],
                                      month: Parameter[String],
                                      day: Parameter[String]) extends View
   with Id
@@ -315,7 +315,7 @@ case class ClickOfEC01WithJdbcExport(year: Parameter[String],
 
 }
 
-case class ClickOfEC01WithRedisExport(year: Parameter[String],
+case class ClickOfEC0101WithRedisExport(year: Parameter[String],
                                       month: Parameter[String],
                                       day: Parameter[String]) extends View
   with Id
@@ -359,7 +359,7 @@ case class ClickOfEC01WithKafkaExport(year: Parameter[String],
 
 }
 
-case class ClickOfEC01WithFtpExport(year: Parameter[String],
+case class ClickOfEC0101WithFtpExport(year: Parameter[String],
                                     month: Parameter[String],
                                     day: Parameter[String]) extends View
   with Id
