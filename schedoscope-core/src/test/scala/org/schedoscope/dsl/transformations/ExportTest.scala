@@ -68,7 +68,7 @@ class ExportTest extends FlatSpec with Matchers {
 
   "The test framework" should "execute hive transformations and perform JDBC export" in {
 
-    new ClickOfEC0101WithJdbcExport(p("2014"), p("01"), p("01")) with test {
+    new ClickOfEC01WithJdbcExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
 
       `then`()
@@ -99,7 +99,7 @@ class ExportTest extends FlatSpec with Matchers {
 
   it should "execute hive transformations and perform Redis export" in {
 
-    new ClickOfEC0101WithRedisExport(p("2014"), p("01"), p("01")) with test {
+    new ClickOfEC01WithRedisExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
 
       `then`()
@@ -133,7 +133,7 @@ class ExportTest extends FlatSpec with Matchers {
     val kafkaServer = new EmbeddedKafkaCluster(zkServer.getConnectString, new Properties(), ImmutableList.of(9092))
     kafkaServer.startup();
 
-    val v = new ClickOfEC0101WithKafkaExport(p("2014"), p("01"), p("01")) with test {
+    val v = new ClickOfEC01WithKafkaExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
 
       `then`()
@@ -165,7 +165,7 @@ class ExportTest extends FlatSpec with Matchers {
     val ftpServer = new EmbeddedFtpSftpServer()
     ftpServer.startEmbeddedFtpServer()
 
-    val v = new ClickOfEC0101WithFtpExport(p("2014"), p("01"), p("01")) with test {
+    val v = new ClickOfEC01WithFtpExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
 
       `then`()

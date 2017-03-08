@@ -389,7 +389,7 @@ class DslTest extends FlatSpec with Matchers {
   it should "be queryable" in {
     val views = View.viewsInPackage("test.views")
 
-    views should contain allOf(classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC0101])
+    views should contain allOf(classOf[Brand], classOf[Product], classOf[ProductBrand], classOf[EdgeCasesView], classOf[AvroView], classOf[ViewWithDefaultParams], classOf[Click], classOf[ClickOfEC01])
 
     val traits = View.getTraits(classOf[ProductBrand])
 

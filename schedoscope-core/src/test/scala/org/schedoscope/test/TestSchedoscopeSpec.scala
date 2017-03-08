@@ -34,55 +34,84 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
   }
 
   val click = putViewUnderTest {
-    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
+    new ClickOfEC01(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       withResource("test" -> "src/test/resources/test.sql")
     }
   }
 
   val clickAvro = putViewUnderTest {
-    new ClickOfEC0101Avro(p("2014"), p("01"), p("01")) with test {
+    new ClickEC01Avro(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
-      withResource("test" -> "src/test/resources/test.sql")
     }
   }
 
   it should "not change output/goal view storage format Avro" in {
-    clickAvro.storageFormat shouldBe Avro("avro_schemas/click_of_e_c0101_avro.avsc")
+    import clickAvro._
+    storageFormat shouldBe Avro("avro_schemas/click_of_e_c0101_avro.avsc")
+    numRows() shouldBe 3
+    row(v(id) shouldBe "event01",
+      v(url) shouldBe "http://ec0101.com/url1")
+    row(v(id) shouldBe "event02",
+      v(url) shouldBe "http://ec0101.com/url2")
+    row(v(id) shouldBe "event03",
+      v(url) shouldBe "http://ec0101.com/url3")
   }
 
 
   val clickORC = putViewUnderTest {
-    new ClickOfEC0101ORC(p("2014"), p("01"), p("01")) with test {
+    new ClickEC01ORC(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
-      withResource("test" -> "src/test/resources/test.sql")
     }
   }
 
   it should "not change output/goal view storage format ORC" in {
-    clickORC.storageFormat shouldBe OptimizedRowColumnar()
+    import clickORC._
+    storageFormat shouldBe OptimizedRowColumnar()
+
+    numRows() shouldBe 3
+    row(v(id) shouldBe "event01",
+      v(url) shouldBe "http://ec0101.com/url1")
+    row(v(id) shouldBe "event02",
+      v(url) shouldBe "http://ec0101.com/url2")
+    row(v(id) shouldBe "event03",
+      v(url) shouldBe "http://ec0101.com/url3")
   }
 
   val clickParquet = putViewUnderTest {
-    new ClickOfEC0101Parquet(p("2014"), p("01"), p("01")) with test {
+    new ClickEC01Parquet(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
-      withResource("test" -> "src/test/resources/test.sql")
     }
   }
 
   it should "not change output/goal view storage format Parquet" in {
-    clickParquet.storageFormat shouldBe Parquet()
+    import clickParquet._
+    storageFormat shouldBe Parquet()
+    numRows() shouldBe 3
+    row(v(id) shouldBe "event01",
+      v(url) shouldBe "http://ec0101.com/url1")
+    row(v(id) shouldBe "event02",
+      v(url) shouldBe "http://ec0101.com/url2")
+    row(v(id) shouldBe "event03",
+      v(url) shouldBe "http://ec0101.com/url3")
   }
 
   val clickJson = putViewUnderTest {
-    new ClickOfEC0101Json(p("2014"), p("01"), p("01")) with test {
+    new ClickEC01Json(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
-      withResource("test" -> "src/test/resources/test.sql")
     }
   }
 
   it should "not change output/goal view storage format JSON" in {
-    clickJson.storageFormat shouldBe Json()
+    import clickJson._
+    storageFormat shouldBe Json()
+    numRows() shouldBe 3
+    row(v(id) shouldBe "event01",
+      v(url) shouldBe "http://ec0101.com/url1")
+    row(v(id) shouldBe "event02",
+      v(url) shouldBe "http://ec0101.com/url2")
+    row(v(id) shouldBe "event03",
+      v(url) shouldBe "http://ec0101.com/url3")
   }
 
 
@@ -135,12 +164,12 @@ class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {
 
   val ec0106Clicks = new Click(p("EC0106"), p("2014"), p("01"), p("01")) with InputSchema
 
-  val click = new ClickOfEC0101(p("2014"), p("01"), p("01")) with OutputSchema {
+  val click = new ClickOfEC01(p("2014"), p("01"), p("01")) with OutputSchema {
     basedOn(ec0101Clicks, ec0106Clicks)
     withResource("test" -> "src/test/resources/test.sql")
   }
 
-  val click2 = new ClickOfEC0101(p("2014"), p("01"), p("01")) with OutputSchema {
+  val click2 = new ClickOfEC01(p("2014"), p("01"), p("01")) with OutputSchema {
     basedOn(ec0101static)
     withResource("test" -> "src/test/resources/test.sql")
   }

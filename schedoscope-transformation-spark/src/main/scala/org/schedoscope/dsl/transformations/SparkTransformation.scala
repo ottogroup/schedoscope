@@ -124,7 +124,6 @@ object SparkTransformation {
                  additionalPys: List[String] = List(),
                  additionalFiles: List[String] = List(),
                  propertiesFile: String = null): SparkTransformation =
-
     SparkTransformation(
       classNameOf(SparkSQLRunner), jarOf(SparkSQLRunner), classNameOf(SparkSQLRunner),
       List({

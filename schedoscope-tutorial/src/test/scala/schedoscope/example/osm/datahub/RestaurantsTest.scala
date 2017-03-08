@@ -47,6 +47,7 @@ class RestaurantsTest extends SchedoscopeSpec {
   "datahub.Restaurants" should "load correctly from processed.nodes" in {
     new Restaurants() with test {
       basedOn(nodes)
+
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "267622930",

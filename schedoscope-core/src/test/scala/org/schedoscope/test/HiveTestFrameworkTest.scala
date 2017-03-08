@@ -18,7 +18,7 @@ package org.schedoscope.test
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
-import test.views.{Click, ClickOfEC0101}
+import test.views.{Click, ClickOfEC01}
 
 class HiveTestFrameworkTest extends SchedoscopeSpec {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
@@ -46,7 +46,7 @@ class HiveTestFrameworkTest extends SchedoscopeSpec {
   }
 
   "Hive test framework" should "execute hive transformations locally" in {
-    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
+    new ClickOfEC01(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       `then`()
       numRows shouldBe 3

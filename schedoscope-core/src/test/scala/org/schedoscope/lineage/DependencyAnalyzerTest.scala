@@ -21,7 +21,7 @@ import org.scalatest.{FlatSpec, Matchers, PrivateMethodTester}
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.dsl.views.DateParameterizationUtils.today
 import org.schedoscope.lineage.DependencyAnalyzer.{analyzeDependencies, analyzeLineage}
-import test.views.{ClickOfEC0101, ProductBrand}
+import test.views.{ClickOfEC01, ProductBrand}
 
 /**
   * @author Jan Hicken (jhicken)
@@ -57,7 +57,7 @@ class DependencyAnalyzerTest extends FlatSpec with Matchers with PrivateMethodTe
   }
 
   it should "analyze lineage for ClickOfEC0101 correctly" in {
-    val v = ClickOfEC0101(today._1, today._2, today._3)
+    val v = ClickOfEC01(today._1, today._2, today._3)
 
     analyzeLineage(v).get shouldEqual Map(
       v.id → Set(v.click().id),
@@ -66,7 +66,7 @@ class DependencyAnalyzerTest extends FlatSpec with Matchers with PrivateMethodTe
   }
 
   it should "analyze dependencies for ClickOfEC0101 correctly" in {
-    val v = ClickOfEC0101(today._1, today._2, today._3)
+    val v = ClickOfEC01(today._1, today._2, today._3)
 
     analyzeDependencies(v).get shouldEqual Map(
       v.id → Set(v.click().id, v.click().shopCode),

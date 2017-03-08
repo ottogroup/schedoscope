@@ -242,7 +242,7 @@ case class Click(shopCode: Parameter[String],
   val url = fieldOf[String]
 }
 
-trait ClickOfEC extends View
+trait ClickEC01 extends View
   with Id
   with DailyParameterization {
 
@@ -258,44 +258,44 @@ trait ClickOfEC extends View
             WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
 }
 
-case class ClickOfEC0101(year: Parameter[String],
-                         month: Parameter[String],
-                         day: Parameter[String]) extends ClickOfEC
+case class ClickOfEC01(year: Parameter[String],
+                     month: Parameter[String],
+                     day: Parameter[String]) extends ClickEC01
    {
   storedAs(TextFile())
 }
 
-case class ClickOfEC0101Json(year: Parameter[String],
+case class ClickEC01Json(year: Parameter[String],
                          month: Parameter[String],
-                         day: Parameter[String]) extends ClickOfEC
+                         day: Parameter[String]) extends ClickEC01
 {
   storedAs(Json())
 }
 
-case class ClickOfEC0101ORC(year: Parameter[String],
-                         month: Parameter[String],
-                         day: Parameter[String]) extends ClickOfEC
+case class ClickEC01ORC(year: Parameter[String],
+                        month: Parameter[String],
+                        day: Parameter[String]) extends ClickEC01
 {
   storedAs(OptimizedRowColumnar())
 }
 
-case class ClickOfEC0101Parquet(year: Parameter[String],
-                                month: Parameter[String],
-                                day: Parameter[String]) extends ClickOfEC
+case class ClickEC01Parquet(year: Parameter[String],
+                            month: Parameter[String],
+                            day: Parameter[String]) extends ClickEC01
 {
   storedAs(Parquet())
 }
 
-case class ClickOfEC0101Avro(year: Parameter[String],
-                             month: Parameter[String],
-                             day: Parameter[String]) extends ClickOfEC
+case class ClickEC01Avro(year: Parameter[String],
+                         month: Parameter[String],
+                         day: Parameter[String]) extends ClickEC01
 {
   storedAs(Avro("avro_schemas/click_of_e_c0101_avro.avsc"))
 }
 
-case class ClickOfEC0101WithJdbcExport(year: Parameter[String],
-                                       month: Parameter[String],
-                                       day: Parameter[String]) extends View
+case class ClickOfEC01WithJdbcExport(year: Parameter[String],
+                                     month: Parameter[String],
+                                     day: Parameter[String]) extends View
   with Id
   with DailyParameterization {
 
@@ -315,9 +315,9 @@ case class ClickOfEC0101WithJdbcExport(year: Parameter[String],
 
 }
 
-case class ClickOfEC0101WithRedisExport(year: Parameter[String],
-                                        month: Parameter[String],
-                                        day: Parameter[String]) extends View
+case class ClickOfEC01WithRedisExport(year: Parameter[String],
+                                      month: Parameter[String],
+                                      day: Parameter[String]) extends View
   with Id
   with DailyParameterization {
 
@@ -337,9 +337,9 @@ case class ClickOfEC0101WithRedisExport(year: Parameter[String],
 
 }
 
-case class ClickOfEC0101WithKafkaExport(year: Parameter[String],
-                                        month: Parameter[String],
-                                        day: Parameter[String]) extends View
+case class ClickOfEC01WithKafkaExport(year: Parameter[String],
+                                      month: Parameter[String],
+                                      day: Parameter[String]) extends View
   with Id
   with DailyParameterization {
 
@@ -359,9 +359,9 @@ case class ClickOfEC0101WithKafkaExport(year: Parameter[String],
 
 }
 
-case class ClickOfEC0101WithFtpExport(year: Parameter[String],
-                                      month: Parameter[String],
-                                      day: Parameter[String]) extends View
+case class ClickOfEC01WithFtpExport(year: Parameter[String],
+                                    month: Parameter[String],
+                                    day: Parameter[String]) extends View
   with Id
   with DailyParameterization {
 
