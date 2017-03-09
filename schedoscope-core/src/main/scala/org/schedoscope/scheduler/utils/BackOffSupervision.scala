@@ -23,9 +23,11 @@ import scala.concurrent.duration._
 
 /**
   * A partial implementation of a BackOffStrategy available in
-  * Akka >= 2.4.1+, which schedules and stores Exponential duration
-  * per actor, and schedules a "tick" activation message send in the
-  * system with the purpose of managed actors activation
+  * Akka >= 2.4.1+, which stores Exponential duration
+  * per actor, and returns a duration duration time.
+  * The returned duration time can then be used by an actor
+  * to schedule a "tick" activation message send in the
+  * system (with the purpose of managed actors activation)
   *
   * @param managerName     param used for logging purposes
   * @param system          akka system used for scheduling firing messages
@@ -34,25 +36,36 @@ class BackOffSupervision(managerName: String,
                          system: ActorSystem) {
 
   val log = LoggerFactory.getLogger(getClass)
-
   val actorBackOffWaitTime = HashMap[String, ExponentialBackOff]()
 
+  /**
+    * Stores a managedActor ExponentialBackOff object, which
+    * itself contains a current waiting time value (finite duration)
+    *
+    * @param managedActor           actor that requires backoff supervision
+    * @param backOffSlotTime        duration of the backoff slot
+    * @param backOffMinimumDelay    minimum base delay configured for actor
+    * @return                       the current waiting time
+    */
   def manageActorLifecycle(managedActor: ActorRef, backOffSlotTime: FiniteDuration = null, backOffMinimumDelay: FiniteDuration = null): FiniteDuration = {
-    if(actorBackOffWaitTime.contains(managedActor.path.toStringWithoutAddress)) {
+    val managedActorName = managedActor.path.toStringWithoutAddress
 
-      val newBackOff = actorBackOffWaitTime(managedActor.path.toStringWithoutAddress).nextBackOff
-      actorBackOffWaitTime.put(managedActor.path.toStringWithoutAddress, newBackOff)
+    if(actorBackOffWaitTime.contains(managedActorName)) {
+      val newBackOff = actorBackOffWaitTime(managedActorName).nextBackOff
+      actorBackOffWaitTime.put(managedActorName, newBackOff)
       log.warn(s"$managerName: Set new back-off waiting " +
-        s"time to value ${newBackOff.backOffWaitTime} for rebooted actor ${managedActor.path.toStringWithoutAddress}; " +
+        s"time to value ${newBackOff.backOffWaitTime} for rebooted actor ${managedActorName}; " +
         s"(retries=${newBackOff.retries}, resets=${newBackOff.resets}, total-retries=${newBackOff.totalRetries})")
+
+      //schedule tick response based on backoff
       newBackOff.backOffWaitTime
     } else {
-      //managedActor ! "tick"
       val backOff = ExponentialBackOff(backOffSlotTime = backOffSlotTime, constantDelay = backOffMinimumDelay)
       log.debug(s"$managerName: Set initial back-off waiting " +
-        s"time to value ${backOff.backOffWaitTime} for booted actor ${managedActor.path.toStringWithoutAddress}; " +
+        s"time to value ${backOff.backOffWaitTime} for booted actor ${managedActorName}; " +
         s"(retries=${backOff.retries}, resets=${backOff.resets}, total-retries=${backOff.totalRetries})")
-      actorBackOffWaitTime.put(managedActor.path.toStringWithoutAddress, backOff)
+      actorBackOffWaitTime.put(managedActorName, backOff)
+
       //schedule immediate tick response
       0 millis
     }
