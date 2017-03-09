@@ -26,6 +26,7 @@ import org.schedoscope.dsl.transformations.MapreduceTransformation
 import schedoscope.example.osm.mapreduce.GeohashMapper
 
 case class NodesWithGeohash() extends View {
+
   val id = fieldOf[Long]("The node ID")
   val version = fieldOf[Int]("OSM version - ignored")
   val userId = fieldOf[Int]("OSM user ID - ignored")
@@ -34,7 +35,19 @@ case class NodesWithGeohash() extends View {
   val latitude = fieldOf[Double]("Latitude of the node")
   val geohash = fieldOf[String]("A geoencoded area string")
 
-  val stageNodes = dependsOn { () => schedoscope.example.osm.stage.Nodes() }
+  val stageNodes = dependsOn { () =>
+    schedoscope.example.osm.stage.Nodes()
+      .affects(n => Seq(
+        n.id -> id,
+        n.version -> version,
+        n.userId -> userId,
+        n.tstamp -> tstamp,
+        n.longitude -> longitude,
+        n.longitude -> geohash,
+        n.latitude -> latitude,
+        n.latitude -> geohash
+      ))
+  }
 
   transformVia(() =>
     MapreduceTransformation(

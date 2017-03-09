@@ -19,7 +19,7 @@ package org.schedoscope.dsl
   * A field-like capturing view fields. Fields have an orderWeight determining their ordering and can override the
   * namingBase inherited from FieldLike.
   */
-case class Field[T: Manifest](orderWeight: Long, nameOverride: Option[String]) extends FieldLike[T] with Commentable {
+class Field[T: Manifest](val orderWeight: Long, val nameOverride: Option[String]) extends FieldLike[T] with Commentable {
   override def namingBase = nameOverride.getOrElse(super.namingBase)
 }
 
@@ -32,4 +32,7 @@ object Field {
     * Used to assign fields values in the test framework.
     */
   def v[T](f: Field[T], v: T) = (f, v)
+
+  def apply[U: Manifest](orderWeight: Long, nameOverride: Option[String]): Field[U] =
+    new Field(orderWeight, nameOverride)
 }

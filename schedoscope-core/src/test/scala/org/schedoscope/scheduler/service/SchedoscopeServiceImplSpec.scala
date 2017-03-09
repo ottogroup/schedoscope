@@ -451,7 +451,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     val expected = ViewStatusList(Map("loading" -> 1),
       List(ViewStatus("test.views/Brand/test",
-        None, "loading", None, None, None, None, None, None, None, None, None, None)))
+        None, "loading", None, None, None, None, None, None, None, None, None, None, None)))
 
     whenReady(response) { result =>
       result shouldBe expected
@@ -470,16 +470,16 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "false", "incomplete" -> "false")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
-      export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      fields = None, parameters = None, dependencies = None, lineage = None,
+      transformation = None, export = None, storageFormat = None, materializeOnce = None,
+      comment = None, isTable = None)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "false", "incomplete" -> "false")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
-      export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      fields = None, parameters = None, dependencies = None, lineage = None,
+      transformation = None, export = None, storageFormat = None, materializeOnce = None,
+      comment = None, isTable = None)
 
     viewManagerActor ? brandVSRmsg
     viewManagerActor ? prodVSRmsg
@@ -506,14 +506,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
+      fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
       isTable = None)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
+      fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
       isTable = None)
 
@@ -542,14 +542,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
+      fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
       isTable = None)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
+      fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
       isTable = None)
 
@@ -579,14 +579,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
+      fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
       isTable = None)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
+      fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
       isTable = None)
 
@@ -614,14 +614,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val brandExpected = ViewStatus(viewPath = brandDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "false", "incomplete" -> "true")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
+      fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
       isTable = None)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "false", "incomplete" -> "true")),
-      fields = None, parameters = None, dependencies = None, transformation = None,
+      fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
       isTable = None)
 

@@ -16,6 +16,9 @@
 package org.schedoscope.test
 
 import org.schedoscope.dsl.FieldLike
+import org.schedoscope.lineage.NoHiveTransformationException
+
+import scala.util.{Failure, Success}
 
 object TestUtils {
 
@@ -29,13 +32,25 @@ object TestUtils {
   def loadView(view: LoadableView,
                sortedBy: FieldLike[_] = null,
                disableDependencyCheck: Boolean = false,
-               disableTransformationValidation: Boolean = false) = {
+               disableTransformationValidation: Boolean = false,
+               disableLineageValidation: Boolean = false) = {
 
 
     //dependencyCheck
-    if (!disableDependencyCheck && !disableDependencyCheck) {
+    if (!disableDependencyCheck) {
       if (!view.checkDependencies()) {
         throw new IllegalArgumentException("The input views to the test given by basedOn() do not cover all types of dependencies of the view under test.")
+      }
+    }
+
+    // lineage validation
+    if (!disableLineageValidation && view.explicitLineage.isEmpty && view.dependencies.nonEmpty) {
+      view.tryLineage match {
+        case Success(_) =>
+        case Failure(ex) => ex match {
+          case _: NoHiveTransformationException =>
+          case _ => throw ex
+        }
       }
     }
 

@@ -33,4 +33,23 @@ $(function() {
 
   /* make table header collapsable */
   $('#expandComments').on('click', expandFunction);
+
+  /* retrieve status information */
+  $(".statusentity").each(function() {
+    var spinner = $(this);
+    var qualifier = spinner.data("qualifier");
+    $.ajax({
+      url: "/status/",
+      data: "qualifier=" + qualifier,
+      success: function(data){
+        setTimeout(function() {
+          var panelClass = getPanelColor(data);
+          spinner.closest(".panel").removeClass("panel-default");
+          spinner.closest(".panel").addClass(panelClass);
+          spinner.replaceWith("<span class='pull-right' title='Status'>" + data + "</span>");
+        }, 1000);
+      }
+    });
+  });
+
 });

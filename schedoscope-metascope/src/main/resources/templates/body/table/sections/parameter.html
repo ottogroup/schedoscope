@@ -23,18 +23,18 @@
         </tr>
         <div data-th-each="parameter : ${table.parameters}">
             <tr style="border-bottom: 1px solid lightgrey;">
-                <td data-th-text="${parameter.name}"></td>
-                <td data-th-text="${parameter.type}"/>
+                <td data-th-text="${parameter.fieldName}"></td>
+                <td data-th-text="${parameter.fieldType}"/>
                 <td data-th-if="${parameter.hasDocumentation()}"
                     style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><a
-                        data-th-attr="href='#parameterContent-' + ${parameter.name}"
+                        data-th-attr="href='#parameterContent-' + ${parameter.fieldName}"
                         th:utext="${parameter.comment.preview}"
-                        th:onclick="'initializeFieldEditor(\'' + ${parameter.name} + '\'); showFieldDocu(\'parameterContent-' + ${parameter.name} + '\')'"></a>
+                        th:onclick="'initializeFieldEditor(\'' + ${parameter.fieldName} + '\'); showFieldDocu(\'parameterContent-' + ${parameter.fieldName} + '\')'"></a>
                 </td>
                 <td data-th-if="${!parameter.hasDocumentation()}"
                     style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><a
-                        class="pull-right" data-th-attr="href='#parameterContent-' + ${parameter.name}"
-                        th:onclick="'initializeFieldEditor(\'' + ${parameter.name} + '\'); showFieldDocu(\'parameterContent-' + ${parameter.name} + '\'); toggleEditDocu(\'' + ${parameter.name} + '\', true);'">
+                        class="pull-right" data-th-attr="href='#parameterContent-' + ${parameter.fieldName}"
+                        th:onclick="'initializeFieldEditor(\'' + ${parameter.fieldName} + '\'); showFieldDocu(\'parameterContent-' + ${parameter.fieldName} + '\'); toggleEditDocu(\'' + ${parameter.fieldName} + '\', true);'">
                     <span class="glyphicon glyphicon-pencil"></span>
                 </a></td>
             </tr>
@@ -42,7 +42,7 @@
     </table>
 
     <div data-th-each="parameter : ${table.parameters}">
-        <div th:id="'parameterContent-' + ${parameter.name}" class="fieldDocumentation">
+        <div th:id="'parameterContent-' + ${parameter.fieldName}" class="fieldDocumentation">
             <div data-th-replace="body/table/sections/documentation_field :: documentation(${parameter}, ${util})"></div>
         </div>
     </div>

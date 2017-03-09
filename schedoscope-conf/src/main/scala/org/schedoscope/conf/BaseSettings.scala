@@ -224,6 +224,11 @@ class BaseSettings(val config: Config) {
   lazy val metascopePort = config.getInt("schedoscope.metascope.port")
 
   /**
+    * List of schedoscope instances
+    */
+  lazy val metascopeSchedoscopeInstances = config.getList("schedoscope.metascope.schedoscope-instances")
+
+  /**
     * Authentication method used for Metascope. Possible options: ['simple', 'ldap']
     */
   lazy val metascopeAuthMethod = config.getString("schedoscope.metascope.auth.authentication")

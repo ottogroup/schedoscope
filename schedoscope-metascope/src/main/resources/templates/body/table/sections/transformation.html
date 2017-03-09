@@ -19,34 +19,56 @@
         <div class="row">
             <div class="col-md-12">
                 <div class="row">
-                    <div class="col-md-6">
-                        <div style="overflow: auto">
-                            <table class="table bordered">
-                                <tr>
-                                    <th>Transformation</th>
-                                </tr>
-                                <tr>
-                                    <td>Type</td>
-                                    <td data-th-text="${table.transformationType}"></td>
-                                </tr>
-                                <tr data-th-each="transformationEntity : ${table.transformationProperties}">
-                                    <td data-th-text="${transformationEntity.transformationKey}"></td>
-                                    <td data-th-text="${transformationEntity.transformationValue}"
-                                        style="white-space: pre;"></td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div data-th-each="export : ${table.exports}">
+                    <div data-th-if="${table.exports.size() > 0}">
+                        <div class="col-md-6">
                             <div style="overflow: auto">
                                 <table class="table bordered">
                                     <tr>
-                                        <th data-th-text="${export.getType()} + ' Export'"></th>
+                                        <th>Transformation</th>
                                     </tr>
-                                    <tr data-th-each="e : ${export.properties.entrySet()}">
-                                        <td data-th-text="${e.key}"></td>
-                                        <td data-th-text="${e.value}" style="white-space: pre;"></td>
+                                    <tr>
+                                        <td>Type</td>
+                                        <td data-th-text="${table.transformation.transformationType}"></td>
+                                    </tr>
+                                    <tr data-th-each="transformationEntity : ${table.transformation.properties}">
+                                        <td data-th-text="${transformationEntity.key}"></td>
+                                        <td data-th-text="${transformationEntity.value}"
+                                            style="white-space: pre;"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div data-th-each="export : ${table.exports}">
+                                <div style="overflow: auto">
+                                    <table class="table bordered">
+                                        <tr>
+                                            <th data-th-text="${export.getExportType()} + ' Export'"></th>
+                                        </tr>
+                                        <tr data-th-each="e : ${export.getProperties().entrySet()}">
+                                            <td data-th-text="${e.key}"></td>
+                                            <td data-th-text="${e.value}" style="white-space: pre;"></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div data-th-if="${table.exports.size() == 0}">
+                        <div class="col-md-12">
+                            <div style="overflow: auto">
+                                <table class="table bordered">
+                                    <tr>
+                                        <th>Transformation</th>
+                                    </tr>
+                                    <tr>
+                                        <td>Type</td>
+                                        <td data-th-text="${table.transformation.transformationType}"></td>
+                                    </tr>
+                                    <tr data-th-each="transformationEntity : ${table.transformation.properties}">
+                                        <td data-th-text="${transformationEntity.key}"></td>
+                                        <td data-th-text="${transformationEntity.value}"
+                                            style="white-space: pre;"></td>
                                     </tr>
                                 </table>
                             </div>

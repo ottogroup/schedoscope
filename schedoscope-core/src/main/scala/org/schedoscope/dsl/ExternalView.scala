@@ -29,7 +29,12 @@ case class ExternalView(view: View) extends View {
 
   //mark view as external
   override val isExternal = true
-  env = view.env
+
+  override def env_=(env: String): Unit = {
+    super.env_=(env)
+    view.env = env
+  }
+
   storageFormat = view.storageFormat
   additionalStoragePathPrefix = view.additionalStoragePathPrefix
   additionalStoragePathSuffix = view.additionalStoragePathSuffix
@@ -98,6 +103,8 @@ case class ExternalView(view: View) extends View {
   override def configureTransformation(k: String, v: Any) = {}
 
   override def transformVia(ft: () => Transformation) = {}
+
+  override def comment = view.comment
 
   override def exportTo(export: () => Transformation) = {}
 

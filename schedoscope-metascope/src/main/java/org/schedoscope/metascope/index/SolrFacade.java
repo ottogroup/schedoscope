@@ -21,16 +21,17 @@ import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.core.CoreContainer;
 import org.schedoscope.metascope.index.model.SolrQueryResult;
-import org.schedoscope.metascope.model.TableEntity;
-import org.schedoscope.metascope.model.ViewEntity;
-import org.schedoscope.metascope.service.FieldEntityService;
-import org.schedoscope.metascope.service.TableEntityService;
-import org.schedoscope.metascope.service.ViewEntityService;
+import org.schedoscope.metascope.model.MetascopeTable;
+import org.schedoscope.metascope.model.MetascopeView;
+import org.schedoscope.metascope.service.MetascopeFieldService;
+import org.schedoscope.metascope.service.MetascopeTableService;
+import org.schedoscope.metascope.service.MetascopeViewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -38,146 +39,129 @@ import java.util.concurrent.Future;
 @Component
 public class SolrFacade {
 
-    private static final String SOLR_HTTP_PREFIX = "http";
-    private static final String METASCOPE_CORE = "metascope";
+  private static final String SOLR_HTTP_PREFIX = "http";
+  private static final String METASCOPE_CORE = "metascope";
 
-    @Autowired
-    private TableEntityService tableEntityService;
-    @Autowired
-    private ViewEntityService viewEntityService;
-    @Autowired
-    private FieldEntityService fieldEntityService;
+  @Autowired
+  private MetascopeTableService metascopeTableService;
+  @Autowired
+  private MetascopeViewService metascopeViewService;
+  @Autowired
+  private MetascopeFieldService metascopeParameterService;
 
-    private String solrUrl;
-    private SolrClient solrClient;
-    private SolrUpdateHandler solrUpdateHandler;
-    private SolrQueryExecutor solrQueryExecutor;
+  private String solrUrl;
+  private SolrClient solrClient;
+  private SolrUpdateHandler solrUpdateHandler;
+  private SolrQueryExecutor solrQueryExecutor;
 
-    public SolrFacade() {
+  public SolrFacade() {}
+
+  public SolrFacade(String solrUrl) {
+    this.solrUrl = solrUrl;
+  }
+
+  @PostConstruct
+  public void init() {
+    if (solrClient == null && solrUrl != null) {
+      String url = solrUrl;
+      if (url.startsWith(SOLR_HTTP_PREFIX)) {
+        initSolrFacade(new HttpSolrClient(url));
+      } else {
+        CoreContainer coreContainer = new CoreContainer(url);
+        coreContainer.load();
+        initSolrFacade(new EmbeddedSolrServer(coreContainer, METASCOPE_CORE));
+      }
     }
+  }
 
-    public SolrFacade(String solrUrl) {
-        this.solrUrl = solrUrl;
-    }
+  /**
+   * Refer to {@link SolrUpdateHandler#getDocument(String)}
+   *
+   * @return
+   */
+  public SolrInputDocument getById(String id) {
+    return solrUpdateHandler.getDocument(id);
+  }
 
-    @PostConstruct
-    public void init() {
-        if (solrClient == null) {
-            String url = solrUrl;
-            if (url.startsWith(SOLR_HTTP_PREFIX)) {
-                initSolrFacade(new HttpSolrClient(url));
-            } else {
-                CoreContainer coreContainer = new CoreContainer(url);
-                coreContainer.load();
-                initSolrFacade(new EmbeddedSolrServer(coreContainer, METASCOPE_CORE));
-            }
-        }
-    }
+  /**
+   * Refer to {@link SolrUpdateHandler#clearSolrData()}
+   *
+   * @return
+   */
+  public void clearSolrData() {
+    solrUpdateHandler.clearSolrData();
+  }
 
-    /**
-     * Refer to {@link SolrUpdateHandler#getDocument(String)}
-     *
-     * @return
-     */
-    public SolrInputDocument getById(String id) {
-        return solrUpdateHandler.getDocument(id);
-    }
+  /**
+   * Refer to {@link SolrUpdateHandler#updateTableEntity(MetascopeTable, boolean)}
+   */
+  public void updateTableEntity(MetascopeTable tableEntity, boolean commit) {
+    solrUpdateHandler.updateTableEntity(tableEntity, commit);
+  }
 
-    /**
-     * Refer to {@link SolrUpdateHandler#clearSolrData()}
-     *
-     * @return
-     */
-    public void clearSolrData() {
-        solrUpdateHandler.clearSolrData();
-    }
+  /**
+   * Refer to {@link SolrUpdateHandler#updateTableEntity(MetascopeTable, boolean)}.
+   * The method is executed asynchronous.
+   *
+   * @return future to wait for completion
+   */
+  @Async
+  public Future<Void> updateTableEntityAsync(MetascopeTable table, boolean commit) {
+    return solrUpdateHandler.updateTableEntityAsync(table, commit);
+  }
 
-    /**
-     * Refer to {@link SolrUpdateHandler#updateTableEntity(TableEntity, boolean)}
-     */
-    public void updateTableEntity(TableEntity tableEntity, boolean commit) {
-        solrUpdateHandler.updateTableEntity(tableEntity, commit);
-    }
+  /**
+   * Refer to {@link SolrUpdateHandler#updateTablePartial(MetascopeTable, boolean)}
+   * .
+   */
+  public void updateTablePartial(MetascopeTable table, boolean commit) {
+    solrUpdateHandler.updateTablePartial(table, commit);
+  }
 
-    /**
-     * Refer to {@link SolrUpdateHandler#updateTableEntity(TableEntity, boolean)}.
-     * The method is executed asynchronous.
-     *
-     * @return future to wait for completion
-     */
-    @Async
-    public Future<Void> updateTableEntityAsync(TableEntity tableEntity, boolean commit) {
-        return solrUpdateHandler.updateTableEntityAsync(tableEntity, commit);
-    }
+  /**
+   * Refer to {@link SolrUpdateHandler#updateViewEntity(MetascopeView, boolean)}
+   */
+  public void updateViewEntity(MetascopeView view, boolean commit) {
+    solrUpdateHandler.updateViewEntity(view, commit);
+  }
 
-    /**
-     * Refer to {@link SolrUpdateHandler#updateTablePartial(TableEntity, boolean)}
-     * .
-     */
-    public void updateTablePartial(TableEntity tableEntity, boolean commit) {
-        solrUpdateHandler.updateTablePartial(tableEntity, commit);
-    }
+  /**
+   * Refer to {@link SolrUpdateHandler#updateViewEntity(MetascopeView, boolean)}.
+   * The method is executed asynchronous.
+   *
+   * @return future to wait for completion
+   */
+  @Async
+  public Future<Void> updateViewEntityAsync(MetascopeView view, boolean commit) {
+    return solrUpdateHandler.updateViewEntityAsync(view, commit);
+  }
 
-    /**
-     * Refer to
-     * {@link SolrUpdateHandler#updateTableStatusInformation(TableEntity, Long, boolean)}
-     */
-    public void updateTableStatusInformation(TableEntity tableEntity, Long lastTransformation, boolean commit) {
-        solrUpdateHandler.updateTableStatusInformation(tableEntity, lastTransformation, commit);
-    }
+  /**
+   * Refer to {@link SolrUpdateHandler#commit()}
+   */
+  public void commit() {
+    solrUpdateHandler.commit();
+  }
 
-    /**
-     * Refer to {@link SolrUpdateHandler#updateViewEntity(ViewEntity, boolean)}
-     */
-    public void updateViewEntity(ViewEntity viewEntity, boolean commit) {
-        solrUpdateHandler.updateViewEntity(viewEntity, commit);
-    }
+  /**
+   * Refer to {@link SolrQueryExecutor#suggest(String)}
+   */
+  public List<String> suggest(String userInput) {
+    return solrQueryExecutor.suggest(userInput);
+  }
 
-    /**
-     * Refer to {@link SolrUpdateHandler#updateViewEntity(ViewEntity, boolean)}.
-     * The method is executed asynchronous.
-     *
-     * @return future to wait for completion
-     */
-    @Async
-    public Future<Void> updateViewEntityAsync(ViewEntity viewEntity, boolean commit) {
-        return solrUpdateHandler.updateViewEntityAsync(viewEntity, commit);
-    }
+  /**
+   * Refer to {@link SolrQueryExecutor#query(Map)}
+   */
+  public SolrQueryResult query(Map<String, String> params) {
+    return solrQueryExecutor.query(params);
+  }
 
-    /**
-     * Refer to
-     * {@link SolrUpdateHandler#updateViewStatusInformation(ViewEntity, Long, Long, boolean)}
-     */
-    public void updateViewStatusInformation(ViewEntity viewEntity, Long transformationEnd, Long createdAt, boolean commit) {
-        solrUpdateHandler.updateViewStatusInformation(viewEntity, transformationEnd, createdAt, commit);
-    }
-
-    /**
-     * Refer to {@link SolrUpdateHandler#commit()}
-     */
-    public void commit() {
-        solrUpdateHandler.commit();
-    }
-
-    /**
-     * Refer to {@link SolrQueryExecutor#suggest(String)}
-     */
-    public List<String> suggest(String userInput) {
-        return solrQueryExecutor.suggest(userInput);
-    }
-
-    /**
-     * Refer to {@link SolrQueryExecutor#query(Map)}
-     */
-    public SolrQueryResult query(Map<String, String> params) {
-        return solrQueryExecutor.query(params);
-    }
-
-    public void initSolrFacade(SolrClient solrClient) {
-        this.solrClient = solrClient;
-        this.solrUpdateHandler = new SolrUpdateHandler(solrClient);
-        this.solrQueryExecutor = new SolrQueryExecutor(solrClient, tableEntityService, viewEntityService,
-                fieldEntityService);
-    }
+  public void initSolrFacade(SolrClient solrClient) {
+    this.solrClient = solrClient;
+    this.solrUpdateHandler = new SolrUpdateHandler(solrClient);
+    this.solrQueryExecutor = new SolrQueryExecutor(solrClient, metascopeTableService,
+            metascopeViewService, metascopeParameterService);
+  }
 
 }

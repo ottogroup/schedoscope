@@ -32,7 +32,7 @@ case class Parameter[T: Manifest](orderWeight: Long) extends FieldLike[T] {
 
     val p = a.asInstanceOf[Parameter[T]]
 
-    (p.t == this.t) && (p.v == this.v)
+    (p.t == this.t) && (p.v == this.v) && super.equals(a)
   }
 
   override def hashCode(): Int = {

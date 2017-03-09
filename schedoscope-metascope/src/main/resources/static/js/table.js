@@ -34,12 +34,12 @@ $(function() {
 
   /* GET lineage information on lineage modal open event */
   $('#lineage').on('shown.bs.modal', function(e) {
-    $.ajax({
-      url : '/table/view/lineage',
-      type : 'GET',
-      data : $('#lineageForm').serialize(),
-      success : drawLineage
-    });
+      $.ajax({
+        url : '/table/view/lineage',
+        type : 'GET',
+        data : $('#lineageForm').serialize(),
+        success : drawLineage
+      });
   });
 
   /* initialize tablesorter plugin */
@@ -49,7 +49,7 @@ $(function() {
   if (url.match('#')) {
     var urlPart = url.split('#')[1];
     var s = '.nav-pills a[href=#' + urlPart + ']';
-    if (urlPart.contains('-')) {
+    if (urlPart.includes('-')) {
       s = '.nav-pills a[href=#' + urlPart.split('-')[0] + ']';
     }
     $(s).tab('show');
@@ -72,7 +72,7 @@ $(function() {
       $(s).tab('show');
     } else {
       s = '.nav-pills a[href=#' + urlPart + ']';
-      if (urlPart.contains('-')) {
+      if (urlPart.includes('-')) {
         s = '.nav-pills a[href=#' + urlPart.split('-')[0] + ']';
       }
       $(s).tab('show');
@@ -89,4 +89,7 @@ $(function() {
     confirmKeys : [ 13, 32, 188 ]
   });
 
+  setInterval(autosave, 30000);
 });
+
+
