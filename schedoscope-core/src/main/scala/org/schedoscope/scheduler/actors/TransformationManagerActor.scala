@@ -24,11 +24,10 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{FilesystemTransformation, Transformation}
 import org.schedoscope.scheduler.driver.{Driver, RetryableDriverException}
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.utils.{BackOffSupervision, ExponentialBackOff}
+import org.schedoscope.scheduler.utils.BackOffSupervision
 
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
-import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
 
 
