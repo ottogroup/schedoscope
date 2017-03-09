@@ -65,8 +65,9 @@ public class FtpUploadOutputCommitter extends FileOutputCommitter {
 
     /**
      * The constructor to initialize the output committer.
+     *
      * @param outputPath The HDFS location of the src file to upload.
-     * @param context The TaskAttemptContext,
+     * @param context    The TaskAttemptContext,
      * @throws IOException Is thrown if an error occurs.
      */
     public FtpUploadOutputCommitter(Path outputPath, TaskAttemptContext context) throws IOException {

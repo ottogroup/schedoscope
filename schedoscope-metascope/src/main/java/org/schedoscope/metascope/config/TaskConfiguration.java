@@ -34,42 +34,42 @@ import java.util.concurrent.Executors;
 @EnableAsync
 public class TaskConfiguration implements AsyncConfigurer, SchedulingConfigurer {
 
-  @Bean(name = "background")
-  public TaskExecutor backgroundTaskExecutor() {
-    ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-    threadPoolTaskExecutor.setCorePoolSize(5);
-    threadPoolTaskExecutor.setMaxPoolSize(5);
-    threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-    return threadPoolTaskExecutor;
-  }
+    @Bean(name = "background")
+    public TaskExecutor backgroundTaskExecutor() {
+        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+        threadPoolTaskExecutor.setCorePoolSize(5);
+        threadPoolTaskExecutor.setMaxPoolSize(5);
+        threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+        return threadPoolTaskExecutor;
+    }
 
-  @Bean
-  public TaskExecutor asyncTaskExecutor() {
-    ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-    threadPoolTaskExecutor.setCorePoolSize(10);
-    threadPoolTaskExecutor.setMaxPoolSize(10);
-    threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-    return threadPoolTaskExecutor;
-  }
+    @Bean
+    public TaskExecutor asyncTaskExecutor() {
+        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+        threadPoolTaskExecutor.setCorePoolSize(10);
+        threadPoolTaskExecutor.setMaxPoolSize(10);
+        threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+        return threadPoolTaskExecutor;
+    }
 
-  @Override
-  public Executor getAsyncExecutor() {
-    return asyncTaskExecutor();
-  }
+    @Override
+    public Executor getAsyncExecutor() {
+        return asyncTaskExecutor();
+    }
 
-  @Override
-  public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
-    return new SimpleAsyncUncaughtExceptionHandler();
-  }
+    @Override
+    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+        return new SimpleAsyncUncaughtExceptionHandler();
+    }
 
-  @Override
-  public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-    taskRegistrar.setScheduler(taskExecutor());
-  }
+    @Override
+    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+        taskRegistrar.setScheduler(taskExecutor());
+    }
 
-  @Bean(destroyMethod="shutdown")
-  public Executor taskExecutor() {
-    return Executors.newScheduledThreadPool(100);
-  }
+    @Bean(destroyMethod = "shutdown")
+    public Executor taskExecutor() {
+        return Executors.newScheduledThreadPool(100);
+    }
 
 }

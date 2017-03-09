@@ -97,7 +97,8 @@
                                 <input data-th-if="${!solrQuery.activeFilterValues.get(solrQueryFilter.name).contains(count.name)}"
                                        type="checkbox" style="pointer-events: none"/>
                             </span>
-                            <span style="margin-left: 10px; margin-top: 3px; float:left" data-th-text="${count.name}"></span>
+                            <span style="margin-left: 10px; margin-top: 3px; float:left"
+                                  data-th-text="${count.name}"></span>
                             <span class="badge" style="margin-top: 4px;" data-th-text="${count.count}"></span>
                         </a>
                     </div>

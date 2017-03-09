@@ -25,15 +25,15 @@ import org.springframework.http.HttpStatus;
 @Configuration
 public class ServletContainerCustomizerConfiguration {
 
-  @Bean
-  public EmbeddedServletContainerCustomizer containerCustomizer() {
-    return new EmbeddedServletContainerCustomizer() {
-      @Override
-      public void customize(ConfigurableEmbeddedServletContainer container) {
-        ErrorPage error404Page = new ErrorPage(HttpStatus.NOT_FOUND, "/notfound");
-        container.addErrorPages(error404Page);
-      }
-    };
-  }
+    @Bean
+    public EmbeddedServletContainerCustomizer containerCustomizer() {
+        return new EmbeddedServletContainerCustomizer() {
+            @Override
+            public void customize(ConfigurableEmbeddedServletContainer container) {
+                ErrorPage error404Page = new ErrorPage(HttpStatus.NOT_FOUND, "/notfound");
+                container.addErrorPages(error404Page);
+            }
+        };
+    }
 
 }

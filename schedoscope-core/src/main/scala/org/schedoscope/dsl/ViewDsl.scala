@@ -53,6 +53,11 @@ trait ViewDsl extends StructureDsl {
   def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null): Unit
 
   /**
+    * Specify table properties of a view, which is implemented in Hive as clause TBLPROPERTIES
+    */
+  def tblProperties(m: Map[String, String]): Unit
+
+  /**
     * Declare that a parameter of the view is implemented not as a Hive partition parameter but as a table name suffix.
     */
   def asTableSuffix[P <: Parameter[_]](p: P): P

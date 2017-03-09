@@ -68,7 +68,7 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
     val driverActor2 = launchDriverActor(t2)
     val driverActor3 = launchDriverActor(t3)
 
-    def shuffleTransformations:Seq[String] = {
+    def shuffleTransformations: Seq[String] = {
       val transformations = List("filesystem", "hive",
         "mapreduce", "noop", "seq")
       val q = Random.shuffle(transformations)
@@ -117,59 +117,59 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   "All Driver Actors" should "run DeployCommand" in new DriverActorTest {
-      val cmd = DriverCommand(DeployCommand(), transformationManagerActor.ref)
-      transformationManagerActor.send(driverActor1, cmd)
-      transformationManagerActor.expectMsgPF() {
-        case TransformationStatusResponse(msg, actor, driver,
-        driverHandle, driverRunStatus) => {
-          msg shouldBe "deploy"
-          actor shouldBe driverActor1
-        }
+    val cmd = DriverCommand(DeployCommand(), transformationManagerActor.ref)
+    transformationManagerActor.send(driverActor1, cmd)
+    transformationManagerActor.expectMsgPF() {
+      case TransformationStatusResponse(msg, actor, driver,
+      driverHandle, driverRunStatus) => {
+        msg shouldBe "deploy"
+        actor shouldBe driverActor1
       }
-      transformationManagerActor.expectMsg(DeployCommandSuccess())
-      transformationManagerActor.expectMsgPF() {
-        case TransformationStatusResponse(msg, actor, driver,
-        driverHandle, driverRunStatus) => {
-          msg shouldBe "idle"
-          actor shouldBe driverActor1
-        }
-      }
-
-      transformationManagerActor.send(driverActor2, cmd)
-      transformationManagerActor.expectMsgPF() {
-        case TransformationStatusResponse(msg, actor, driver,
-        driverHandle, driverRunStatus) => {
-          msg shouldBe "deploy"
-          actor shouldBe driverActor2
-        }
-      }
-      transformationManagerActor.expectMsg(DeployCommandSuccess())
-      transformationManagerActor.expectMsgPF() {
-        case TransformationStatusResponse(msg, actor, driver,
-        driverHandle, driverRunStatus) => {
-          msg shouldBe "idle"
-          actor shouldBe driverActor2
-        }
-      }
-
-      transformationManagerActor.send(driverActor3, cmd)
-      transformationManagerActor.expectMsgPF() {
-        case TransformationStatusResponse(msg, actor, driver,
-        driverHandle, driverRunStatus) => {
-          msg shouldBe "deploy"
-          actor shouldBe driverActor3
-        }
-      }
-      transformationManagerActor.expectMsg(DeployCommandSuccess())
-      transformationManagerActor.expectMsgPF() {
-        case TransformationStatusResponse(msg, actor, driver,
-        driverHandle, driverRunStatus) => {
-          msg shouldBe "idle"
-          actor shouldBe driverActor3
-        }
-      }
-
     }
+    transformationManagerActor.expectMsg(DeployCommandSuccess())
+    transformationManagerActor.expectMsgPF() {
+      case TransformationStatusResponse(msg, actor, driver,
+      driverHandle, driverRunStatus) => {
+        msg shouldBe "idle"
+        actor shouldBe driverActor1
+      }
+    }
+
+    transformationManagerActor.send(driverActor2, cmd)
+    transformationManagerActor.expectMsgPF() {
+      case TransformationStatusResponse(msg, actor, driver,
+      driverHandle, driverRunStatus) => {
+        msg shouldBe "deploy"
+        actor shouldBe driverActor2
+      }
+    }
+    transformationManagerActor.expectMsg(DeployCommandSuccess())
+    transformationManagerActor.expectMsgPF() {
+      case TransformationStatusResponse(msg, actor, driver,
+      driverHandle, driverRunStatus) => {
+        msg shouldBe "idle"
+        actor shouldBe driverActor2
+      }
+    }
+
+    transformationManagerActor.send(driverActor3, cmd)
+    transformationManagerActor.expectMsgPF() {
+      case TransformationStatusResponse(msg, actor, driver,
+      driverHandle, driverRunStatus) => {
+        msg shouldBe "deploy"
+        actor shouldBe driverActor3
+      }
+    }
+    transformationManagerActor.expectMsg(DeployCommandSuccess())
+    transformationManagerActor.expectMsgPF() {
+      case TransformationStatusResponse(msg, actor, driver,
+      driverHandle, driverRunStatus) => {
+        msg shouldBe "idle"
+        actor shouldBe driverActor3
+      }
+    }
+
+  }
 
   "HiveDriver" should "change state to run hive transformation, " +
     "kill it, and go back into idle state" in new HiveActorTest {

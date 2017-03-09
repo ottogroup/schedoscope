@@ -26,7 +26,8 @@
                             th:text="${!partition.getParameters().isEmpty()} ?
                ${partition.viewUrl} + ' (' + ${partition.parameterString} + ')' :
                ${partition.viewUrl}"></a>
-                    <span th:attr="data-qualifier=${partition.viewUrl}" class="loader statusentity pull-right" title="Loading view status ..."></span>
+                    <span th:attr="data-qualifier=${partition.viewUrl}" class="loader statusentity pull-right"
+                          title="Loading view status ..."></span>
                 </div>
             </div>
         </div>

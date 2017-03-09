@@ -141,7 +141,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         Some(vsr.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
       else
         None,
-      lineage = if (overview) None else Some(vsr.view.lineage.map{ case (f, deps) => f.toString -> deps.map(_.toString).toList }),
+      lineage = if (overview) None else Some(vsr.view.lineage.map { case (f, deps) => f.toString -> deps.map(_.toString).toList }),
       transformation = if (overview) None else Option(vsr.view.registeredTransformation().viewTransformationStatus),
       export = if (overview) None else Option(viewExportStatus(vsr.view.registeredExports.map(e => e.apply()))),
       storageFormat = if (overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
@@ -265,12 +265,12 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
-            vsr.actor ! MaterializeView(
+            vsr.actor ! CommandForView(None, vsr.view, MaterializeView(
               try {
                 MaterializeViewMode.withName(mode.getOrElse("DEFAULT"))
               } catch {
                 case _: NoSuchElementException => MaterializeViewMode.DEFAULT
-              })
+              }))
           }
         viewStatusListFromStatusResponses(viewStatusResponses, None, None, None, issueFilter)
     }
@@ -281,7 +281,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       viewStatusResponses =>
         viewStatusResponses
           .foreach { vsr =>
-            vsr.actor ! InvalidateView()
+            vsr.actor ! CommandForView(None, vsr.view, InvalidateView())
           }
         viewStatusListFromStatusResponses(viewStatusResponses, dependencies, None, None, issueFilter)
     }

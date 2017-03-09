@@ -20,10 +20,12 @@
             <th>Depends on</th>
         </tr>
         <tr data-th-if="${transitiveDependencies == null}" data-th-each="d : ${table.dependencies}">
-            <td><a data-th-href="'table?fqdn=' + ${d.fqdn}" data-th-text="${d.databaseName + '.' + d.tableName}"></a></td>
+            <td><a data-th-href="'table?fqdn=' + ${d.fqdn}" data-th-text="${d.databaseName + '.' + d.tableName}"></a>
+            </td>
         </tr>
         <tr data-th-if="${transitiveDependencies != null}" data-th-each="d : ${transitiveDependencies}">
-            <td><a data-th-href="'table?fqdn=' + ${d.fqdn}" data-th-text="${d.databaseName + '.' + d.tableName}"></a></td>
+            <td><a data-th-href="'table?fqdn=' + ${d.fqdn}" data-th-text="${d.databaseName + '.' + d.tableName}"></a>
+            </td>
         </tr>
     </table>
     <table class="table table-bordered table-striped"
@@ -32,10 +34,12 @@
             <th>Used by</th>
         </tr>
         <tr data-th-if="${transitiveSuccessors == null}" data-th-each="s : ${table.successors}">
-            <td><a data-th-href="'table?fqdn=' + ${s.fqdn}" data-th-text="${s.databaseName + '.' + s.tableName}"></a></td>
+            <td><a data-th-href="'table?fqdn=' + ${s.fqdn}" data-th-text="${s.databaseName + '.' + s.tableName}"></a>
+            </td>
         </tr>
         <tr data-th-if="${transitiveSuccessors != null}" data-th-each="s : ${transitiveSuccessors}">
-            <td><a data-th-href="'table?fqdn=' + ${s.fqdn}" data-th-text="${s.databaseName + '.' + s.tableName}"></a></td>
+            <td><a data-th-href="'table?fqdn=' + ${s.fqdn}" data-th-text="${s.databaseName + '.' + s.tableName}"></a>
+            </td>
         </tr>
     </table>
     <div class="row" style="padding-left: 15px;">
@@ -50,7 +54,8 @@
         <div class="col-md-3">
             <form id="lineageForm">
                 <input type="hidden" name="fqdn" th:value="${table.fqdn}"/>
-                <button class="pull-right btn btn-info" data-toggle="modal" data-target="#lineage" th:value="${table.fqdn}" type="button">
+                <button class="pull-right btn btn-info" data-toggle="modal" data-target="#lineage"
+                        th:value="${table.fqdn}" type="button">
                     Show Lineage Graph
                 </button>
             </form>

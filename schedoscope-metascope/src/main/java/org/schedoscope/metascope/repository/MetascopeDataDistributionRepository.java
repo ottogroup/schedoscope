@@ -22,6 +22,6 @@ import java.util.List;
 
 public interface MetascopeDataDistributionRepository extends CrudRepository<MetascopeDataDistribution, String> {
 
-  public List<MetascopeDataDistribution> findByFqdn(String fqdn);
+    public List<MetascopeDataDistribution> findByFqdn(String fqdn);
 
 }

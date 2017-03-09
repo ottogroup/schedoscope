@@ -25,7 +25,6 @@ import java.util.Properties;
 
 /**
  * Contains the mysql specific mapping of the column types.
- *
  */
 public class MySQLSchema extends AbstractSchema {
 
@@ -65,8 +64,7 @@ public class MySQLSchema extends AbstractSchema {
     /**
      * A class representing the MySQL dialect.
      *
-     * @param conf
-     *            The Hadoop configuration object.
+     * @param conf The Hadoop configuration object.
      */
     public MySQLSchema(Configuration conf) {
         super(conf);

@@ -23,58 +23,58 @@ import javax.persistence.Id;
 @Entity
 public class MetascopeComment {
 
-  @Id
-  @GeneratedValue
-  private Long id;
-  @Column(columnDefinition = "varchar(32629)")
-  private String text;
-  @Column(columnDefinition = "varchar(32629)")
-  private String plainText;
-  private String username;
-  private long lastEdit;
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Column(columnDefinition = "varchar(32629)")
+    private String text;
+    @Column(columnDefinition = "varchar(32629)")
+    private String plainText;
+    private String username;
+    private long lastEdit;
 
-  public Long getId() {
-    return id;
-  }
+    public Long getId() {
+        return id;
+    }
 
-  public void setId(Long id) {
-    this.id = id;
-  }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-  public String getText() {
-    return text;
-  }
+    public String getText() {
+        return text;
+    }
 
-  public void setText(String text) {
-    this.text = text;
-  }
+    public void setText(String text) {
+        this.text = text;
+    }
 
-  public String getPlainText() {
-    return plainText;
-  }
+    public String getPlainText() {
+        return plainText;
+    }
 
-  public void setPlainText(String plainText) {
-    this.plainText = plainText;
-  }
+    public void setPlainText(String plainText) {
+        this.plainText = plainText;
+    }
 
-  public String getUsername() {
-    return username;
-  }
+    public String getUsername() {
+        return username;
+    }
 
-  public void setUsername(String username) {
-    this.username = username;
-  }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-  public long getLastEdit() {
-    return lastEdit;
-  }
+    public long getLastEdit() {
+        return lastEdit;
+    }
 
-  public void setLastEdit(long lastEdit) {
-    this.lastEdit = lastEdit;
-  }
+    public void setLastEdit(long lastEdit) {
+        this.lastEdit = lastEdit;
+    }
 
-  public String getPreview() {
-    return plainText.length() <= 75 ? plainText : plainText.substring(0, 75) + " ...";
-  }
+    public String getPreview() {
+        return plainText.length() <= 75 ? plainText : plainText.substring(0, 75) + " ...";
+    }
 
 }

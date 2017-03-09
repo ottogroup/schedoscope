@@ -31,90 +31,90 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class MetascopeTaxonomyController {
 
-  @Autowired
-  private MetascopeTaxonomyService metascopeTaxonomyService;
+    @Autowired
+    private MetascopeTaxonomyService metascopeTaxonomyService;
 
-  @Autowired
-  private MetascopeUserService metascopeUserService;
+    @Autowired
+    private MetascopeUserService metascopeUserService;
 
-  @Autowired
-  private MetascopeMetadataService metascopeMetadataService;
+    @Autowired
+    private MetascopeMetadataService metascopeMetadataService;
 
-  @Autowired
-  private MetascopeConfig config;
+    @Autowired
+    private MetascopeConfig config;
 
-  @RequestMapping(value = "/admin/taxonomies", method = RequestMethod.GET)
-  public ModelAndView createTaxonomy(HttpServletRequest request) {
-    ModelAndView mav = new ModelAndView("body/admin/taxonomy/taxonomy");
+    @RequestMapping(value = "/admin/taxonomies", method = RequestMethod.GET)
+    public ModelAndView createTaxonomy(HttpServletRequest request) {
+        ModelAndView mav = new ModelAndView("body/admin/taxonomy/taxonomy");
 
-    boolean admin = metascopeUserService.isAdmin();
-    boolean withUserManagement = config.withUserManagement();
-    String schedoscopeTimestamp = metascopeMetadataService.getMetadataValue("timestamp");
-    Iterable<MetascopeTaxonomy> taxonomies = metascopeTaxonomyService.getTaxonomies();
+        boolean admin = metascopeUserService.isAdmin();
+        boolean withUserManagement = config.withUserManagement();
+        String schedoscopeTimestamp = metascopeMetadataService.getMetadataValue("timestamp");
+        Iterable<MetascopeTaxonomy> taxonomies = metascopeTaxonomyService.getTaxonomies();
 
-    mav.addObject("schedoscopeTimestamp", schedoscopeTimestamp);
-    mav.addObject("userEntityService", metascopeUserService);
-    mav.addObject("admin", admin);
-    mav.addObject("userMgmnt", withUserManagement);
-    mav.addObject("taxonomies", taxonomies);
+        mav.addObject("schedoscopeTimestamp", schedoscopeTimestamp);
+        mav.addObject("userEntityService", metascopeUserService);
+        mav.addObject("admin", admin);
+        mav.addObject("userMgmnt", withUserManagement);
+        mav.addObject("taxonomies", taxonomies);
 
-    return mav;
-  }
+        return mav;
+    }
 
-  @RequestMapping(value = "/admin/taxonomy/create", method = RequestMethod.POST)
-  public String createTaxonomy(HttpServletRequest request, String taxonomyName) {
-    long taxonomyId = this.metascopeTaxonomyService.createTaxonomy(taxonomyName);
-    return "redirect:" + request.getHeader("Referer") + "#taxonomy" + taxonomyId;
-  }
+    @RequestMapping(value = "/admin/taxonomy/create", method = RequestMethod.POST)
+    public String createTaxonomy(HttpServletRequest request, String taxonomyName) {
+        long taxonomyId = this.metascopeTaxonomyService.createTaxonomy(taxonomyName);
+        return "redirect:" + request.getHeader("Referer") + "#taxonomy" + taxonomyId;
+    }
 
-  @RequestMapping(value = "/admin/taxonomy/edit", method = RequestMethod.POST)
-  public String editTaxonomy(HttpServletRequest request, Long taxonomyId, String taxonomyName) {
-    this.metascopeTaxonomyService.editTaxonomy(taxonomyId, taxonomyName);
-    return "redirect:" + request.getHeader("Referer") + "#taxonomy" + taxonomyId;
-  }
+    @RequestMapping(value = "/admin/taxonomy/edit", method = RequestMethod.POST)
+    public String editTaxonomy(HttpServletRequest request, Long taxonomyId, String taxonomyName) {
+        this.metascopeTaxonomyService.editTaxonomy(taxonomyId, taxonomyName);
+        return "redirect:" + request.getHeader("Referer") + "#taxonomy" + taxonomyId;
+    }
 
-  @RequestMapping(value = "/admin/taxonomy/delete", method = RequestMethod.POST)
-  public String deleteTaxonomy(HttpServletRequest request, Long taxonomyId) {
-    this.metascopeTaxonomyService.deleteTaxonomy(taxonomyId);
-    return "redirect:" + request.getHeader("Referer");
-  }
+    @RequestMapping(value = "/admin/taxonomy/delete", method = RequestMethod.POST)
+    public String deleteTaxonomy(HttpServletRequest request, Long taxonomyId) {
+        this.metascopeTaxonomyService.deleteTaxonomy(taxonomyId);
+        return "redirect:" + request.getHeader("Referer");
+    }
 
-  @RequestMapping(value = "/admin/category/create", method = RequestMethod.POST)
-  public String createCategory(HttpServletRequest request, Long taxonomyId, String categoryName) {
-    long categoryId = this.metascopeTaxonomyService.createCategory(taxonomyId, categoryName);
-    return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
-  }
+    @RequestMapping(value = "/admin/category/create", method = RequestMethod.POST)
+    public String createCategory(HttpServletRequest request, Long taxonomyId, String categoryName) {
+        long categoryId = this.metascopeTaxonomyService.createCategory(taxonomyId, categoryName);
+        return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
+    }
 
-  @RequestMapping(value = "/admin/category/edit", method = RequestMethod.POST)
-  public String editCategory(HttpServletRequest request, Long categoryId, String categoryName) {
-    this.metascopeTaxonomyService.editCategory(categoryId, categoryName);
-    return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
-  }
+    @RequestMapping(value = "/admin/category/edit", method = RequestMethod.POST)
+    public String editCategory(HttpServletRequest request, Long categoryId, String categoryName) {
+        this.metascopeTaxonomyService.editCategory(categoryId, categoryName);
+        return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
+    }
 
-  @RequestMapping(value = "/admin/category/delete", method = RequestMethod.POST)
-  public String deleteCategory(HttpServletRequest request, Long categoryId) {
-    this.metascopeTaxonomyService.deleteCategory(categoryId);
-    return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
-  }
+    @RequestMapping(value = "/admin/category/delete", method = RequestMethod.POST)
+    public String deleteCategory(HttpServletRequest request, Long categoryId) {
+        this.metascopeTaxonomyService.deleteCategory(categoryId);
+        return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
+    }
 
-  @RequestMapping(value = "/admin/categoryobject/create", method = RequestMethod.POST)
-  public String createCategoryObject(HttpServletRequest request, Long categoryId, String categoryObjectName,
+    @RequestMapping(value = "/admin/categoryobject/create", method = RequestMethod.POST)
+    public String createCategoryObject(HttpServletRequest request, Long categoryId, String categoryObjectName,
+                                       String description) {
+        this.metascopeTaxonomyService.createCategoryObject(categoryId, categoryObjectName, description);
+        return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
+    }
+
+    @RequestMapping(value = "/admin/categoryobject/edit", method = RequestMethod.POST)
+    public String editCategoryObject(HttpServletRequest request, Long categoryObjectId, String categoryObjectName,
                                      String description) {
-    this.metascopeTaxonomyService.createCategoryObject(categoryId, categoryObjectName, description);
-    return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
-  }
+        long categoryId = this.metascopeTaxonomyService.editCategoryObject(categoryObjectId, categoryObjectName, description);
+        return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
+    }
 
-  @RequestMapping(value = "/admin/categoryobject/edit", method = RequestMethod.POST)
-  public String editCategoryObject(HttpServletRequest request, Long categoryObjectId, String categoryObjectName,
-                                   String description) {
-    long categoryId = this.metascopeTaxonomyService.editCategoryObject(categoryObjectId, categoryObjectName, description);
-    return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
-  }
-
-  @RequestMapping(value = "/admin/categoryobject/delete", method = RequestMethod.POST)
-  public String deleteCategoryObject(HttpServletRequest request, Long categoryObjectId) {
-    long categoryId = this.metascopeTaxonomyService.deleteCategoryObject(categoryObjectId);
-    return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
-  }
+    @RequestMapping(value = "/admin/categoryobject/delete", method = RequestMethod.POST)
+    public String deleteCategoryObject(HttpServletRequest request, Long categoryObjectId) {
+        long categoryId = this.metascopeTaxonomyService.deleteCategoryObject(categoryObjectId);
+        return "redirect:" + request.getHeader("Referer") + "#categoryObjects" + categoryId;
+    }
 
 }

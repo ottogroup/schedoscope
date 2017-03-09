@@ -33,8 +33,7 @@ public class RedisMRJedisFactory {
      * Set a Jedis mock object for test purposes, that will be delivered by
      * getJedisClient
      *
-     * @param mock
-     *            the Jedis mock to set
+     * @param mock the Jedis mock to set
      */
     public static void setJedisMock(Jedis mock) {
         jedisMock = mock;
@@ -43,8 +42,7 @@ public class RedisMRJedisFactory {
     /**
      * Returns a configured Redis client.
      *
-     * @param conf
-     *            The Hadoop configuration object.
+     * @param conf The Hadoop configuration object.
      * @return The configured Redis client.
      */
     public static Jedis getJedisClient(Configuration conf) {

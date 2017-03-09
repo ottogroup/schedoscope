@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  * Contains the exasol specific mapping of the column types.
- *
  */
 public class ExasolSchema extends AbstractSchema {
 
@@ -62,8 +61,7 @@ public class ExasolSchema extends AbstractSchema {
     /**
      * The constructor to initialize the Exasol dialect.
      *
-     * @param conf
-     *            The Hadoop configuration object.
+     * @param conf The Hadoop configuration object.
      */
     public ExasolSchema(Configuration conf) {
         super(conf);

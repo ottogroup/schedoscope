@@ -24,33 +24,33 @@ import java.util.List;
 @MappedSuperclass
 public abstract class Documentable {
 
-  @OneToOne(fetch = FetchType.EAGER)
-  private MetascopeComment comment;
-  @OneToMany(fetch = FetchType.EAGER)
-  private List<MetascopeComment> comments;
+    @OneToOne(fetch = FetchType.EAGER)
+    private MetascopeComment comment;
+    @OneToMany(fetch = FetchType.EAGER)
+    private List<MetascopeComment> comments;
 
-  public MetascopeComment getComment() {
-    return comment;
-  }
+    public MetascopeComment getComment() {
+        return comment;
+    }
 
-  public void setComment(MetascopeComment comment) {
-    this.comment = comment;
-  }
+    public void setComment(MetascopeComment comment) {
+        this.comment = comment;
+    }
 
-  public List<MetascopeComment> getComments() {
-    return comments;
-  }
+    public List<MetascopeComment> getComments() {
+        return comments;
+    }
 
-  public void setComments(List<MetascopeComment> comments) {
-    this.comments = comments;
-  }
+    public void setComments(List<MetascopeComment> comments) {
+        this.comments = comments;
+    }
 
-  public boolean hasDocumentation() {
-    return comment != null;
-  }
+    public boolean hasDocumentation() {
+        return comment != null;
+    }
 
-  public boolean hasComments() {
-    return comments.size() > 0;
-  }
+    public boolean hasComments() {
+        return comments.size() > 0;
+    }
 
 }
