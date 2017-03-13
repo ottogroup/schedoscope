@@ -33,7 +33,7 @@ object TestUtils {
                sortedBy: FieldLike[_] = null,
                disableDependencyCheck: Boolean = false,
                disableTransformationValidation: Boolean = false,
-               disableLineageValidation: Boolean = false) = {
+               disableLineageValidation: Boolean = true) = {
 
 
     //dependencyCheck

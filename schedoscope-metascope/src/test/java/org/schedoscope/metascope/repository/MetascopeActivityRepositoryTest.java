@@ -15,55 +15,55 @@
  */
 package org.schedoscope.metascope.repository;
 
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.schedoscope.metascope.model.MetascopeActivity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class MetascopeActivityRepositoryTest {
 
-  @Autowired
-  private TestEntityManager entityManager;
+    @Autowired
+    private TestEntityManager entityManager;
 
-  @Autowired
-  private MetascopeActivityRepository metascopeActivityRepository;
+    @Autowired
+    private MetascopeActivityRepository metascopeActivityRepository;
 
-  @Before
-  public void setup() {
-    long ts = System.currentTimeMillis();
+    @Before
+    public void setup() {
+        long ts = System.currentTimeMillis();
 
-    for (int i = 0; i < 20; i++) {
-      MetascopeActivity metascopeActivity = new MetascopeActivity();
-      metascopeActivity.setActivityId(String.valueOf(i));
-      metascopeActivity.setTimestamp(ts - i);
-      this.entityManager.persist(metascopeActivity);
-    }
-  }
-
-  @Test
-  public void findFirst10ByOrderByTimestampDescTest() {
-    List<MetascopeActivity> activities = metascopeActivityRepository.findFirst10ByOrderByTimestampDesc();
-
-    assertNotNull(activities);
-    assertTrue(activities.size() == 10);
-
-    for (MetascopeActivity activity : activities) {
-      assertTrue(Integer.valueOf(activity.getActivityId()) <= 10);
+        for (int i = 0; i < 20; i++) {
+            MetascopeActivity metascopeActivity = new MetascopeActivity();
+            metascopeActivity.setActivityId(String.valueOf(i));
+            metascopeActivity.setTimestamp(ts - i);
+            this.entityManager.persist(metascopeActivity);
+        }
     }
 
-  }
+    @Test
+    public void findFirst10ByOrderByTimestampDescTest() {
+        List<MetascopeActivity> activities = metascopeActivityRepository.findFirst10ByOrderByTimestampDesc();
+
+        assertNotNull(activities);
+        assertTrue(activities.size() == 10);
+
+        for (MetascopeActivity activity : activities) {
+            assertTrue(Integer.valueOf(activity.getActivityId()) <= 10);
+        }
+
+    }
 
 }

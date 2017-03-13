@@ -42,10 +42,8 @@ import java.sql.SQLException;
  * The JDBC output format is responsible to write data into a database using
  * JDBC connection.
  *
- * @param <K>
- *            The key class.
- * @param <V>
- *            The value class.
+ * @param <K> The key class.
+ * @param <V> The value class.
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
@@ -88,14 +86,10 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
         /**
          * The constructor to initialize the JDBC Record Writer.
          *
-         * @param connection
-         *            The JDBC connection.
-         * @param statement
-         *            The prepared statement.
-         * @param commitSize
-         *            The batch size
-         * @throws SQLException
-         *             Is thrown if a error occurs.
+         * @param connection The JDBC connection.
+         * @param statement  The prepared statement.
+         * @param commitSize The batch size
+         * @throws SQLException Is thrown if a error occurs.
          */
         public JdbcRecordWriter(Connection connection,
                                 PreparedStatement statement, int commitSize)
@@ -208,32 +202,19 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
     /**
      * Initializes the JDBCOutputFormat.
      *
-     * @param conf
-     *            The Hadoop configuration object.
-     * @param connectionString
-     *            The JDBC connection string.
-     * @param username
-     *            The database user name
-     * @param password
-     *            The database password
-     * @param outputTable
-     *            The output table
-     * @param inputFilter
-     *            The input filter
-     * @param outputNumberOfPartitions
-     *            The number of partitions / reducers
-     * @param outputCommitSize
-     *            The batch size
-     * @param storageEngine
-     *            The storage engine, either MyISAM or InnoDB (MySQL)
-     * @param distributedBy
-     *            An optional distribute by clause (Exasol)
-     * @param columnNames
-     *            The column names.
-     * @param columnsTypes
-     *            The column types.
-     * @throws IOException
-     *             Is thrown if an error occurs.
+     * @param conf                     The Hadoop configuration object.
+     * @param connectionString         The JDBC connection string.
+     * @param username                 The database user name
+     * @param password                 The database password
+     * @param outputTable              The output table
+     * @param inputFilter              The input filter
+     * @param outputNumberOfPartitions The number of partitions / reducers
+     * @param outputCommitSize         The batch size
+     * @param storageEngine            The storage engine, either MyISAM or InnoDB (MySQL)
+     * @param distributedBy            An optional distribute by clause (Exasol)
+     * @param columnNames              The column names.
+     * @param columnsTypes             The column types.
+     * @throws IOException Is thrown if an error occurs.
      */
     public static void setOutput(Configuration conf, String connectionString,
                                  String username, String password, String outputTable,
@@ -252,12 +233,9 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
      * This function finalizes the JDBC export, it merges all partitions and
      * drops the temporary tables, optionally updates the output table.
      *
-     * @param conf
-     *            The Hadoop configuration object.
-     * @throws RetryException
-     *             Is thrown if a SQL error occurs.
-     * @throws UnrecoverableException
-     *             Is thrown if JDBC driver issue occurs.
+     * @param conf The Hadoop configuration object.
+     * @throws RetryException         Is thrown if a SQL error occurs.
+     * @throws UnrecoverableException Is thrown if JDBC driver issue occurs.
      */
     public static void finalizeOutput(Configuration conf)
             throws RetryException, UnrecoverableException {
@@ -301,12 +279,9 @@ public class JdbcOutputFormat<K, V extends DBWritable> extends
     /**
      * This function is called if the MR job doesn't finish successfully.
      *
-     * @param conf
-     *            The Hadoop configuration object.
-     * @throws RetryException
-     *             Is thrown if a SQL error occurs.
-     * @throws UnrecoverableException
-     *             Is thrown if JDBC driver issue occurs.
+     * @param conf The Hadoop configuration object.
+     * @throws RetryException         Is thrown if a SQL error occurs.
+     * @throws UnrecoverableException Is thrown if JDBC driver issue occurs.
      */
     public static void rollback(Configuration conf) throws RetryException,
             UnrecoverableException {

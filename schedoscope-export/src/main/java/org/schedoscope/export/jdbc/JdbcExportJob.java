@@ -93,14 +93,10 @@ public class JdbcExportJob extends BaseExportJob {
      * Triggers the post commit action, in this instance the final table is
      * created and filled with data from all partition tables.
      *
-     * @param jobSuccessful
-     *            A flag indicating if job was successful.
-     * @param conf
-     *            The Hadoop configuration object.
-     * @throws RetryException
-     *             Is thrown if a SQL error occurs.
-     * @throws UnrecoverableException
-     *             Is thrown if JDBC driver issue occurs.
+     * @param jobSuccessful A flag indicating if job was successful.
+     * @param conf          The Hadoop configuration object.
+     * @throws RetryException         Is thrown if a SQL error occurs.
+     * @throws UnrecoverableException Is thrown if JDBC driver issue occurs.
      */
     public void postCommit(boolean jobSuccessful, Configuration conf)
             throws RetryException, UnrecoverableException {
@@ -116,39 +112,23 @@ public class JdbcExportJob extends BaseExportJob {
      * This function takes all required parameters and returns a configured job
      * object.
      *
-     * @param isSecured
-     *            A flag indicating if Kerberos is enabled.
-     * @param metaStoreUris
-     *            A string containing the Hive meta store URI
-     * @param principal
-     *            The Kerberos principal.
-     * @param dbConnectionString
-     *            The JDBC connection string.
-     * @param dbUser
-     *            The database user
-     * @param dbPassword
-     *            The database password
-     * @param inputDatabase
-     *            The Hive input database
-     * @param inputTable
-     *            The Hive input table
-     * @param inputFilter
-     *            An optional input filter.
-     * @param storageEngine
-     *            An optional storage engine (only MySQL)
-     * @param distributeBy
-     *            An optional distribute by clause (only Exasol)
-     * @param numReducer
-     *            Number of reducers / partitions
-     * @param commitSize
-     *            The batch size.
-     * @param anonFields
-     *            A list of fields to anonymize
-     * @param exportSalt
-     *            An optional salt when anonymizing fields
+     * @param isSecured          A flag indicating if Kerberos is enabled.
+     * @param metaStoreUris      A string containing the Hive meta store URI
+     * @param principal          The Kerberos principal.
+     * @param dbConnectionString The JDBC connection string.
+     * @param dbUser             The database user
+     * @param dbPassword         The database password
+     * @param inputDatabase      The Hive input database
+     * @param inputTable         The Hive input table
+     * @param inputFilter        An optional input filter.
+     * @param storageEngine      An optional storage engine (only MySQL)
+     * @param distributeBy       An optional distribute by clause (only Exasol)
+     * @param numReducer         Number of reducers / partitions
+     * @param commitSize         The batch size.
+     * @param anonFields         A list of fields to anonymize
+     * @param exportSalt         An optional salt when anonymizing fields
      * @return A configured job instance.
-     * @throws Exception
-     *             Is thrown if an error occurs.
+     * @throws Exception Is thrown if an error occurs.
      */
     public Job configure(boolean isSecured, String metaStoreUris,
                          String principal, String dbConnectionString, String dbUser,
@@ -246,10 +226,8 @@ public class JdbcExportJob extends BaseExportJob {
     /**
      * The entry point when called from the command line.
      *
-     * @param args
-     *            A string array containing the cmdl args.
-     * @throws Exception
-     *             is thrown if an error occurs.
+     * @param args A string array containing the cmdl args.
+     * @throws Exception is thrown if an error occurs.
      */
     public static void main(String[] args) throws Exception {
         try {

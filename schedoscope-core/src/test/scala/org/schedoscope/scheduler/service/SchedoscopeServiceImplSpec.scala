@@ -83,7 +83,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
       schemaManagerRouter.reply(SchemaActionSuccess())
       schemaManagerRouter.expectMsg(AddPartitions(List(view)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+      schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true
@@ -102,18 +102,34 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     def initializeViewWithDep(view: View, brandDependency: View, productDependency: View): ActorRef = {
       val future = viewManagerActor ? view
 
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(brandDependency)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(productDependency)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(AddPartitions(List(brandDependency)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
-      schemaManagerRouter.expectMsg(AddPartitions(List(view)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
-      schemaManagerRouter.expectMsg(AddPartitions(List(productDependency)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
+      var messageSum = 0
+
+      def acceptMessage: PartialFunction[Any, _] = {
+        case AddPartitions(List(`brandDependency`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency ->("test", 1L))))
+          messageSum += 1
+        case AddPartitions(List(`productDependency`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency ->("test", 1L))))
+          messageSum += 2
+        case AddPartitions(List(`view`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
+          messageSum += 3
+        case CheckOrCreateTables(List(`brandDependency`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 4
+        case CheckOrCreateTables(List(`productDependency`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 5
+        case CheckOrCreateTables(List(`view`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 6
+      }
+
+      val msgs = schemaManagerRouter.receiveWhile(messages = 6)(acceptMessage)
+      msgs.size shouldBe 6
+      messageSum shouldBe 21
+
+      //      Thread.sleep(2)
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true
@@ -690,7 +706,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       ViewStatusListResponse(List(ViewStatusResponse("materialized", productBrandView01, prodBrandViewActor.ref,
         errors = Some(false), incomplete = Some(false)))))
 
-    prodBrandViewActor.expectMsg(MaterializeView(MaterializeViewMode.DEFAULT))
+    prodBrandViewActor.expectMsg(CommandForView(None, productBrandView01, MaterializeView(MaterializeViewMode.DEFAULT)))
 
     Await.result(response, TIMEOUT)
 
@@ -790,7 +806,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       ViewStatusListResponse(List(ViewStatusResponse("invalidated", productBrandView01, prodBrandViewActor.ref,
         errors = Some(true), incomplete = Some(true)))))
 
-    prodBrandViewActor.expectMsg(InvalidateView())
+    prodBrandViewActor.expectMsg(CommandForView(None, productBrandView01, InvalidateView()))
 
     Await.result(response, TIMEOUT)
 

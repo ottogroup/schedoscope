@@ -120,7 +120,9 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
             case t: Throwable => {
               log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}, trace ${ExceptionUtils.getStackTrace(t)}")
-              originalSender ! TransformationFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t))
+              sendTransformationResult(transformingView,
+                originalSender,
+                TransformationFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t)))
               toReceive()
             }
           }
@@ -137,7 +139,9 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
               false
           }
 
-          originalSender ! TransformationSuccess(runHandle, success, viewHasData)
+          sendTransformationResult(transformingView,
+            originalSender,
+            TransformationSuccess(runHandle, success, viewHasData))
           toReceive()
         }
 
@@ -153,7 +157,9 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
             }
           }
 
-          originalSender ! TransformationFailure(runHandle, failure)
+          sendTransformationResult(transformingView,
+            originalSender,
+            TransformationFailure(runHandle, failure))
           toReceive()
         }
       }
@@ -168,8 +174,14 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
         throw t
       }
     }
+  }
 
-
+  def sendTransformationResult(transformingView: Option[View], actorRef: ActorRef, msg: AnyRef): Unit = {
+    val message = transformingView match {
+      case Some(v) => CommandForView(None, v, msg)
+      case None => msg
+    }
+    actorRef ! message
   }
 
   /**

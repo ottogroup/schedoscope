@@ -42,8 +42,9 @@ public class CSVRecordWriter<K, V> extends RecordWriter<K, V> {
 
     /**
      * The constructor to initialize the CSV Record Writer.
-     * @param out A data output stream.
-     * @param header A flag to print a header or not.
+     *
+     * @param out       A data output stream.
+     * @param header    A flag to print a header or not.
      * @param delimiter The delimiter to use.
      * @throws IOException Is thrown if an error occurs.
      */

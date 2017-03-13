@@ -32,10 +32,8 @@ import java.io.IOException;
  * The Redis output format is responsible to write data into Redis, initializes
  * the Redis Record Writer.
  *
- * @param <K>
- *            The key class,must be sub class of Rediswritable
- * @param <V>
- *            The value class.
+ * @param <K> The key class,must be sub class of Rediswritable
+ * @param <V> The value class.
  */
 public class RedisOutputFormat<K, V extends RedisWritable> extends
         OutputFormat<K, V> {
@@ -99,8 +97,7 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
     /**
      * Returns the optional key prefix to prepend to the Redis key.
      *
-     * @param conf
-     *            The Hadoop configuration object.
+     * @param conf The Hadoop configuration object.
      * @return The prefix as string.
      */
     public static String getExportKeyPrefix(Configuration conf) {
@@ -116,28 +113,17 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
     /**
      * Initializes the RedisOutputFormat.
      *
-     * @param conf
-     *            The Hadoop configuration object.
-     * @param redisHost
-     *            The Redis hostname
-     * @param redisPort
-     *            The Redis port
-     * @param password
-     *            The password to authenticate.
-     * @param redisDb
-     *            The Redis database.
-     * @param keyName
-     *            The name of the key field
-     * @param keyPrefix
-     *            The key prefix
-     * @param valueName
-     *            The name of the value field
-     * @param replace
-     *            A flag indicating if existing data should be replaced
-     * @param pipeline
-     *            A flag to use the Redis pipeline mode.
-     * @param commitSize
-     *            The number of records to write before syncing.
+     * @param conf       The Hadoop configuration object.
+     * @param redisHost  The Redis hostname
+     * @param redisPort  The Redis port
+     * @param password   The password to authenticate.
+     * @param redisDb    The Redis database.
+     * @param keyName    The name of the key field
+     * @param keyPrefix  The key prefix
+     * @param valueName  The name of the value field
+     * @param replace    A flag indicating if existing data should be replaced
+     * @param pipeline   A flag to use the Redis pipeline mode.
+     * @param commitSize The number of records to write before syncing.
      */
     public static void setOutput(Configuration conf, String redisHost,
                                  int redisPort, String password, int redisDb, String keyName,
@@ -171,13 +157,10 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
      * A function to return the writable depending on the name of the value
      * field.
      *
-     * @param schema
-     *            The Hcatalog schema
-     * @param fieldName
-     *            The name of the field.
+     * @param schema    The Hcatalog schema
+     * @param fieldName The name of the field.
      * @return A class used as writable
-     * @throws IOException
-     *             Thrown if an error occurs.
+     * @throws IOException Thrown if an error occurs.
      */
     public static Class<?> getRedisWritableClazz(HCatSchema schema,
                                                  String fieldName) throws IOException {
@@ -217,10 +200,8 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
         /**
          * The constructor to initialize the record writer.
          *
-         * @param jedis
-         *            The redis client.
-         * @param replace
-         *            A flag to enable replace mode.
+         * @param jedis   The redis client.
+         * @param replace A flag to enable replace mode.
          */
         public RedisRecordWriter(Jedis jedis, boolean replace) {
 
@@ -258,12 +239,9 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
         /**
          * The constructor to initialize the pipelined writer.
          *
-         * @param jedis
-         *            The pipelined Redis client.
-         * @param replace
-         *            A flag to enable replace mode.
-         * @param commitSize
-         *            The number of records between a sync.
+         * @param jedis      The pipelined Redis client.
+         * @param replace    A flag to enable replace mode.
+         * @param commitSize The number of records between a sync.
          */
         public PipelinedRedisRecordWriter(Pipeline jedis, boolean replace,
                                           int commitSize) {

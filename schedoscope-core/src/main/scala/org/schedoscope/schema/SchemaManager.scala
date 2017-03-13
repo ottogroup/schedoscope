@@ -237,6 +237,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     *
     */
   def getTransformationMetadata(views: List[View]): Map[View, (String, Long)] = try {
+
     val tablePrototype = views.head
 
     log.info(s"Reading partition names for view: ${tablePrototype.module}.${tablePrototype.n}")
@@ -288,7 +289,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
-      partitions.map(p => (partitionToView(tablePrototype, p) -> (Checksum.defaultDigest, 0.toLong))).toMap
+      partitions.map(p => (partitionToView(tablePrototype, p) ->(Checksum.defaultDigest, 0.toLong))).toMap
     }
   } catch {
     case are: AlreadyExistsException => throw are

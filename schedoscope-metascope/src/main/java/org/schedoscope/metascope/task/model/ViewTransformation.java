@@ -20,26 +20,26 @@ import java.util.Map;
 
 public class ViewTransformation {
 
-  protected String name;
-  protected Map<String, String> properties;
+    protected String name;
+    protected Map<String, String> properties;
 
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public Map<String, String> getProperties() {
-    if (properties == null) {
-      properties = new HashMap<String, String>();
+    public String getName() {
+        return name;
     }
-    return properties;
-  }
 
-  public void setProperties(Map<String, String> properties) {
-    this.properties = properties;
-  }
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Map<String, String> getProperties() {
+        if (properties == null) {
+            properties = new HashMap<String, String>();
+        }
+        return properties;
+    }
+
+    public void setProperties(Map<String, String> properties) {
+        this.properties = properties;
+    }
 
 }

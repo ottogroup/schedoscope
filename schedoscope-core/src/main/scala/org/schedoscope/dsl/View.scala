@@ -50,6 +50,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
         _.rank
       }.max + 1
   }
+
   val isExternal = false
   val suffixPartitions = new HashSet[Parameter[_]]()
   private val deferredDependencies = ListBuffer[() => Seq[View]]()
@@ -241,7 +242,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     */
   def partitionSpec = "/" + partitionParameters.map(p => s"${p.n}=${p.v.getOrElse("")}").mkString("/")
 
-  def asTableSuffix[P <: Parameter[_]](p: P): P = {
+  override def asTableSuffix[P <: Parameter[_]](p: P): P = {
     suffixPartitions.add(p)
     p
   }
@@ -250,7 +251,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * Add a dependency to the given view. This is done with an anonymous function returning a view the
     * current view depends on. This function is returned so that it can be assigned to variables for further reference.
     */
-  def dependsOn[V <: View : Manifest](df: () => V) = {
+  override def dependsOn[V <: View : Manifest](df: () => V) = {
     val dsf = () => List(View.register(this.env, df()))
 
     dependsOn(dsf)
@@ -262,7 +263,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * Add dependencies to the given view. This is done with an anonymous function returning a sequence of views the
     * current view depends on.
     */
-  def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
+  override def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
     val df = () => dsf().map {
       View.register(this.env, _)
     }
@@ -273,7 +274,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Specify the storage format of the view, with TextFile being the default. One can optionally specify storage path prefixes and suffixes.
     */
-  def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) {
+  override def storedAs(f: StorageFormat, additionalStoragePathPrefix: String = null, additionalStoragePathSuffix: String = null) {
     storageFormat = f
     this.additionalStoragePathPrefix = Option(additionalStoragePathPrefix)
     this.additionalStoragePathSuffix = Option(additionalStoragePathSuffix)
@@ -294,7 +295,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Specify table properties of a view, which is implemented in Hive as clause TBLPROPERTIES
     */
-  def tblProperties(m: Map[String, String]): Unit = tblProperties ++= m
+  override def tblProperties(m: Map[String, String]): Unit = tblProperties ++= m
 
   /**
     * Postfactum configuration of the registered transformation. Useful to override transformation configs within a test.
@@ -310,7 +311,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * Set the transformation with which the view is created. Provide an anonymous function returning the transformation.
     * NoOp is the default transformation if none is specified.
     */
-  def transformVia(ft: () => Transformation) {
+  override def transformVia(ft: () => Transformation) {
     ensureRegisteredParameters
 
     registeredTransformation = ft
@@ -320,7 +321,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * Registers an export transformation with the view. You need to provide an anonymous constructor function returning this transformation.
     * This transformation is executed after the "real" transformation registered with transformVia() has executed successfully.
     */
-  def exportTo(export: () => Transformation) {
+  override def exportTo(export: () => Transformation) {
     ensureRegisteredParameters
 
     registeredExports ::= export
@@ -382,7 +383,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       }
   }
 
-  def materializeOnce {
+  /**
+    * Materialize once makes sure that the given view is only materialized once, even if its dependencies or version checksum change
+    * afterwards.
+    */
+  override def materializeOnce {
     isMaterializeOnce = true
   }
 
@@ -423,9 +428,9 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * Return all dependencies of the view in the order they have been declared.
     */
-  def dependencies = deferredDependencies.flatMap {
+  def dependencies: List[View] = deferredDependencies.flatMap {
     _ ()
-  }.distinct
+  }.distinct.toList
 
   /**
     * Returns true if views contains external dependencies
@@ -446,7 +451,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   * View helpers. Also a registry of created views ensuring that there are no duplicate objects representing the same view.
   */
 object View {
-  private val knownViews = HashMap[View, View]()
+  private val knownViews = HashMap[String, View]()
 
   /**
     * Return all views from a given package.
@@ -543,12 +548,12 @@ object View {
   }
 
   private def register[V <: View : Manifest](env: String, v: V): V = this.synchronized {
-    val registeredView = knownViews.get(v) match {
+    val registeredView = knownViews.get(v.urlPath) match {
       case Some(registeredView) => {
         registeredView.asInstanceOf[V]
       }
       case None => {
-        knownViews.put(v, v)
+        knownViews.put(v.urlPath, v)
         v
       }
     }

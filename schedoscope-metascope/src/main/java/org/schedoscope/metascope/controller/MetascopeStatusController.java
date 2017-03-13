@@ -12,19 +12,20 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class MetascopeStatusController {
 
-  @Autowired
-  private MetascopeStatusService metascopeStatusService;
+    @Autowired
+    private MetascopeStatusService metascopeStatusService;
 
-  /**
-   * Retrieves the current schedoscope status for a table
-   * @param request
-   * @param qualifier the fully qualified domain name for entity to get status from
-   * @return
-   */
-  @RequestMapping(value = "/status/", method = RequestMethod.GET)
-  @ResponseBody
-  public String getStatus(HttpServletRequest request, String qualifier) {
-    return metascopeStatusService.getStatus(qualifier);
-  }
+    /**
+     * Retrieves the current schedoscope status for a table
+     *
+     * @param request
+     * @param qualifier the fully qualified domain name for entity to get status from
+     * @return
+     */
+    @RequestMapping(value = "/status/", method = RequestMethod.GET)
+    @ResponseBody
+    public String getStatus(HttpServletRequest request, String qualifier) {
+        return metascopeStatusService.getStatus(qualifier);
+    }
 
 }

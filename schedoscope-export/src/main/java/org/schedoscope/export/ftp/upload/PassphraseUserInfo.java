@@ -27,6 +27,7 @@ public class PassphraseUserInfo implements UserInfo {
 
     /**
      * The constructor to initialize the user info instance
+     *
      * @param passphrase The passphrase to use for decrypting the key.
      */
     public PassphraseUserInfo(final String passphrase) {
