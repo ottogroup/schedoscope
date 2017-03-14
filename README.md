@@ -151,3 +151,4 @@ The test framework now automatically checks whether there is an `ON` condition f
 
 ## License
 Licensed under the [Apache License 2.0](https://github.com/ottogroup/schedoscope/blob/master/LICENSE)
+
