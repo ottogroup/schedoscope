@@ -107,8 +107,8 @@ case class ExternalView(view: View) extends View {
   }
 
   override def comment(aComment: String): Unit = {
-  throw new IllegalArgumentException("You cannot set comments on an external view")
-}
+    throw new IllegalArgumentException("You cannot set comments on an external view")
+  }
 
   override def registerParameter(p: Parameter[_]): Unit = {
     throw new IllegalArgumentException("You cannot register parameters with an external view")

@@ -25,15 +25,16 @@ class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
   case class ToPCA(msg: String)
 
   class TestRouter(to: ActorRef) extends Actor {
-    val pca = TestActorRef(new PartitionCreatorActor("","","", msgHub.ref) {
+    val pca = TestActorRef(new PartitionCreatorActor("", "", "", msgHub.ref) {
       override def getSchemaManager(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
         null
       }
+
       override def schemaRouter = msgHub.ref
     })
 
     def receive = {
-      case ToPCA(m) => pca forward(m)
+      case ToPCA(m) => pca forward (m)
 
       case "tick" => to forward "tick"
     }
@@ -47,7 +48,7 @@ class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
   it should "change to active state upon receive of tick msg" in {
     val router = TestActorRef(new TestRouter(msgHub.ref))
 
-    EventFilter.info(message="PARTITION CREATOR ACTOR: changed to active state.", occurrences = 1) intercept {
+    EventFilter.info(message = "PARTITION CREATOR ACTOR: changed to active state.", occurrences = 1) intercept {
       msgHub.send(router, ToPCA("tick"))
     }
   }

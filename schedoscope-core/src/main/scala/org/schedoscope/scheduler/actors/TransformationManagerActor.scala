@@ -73,7 +73,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
 
   def manageDriverLifeCycle(asr: TransformationStatusResponse[_]) {
 
-    if(asr.message == "booted") {
+    if (asr.message == "booted") {
       val transformation = getTransformationName(asr.actor)
       val slot = settings.getDriverSettings(transformation).backOffSlotTime millis
       val delay = settings.getDriverSettings(transformation).backOffMinimumDelay millis

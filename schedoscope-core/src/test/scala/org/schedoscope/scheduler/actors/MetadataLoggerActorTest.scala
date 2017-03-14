@@ -25,15 +25,16 @@ class MetadataLoggerActorTest extends TestKit(ActorSystem("schedoscope",
   case class toPCA(msg: String)
 
   class TestRouter(to: ActorRef) extends Actor {
-    val pca = TestActorRef(new MetadataLoggerActor("","","") {
+    val pca = TestActorRef(new MetadataLoggerActor("", "", "") {
       override def getSchemaManager(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
         null
       }
+
       override def schemaRouter = msgHub.ref
     })
 
     def receive = {
-      case toPCA(m) => pca forward(m)
+      case toPCA(m) => pca forward (m)
 
       case "tick" => to forward "tick"
     }
@@ -47,7 +48,7 @@ class MetadataLoggerActorTest extends TestKit(ActorSystem("schedoscope",
   it should "change to active state upon receive of tick msg" in {
     val router = TestActorRef(new TestRouter(msgHub.ref))
 
-    EventFilter.info(message="METADATA LOGGER ACTOR: changed to active state.", occurrences = 1) intercept {
+    EventFilter.info(message = "METADATA LOGGER ACTOR: changed to active state.", occurrences = 1) intercept {
       msgHub.send(router, toPCA("tick"))
     }
   }

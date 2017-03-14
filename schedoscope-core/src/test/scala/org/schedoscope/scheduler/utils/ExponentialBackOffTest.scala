@@ -29,7 +29,7 @@ class ExponentialBackOffTest extends FlatSpec with Matchers {
     //second slot
     val secondSlotBackOff = backOff.nextBackOff
     (secondSlotBackOff.backOffWaitTime.equals(Duration.Zero) || secondSlotBackOff.backOffWaitTime.equals(backOffSlotTime)
-      || secondSlotBackOff.backOffWaitTime.equals(3*backOffSlotTime)) shouldBe true
+      || secondSlotBackOff.backOffWaitTime.equals(3 * backOffSlotTime)) shouldBe true
 
   }
 

@@ -36,8 +36,8 @@ class SchemaManagerRouter(settings: SchedoscopeSettings) extends Actor {
   val log = Logging(system, this)
 
   val metastoreActorsBackOffSupervision = new BackOffSupervision(
-      managerName = "SCHEMA MANAGER ACTOR",
-      system = context.system)
+    managerName = "SCHEMA MANAGER ACTOR",
+    system = context.system)
 
   var metadataLoggerActor: ActorRef = null
   var partitionCreatorActor: ActorRef = null

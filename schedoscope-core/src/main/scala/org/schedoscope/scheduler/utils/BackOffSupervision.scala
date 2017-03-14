@@ -29,8 +29,8 @@ import scala.concurrent.duration._
   * to schedule a "tick" activation message send in the
   * system (with the purpose of managed actors activation)
   *
-  * @param managerName     param used for logging purposes
-  * @param system          akka system used for scheduling firing messages
+  * @param managerName param used for logging purposes
+  * @param system      akka system used for scheduling firing messages
   */
 class BackOffSupervision(managerName: String,
                          system: ActorSystem) {
@@ -42,15 +42,15 @@ class BackOffSupervision(managerName: String,
     * Stores a managedActor ExponentialBackOff object, which
     * itself contains a current waiting time value (finite duration)
     *
-    * @param managedActor           actor that requires backoff supervision
-    * @param backOffSlotTime        duration of the backoff slot
-    * @param backOffMinimumDelay    minimum base delay configured for actor
-    * @return                       the current waiting time
+    * @param managedActor        actor that requires backoff supervision
+    * @param backOffSlotTime     duration of the backoff slot
+    * @param backOffMinimumDelay minimum base delay configured for actor
+    * @return the current waiting time
     */
   def manageActorLifecycle(managedActor: ActorRef, backOffSlotTime: FiniteDuration = null, backOffMinimumDelay: FiniteDuration = null): FiniteDuration = {
     val managedActorName = managedActor.path.toStringWithoutAddress
 
-    if(actorBackOffWaitTime.contains(managedActorName)) {
+    if (actorBackOffWaitTime.contains(managedActorName)) {
       val newBackOff = actorBackOffWaitTime(managedActorName).nextBackOff
       actorBackOffWaitTime.put(managedActorName, newBackOff)
       log.warn(s"$managerName: Set new back-off waiting " +

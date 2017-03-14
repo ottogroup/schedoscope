@@ -26,6 +26,7 @@ import org.schedoscope.schema.{RetryableSchemaManagerException, SchemaManager}
 class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String, schemaManagerRouter: ActorRef) extends Actor {
 
   import context._
+
   val log = Logging(system, this)
 
   lazy val schemaManager = getSchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)

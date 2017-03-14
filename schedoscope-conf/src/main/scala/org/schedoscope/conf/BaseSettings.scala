@@ -116,8 +116,8 @@ class BaseSettings(val config: Config) {
     * The configured timeout for Schedoscope web service calls.
     */
   lazy val webserviceTimeout =
-  Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schedulingCommand", TimeUnit.MILLISECONDS),
-    TimeUnit.MILLISECONDS)
+    Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schedulingCommand", TimeUnit.MILLISECONDS),
+      TimeUnit.MILLISECONDS)
 
   /**
     * The configured number of retries before a view enters failed state.

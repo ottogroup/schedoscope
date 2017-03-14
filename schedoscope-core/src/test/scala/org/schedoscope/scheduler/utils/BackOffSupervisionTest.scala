@@ -10,8 +10,7 @@ import scala.concurrent.duration._
 class BackOffSupervisionTest extends TestKit(ActorSystem("schedoscope"))
   with FlatSpecLike
   with BeforeAndAfterAll
-  with Matchers
-{
+  with Matchers {
 
   override def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
@@ -32,7 +31,7 @@ class BackOffSupervisionTest extends TestKit(ActorSystem("schedoscope"))
   it should "schedule a tick for an actor that is rebooting" in {
     val bos = new BackOffSupervision("THE MANAGER", system)
     val backOffSlot = 100 millis
-    val backOffMinDelay =  1 seconds
+    val backOffMinDelay = 1 seconds
 
     val tickTime = bos.manageActorLifecycle(managedActor.ref, backOffSlot, backOffMinDelay)
     system.scheduler.scheduleOnce(tickTime, managedActor.ref, "tick")
@@ -49,7 +48,7 @@ class BackOffSupervisionTest extends TestKit(ActorSystem("schedoscope"))
     "(assure that tick is happening in the future only)" in {
     val bos = new BackOffSupervision("THE MANAGER", system)
     val backOffSlot = 100 millis
-    val backOffMinDelay =  5 seconds
+    val backOffMinDelay = 5 seconds
 
     val tickTime = bos.manageActorLifecycle(managedActor.ref, backOffSlot, backOffMinDelay)
     system.scheduler.scheduleOnce(tickTime, managedActor.ref, "tick")

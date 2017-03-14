@@ -79,7 +79,7 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
       Seq(q.dequeue, q.dequeue, q.dequeue)
     }
 
-    def launchDriverActor(transformation:String):ActorRef = {
+    def launchDriverActor(transformation: String): ActorRef = {
       val driverActor = TestActorRef(DriverActor.props(settings,
         transformation, transformationManagerActor.ref))
       transformationManagerActor.expectMsgPF() {

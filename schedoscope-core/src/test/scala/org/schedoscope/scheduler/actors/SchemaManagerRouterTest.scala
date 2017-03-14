@@ -34,7 +34,7 @@ class SchemaManagerRouterTest extends TestKit(ActorSystem("schedoscope"))
     def getSchemaManager(s: SchedoscopeSettings): ActorRef = {
 
       TestActorRef(new SchemaManagerRouter(s) {
-        override def preStart{
+        override def preStart {
           context.actorOf(Props(new ForwardChildActor(partitionCreatorRouterActor.ref)),
             "partition-creator")
           context.actorOf(Props(new ForwardChildActor(metadataLoggerActorTest.ref)),
@@ -69,23 +69,23 @@ class SchemaManagerRouterTest extends TestKit(ActorSystem("schedoscope"))
   it should "should set an exponential backoff time too big for the test to get it" in
     new SchemaManagerRouterTest {
 
-    val newSettings = TestUtils.createSettings(
-      "schedoscope.metastore.actor-backoff-slot-time=10000",
-      "schedoscope.metastore.actor-backoff-minimum-delay=10000")
+      val newSettings = TestUtils.createSettings(
+        "schedoscope.metastore.actor-backoff-slot-time=10000",
+        "schedoscope.metastore.actor-backoff-minimum-delay=10000")
 
 
-    var schemaManagerRouter: ActorRef = getSchemaManager(newSettings)
+      var schemaManagerRouter: ActorRef = getSchemaManager(newSettings)
 
-    partitionCreatorRouterActor.send(schemaManagerRouter, "tick")
-    partitionCreatorRouterActor.expectMsg("tick")
-    partitionCreatorRouterActor.send(schemaManagerRouter, "tick")
-    partitionCreatorRouterActor.expectNoMsg(3 seconds)
+      partitionCreatorRouterActor.send(schemaManagerRouter, "tick")
+      partitionCreatorRouterActor.expectMsg("tick")
+      partitionCreatorRouterActor.send(schemaManagerRouter, "tick")
+      partitionCreatorRouterActor.expectNoMsg(3 seconds)
 
-    metadataLoggerActorTest.send(schemaManagerRouter, "tick")
-    metadataLoggerActorTest.expectMsg("tick")
-    metadataLoggerActorTest.send(schemaManagerRouter, "tick")
-    metadataLoggerActorTest.expectNoMsg(3 seconds)
+      metadataLoggerActorTest.send(schemaManagerRouter, "tick")
+      metadataLoggerActorTest.expectMsg("tick")
+      metadataLoggerActorTest.send(schemaManagerRouter, "tick")
+      metadataLoggerActorTest.expectNoMsg(3 seconds)
 
-  }
+    }
 
 }

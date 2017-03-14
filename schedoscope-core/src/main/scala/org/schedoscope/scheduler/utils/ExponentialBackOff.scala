@@ -22,15 +22,15 @@ import scala.util.Random
   * Implementing Exponential Back-off Algorithm
   * https://en.wikipedia.org/wiki/Exponential_backoff
   *
-  * @param backOffSlotTime    the time value of a slot; in wikipedia network example, this would be the 51.2 microseconds
-  * @param backOffSlot        counter for exponential growth; in wikipedia example, this would be the collisions count
-  * @param backOffWaitTime    the actual waiting time for a given iteration
-  * @param constantDelay     add, optionally, variant to algorithm to allow guarantee of minimum delay > 0
-  * @param ceiling            optionally define an upper limit for the max number of collisions multiplier
-  * @param resetOnCeiling     reset algorithm collision count if ceiling reached
-  * @param retries            counter for number of retries/collisions occurred
-  * @param resets             counter for number of times ceiling was reached
-  * @param totalRetries       counter of absolute total retries, independently of resets
+  * @param backOffSlotTime the time value of a slot; in wikipedia network example, this would be the 51.2 microseconds
+  * @param backOffSlot     counter for exponential growth; in wikipedia example, this would be the collisions count
+  * @param backOffWaitTime the actual waiting time for a given iteration
+  * @param constantDelay   add, optionally, variant to algorithm to allow guarantee of minimum delay > 0
+  * @param ceiling         optionally define an upper limit for the max number of collisions multiplier
+  * @param resetOnCeiling  reset algorithm collision count if ceiling reached
+  * @param retries         counter for number of retries/collisions occurred
+  * @param resets          counter for number of times ceiling was reached
+  * @param totalRetries    counter of absolute total retries, independently of resets
   */
 case class ExponentialBackOff(backOffSlotTime: FiniteDuration,
                               backOffSlot: Int = 1,
@@ -46,24 +46,24 @@ case class ExponentialBackOff(backOffSlotTime: FiniteDuration,
 
   private def expectedBackOff(backOffSlot: Int) = {
     val rand = new Random().nextInt(backOffSlot + 1)
-    math.round(math.pow(2, rand)-1)
+    math.round(math.pow(2, rand) - 1)
   }
 
   def nextBackOff: ExponentialBackOff = {
-    if(backOffSlot >= ceiling && resetOnCeiling)
-      // reset
+    if (backOffSlot >= ceiling && resetOnCeiling)
+    // reset
       copy(backOffSlot = 1,
         backOffWaitTime = Duration.Zero,
-        resets = resets +1,
+        resets = resets + 1,
         retries = 0,
-        totalRetries = totalRetries +1)
+        totalRetries = totalRetries + 1)
     else {
-      val newBackOffSlot = if(backOffSlot >= ceiling) ceiling else backOffSlot + 1
+      val newBackOffSlot = if (backOffSlot >= ceiling) ceiling else backOffSlot + 1
       // increase 1 collision
       copy(backOffSlot = newBackOffSlot,
         backOffWaitTime = updateTime,
-        retries = retries +1,
-        totalRetries = totalRetries +1)
+        retries = retries + 1,
+        totalRetries = totalRetries + 1)
     }
   }
 }
