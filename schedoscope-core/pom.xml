@@ -214,6 +214,8 @@
             <groupId>com.twitter</groupId>
             <artifactId>parquet-hadoop</artifactId>
             <version>${hive.parquet.version}</version>
+            <classifier>tests</classifier>
+            <scope>test</scope>
         </dependency>
 
         <dependency>

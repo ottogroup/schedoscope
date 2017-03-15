@@ -23,7 +23,7 @@ import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.hive.conf.HiveConf
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient
 import org.apache.hadoop.security.UserGroupInformation
-import org.schedoscope.dsl.storageformats.TextFile
+import org.schedoscope.dsl.storageformats.{StorageFormat, TextFile}
 import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.driver.{Driver, DriverRunCompletionHandler, DriverRunHandle, DriverRunState}
 import org.schedoscope.schema.SchemaManager
@@ -107,5 +107,5 @@ abstract class TestResources {
 
   def driverFor[T <: Transformation](transformation: T) = Driver.driverFor[T](transformation, Some(this))
 
-  lazy val textStorage = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "\u0002", mapKeyTerminator = "\u0003")
+  lazy val textStorage: StorageFormat = new TextFile(fieldTerminator = "\\t", collectionItemTerminator = "\u0002", mapKeyTerminator = "\u0003")
 }
