@@ -25,7 +25,6 @@ import java.util.Properties;
 
 /**
  * Contains the derby specific mapping of the column types.
- *
  */
 public class DerbySchema extends AbstractSchema {
 
@@ -63,8 +62,7 @@ public class DerbySchema extends AbstractSchema {
     /**
      * The constructor to initialize the Derby dialect.
      *
-     * @param conf
-     *            The Hadoop configuration object.
+     * @param conf The Hadoop configuration object.
      */
     public DerbySchema(Configuration conf) {
 

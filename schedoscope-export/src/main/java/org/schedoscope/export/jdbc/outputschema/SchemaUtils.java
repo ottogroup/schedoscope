@@ -25,7 +25,6 @@ import java.util.Set;
 /**
  * This class provides utility functions to convert names and types between
  * different database dialects.
- *
  */
 public class SchemaUtils {
 
@@ -33,12 +32,10 @@ public class SchemaUtils {
      * Converts the column names from HCatalogSchema to a given database
      * dialect.
      *
-     * @param inputSchema
-     *            The HCatalog Schema containing the meta data.
-     * @param schema
-     *            The database schema dialect.
+     * @param inputSchema The HCatalog Schema containing the meta data.
+     * @param schema      The database schema dialect.
      * @return An array of string containing the names of the columns, order is
-     *         important.
+     * important.
      */
     public static String[] getColumnNamesFromHcatSchema(HCatSchema inputSchema,
                                                         Schema schema) {
@@ -66,14 +63,11 @@ public class SchemaUtils {
     /**
      * Converts the column types from HCatSchema to the database dialect.
      *
-     * @param inputSchema
-     *            The HCatalog Schema containing the meta data.
-     * @param schema
-     *            The database schema dialect.
-     * @param anonFields
-     *            A list of fields to anonymize
+     * @param inputSchema The HCatalog Schema containing the meta data.
+     * @param schema      The database schema dialect.
+     * @param anonFields  A list of fields to anonymize
      * @return An array of string containing the column types, order is
-     *         important.
+     * important.
      */
     public static String[] getColumnTypesFromHcatSchema(HCatSchema inputSchema,
                                                         Schema schema, Set<String> anonFields) {

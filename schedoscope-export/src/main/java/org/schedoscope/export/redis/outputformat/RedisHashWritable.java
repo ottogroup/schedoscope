@@ -50,10 +50,8 @@ public class RedisHashWritable implements RedisWritable, Writable {
     /**
      * Constructor to initialize with a key and a list of elements.
      *
-     * @param key
-     *            The key to use for Redis.
-     * @param value
-     *            The data to write into Redis.
+     * @param key   The key to use for Redis.
+     * @param value The data to write into Redis.
      */
     public RedisHashWritable(String key, Map<String, String> value) {
 
@@ -64,10 +62,8 @@ public class RedisHashWritable implements RedisWritable, Writable {
     /**
      * A constructor setting the internal writables.
      *
-     * @param key
-     *            The Redis key
-     * @param value
-     *            The Redis value
+     * @param key   The Redis key
+     * @param value The Redis value
      */
     public RedisHashWritable(Text key, MapWritable value) {
 

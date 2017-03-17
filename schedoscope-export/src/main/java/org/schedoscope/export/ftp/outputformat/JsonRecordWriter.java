@@ -37,6 +37,7 @@ public class JsonRecordWriter<K, V> extends RecordWriter<K, V> {
 
     /**
      * The constructor to initialize the Json Record Writer.
+     *
      * @param out A data output stream.
      */
     public JsonRecordWriter(DataOutputStream out) {

@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  * Contains the postgresql specific mapping of the column types.
- *
  */
 public class PostgreSQLSchema extends AbstractSchema {
 
@@ -63,8 +62,7 @@ public class PostgreSQLSchema extends AbstractSchema {
     /**
      * The constructor to initialize the PostgreSQL dialect.
      *
-     * @param conf
-     *            The Hadoop configuration object.
+     * @param conf The Hadoop configuration object.
      */
     public PostgreSQLSchema(Configuration conf) {
 

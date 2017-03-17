@@ -24,25 +24,25 @@ import java.util.Properties;
 
 public class ValidationQueryUtil {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ValidationQueryUtil.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ValidationQueryUtil.class);
 
-  public static String getValidationQuery(String driver) {
-    Properties properties = loadProperties();
-    return properties.getProperty(driver, "select 1");
-  }
-
-  private static Properties loadProperties() {
-    String propertyFilename = "db.validation.properties";
-    try {
-      Properties props = new Properties();
-      InputStream resourceAsStream = ValidationQueryUtil.class.getClassLoader().getResourceAsStream(propertyFilename);
-      props.load(resourceAsStream);
-      resourceAsStream.close();
-      return props;
-    } catch (IOException e) {
-      LOG.error("Could not load db.validation.properties file", e);
-      return null;
+    public static String getValidationQuery(String driver) {
+        Properties properties = loadProperties();
+        return properties.getProperty(driver, "select 1");
     }
-  }
+
+    private static Properties loadProperties() {
+        String propertyFilename = "db.validation.properties";
+        try {
+            Properties props = new Properties();
+            InputStream resourceAsStream = ValidationQueryUtil.class.getClassLoader().getResourceAsStream(propertyFilename);
+            props.load(resourceAsStream);
+            resourceAsStream.close();
+            return props;
+        } catch (IOException e) {
+            LOG.error("Could not load db.validation.properties file", e);
+            return null;
+        }
+    }
 
 }

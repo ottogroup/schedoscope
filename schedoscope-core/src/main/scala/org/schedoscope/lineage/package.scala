@@ -58,14 +58,15 @@ package object lineage {
       * @return a HiveTransformation, if found
       */
     private def getHiveTransformation(st: SeqTransformation[_, _]): Option[HiveTransformation] =
-    st.firstThisTransformation -> st.thenThatTransformation match {
-      case (ht: HiveTransformation, _) => Some(ht)
-      case (_, ht: HiveTransformation) => Some(ht)
-      case (st: SeqTransformation[_, _], _) => getHiveTransformation(st)
-      case (_, st: SeqTransformation[_, _]) => getHiveTransformation(st)
-      case _ => None
-    }
+      st.firstThisTransformation -> st.thenThatTransformation match {
+        case (ht: HiveTransformation, _) => Some(ht)
+        case (_, ht: HiveTransformation) => Some(ht)
+        case (st: SeqTransformation[_, _], _) => getHiveTransformation(st)
+        case (_, st: SeqTransformation[_, _]) => getHiveTransformation(st)
+        case _ => None
+      }
   }
 
   class NoHiveTransformationException extends Exception
+
 }

@@ -62,8 +62,7 @@ public class JdbcOutputWritable implements Writable, DBWritable {
     /**
      * Constructor to initialize the internal writable set by the param.
      *
-     * @param value
-     *            The data to initialize the writable with
+     * @param value The data to initialize the writable with
      */
     public JdbcOutputWritable(List<Pair<String, String>> value) {
 
@@ -73,8 +72,7 @@ public class JdbcOutputWritable implements Writable, DBWritable {
     /**
      * Constructor to initialize the internal writable.
      *
-     * @param value
-     *            Another ArrayWritable to copy from.
+     * @param value Another ArrayWritable to copy from.
      */
     public JdbcOutputWritable(ArrayWritable value) {
 

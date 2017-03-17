@@ -21,7 +21,10 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.Transformation
 import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
-import org.schedoscope.scheduler.states.{ViewSchedulingAction, ViewSchedulingState}
+import org.schedoscope.scheduler.states.{PartyInterestedInViewSchedulingStateChange, ViewSchedulingAction, ViewSchedulingState}
+
+
+case class CommandForView(sender: Option[View], receiver: View, anyRef: AnyRef)
 
 /**
   * Superclass for failure messages.
@@ -141,6 +144,13 @@ object MaterializeViewMode extends Enumeration {
 }
 
 /**
+  * Instructs a table actor to initialize a list of views. If not yet initialized.
+  *
+  * @param vs List of views to initialize
+  */
+case class InitializeViews(vs: List[View]) extends CommandRequest
+
+/**
   * Instructs a view actor to materialize itself
   */
 case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
@@ -154,7 +164,7 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
 case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
 
 /**
-  * Request for the SchemaManager to
+  * Request for the SchemaManager to retrieve partition / table metadta for view.
   *
   * @param view              to be materialized
   * @param mode              materialization mode
@@ -162,7 +172,7 @@ case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode
   */
 case class GetMetaDataForMaterialize(view: View,
                                      mode: MaterializeViewMode = MaterializeViewMode.DEFAULT,
-                                     materializeSource: ActorRef) extends CommandRequest
+                                     materializeSource: PartyInterestedInViewSchedulingStateChange) extends CommandRequest
 
 /**
   * Instructs a view actor to assume that its data needs to be recomputed.
@@ -190,7 +200,7 @@ case class DeployCommandSuccess() extends CommandResponse
   * @param view
   * @param viewRef
   */
-case class NewViewActorRef(view: View, viewRef: ActorRef) extends CommandResponse
+case class NewTableActorRef(view: View, viewRef: ActorRef) extends CommandResponse
 
 /**
   * Schema actor or metadata logger notifying view manager actor or view actor of successful schema action.
@@ -204,7 +214,7 @@ case class SchemaActionSuccess() extends CommandResponse
   * @param mode              transformation mode
   * @param materializeSource sender of the [[MaterializeView]] command
   */
-case class MetaDataForMaterialize(metadata: (View, (String, Long)), mode: MaterializeViewMode, materializeSource: ActorRef) extends CommandResponse
+case class MetaDataForMaterialize(metadata: (View, (String, Long)), mode: MaterializeViewMode, materializeSource: PartyInterestedInViewSchedulingStateChange) extends CommandResponse
 
 /**
   * Driver actor notifying view actor of successful transformation.
@@ -220,7 +230,7 @@ case class TransformationSuccess[T <: Transformation](driverRunHandle: DriverRun
   * @param transformationStatusList List of entities of TransformationStatusResponse
   * @see TransformationStatusResponse
   */
-case class TransformationStatusListResponse(val transformationStatusList: List[TransformationStatusResponse[_]]) extends CommandResponse
+case class TransformationStatusListResponse(transformationStatusList: List[TransformationStatusResponse[_]]) extends CommandResponse
 
 /**
   * Response message of view manager actor with state of view actors
@@ -238,7 +248,7 @@ case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) exte
   * @param driverRunHandle runHandle of a running transformation
   * @param driverRunStatus state of a running transformation
   */
-case class TransformationStatusResponse[T <: Transformation](val message: String, val actor: ActorRef, val driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
+case class TransformationStatusResponse[T <: Transformation](message: String, actor: ActorRef, driver: Driver[T], driverRunHandle: DriverRunHandle[T], driverRunStatus: DriverRunState[T]) extends CommandResponse
 
 /**
   * View actor responding to the view manager actor with the state of the view
@@ -249,7 +259,7 @@ case class TransformationStatusResponse[T <: Transformation](val message: String
   * @param errors     true if some transformations in that subtree have been failing
   * @param incomplete true of not all transitive dependencies had data available
   */
-case class ViewStatusResponse(val status: String, view: View, actor: ActorRef, errors: Option[Boolean] = None, incomplete: Option[Boolean] = None) extends CommandResponse
+case class ViewStatusResponse(status: String, view: View, actor: ActorRef, errors: Option[Boolean] = None, incomplete: Option[Boolean] = None) extends CommandResponse
 
 /**
   * Schema actor returning the stored transformation metadata (version checksum, timestamp) retrieved from metadata store

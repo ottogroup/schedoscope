@@ -28,7 +28,8 @@
                ${table.databaseName} + ' :: ' + ${table.tableName} + ' (' + ${table.getParameterCommaDelimited()} + ')' :
                ${table.databaseName} + ' :: ' + ${table.tableName}"
                            th:onclick="'increaseViewCount(\'' + ${table.fqdn} + '\')'"></a>
-                        <span th:attr="data-qualifier=${table.viewPath}" class="loader statusentity pull-right" title="Loading table status ..."></span>
+                        <span th:attr="data-qualifier=${table.viewPath}" class="loader statusentity pull-right"
+                              title="Loading table status ..."></span>
                     </div>
                 </form>
             </div>

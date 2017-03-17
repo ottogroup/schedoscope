@@ -24,9 +24,11 @@ import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{FilesystemTransformation, Transformation}
 import org.schedoscope.scheduler.driver.{Driver, RetryableDriverException}
 import org.schedoscope.scheduler.messages._
+import org.schedoscope.scheduler.utils.BackOffSupervision
 
 import scala.collection.JavaConversions.asScalaSet
 import scala.collection.mutable.HashMap
+import scala.concurrent.duration._
 
 
 /**
@@ -61,6 +63,39 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
   }
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
+  val driverActorsBackOffSupervision = new BackOffSupervision(
+    managerName = "TRANSFORMATION MANAGER ACTOR",
+    system = context.system)
+
+  def scheduleTick(managedActor: ActorRef, backOffTime: FiniteDuration) {
+    system.scheduler.scheduleOnce(backOffTime, managedActor, "tick")
+  }
+
+  def manageDriverLifeCycle(asr: TransformationStatusResponse[_]) {
+
+    if (asr.message == "booted") {
+      val transformation = getTransformationName(asr.actor)
+      val slot = settings.getDriverSettings(transformation).backOffSlotTime millis
+      val delay = settings.getDriverSettings(transformation).backOffMinimumDelay millis
+
+      val backOffTime = driverActorsBackOffSupervision.manageActorLifecycle(
+        managedActor = asr.actor,
+        backOffSlotTime = slot,
+        backOffMinimumDelay = delay)
+
+      scheduleTick(asr.actor, backOffTime)
+    }
+    driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
+
+  }
+
+  def getTransformationName(actor: ActorRef): String = {
+    val router = actor.path.toString
+      .slice(self.path.toString.size, actor.path.toString.size)
+      .split("/")(1)
+    val transformation = router.split("-")(0)
+    transformation
+  }
 
   /**
     * Create one driver router per transformation type, which themselves spawn driver actors as required by configured transformation concurrency.
@@ -86,7 +121,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
     */
   def receive = LoggingReceive({
 
-    case asr: TransformationStatusResponse[_] => driverStates.put(asr.actor.path.toStringWithoutAddress, asr)
+    case asr: TransformationStatusResponse[_] => manageDriverLifeCycle(asr)
 
     case GetTransformations() => sender ! TransformationStatusListResponse(driverStates.values.toList)
 

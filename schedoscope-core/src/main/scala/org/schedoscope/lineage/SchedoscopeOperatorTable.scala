@@ -34,12 +34,12 @@ class SchedoscopeOperatorTable(view: View) extends SqlOperatorTable {
 
   override def lookupOperatorOverloads(opName: SqlIdentifier, category: SqlFunctionCategory, syntax: SqlSyntax,
                                        operatorList: util.List[SqlOperator]): Unit = {
-    udfs.filter( f =>
+    udfs.filter(f =>
       if (opName.isSimple)
         f.getFunctionName.equalsIgnoreCase(opName.getSimple)
       else
         f.getDbName.equalsIgnoreCase(opName.getComponent(0).getSimple) &&
-        f.getFunctionName.equalsIgnoreCase(opName.getComponent(1).getSimple)
+          f.getFunctionName.equalsIgnoreCase(opName.getComponent(1).getSimple)
     ).map(
       func => func.getFunctionName -> Class.forName(func.getClassName).newInstance()
     ).flatMap {

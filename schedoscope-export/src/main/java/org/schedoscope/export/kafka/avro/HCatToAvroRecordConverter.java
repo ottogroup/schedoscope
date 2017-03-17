@@ -45,12 +45,9 @@ public class HCatToAvroRecordConverter {
      * Create a new record converter instance, pass in a json serializer and a
      * list with field names to anonymize.
      *
-     * @param serializer
-     *            A Json serializer
-     * @param anonFields
-     *            A list with fields to anonymize
-     * @param salt
-     *            An optional salt to use when anonymizing fields
+     * @param serializer A Json serializer
+     * @param anonFields A list with fields to anonymize
+     * @param salt       An optional salt to use when anonymizing fields
      */
     public HCatToAvroRecordConverter(HCatRecordJsonSerializer serializer,
                                      Set<String> anonFields, String salt) {
@@ -63,8 +60,7 @@ public class HCatToAvroRecordConverter {
     /**
      * Create a new record converter instance, pass in a json serializer.
      *
-     * @param serializer
-     *            A Json serializer.
+     * @param serializer A Json serializer.
      */
     public HCatToAvroRecordConverter(HCatRecordJsonSerializer serializer) {
 
@@ -76,13 +72,10 @@ public class HCatToAvroRecordConverter {
     /**
      * This function converts an HCatRecord to an Avro GenericRecord.
      *
-     * @param hcatRecord
-     *            The HCatRecord
-     * @param avroSchema
-     *            The Avro Schema
+     * @param hcatRecord The HCatRecord
+     * @param avroSchema The Avro Schema
      * @return Returns an Avro GenericRecord
-     * @throws IOException
-     *             Is thrown if an error occurs
+     * @throws IOException Is thrown if an error occurs
      */
     public GenericRecord convert(HCatRecord hcatRecord, Schema avroSchema)
             throws IOException {

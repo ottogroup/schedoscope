@@ -28,10 +28,8 @@ public class SchemaFactory {
      * Returns a concrete schema implementation determined by the JDBC
      * connection string.
      *
-     * @param dbConnectionString
-     *            The JDBC connection string.
-     * @param conf
-     *            The Hadoop configuration object.
+     * @param dbConnectionString The JDBC connection string.
+     * @param conf               The Hadoop configuration object.
      * @return A concrete {@link Schema} implementation.
      */
     public static Schema getSchema(String dbConnectionString, Configuration conf) {
@@ -54,8 +52,7 @@ public class SchemaFactory {
      * Returns a concrete schema implementation determined by the JDBC
      * connection string, extracted from the Hadoop configuration object.
      *
-     * @param conf
-     *            The Hadoop configuration object.
+     * @param conf The Hadoop configuration object.
      * @return A concrete {@link Schema} implementation.
      */
     public static Schema getSchema(Configuration conf) {
