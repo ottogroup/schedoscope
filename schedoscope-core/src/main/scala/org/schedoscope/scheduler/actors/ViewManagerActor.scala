@@ -120,17 +120,22 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       }
     }
 
-  def initializeViews(vs: List[View], includeExistingActors: Boolean = false): Set[ActorRef] = {
+  /**
+    * Ensures a view and all it's dependencies are initialized.
+    * Will create a table actor if required. The table actors are then instructed to create the corresponding views.
+    * @param views to be initialized
+    * @param includeExistingActors
+    * @return Set of [[TableActor]] [[ActorRef]]s affected by the changes
+    */
+  def initializeViews(views: List[View], includeExistingActors: Boolean = false): Set[ActorRef] = {
 
-    val dependentViews = viewsToCreateActorsFor(vs, includeExistingActors)
+    val dependentViews = viewsToCreateActorsFor(views, includeExistingActors)
 
     validateExternalViews(dependentViews)
 
     val viewsPerTableName = dependentViews
       .map { case (view, _, _) => view }
       .groupBy(_.urlPathPrefix)
-
-    //    viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
 
     //sendViewsToTableActors / createMissingTableActor
     val actors = viewsPerTableName.map {
@@ -161,8 +166,6 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         actorRef
     }.toSet
 
-
-    //TODO: Think about this!
     viewsPerTableName.flatMap(_._2).foreach { view =>
       val newDepsActorRefs = view
         .dependencies
@@ -177,7 +180,6 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     actors
   }
 
-  //TODO: review this method
   def viewsToCreateActorsFor(views: List[View], includeExistingActors: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
     views.flatMap {
       v =>

@@ -33,6 +33,9 @@ import scala.concurrent.duration.Duration
 
 /**
   * Table actors manage the scheduling states of the views belonging to a given table.
+  *
+  * The actor holds the [[ViewSchedulingState]] of all relevant views.
+  * Messages addressing a certain view have to be wrapped into a [[CommandForView]] Message.
   */
 class TableActor(currentStates: Map[View, ViewSchedulingState],
                  settings: SchedoscopeSettings,
@@ -253,7 +256,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
   def sendMessageToView(view: View, msg: AnyRef)(implicit reportingView: View) = {
 
-    //Package Message:
+    //Package message
     val messageForView = CommandForView(Some(reportingView), view, msg)
 
     //
