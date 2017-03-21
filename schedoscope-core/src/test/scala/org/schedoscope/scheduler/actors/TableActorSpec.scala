@@ -262,7 +262,7 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   }
 
-  "A view" should "should reload it's state and ignore it's deps when called view external materialize" in new TableActorTest {
+  "A view" should "reload it's state and ignore it's deps when called view external materialize" in new TableActorTest {
     val viewNE = ProductBrand(p("ec0101"), p("2016"), p("11"), p("07"))
     val viewE = ExternalView(ProductBrand(p("ec0101"), p("2016"), p("11"), p("07")))
 

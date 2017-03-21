@@ -101,7 +101,7 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
-  it should "should not execute commands before changing to activeReceive state" in {
+  it should "not execute commands before changing to activeReceive state" in {
     val hivedriverActor = TestActorRef(DriverActor.props(settings,
       "hive", transformationManagerActor.ref))
     transformationManagerActor.expectMsgPF() {
