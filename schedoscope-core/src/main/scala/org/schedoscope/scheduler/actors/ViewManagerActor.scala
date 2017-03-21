@@ -61,9 +61,10 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
     //TODO: Review this part!
     case GetViews(views, status, filter, issueFilter, dependencies) => {
-      val viewActors: Set[ActorRef] = if (views.isDefined) initializeViews(views.get, dependencies) else Set()
+      val tableActorsForViews: Map[View, ActorRef] = if (views.isDefined) initializeViews(views.get, dependencies) else Map()
+
       val viewStates = viewStatusMap.values
-        .filter(vs => views.isEmpty || viewActors.contains(vs.actor))
+        .filter(vs => views.isEmpty || tableActorsForViews.contains(vs.view))
         .filter(vs => status.isEmpty || status.get.equals(vs.status))
         .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
         .filter(vs => issueFilter.isEmpty || (
@@ -73,13 +74,13 @@ class ViewManagerActor(settings: SchedoscopeSettings,
               || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
             )
           )
-        ).toList
+        ).toList.distinct
 
       sender ! ViewStatusListResponse(viewStates)
     }
 
     case v: View => {
-      sender ! initializeViews(List(v), includeExistingActors = false).head
+      sender ! initializeViews(List(v), includeExistingActors = false).head._2
     }
 
     case DelegateMessageToView(view, msg) => {
@@ -87,7 +88,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         case Some(actorRef) =>
           actorRef
         case None =>
-          initializeViews(List(view), false).head
+          initializeViews(List(view), false).head._2
       }
       ref forward msg
       sender ! NewTableActorRef(view, ref)
@@ -120,7 +121,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       }
     }
 
-  def initializeViews(vs: List[View], includeExistingActors: Boolean = false): Set[ActorRef] = {
+  def initializeViews(vs: List[View], includeExistingActors: Boolean = false): Map[View, ActorRef] = {
 
     val dependentViews = viewsToCreateActorsFor(vs, includeExistingActors)
 
@@ -133,7 +134,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     //    viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
 
     //sendViewsToTableActors / createMissingTableActor
-    val actors = viewsPerTableName.map {
+    val actors : Map[View, ActorRef] = viewsPerTableName.flatMap {
       case (table, views) =>
         val actorRef = actorForView(views.head) match {
           case Some(tableActorRef) =>
@@ -153,13 +154,13 @@ class ViewManagerActor(settings: SchedoscopeSettings,
             actorRef ! InitializeViews(views)
             actorRef
         }
-        views.foreach { v =>
+        views.map { v =>
           if (!viewStatusMap.contains(v.fullPath)) {
             viewStatusMap.put(v.fullPath, ViewStatusResponse("receive", v, actorRef))
           }
+          v -> actorRef
         }
-        actorRef
-    }.toSet
+    }
 
 
     //TODO: Think about this!
@@ -174,6 +175,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         case None => //actor not yet known nothing to do here
       }
     }
+
     actors
   }
 
