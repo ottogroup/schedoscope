@@ -77,7 +77,14 @@ Please help making Schedoscope better!
 
 ## News
 
-###### 03/17/2016 - Release 0.8.0
+###### 03/18/2017 - Release 0.8.1
+
+We have released Version 0.8.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This fixes a critical bug that could result in applying commands to all views in a table and not just the ones addressed. *Do not use Release 0.8.0*
+
+###### 03/17/2017 - Release 0.8.0
+
 
 We have released Version 0.8.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
 
