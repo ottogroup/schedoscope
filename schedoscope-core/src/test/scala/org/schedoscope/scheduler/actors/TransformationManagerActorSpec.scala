@@ -149,7 +149,7 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope",
     }
 
   // integration test transformationManager + DriverRouter + Drivers
-  it should "should directly broadcast to all driver actors, instead of using driver router" in {
+  it should "directly broadcast to all driver actors, instead of using driver router" in {
     val msgSender = TestProbe()
     val transformationManagerActor = TestActorRef(new TransformationManagerActor(settings,
       bootstrapDriverActors = true))
@@ -166,16 +166,16 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope",
     msgSender.receiveN(numberOfMessages, 3 seconds)
   }
 
-  it should "should set a minimal exponential backoff time for restarting drivers" in {
+  it should "set a minimal exponential backoff time for restarting drivers" in {
     val newSettings = TestUtils.createSettings(
-      "schedoscope.transformations.hive.driver-actor-backoff-minimum-delay=0",
-      "schedoscope.transformations.mapreduce.driver-actor-backoff-minimum-delay=0",
-      "schedoscope.transformations.filesystem.driver-actor-backoff-minimum-delay=0",
-      "schedoscope.transformations.seq.driver-actor-backoff-minimum-delay=0",
-      "schedoscope.transformations.oozie.driver-actor-backoff-minimum-delay=0",
-      "schedoscope.transformations.pig.driver-actor-backoff-minimum-delay=0",
-      "schedoscope.transformations.shell.driver-actor-backoff-minimum-delay=0",
-      "schedoscope.transformations.spark.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.hive.driver-actor-backoff-minimum-delay=10",
+      "schedoscope.transformations.mapreduce.driver-actor-backoff-minimum-delay=10",
+      "schedoscope.transformations.filesystem.driver-actor-backoff-minimum-delay=10",
+      "schedoscope.transformations.seq.driver-actor-backoff-minimum-delay=10",
+      "schedoscope.transformations.oozie.driver-actor-backoff-minimum-delay=10",
+      "schedoscope.transformations.pig.driver-actor-backoff-minimum-delay=10",
+      "schedoscope.transformations.shell.driver-actor-backoff-minimum-delay=10",
+      "schedoscope.transformations.spark.driver-actor-backoff-minimum-delay=10",
       "schedoscope.transformations.hive.driver-actor-backoff-slot-time=10",
       "schedoscope.transformations.mapreduce.driver-actor-backoff-slot-time=10",
       "schedoscope.transformations.filesystem.driver-actor-backoff-slot-time=10",
@@ -207,7 +207,7 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope",
     }
   }
 
-  it should "should set an exponential backoff time for restarting drivers" in {
+  it should "set an exponential backoff time for restarting drivers" in {
     val newSettings = TestUtils.createSettings(
       "schedoscope.transformations.hive.driver-actor-backoff-minimum-delay=10000",
       "schedoscope.transformations.mapreduce.driver-actor-backoff-minimum-delay=10000",

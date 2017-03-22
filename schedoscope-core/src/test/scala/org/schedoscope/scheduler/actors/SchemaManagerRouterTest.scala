@@ -44,7 +44,7 @@ class SchemaManagerRouterTest extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
-  it should "should set an exponential backoff time for restarting drivers" in
+  it should "set an exponential backoff time for restarting drivers" in
     new SchemaManagerRouterTest {
 
       val newSettings = TestUtils.createSettings(
@@ -66,7 +66,7 @@ class SchemaManagerRouterTest extends TestKit(ActorSystem("schedoscope"))
 
     }
 
-  it should "should set an exponential backoff time too big for the test to get it" in
+  it should "set an exponential backoff time too big for the test to get it" in
     new SchemaManagerRouterTest {
 
       val newSettings = TestUtils.createSettings(

@@ -61,9 +61,10 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
     //TODO: Review this part!
     case GetViews(views, status, filter, issueFilter, dependencies) => {
-      val viewActors: Set[ActorRef] = if (views.isDefined) initializeViews(views.get, dependencies) else Set()
+      val viewsAndTableActors: Map[View, ActorRef] = if (views.isDefined) initializeViews(views.get.toSet, dependencies) else Map()
+
       val viewStates = viewStatusMap.values
-        .filter(vs => views.isEmpty || viewActors.contains(vs.actor))
+        .filter(vs => views.isEmpty || viewsAndTableActors.contains(vs.view))
         .filter(vs => status.isEmpty || status.get.equals(vs.status))
         .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
         .filter(vs => issueFilter.isEmpty || (
@@ -73,13 +74,13 @@ class ViewManagerActor(settings: SchedoscopeSettings,
               || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
             )
           )
-        ).toList
+        ).toList.distinct
 
       sender ! ViewStatusListResponse(viewStates)
     }
 
     case v: View => {
-      sender ! initializeViews(List(v), includeExistingActors = false).head
+      sender ! initializeViews(Set(v), includeExistingActors = false).head._2
     }
 
     case DelegateMessageToView(view, msg) => {
@@ -87,7 +88,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         case Some(actorRef) =>
           actorRef
         case None =>
-          initializeViews(List(view), false).head
+          initializeViews(Set(view), false).head._2
       }
       ref forward msg
       sender ! NewTableActorRef(view, ref)
@@ -120,61 +121,63 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       }
     }
 
-  def initializeViews(vs: List[View], includeExistingActors: Boolean = false): Set[ActorRef] = {
+  def initializeViews(vs: Set[View], includeExistingActors: Boolean = false): Map[View, ActorRef] = {
 
-    val dependentViews = viewsToCreateActorsFor(vs, includeExistingActors)
+    val viewsRequiringActors = viewsToCreateActorsFor(vs.toList, includeExistingActors)
 
-    validateExternalViews(dependentViews)
+    validateExternalViews(viewsRequiringActors)
 
-    val viewsPerTableName = dependentViews
+    val viewsPerTableName = viewsRequiringActors
       .map { case (view, _, _) => view }
       .groupBy(_.urlPathPrefix)
 
-    //    viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
+    val tableActorsForViews: Map[View, ActorRef] = viewsPerTableName.flatMap {
 
-    //sendViewsToTableActors / createMissingTableActor
-    val actors = viewsPerTableName.map {
       case (table, views) =>
+
         val actorRef = actorForView(views.head) match {
           case Some(tableActorRef) =>
             tableActorRef ! InitializeViews(views)
             tableActorRef
+
           case None =>
-            // create actor
-            val actorRef = actorOf(TableActor.props(
-              Map.empty[View, ViewSchedulingState],
-              settings,
-              Map.empty[String, ActorRef],
-              self,
-              actionsManagerActor,
-              schemaManagerRouter,
-              viewSchedulingListenerManagerActor), actorNameForView(views.head))
-            // send to actor
+            val actorRef = actorOf(
+              TableActor.props(
+                Map.empty[View, ViewSchedulingState],
+                settings,
+                Map.empty[String, ActorRef],
+                self,
+                actionsManagerActor,
+                schemaManagerRouter,
+                viewSchedulingListenerManagerActor), actorNameForView(views.head)
+            )
+
             actorRef ! InitializeViews(views)
             actorRef
         }
-        views.foreach { v =>
+
+        views.map { v =>
           if (!viewStatusMap.contains(v.fullPath)) {
             viewStatusMap.put(v.fullPath, ViewStatusResponse("receive", v, actorRef))
           }
+          v -> actorRef
         }
-        actorRef
-    }.toSet
+    }
 
-
-    //TODO: Think about this!
-    viewsPerTableName.flatMap(_._2).foreach { view =>
-      val newDepsActorRefs = view
+    viewsPerTableName.flatMap(_._2).foreach { v =>
+      val newDepsActorRefs = v
         .dependencies
         .flatMap(v => actorForView(v).map(NewTableActorRef(v, _)))
 
-      actorForView(view) match {
+      actorForView(v) match {
         case Some(actorRef) =>
           newDepsActorRefs.foreach(actorRef ! _)
         case None => //actor not yet known nothing to do here
       }
     }
-    actors
+
+    tableActorsForViews
+      .filter { case (v, _) => includeExistingActors || vs.contains(v) }
   }
 
   //TODO: review this method
@@ -185,10 +188,10 @@ class ViewManagerActor(settings: SchedoscopeSettings,
           List()
         else if (child(actorNameForView(v)).isEmpty) {
           visited += v
-          (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, includeExistingActors, depth + 1, visited)
+          (v, true, depth) :: viewsToCreateActorsFor(v.dependencies, includeExistingActors, depth + 1, visited)
         } else if (includeExistingActors) {
           visited += v
-          (v, false, depth) :: viewsToCreateActorsFor(v.dependencies.toList, includeExistingActors, depth + 1, visited)
+          (v, false, depth) :: viewsToCreateActorsFor(v.dependencies, includeExistingActors, depth + 1, visited)
         } else {
           visited += v
           List((v, false, depth))
