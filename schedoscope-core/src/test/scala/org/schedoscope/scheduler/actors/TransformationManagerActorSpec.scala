@@ -17,23 +17,25 @@ package org.schedoscope.scheduler.actors
 
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.testkit.{TestActorRef, TestKit, TestProbe}
-import org.scalatest.mock.MockitoSugar
+import akka.testkit.{EventFilter, TestActorRef, TestKit, TestProbe}
+import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
-import org.schedoscope.Settings
+import org.schedoscope.{Settings, TestUtils}
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.{FilesystemTransformation, Touch}
-import org.schedoscope.scheduler.driver.{HiveDriver, Driver}
+import org.schedoscope.dsl.transformations.FilesystemTransformation
+import org.schedoscope.scheduler.driver.{Driver, HiveDriver}
 import org.schedoscope.scheduler.messages._
 import test.views.ProductBrand
 
 import scala.concurrent.duration._
 
-class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
+//
+
+class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope",
+  ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")))
   with FlatSpecLike
   with Matchers
-  with BeforeAndAfterAll
-  with MockitoSugar {
+  with BeforeAndAfterAll {
 
   override def afterAll() {
     TestKit.shutdownActorSystem(system)
@@ -162,6 +164,82 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
       }
       .sum
     msgSender.receiveN(numberOfMessages, 3 seconds)
+  }
+
+  it should "should set a minimal exponential backoff time for restarting drivers" in {
+    val newSettings = TestUtils.createSettings(
+      "schedoscope.transformations.hive.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.mapreduce.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.filesystem.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.seq.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.oozie.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.pig.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.shell.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.spark.driver-actor-backoff-minimum-delay=0",
+      "schedoscope.transformations.hive.driver-actor-backoff-slot-time=10",
+      "schedoscope.transformations.mapreduce.driver-actor-backoff-slot-time=10",
+      "schedoscope.transformations.filesystem.driver-actor-backoff-slot-time=10",
+      "schedoscope.transformations.seq.driver-actor-backoff-slot-time=10",
+      "schedoscope.transformations.oozie.driver-actor-backoff-slot-time=10",
+      "schedoscope.transformations.pig.driver-actor-backoff-slot-time=10",
+      "schedoscope.transformations.shell.driver-actor-backoff-slot-time=10",
+      "schedoscope.transformations.spark.driver-actor-backoff-slot-time=10")
+
+    val totalCountDrivers = Driver
+      .transformationsWithDrivers
+      .toArray
+      .map {
+        case t: String => newSettings.getDriverSettings(t).concurrency
+        case _ => 0
+      }
+      .sum
+
+    var transformationManagerActor: ActorRef = null
+    EventFilter.info(pattern = "DRIVER ACTOR: becoming idle",
+      occurrences = totalCountDrivers) intercept {
+      transformationManagerActor = TestActorRef(new TransformationManagerActor(newSettings,
+        bootstrapDriverActors = true))
+    }
+
+    EventFilter.info(pattern = "DRIVER ACTOR: becoming idle",
+      occurrences = totalCountDrivers) intercept {
+      system.actorSelection(s"${transformationManagerActor.path}/*-driver/*") ! "reboot"
+    }
+  }
+
+  it should "should set an exponential backoff time for restarting drivers" in {
+    val newSettings = TestUtils.createSettings(
+      "schedoscope.transformations.hive.driver-actor-backoff-minimum-delay=10000",
+      "schedoscope.transformations.mapreduce.driver-actor-backoff-minimum-delay=10000",
+      "schedoscope.transformations.filesystem.driver-actor-backoff-minimum-delay=10000",
+      "schedoscope.transformations.seq.driver-actor-backoff-minimum-delay=10000",
+      "schedoscope.transformations.oozie.driver-actor-backoff-minimum-delay=10000",
+      "schedoscope.transformations.pig.driver-actor-backoff-minimum-delay=10000",
+      "schedoscope.transformations.shell.driver-actor-backoff-minimum-delay=10000",
+      "schedoscope.transformations.spark.driver-actor-backoff-minimum-delay=10000")
+
+    val totalCountDrivers = Driver
+      .transformationsWithDrivers
+      .toArray
+      .map {
+        case t: String => newSettings.getDriverSettings(t).concurrency
+        case _ => 0
+      }
+      .sum
+
+    var transformationManagerActor: ActorRef = null
+    EventFilter.info(pattern = "DRIVER ACTOR: becoming idle",
+      occurrences = totalCountDrivers) intercept {
+      transformationManagerActor = TestActorRef(new TransformationManagerActor(newSettings,
+        bootstrapDriverActors = true))
+    }
+
+    val expectedActorsReplyingWithinTestTimeOut = 0
+
+    EventFilter.info(pattern = "DRIVER ACTOR: becoming idle",
+      occurrences = expectedActorsReplyingWithinTestTimeOut) intercept {
+      system.actorSelection(s"${transformationManagerActor.path}/*-driver/*") ! "reboot"
+    }
   }
 
 }

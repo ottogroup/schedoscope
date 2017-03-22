@@ -18,7 +18,7 @@ package org.schedoscope.scheduler.actors
 import akka.actor.{Actor, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.schema.SchemaManager
+import org.schedoscope.schema.{RetryableSchemaManagerException, SchemaManager}
 
 /**
   * The metadata logger actor writes view version checksums and timestamps to the metastore
@@ -29,8 +29,17 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
 
   val log = Logging(system, MetadataLoggerActor.this)
 
-  val crate = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  lazy val crate = getSchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
+
+  /**
+    * Before MetadataLoggerActor can become active, it depends on
+    * SchemaManager's BackOffStrategy
+    */
+  override def preStart() {
+    log.info("METADATA LOGGER ACTOR: booted.")
+    schemaRouter ! "tick"
+  }
 
   /**
     * Before the actor gets restarted, reenqueue the running write command with the schema root actor
@@ -41,10 +50,16 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
       self forward runningCommand.get
   }
 
+  def receive: Receive = LoggingReceive {
+    case "tick" => becomeActive()
+
+    case c: CommandRequest => schemaRouter forward c
+  }
+
   /**
     * Message handler.
     */
-  def receive = LoggingReceive({
+  def activeReceive = LoggingReceive({
 
     case s: SetViewVersion => {
       runningCommand = Some(s)
@@ -59,7 +74,21 @@ class MetadataLoggerActor(jdbcUrl: String, metaStoreUri: String, serverKerberosP
       sender ! SchemaActionSuccess()
       runningCommand = None
     }
+
+    case "reboot" => throw new RetryableSchemaManagerException(s"Received reboot command from ${sender.path.toStringWithoutAddress}")
   })
+
+  def becomeActive() {
+    log.info("METADATA LOGGER ACTOR: changed to active state.")
+    become(activeReceive)
+  }
+
+  def getSchemaManager(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
+    SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  }
+
+  def schemaRouter = context.parent
+
 }
 
 /**

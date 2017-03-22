@@ -55,6 +55,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   val driverRouter = context.parent
 
+
   /**
     * Log state upon start.
     */
@@ -64,7 +65,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     } catch {
       case t: Throwable => throw RetryableDriverException("Driver actor could not initialize driver because driver constructor throws exception (HINT: if Driver Actor start failure behaviour persists, validate the respective transformation driver config in conf file). Restarting driver actor...", t)
     }
-    logStateInfo("idle", "DRIVER ACTOR: initialized actor")
+    logStateInfo("booted", "DRIVER ACTOR: booted")
   }
 
   /**
@@ -84,10 +85,25 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
   /**
     * Message handler for the default state.
-    * Transitions only to state running
+    * Transitions only to state activeReceive
     */
   def receive = LoggingReceive {
+    case "tick" => toActiveReceive()
+
+    case c: DriverCommand => driverRouter ! c
+
+    case "reboot" => throw new RetryableDriverException()
+  }
+
+  /**
+    * Message handler for the actively processing
+    * DriverCommand messages.
+    * Transitions only to state active running
+    */
+  def activeReceive = LoggingReceive {
     case t: DriverCommand => toRunning(t)
+
+    case "reboot" => throw new RetryableDriverException()
   }
 
   /**
@@ -99,7 +115,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   def running(runHandle: DriverRunHandle[T], originalSender: ActorRef, transformingView: Option[View]): Receive = LoggingReceive {
     case KillCommand() => {
       driver.killRun(runHandle)
-      toReceive()
+      toActiveReceive()
     }
     // If getting a command while being busy, reschedule it by sending it to the driver router for load balancing
     case c: DriverCommand => driverRouter ! c
@@ -120,10 +136,11 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
 
             case t: Throwable => {
               log.error(s"DRIVER ACTOR: Driver run for handle=${runHandle} failed because completion handler threw exception ${t}, trace ${ExceptionUtils.getStackTrace(t)}")
+
               sendTransformationResult(transformingView,
                 originalSender,
                 TransformationFailure(runHandle, DriverRunFailed[T](driver, "Completition handler failed", t)))
-              toReceive()
+              toActiveReceive()
             }
           }
 
@@ -142,7 +159,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           sendTransformationResult(transformingView,
             originalSender,
             TransformationSuccess(runHandle, success, viewHasData))
-          toReceive()
+          toActiveReceive()
         }
 
         case failure: DriverRunFailed[T] => {
@@ -160,7 +177,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           sendTransformationResult(transformingView,
             originalSender,
             TransformationFailure(runHandle, failure))
-          toReceive()
+          toActiveReceive()
         }
       }
     } catch {
@@ -174,6 +191,9 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
         throw t
       }
     }
+
+    case "reboot" => throw new RetryableDriverException(s"Received reboot command from ${sender.path.toStringWithoutAddress}")
+
   }
 
   def sendTransformationResult(transformingView: Option[View], actorRef: ActorRef, msg: AnyRef): Unit = {
@@ -187,12 +207,12 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   /**
     * State transition to default state.
     */
-  def toReceive() {
+  def toActiveReceive() {
     runningCommand = None
 
     logStateInfo("idle", "DRIVER ACTOR: becoming idle")
 
-    become(receive)
+    become(activeReceive)
   }
 
   /**

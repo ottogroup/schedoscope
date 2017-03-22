@@ -157,33 +157,6 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgAllClassOf(classOf[NewTableActorRef], classOf[ViewStatusResponse])
   }
 
-  it should "initialize an external view" in new ViewManagerActorExternalTest {
-
-    val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
-    val future = viewManagerActor ? viewWithExt
-    val viewE = ExternalView(ExternalShop())
-
-    schemaManagerRouter.receiveWhile(messages = 4) {
-      case CheckOrCreateTables(List(`viewWithExt`)) =>
-        schemaManagerRouter.reply(SchemaActionSuccess())
-      case CheckOrCreateTables(List(`viewE`)) =>
-        schemaManagerRouter.reply(SchemaActionSuccess())
-      case AddPartitions(List(`viewWithExt`)) =>
-        schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt ->("test", 1L))))
-      case AddPartitions(List(`viewE`)) =>
-        schemaManagerRouter.reply(TransformationMetadata(Map(viewE ->("test", 1L))))
-    }
-
-    Await.result(future, 5 seconds)
-    future.isCompleted shouldBe true
-    future.value.get.isSuccess shouldBe true
-
-    viewManagerActor ! DelegateMessageToView(viewE, CommandForView(None, viewE, MaterializeView()))
-
-    //    expectMsgType[ViewStatusResponse]
-    expectMsgType[NewTableActorRef]
-  }
-
   it should "throw an exception if external views are not allowed" in new ViewManagerActorTest {
 
     val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))

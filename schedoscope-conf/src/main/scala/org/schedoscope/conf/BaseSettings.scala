@@ -116,8 +116,8 @@ class BaseSettings(val config: Config) {
     * The configured timeout for Schedoscope web service calls.
     */
   lazy val webserviceTimeout =
-  Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schedulingCommand", TimeUnit.MILLISECONDS),
-    TimeUnit.MILLISECONDS)
+    Duration.create(config.getDuration("schedoscope.scheduler.timeouts.schedulingCommand", TimeUnit.MILLISECONDS),
+      TimeUnit.MILLISECONDS)
 
   /**
     * The configured number of retries before a view enters failed state.
@@ -148,11 +148,20 @@ class BaseSettings(val config: Config) {
     false
   }
 
-
   /**
     * Number of parallel threads to access the metastore
     */
   lazy val metastoreConcurrency = config.getInt("schedoscope.metastore.concurrency")
+
+  /**
+    * Backoff time slot for partition creator actors dealing with metastore
+    */
+  lazy val backOffSlotTime = config.getInt("schedoscope.metastore.actor-backoff-slot-time")
+
+  /**
+    * Backoff time slot for driver actor restart.
+    */
+  lazy val backOffMinimumDelay = config.getInt("schedoscope.metastore.actor-backoff-minimum-delay")
 
   /**
     * Number of partitions to write in batch to the metatatore

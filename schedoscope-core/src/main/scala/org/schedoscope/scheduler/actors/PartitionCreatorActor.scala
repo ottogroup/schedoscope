@@ -15,22 +15,31 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, Props, actorRef2Scala}
+import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.schema.SchemaManager
+import org.schedoscope.schema.{RetryableSchemaManagerException, SchemaManager}
 
 /**
   * Parition creator actors are responsible for creating tables and partitions in the metastore.
   */
-class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) extends Actor {
+class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String, schemaManagerRouter: ActorRef) extends Actor {
 
   import context._
 
   val log = Logging(system, this)
 
-  val schemaManager = SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  lazy val schemaManager = getSchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
   var runningCommand: Option[Any] = None
+
+  /**
+    * Before PartitionCreatorActor can become active, it depends on
+    * SchemaManager's BackOffStrategy
+    */
+  override def preStart() {
+    log.info("PARTITION CREATOR ACTOR: booted.")
+    schemaRouter ! "tick"
+  }
 
   /**
     * Before the actor gets restarted, reenqueue the running write command with the schema root actor
@@ -41,11 +50,16 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
       self forward runningCommand.get
   }
 
+  def receive: Receive = LoggingReceive {
+    case "tick" => becomeActive()
+
+    case c: CommandRequest => schemaRouter forward c
+  }
+
   /**
     * Message handler
     */
-  def receive: Receive = LoggingReceive {
-
+  def activeReceive: Receive = LoggingReceive {
 
     case c: CheckOrCreateTables => {
 
@@ -105,7 +119,22 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
 
       runningCommand = None
     }
+
+    case "reboot" => throw new RetryableSchemaManagerException(s"Received reboot command from ${sender.path.toStringWithoutAddress}")
   }
+
+
+  def becomeActive() {
+    log.info("PARTITION CREATOR ACTOR: changed to active state.")
+    become(activeReceive)
+  }
+
+  def getSchemaManager(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = {
+    SchemaManager(jdbcUrl, metaStoreUri, serverKerberosPrincipal)
+  }
+
+  def schemaRouter = schemaManagerRouter
+
 }
 
 
@@ -113,5 +142,5 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
   * Factory for partition creator actors
   */
 object PartitionCreatorActor {
-  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String) = Props(classOf[PartitionCreatorActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal).withDispatcher("akka.actor.partition-creator-dispatcher")
+  def props(jdbcUrl: String, metaStoreUri: String, serverKerberosPrincipal: String, schemaManagerRouter: ActorRef) = Props(classOf[PartitionCreatorActor], jdbcUrl, metaStoreUri, serverKerberosPrincipal, schemaManagerRouter).withDispatcher("akka.actor.partition-creator-dispatcher")
 }
