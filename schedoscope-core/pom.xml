@@ -210,11 +210,13 @@
             </exclusions>
         </dependency>
 
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>parquet-hadoop</artifactId>
-            <version>${hive.parquet.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.twitter</groupId>-->
+            <!--<artifactId>parquet-hadoop</artifactId>-->
+            <!--<version>${hive.parquet.version}</version>-->
+            <!--<classifier>tests</classifier>-->
+            <!--<scope>test</scope>-->
+        <!--</dependency>-->
 
         <dependency>
             <groupId>schedoscope</groupId>
