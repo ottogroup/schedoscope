@@ -18,11 +18,11 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.7.13</version>
         </dependency>
-        <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>parquet-hadoop-bundle</artifactId>
-            <version>${pig.parquet.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.twitter</groupId>-->
+            <!--<artifactId>parquet-hadoop-bundle</artifactId>-->
+            <!--<version>${pig.parquet.version}</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.hive</groupId>
             <artifactId>hive-jdbc</artifactId>
