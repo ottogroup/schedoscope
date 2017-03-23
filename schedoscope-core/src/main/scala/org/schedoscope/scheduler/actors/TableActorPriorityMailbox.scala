@@ -16,22 +16,18 @@
 package org.schedoscope.scheduler.actors
 
 import akka.actor.ActorSystem
-import akka.dispatch.PriorityGenerator
-import akka.dispatch.UnboundedPriorityMailbox
+import akka.dispatch.{PriorityGenerator, UnboundedPriorityMailbox}
 import com.typesafe.config.Config
+import org.schedoscope.scheduler.messages.{InitializeViews, NewTableActorRef}
 
 /**
-  * Schedoscope-managed actors which rely on a BackOffStrategy for activation
-  * require prioritization of their activation messages, namely tick messages.
-  * The implementation of this UnboundedPriorityMailbox is done in config file
-  *
+  * Make sure that batched InitializeViews are processed with priority by table actors.
   */
-class ManagedActorPriorityMailbox(settings: ActorSystem.Settings, config: Config)
+class TableActorPriorityMailbox(settings: ActorSystem.Settings, config: Config)
   extends UnboundedPriorityMailbox(
-    // Note: lower prio means more important
     PriorityGenerator {
-      // prioritize tick for progress tracking
-      case "tick" => 0
-      // else default
-      case _ => 1
-    })
+      case InitializeViews(views) => if (views.size > 1) 0 else 2
+      case _: NewTableActorRef => 1
+      case _ => 3
+    }
+  )

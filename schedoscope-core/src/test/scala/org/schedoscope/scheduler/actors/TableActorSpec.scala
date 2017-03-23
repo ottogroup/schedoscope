@@ -27,7 +27,7 @@ import org.schedoscope.scheduler.driver.{DriverRunHandle, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
 import test.views.{ProductBrand, ViewWithExternalDeps}
-
+import scala.concurrent.duration._
 
 class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
@@ -114,9 +114,9 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     emptyDepsViewActor ! NewTableActorRef(productDependency, productViewActor.ref)
 
     emptyDepsViewActor ! CommandForView(None, view, MaterializeView())
-
     brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
     productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
+
   }
 
   it should "ask if he doesn't know another ViewActor" in new TableActorTest {
