@@ -59,10 +59,8 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
     //TODO: Review this part!
     case GetViews(views, status, filter, issueFilter, withDependencies) =>
-      val tableActors = tableActorsForViews(views.get.toSet, withDependencies)
-
       val viewStates = viewStatusMap.values
-        .filter(vs => views.isEmpty || tableActors.contains(vs.view))
+        .filter(vs => views.isEmpty || tableActorsForViews(views.get.toSet, withDependencies).contains(vs.view))
         .filter(vs => status.isEmpty || status.get.equals(vs.status))
         .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
         .filter(vs => issueFilter.isEmpty || (
@@ -78,19 +76,13 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
 
     case v: View =>
-      sender ! tableActorsForViews(Set(v)).head._2
+      sender ! tableActorForView(v)
 
 
-    case DelegateMessageToView(view, msg) =>
-      val ref = tableActorForView(view) match {
-        case Some(actorRef) =>
-          actorRef
-        case None =>
-          tableActorsForViews(Set(view)).head._2
-      }
-
+    case DelegateMessageToView(v, msg) =>
+      val ref = tableActorForView(v)
       ref forward msg
-      sender ! NewTableActorRef(view, ref)
+      sender ! NewTableActorRef(v, ref)
 
   })
 
@@ -121,6 +113,14 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     }
 
   /**
+    * This method returns the table actor for the given view, creating it if necessary.
+    *
+    * @param v the view to obtain table actor for
+    * @return the actor
+    */
+  def tableActorForView(v: View): ActorRef = tableActorsForViews(Set(v), false).head._2
+
+  /**
     * This method returns the table actors for the given views, creating them if necessary.
     *
     * @param vs               the views to obtain table actors for
@@ -144,7 +144,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     //
     viewsPerTable.foreach { vst =>
 
-      val tableActorRef = tableActorForView(vst.head).getOrElse(
+      val tableActorRef = existingTableActorForView(vst.head).getOrElse(
         actorOf(
           TableActor.props(
             Map.empty[View, ViewSchedulingState],
@@ -169,9 +169,9 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
       val newDepsActorRefs = v
         .dependencies
-        .flatMap(v => tableActorForView(v).map(NewTableActorRef(v, _)))
+        .flatMap(v => existingTableActorForView(v).map(NewTableActorRef(v, _)))
 
-      tableActorForView(v) match {
+      existingTableActorForView(v) match {
         case Some(actorRef) =>
           newDepsActorRefs.foreach(actorRef ! _)
 
@@ -180,7 +180,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     }
 
     //
-    // Finally return all views (initialized or already existing) that were address along with their table actors
+    // Finally return all views (initialized or already existing) that were addressed by the caller along with their table actors
     //
     val addressedViews =
       if (withDependencies)
@@ -209,7 +209,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
   /**
     * Returns the responsible table actor for a view if it exists.
     */
-  def tableActorForView(view: View): Option[ActorRef] =
+  def existingTableActorForView(view: View): Option[ActorRef] =
     child(tableActorNameForView(view))
 
 }
