@@ -34,7 +34,6 @@ class ViewManagerActor(settings: SchedoscopeSettings,
                        actionsManagerActor: ActorRef,
                        schemaManagerRouter: ActorRef,
                        viewSchedulingListenerManagerActor: ActorRef
-                       //                       createChildActor: String => ActorRef
                       ) extends Actor {
 
   import ViewManagerActor._
@@ -60,7 +59,6 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     case vsr: ViewStatusResponse =>
       viewStatusMap.put(vsr.view.urlPath, vsr)
 
-    //TODO: Review this part!
     case GetViews(views, status, filter, issueFilter, withDependencies) =>
       val viewStates = viewStatusMap.values
         .filter(vs => views.isEmpty || tableActorsForViews(views.get.toSet, withDependencies).contains(vs.view))
