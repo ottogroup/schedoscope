@@ -207,8 +207,10 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     vs.flatMap { v =>
       if (visited.contains(v) || viewStatusMap.contains(v.urlPath))
         List()
-      else
-        v :: unknownViewsOrDependencies(v.dependencies, visited + v)
+      else {
+        visited.add(v)
+        v :: unknownViewsOrDependencies(v.dependencies, visited)
+      }
     }
 
   /**
