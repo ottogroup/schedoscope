@@ -60,8 +60,10 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       viewStatusMap.put(vsr.view.urlPath, vsr)
 
     case GetViews(views, status, filter, issueFilter, withDependencies) =>
+      val tableActors = tableActorsForViews(views.getOrElse(List()).toSet, withDependencies)
+
       val viewStates = viewStatusMap.values
-        .filter(vs => views.isEmpty || tableActorsForViews(views.get.toSet, withDependencies).contains(vs.view))
+        .filter(vs => views.isEmpty || tableActors.contains(vs.view))
         .filter(vs => status.isEmpty || status.get.equals(vs.status))
         .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
         .filter(vs => issueFilter.isEmpty || (
