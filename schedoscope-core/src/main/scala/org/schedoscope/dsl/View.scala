@@ -432,6 +432,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   }.distinct.toList
 
   /**
+    * Returns all transitive dependencies of this view.
+    */
+  def transitiveDependencies: Set[View] = View.recursiveDependenciesOf(this).toSet - this
+
+  /**
     * Returns true if views contains external dependencies
     */
   def hasExternalDependencies = dependencies.exists(_.isExternal)
