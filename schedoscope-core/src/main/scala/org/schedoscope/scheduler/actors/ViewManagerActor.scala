@@ -129,7 +129,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     */
   def tableActorsForViews(vs: Set[View], withDependencies: Boolean = false): Map[View, ActorRef] = {
 
-    val viewsRequiringInitialization: List[View] = unknownViewsOrDependencies(vs.toList)
+    val viewsRequiringInitialization = unknownViewsOrDependencies(vs.toList)
 
     validateExternalViews(viewsRequiringInitialization)
 
@@ -138,8 +138,8 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       .map { case (_, views) => views }
 
     //
-    // a) Create table actors for views if necessary
-    // b) Send those actors initialize messages for the given views
+    // a) Create table actors for views requiring initialization if necessary
+    // b) Send table actors initialize messages with those views
     // c) register views in view status map
     //
     viewsPerTable.foreach { vst =>
@@ -174,10 +174,14 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       tableActorForView(v) match {
         case Some(actorRef) =>
           newDepsActorRefs.foreach(actorRef ! _)
+
         case None => //actor not yet known nothing to do here
       }
     }
 
+    //
+    // Finally return all views (initialized or already existing) that were address along with their table actors
+    //
     val addressedViews =
       if (withDependencies)
         vs ++ vs.flatMap(_.transitiveDependencies)
