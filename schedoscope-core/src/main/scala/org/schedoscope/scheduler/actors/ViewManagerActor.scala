@@ -23,6 +23,7 @@ import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.ViewSchedulingState
 
+import scala.collection.mutable
 import scala.collection.mutable.HashMap
 
 /**
@@ -202,7 +203,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     * @param vs views to inspect along with their dependecies
     * @return the view needing initialization
     */
-  def unknownViewsOrDependencies(vs: List[View], visited: Set[View] = Set()): List[View] =
+  def unknownViewsOrDependencies(vs: List[View], visited: mutable.HashSet[View] = mutable.HashSet()): List[View] =
     vs.flatMap { v =>
       if (visited.contains(v) || viewStatusMap.contains(v.urlPath))
         List()
