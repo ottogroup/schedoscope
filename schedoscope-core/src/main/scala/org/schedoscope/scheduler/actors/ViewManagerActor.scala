@@ -47,13 +47,16 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _ => Escalate
     }
+
   val log = Logging(system, ViewManagerActor.this)
+
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
   /**
     * Message handler.
     */
   def receive = LoggingReceive({
+
     case vsr: ViewStatusResponse =>
       viewStatusMap.put(vsr.view.urlPath, vsr)
 
@@ -90,7 +93,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     * Convenience "private" method to validate external Views and their dependencies
     * prior to actor initialization
     */
-  def validateExternalViews(vs: List[View]): Unit =
+  def validateExternalViews(vs: List[View]) {
     if (!settings.externalDependencies) {
       //external dependencies are not allowed
       val containsExternalDependencies = vs.exists {
@@ -111,6 +114,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         }
       }
     }
+  }
 
   /**
     * This method returns the table actor for the given view, creating it if necessary.
@@ -183,10 +187,10 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     // Finally return all views (initialized or already existing) that were addressed by the caller along with their table actors
     //
     val addressedViews =
-      if (withDependencies)
-        vs ++ vs.flatMap(_.transitiveDependencies)
-      else
-        vs
+    if (withDependencies)
+      vs ++ vs.flatMap(_.transitiveDependencies)
+    else
+      vs
 
     addressedViews.map(v => v -> viewStatusMap(v.urlPath).actor).toMap
   }
