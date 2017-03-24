@@ -134,7 +134,11 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     */
   def tableActorsForViews(vs: Set[View], withDependencies: Boolean = false): Map[View, ActorRef] = {
 
+    log.info(s"Looking for unknown views or dependencies for a set of ${vs.size} views.")
+
     val viewsRequiringInitialization = unknownViewsOrDependencies(vs.toList)
+
+    log.info(s"${viewsRequiringInitialization.size} views require initialization.")
 
     validateExternalViews(viewsRequiringInitialization)
 
@@ -184,6 +188,8 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       }
     }
 
+    log.info(s"${viewsRequiringInitialization.size} views initialized.")
+
     //
     // Finally return all views (initialized or already existing) that were addressed by the caller along with their table actors
     //
@@ -192,6 +198,8 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       vs ++ vs.flatMap(_.transitiveDependencies)
     else
       vs
+
+    log.info(s"Returning actors for ${addressedViews.size} addressed views.")
 
     addressedViews.map(v => v -> viewStatusMap(v.urlPath).actor).toMap
   }
@@ -205,9 +213,9 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     */
   def unknownViewsOrDependencies(vs: List[View], visited: mutable.HashSet[View] = mutable.HashSet()): List[View] =
     vs.flatMap { v =>
-      if (visited.contains(v) || viewStatusMap.contains(v.urlPath))
+      if (visited.contains(v) || viewStatusMap.contains(v.urlPath)) {
         List()
-      else {
+      } else {
         visited.add(v)
         v :: unknownViewsOrDependencies(v.dependencies, visited)
       }
