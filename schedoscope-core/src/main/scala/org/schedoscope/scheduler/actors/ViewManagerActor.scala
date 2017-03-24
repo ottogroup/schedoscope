@@ -55,7 +55,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     */
   def receive = LoggingReceive({
     case vsr: ViewStatusResponse =>
-      viewStatusMap.put(vsr.view.fullPath, vsr)
+      viewStatusMap.put(vsr.view.urlPath, vsr)
 
     //TODO: Review this part!
     case GetViews(views, status, filter, issueFilter, withDependencies) =>
