@@ -3743,7 +3743,7 @@ SqlIdentifier TypeName() :
                     SqlTypeName.VARCHAR.name(), pos);
             }
         ]
-        | <VARCHAR>
+        | ( <STRING> | <VARCHAR> )
         {
             typeName = new SqlIdentifier(
                 SqlTypeName.VARCHAR.name(), pos);
@@ -5056,6 +5056,7 @@ SqlPostfixOperator PostfixRowOperator() :
     | < STATIC: "STATIC" >
     | < STDDEV_POP: "STDDEV_POP" >
     | < STDDEV_SAMP: "STDDEV_SAMP" >
+    | < STRING: "STRING" >
     | < STRUCTURE: "STRUCTURE" >
     | < STYLE: "STYLE" >
     | < SUBCLASS_ORIGIN: "SUBCLASS_ORIGIN" >
@@ -5177,6 +5178,7 @@ String CommonNonReservedKeyWord() :
         | <ADD>
         | <ADMIN>
         | <AFTER>
+        | <ALL>
         | <ALWAYS>
         | <ASC>
         | <ASSERTION>
@@ -5218,6 +5220,7 @@ String CommonNonReservedKeyWord() :
         | <CONTINUE>
         | <CURSOR_NAME>
         | <DATA>
+        | <DATE>
         | <DATETIME_INTERVAL_CODE>
         | <DATETIME_INTERVAL_PRECISION>
         | <DAY>
@@ -5363,6 +5366,7 @@ String CommonNonReservedKeyWord() :
         | <SPECIFIC_NAME>
         | <STATE>
         | <STATEMENT>
+        | <STRING>
         | <STRUCTURE>
         | <STYLE>
         | <SUBCLASS_ORIGIN>

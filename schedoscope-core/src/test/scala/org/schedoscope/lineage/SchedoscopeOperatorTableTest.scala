@@ -32,7 +32,7 @@ import scala.collection.JavaConverters._
   */
 class SchedoscopeOperatorTableTest extends FlatSpec with Matchers {
   "A Schedoscope operator table" should "return an operator for a configured metastore function" in {
-    val operatorTable = new SchedoscopeOperatorTable(Set(ProductBrand(p("EC0101"), today._1, today._2, today._3)))
+    val operatorTable = new SchedoscopeOperatorTable(ProductBrand(p("EC0101"), today._1, today._2, today._3))
     val list = new util.ArrayList[SqlOperator]()
 
     operatorTable.lookupOperatorOverloads(new SqlIdentifier("soundex", SqlParserPos.ZERO), null, null, list)
