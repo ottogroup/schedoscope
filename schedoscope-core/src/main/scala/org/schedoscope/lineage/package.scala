@@ -67,4 +67,5 @@ package object lineage {
     }
   }
 
+  class NoHiveTransformationException extends Exception
 }

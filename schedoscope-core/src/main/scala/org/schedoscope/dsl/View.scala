@@ -23,12 +23,14 @@ import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.{ParsedView, ParsedViewAugmentor}
 import org.schedoscope.lineage.{DependencyAnalyzer, DependencyMap}
 import org.schedoscope.test.WritableView
+import org.slf4j.LoggerFactory
 
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
 import scala.collection.mutable
 import scala.collection.mutable.{HashMap, HashSet, ListBuffer}
 import scala.language.{existentials, implicitConversions}
+import scala.util.{Failure, Success, Try}
 
 /**
   * Base class for all view definitions. Provides all features of structures and view DSLs.
@@ -408,7 +410,14 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     this
   }
 
-  def lineage: DependencyMap = DependencyAnalyzer.analyzeLineage(this)
+  def lineage: DependencyMap = tryLineage match {
+    case Success(d) => d
+    case Failure(ex) =>
+      LoggerFactory.getLogger(getClass).warn("Cannot analyze lineage, falling back to black-box: ", ex)
+      DependencyAnalyzer.getBlackboxLineage(this)
+  }
+
+  def tryLineage: Try[DependencyMap] = DependencyAnalyzer.analyzeLineage(this)
 
   /**
     * Return all dependencies of the view in the order they have been declared.
