@@ -20,6 +20,7 @@ package org.schedoscope.dsl
   * - implicitly - views.
   */
 trait StructureDsl extends Named with Commentable {
+
   protected def registerField(f: Field[_]): Unit
 
   /**

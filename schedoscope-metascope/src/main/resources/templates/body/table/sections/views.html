@@ -14,7 +14,8 @@
  * limitations under the License.
  */  -->
 
-<tr data-th-each="partition : ${views}" style="border-bottom: 1px solid lightgrey;" th:id="${partition.internalViewId()}">
+<tr data-th-each="partition : ${views}" style="border-bottom: 1px solid lightgrey;"
+    th:id="${partition.internalViewId()}">
     <td data-th-each="parameter:${table.parameters}"
         data-th-text="${partition.getValueForParameterName(parameter.fieldName)}"/>
     <td data-th-if="${table.parameters.size() == 0}">/</td>
@@ -28,7 +29,8 @@
                     </a>
                     <ul class="partitionList">
                         <li data-th-each="dep : ${e.value}">
-                            <a th:href="'table?fqdn=' + ${dep.table.fqdn} + '#partitionsContent-' + ${dep.internalViewId()}" data-th-text="${dep.viewUrl}"></a>
+                            <a th:href="'table?fqdn=' + ${dep.table.fqdn} + '#partitionsContent-' + ${dep.internalViewId()}"
+                               data-th-text="${dep.viewUrl}"></a>
                         </li>
                     </ul>
                 </li>
@@ -45,7 +47,8 @@
                     </a>
                     <ul class="partitionList">
                         <li data-th-each="dep : ${e.value}">
-                            <a th:href="'table?fqdn=' + ${dep.table.fqdn} + '#partitionsContent-' + ${dep.internalViewId()}" data-th-text="${dep.viewUrl}"></a>
+                            <a th:href="'table?fqdn=' + ${dep.table.fqdn} + '#partitionsContent-' + ${dep.internalViewId()}"
+                               data-th-text="${dep.viewUrl}"></a>
                         </li>
                     </ul>
                 </li>

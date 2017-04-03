@@ -93,46 +93,26 @@ public class KafkaExportJob extends BaseExportJob {
     }
 
     /**
-     *
-     * @param isSecured
-     *            A flag indicating if Kerberos is enabled
-     * @param metaStoreUris
-     *            The Hive metastore uri(s)
-     * @param principal
-     *            The Kerberos principal
-     * @param inputDatabase
-     *            The Hive input database
-     * @param inputTable
-     *            Hive input table
-     * @param inputFilter
-     *            An optional filter
-     * @param keyName
-     *            The name of the database column used as key
-     * @param brokers
-     *            A list of Kafka brokers
-     * @param zookeepers
-     *            A list of zookeeper brokers
-     * @param producerType
-     *            The Kafka producer type (sync / async)
-     * @param cleanupPolicy
-     *            The cleanup policy (delete / compact)
-     * @param numPartitions
-     *            Num of partitions for the Kafka topic
-     * @param replicationFactor
-     *            The replication factor for the topic
-     * @param numReducer
-     *            The number of reducers
-     * @param codec
-     *            The compression codec (gzip / snappy / none)
-     * @param outputEncoding
-     *            Output encoding (string / avro)
-     * @param anonFields
-     *            A list of fields to anonymize
-     * @param exportSalt
-     *            An optional salt when anonymizing fields
+     * @param isSecured         A flag indicating if Kerberos is enabled
+     * @param metaStoreUris     The Hive metastore uri(s)
+     * @param principal         The Kerberos principal
+     * @param inputDatabase     The Hive input database
+     * @param inputTable        Hive input table
+     * @param inputFilter       An optional filter
+     * @param keyName           The name of the database column used as key
+     * @param brokers           A list of Kafka brokers
+     * @param zookeepers        A list of zookeeper brokers
+     * @param producerType      The Kafka producer type (sync / async)
+     * @param cleanupPolicy     The cleanup policy (delete / compact)
+     * @param numPartitions     Num of partitions for the Kafka topic
+     * @param replicationFactor The replication factor for the topic
+     * @param numReducer        The number of reducers
+     * @param codec             The compression codec (gzip / snappy / none)
+     * @param outputEncoding    Output encoding (string / avro)
+     * @param anonFields        A list of fields to anonymize
+     * @param exportSalt        An optional salt when anonymizing fields
      * @return A configured Job instance
-     * @throws Exception
-     *             Is thrown if an error occurs
+     * @throws Exception Is thrown if an error occurs
      */
     public Job configure(boolean isSecured, String metaStoreUris,
                          String principal, String inputDatabase, String inputTable,
@@ -218,10 +198,8 @@ public class KafkaExportJob extends BaseExportJob {
     /**
      * The entry point when called from the command line.
      *
-     * @param args
-     *            A string array containing the cmdl args.
-     * @throws Exception
-     *             is thrown if an error occurs.
+     * @param args A string array containing the cmdl args.
+     * @throws Exception is thrown if an error occurs.
      */
     public static void main(String[] args) throws Exception {
         try {

@@ -16,7 +16,6 @@
 package org.schedoscope.metascope.repository;
 
 import org.schedoscope.metascope.model.MetascopeExport;
-import org.schedoscope.metascope.model.MetascopeMetadata;
 import org.springframework.data.repository.CrudRepository;
 
 public interface MetascopeExportRepository extends CrudRepository<MetascopeExport, String> {

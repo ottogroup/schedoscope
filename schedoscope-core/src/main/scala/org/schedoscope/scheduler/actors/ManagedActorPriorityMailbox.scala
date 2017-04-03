@@ -21,13 +21,12 @@ import akka.dispatch.UnboundedPriorityMailbox
 import com.typesafe.config.Config
 
 /**
-  * A driver actor requires prioritization of tick messages,
-  * in order to guarantee successful progress tracking, and
-  * to new Mailbox successful moving forward to Mailbox queued
-  * transformation tasks
+  * Schedoscope-managed actors which rely on a BackOffStrategy for activation
+  * require prioritization of their activation messages, namely tick messages.
+  * The implementation of this UnboundedPriorityMailbox is done in config file
   *
   */
-class DriverPriorityMailbox(settings: ActorSystem.Settings, config: Config)
+class ManagedActorPriorityMailbox(settings: ActorSystem.Settings, config: Config)
   extends UnboundedPriorityMailbox(
     // Note: lower prio means more important
     PriorityGenerator {

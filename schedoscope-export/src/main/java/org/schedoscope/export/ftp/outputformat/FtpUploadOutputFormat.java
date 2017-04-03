@@ -142,19 +142,20 @@ public class FtpUploadOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
     /**
      * A method to configure the output format.
-     * @param job The job object.
-     * @param tableName The Hive input table name
-     * @param printHeader A flag indicating to print a csv header or not.
-     * @param delimiter The delimiter to use for separating the records (CSV)
-     * @param fileType The file type (csv / json)
-     * @param codec The compresson codec (none / gzip / bzip2)
-     * @param ftpEndpoint The (s)ftp endpoint.
-     * @param ftpUser The (s)ftp user
-     * @param ftpPass The (s)ftp password or sftp passphrase
-     * @param keyFile The private ssh key file
-     * @param filePrefix An optional file prefix
-     * @param passiveMode Passive mode or not (only ftp)
-     * @param userIsRoot User dir is root or not
+     *
+     * @param job          The job object.
+     * @param tableName    The Hive input table name
+     * @param printHeader  A flag indicating to print a csv header or not.
+     * @param delimiter    The delimiter to use for separating the records (CSV)
+     * @param fileType     The file type (csv / json)
+     * @param codec        The compresson codec (none / gzip / bzip2)
+     * @param ftpEndpoint  The (s)ftp endpoint.
+     * @param ftpUser      The (s)ftp user
+     * @param ftpPass      The (s)ftp password or sftp passphrase
+     * @param keyFile      The private ssh key file
+     * @param filePrefix   An optional file prefix
+     * @param passiveMode  Passive mode or not (only ftp)
+     * @param userIsRoot   User dir is root or not
      * @param cleanHdfsDir Clean up HDFS temporary files.
      * @throws Exception Is thrown if an error occurs.
      */
@@ -223,6 +224,7 @@ public class FtpUploadOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
     /**
      * A method to provide the fully qualified file path of the current file.
+     *
      * @param context The TaskAttemptContext.
      * @return Returns the fully qualified file path of the current file.
      */
@@ -232,6 +234,7 @@ public class FtpUploadOutputFormat<K, V> extends FileOutputFormat<K, V> {
 
     /**
      * A method to return the file extension, depends on the compression codec.
+     *
      * @return The file extension.
      */
     public static String getOutputNameExtension() {

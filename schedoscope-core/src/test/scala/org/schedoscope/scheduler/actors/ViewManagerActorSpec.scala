@@ -67,18 +67,46 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
       val future = viewManagerActor ? view
 
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(productDependency)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(brandDependency)))
-      schemaManagerRouter.reply(SchemaActionSuccess())
-      schemaManagerRouter.expectMsg(AddPartitions(List(view)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
-      schemaManagerRouter.expectMsg(AddPartitions(List(productDependency)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
-      schemaManagerRouter.expectMsg(AddPartitions(List(brandDependency)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
+      var messageSum = 0
+
+      def acceptMessage: PartialFunction[Any, _] = {
+        case AddPartitions(List(`brandDependency`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency ->("test", 1L))))
+          messageSum += 1
+        case AddPartitions(List(`productDependency`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency ->("test", 1L))))
+          messageSum += 2
+        case AddPartitions(List(`view`)) =>
+          schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
+          messageSum += 3
+        case CheckOrCreateTables(List(`brandDependency`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 4
+        case CheckOrCreateTables(List(`productDependency`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 5
+        case CheckOrCreateTables(List(`view`)) =>
+          schemaManagerRouter.reply(SchemaActionSuccess())
+          messageSum += 6
+      }
+
+      val msgs = schemaManagerRouter.receiveWhile(messages = 6)(acceptMessage)
+      msgs.size shouldBe 6
+      messageSum shouldBe 21
+
+      //
+      //      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
+      //      schemaManagerRouter.reply(SchemaActionSuccess())
+      //      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(productDependency)))
+      //      schemaManagerRouter.reply(SchemaActionSuccess())
+      //      schemaManagerRouter.expectMsg(CheckOrCreateTables(List(brandDependency)))
+      //      schemaManagerRouter.reply(SchemaActionSuccess())
+      //      schemaManagerRouter.expectMsg(AddPartitions(List(view)))
+      //      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
+      //      schemaManagerRouter.expectMsg(AddPartitions(List(productDependency)))
+      //      schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
+      //      schemaManagerRouter.expectMsg(AddPartitions(List(brandDependency)))
+      //      schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
 
       Await.result(future, 5 seconds)
       future.isCompleted shouldBe true
@@ -100,48 +128,33 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   it should "delegate a message to a view" in new ViewManagerActorTest {
     val actorRef = initializeView(view)
 
-    viewManagerActor ! DelegateMessageToView(view, InvalidateView())
-    expectMsgAllOf(NewViewActorRef(view, actorRef),
+    viewManagerActor ! DelegateMessageToView(view, CommandForView(None, view, InvalidateView()))
+    expectMsgAllOf(NewTableActorRef(view, actorRef),
       ViewStatusResponse("invalidated", view, actorRef))
   }
 
-  it should "delegate a message to a unknown view" in new ViewManagerActorTest {
+  it should "delegate a message to a unknown view with known table" in new ViewManagerActorTest {
     val unknownView = Brand(p("ec0101"))
     val actorRef = initializeView(view)
-    viewManagerActor ! DelegateMessageToView(unknownView, InvalidateView())
+    viewManagerActor ! DelegateMessageToView(unknownView, CommandForView(None, unknownView, InvalidateView()))
 
-    //if ViewManager does not know view it will start to communicate with
-    //the SchemaManager
+    schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
+    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView ->("checksum", 1L))))
+
+    expectMsgAllClassOf(classOf[NewTableActorRef], classOf[ViewStatusResponse])
+  }
+
+  it should "delegate a message to a unknown view with unknown table" in new ViewManagerActorTest {
+    val unknownView = Click(p("ec0101"), p("2999"), p("12"), p("31"))
+    val actorRef = initializeView(view)
+    viewManagerActor ! DelegateMessageToView(unknownView, CommandForView(None, unknownView, InvalidateView()))
+
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(unknownView)))
     schemaManagerRouter.reply(SchemaActionSuccess())
     schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("checksum", 1L))))
+    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView ->("checksum", 1L))))
 
-    expectMsgAllClassOf(classOf[NewViewActorRef], classOf[ViewStatusResponse])
-  }
-
-  it should "initialize an external view" in new ViewManagerActorExternalTest {
-
-    val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
-    val future = viewManagerActor ? viewWithExt
-    val viewE = ExternalView(ExternalShop())
-
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewE)))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
-    schemaManagerRouter.expectMsg(AddPartitions(List(viewE)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(viewE -> ("test", 1L))))
-
-    Await.result(future, 5 seconds)
-    future.isCompleted shouldBe true
-    future.value.get.isSuccess shouldBe true
-
-    viewManagerActor ! DelegateMessageToView(viewE, MaterializeView())
-
-    expectMsgType[NewViewActorRef]
+    expectMsgAllClassOf(classOf[NewTableActorRef], classOf[ViewStatusResponse])
   }
 
   it should "throw an exception if external views are not allowed" in new ViewManagerActorTest {
@@ -157,15 +170,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     val viewWithExt = ViewWithIllegalExternalDeps(p("ec0101"))
     the[UnsupportedOperationException] thrownBy {
       viewManagerActor.receive(viewWithExt)
-    } should have message "You are referencing an external view as internal: test.views/Brand/ec0101."
-  }
-
-  it should "throw an exception if external views are used as internal" in new ViewManagerActorExternalTest {
-
-    val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
-    the[UnsupportedOperationException] thrownBy {
-      viewManagerActor.receive(viewWithExt)
-    } should have message "You are referencing an internal view as external: test.extviews/ExternalShop/."
+    } should have message "You are referencing an external view as internal: external(test.views/Brand/ec0101)."
   }
 
   "the check" should "be silenced by the setting" in new ViewManagerActorExternalTest {
@@ -176,13 +181,17 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     val viewWithExt = ViewWithIllegalInternalDeps(p("ec0101"))
 
     viewManagerActor ! viewWithExt
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(viewWithExt)))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(CheckOrCreateTables(List(ExternalShop())))
-    schemaManagerRouter.reply(SchemaActionSuccess())
-    schemaManagerRouter.expectMsg(AddPartitions(List(viewWithExt)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
-    schemaManagerRouter.expectMsg(AddPartitions(List(ExternalShop())))
-    schemaManagerRouter.reply(TransformationMetadata(Map(ExternalShop() -> ("test", 1L))))
+
+    schemaManagerRouter.receiveWhile(messages = 4) {
+      case CheckOrCreateTables(List(`viewWithExt`)) =>
+        schemaManagerRouter.reply(SchemaActionSuccess())
+      case CheckOrCreateTables(List(ExternalShop())) =>
+        schemaManagerRouter.reply(SchemaActionSuccess())
+      case AddPartitions(List(viewWithExt)) =>
+        schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt ->("test", 1L))))
+      case AddPartitions(List(ExternalShop())) =>
+        schemaManagerRouter.reply(TransformationMetadata(Map(ExternalShop() ->("test", 1L))))
+    }
+
   }
 }

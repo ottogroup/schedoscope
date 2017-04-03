@@ -27,18 +27,18 @@ import java.util.Set;
 
 public interface MetascopeTableRepository extends CrudRepository<MetascopeTable, String> {
 
-  @Query("SELECT t FROM MetascopeTable t WHERE :co MEMBER OF t.categoryObjects")
-  public List<MetascopeTable> findByCategoryObject(@Param(value = "co") MetascopeCategoryObject co);
+    @Query("SELECT t FROM MetascopeTable t WHERE :co MEMBER OF t.categoryObjects")
+    public List<MetascopeTable> findByCategoryObject(@Param(value = "co") MetascopeCategoryObject co);
 
-  @Query("SELECT t FROM MetascopeTable t WHERE :commentEntity MEMBER OF t.comments")
-  public MetascopeTable findByComment(@Param(value = "commentEntity") MetascopeComment commentEntity);
+    @Query("SELECT t FROM MetascopeTable t WHERE :commentEntity MEMBER OF t.comments")
+    public MetascopeTable findByComment(@Param(value = "commentEntity") MetascopeComment commentEntity);
 
-  @Query("SELECT distinct(t.personResponsible) FROM MetascopeTable t where t.personResponsible is not null")
-  public Set<String> getAllOwner();
+    @Query("SELECT distinct(t.personResponsible) FROM MetascopeTable t where t.personResponsible is not null")
+    public Set<String> getAllOwner();
 
-  public List<MetascopeTable> findTop5ByOrderByViewCountDesc();
+    public List<MetascopeTable> findTop5ByOrderByViewCountDesc();
 
-  @Query("SELECT t.fqdn FROM MetascopeTable t")
-  public List<String> getAllTablesNames();
+    @Query("SELECT t.fqdn FROM MetascopeTable t")
+    public List<String> getAllTablesNames();
 
 }

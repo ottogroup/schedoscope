@@ -44,10 +44,11 @@
                         data-th-if="${!field.hasDocumentation()}" class="btn btn-default show-elem">Create Documentation
                 </button>
                 <input type="hidden" name="fqdn" th:value="${table.fqdn}"/> <input type="hidden" name="fieldname"
-                                                                                   th:value="${field.fieldName}"/> <input
-                    type="hidden" name="parameter" th:value="${field.isParameter()}"/> <input type="hidden"
-                                                                                               name="documentation"
-                                                                                               th:id="${field.fieldName} + 'Input'"/>
+                                                                                   th:value="${field.fieldName}"/>
+                <input
+                        type="hidden" name="parameter" th:value="${field.isParameter()}"/> <input type="hidden"
+                                                                                                  name="documentation"
+                                                                                                  th:id="${field.fieldName} + 'Input'"/>
                 <button th:id="${field.fieldName} + 'SubmitDocuButton'" class="btn btn-success hide-elem" type="submit"
                         style="display: none;">Save
                 </button>
@@ -140,9 +141,9 @@
                             <input type="hidden" name="fqdn" th:value="${table.fqdn}"/> <input type="hidden"
                                                                                                name="fieldname"
                                                                                                th:value="${field.fieldName}"/>
-<input
-                                type="hidden" name="comment"
-                                th:id="${field.fieldName} + 'CommentInput'"/>
+                            <input
+                                    type="hidden" name="comment"
+                                    th:id="${field.fieldName} + 'CommentInput'"/>
                             <button id="createCommentButton" type="submit" class="btn btn-success pull-right">Create
                                 Comment
                             </button>

@@ -293,7 +293,7 @@ public class SchedoscopeTask extends Task {
       connection.close();
     } catch (SQLException e) {
       LOG.error("Could not close connection", e);
-      }
+    }
 
     LOG.info("Saving to index");
     for (MetascopeTable table : cachedTables.values()) {

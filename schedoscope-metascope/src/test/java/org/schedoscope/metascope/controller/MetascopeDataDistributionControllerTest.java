@@ -34,44 +34,46 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.mockito.Mockito.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 @ActiveProfiles(value = "test")
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment= SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class MetascopeDataDistributionControllerTest {
 
-  @Autowired
-  protected TestRestTemplate restTemplate;
+    @Autowired
+    protected TestRestTemplate restTemplate;
 
-  @Autowired
-  private MetascopeTableService metascopeTableService;
+    @Autowired
+    private MetascopeTableService metascopeTableService;
 
-  @MockBean
-  private MetascopeDataDistributionService metascopeDataDistributionService;
+    @MockBean
+    private MetascopeDataDistributionService metascopeDataDistributionService;
 
-  @Before
-  public void setup() {
-    when(metascopeDataDistributionService.checkStatus(any(MetascopeTable.class))).thenReturn(MetascopeDataDistributionService.Status.NotAvailable);
-    Mockito.doNothing().when(metascopeDataDistributionService).calculateDistribution(any(MetascopeTable.class));
+    @Before
+    public void setup() {
+        when(metascopeDataDistributionService.checkStatus(any(MetascopeTable.class))).thenReturn(MetascopeDataDistributionService.Status.NotAvailable);
+        Mockito.doNothing().when(metascopeDataDistributionService).calculateDistribution(any(MetascopeTable.class));
 
-    MetascopeTable table = new MetascopeTable();
-    table.setFqdn("test");
-    metascopeTableService.save(table);
-  }
+        MetascopeTable table = new MetascopeTable();
+        table.setFqdn("test");
+        metascopeTableService.save(table);
+    }
 
-  @Test
-  public void sometest() throws Exception {
-    HttpHeaders headers = new HttpHeaders();
-    headers.set("Referer", "/test");
+    @Test
+    public void sometest() throws Exception {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Referer", "/test");
 
-    HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
+        HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
 
-    ResponseEntity<String> response = this.restTemplate.exchange("/datadistribution/start?fqdn=test", HttpMethod.POST, entity, String.class);
-    assertEquals(302, response.getStatusCodeValue());
-    assertTrue(response.getHeaders().get("Location").get(0).endsWith("/test#datadistributionContent"));
-  }
+        ResponseEntity<String> response = this.restTemplate.exchange("/datadistribution/start?fqdn=test", HttpMethod.POST, entity, String.class);
+        assertEquals(302, response.getStatusCodeValue());
+        assertTrue(response.getHeaders().get("Location").get(0).endsWith("/test#datadistributionContent"));
+    }
 
 }

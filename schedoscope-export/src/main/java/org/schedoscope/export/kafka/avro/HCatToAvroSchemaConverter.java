@@ -74,13 +74,10 @@ public class HCatToAvroSchemaConverter {
     /**
      * Converts a HCatSchema to an Avro Schema.
      *
-     * @param hcatSchema
-     *            The HCatSchema.
-     * @param tableName
-     *            The name of the table, will be the record name.
+     * @param hcatSchema The HCatSchema.
+     * @param tableName  The name of the table, will be the record name.
      * @return A derived Avro Schema.
-     * @throws HCatException
-     *             Is thrown if an error occurs.
+     * @throws HCatException Is thrown if an error occurs.
      */
     public Schema convertSchema(HCatSchema hcatSchema, String tableName)
             throws IOException {

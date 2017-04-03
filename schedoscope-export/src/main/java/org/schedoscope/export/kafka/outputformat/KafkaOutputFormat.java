@@ -41,10 +41,8 @@ import java.util.Properties;
  * The Kafka output format is responsible to write data into Kafka, it
  * initializes the KafkaRecordWriter.
  *
- * @param <K>
- *            The key class.
- * @param <V>
- *            The value class, must be a GenericRecord.
+ * @param <K> The key class.
+ * @param <V> The value class, must be a GenericRecord.
  */
 public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord>>
         extends OutputFormat<K, V> {
@@ -132,30 +130,18 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
     /**
      * Initializes the KafkaOutputFormat.
      *
-     * @param conf
-     *            The Hadoop configuration object.
-     * @param brokerList
-     *            The list of Kafka brokers to bootstrap from.
-     * @param zookeeperHosts
-     *            The list of Zookeeper srvers to connect to.
-     * @param producerType
-     *            The Kafka producer type (sync / async).
-     * @param cleanupPolicy
-     *            The Kafka topic cleanup policy (delete / compact)
-     * @param keyName
-     *            The name of the key field.
-     * @param tableName
-     *            The name of the Hive table.
-     * @param databaseName
-     *            The name of the Hive database.
-     * @param numPartitions
-     *            The number of partitions for the given topic.
-     * @param replicationFactor
-     *            The replication factor for the given topic.
-     * @param codec
-     *            The compression codec to use (none / snappy / gzip).
-     * @param enc
-     *            The outputencoding to use (string / avro).
+     * @param conf              The Hadoop configuration object.
+     * @param brokerList        The list of Kafka brokers to bootstrap from.
+     * @param zookeeperHosts    The list of Zookeeper srvers to connect to.
+     * @param producerType      The Kafka producer type (sync / async).
+     * @param cleanupPolicy     The Kafka topic cleanup policy (delete / compact)
+     * @param keyName           The name of the key field.
+     * @param tableName         The name of the Hive table.
+     * @param databaseName      The name of the Hive database.
+     * @param numPartitions     The number of partitions for the given topic.
+     * @param replicationFactor The replication factor for the given topic.
+     * @param codec             The compression codec to use (none / snappy / gzip).
+     * @param enc               The outputencoding to use (string / avro).
      */
     public static void setOutput(Configuration conf, String brokerList,
                                  String zookeeperHosts, ProducerType producerType,
@@ -216,10 +202,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
          * Inializes a new Kafka Record Writer using a Kafka producer under the
          * hood.
          *
-         * @param producer
-         *            The configured Kafka producer.
-         * @param topic
-         *            The Kafka topic to send the data to.
+         * @param producer The configured Kafka producer.
+         * @param topic    The Kafka topic to send the data to.
          */
         public KafkaStringRecordWriter(Producer<String, String> producer,
                                        String topic) {
@@ -257,10 +241,8 @@ public class KafkaOutputFormat<K extends Text, V extends AvroValue<GenericRecord
          * Inializes a new Kafka Record Writer using a Kafka producer under the
          * hood. This one writes avro generic records to Kafka.
          *
-         * @param producer
-         *            The configured Kafka producer.
-         * @param topic
-         *            The Kafka topic to send the data to.
+         * @param producer The configured Kafka producer.
+         * @param topic    The Kafka topic to send the data to.
          */
         public KafkaAvroGenericRecordWriter(
                 Producer<String, GenericRecord> producer, String topic) {

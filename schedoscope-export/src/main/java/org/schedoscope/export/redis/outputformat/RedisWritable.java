@@ -28,30 +28,24 @@ public interface RedisWritable {
     /**
      * Write data back to redis using the regular client.
      *
-     * @param jedis
-     *            The Redis client.
-     * @param replace
-     *            Flag to toggle replace mode.
+     * @param jedis   The Redis client.
+     * @param replace Flag to toggle replace mode.
      */
     public void write(Jedis jedis, boolean replace);
 
     /**
      * Write data back to redis using the pipelined client.
      *
-     * @param jedis
-     *            The Redis client.
-     * @param replace
-     *            Flag to toggle replace mode.
+     * @param jedis   The Redis client.
+     * @param replace Flag to toggle replace mode.
      */
     public void write(Pipeline jedis, boolean replace);
 
     /**
      * Read data from Redis using the regular client.
      *
-     * @param jedis
-     *            The Redis client
-     * @param key
-     *            The key to use for lookups.
+     * @param jedis The Redis client
+     * @param key   The key to use for lookups.
      */
     public void readFields(Jedis jedis, String key);
 }

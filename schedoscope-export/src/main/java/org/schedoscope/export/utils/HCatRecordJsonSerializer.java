@@ -42,10 +42,8 @@ public class HCatRecordJsonSerializer {
     /**
      * The constructor initializes the JsonSerDe and Jackson ObjectMapper.
      *
-     * @param conf
-     *            The Hadoop configuration object.
-     * @param schema
-     *            The HCatalog Schema
+     * @param conf   The Hadoop configuration object.
+     * @param schema The HCatalog Schema
      */
     public HCatRecordJsonSerializer(Configuration conf, HCatSchema schema) {
 
@@ -82,13 +80,10 @@ public class HCatRecordJsonSerializer {
     /**
      * Extracts a complex field as Json from a HCatalog record.
      *
-     * @param value
-     *            The HCatalogRecord
-     * @param fieldName
-     *            The field to extract.
+     * @param value     The HCatalogRecord
+     * @param fieldName The field to extract.
      * @return A string representation of the field.
-     * @throws IOException
-     *             Is thrown if an error occurs.
+     * @throws IOException Is thrown if an error occurs.
      */
     public String getFieldAsJson(HCatRecord value, String fieldName)
             throws IOException {
@@ -106,11 +101,9 @@ public class HCatRecordJsonSerializer {
     /**
      * Converts a HCatRecord to Json.
      *
-     * @param value
-     *            The HCatRecord
+     * @param value The HCatRecord
      * @return A JsonNode representing the complete HCatRecord.
-     * @throws IOException
-     *             Is thrown if an error occurs
+     * @throws IOException Is thrown if an error occurs
      */
     public JsonNode getRecordAsJson(HCatRecord value) throws IOException {
 

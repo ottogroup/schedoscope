@@ -77,6 +77,33 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 03/24/2017 - Release 0.8.2
+
+We have released Version 0.8.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This version provides significant performance improvements when initializing the scheduling state for a large number of views.
+
+###### 03/18/2017 - Release 0.8.1
+
+We have released Version 0.8.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This fixes a critical bug that could result in applying commands to all views in a table and not just the ones addressed. *Do not use Release 0.8.0*
+
+###### 03/17/2017 - Release 0.8.0
+
+
+We have released Version 0.8.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+Schedoscope 0.8.0 includes, among other things:
+
+* significant rework of Schedoscope's actor system that supports testing and uses significantly fewer actors reducing stress for poor Akka;
+* support for a lot more [Hive storage formats](https://github.com/ottogroup/schedoscope/wiki/Storage-Formats);
+* definition of arbitrary [Hive table properties / SerDes](https://github.com/ottogroup/schedoscope/wiki/Storage-Formats);
+* stability, performance, and UI improvements to Metascope;
+* the names of views being transformed appear as the job name in the Hadoop resource manager.
+
+Please note that Metascope's database schema has changed with this release, so back up your database before deploying.
+
 ###### 11/30/2016 - Release 0.7.1
 
 We have released Version 0.7.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
@@ -151,3 +178,4 @@ The test framework now automatically checks whether there is an `ON` condition f
 
 ## License
 Licensed under the [Apache License 2.0](https://github.com/ottogroup/schedoscope/blob/master/LICENSE)
+

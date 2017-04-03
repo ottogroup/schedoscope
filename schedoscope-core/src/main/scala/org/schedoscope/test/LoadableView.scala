@@ -161,7 +161,8 @@ trait test extends LoadableView with AccessRowData {
   def `then`() {
     `then`(null,
       disableDependencyCheck = false,
-      disableTransformationValidation = false)
+      disableTransformationValidation = false,
+      disableLineageValidation = true)
   }
 
   /**
@@ -170,11 +171,12 @@ trait test extends LoadableView with AccessRowData {
     * @param sortedBy                        sort the table by field
     * @param disableDependencyCheck          disable dependency checks
     * @param disableTransformationValidation disable transformation validation
+    * @param disableLineageValidation        disable lineage validation
     */
   def `then`(sortedBy: FieldLike[_] = null,
              disableDependencyCheck: Boolean = false,
              disableTransformationValidation: Boolean = false,
-             disableLineageValidation: Boolean = false) {
+             disableLineageValidation: Boolean = true) {
     TestUtils.loadView(this, sortedBy, disableDependencyCheck, disableTransformationValidation,
       disableLineageValidation)
   }

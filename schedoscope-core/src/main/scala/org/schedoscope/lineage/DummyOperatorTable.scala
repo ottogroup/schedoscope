@@ -32,6 +32,7 @@ import scala.collection.JavaConverters._
   * @author Jan Hicken (jhicken)
   */
 object DummyOperatorTable extends SqlOperatorTable {
+
   case class FramingSqlRankFunction(name: String) extends SqlRankFunction(name) {
     override def allowsFraming(): Boolean = true
   }

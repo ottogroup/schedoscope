@@ -21,7 +21,10 @@ import akka.event.Logging
 import akka.routing.RoundRobinPool
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.scheduler.messages._
+import org.schedoscope.scheduler.utils.{BackOffSupervision, ExponentialBackOff}
 import org.schedoscope.schema.RetryableSchemaManagerException
+
+import scala.concurrent.duration._
 
 /**
   * Supervisor and forwarder for partition creator and metadata logger actors
@@ -31,6 +34,10 @@ class SchemaManagerRouter(settings: SchedoscopeSettings) extends Actor {
   import context._
 
   val log = Logging(system, this)
+
+  val metastoreActorsBackOffSupervision = new BackOffSupervision(
+    managerName = "SCHEMA MANAGER ACTOR",
+    system = context.system)
 
   var metadataLoggerActor: ActorRef = null
   var partitionCreatorActor: ActorRef = null
@@ -46,11 +53,35 @@ class SchemaManagerRouter(settings: SchedoscopeSettings) extends Actor {
     }
 
   override def preStart {
-    metadataLoggerActor = actorOf(MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal), "metadata-logger")
-    partitionCreatorActor = actorOf(PartitionCreatorActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal).withRouter(new RoundRobinPool(settings.metastoreConcurrency)), "partition-creator")
+    metadataLoggerActor = actorOf(
+      MetadataLoggerActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal),
+      "metadata-logger")
+    partitionCreatorActor = actorOf(
+      PartitionCreatorActor.props(settings.jdbcUrl, settings.metastoreUri, settings.kerberosPrincipal, self)
+        .withRouter(new RoundRobinPool(settings.metastoreConcurrency)),
+      "partition-creator")
   }
 
+  def scheduleTick(managedActor: ActorRef, backOffTime: FiniteDuration) {
+    system.scheduler.scheduleOnce(backOffTime, managedActor, "tick")
+  }
+
+  def manageActorLifecycle(metaActor: ActorRef) {
+    val slot = settings.backOffSlotTime millis
+    val delay = settings.backOffMinimumDelay millis
+
+    val backOffTime = metastoreActorsBackOffSupervision.manageActorLifecycle(
+      managedActor = metaActor,
+      backOffSlotTime = slot,
+      backOffMinimumDelay = delay)
+
+    scheduleTick(metaActor, backOffTime)
+  }
+
+
   def receive = {
+
+    case "tick" => manageActorLifecycle(sender)
 
     case m: CheckOrCreateTables => partitionCreatorActor forward m
 

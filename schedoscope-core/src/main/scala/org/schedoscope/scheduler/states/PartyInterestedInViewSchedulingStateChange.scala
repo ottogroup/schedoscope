@@ -27,17 +27,21 @@ import scala.language.implicitConversions
   *
   * For informing, one needs to provide an adequate message sending ! operator
   */
-sealed class PartyInterestedInViewSchedulingStateChange
+sealed trait PartyInterestedInViewSchedulingStateChange {
+  val view: Option[View]
+}
 
 /**
   * A view depending on a given view with a state change.
   */
-case class DependentView(view: View) extends PartyInterestedInViewSchedulingStateChange
+case class DependentView(dependentView: View) extends PartyInterestedInViewSchedulingStateChange {
+  val view = Some(dependentView)
+}
 
 /**
   * A generic Akka actor interested in a state change
   */
-case class AkkaActor(actorRef: ActorRef) extends PartyInterestedInViewSchedulingStateChange
+case class AkkaActor(view: Option[View], actorRef: ActorRef) extends PartyInterestedInViewSchedulingStateChange
 
 object PartyInterestedInViewSchedulingStateChange {
   /**
@@ -48,5 +52,5 @@ object PartyInterestedInViewSchedulingStateChange {
   /**
     * Implicit conversion of view to party type
     */
-  implicit def toParty(actorRef: ActorRef): AkkaActor = AkkaActor(actorRef)
+  implicit def toParty(actorRef: ActorRef): AkkaActor = AkkaActor(None, actorRef)
 }
