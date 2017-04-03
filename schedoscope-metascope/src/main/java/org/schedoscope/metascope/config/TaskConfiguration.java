@@ -1,7 +1,5 @@
-package org.schedoscope.metascope.config;
-
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +13,7 @@ package org.schedoscope.metascope.config;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.schedoscope.metascope.config;
 
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.aop.interceptor.SimpleAsyncUncaughtExceptionHandler;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import javax.persistence.FetchType;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
-import java.util.List;
+import java.util.Set;
 
 @MappedSuperclass
 public abstract class Documentable {
@@ -27,7 +27,7 @@ public abstract class Documentable {
     @OneToOne(fetch = FetchType.EAGER)
     private MetascopeComment comment;
     @OneToMany(fetch = FetchType.EAGER)
-    private List<MetascopeComment> comments;
+    private Set<MetascopeComment> comments;
 
     public MetascopeComment getComment() {
         return comment;
@@ -37,11 +37,11 @@ public abstract class Documentable {
         this.comment = comment;
     }
 
-    public List<MetascopeComment> getComments() {
+    public Set<MetascopeComment> getComments() {
         return comments;
     }
 
-    public void setComments(List<MetascopeComment> comments) {
+    public void setComments(Set<MetascopeComment> comments) {
         this.comments = comments;
     }
 
