@@ -16,20 +16,19 @@
 
 package org.schedoscope.lineage
 
-import org.apache.calcite.plan.RelOptUtil
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core._
 import org.apache.calcite.rex._
-import org.apache.calcite.sql.parser.SqlParseException
-import org.apache.calcite.tools.{Frameworks, RelConversionException, ValidationException}
+import org.apache.calcite.tools.ValidationException
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
-import org.schedoscope.dsl.{Field, FieldLike, Parameter, View}
+import org.schedoscope.dsl.{FieldLike, View}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.util.matching.Regex.Match
+import scala.util.{Failure, Try}
 
 /**
   * @author Jan Hicken (jhicken)
@@ -67,10 +66,9 @@ object DependencyAnalyzer {
     * if lineage is not defined explicitly, ''blackbox lineage'' will be returned.
     *
     * @param view    a view to analyze
-    * @param recurse true, if a recursive analysis should be done
     * @return a map, that assigns a set of dependencies to each field
     */
-  def analyzeDependencies(view: View, recurse: Boolean = false): DependencyMap = analyze(view, recurse, dependenciesOf)
+  def analyzeDependencies(view: View): Try[DependencyMap] = analyze(view, dependenciesOf)
 
   /**
     * Provides ''Where-Provenance'' information for a [[org.schedoscope.dsl.View]].
@@ -87,104 +85,58 @@ object DependencyAnalyzer {
     * if lineage is not defined explicitly, ''blackbox lineage'' will be returned.
     *
     * @param view    a view to analyze
-    * @param recurse true, if a recursive analysis should be done
     * @return a map, that assigns a set of dependencies to each field
     */
-  def analyzeLineage(view: View, recurse: Boolean = false): DependencyMap = analyze(view, recurse, lineageOf)
+  def analyzeLineage(view: View): Try[DependencyMap] = analyze(view, lineageOf)
 
-  private def analyze(view: View, recurse: Boolean, depFunc: DependencyFunction,
-                      cache: DependencyCache = mutable.Map()): DependencyMap = {
-    cache.put(view.tableName, view.hiveTransformation match {
-      case Some(ht) => try {
-        getMap(view, ht, depFunc)
-      } catch {
-        case ex: SqlParseException =>
-          log.warn(s"$view's HiveQl cannot be parsed, falling back to blackbox lineage", ex)
-          getBlackboxLineage(view)
-        case ex: ValidationException =>
-          log.warn(s"$view's HiveQl cannot be validated, falling back to blackbox lineage", ex)
-          getBlackboxLineage(view)
-        case ex: RelConversionException =>
-          log.warn(s"$view's HiveQl cannot be converted into a relational expression, falling back to blackbox lineage", ex)
-          getBlackboxLineage(view)
-      }
-      case _ =>
-        log.info(s"$view does not use a HiveTransformation, falling back to blackbox lineage")
-        getBlackboxLineage(view)
-    })
-
-    if (recurse) {
-      view.recursiveDependencies.groupBy(_.tableName).foreach {
-        case (tblName, views) => cache.put(tblName, analyze(views.head, recurse = false, depFunc, cache))
-      }
-
-      cache.put(view.tableName, cache(view.tableName).map[(FieldLike[_], Set[FieldLike[_]]), DependencyMap] {
-        case (f, deps) => f -> deps.flatMap {
-          case p: Parameter[_] => Some(p)
-          case dep: Field[_] => getLeafDependencies(Set(dep), cache)
-        }
-      })
-    }
-
-    cache(view.tableName)
-  }
-
-  private def getLeafDependencies(fields: FieldSet, cache: DependencyCache): FieldSet = {
-    fields.flatMap { fieldLike =>
-      fieldLike match {
-        case p: Parameter[_] => Some(p)
-        case f: Field[_] =>
-          if (f.assignedStructure.get.asInstanceOf[View].dependencies.isEmpty)
-            Some(f)
-          else {
-            val fieldDeps = cache(f.assignedStructure.get.asInstanceOf[View].tableName)(f)
-            if (fieldDeps.contains(f)) // ignore dependencies to itself
-              Some(f)
-            else
-              getLeafDependencies(fieldDeps, cache)
-          }
-      }
+  private def analyze(view: View, depFunc: DependencyFunction): Try[DependencyMap] = {
+    view.hiveTransformation match {
+      case Some(ht) => Try(getMap(view, ht, depFunc))
+      case _ => Failure(new NoHiveTransformationException())
     }
   }
 
-  @throws(classOf[SqlParseException])
   private def getMap(view: View, ht: HiveTransformation, depFunc: DependencyFunction): DependencyMap = {
     log.debug("Processing lineage of {}", view)
 
-    val planner = Frameworks.getPlanner(SchedoscopeConfig(view))
+    var planner = new NonFlatteningPlannerImpl(SchedoscopeConfig(view, scanRecursive = false))
 
-    Some(ht.sql).map(
-      replaceParameters(_, ht.configuration.toMap)
-    ).map(sql =>
-      replaceParameters(sql, parseHiveVars(sql))
-    ).map(
-      preprocessSql
-    ).map { sql =>
-      """[^\\];""".r.findFirstMatchIn(sql) match {
-        case Some(m) => sql.substring(0, m.start + 1)
+    val firstStmt = (Some(ht.sql)
+      map (replaceParameters(_, ht.configuration.toMap))
+      map { sql => replaceParameters(sql, parseHiveVars(sql)) }
+      map preprocessSql
+      map { sql =>
+      """(?!\\);""".r.findFirstMatchIn(sql) match {
+        case Some(m) => sql.substring(0, m.start)
         case None => sql
       }
-    }.map { sql =>
-      log.debug("Parsing SQL:\n{}", sql)
-      planner.parse(sql)
-    }.map(
-      planner.validate
-    ).map(
-      planner.convert
-    ).map { relNode =>
-      log.debug(RelOptUtil.toString(relNode))
-      depFunc(relNode)
-    }.get.zipWithIndex.map {
+    }
+      ).get
+
+    val parsed = planner.parse(firstStmt)
+
+    // try with direct dependencies first, then recursively
+    val validated = try {
+      planner.validate(parsed)
+    } catch {
+      case _: ValidationException =>
+        log.debug("Trying again with a recursively-built schema...")
+        planner = new NonFlatteningPlannerImpl(SchedoscopeConfig(view, scanRecursive = true))
+        planner.validate(planner.parse(firstStmt))
+    }
+
+    val relNode = planner.convert(validated)
+    depFunc(relNode).zipWithIndex.map {
       case (set, i) => view.fields(i) -> set
     }.toMap
   }
 
   /**
-    * Provides dependency information for a [[RelNode]].
+    * Provides dependency information for a [[org.apache.calcite.rel.RelNode]].
     * <p>
-    * In addition to all dependencies found by [[DependencyAnalyzer.lineageOf()]], the following dependencies are added:
+    * In addition to all dependencies found by `lineageOf()`, the following dependencies are added:
     * <ul>
-    *   <li>`JOIN`, `FILTER`: Lineage of the condition's [[RexNode]] is added to all output attributes' lineage</li>
+    * <li>`JOIN`, `FILTER`: Lineage of the condition's [[org.apache.calcite.rel.RelNode]] is added to all output attributes' lineage</li>
     *   <li>`AGGREGATE`: Lineage of all group set members is added to all aggregated attributes' lineage</li>
     * </ul>
     *
@@ -225,7 +177,7 @@ object DependencyAnalyzer {
   }
 
   /**
-    * Provides lineage information for a [[RelNode]].
+    * Provides lineage information for a [[org.apache.calcite.rel.RelNode]].
     * <p>
     * <ul>
     *   <li>`TABLESCAN`: Trivial leaf case, each attribute depends on itself</li>
@@ -267,10 +219,11 @@ object DependencyAnalyzer {
   }
 
   /**
-    * Provides lineage information for a [[RexNode]].
+    * Provides lineage information for a [[org.apache.calcite.rex.RexNode]].
     * <p>
-    * The [[RexNode]] is analyzed recursively with its operands, if a [[RexCall]] is found.
-    * In case of an [[RexInputRef]], the referenced field index is returned.
+    * The [[org.apache.calcite.rex.RexNode]] is analyzed recursively with its operands, if a
+    * [[org.apache.calcite.rex.RexCall]] is found. In case of an [[org.apache.calcite.rex.RexInputRef]],
+    * the referenced field index is returned.
     *
     * @param node the node to analyze
     * @return A list of field indices from the input relation the node depends on
@@ -285,7 +238,7 @@ object DependencyAnalyzer {
   /**
     * Provides lineage information for black box transformations.
     * <p>
-    * If an explicit lineage for a field has been defined with [[View.affects()]], the information is taken from
+    * If an explicit lineage for a field has been defined with `View.affects()`, the information is taken from
     * there. Otherwise, it is assumed, that each field depends on <i>every</i> field from each dependency.
     * <p>
     * If a view does not depend on any views, will return a map where each field depends only on itself.
@@ -293,7 +246,7 @@ object DependencyAnalyzer {
     * @param view a view
     * @return a map: `f -> Set(all fields from all dependencies)`
     */
-  private def getBlackboxLineage(view: View): DependencyMap = {
+  def getBlackboxLineage(view: View): DependencyMap = {
     if (view.dependencies.isEmpty)
       view.fieldsAndParameters.map(f => f -> Set[FieldLike[_]](f))
     else if (view.explicitLineage.nonEmpty)
@@ -312,12 +265,15 @@ object DependencyAnalyzer {
     */
   private def preprocessSql(sql: String): String =
     Seq(
+      """--.*?\n""".r -> { (_: Match) =>
+        ""
+      }, // remove all comments
       """"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'""".r -> { (_: Match) =>
         "''"
       }, // replace all double or single quoted strings by empty single quoted strings
       """(?i)SET .+?=.+?;""".r -> { (_: Match) =>
         ""
-      }
+      } // remove all SET option=value; expressions
     ).foldLeft(sql) {
       case (str, (regex, replacer)) => regex.replaceAllIn(str, replacer)
     }
