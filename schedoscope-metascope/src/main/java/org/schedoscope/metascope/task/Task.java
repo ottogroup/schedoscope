@@ -19,15 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 public abstract class Task {
 
-  public void preExecute() {
-  }
+    public void preExecute() {
+    }
 
-  public boolean execute(long start) {
-    preExecute();
-    return run(start);
-  }
+    public boolean execute(long start) {
+        preExecute();
+        return run(start);
+    }
 
-  @Transactional
-  public abstract boolean run(long start);
+    @Transactional
+    public abstract boolean run(long start);
 
 }

@@ -108,18 +108,18 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
     val hack = ""
     HiveQl.ddl(view) shouldEqual
       s"""	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_avro ${hack}
-         |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
-         |	WITH SERDEPROPERTIES (
-         |		 'avro.schema.url' = 'hdfs:///hdp/dev/global/datadictionary/schema/avro/myPath'
-         |	)
-         |	STORED AS
-         |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
-         |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
-         |	TBLPROPERTIES (
-         |		 'immutable' = 'true'
-         |	)
-         |	LOCATION '/hdp/dev/test/views/article_view_avro'
-         |""".stripMargin
+          |	ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+          |	WITH SERDEPROPERTIES (
+          |		 'avro.schema.url' = 'hdfs:///hdp/dev/global/datadictionary/schema/avro/myPath'
+          |	)
+          |	STORED AS
+          |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+          |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+          |	TBLPROPERTIES (
+          |		 'immutable' = 'true'
+          |	)
+          |	LOCATION '/hdp/dev/test/views/article_view_avro'
+          |""".stripMargin
   }
 
   it should "generate avro consise format" in {
@@ -127,12 +127,12 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
     val hack = ""
     HiveQl.ddl(view) shouldEqual
       s"""	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_avro2 ${hack}
-         |	STORED AS AVRO
-         |	TBLPROPERTIES (
-         |		 'immutable' = 'true'
-         |	)
-         |	LOCATION '/hdp/dev/test/views/article_view_avro2'
-         |""".stripMargin
+          |	STORED AS AVRO
+          |	TBLPROPERTIES (
+          |		 'immutable' = 'true'
+          |	)
+          |	LOCATION '/hdp/dev/test/views/article_view_avro2'
+          |""".stripMargin
   }
 
   it should "generate ORC row format and tblproperties sql statement" in {

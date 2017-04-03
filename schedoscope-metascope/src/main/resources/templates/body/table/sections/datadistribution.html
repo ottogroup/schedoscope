@@ -16,47 +16,54 @@
 
 <div th:attr="class=${selectedPartition != null ? 'tab-pane active' : 'tab-pane'}" id="datadistributionContent"
      data-th-fragment="data(table,util)">
-  <div data-th-if="${dataDistStatus.equals('running')}">
-    <div>Data Distribution is getting calculated at the moment. Check your resource manager for progress.</div>
-  </div>
-
-  <div data-th-if="${dataDistStatus.equals('notavailable')}">
-    <div>Data Distribution for this table has not been calculated yet.</div>
-
-    <em>Calculating the distribution will launch MapReduce jobs on your
-      cluster, depending on the size of your data, this may take a while.</em>
-
-    <br/>
-
-    <div style="padding-top: 50px;">
-      <a class="btn btn-info" th:href="'datadistribution/start?fqdn=' + ${table.fqdn}">Calculate data distribution</a>
-    </div>
-  </div>
-
-  <div data-th-if="${dataDistStatus.equals('finished')}">
-
-    <div style="overflow: auto;">
-      <span data-th-if="${ddMap.get('agg_rows') != null}" data-th-text="${'Total count of lines: ' + ddMap.get('agg_rows').value}"/>
-      <hr/>
-      <table class="table table-bordered table-striped">
-        <tr>
-          <th></th>
-          <th>Minimum</th>
-          <th>Maximum</th>
-          <th>Average</th>
-          <th>Standard Deviation</th>
-          <th>Sum</th>
-        </tr>
-        <tr data-th-each="field : ${table.fields}">
-          <td data-th-text="${field.fieldName} + ' (' + ${field.fieldType} + ')'"></td>
-          <td th:with="dd=${ddMap.get(field.fieldName + '__min')}" data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
-          <td th:with="dd=${ddMap.get(field.fieldName + '__max')}" data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
-          <td th:with="dd=${ddMap.get(field.fieldName + '__avg')}" data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
-          <td th:with="dd=${ddMap.get(field.fieldName + '__stddev')}" data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
-          <td th:with="dd=${ddMap.get(field.fieldName + '__sum')}" data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
-        </tr>
-      </table>
+    <div data-th-if="${dataDistStatus.equals('running')}">
+        <div>Data Distribution is getting calculated at the moment. Check your resource manager for progress.</div>
     </div>
 
-  </div>
+    <div data-th-if="${dataDistStatus.equals('notavailable')}">
+        <div>Data Distribution for this table has not been calculated yet.</div>
+
+        <em>Calculating the distribution will launch MapReduce jobs on your
+            cluster, depending on the size of your data, this may take a while.</em>
+
+        <br/>
+
+        <div style="padding-top: 50px;">
+            <a class="btn btn-info" th:href="'datadistribution/start?fqdn=' + ${table.fqdn}">Calculate data
+                distribution</a>
+        </div>
+    </div>
+
+    <div data-th-if="${dataDistStatus.equals('finished')}">
+
+        <div style="overflow: auto;">
+            <span data-th-if="${ddMap.get('agg_rows') != null}"
+                  data-th-text="${'Total count of lines: ' + ddMap.get('agg_rows').value}"/>
+            <hr/>
+            <table class="table table-bordered table-striped">
+                <tr>
+                    <th></th>
+                    <th>Minimum</th>
+                    <th>Maximum</th>
+                    <th>Average</th>
+                    <th>Standard Deviation</th>
+                    <th>Sum</th>
+                </tr>
+                <tr data-th-each="field : ${table.fields}">
+                    <td data-th-text="${field.fieldName} + ' (' + ${field.fieldType} + ')'"></td>
+                    <td th:with="dd=${ddMap.get(field.fieldName + '__min')}"
+                        data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
+                    <td th:with="dd=${ddMap.get(field.fieldName + '__max')}"
+                        data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
+                    <td th:with="dd=${ddMap.get(field.fieldName + '__avg')}"
+                        data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
+                    <td th:with="dd=${ddMap.get(field.fieldName + '__stddev')}"
+                        data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
+                    <td th:with="dd=${ddMap.get(field.fieldName + '__sum')}"
+                        data-th-text="${dd == null} ? '-' : ${dd.value}"></td>
+                </tr>
+            </table>
+        </div>
+
+    </div>
 </div>

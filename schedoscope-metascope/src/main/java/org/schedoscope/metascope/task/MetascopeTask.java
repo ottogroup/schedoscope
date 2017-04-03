@@ -27,32 +27,32 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class MetascopeTask implements Runnable {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MetascopeTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(MetascopeTask.class);
 
-  @Autowired
-  private MetascopeConfig config;
+    @Autowired
+    private MetascopeConfig config;
 
-  @Autowired
-  private SchedoscopeTask syncTask;
+    @Autowired
+    private SchedoscopeTask syncTask;
 
-  @Autowired
-  private MetastoreTask metastoreSyncTask;
+    @Autowired
+    private MetastoreTask metastoreSyncTask;
 
-  @Autowired
-  private TaskMutex taskMutex;
+    @Autowired
+    private TaskMutex taskMutex;
 
-  @Override
-  @Transactional
-  public void run() {
-    long ts = System.currentTimeMillis();
-    if (!taskMutex.isSchedoscopeTaskRunning()) {
-      taskMutex.setSchedoscopeTaskRunning(true);
-      for (SchedoscopeInstance schedoscopeInstance : config.getSchedoscopeInstances()) {
-        syncTask.forInstance(schedoscopeInstance).run(ts);
-      }
-      metastoreSyncTask.run(ts);
-      taskMutex.setSchedoscopeTaskRunning(false);
+    @Override
+    @Transactional
+    public void run() {
+        long ts = System.currentTimeMillis();
+        if (!taskMutex.isSchedoscopeTaskRunning()) {
+            taskMutex.setSchedoscopeTaskRunning(true);
+            for (SchedoscopeInstance schedoscopeInstance : config.getSchedoscopeInstances()) {
+                syncTask.forInstance(schedoscopeInstance).run(ts);
+            }
+            metastoreSyncTask.run(ts);
+            taskMutex.setSchedoscopeTaskRunning(false);
+        }
     }
-  }
 
 }

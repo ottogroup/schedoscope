@@ -33,8 +33,7 @@ public class UnrecoverableException extends Exception {
     /**
      * Initializes the exception with a message.
      *
-     * @param message
-     *            The exception message.
+     * @param message The exception message.
      */
     public UnrecoverableException(String message) {
         super(message);
@@ -43,8 +42,7 @@ public class UnrecoverableException extends Exception {
     /**
      * Initializes the exception from a throwable.
      *
-     * @param cause
-     *            The exception to initialize from.
+     * @param cause The exception to initialize from.
      */
     public UnrecoverableException(Throwable cause) {
         super(cause);
@@ -53,10 +51,8 @@ public class UnrecoverableException extends Exception {
     /**
      * Initializes the exception from a throwable and a message.
      *
-     * @param message
-     *            The exception message.
-     * @param cause
-     *            The exception to initialize from.
+     * @param message The exception message.
+     * @param cause   The exception to initialize from.
      */
     public UnrecoverableException(String message, Throwable cause) {
         super(message, cause);

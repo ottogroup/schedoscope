@@ -26,14 +26,14 @@ import java.util.List;
 
 public interface MetascopeViewRepository extends CrudRepository<MetascopeView, String> {
 
-  @Query("SELECT count(*) FROM MetascopeView v WHERE v.table.fqdn = :fqdn AND v.viewId < :viewId")
-  public int getPartitionPosition(@Param(value = "fqdn") String fqdn, @Param(value = "viewId") String viewId);
+    @Query("SELECT count(*) FROM MetascopeView v WHERE v.table.fqdn = :fqdn AND v.viewId < :viewId")
+    public int getPartitionPosition(@Param(value = "fqdn") String fqdn, @Param(value = "viewId") String viewId);
 
-  @Query("SELECT v.parameterString FROM MetascopeView v WHERE v.table.fqdn = :fqdn ORDER BY v.parameterString")
-  public List<String> findParameterStringsForTable(@Param(value = "fqdn") String fqdn);
+    @Query("SELECT v.parameterString FROM MetascopeView v WHERE v.table.fqdn = :fqdn ORDER BY v.parameterString")
+    public List<String> findParameterStringsForTable(@Param(value = "fqdn") String fqdn);
 
-  public Page<MetascopeView> findByTableFqdnOrderByViewId(String fqdn, Pageable pageable);
+    public Page<MetascopeView> findByTableFqdnOrderByViewId(String fqdn, Pageable pageable);
 
-  public MetascopeView findFirstByTableFqdn(String fqdn);
+    public MetascopeView findFirstByTableFqdn(String fqdn);
 
 }

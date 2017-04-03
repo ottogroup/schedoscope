@@ -9,7 +9,7 @@
     <parent>
         <artifactId>schedoscope-suite</artifactId>
         <groupId>schedoscope</groupId>
-        <version>0.7.2-SNAPSHOT</version>
+        <version>0.8.3-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -280,7 +280,8 @@
                     <additionalClasspathElements>
                         <additionalClasspathElement>/etc/hadoop/conf</additionalClasspathElement>
                         <additionalClasspathElement>/etc/hive/conf</additionalClasspathElement>
-                        <additionalClasspathElement>target/${project.build.finalName}-mapreduce.jar</additionalClasspathElement>
+                        <additionalClasspathElement>target/${project.build.finalName}-mapreduce.jar
+                        </additionalClasspathElement>
                     </additionalClasspathElements>
                 </configuration>
             </plugin>

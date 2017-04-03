@@ -18,23 +18,18 @@ package org.schedoscope.scheduler.actors
 import akka.actor.SupervisorStrategy.Escalate
 import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
-import org.schedoscope.AskPattern._
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.Checksum
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.states.{CreatedByViewManager, ReadFromSchemaManager}
+import org.schedoscope.scheduler.states.ViewSchedulingState
 
-import scala.collection.mutable.{HashMap, HashSet}
+import scala.collection.mutable
+import scala.collection.mutable.HashMap
 
 /**
-  * The view manager actor is the factory and import org.schedoscope.scheduler.actors.ViewActor
-  * supervisor of view actors. Upon creation of view actors
-  * it is responsible for creating non-existing tables or partitions in the Hive metastore, for reading
-  * the last transformation timestamps and version checksums from the metastore for already materialized
-  * views.
+  * The view manager actor is the factory and supervisor of table actors managing all views of a table. It also serves
+  * as the central access point for the schedoscope service.
   *
-  * It does this by cooperating with the partition creator actor and metadata logger actor.
   */
 class ViewManagerActor(settings: SchedoscopeSettings,
                        actionsManagerActor: ActorRef,
@@ -52,19 +47,24 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _ => Escalate
     }
+
   val log = Logging(system, ViewManagerActor.this)
+
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
   /**
     * Message handler.
     */
   def receive = LoggingReceive({
-    case vsr: ViewStatusResponse => viewStatusMap.put(sender.path.toStringWithoutAddress, vsr)
 
-    case GetViews(views, status, filter, issueFilter, dependencies) => {
-      val viewActors: Set[ActorRef] = if (views.isDefined) initializeViewActors(views.get, dependencies) else Set()
+    case vsr: ViewStatusResponse =>
+      viewStatusMap.put(vsr.view.urlPath, vsr)
+
+    case GetViews(views, status, filter, issueFilter, withDependencies) =>
+      val tableActors = tableActorsForViews(views.getOrElse(List()).toSet, withDependencies)
+
       val viewStates = viewStatusMap.values
-        .filter(vs => views.isEmpty || viewActors.contains(vs.actor))
+        .filter(vs => views.isEmpty || tableActors.contains(vs.view))
         .filter(vs => status.isEmpty || status.get.equals(vs.status))
         .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
         .filter(vs => issueFilter.isEmpty || (
@@ -74,182 +74,158 @@ class ViewManagerActor(settings: SchedoscopeSettings,
               || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
             )
           )
-        ).toList
+        ).toList.distinct
 
       sender ! ViewStatusListResponse(viewStates)
-    }
 
-    case v: View => {
-      sender ! initializeViewActors(List(v), dependencies = false).head
-    }
 
-    case DelegateMessageToView(view, msg) => {
-      val ref = actorForView(view) match {
-        case Some(actorRef) =>
-          actorRef
-        case None =>
-          initializeViewActors(List(view), false).head
-      }
+    case v: View =>
+      sender ! tableActorForView(v)
+
+
+    case DelegateMessageToView(v, msg) =>
+      val ref = tableActorForView(v)
       ref forward msg
-      sender ! NewViewActorRef(view, ref)
-    }
+      sender ! NewTableActorRef(v, ref)
+
   })
 
   /**
     * Convenience "private" method to validate external Views and their dependencies
     * prior to actor initialization
     */
-  def validateExternalViews(allViews: List[(View, Boolean, Int)]): Unit =
+  def validateExternalViews(vs: List[View]) {
     if (!settings.externalDependencies) {
       //external dependencies are not allowed
-      val containsExternalDependencies = allViews.exists {
-        case (view, _, _) => view.hasExternalDependencies
+      val containsExternalDependencies = vs.exists {
+        _.hasExternalDependencies
       }
 
       if (containsExternalDependencies)
         throw new UnsupportedOperationException("External dependencies are not enabled," +
           "if you are sure you wan't to use this feature enable it in the schedoscope.conf.")
     } else if (settings.externalChecksEnabled) {
-      allViews.foreach { case (view, _, _) =>
-        if (view.isInDatabases(settings.externalHome: _*)) {
-          if (view.isExternal)
-            throw new UnsupportedOperationException(s"You are referencing an external view as internal: $view.")
+      vs.foreach { v =>
+        if (v.isInDatabases(settings.externalHome: _*)) {
+          if (v.isExternal)
+            throw new UnsupportedOperationException(s"You are referencing an external view as internal: $v.")
         } else {
-          if (!view.isExternal)
-            throw new UnsupportedOperationException(s"You are referencing an internal view as external: $view.")
+          if (!v.isExternal)
+            throw new UnsupportedOperationException(s"You are referencing an internal view as external: $v.")
         }
+      }
+    }
+  }
+
+  /**
+    * This method returns the table actor for the given view, creating it if necessary.
+    *
+    * @param v the view to obtain table actor for
+    * @return the actor
+    */
+  def tableActorForView(v: View): ActorRef = tableActorsForViews(Set(v), false).head._2
+
+  /**
+    * This method returns the table actors for the given views, creating them if necessary.
+    *
+    * @param vs               the views to obtain table actors for
+    * @param withDependencies includes the dependencies of the given views (defaults to false)
+    * @return a map assigning each view its responsible table actor.
+    */
+  def tableActorsForViews(vs: Set[View], withDependencies: Boolean = false): Map[View, ActorRef] = {
+
+    log.info(s"Looking for unknown views or dependencies for a set of ${vs.size} views.")
+
+    val viewsRequiringInitialization = unknownViewsOrDependencies(vs.toList)
+
+    log.info(s"${viewsRequiringInitialization.size} views require initialization.")
+
+    validateExternalViews(viewsRequiringInitialization)
+
+    val viewsPerTable = viewsRequiringInitialization
+      .groupBy(_.urlPathPrefix)
+      .map { case (_, views) => views }
+
+    //
+    // a) Create table actors for views requiring initialization if necessary
+    // b) Send table actors initialize messages with those views
+    // c) register views in view status map
+    //
+    viewsPerTable.foreach { vst =>
+
+      val tableActorRef = existingTableActorForView(vst.head).getOrElse(
+        actorOf(
+          TableActor.props(
+            Map.empty[View, ViewSchedulingState],
+            settings,
+            Map.empty[String, ActorRef],
+            self,
+            actionsManagerActor,
+            schemaManagerRouter,
+            viewSchedulingListenerManagerActor), tableActorNameForView(vst.head)
+        )
+      )
+
+      tableActorRef ! InitializeViews(vst)
+
+      vst.foreach(v => viewStatusMap.put(v.urlPath, ViewStatusResponse("receive", v, tableActorRef)))
+    }
+
+    //
+    // Make table actors for dependencies known to table actors
+    //
+    viewsPerTable.flatten.foreach { v =>
+
+      val newDepsActorRefs = v
+        .dependencies
+        .flatMap(v => existingTableActorForView(v).map(NewTableActorRef(v, _)))
+
+      existingTableActorForView(v) match {
+        case Some(actorRef) =>
+          newDepsActorRefs.foreach(actorRef ! _)
+
+        case None => //actor not yet known nothing to do here
+      }
+    }
+
+    log.info(s"${viewsRequiringInitialization.size} views initialized.")
+
+    //
+    // Finally return all views (initialized or already existing) that were addressed by the caller along with their table actors
+    //
+    val addressedViews =
+    if (withDependencies)
+      vs ++ vs.flatMap(_.transitiveDependencies)
+    else
+      vs
+
+    log.info(s"Returning actors for ${addressedViews.size} addressed views.")
+
+    addressedViews.map(v => v -> viewStatusMap(v.urlPath).actor).toMap
+  }
+
+  /**
+    * This method returns for a given set of views along with their dependencies, which of those are yet known
+    * to the view manager actor
+    *
+    * @param vs views to inspect along with their dependecies
+    * @return the view needing initialization
+    */
+  def unknownViewsOrDependencies(vs: List[View], visited: mutable.HashSet[View] = mutable.HashSet()): List[View] =
+    vs.flatMap { v =>
+      if (visited.contains(v) || viewStatusMap.contains(v.urlPath)) {
+        List()
+      } else {
+        visited.add(v)
+        v :: unknownViewsOrDependencies(v.dependencies, visited)
       }
     }
 
   /**
-    * Initialize view actors for a list of views. If a view actor has been produced for a view
-    * previously, that one is returned.
-    *
-    * @param vs           the views to create actors for
-    * @param dependencies create actors for the prerequisite views as well.
-    * @return the set of corresponding view actor refs
+    * Returns the responsible table actor for a view if it exists.
     */
-  def initializeViewActors(vs: List[View], dependencies: Boolean = false): Set[ActorRef] = {
-    log.info(s"Initializing ${vs.size} views")
-
-    val allViews = viewsToCreateActorsFor(vs, dependencies)
-
-    validateExternalViews(allViews)
-
-    log.info(s"Computed ${allViews.size} views (with dependencies=${dependencies})")
-
-    val actorsToCreate = allViews
-      .filter { case (_, needsCreation, _) => needsCreation }
-
-    log.info(s"Need to create ${actorsToCreate.size} actors")
-
-    val viewsPerTableName = actorsToCreate
-      .map { case (view, _, _) => view }
-      .distinct
-      .groupBy {
-        _.tableName
-      }
-      .values
-      .toList
-
-    val tablesToCreate = viewsPerTableName
-      .map {
-        CheckOrCreateTables(_)
-      }
-
-    if (tablesToCreate.nonEmpty) {
-      log.info(s"Submitting tables to check or create to schema actor")
-      tablesToCreate.foreach {
-        queryActor[Any](schemaManagerRouter, _, settings.schemaTimeout)
-      }
-    }
-
-    val partitionsToCreate = viewsPerTableName
-      .map {
-        AddPartitions(_)
-      }
-
-    if (partitionsToCreate.nonEmpty) {
-      log.info(s"Submitting ${partitionsToCreate.size} partition batches to schema actor")
-
-      val viewsWithMetadataToCreate = queryActors[TransformationMetadata](schemaManagerRouter, partitionsToCreate, settings.schemaTimeout)
-
-      log.info(s"Partitions created, initializing actors")
-
-      viewsWithMetadataToCreate.foreach { t =>
-        t.metadata.foreach {
-          case (view, (version, timestamp)) => {
-
-            val initialState = getStateFromMetadata(view, version, timestamp)
-
-            val actorRef = actorOf(ViewActor.props(
-              initialState,
-              settings,
-              Map.empty[View, ActorRef],
-              self,
-              actionsManagerActor,
-              schemaManagerRouter,
-              viewSchedulingListenerManagerActor), actorNameForView(view))
-            viewStatusMap.put(actorRef.path.toStringWithoutAddress, ViewStatusResponse("receive", view, actorRef))
-          }
-        }
-        log.info(s"Created actors for view table ${t.metadata.head._1.dbName}.${t.metadata.head._1.n}")
-      }
-
-      viewsWithMetadataToCreate.foreach { t =>
-        t.metadata.foreach {
-          case (view, _) =>
-            val newDepsActorRefs = view
-              .dependencies
-              .flatMap(v => actorForView(v).map(NewViewActorRef(v, _)))
-
-            actorForView(view) match {
-              case Some(actorRef) =>
-                newDepsActorRefs.foreach(actorRef ! _)
-              case None => //actor not yet known nothing to do here
-            }
-        }
-      }
-    }
-    log.info(s"Returning actors${if (dependencies) " including dependencies."}")
-
-    val viewsToReturnActorRefsFor = if (dependencies)
-      allViews.map { case (view, _, _) => view }.toSet
-    else
-      allViews.filter { case (_, _, depth) => depth == 0 }.map { case (view, _, _) => view }.toSet
-
-    log.info(s"Fetching ${viewsToReturnActorRefsFor.size} actors")
-
-    val actors = viewsToReturnActorRefsFor.map {
-      view =>
-        child(actorNameForView(view)).get
-    }
-
-    log.info(s"Returned ${actors.size} actors")
-
-    actors
-  }
-
-  def viewsToCreateActorsFor(views: List[View], dependencies: Boolean = false, depth: Int = 0, visited: HashSet[View] = HashSet()): List[(View, Boolean, Int)] =
-    views.flatMap {
-      v =>
-        if (visited.contains(v))
-          List()
-        else if (child(actorNameForView(v)).isEmpty) {
-          visited += v
-          (v, true, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
-        } else if (dependencies) {
-          visited += v
-          (v, false, depth) :: viewsToCreateActorsFor(v.dependencies.toList, dependencies, depth + 1, visited)
-        } else {
-          visited += v
-          List((v, false, depth))
-        }
-
-    }.distinct
-
-  def actorForView(view: View) =
-    child(actorNameForView(view))
+  def existingTableActorForView(view: View): Option[ActorRef] =
+    child(tableActorNameForView(view))
 
 }
 
@@ -265,20 +241,5 @@ object ViewManagerActor {
       actionsManagerActor, schemaManagerRouter, viewSchedulingListenerManagerActor)
       .withDispatcher("akka.actor.view-manager-dispatcher")
 
-  /**
-    * Helper to convert state to MetaData
-    *
-    * @param view
-    * @param version
-    * @param timestamp
-    * @return current [[org.schedoscope.scheduler.states.ViewSchedulingState]] of the view
-    */
-  def getStateFromMetadata(view: View, version: String, timestamp: Long) = {
-    if ((version != Checksum.defaultDigest) || (timestamp > 0))
-      ReadFromSchemaManager(view, version, timestamp)
-    else
-      CreatedByViewManager(view)
-  }
-
-  def actorNameForView(view: View) = view.urlPath.replaceAll("/", ":")
+  def tableActorNameForView(view: View): String = view.urlPathPrefix.replaceAll("/", ":")
 }

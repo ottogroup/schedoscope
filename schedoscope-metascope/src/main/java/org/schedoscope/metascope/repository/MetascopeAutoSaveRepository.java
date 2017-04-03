@@ -20,6 +20,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface MetascopeAutoSaveRepository extends CrudRepository<MetascopeAutoSave, String> {
 
-  public void deleteByTableFqdn(String fqdn);
+    public void deleteByTableFqdn(String fqdn);
 
 }
