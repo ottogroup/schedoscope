@@ -350,6 +350,16 @@ var setViews = function(data) {
       }, 100);
     }
   }
+
+   if (url.match('#')) {
+      var urlPart = url.split('#')[1];
+      if (urlPart.split('-')[0] === 'schemaContent') {
+        var row = $('#field-' + urlPart.split('-')[1]);
+        row.children().each(function() {
+          $(this).css('background-color', 'rgba(153, 222, 255, 0.2)');
+        })
+      }
+    }
 }
 
 var initDataDisFilter = function(data, next) {

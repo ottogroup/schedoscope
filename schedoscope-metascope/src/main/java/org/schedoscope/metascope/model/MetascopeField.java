@@ -16,6 +16,8 @@
 package org.schedoscope.metascope.model;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class MetascopeField extends Documentable {
@@ -32,6 +34,22 @@ public class MetascopeField extends Documentable {
   private boolean isParameter;
   @ManyToOne(fetch = FetchType.LAZY)
   private MetascopeTable table;
+
+  @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  @JoinTable(name="metascope_field_relationship",
+          joinColumns=@JoinColumn(name="dependency"),
+          inverseJoinColumns=@JoinColumn(name="successor"),
+          uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
+  )
+  private List<MetascopeField> dependencies;
+
+  @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+  @JoinTable(name="metascope_field_relationship",
+          joinColumns=@JoinColumn(name="successor"),
+          inverseJoinColumns=@JoinColumn(name="dependency"),
+          uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
+  )
+  private List<MetascopeField> successors;
 
   /* getter and setter */
   public String getDescription() {
@@ -88,6 +106,32 @@ public class MetascopeField extends Documentable {
 
   public void setParameter(boolean parameter) {
     isParameter = parameter;
+  }
+
+  public List<MetascopeField> getDependencies() {
+    return dependencies;
+  }
+
+  public List<MetascopeField> getSuccessors() {
+    return successors;
+  }
+
+  public void addToDependencies(MetascopeField field) {
+    if (dependencies == null) {
+      this.dependencies = new ArrayList<>();
+    }
+    if (!dependencies.contains(field)) {
+      this.dependencies.add(field);
+    }
+  }
+
+  public void addToSuccessors(MetascopeField field) {
+    if (successors == null) {
+      this.successors = new ArrayList<>();
+    }
+    if (!successors.contains(field)) {
+      this.successors.add(field);
+    }
   }
 
   @Override

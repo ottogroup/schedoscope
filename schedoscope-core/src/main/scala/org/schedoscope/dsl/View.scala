@@ -21,10 +21,12 @@ import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.transformations.{NoOp, SeqTransformation, Transformation}
 import org.schedoscope.dsl.views.ViewUrlParser
 import org.schedoscope.dsl.views.ViewUrlParser.{ParsedView, ParsedViewAugmentor}
+import org.schedoscope.lineage.{DependencyAnalyzer, DependencyMap}
 import org.schedoscope.test.WritableView
 
 import scala.Array.canBuildFrom
 import scala.collection.JavaConversions.asScalaBuffer
+import scala.collection.mutable
 import scala.collection.mutable.{HashMap, HashSet, ListBuffer}
 import scala.language.{existentials, implicitConversions}
 
@@ -223,6 +225,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
   /**
+    * Return all dependencies of this view recursively
+    */
+  lazy val recursiveDependencies: Set[View] = View.recursiveDependenciesOf(this).toSet
+
+  /**
     * Returns true if the present view is partitionend.
     */
   def isPartitioned() = partitionParameters.nonEmpty
@@ -384,6 +391,25 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     body
   }
 
+  def fieldsAndParameters: Seq[FieldLike[_]] = Seq[FieldLike[_]]() ++ fields ++ partitionParameters
+
+  var explicitLineage: Map[FieldLike[_], mutable.Set[FieldLike[_]]] = Map()
+
+  def affects(influenceFunc: this.type => Traversable[(FieldLike[_], FieldLike[_])]): this.type = {
+    influenceFunc(this).foreach {
+      case (influencer, influencee) =>
+        val ownerView: View = influencee.assignedStructure.get.asInstanceOf[View]
+        if (ownerView.explicitLineage.isEmpty)
+          ownerView.explicitLineage = ownerView.fields.map(f => f -> mutable.Set[FieldLike[_]]()).toMap
+
+        ownerView.explicitLineage(influencee).add(influencer)
+    }
+
+    this
+  }
+
+  def lineage: DependencyMap = DependencyAnalyzer.analyzeLineage(this)
+
   /**
     * Return all dependencies of the view in the order they have been declared.
     */
@@ -520,7 +546,11 @@ object View {
     registeredView
   }
 
-
+  private def recursiveDependenciesOf(view: View, soFar: mutable.Set[View] = mutable.Set[View]()): mutable.Set[View] = {
+    if (soFar.add(view))
+      view.dependencies.foreach(recursiveDependenciesOf(_, soFar))
+    soFar
+  }
 }
 
 

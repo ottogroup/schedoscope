@@ -21,14 +21,46 @@
             <th>Name</th>
             <th>Type</th>
             <th>Description</th>
+            <th data-th-if="${fieldDependencyMap.size() > 0}">Depends on</th>
+            <th data-th-if="${fieldSuccessorMap.size() > 0}">Used by</th>
             <th>Documentation</th>
         </tr>
         </thead>
         <tbody>
-        <tr data-th-each="field : ${table.fields}" style="border-bottom: 1px solid lightgrey;">
+        <tr th:id="'field-' + ${field.fieldName}" data-th-each="field : ${table.fields}" style="border-bottom: 1px solid lightgrey;">
             <td data-th-text="${field.fieldName}"/>
             <td data-th-text="${field.fieldType}"/>
             <td data-th-text="${field.description}"/>
+            <td data-th-if="${fieldDependencyMap.size() > 0}">
+                <ul data-th-each="e : ${fieldDependencyMap.get(field.fieldId)}" style="padding-left: 0px; ">
+                    <li>
+                        <a class="showFirst" href="javascript:void(0)">
+                            <span data-th-text="${e.key} + ' (' + ${e.value.size()} + ')'"></span>
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="partitionList">
+                            <li data-th-each="dep : ${e.value}">
+                                <a th:href="'table?fqdn=' + ${e.key} + '#schemaContent-' + ${dep.fieldName}" data-th-text="${dep.fieldName} + ' - ' + ${dep.fieldType}"></a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </td>
+            <td data-th-if="${fieldSuccessorMap.size() > 0}">
+                <ul data-th-each="e : ${fieldSuccessorMap.get(field.fieldId)}" style="padding-left: 0px; ">
+                    <li>
+                        <a class="showFirst" href="javascript:void(0)">
+                            <span data-th-text="${e.key} + ' (' + ${e.value.size()} + ')'"></span>
+                            <span class="caret"></span>
+                        </a>
+                        <ul class="partitionList">
+                            <li data-th-each="dep : ${e.value}">
+                                <a th:href="'table?fqdn=' + ${e.key} + '#schemaContent-' + ${dep.fieldName}" data-th-text="${dep.fieldName} + ' - ' + ${dep.fieldType}"></a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </td>
             <td data-th-if="${field.hasDocumentation()}"
                 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><a
                     data-th-attr="href='#schemaContent-' + ${field.fieldName}" th:utext="${field.comment.preview}"

@@ -69,8 +69,10 @@ public class SchedoscopeTask extends Task {
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public boolean run(long start) {
     Map<String, MetascopeTable> cachedTables = new HashMap<>();
+    Map<String, MetascopeField> cachedFields = new HashMap<>();
     Map<String, MetascopeView> cachedViews = new HashMap<>();
     List<ViewDependency> viewDependencies = new ArrayList<>();
+    List<FieldDependency> fieldDependencies = new ArrayList<>();
 
     LOG.info("Retrieve and parse data from schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
 
@@ -161,7 +163,24 @@ public class SchedoscopeTask extends Task {
           field.setFieldOrder(i++);
           field.setParameter(false);
           field.setDescription(viewField.getComment());
+
+          //lineage
+          if (view.getLineage() != null && view.getLineage().get(fieldFqdn) != null) {
+            for (String dependencyField : view.getLineage().get(fieldFqdn)) {
+              if (!dependencyField.equals(fieldFqdn)) {
+                MetascopeField dField = cachedFields.get(dependencyField);
+                if (dField == null) {
+                  dField = new MetascopeField();
+                  dField.setFieldId(dependencyField);
+                  cachedFields.put(dependencyField, dField);
+                }
+                fieldDependencies.add(new FieldDependency(field.getFieldId(), dField.getFieldId()));
+              }
+            }
+          }
+
           table.addToFields(field);
+          cachedFields.put(field.getFieldId(), field);
         }
 
         /** parameter */
@@ -262,8 +281,10 @@ public class SchedoscopeTask extends Task {
       RawJDBCSqlRepository sqlRepository = new RawJDBCSqlRepository(isMySQLDatabase, isH2Database);
       LOG.info("Saving views (" + cachedViews.values().size() + ")...");
       sqlRepository.insertOrUpdateViews(connection, cachedViews.values());
-      LOG.info("Saving dependency information (" + viewDependencies.size() + ") ...");
-      sqlRepository.insertDependencies(connection, viewDependencies);
+      LOG.info("Saving field dependency information (" + fieldDependencies.size() + ") ...");
+      sqlRepository.insertFieldDependencies(connection, fieldDependencies);
+      LOG.info("Saving view dependency information (" + viewDependencies.size() + ") ...");
+      sqlRepository.insertViewDependencies(connection, viewDependencies);
     } catch (Exception e) {
       LOG.error("Error writing to database", e);
     }
