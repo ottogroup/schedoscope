@@ -91,7 +91,7 @@
                                                                                                     name="fieldname"
                                                                                                     th:value="${field.fieldName}"/>
                             <input
-                                    type="hidden" name="parameter" th:value="${field.parameterField}"/> <input
+                                    type="hidden" name="parameter" th:value="${field.isParameter()}"/> <input
                                 type="hidden" name="commentText"
                                 th:id="'comment' + ${comment.id} + 'text'"/>
                             <button class="btn btn-success">Save</button>
@@ -121,7 +121,7 @@
                                           method="post" style="display: inline">
                                         <input type="hidden" name="commentID" th:value="${comment.id}"/> <input
                                             type="hidden" name="fieldname" th:value="${field.fieldName}"/>
-                                        <input type="hidden" name="parameter" th:value="${field.parameterField}"/> <a
+                                        <input type="hidden" name="parameter" th:value="${field.isParameter()}"/> <a
                                             href="javascript:void()"
                                             onclick="$(this).closest('form').submit()"><span
                                             class="glyphicon glyphicon-trash"></span></a>

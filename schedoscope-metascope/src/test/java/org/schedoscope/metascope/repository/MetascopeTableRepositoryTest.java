@@ -27,10 +27,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -68,7 +65,7 @@ public class MetascopeTableRepositoryTest {
         metascopeCategoryObjects.add(metascopeCategoryObject);
         testTable.setCategoryObjects(metascopeCategoryObjects);
 
-        List<MetascopeComment> metascopeComments = new ArrayList<>();
+        Set<MetascopeComment> metascopeComments = new HashSet<>();
         metascopeComments.add(metascopeComment);
         testTable.setComments(metascopeComments);
 

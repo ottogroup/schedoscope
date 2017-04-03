@@ -28,7 +28,6 @@ import org.schedoscope.metascope.repository.MetascopeCommentRepository;
 import org.schedoscope.metascope.repository.MetascopeFieldRepository;
 import org.schedoscope.metascope.repository.MetascopeTableRepository;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -80,7 +79,7 @@ public class MetascopeDocumentationServiceTest {
 
     /* test data */
         this.metascopeTable = new MetascopeTable();
-        metascopeTable.setComments(new ArrayList<MetascopeComment>());
+        metascopeTable.setComments(new HashSet<MetascopeComment>());
 
         this.metascopeUser = new MetascopeUser();
         metascopeUser.setUsername("testUser");

@@ -26,8 +26,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -73,7 +74,7 @@ public class MetascopeFieldRepositoryTest {
         someField.setFieldId("4");
         someField.setFieldName("someField");
         someField.setParameter(false);
-        List<MetascopeComment> comments = new ArrayList<>();
+        Set<MetascopeComment> comments = new HashSet<>();
         comments.add(metascopeComment);
         someField.setComments(comments);
 
@@ -95,7 +96,7 @@ public class MetascopeFieldRepositoryTest {
         assertNotNull(metascopeField);
         assertEquals("4", metascopeField.getFieldId());
         assertEquals("someField", metascopeField.getFieldName());
-        assertEquals("comment", metascopeField.getComments().get(0).getText());
+        assertEquals("comment", metascopeField.getComments().iterator().next().getText());
     }
 
 }
