@@ -150,6 +150,7 @@ public class SchedoscopeTask extends Task {
         }
 
         /** fields */
+        Set<MetascopeField> tableFields = new HashSet<>();
         int i = 0;
         for (ViewField viewField : view.getFields()) {
           String fieldFqdn = fqdn + "." + viewField.getName();
@@ -179,9 +180,10 @@ public class SchedoscopeTask extends Task {
             }
           }
 
-          table.addToFields(field);
+          tableFields.add(field);
           cachedFields.put(field.getFieldId(), field);
         }
+        table.setFields(tableFields);
 
         /** parameter */
         i = 0;
