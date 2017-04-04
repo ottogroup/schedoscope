@@ -15,16 +15,16 @@
         <scalarelease.version>2.10.6</scalarelease.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <hadoop.version>2.6.0-cdh5.8.3</hadoop.version>
-        <hive.version>1.1.0-cdh5.8.3</hive.version>
+        <hadoop.version>2.6.0-cdh5.10.1</hadoop.version>
+        <hive.version>1.1.0-cdh5.10.1</hive.version>
         <hive.hcatalog.version>${hive.version}</hive.hcatalog.version>
-        <oozie.version>4.1.0-cdh5.8.3</oozie.version>
-        <pig.version>0.12.0-cdh5.8.3</pig.version>
-        <pig.parquet.version>1.6.0</pig.parquet.version>
-        <spark.version>1.6.0-cdh5.8.3</spark.version>
+        <oozie.version>4.1.0-cdh5.10.1</oozie.version>
+        <pig.version>0.12.0-cdh5.10.1</pig.version>
+        <pig.parquet.version>1.5.0-cdh5.10.1</pig.parquet.version>
+        <spark.version>1.6.0-cdh5.10.1</spark.version>
         <mrunit.version>1.1.0</mrunit.version>
-        <hiveunit.version>1.2.4</hiveunit.version>
-        <minioozie.version>1.2.2</minioozie.version>
+        <hiveunit.version>1.2.5</hiveunit.version>
+        <minioozie.version>1.2.3</minioozie.version>
         <schedoscope.version>0.8.3-SNAPSHOT</schedoscope.version>
     </properties>
 
