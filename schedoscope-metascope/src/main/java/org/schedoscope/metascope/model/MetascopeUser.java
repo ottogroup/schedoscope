@@ -22,107 +22,107 @@ import java.util.List;
 @Entity
 public class MetascopeUser {
 
-    public enum Role {
-        ROLE_ADMIN, ROLE_USER
+  public enum Role {
+    ROLE_ADMIN, ROLE_USER
+  }
+
+  public enum Group {
+    BUSINESS_USER, TECHNICAL_USER, OPS_USER
+  }
+
+  @Id
+  private String username;
+  private String fullname;
+  private String email;
+  private String passwordHash;
+  @Enumerated(EnumType.STRING)
+  private Group usergroup;
+  @Enumerated(EnumType.STRING)
+  private Role userrole;
+
+  @ElementCollection
+  private List<String> favourites;
+
+  public MetascopeUser() {
+    this.favourites = new ArrayList<String>();
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public void setUsername(String username) {
+    this.username = username;
+  }
+
+  public String getFullname() {
+    return fullname;
+  }
+
+  public void setFullname(String fullname) {
+    this.fullname = fullname;
+  }
+
+  public String getEmail() {
+    return email;
+  }
+
+  public void setEmail(String email) {
+    this.email = email;
+  }
+
+  public String getPasswordHash() {
+    return passwordHash;
+  }
+
+  public void setPasswordHash(String passwordHash) {
+    this.passwordHash = passwordHash;
+  }
+
+  public Group getUsergroup() {
+    return usergroup;
+  }
+
+  public void setUsergroup(Group usergroup) {
+    this.usergroup = usergroup;
+  }
+
+  public Role getUserrole() {
+    return userrole;
+  }
+
+  public void setUserrole(Role userrole) {
+    this.userrole = userrole;
+  }
+
+  public void setUserrole(String roleString) {
+    Role role = Role.valueOf(roleString);
+    if (role != null) {
+      this.userrole = role;
     }
+  }
 
-    public enum Group {
-        BUSINESS_USER, TECHNICAL_USER, OPS_USER
+  public void setUsergroup(String groupString) {
+    if (groupString == null) {
+      this.usergroup = Group.BUSINESS_USER;
+      return;
     }
-
-    @Id
-    private String username;
-    private String fullname;
-    private String email;
-    private String passwordHash;
-    @Enumerated(EnumType.STRING)
-    private Group usergroup;
-    @Enumerated(EnumType.STRING)
-    private Role userrole;
-
-    @ElementCollection
-    private List<String> favourites;
-
-    public MetascopeUser() {
-        this.favourites = new ArrayList<String>();
+    Group group = Group.valueOf(groupString);
+    if (group != null) {
+      this.usergroup = group;
     }
+  }
 
-    public String getUsername() {
-        return username;
-    }
+  public List<String> getFavourites() {
+    return favourites;
+  }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+  public void setFavourites(List<String> favourites) {
+    this.favourites = favourites;
+  }
 
-    public String getFullname() {
-        return fullname;
-    }
-
-    public void setFullname(String fullname) {
-        this.fullname = fullname;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public Group getUsergroup() {
-        return usergroup;
-    }
-
-    public void setUsergroup(Group usergroup) {
-        this.usergroup = usergroup;
-    }
-
-    public Role getUserrole() {
-        return userrole;
-    }
-
-    public void setUserrole(Role userrole) {
-        this.userrole = userrole;
-    }
-
-    public void setUserrole(String roleString) {
-        Role role = Role.valueOf(roleString);
-        if (role != null) {
-            this.userrole = role;
-        }
-    }
-
-    public void setUsergroup(String groupString) {
-        if (groupString == null) {
-            this.usergroup = Group.BUSINESS_USER;
-            return;
-        }
-        Group group = Group.valueOf(groupString);
-        if (group != null) {
-            this.usergroup = group;
-        }
-    }
-
-    public List<String> getFavourites() {
-        return favourites;
-    }
-
-    public void setFavourites(List<String> favourites) {
-        this.favourites = favourites;
-    }
-
-    public boolean isAdmin() {
-        return userrole.equals(Role.ROLE_ADMIN);
-    }
+  public boolean isAdmin() {
+    return userrole.equals(Role.ROLE_ADMIN);
+  }
 
 }

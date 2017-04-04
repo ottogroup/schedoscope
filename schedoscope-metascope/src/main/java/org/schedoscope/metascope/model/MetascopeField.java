@@ -36,18 +36,18 @@ public class MetascopeField extends Documentable {
   private MetascopeTable table;
 
   @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-  @JoinTable(name="metascope_field_relationship",
-          joinColumns=@JoinColumn(name="dependency"),
-          inverseJoinColumns=@JoinColumn(name="successor"),
-          uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
+  @JoinTable(name = "metascope_field_relationship",
+    joinColumns = @JoinColumn(name = "dependency"),
+    inverseJoinColumns = @JoinColumn(name = "successor"),
+    uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
   )
   private List<MetascopeField> dependencies;
 
   @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-  @JoinTable(name="metascope_field_relationship",
-          joinColumns=@JoinColumn(name="successor"),
-          inverseJoinColumns=@JoinColumn(name="dependency"),
-          uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
+  @JoinTable(name = "metascope_field_relationship",
+    joinColumns = @JoinColumn(name = "successor"),
+    inverseJoinColumns = @JoinColumn(name = "dependency"),
+    uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
   )
   private List<MetascopeField> successors;
 

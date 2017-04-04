@@ -22,42 +22,42 @@ import java.util.List;
 @Entity
 public class MetascopeTaxonomy {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private long taxonomyId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private long taxonomyId;
 
-    @Column(columnDefinition = "varchar(32672)")
-    private String name;
+  @Column(columnDefinition = "varchar(32672)")
+  private String name;
 
-    @OneToMany(mappedBy = "taxonomy", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MetascopeCategory> categories;
+  @OneToMany(mappedBy = "taxonomy", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<MetascopeCategory> categories;
 
-    public MetascopeTaxonomy() {
-        this.categories = new ArrayList<MetascopeCategory>();
-    }
+  public MetascopeTaxonomy() {
+    this.categories = new ArrayList<MetascopeCategory>();
+  }
 
-    public long getTaxonomyId() {
-        return taxonomyId;
-    }
+  public long getTaxonomyId() {
+    return taxonomyId;
+  }
 
-    public void setTaxonomyId(long taxonomyId) {
-        this.taxonomyId = taxonomyId;
-    }
+  public void setTaxonomyId(long taxonomyId) {
+    this.taxonomyId = taxonomyId;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public List<MetascopeCategory> getCategories() {
-        return categories;
-    }
+  public List<MetascopeCategory> getCategories() {
+    return categories;
+  }
 
-    public void setCategories(List<MetascopeCategory> categories) {
-        this.categories = categories;
-    }
+  public void setCategories(List<MetascopeCategory> categories) {
+    this.categories = categories;
+  }
 
 }

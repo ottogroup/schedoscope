@@ -27,24 +27,24 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class MetascopeDataDistributionController {
 
-    @Autowired
-    private MetascopeTableService metascopeTableService;
+  @Autowired
+  private MetascopeTableService metascopeTableService;
 
-    @Autowired
-    private MetascopeDataDistributionService metascopeDataDistributionService;
+  @Autowired
+  private MetascopeDataDistributionService metascopeDataDistributionService;
 
-    @RequestMapping("/datadistribution/start")
-    public String calculateDistribution(HttpServletRequest request, String fqdn) {
-        if (fqdn != null) {
-            MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
-            if (table != null) {
-                MetascopeDataDistributionService.Status status = metascopeDataDistributionService.checkStatus(table);
-                if (status != null && status.equals(MetascopeDataDistributionService.Status.NotAvailable)) {
-                    metascopeDataDistributionService.calculateDistribution(table);
-                }
-            }
+  @RequestMapping("/datadistribution/start")
+  public String calculateDistribution(HttpServletRequest request, String fqdn) {
+    if (fqdn != null) {
+      MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
+      if (table != null) {
+        MetascopeDataDistributionService.Status status = metascopeDataDistributionService.checkStatus(table);
+        if (status != null && status.equals(MetascopeDataDistributionService.Status.NotAvailable)) {
+          metascopeDataDistributionService.calculateDistribution(table);
         }
-        return "redirect:" + request.getHeader("Referer") + "#datadistributionContent";
+      }
     }
+    return "redirect:" + request.getHeader("Referer") + "#datadistributionContent";
+  }
 
 }

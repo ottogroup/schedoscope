@@ -17,33 +17,33 @@ package org.schedoscope.metascope.index.model;
 
 public class SolrFacet {
 
-    private String name;
-    private long count;
+  private String name;
+  private long count;
 
-    public SolrFacet(String name, long count) {
-        this.name = name;
-        this.count = count;
-    }
+  public SolrFacet(String name, long count) {
+    this.name = name;
+    this.count = count;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public long getCount() {
-        return count;
-    }
+  public long getCount() {
+    return count;
+  }
 
-    public void setCount(long count) {
-        this.count = count;
-    }
+  public void setCount(long count) {
+    this.count = count;
+  }
 
-    @Override
-    public String toString() {
-        return name + ":" + count;
-    }
+  @Override
+  public String toString() {
+    return name + ":" + count;
+  }
 
 }

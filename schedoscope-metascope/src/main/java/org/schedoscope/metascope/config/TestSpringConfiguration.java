@@ -38,41 +38,41 @@ import javax.sql.DataSource;
 @EnableAsync
 public class TestSpringConfiguration extends WebSecurityConfigurerAdapter {
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http.authorizeRequests().anyRequest().permitAll();
-        http.csrf().disable();
-    }
+  @Override
+  protected void configure(HttpSecurity http) throws Exception {
+    http.authorizeRequests().anyRequest().permitAll();
+    http.csrf().disable();
+  }
 
-    @Bean
-    public LdapTemplate ldapTemplate() {
-        return new LdapTemplate(new LdapContextSource());
-    }
+  @Bean
+  public LdapTemplate ldapTemplate() {
+    return new LdapTemplate(new LdapContextSource());
+  }
 
-    @Bean
-    public SessionRegistry sessionRegistry() {
-        return new SessionRegistryImpl();
-    }
+  @Bean
+  public SessionRegistry sessionRegistry() {
+    return new SessionRegistryImpl();
+  }
 
-    @Bean
-    public org.springframework.boot.web.servlet.ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
-        return new org.springframework.boot.web.servlet.ServletListenerRegistrationBean<HttpSessionEventPublisher>(new HttpSessionEventPublisher());
-    }
+  @Bean
+  public org.springframework.boot.web.servlet.ServletListenerRegistrationBean<HttpSessionEventPublisher> httpSessionEventPublisher() {
+    return new org.springframework.boot.web.servlet.ServletListenerRegistrationBean<HttpSessionEventPublisher>(new HttpSessionEventPublisher());
+  }
 
-    @Bean
-    public MetascopeConfig metascopeConfig() {
-        return new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
-    }
+  @Bean
+  public MetascopeConfig metascopeConfig() {
+    return new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
+  }
 
-    @Bean
-    public DataSource dataSource() {
-        return DataSourceBuilder.create().username("sa").password("sa").url("jdbc:h2:mem:metascope")
-                .build();
-    }
+  @Bean
+  public DataSource dataSource() {
+    return DataSourceBuilder.create().username("sa").password("sa").url("jdbc:h2:mem:metascope")
+      .build();
+  }
 
-    @Bean
-    public SolrFacade solrFacade() {
-        return new SolrFacade();
-    }
+  @Bean
+  public SolrFacade solrFacade() {
+    return new SolrFacade();
+  }
 
 }

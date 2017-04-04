@@ -227,7 +227,7 @@ public class MetascopeTableController {
   /**
    * Adds or removes the business objects from the table
    *
-   * @param request         the HTTPServletRequest from the client
+   * @param request the HTTPServletRequest from the client
    * @return the same view the user request came from
    */
   @RequestMapping(value = "/table/categoryobjects", method = RequestMethod.POST)
@@ -416,7 +416,7 @@ public class MetascopeTableController {
 
   public boolean hasSearchParameters(String url) {
     final Map<String, List<String>> query_pairs = new LinkedHashMap<String, List<String>>();
-    final String[] pairs =url.split("&");
+    final String[] pairs = url.split("&");
     for (String pair : pairs) {
       final int idx = pair.indexOf("=");
       try {
