@@ -27,30 +27,30 @@ import org.springframework.context.ConfigurableApplicationContext;
 @SpringBootApplication
 public class Metascope {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Metascope.class);
+  private static final Logger LOG = LoggerFactory.getLogger(Metascope.class);
 
-    private ConfigurableApplicationContext ctx;
+  private ConfigurableApplicationContext ctx;
 
-    public static void main(String[] args) {
-        new Metascope().start(args);
-    }
+  public static void main(String[] args) {
+    new Metascope().start(args);
+  }
 
-    public void start(String[] args) {
+  public void start(String[] args) {
     /* set some mandatory configs before application start */
-        MetascopeConfig config = new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
-        System.setProperty("server.port", String.valueOf(config.getPort()));
-        System.setProperty("spring.jpa.database-platform", config.getRepositoryDialect());
-        System.setProperty("logging.level.org.schedoscope", config.getLogLevel());
-        System.setProperty("logging.file", config.getLogfilePath());
-        System.setProperty("spring.profiles.active", "production");
+    MetascopeConfig config = new MetascopeConfig(new BaseSettings(ConfigFactory.load()));
+    System.setProperty("server.port", String.valueOf(config.getPort()));
+    System.setProperty("spring.jpa.database-platform", config.getRepositoryDialect());
+    System.setProperty("logging.level.org.schedoscope", config.getLogLevel());
+    System.setProperty("logging.file", config.getLogfilePath());
+    System.setProperty("spring.profiles.active", "production");
 
     /* start metascope spring boot application */
-        this.ctx = SpringApplication.run(Metascope.class, args);
-        LOG.info("Metascope webservice started.");
-    }
+    this.ctx = SpringApplication.run(Metascope.class, args);
+    LOG.info("Metascope webservice started.");
+  }
 
-    public void stop() {
-        ctx.stop();
-    }
+  public void stop() {
+    ctx.stop();
+  }
 
 }

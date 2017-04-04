@@ -20,10 +20,10 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface MetascopeUserRepository extends CrudRepository<MetascopeUser, Long> {
 
-    public MetascopeUser findByUsername(String username);
+  public MetascopeUser findByUsername(String username);
 
-    public MetascopeUser findByEmail(String email);
+  public MetascopeUser findByEmail(String email);
 
-    public MetascopeUser findByFullname(String fullname);
+  public MetascopeUser findByFullname(String fullname);
 
 }

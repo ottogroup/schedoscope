@@ -21,32 +21,32 @@ import javax.persistence.Id;
 @Entity
 public class MetascopeMetadata {
 
-    @Id
-    private String metadataKey;
-    private String metadataValue;
+  @Id
+  private String metadataKey;
+  private String metadataValue;
 
-    public MetascopeMetadata() {
-    }
+  public MetascopeMetadata() {
+  }
 
-    public MetascopeMetadata(String key, String value) {
-        this.metadataKey = key;
-        this.metadataValue = value;
-    }
+  public MetascopeMetadata(String key, String value) {
+    this.metadataKey = key;
+    this.metadataValue = value;
+  }
 
-    public String getMetadataKey() {
-        return metadataKey;
-    }
+  public String getMetadataKey() {
+    return metadataKey;
+  }
 
-    public void setMetadataKey(String metadataKey) {
-        this.metadataKey = metadataKey;
-    }
+  public void setMetadataKey(String metadataKey) {
+    this.metadataKey = metadataKey;
+  }
 
-    public String getMetadataValue() {
-        return metadataValue;
-    }
+  public String getMetadataValue() {
+    return metadataValue;
+  }
 
-    public void setMetadataValue(String metadataValue) {
-        this.metadataValue = metadataValue;
-    }
+  public void setMetadataValue(String metadataValue) {
+    this.metadataValue = metadataValue;
+  }
 
 }

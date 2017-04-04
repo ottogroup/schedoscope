@@ -34,108 +34,108 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class MetascopeDocumentationController {
 
-    @Autowired
-    private MetascopeDocumentationService documentationService;
-    @Autowired
-    private MetascopeTableService metascopeTableService;
-    @Autowired
-    private MetascopeFieldService metascopeFieldService;
-    @Autowired
-    private MetascopeUserService metascopeUserService;
+  @Autowired
+  private MetascopeDocumentationService documentationService;
+  @Autowired
+  private MetascopeTableService metascopeTableService;
+  @Autowired
+  private MetascopeFieldService metascopeFieldService;
+  @Autowired
+  private MetascopeUserService metascopeUserService;
 
-    @RequestMapping(value = "/table/documentation", method = RequestMethod.POST)
-    public String updateDocumentation(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn,
-                                      String documentation) {
-        MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
-        documentationService.updateDocumentation(table, documentation, metascopeUserService.getUser());
-        redirAttr.addFlashAttribute("documentation", true);
-        return "redirect:" + request.getHeader("Referer");
-    }
+  @RequestMapping(value = "/table/documentation", method = RequestMethod.POST)
+  public String updateDocumentation(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn,
+                                    String documentation) {
+    MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
+    documentationService.updateDocumentation(table, documentation, metascopeUserService.getUser());
+    redirAttr.addFlashAttribute("documentation", true);
+    return "redirect:" + request.getHeader("Referer");
+  }
 
-    @RequestMapping(value = "/table/documentation/comment/add", method = RequestMethod.POST)
-    public String addComment(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn, String comment) {
-        MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
-        documentationService.addComment(table, comment, metascopeUserService.getUser());
-        redirAttr.addFlashAttribute("comment", "created");
-        return "redirect:" + request.getHeader("Referer");
-    }
+  @RequestMapping(value = "/table/documentation/comment/add", method = RequestMethod.POST)
+  public String addComment(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn, String comment) {
+    MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
+    documentationService.addComment(table, comment, metascopeUserService.getUser());
+    redirAttr.addFlashAttribute("comment", "created");
+    return "redirect:" + request.getHeader("Referer");
+  }
 
-    @RequestMapping(value = "/table/documentation/comment/edit", method = RequestMethod.POST)
-    public String editComment(HttpServletRequest request, RedirectAttributes redirAttr, String commentID,
-                              String commentText) {
-        MetascopeComment comment = documentationService.findById(commentID);
-        documentationService.editComment(comment, commentText, metascopeUserService.getUser());
-        redirAttr.addFlashAttribute("comment", "edited");
-        return "redirect:" + request.getHeader("Referer");
-    }
+  @RequestMapping(value = "/table/documentation/comment/edit", method = RequestMethod.POST)
+  public String editComment(HttpServletRequest request, RedirectAttributes redirAttr, String commentID,
+                            String commentText) {
+    MetascopeComment comment = documentationService.findById(commentID);
+    documentationService.editComment(comment, commentText, metascopeUserService.getUser());
+    redirAttr.addFlashAttribute("comment", "edited");
+    return "redirect:" + request.getHeader("Referer");
+  }
 
-    @RequestMapping(value = "/table/documentation/comment/delete", method = RequestMethod.POST)
-    public String deleteComment(HttpServletRequest request, RedirectAttributes redirAttr, String commentID) {
-        MetascopeComment comment = documentationService.findById(commentID);
-        MetascopeTable table = metascopeTableService.findByComment(comment);
-        documentationService.deleteComment(table, comment, metascopeUserService.getUser());
-        redirAttr.addFlashAttribute("comment", "deleted");
-        return "redirect:" + request.getHeader("Referer");
-    }
+  @RequestMapping(value = "/table/documentation/comment/delete", method = RequestMethod.POST)
+  public String deleteComment(HttpServletRequest request, RedirectAttributes redirAttr, String commentID) {
+    MetascopeComment comment = documentationService.findById(commentID);
+    MetascopeTable table = metascopeTableService.findByComment(comment);
+    documentationService.deleteComment(table, comment, metascopeUserService.getUser());
+    redirAttr.addFlashAttribute("comment", "deleted");
+    return "redirect:" + request.getHeader("Referer");
+  }
 
-    @RequestMapping(value = "/field/documentation", method = RequestMethod.POST)
-    public String updateDocumentation(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn,
-                                      String fieldname, boolean parameter, String documentation) {
-        MetascopeField fieldEntity = metascopeFieldService.findById(fqdn + "." + fieldname);
-        documentationService.updateDocumentation(fieldEntity, documentation, metascopeUserService.getUser());
-        redirAttr.addFlashAttribute("documentation", true);
-        return getReferer(request, fieldname, parameter);
-    }
+  @RequestMapping(value = "/field/documentation", method = RequestMethod.POST)
+  public String updateDocumentation(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn,
+                                    String fieldname, boolean parameter, String documentation) {
+    MetascopeField fieldEntity = metascopeFieldService.findById(fqdn + "." + fieldname);
+    documentationService.updateDocumentation(fieldEntity, documentation, metascopeUserService.getUser());
+    redirAttr.addFlashAttribute("documentation", true);
+    return getReferer(request, fieldname, parameter);
+  }
 
-    @RequestMapping(value = "/field/documentation/comment/add", method = RequestMethod.POST)
-    public String addComment(HttpServletRequest request, String fqdn, RedirectAttributes redirAttr, String fieldname,
-                             boolean parameter, String comment) {
-        MetascopeField fieldEntity = metascopeFieldService.findById(fqdn + "." + fieldname);
-        documentationService.addComment(fieldEntity, comment, metascopeUserService.getUser());
-        redirAttr.addFlashAttribute("comment", "created");
-        return getReferer(request, fieldname, parameter);
-    }
+  @RequestMapping(value = "/field/documentation/comment/add", method = RequestMethod.POST)
+  public String addComment(HttpServletRequest request, String fqdn, RedirectAttributes redirAttr, String fieldname,
+                           boolean parameter, String comment) {
+    MetascopeField fieldEntity = metascopeFieldService.findById(fqdn + "." + fieldname);
+    documentationService.addComment(fieldEntity, comment, metascopeUserService.getUser());
+    redirAttr.addFlashAttribute("comment", "created");
+    return getReferer(request, fieldname, parameter);
+  }
 
-    @RequestMapping(value = "/field/documentation/comment/edit", method = RequestMethod.POST)
-    public String editFieldComment(HttpServletRequest request, RedirectAttributes redirAttr, String fieldname,
-                                   boolean parameter, String commentID, String commentText) {
-        MetascopeComment commentEntity = documentationService.findById(commentID);
-        documentationService.editComment(commentEntity, commentText, metascopeUserService.getUser());
-        redirAttr.addFlashAttribute("comment", "edited");
-        return getReferer(request, fieldname, parameter);
-    }
+  @RequestMapping(value = "/field/documentation/comment/edit", method = RequestMethod.POST)
+  public String editFieldComment(HttpServletRequest request, RedirectAttributes redirAttr, String fieldname,
+                                 boolean parameter, String commentID, String commentText) {
+    MetascopeComment commentEntity = documentationService.findById(commentID);
+    documentationService.editComment(commentEntity, commentText, metascopeUserService.getUser());
+    redirAttr.addFlashAttribute("comment", "edited");
+    return getReferer(request, fieldname, parameter);
+  }
 
-    @RequestMapping(value = "/field/documentation/comment/delete", method = RequestMethod.POST)
-    public String deleteComment(HttpServletRequest request, RedirectAttributes redirAttr, String fieldname,
-                                boolean parameter, String commentID) {
-        MetascopeComment commentEntity = documentationService.findById(commentID);
-        MetascopeField fieldEntity = metascopeFieldService.findByComment(commentEntity);
-        documentationService.deleteComment(fieldEntity, commentEntity, metascopeUserService.getUser());
-        redirAttr.addFlashAttribute("comment", "deleted");
-        return getReferer(request, fieldname, parameter);
-    }
+  @RequestMapping(value = "/field/documentation/comment/delete", method = RequestMethod.POST)
+  public String deleteComment(HttpServletRequest request, RedirectAttributes redirAttr, String fieldname,
+                              boolean parameter, String commentID) {
+    MetascopeComment commentEntity = documentationService.findById(commentID);
+    MetascopeField fieldEntity = metascopeFieldService.findByComment(commentEntity);
+    documentationService.deleteComment(fieldEntity, commentEntity, metascopeUserService.getUser());
+    redirAttr.addFlashAttribute("comment", "deleted");
+    return getReferer(request, fieldname, parameter);
+  }
 
-    private String getReferer(HttpServletRequest request, String fieldname, boolean parameter) {
-        String refererString = "redirect:" + request.getHeader("Referer");
-        if (parameter) {
-            return refererString + "#parameterContent-" + fieldname;
-        } else {
-            return refererString + "#schemaContent-" + fieldname;
-        }
+  private String getReferer(HttpServletRequest request, String fieldname, boolean parameter) {
+    String refererString = "redirect:" + request.getHeader("Referer");
+    if (parameter) {
+      return refererString + "#parameterContent-" + fieldname;
+    } else {
+      return refererString + "#schemaContent-" + fieldname;
     }
+  }
 
-    @RequestMapping(value = "/table/documentation/autosave", method = RequestMethod.POST)
-    @ResponseBody
-    public boolean autosaveDocumentation(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn, String documentation) {
-        MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
-        return documentationService.autosaveDocumentation(table, documentation, metascopeUserService.getUser());
-    }
+  @RequestMapping(value = "/table/documentation/autosave", method = RequestMethod.POST)
+  @ResponseBody
+  public boolean autosaveDocumentation(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn, String documentation) {
+    MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
+    return documentationService.autosaveDocumentation(table, documentation, metascopeUserService.getUser());
+  }
 
-    @RequestMapping(value = "/table/documentation/autosave/get", method = RequestMethod.GET)
-    @ResponseBody
-    public String getDraft(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn) {
-        MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
-        return documentationService.getDraft(table, metascopeUserService.getUser()).getText();
-    }
+  @RequestMapping(value = "/table/documentation/autosave/get", method = RequestMethod.GET)
+  @ResponseBody
+  public String getDraft(HttpServletRequest request, RedirectAttributes redirAttr, String fqdn) {
+    MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
+    return documentationService.getDraft(table, metascopeUserService.getUser()).getText();
+  }
 
 }

@@ -24,13 +24,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MetascopeAdminService {
 
-    @Autowired
-    private MetascopeTask metascopeTask;
+  @Autowired
+  private MetascopeTask metascopeTask;
 
-    @Async
-    @Transactional
-    public void schedule() {
-        metascopeTask.run();
-    }
+  @Async
+  @Transactional
+  public void schedule() {
+    metascopeTask.run();
+  }
 
 }

@@ -35,35 +35,35 @@ import static org.junit.Assert.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class MetascopeActivityRepositoryTest {
 
-    @Autowired
-    private TestEntityManager entityManager;
+  @Autowired
+  private TestEntityManager entityManager;
 
-    @Autowired
-    private MetascopeActivityRepository metascopeActivityRepository;
+  @Autowired
+  private MetascopeActivityRepository metascopeActivityRepository;
 
-    @Before
-    public void setup() {
-        long ts = System.currentTimeMillis();
+  @Before
+  public void setup() {
+    long ts = System.currentTimeMillis();
 
-        for (int i = 0; i < 20; i++) {
-            MetascopeActivity metascopeActivity = new MetascopeActivity();
-            metascopeActivity.setActivityId(String.valueOf(i));
-            metascopeActivity.setTimestamp(ts - i);
-            this.entityManager.persist(metascopeActivity);
-        }
+    for (int i = 0; i < 20; i++) {
+      MetascopeActivity metascopeActivity = new MetascopeActivity();
+      metascopeActivity.setActivityId(String.valueOf(i));
+      metascopeActivity.setTimestamp(ts - i);
+      this.entityManager.persist(metascopeActivity);
+    }
+  }
+
+  @Test
+  public void findFirst10ByOrderByTimestampDescTest() {
+    List<MetascopeActivity> activities = metascopeActivityRepository.findFirst10ByOrderByTimestampDesc();
+
+    assertNotNull(activities);
+    assertTrue(activities.size() == 10);
+
+    for (MetascopeActivity activity : activities) {
+      assertTrue(Integer.valueOf(activity.getActivityId()) <= 10);
     }
 
-    @Test
-    public void findFirst10ByOrderByTimestampDescTest() {
-        List<MetascopeActivity> activities = metascopeActivityRepository.findFirst10ByOrderByTimestampDesc();
-
-        assertNotNull(activities);
-        assertTrue(activities.size() == 10);
-
-        for (MetascopeActivity activity : activities) {
-            assertTrue(Integer.valueOf(activity.getActivityId()) <= 10);
-        }
-
-    }
+  }
 
 }

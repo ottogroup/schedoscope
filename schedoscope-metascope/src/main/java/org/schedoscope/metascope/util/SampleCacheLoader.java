@@ -28,35 +28,35 @@ import java.util.Set;
 
 public class SampleCacheLoader extends CacheLoader<String, HiveQueryResult> {
 
-    private MetascopeTableService metascopeTableService;
-    private HiveQueryExecutor hiveQueryExecutor;
+  private MetascopeTableService metascopeTableService;
+  private HiveQueryExecutor hiveQueryExecutor;
 
-    public SampleCacheLoader(MetascopeTableService metascopeTableService, HiveQueryExecutor hiveQueryExecutor) {
-        this.metascopeTableService = metascopeTableService;
-        this.hiveQueryExecutor = hiveQueryExecutor;
-    }
+  public SampleCacheLoader(MetascopeTableService metascopeTableService, HiveQueryExecutor hiveQueryExecutor) {
+    this.metascopeTableService = metascopeTableService;
+    this.hiveQueryExecutor = hiveQueryExecutor;
+  }
 
-    @Override
-    @Transactional
-    public HiveQueryResult load(String fqdn) throws Exception {
-        return getSample(fqdn);
-    }
+  @Override
+  @Transactional
+  public HiveQueryResult load(String fqdn) throws Exception {
+    return getSample(fqdn);
+  }
 
-    public HiveQueryResult getSample(String fqdn) {
-        MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
-        if (table == null) {
-            return new HiveQueryResult("Internal error");
-        }
-        Map<String, String> params = new HashMap<String, String>();
-        Set<MetascopeField> parameters = table.getParameters();
-        if (parameters.size() > 0) {
-            MetascopeField parameter = parameters.iterator().next();
-            String parameterValue = metascopeTableService.getRandomParameterValue(table, parameter);
-            params.put(parameter.getFieldName(), parameterValue);
-        }
-        HiveQueryResult queryResult = hiveQueryExecutor.executeQuery(table.getDatabaseName(), table.getTableName(),
-                table.getFieldsCommaDelimited(), table.getParameters(), params);
-        return queryResult;
+  public HiveQueryResult getSample(String fqdn) {
+    MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
+    if (table == null) {
+      return new HiveQueryResult("Internal error");
     }
+    Map<String, String> params = new HashMap<String, String>();
+    Set<MetascopeField> parameters = table.getParameters();
+    if (parameters.size() > 0) {
+      MetascopeField parameter = parameters.iterator().next();
+      String parameterValue = metascopeTableService.getRandomParameterValue(table, parameter);
+      params.put(parameter.getFieldName(), parameterValue);
+    }
+    HiveQueryResult queryResult = hiveQueryExecutor.executeQuery(table.getDatabaseName(), table.getTableName(),
+      table.getFieldsCommaDelimited(), table.getParameters(), params);
+    return queryResult;
+  }
 
 }
