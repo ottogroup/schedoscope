@@ -24,7 +24,7 @@ Get a glance at
 
 - [Schedoscope's features](https://github.com/ottogroup/schedoscope/wiki/Schedoscope-at-a-Glance)
 
-Build it:
+Build it (you currently need to use JDK7 because of the state of Cloudera dependencies):
 
      [~]$ git clone https://github.com/ottogroup/schedoscope.git
      [~]$ cd schedoscope
