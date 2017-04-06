@@ -237,7 +237,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     the[IllegalArgumentException] thrownBy {
       val response = service.materialize(Some("test.views/ViewWithExceptionThrowingDependency"), None, None, None, None)
       Await.result(response, TIMEOUT)
-    } should have message "Invalid view passed to view manager for initialization"
+    } should have message "Some dependencies of the views passed could not be instantiated by the view manager"
   }
 
   it should "fail to load views due to wrong package reference for View Brand " +

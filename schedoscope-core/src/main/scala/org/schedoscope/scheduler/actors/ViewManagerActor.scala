@@ -134,21 +134,26 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     * @param v the view to obtain table actor for
     * @return the actor or a failure if the view or a dependency could not be initialized
     */
-  def tableActorForView(v: View): Try[ActorRef] = tableActorsForViews(Set(v), false).map(_(v))
+  def tableActorForView(v: View): Try[ActorRef] = tableActorsForViews(Set(v), false).map(_ (v))
 
   /**
     * This method returns the table actors for the given views, creating them if necessary.
     *
     * @param vs               the views to obtain table actors for
     * @param withDependencies includes the dependencies of the given views (defaults to false)
-    * @return a map assigning each view its responsible table actor or a failure if the views or a dependency could
-    *         not be initialized
+    * @return a map assigning each view its responsible table actor or a failure if some dependencies of the views could
+    *         not be instantiated for some reason. Note that other problems will still raise an exception and
+    *         terminate the actor system and thereby Schedoscope.
     */
-  def tableActorsForViews(vs: Set[View], withDependencies: Boolean = false): Try[Map[View, ActorRef]] = try {
+  def tableActorsForViews(vs: Set[View], withDependencies: Boolean = false): Try[Map[View, ActorRef]] = {
 
     log.info(s"Looking for unknown views or dependencies for a set of ${vs.size} views.")
 
-    val viewsRequiringInitialization = unknownViewsOrDependencies(vs.toList)
+    val viewsRequiringInitialization = try {
+      unknownViewsOrDependencies(vs.toList)
+    } catch {
+      case t: Throwable => return Failure(new IllegalArgumentException("Some dependencies of the views passed could not be instantiated by the view manager", t))
+    }
 
     log.info(s"${viewsRequiringInitialization.size} views require initialization.")
 
@@ -214,9 +219,8 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     log.info(s"Returning actors for ${addressedViews.size} addressed views.")
 
     Success(addressedViews.map(v => v -> viewStatusMap(v.urlPath).actor).toMap)
-  } catch {
-    case t: Throwable => Failure(new IllegalArgumentException("Invalid view passed to view manager for initialization", t))
   }
+
 
   /**
     * This method returns for a given set of views along with their dependencies, which of those are yet known
