@@ -59,8 +59,20 @@ object TestUtils {
     val resources = view.resources
     val inputFixtures = view.inputFixtures
 
-    inputFixtures.foreach(_.writeData())
+    // edge case to solve issue with recursive dependencies
+    var recursiveView = false
+    inputFixtures.foreach { v =>
+      if(v.n == view.n && !recursiveView) {
+        println(s"[Schedoscope INFO]: The View you are testing - ${view.n} - depends on itself " +
+          s"(specified with dependsOn {} method). In these edge cases Schedoscope also changes Storage " +
+          s"format of output files into TextFile() of the view being tested (besides for its input views). " +
+          s"You can safely ignore this message, as this should not affect the logic of your tests.")
+        view.storedAs(resources.textStorage)
+        recursiveView = true
+      }
+    }
 
+    inputFixtures.foreach(_.writeData())
     view.createViewTable()
 
     if (view.isPartitioned()) {
@@ -92,11 +104,13 @@ object TestUtils {
       .driverFor(finalTransformationToRun)
       .runAndWait(finalTransformationToRun)
 
+
     if (sortedBy != null) {
       view.populate(Some(sortedBy))
     } else {
       view.populate(view.sortedBy)
     }
+
 
   }
 }

@@ -3,12 +3,13 @@ package org.schedoscope.test
 import org.apache.hadoop.fs.Path
 import org.schedoscope.dsl.Field._
 import org.schedoscope.dsl.Parameter._
-import test.views.{Click, ClickOfEC0101}
+import org.schedoscope.dsl.storageformats._
+import test.views._
 
 
 class TestSchedoscopeSpec extends SchedoscopeSpec {
 
-  val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
+    val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
       v(id, "event01"),
       v(url, "http://ec0101.com/url1"))
@@ -33,11 +34,86 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
   }
 
   val click = putViewUnderTest {
-    new ClickOfEC0101(p("2014"), p("01"), p("01")) with test {
+    new ClickOfEC01(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
       withResource("test" -> "src/test/resources/test.sql")
     }
   }
+
+  val clickAvro = putViewUnderTest {
+    new ClickEC01Avro(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+    }
+  }
+
+  it should "not change output/goal view storage format Avro" in {
+    import clickAvro._
+    storageFormat shouldBe Avro("avro_schemas/click_of_e_c0101_avro.avsc")
+    numRows() shouldBe 3
+    row(v(id) shouldBe "event01",
+      v(url) shouldBe "http://ec0101.com/url1")
+    row(v(id) shouldBe "event02",
+      v(url) shouldBe "http://ec0101.com/url2")
+    row(v(id) shouldBe "event03",
+      v(url) shouldBe "http://ec0101.com/url3")
+  }
+
+
+  val clickORC = putViewUnderTest {
+    new ClickEC01ORC(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+    }
+  }
+
+  it should "not change output/goal view storage format ORC" in {
+    import clickORC._
+    storageFormat shouldBe OptimizedRowColumnar()
+
+    numRows() shouldBe 3
+    row(v(id) shouldBe "event01",
+      v(url) shouldBe "http://ec0101.com/url1")
+    row(v(id) shouldBe "event02",
+      v(url) shouldBe "http://ec0101.com/url2")
+    row(v(id) shouldBe "event03",
+      v(url) shouldBe "http://ec0101.com/url3")
+  }
+
+  val clickParquet = putViewUnderTest {
+    new ClickEC01Parquet(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+    }
+  }
+
+  it should "not change output/goal view storage format Parquet" in {
+    import clickParquet._
+    storageFormat shouldBe Parquet()
+    numRows() shouldBe 3
+    row(v(id) shouldBe "event01",
+      v(url) shouldBe "http://ec0101.com/url1")
+    row(v(id) shouldBe "event02",
+      v(url) shouldBe "http://ec0101.com/url2")
+    row(v(id) shouldBe "event03",
+      v(url) shouldBe "http://ec0101.com/url3")
+  }
+
+  val clickJson = putViewUnderTest {
+    new ClickEC01Json(p("2014"), p("01"), p("01")) with test {
+      basedOn(ec0101Clicks, ec0106Clicks)
+    }
+  }
+
+  it should "not change output/goal view storage format JSON" in {
+    import clickJson._
+    storageFormat shouldBe Json()
+    numRows() shouldBe 3
+    row(v(id) shouldBe "event01",
+      v(url) shouldBe "http://ec0101.com/url1")
+    row(v(id) shouldBe "event02",
+      v(url) shouldBe "http://ec0101.com/url2")
+    row(v(id) shouldBe "event03",
+      v(url) shouldBe "http://ec0101.com/url3")
+  }
+
 
   //import the view under test to access it in the tests
   import click._
@@ -64,6 +140,7 @@ class TestSchedoscopeSpec extends SchedoscopeSpec {
     val target = new Path(s"${click.resources.remoteTestDirectory}/test.sql")
     fs.exists(target) shouldBe true
   }
+
 }
 
 class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {
@@ -87,12 +164,12 @@ class TestReusableFixtures extends SchedoscopeSpec with ReusableHiveSchema {
 
   val ec0106Clicks = new Click(p("EC0106"), p("2014"), p("01"), p("01")) with InputSchema
 
-  val click = new ClickOfEC0101(p("2014"), p("01"), p("01")) with OutputSchema {
+  val click = new ClickOfEC01(p("2014"), p("01"), p("01")) with OutputSchema {
     basedOn(ec0101Clicks, ec0106Clicks)
     withResource("test" -> "src/test/resources/test.sql")
   }
 
-  val click2 = new ClickOfEC0101(p("2014"), p("01"), p("01")) with OutputSchema {
+  val click2 = new ClickOfEC01(p("2014"), p("01"), p("01")) with OutputSchema {
     basedOn(ec0101static)
     withResource("test" -> "src/test/resources/test.sql")
   }

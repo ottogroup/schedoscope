@@ -133,7 +133,7 @@ class ExportTest extends FlatSpec with Matchers {
     val kafkaServer = new EmbeddedKafkaCluster(zkServer.getConnectString, new Properties(), ImmutableList.of(9092))
     kafkaServer.startup();
 
-    val v = new ClickOfEC0101WithKafkaExport(p("2014"), p("01"), p("01")) with test {
+    val v = new ClickOfEC01WithKafkaExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
 
       `then`()

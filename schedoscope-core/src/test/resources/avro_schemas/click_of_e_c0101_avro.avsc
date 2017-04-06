@@ -1,0 +1,9 @@
+{
+  "name": "ClickOfEC0101Avro",
+  "type": "record",
+  "fields": [
+     {"name":"id", "type": "string"},
+     {"name":"url", "type": "string"}
+    ],
+    "namespace": "org.schedoscope.test_test_views.click_of_e_c0101_avro"
+}

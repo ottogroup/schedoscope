@@ -21,7 +21,8 @@
         <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>parquet-hadoop-bundle</artifactId>
-            <version>${pig.parquet.version}</version>
+            <!--<version>${pig.parquet.version}</version>-->
+            <version>${hive.parquet.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hive</groupId>

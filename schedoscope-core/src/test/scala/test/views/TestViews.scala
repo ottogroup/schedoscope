@@ -242,6 +242,150 @@ case class Click(shopCode: Parameter[String],
   val url = fieldOf[String]
 }
 
+trait ClickEC01 extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this,
+        s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+}
+
+case class ClickOfEC01(year: Parameter[String],
+                     month: Parameter[String],
+                     day: Parameter[String]) extends ClickEC01
+   {
+  storedAs(TextFile())
+}
+
+case class ClickEC01Json(year: Parameter[String],
+                         month: Parameter[String],
+                         day: Parameter[String]) extends ClickEC01
+{
+  storedAs(Json())
+}
+
+case class ClickEC01ORC(year: Parameter[String],
+                        month: Parameter[String],
+                        day: Parameter[String]) extends ClickEC01
+{
+  storedAs(OptimizedRowColumnar())
+}
+
+case class ClickEC01Parquet(year: Parameter[String],
+                            month: Parameter[String],
+                            day: Parameter[String]) extends ClickEC01
+{
+  storedAs(Parquet())
+}
+
+case class ClickEC01Avro(year: Parameter[String],
+                         month: Parameter[String],
+                         day: Parameter[String]) extends ClickEC01
+{
+  storedAs(Avro("avro_schemas/click_of_e_c0101_avro.avsc"))
+}
+
+case class ClickOfEC0101WithJdbcExport(year: Parameter[String],
+                                     month: Parameter[String],
+                                     day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this,
+        s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+
+  exportTo(() => Jdbc(this, "jdbc:derby:memory:TestingDB"))
+
+}
+
+case class ClickOfEC0101WithRedisExport(year: Parameter[String],
+                                      month: Parameter[String],
+                                      day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this,
+        s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+
+  exportTo(() => Redis(this, "localhost", id))
+
+}
+
+case class ClickOfEC01WithKafkaExport(year: Parameter[String],
+                                      month: Parameter[String],
+                                      day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this,
+        s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+
+  exportTo(() => Kafka(this, id, "localhost:9092", "localhost:2182"))
+
+}
+
+case class ClickOfEC0101WithFtpExport(year: Parameter[String],
+                                    month: Parameter[String],
+                                    day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this,
+        s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+
+  val filePrefix = Random.alphanumeric.take(10).mkString
+
+  exportTo(() => Ftp(this,
+    "ftp://localhost:2221/",
+    EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING,
+    EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING,
+    filePrefix))
+}
+
 case class ClicksGroupUrlShop(shopCodes: Parameter[List[String]],
                               year: Parameter[String],
                               month: Parameter[String],
@@ -269,117 +413,7 @@ case class ClicksGroupUrlShop(shopCodes: Parameter[List[String]],
   )
 }
 
-case class ClickOfEC0101(year: Parameter[String],
-                         month: Parameter[String],
-                         day: Parameter[String]) extends View
-  with Id
-  with DailyParameterization {
 
-  val url = fieldOf[String]
-
-  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
-
-  transformVia(
-    () => HiveTransformation(
-      insertInto(this,
-        s"""
-            SELECT ${click().id.n}, ${click().url.n}
-            FROM ${click().tableName}
-            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
-}
-
-case class ClickOfEC0101WithJdbcExport(year: Parameter[String],
-                                       month: Parameter[String],
-                                       day: Parameter[String]) extends View
-  with Id
-  with DailyParameterization {
-
-  val url = fieldOf[String]
-
-  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
-
-  transformVia(
-    () => HiveTransformation(
-      insertInto(this,
-        s"""
-            SELECT ${click().id.n}, ${click().url.n}
-            FROM ${click().tableName}
-            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
-
-  exportTo(() => Jdbc(this, "jdbc:derby:memory:TestingDB"))
-
-}
-
-case class ClickOfEC0101WithRedisExport(year: Parameter[String],
-                                        month: Parameter[String],
-                                        day: Parameter[String]) extends View
-  with Id
-  with DailyParameterization {
-
-  val url = fieldOf[String]
-
-  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
-
-  transformVia(
-    () => HiveTransformation(
-      insertInto(this,
-        s"""
-            SELECT ${click().id.n}, ${click().url.n}
-            FROM ${click().tableName}
-            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
-
-  exportTo(() => Redis(this, "localhost", id))
-
-}
-
-case class ClickOfEC0101WithKafkaExport(year: Parameter[String],
-                                        month: Parameter[String],
-                                        day: Parameter[String]) extends View
-  with Id
-  with DailyParameterization {
-
-  val url = fieldOf[String]
-
-  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
-
-  transformVia(
-    () => HiveTransformation(
-      insertInto(this,
-        s"""
-            SELECT ${click().id.n}, ${click().url.n}
-            FROM ${click().tableName}
-            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
-
-  exportTo(() => Kafka(this, id, "localhost:9092", "localhost:2182"))
-
-}
-
-case class ClickOfEC0101WithFtpExport(year: Parameter[String],
-                                      month: Parameter[String],
-                                      day: Parameter[String]) extends View
-  with Id
-  with DailyParameterization {
-
-  val url = fieldOf[String]
-
-  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
-
-  transformVia(
-    () => HiveTransformation(
-      insertInto(this,
-        s"""
-            SELECT ${click().id.n}, ${click().url.n}
-            FROM ${click().tableName}
-            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
-
-  val filePrefix = Random.alphanumeric.take(10).mkString
-
-  exportTo(() => Ftp(this,
-    "ftp://localhost:2221/",
-    EmbeddedFtpSftpServer.FTP_USER_FOR_TESTING,
-    EmbeddedFtpSftpServer.FTP_PASS_FOR_TESTING,
-    filePrefix))
-}
 
 case class SimpleDependendView() extends View with Id {
   val field1 = fieldOf[String]

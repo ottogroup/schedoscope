@@ -17,6 +17,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <hadoop.version>2.6.0-cdh5.8.3</hadoop.version>
         <hive.version>1.1.0-cdh5.8.3</hive.version>
+        <hive.parquet.version>1.5.0-cdh5.8.3</hive.parquet.version>
         <hive.hcatalog.version>${hive.version}</hive.hcatalog.version>
         <oozie.version>4.1.0-cdh5.8.3</oozie.version>
         <pig.version>0.12.0-cdh5.8.3</pig.version>
@@ -30,7 +31,6 @@
 
     <modules>
         <module>schedoscope-conf</module>
-        <module>schedoscope-export</module>
         <module>schedoscope-core</module>
         <module>schedoscope-transformation-oozie</module>
         <module>schedoscope-transformation-pig</module>
@@ -38,6 +38,7 @@
         <module>schedoscope-transformation-spark</module>
         <module>schedoscope-tutorial</module>
         <module>schedoscope-metascope</module>
+        <module>schedoscope-export</module>
     </modules>
 
 
