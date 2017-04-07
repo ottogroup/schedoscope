@@ -38,65 +38,65 @@ import static org.junit.Assert.assertNotNull;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class MetascopeFieldRepositoryTest {
 
-    @Autowired
-    private TestEntityManager entityManager;
+  @Autowired
+  private TestEntityManager entityManager;
 
-    @Autowired
-    private MetascopeFieldRepository metascopeFieldRepository;
-    private MetascopeComment metascopeComment;
+  @Autowired
+  private MetascopeFieldRepository metascopeFieldRepository;
+  private MetascopeComment metascopeComment;
 
-    @Before
-    public void setup() {
+  @Before
+  public void setup() {
     /* create test data */
-        MetascopeComment tmpComment = new MetascopeComment();
-        tmpComment.setText("comment");
-        this.metascopeComment = this.entityManager.persist(tmpComment);
+    MetascopeComment tmpComment = new MetascopeComment();
+    tmpComment.setText("comment");
+    this.metascopeComment = this.entityManager.persist(tmpComment);
 
-        MetascopeField yearParameter = new MetascopeField();
-        yearParameter.setFieldId("1");
-        yearParameter.setFieldName("year");
-        yearParameter.setParameter(true);
-        this.entityManager.persist(yearParameter);
+    MetascopeField yearParameter = new MetascopeField();
+    yearParameter.setFieldId("1");
+    yearParameter.setFieldName("year");
+    yearParameter.setParameter(true);
+    this.entityManager.persist(yearParameter);
 
-        MetascopeField yearParameter2 = new MetascopeField();
-        yearParameter2.setFieldId("2");
-        yearParameter2.setFieldName("year");
-        yearParameter2.setParameter(true);
-        this.entityManager.persist(yearParameter2);
+    MetascopeField yearParameter2 = new MetascopeField();
+    yearParameter2.setFieldId("2");
+    yearParameter2.setFieldName("year");
+    yearParameter2.setParameter(true);
+    this.entityManager.persist(yearParameter2);
 
-        MetascopeField monthParameter = new MetascopeField();
-        monthParameter.setFieldId("3");
-        monthParameter.setFieldName("month");
-        monthParameter.setParameter(true);
-        this.entityManager.persist(monthParameter);
+    MetascopeField monthParameter = new MetascopeField();
+    monthParameter.setFieldId("3");
+    monthParameter.setFieldName("month");
+    monthParameter.setParameter(true);
+    this.entityManager.persist(monthParameter);
 
-        MetascopeField someField = new MetascopeField();
-        someField.setFieldId("4");
-        someField.setFieldName("someField");
-        someField.setParameter(false);
-        Set<MetascopeComment> comments = new HashSet<>();
-        comments.add(metascopeComment);
-        someField.setComments(comments);
+    MetascopeField someField = new MetascopeField();
+    someField.setFieldId("4");
+    someField.setFieldName("someField");
+    someField.setParameter(false);
+    Set<MetascopeComment> comments = new HashSet<>();
+    comments.add(metascopeComment);
+    someField.setComments(comments);
 
-        this.entityManager.persist(someField);
-    }
+    this.entityManager.persist(someField);
+  }
 
-    @Test
-    public void findDistinctParameterTest() {
-        List<Object[]> distinctParameters = metascopeFieldRepository.findDistinctParameters();
+  @Test
+  public void findDistinctParameterTest() {
+    List<Object[]> distinctParameters = metascopeFieldRepository.findDistinctParameters();
 
-        assertNotNull(distinctParameters);
-        assertEquals(2, distinctParameters.size());
-    }
+    assertNotNull(distinctParameters);
+    assertEquals(2, distinctParameters.size());
+  }
 
-    @Test
-    public void findByComment() {
-        MetascopeField metascopeField = metascopeFieldRepository.findByComment(metascopeComment);
+  @Test
+  public void findByComment() {
+    MetascopeField metascopeField = metascopeFieldRepository.findByComment(metascopeComment);
 
-        assertNotNull(metascopeField);
-        assertEquals("4", metascopeField.getFieldId());
-        assertEquals("someField", metascopeField.getFieldName());
-        assertEquals("comment", metascopeField.getComments().iterator().next().getText());
-    }
+    assertNotNull(metascopeField);
+    assertEquals("4", metascopeField.getFieldId());
+    assertEquals("someField", metascopeField.getFieldName());
+    assertEquals("comment", metascopeField.getComments().iterator().next().getText());
+  }
 
 }

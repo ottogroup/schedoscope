@@ -150,6 +150,7 @@ public class SchedoscopeTask extends Task {
                 }
 
                 /** fields */
+                Set<MetascopeField> tableFields = new HashSet<>();
                 int i = 0;
                 for (ViewField viewField : view.getFields()) {
                     String fieldFqdn = fqdn + "." + viewField.getName();
@@ -179,11 +180,13 @@ public class SchedoscopeTask extends Task {
                         }
                     }
 
-                    table.addToFields(field);
+                    tableFields.add(field);
                     cachedFields.put(field.getFieldId(), field);
                 }
+                table.setFields(tableFields);
 
                 /** parameter */
+                Set<MetascopeField> tableParameter = new HashSet<>();
                 i = 0;
                 for (ViewField viewField : view.getParameters()) {
                     String parameterFqdn = fqdn + "." + viewField.getName();
@@ -197,10 +200,14 @@ public class SchedoscopeTask extends Task {
                     parameter.setFieldOrder(i++);
                     parameter.setParameter(true);
                     parameter.setDescription(viewField.getComment());
-                    table.addToParameters(parameter);
+
+                    parameter.setTable(table);
+                    tableParameter.add(parameter);
                 }
+                table.setParameters(tableParameter);
 
                 /** exports */
+                List<MetascopeExport> tableExports = new ArrayList<>();
                 i = 0;
                 if (view.getExport() != null) {
                     for (ViewTransformation viewExport : view.getExport()) {
@@ -212,10 +219,13 @@ public class SchedoscopeTask extends Task {
                         }
                         export.setExportType(viewExport.getName());
                         export.setProperties(viewExport.getProperties());
-                        table.addToExports(export);
+
+                        export.setTable(table);
+                        tableExports.add(export);
                         i++;
                     }
                 }
+                table.setExports(tableExports);
 
                 /** transformation */
                 MetascopeTransformation metascopeTransformation = new MetascopeTransformation();

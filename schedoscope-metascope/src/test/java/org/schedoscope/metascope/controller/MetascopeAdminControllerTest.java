@@ -37,18 +37,18 @@ import static org.junit.Assert.assertTrue;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 public class MetascopeAdminControllerTest {
 
-    @Autowired
-    protected TestRestTemplate restTemplate;
+  @Autowired
+  protected TestRestTemplate restTemplate;
 
-    @Test
-    public void sometest() throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Referer", "/test");
-        HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
+  @Test
+  public void sometest() throws Exception {
+    HttpHeaders headers = new HttpHeaders();
+    headers.set("Referer", "/test");
+    HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
 
-        ResponseEntity<String> response = this.restTemplate.exchange("/admin/sync", HttpMethod.POST, entity, String.class);
-        assertEquals(302, response.getStatusCodeValue());
-        assertTrue(response.getHeaders().get("Location").get(0).endsWith("/test"));
-    }
+    ResponseEntity<String> response = this.restTemplate.exchange("/admin/sync", HttpMethod.POST, entity, String.class);
+    assertEquals(302, response.getStatusCodeValue());
+    assertTrue(response.getHeaders().get("Location").get(0).endsWith("/test"));
+  }
 
 }
