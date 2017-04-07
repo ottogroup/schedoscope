@@ -1,14 +1,15 @@
 package org.schedoscope.scheduler.rest.client
 
 
-import org.scalatest.mock.MockitoSugar
 import org.mockito.Mockito._
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FlatSpecLike, Matchers}
 import org.schedoscope.Schedoscope
-import scala.concurrent.{Await, Promise}
-import scala.concurrent.duration._
-import spray.http._
 import org.schedoscope.scheduler.service.RunStatus
+import spray.http._
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Promise}
 
 
 class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike

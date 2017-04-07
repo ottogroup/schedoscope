@@ -16,10 +16,10 @@
 package org.schedoscope.scheduler.utils
 
 import akka.actor.{ActorRef, ActorSystem}
-import scala.concurrent.duration.FiniteDuration
-import scala.collection.mutable.HashMap
 import org.slf4j.LoggerFactory
-import scala.concurrent.duration._
+
+import scala.collection.mutable.HashMap
+import scala.concurrent.duration.{FiniteDuration, _}
 
 /**
   * A partial implementation of a BackOffStrategy available in

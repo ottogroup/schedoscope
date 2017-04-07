@@ -15,7 +15,7 @@
   */
 package org.schedoscope.test
 
-import org.schedoscope.dsl.{Structure, FieldLike}
+import org.schedoscope.dsl.{FieldLike, Structure}
 
 import scala.collection.mutable.ListBuffer
 

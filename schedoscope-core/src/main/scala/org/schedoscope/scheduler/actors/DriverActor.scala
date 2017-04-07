@@ -24,9 +24,9 @@ import org.apache.hadoop.fs._
 import org.schedoscope.conf.{DriverSettings, SchedoscopeSettings}
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{Transformation, _}
+import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.driver.FilesystemDriver.defaultFileSystem
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.language.postfixOps

@@ -16,6 +16,7 @@
 package org.schedoscope.scheduler.utils
 
 import org.scalatest.{FlatSpec, Matchers}
+
 import scala.concurrent.duration._
 
 class ExponentialBackOffTest extends FlatSpec with Matchers {

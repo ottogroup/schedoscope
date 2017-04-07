@@ -16,7 +16,7 @@
 package org.schedoscope.dsl
 
 import org.schedoscope.dsl.storageformats._
-import org.schedoscope.dsl.transformations.{NoOp, Transformation}
+import org.schedoscope.dsl.transformations.Transformation
 
 /**
   * A trait summarizing the DSL constructs available for the definition of views.

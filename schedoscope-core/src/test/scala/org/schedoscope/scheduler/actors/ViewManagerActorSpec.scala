@@ -22,7 +22,7 @@ import akka.util.Timeout
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.{ExternalView, View}
+import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.{Schedoscope, Settings, TestUtils}
 import test.extviews.ExternalShop
@@ -71,13 +71,13 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
       def acceptMessage: PartialFunction[Any, _] = {
         case AddPartitions(List(`brandDependency`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency ->("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
           messageSum += 1
         case AddPartitions(List(`productDependency`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency ->("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
           messageSum += 2
         case AddPartitions(List(`view`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
           messageSum += 3
         case CheckOrCreateTables(List(`brandDependency`)) =>
           schemaManagerRouter.reply(SchemaActionSuccess())
@@ -139,7 +139,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     viewManagerActor ! DelegateMessageToView(unknownView, CommandForView(None, unknownView, InvalidateView()))
 
     schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView ->("checksum", 1L))))
+    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("checksum", 1L))))
 
     expectMsgAllClassOf(classOf[NewTableActorRef], classOf[ViewStatusResponse])
   }
@@ -152,7 +152,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     schemaManagerRouter.expectMsg(CheckOrCreateTables(List(unknownView)))
     schemaManagerRouter.reply(SchemaActionSuccess())
     schemaManagerRouter.expectMsg(AddPartitions(List(unknownView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView ->("checksum", 1L))))
+    schemaManagerRouter.reply(TransformationMetadata(Map(unknownView -> ("checksum", 1L))))
 
     expectMsgAllClassOf(classOf[NewTableActorRef], classOf[ViewStatusResponse])
   }
@@ -188,9 +188,9 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
       case CheckOrCreateTables(List(ExternalShop())) =>
         schemaManagerRouter.reply(SchemaActionSuccess())
       case AddPartitions(List(viewWithExt)) =>
-        schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt ->("test", 1L))))
+        schemaManagerRouter.reply(TransformationMetadata(Map(viewWithExt -> ("test", 1L))))
       case AddPartitions(List(ExternalShop())) =>
-        schemaManagerRouter.reply(TransformationMetadata(Map(ExternalShop() ->("test", 1L))))
+        schemaManagerRouter.reply(TransformationMetadata(Map(ExternalShop() -> ("test", 1L))))
     }
 
   }

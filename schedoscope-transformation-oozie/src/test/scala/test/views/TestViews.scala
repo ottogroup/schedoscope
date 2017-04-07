@@ -15,9 +15,8 @@
   */
 package test.views
 
-import org.schedoscope.dsl.Parameter
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.View
+import org.schedoscope.dsl.{Parameter, View}
 import org.schedoscope.dsl.transformations.OozieTransformation
 import org.schedoscope.dsl.transformations.OozieTransformation.oozieWFPath
 import org.schedoscope.dsl.views.{DailyParameterization, Id}

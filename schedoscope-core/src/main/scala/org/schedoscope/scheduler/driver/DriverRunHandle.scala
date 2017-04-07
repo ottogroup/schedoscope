@@ -17,8 +17,6 @@ package org.schedoscope.scheduler.driver
 import org.joda.time.LocalDateTime
 import org.schedoscope.dsl.transformations.Transformation
 
-import scala.reflect.internal.util.Statistics.View
-
 /**
   * Handle for the transformation executed by a driver, called a driver run.
   *

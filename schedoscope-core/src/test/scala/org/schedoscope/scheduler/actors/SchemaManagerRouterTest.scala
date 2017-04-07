@@ -5,6 +5,7 @@ import akka.testkit.{TestActorRef, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.{Settings, TestUtils}
+
 import scala.concurrent.duration._
 
 class SchemaManagerRouterTest extends TestKit(ActorSystem("schedoscope"))

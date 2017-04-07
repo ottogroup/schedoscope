@@ -11,7 +11,7 @@ object TestUtils {
     // load the normal config stack (system props,
     // then application.conf, then reference.conf)
     val regularConfig =
-      ConfigFactory.load()
+    ConfigFactory.load()
     // override regular stack with myConfig
     val combined =
       myConfig.withFallback(regularConfig)

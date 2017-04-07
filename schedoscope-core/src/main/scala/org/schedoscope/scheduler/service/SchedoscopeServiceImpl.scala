@@ -257,8 +257,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
           viewManagerActor,
           GetViews(resolvedViews, status, filter, issueFilter, dependencies),
           settings.schedulingCommandTimeout).viewStatusList match {
-            case Success(vsl) => vsl
-            case Failure(t) => throw t
+          case Success(vsl) => vsl
+          case Failure(t) => throw t
         }
       }
     }

@@ -15,7 +15,6 @@
   */
 package org.schedoscope.test
 
-import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
 import test.views.{Click, ClickOfEC0101}

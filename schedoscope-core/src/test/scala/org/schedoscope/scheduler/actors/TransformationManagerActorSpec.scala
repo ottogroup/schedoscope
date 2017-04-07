@@ -20,11 +20,11 @@ import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.testkit.{EventFilter, TestActorRef, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
-import org.schedoscope.{Settings, TestUtils}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.FilesystemTransformation
 import org.schedoscope.scheduler.driver.{Driver, HiveDriver}
 import org.schedoscope.scheduler.messages._
+import org.schedoscope.{Settings, TestUtils}
 import test.views.ProductBrand
 
 import scala.concurrent.duration._

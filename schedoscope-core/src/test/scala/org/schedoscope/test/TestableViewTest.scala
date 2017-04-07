@@ -19,9 +19,9 @@ package org.schedoscope.test
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
-import org.schedoscope.dsl.{ExternalView, View}
 import org.schedoscope.dsl.transformations.HiveTransformation.insertInto
 import org.schedoscope.dsl.transformations.{HiveTransformation, InvalidTransformationException}
+import org.schedoscope.dsl.{ExternalView, View}
 import test.views.ProductBrand
 
 case class View1() extends View {

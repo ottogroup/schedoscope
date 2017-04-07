@@ -110,16 +110,6 @@ class DslTest extends FlatSpec with Matchers {
 
   }
 
-  it should "have a rank according to their level in the dependency hierarchy" in {
-    val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
-    val brandView = productBrandView.brand()
-    val productView = productBrandView.product()
-
-    productView.rank shouldBe 0
-    brandView.rank shouldBe 0
-    productBrandView.rank shouldBe 1
-  }
-
   it should "collect all fields" in {
     val productBrandView = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     val fields = productBrandView.fields.map { f => (f.n, f.t) }

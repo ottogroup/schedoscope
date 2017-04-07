@@ -17,16 +17,15 @@ package org.schedoscope.scheduler.actors
 
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
-
-import scala.concurrent.duration._
-import com.typesafe.config.ConfigFactory
 import org.joda.time.LocalDateTime
+import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.scheduler.listeners.{RetryableViewSchedulingListenerException, ViewSchedulingListenerException}
 import org.schedoscope.scheduler.messages.{RegisterFailedListener, ViewSchedulingMonitoringEvent}
 import org.schedoscope.scheduler.states._
 import test.views.Brand
+
+import scala.concurrent.duration._
 
 class ViewSchedulingListenerActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender

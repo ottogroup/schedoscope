@@ -31,7 +31,7 @@ import spray.can.Http
 import spray.http.HttpHeaders.RawHeader
 import spray.http.StatusCodes._
 import spray.routing.Directive.pimpApply
-import spray.routing.{ExceptionHandler, HttpService, Route}
+import spray.routing.{ExceptionHandler, HttpService}
 import spray.util.LoggingContext
 
 import scala.concurrent.ExecutionContextExecutor
@@ -43,8 +43,8 @@ import scala.language.postfixOps
   */
 class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor with HttpService {
 
-  import spray.httpx.SprayJsonSupport._
   import SchedoscopeJsonDataFormat._
+  import spray.httpx.SprayJsonSupport._
 
   implicit def executionContext: ExecutionContextExecutor = actorRefFactory.dispatcher
 
