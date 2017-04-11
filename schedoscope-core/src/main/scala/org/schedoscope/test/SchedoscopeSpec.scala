@@ -38,8 +38,6 @@ trait SchedoscopeSuite
     with BeforeAndAfterEach {
   this: Suite =>
 
-  val views = ListBuffer.empty[test]
-
   Class.forName("parquet.Log")
   Logger.getLogger("").getHandlers.foreach(Logger.getLogger("").removeHandler)
   LogManager.getLogManager.reset()
@@ -47,6 +45,7 @@ trait SchedoscopeSuite
   SLF4JBridgeHandler.install()
   Logger.getLogger("global").setLevel(Level.WARNING)
 
+  val views = ListBuffer.empty[test]
 
   override protected def beforeAll(configMap: org.scalatest.ConfigMap) = {
     views.foreach {
