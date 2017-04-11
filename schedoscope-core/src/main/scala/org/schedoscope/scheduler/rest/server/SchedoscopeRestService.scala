@@ -91,10 +91,12 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
   */
 object SchedoscopeRestService {
 
+  Class.forName("parquet.Log")
+  Logger.getLogger("").getHandlers.foreach(Logger.getLogger("").removeHandler)
   LogManager.getLogManager.reset()
   SLF4JBridgeHandler.removeHandlersForRootLogger()
   SLF4JBridgeHandler.install()
-  Logger.getLogger("global").setLevel(Level.FINEST)
+  Logger.getLogger("global").setLevel(Level.WARNING)
 
   import Schedoscope._
 
