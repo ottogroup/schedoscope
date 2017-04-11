@@ -20,7 +20,7 @@ import java.io.File
 import org.apache.commons.io.FileUtils
 import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.schedoscope.dsl.transformations.SparkTransformation
-import org.schedoscope.dsl.transformations.SparkTransformation.{jarOf, classNameOf}
+import org.schedoscope.dsl.transformations.SparkTransformation.{classNameOf, jarOf}
 import org.schedoscope.spark.test.{FailingSimpleFileWriter, SimpleFileWriter}
 import org.schedoscope.test.resources.LocalTestResources
 import org.schedoscope.test.resources.TestDriverRunCompletionHandlerCallCounter._

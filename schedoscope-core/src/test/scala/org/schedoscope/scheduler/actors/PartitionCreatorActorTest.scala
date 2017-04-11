@@ -1,11 +1,10 @@
 package org.schedoscope.scheduler.actors
 
 import akka.actor.{Actor, ActorRef, ActorSystem}
-import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
+import akka.testkit.{EventFilter, ImplicitSender, TestActorRef, TestKit, TestProbe}
+import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Schedoscope
-import akka.testkit.EventFilter
-import com.typesafe.config.ConfigFactory
 
 class PartitionCreatorActorTest extends TestKit(ActorSystem("schedoscope",
   ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")))

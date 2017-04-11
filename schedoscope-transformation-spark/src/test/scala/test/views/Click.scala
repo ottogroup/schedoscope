@@ -16,9 +16,9 @@
 package test.views
 
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.{HiveTransformation, SparkSQLRunner, SparkTransformation}
-import org.schedoscope.dsl.transformations.SparkTransformation._
 import org.schedoscope.dsl.transformations.HiveTransformation._
+import org.schedoscope.dsl.transformations.SparkTransformation._
+import org.schedoscope.dsl.transformations.{HiveTransformation, SparkSQLRunner, SparkTransformation}
 import org.schedoscope.dsl.views.{DailyParameterization, Id}
 import org.schedoscope.dsl.{Parameter, View}
 

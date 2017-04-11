@@ -17,7 +17,6 @@ package org.schedoscope.scheduler.states
 
 import akka.actor.ActorRef
 import org.schedoscope.dsl.View
-import org.schedoscope.scheduler.actors.ViewManagerActor
 
 import scala.language.implicitConversions
 

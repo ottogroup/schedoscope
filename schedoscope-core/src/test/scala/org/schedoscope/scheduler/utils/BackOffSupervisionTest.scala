@@ -1,8 +1,8 @@
 package org.schedoscope.scheduler.utils
 
 import akka.actor.ActorSystem
+import akka.testkit.{TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
-import akka.testkit.{TestActorRef, TestKit, TestProbe}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._

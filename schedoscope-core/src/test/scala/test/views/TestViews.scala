@@ -139,6 +139,14 @@ case class ViewWithExternalDeps(shopCode: Parameter[String],
       s"""SELECT * FROM ${shop().n}""")))
 }
 
+case class ViewWithExceptionThrowingDependency() extends View {
+  dependsOn(() => ViewThrowingExceptionUponInitialization())
+}
+
+case class ViewThrowingExceptionUponInitialization() extends View {
+  throw new IllegalArgumentException("This view will not initialize")
+}
+
 trait Shop {
   val shopCode: Parameter[String]
   require((shopCode.v.get).toUpperCase().equals(shopCode.v.get), "Put in upper case: " + shopCode.v.get)

@@ -18,8 +18,8 @@ package org.schedoscope.conf
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.config.Config
-import collection.JavaConversions._
 
+import scala.collection.JavaConversions._
 import scala.concurrent.duration.Duration
 
 /**

@@ -18,6 +18,7 @@ package org.schedoscope.dsl.transformations
 import java.sql.DriverManager
 import java.util.Properties
 
+import _root_.test.views._
 import com.google.common.collect.ImmutableList
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.curator.test.TestingServer
@@ -30,7 +31,6 @@ import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.export.testsupport.{EmbeddedFtpSftpServer, EmbeddedKafkaCluster, SimpleTestKafkaConsumer}
 import org.schedoscope.export.utils.RedisMRJedisFactory
 import org.schedoscope.test.{rows, test}
-import _root_.test.views._
 
 import scala.collection.JavaConversions.iterableAsScalaIterable
 

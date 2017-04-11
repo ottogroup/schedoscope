@@ -15,11 +15,12 @@
   */
 package org.schedoscope.dsl.transformations
 
+import java.util.regex.Pattern.quote
+
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.service.ViewTransformationStatus
 
 import scala.collection.mutable.HashMap
-import java.util.regex.Pattern.quote
 
 /**
   * Base class for transformation types

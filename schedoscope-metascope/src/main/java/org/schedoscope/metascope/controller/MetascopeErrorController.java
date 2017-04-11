@@ -27,35 +27,35 @@ import javax.servlet.http.HttpServletRequest;
 @Controller
 public class MetascopeErrorController {
 
-  @Autowired
-  private MetascopeUserService metascopeUserService;
+    @Autowired
+    private MetascopeUserService metascopeUserService;
 
-  @Autowired
-  private MetascopeConfig config;
+    @Autowired
+    private MetascopeConfig config;
 
-  @RequestMapping("/accessdenied")
-  public ModelAndView accessdenied(HttpServletRequest request) {
-    return showErrorView("accessdenied");
-  }
-
-  @RequestMapping("/notfound")
-  public ModelAndView notfound(HttpServletRequest request) {
-    return showErrorView("notfound");
-  }
-
-  @RequestMapping("/expired")
-  public ModelAndView expired(HttpServletRequest request) {
-    return showErrorView("expired");
-  }
-
-  private ModelAndView showErrorView(String view) {
-    ModelAndView mav = new ModelAndView("util/" + view);
-    mav.addObject("userEntityService", metascopeUserService);
-    if (metascopeUserService.isAuthenticated()) {
-      mav.addObject("admin", metascopeUserService.isAdmin());
-      mav.addObject("userMgmnt", config.withUserManagement());
+    @RequestMapping("/accessdenied")
+    public ModelAndView accessdenied(HttpServletRequest request) {
+        return showErrorView("accessdenied");
     }
-    return mav;
-  }
+
+    @RequestMapping("/notfound")
+    public ModelAndView notfound(HttpServletRequest request) {
+        return showErrorView("notfound");
+    }
+
+    @RequestMapping("/expired")
+    public ModelAndView expired(HttpServletRequest request) {
+        return showErrorView("expired");
+    }
+
+    private ModelAndView showErrorView(String view) {
+        ModelAndView mav = new ModelAndView("util/" + view);
+        mav.addObject("userEntityService", metascopeUserService);
+        if (metascopeUserService.isAuthenticated()) {
+            mav.addObject("admin", metascopeUserService.isAdmin());
+            mav.addObject("userMgmnt", config.withUserManagement());
+        }
+        return mav;
+    }
 
 }

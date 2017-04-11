@@ -37,20 +37,6 @@ import scala.util.{Failure, Success, Try}
   */
 abstract class View extends Structure with ViewDsl with DelayedInit {
 
-  /**
-    * The rank of the view. Views without dependencies are of Rank 0, all others are one rank higher than the
-    * of biggest rank of their dependencies
-    */
-  lazy val rank: Int = {
-    val ds = dependencies
-    if (ds.isEmpty)
-      0
-    else
-      ds.map {
-        _.rank
-      }.max + 1
-  }
-
   val isExternal = false
   val suffixPartitions = new HashSet[Parameter[_]]()
   private val deferredDependencies = ListBuffer[() => Seq[View]]()

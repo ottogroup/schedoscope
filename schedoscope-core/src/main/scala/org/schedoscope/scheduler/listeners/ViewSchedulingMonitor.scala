@@ -15,7 +15,7 @@
   */
 package org.schedoscope.scheduler.listeners
 
-import org.schedoscope.scheduler.states.{ViewSchedulingEvent}
+import org.schedoscope.scheduler.states.ViewSchedulingEvent
 import org.slf4j.LoggerFactory
 
 /**

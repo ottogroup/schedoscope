@@ -15,7 +15,7 @@
   */
 package org.schedoscope.scheduler.utils
 
-import scala.concurrent.duration.{FiniteDuration, Duration}
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.Random
 
 /**

@@ -17,6 +17,7 @@ package org.schedoscope.metascope.task;
 
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.schedoscope.metascope.config.MetascopeConfig;
+import org.schedoscope.metascope.exception.SchedoscopeConnectException;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.*;
 import org.schedoscope.metascope.repository.MetascopeExportRepository;
@@ -25,7 +26,6 @@ import org.schedoscope.metascope.repository.MetascopeTableRepository;
 import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
 import org.schedoscope.metascope.service.MetascopeMetadataService;
 import org.schedoscope.metascope.task.model.*;
-import org.schedoscope.metascope.exception.SchedoscopeConnectException;
 import org.schedoscope.metascope.util.SchedoscopeUtil;
 import org.schedoscope.metascope.util.model.SchedoscopeInstance;
 import org.slf4j.Logger;
@@ -42,312 +42,312 @@ import java.util.*;
 @Component
 public class SchedoscopeTask extends Task {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SchedoscopeTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SchedoscopeTask.class);
 
-  private static final String OCCURRED_AT = "occurred_at";
-  private static final String OCCURRED_UNTIL = "occurred_until";
-  private static final String SCHEDOSCOPE_TIMESTAMP_FORMAT = "yyyy-MM-dd''T''HH:mm:ss.SSS''Z''";
+    private static final String OCCURRED_AT = "occurred_at";
+    private static final String OCCURRED_UNTIL = "occurred_until";
+    private static final String SCHEDOSCOPE_TIMESTAMP_FORMAT = "yyyy-MM-dd''T''HH:mm:ss.SSS''Z''";
 
-  @Autowired
-  private MetascopeConfig config;
-  @Autowired
-  private SolrFacade solrFacade;
-  @Autowired
-  private MetascopeTableRepository metascopeTableRepository;
-  @Autowired
-  private MetascopeFieldRepository metascopeFieldRepository;
-  @Autowired
-  private MetascopeExportRepository metascopeExportRepository;
-  @Autowired
-  private MetascopeMetadataService metascopeMetadataService;
-  @Autowired
-  private DataSource dataSource;
+    @Autowired
+    private MetascopeConfig config;
+    @Autowired
+    private SolrFacade solrFacade;
+    @Autowired
+    private MetascopeTableRepository metascopeTableRepository;
+    @Autowired
+    private MetascopeFieldRepository metascopeFieldRepository;
+    @Autowired
+    private MetascopeExportRepository metascopeExportRepository;
+    @Autowired
+    private MetascopeMetadataService metascopeMetadataService;
+    @Autowired
+    private DataSource dataSource;
 
-  private SchedoscopeInstance schedoscopeInstance;
+    private SchedoscopeInstance schedoscopeInstance;
 
-  @Override
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public boolean run(long start) {
-    Map<String, MetascopeTable> cachedTables = new HashMap<>();
-    Map<String, MetascopeField> cachedFields = new HashMap<>();
-    Map<String, MetascopeView> cachedViews = new HashMap<>();
-    List<ViewDependency> viewDependencies = new ArrayList<>();
-    List<FieldDependency> fieldDependencies = new ArrayList<>();
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean run(long start) {
+        Map<String, MetascopeTable> cachedTables = new HashMap<>();
+        Map<String, MetascopeField> cachedFields = new HashMap<>();
+        Map<String, MetascopeView> cachedViews = new HashMap<>();
+        List<ViewDependency> viewDependencies = new ArrayList<>();
+        List<FieldDependency> fieldDependencies = new ArrayList<>();
 
-    LOG.info("Retrieve and parse data from schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
+        LOG.info("Retrieve and parse data from schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
 
-    boolean isH2Database = config.getRepositoryUrl().startsWith("jdbc:h2");
-    boolean isMySQLDatabase = config.getRepositoryUrl().startsWith("jdbc:mysql");
+        boolean isH2Database = config.getRepositoryUrl().startsWith("jdbc:h2");
+        boolean isMySQLDatabase = config.getRepositoryUrl().startsWith("jdbc:mysql");
 
 
-    /** get data from schedoscope */
-    ViewStatus viewStatus;
-    try {
-      viewStatus = SchedoscopeUtil.getViewStatus(true, false, null, schedoscopeInstance.getHost(), schedoscopeInstance.getPort());
-    } catch (SchedoscopeConnectException e) {
-      LOG.error("Could not retrieve view information", e);
-      return false;
-    }
-
-    if (viewStatus == null) {
-      LOG.info("[SchedoscopeSyncTask] FAILED: Schedoscope status information is not available");
-      return false;
-    }
-
-    if (viewStatus.getViews().size() == 0) {
-      LOG.info("[SchedoscopeSyncTask] No schedoscope metadata available. Maybe materialize some views?");
-      metascopeMetadataService.save("schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
-      return false;
-    }
-
-    int size = viewStatus.getViews().size();
-    LOG.info("Received " + size + " views");
-
-    /** save tables to avoid foreign key constraint violation */
-    int tableCount = 0;
-    for (View view : viewStatus.getViews()) {
-      if (view.isTable()) {
-        String fqdn = view.getDatabase() + "." + view.getTableName();
-        MetascopeTable table = metascopeTableRepository.findOne(fqdn);
-        if (table == null) {
-          table = new MetascopeTable();
-          table.setFqdn(fqdn);
-        }
-        cachedTables.put(fqdn, table);
-        LOG.info("Saved table " + fqdn);
-        tableCount++;
-      }
-    }
-    LOG.info("Received " + tableCount + " tables");
-
-    metascopeTableRepository.save(cachedTables.values());
-
-    for (View view : viewStatus.getViews()) {
-      if (view.isTable()) {
-        String fqdn = view.getDatabase() + "." + view.getTableName();
-
-        LOG.info("Consuming table " + fqdn);
-
-        MetascopeTable table = cachedTables.get(fqdn);
-        table.setSchedoscopeId(schedoscopeInstance.getId());
-        table.setDatabaseName(view.getDatabase());
-        table.setTableName(view.getTableName());
-        table.setViewPath(view.viewPath());
-        table.setExternalTable(view.isExternal());
-        table.setTableDescription(view.getComment());
-        table.setStorageFormat(view.getStorageFormat());
-        table.setMaterializeOnce(view.isMaterializeOnce());
-        for (ViewField field : view.getFields()) {
-          if (field.getName().equals(OCCURRED_AT)) {
-            table.setTimestampField(OCCURRED_AT);
-            table.setTimestampFieldFormat(SCHEDOSCOPE_TIMESTAMP_FORMAT);
-            break;
-          } else if (field.getName().equals(OCCURRED_UNTIL)) {
-            table.setTimestampField(OCCURRED_UNTIL);
-            table.setTimestampFieldFormat(SCHEDOSCOPE_TIMESTAMP_FORMAT);
-            break;
-          }
+        /** get data from schedoscope */
+        ViewStatus viewStatus;
+        try {
+            viewStatus = SchedoscopeUtil.getViewStatus(true, false, null, schedoscopeInstance.getHost(), schedoscopeInstance.getPort());
+        } catch (SchedoscopeConnectException e) {
+            LOG.error("Could not retrieve view information", e);
+            return false;
         }
 
-        /** fields */
-        Set<MetascopeField> tableFields = new HashSet<>();
-        int i = 0;
-        for (ViewField viewField : view.getFields()) {
-          String fieldFqdn = fqdn + "." + viewField.getName();
-          MetascopeField field = metascopeFieldRepository.findOne(fieldFqdn);
-          if (field == null) {
-            field = new MetascopeField();
-            field.setFieldId(fieldFqdn);
-          }
-          field.setFieldName(viewField.getName());
-          field.setFieldType(viewField.getFieldtype());
-          field.setFieldOrder(i++);
-          field.setParameter(false);
-          field.setDescription(viewField.getComment());
+        if (viewStatus == null) {
+            LOG.info("[SchedoscopeSyncTask] FAILED: Schedoscope status information is not available");
+            return false;
+        }
 
-          //lineage
-          if (view.getLineage() != null && view.getLineage().get(fieldFqdn) != null) {
-            for (String dependencyField : view.getLineage().get(fieldFqdn)) {
-              if (!dependencyField.equals(fieldFqdn)) {
-                MetascopeField dField = cachedFields.get(dependencyField);
-                if (dField == null) {
-                  dField = new MetascopeField();
-                  dField.setFieldId(dependencyField);
-                  cachedFields.put(dependencyField, dField);
+        if (viewStatus.getViews().size() == 0) {
+            LOG.info("[SchedoscopeSyncTask] No schedoscope metadata available. Maybe materialize some views?");
+            metascopeMetadataService.save("schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
+            return false;
+        }
+
+        int size = viewStatus.getViews().size();
+        LOG.info("Received " + size + " views");
+
+        /** save tables to avoid foreign key constraint violation */
+        int tableCount = 0;
+        for (View view : viewStatus.getViews()) {
+            if (view.isTable()) {
+                String fqdn = view.getDatabase() + "." + view.getTableName();
+                MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+                if (table == null) {
+                    table = new MetascopeTable();
+                    table.setFqdn(fqdn);
                 }
-                fieldDependencies.add(new FieldDependency(field.getFieldId(), dField.getFieldId()));
-              }
+                cachedTables.put(fqdn, table);
+                LOG.info("Saved table " + fqdn);
+                tableCount++;
             }
-          }
-
-          tableFields.add(field);
-          cachedFields.put(field.getFieldId(), field);
         }
-        table.setFields(tableFields);
+        LOG.info("Received " + tableCount + " tables");
 
-        /** parameter */
-        Set<MetascopeField> tableParameter = new HashSet<>();
-        i = 0;
-        for (ViewField viewField : view.getParameters()) {
-          String parameterFqdn = fqdn + "." + viewField.getName();
-          MetascopeField parameter = metascopeFieldRepository.findOne(parameterFqdn);
-          if (parameter == null) {
-            parameter = new MetascopeField();
-            parameter.setFieldId(parameterFqdn);
-          }
-          parameter.setFieldName(viewField.getName());
-          parameter.setFieldType(viewField.getFieldtype());
-          parameter.setFieldOrder(i++);
-          parameter.setParameter(true);
-          parameter.setDescription(viewField.getComment());
+        metascopeTableRepository.save(cachedTables.values());
 
-          parameter.setTable(table);
-          tableParameter.add(parameter);
-        }
-        table.setParameters(tableParameter);
+        for (View view : viewStatus.getViews()) {
+            if (view.isTable()) {
+                String fqdn = view.getDatabase() + "." + view.getTableName();
 
-        /** exports */
-        List<MetascopeExport> tableExports = new ArrayList<>();
-        i = 0;
-        if (view.getExport() != null) {
-          for (ViewTransformation viewExport : view.getExport()) {
-            String parameterFqdn = fqdn + "." + viewExport.getName();
-            MetascopeExport export = metascopeExportRepository.findOne(parameterFqdn);
-            if (export == null) {
-              export = new MetascopeExport();
-              export.setExportId(table.getFqdn() + "_" + (i));
+                LOG.info("Consuming table " + fqdn);
+
+                MetascopeTable table = cachedTables.get(fqdn);
+                table.setSchedoscopeId(schedoscopeInstance.getId());
+                table.setDatabaseName(view.getDatabase());
+                table.setTableName(view.getTableName());
+                table.setViewPath(view.viewPath());
+                table.setExternalTable(view.isExternal());
+                table.setTableDescription(view.getComment());
+                table.setStorageFormat(view.getStorageFormat());
+                table.setMaterializeOnce(view.isMaterializeOnce());
+                for (ViewField field : view.getFields()) {
+                    if (field.getName().equals(OCCURRED_AT)) {
+                        table.setTimestampField(OCCURRED_AT);
+                        table.setTimestampFieldFormat(SCHEDOSCOPE_TIMESTAMP_FORMAT);
+                        break;
+                    } else if (field.getName().equals(OCCURRED_UNTIL)) {
+                        table.setTimestampField(OCCURRED_UNTIL);
+                        table.setTimestampFieldFormat(SCHEDOSCOPE_TIMESTAMP_FORMAT);
+                        break;
+                    }
+                }
+
+                /** fields */
+                Set<MetascopeField> tableFields = new HashSet<>();
+                int i = 0;
+                for (ViewField viewField : view.getFields()) {
+                    String fieldFqdn = fqdn + "." + viewField.getName();
+                    MetascopeField field = metascopeFieldRepository.findOne(fieldFqdn);
+                    if (field == null) {
+                        field = new MetascopeField();
+                        field.setFieldId(fieldFqdn);
+                    }
+                    field.setFieldName(viewField.getName());
+                    field.setFieldType(viewField.getFieldtype());
+                    field.setFieldOrder(i++);
+                    field.setParameter(false);
+                    field.setDescription(viewField.getComment());
+
+                    //lineage
+                    if (view.getLineage() != null && view.getLineage().get(fieldFqdn) != null) {
+                        for (String dependencyField : view.getLineage().get(fieldFqdn)) {
+                            if (!dependencyField.equals(fieldFqdn)) {
+                                MetascopeField dField = cachedFields.get(dependencyField);
+                                if (dField == null) {
+                                    dField = new MetascopeField();
+                                    dField.setFieldId(dependencyField);
+                                    cachedFields.put(dependencyField, dField);
+                                }
+                                fieldDependencies.add(new FieldDependency(field.getFieldId(), dField.getFieldId()));
+                            }
+                        }
+                    }
+
+                    tableFields.add(field);
+                    cachedFields.put(field.getFieldId(), field);
+                }
+                table.setFields(tableFields);
+
+                /** parameter */
+                Set<MetascopeField> tableParameter = new HashSet<>();
+                i = 0;
+                for (ViewField viewField : view.getParameters()) {
+                    String parameterFqdn = fqdn + "." + viewField.getName();
+                    MetascopeField parameter = metascopeFieldRepository.findOne(parameterFqdn);
+                    if (parameter == null) {
+                        parameter = new MetascopeField();
+                        parameter.setFieldId(parameterFqdn);
+                    }
+                    parameter.setFieldName(viewField.getName());
+                    parameter.setFieldType(viewField.getFieldtype());
+                    parameter.setFieldOrder(i++);
+                    parameter.setParameter(true);
+                    parameter.setDescription(viewField.getComment());
+
+                    parameter.setTable(table);
+                    tableParameter.add(parameter);
+                }
+                table.setParameters(tableParameter);
+
+                /** exports */
+                List<MetascopeExport> tableExports = new ArrayList<>();
+                i = 0;
+                if (view.getExport() != null) {
+                    for (ViewTransformation viewExport : view.getExport()) {
+                        String parameterFqdn = fqdn + "." + viewExport.getName();
+                        MetascopeExport export = metascopeExportRepository.findOne(parameterFqdn);
+                        if (export == null) {
+                            export = new MetascopeExport();
+                            export.setExportId(table.getFqdn() + "_" + (i));
+                        }
+                        export.setExportType(viewExport.getName());
+                        export.setProperties(viewExport.getProperties());
+
+                        export.setTable(table);
+                        tableExports.add(export);
+                        i++;
+                    }
+                }
+                table.setExports(tableExports);
+
+                /** transformation */
+                MetascopeTransformation metascopeTransformation = new MetascopeTransformation();
+                metascopeTransformation.setTransformationId(fqdn + "." + view.getTransformation().getName());
+                metascopeTransformation.setTransformationType(view.getTransformation().getName());
+                metascopeTransformation.setProperties(view.getTransformation().getProperties());
+                table.setTransformation(metascopeTransformation);
+
+                /** views and dependencies */
+                LOG.info("Getting views for table " + fqdn);
+                List<View> views = getViewsForTable(table.getViewPath(), viewStatus.getViews());
+                LOG.info("Found " + views.size() + " views");
+
+                for (View partition : views) {
+                    MetascopeView metascopeView = cachedViews.get(partition.getName());
+                    if (metascopeView == null) {
+                        metascopeView = new MetascopeView();
+                        metascopeView.setViewUrl(partition.getName());
+                        metascopeView.setViewId(partition.getName());
+                        cachedViews.put(partition.getName(), metascopeView);
+                    }
+                    if (table.getParameters() != null && table.getParameters().size() > 0) {
+                        String parameterString = getParameterString(partition.getName(), table);
+                        metascopeView.setParameterString(parameterString);
+                    }
+                    for (List<String> dependencyLists : partition.getDependencies().values()) {
+                        for (String dependency : dependencyLists) {
+                            MetascopeView dependencyView = cachedViews.get(dependency);
+                            if (dependencyView == null) {
+                                dependencyView = new MetascopeView();
+                                dependencyView.setViewUrl(dependency);
+                                dependencyView.setViewId(dependency);
+                                cachedViews.put(dependency, dependencyView);
+                            }
+                            metascopeView.addToDependencies(dependencyView);
+                            dependencyView.addToSuccessors(metascopeView);
+                            viewDependencies.add(new ViewDependency(metascopeView.getViewId(), dependencyView.getViewId()));
+                        }
+                    }
+                    for (String dependency : partition.getDependencies().keySet()) {
+                        String dqpFqdn = dependency;
+                        MetascopeTable dep = cachedTables.get(dqpFqdn);
+                        table.addToDependencies(dep);
+                        dep.addToSuccessor(table);
+                    }
+                    cachedViews.put(partition.getName(), metascopeView);
+                    metascopeView.setTable(table);
+                }
+
+                LOG.info("Processed all views for table " + fqdn);
+
+                table.setViewsSize(views.size());
+                metascopeTableRepository.save(table);
+
+                LOG.info("Finished processing table " + fqdn);
             }
-            export.setExportType(viewExport.getName());
-            export.setProperties(viewExport.getProperties());
-
-            export.setTable(table);
-            tableExports.add(export);
-            i++;
-          }
         }
-        table.setExports(tableExports);
-
-        /** transformation */
-        MetascopeTransformation metascopeTransformation = new MetascopeTransformation();
-        metascopeTransformation.setTransformationId(fqdn + "." + view.getTransformation().getName());
-        metascopeTransformation.setTransformationType(view.getTransformation().getName());
-        metascopeTransformation.setProperties(view.getTransformation().getProperties());
-        table.setTransformation(metascopeTransformation);
-
-        /** views and dependencies */
-        LOG.info("Getting views for table " + fqdn);
-        List<View> views = getViewsForTable(table.getViewPath(), viewStatus.getViews());
-        LOG.info("Found " + views.size() + " views");
-
-        for (View partition : views) {
-          MetascopeView metascopeView = cachedViews.get(partition.getName());
-          if (metascopeView == null) {
-            metascopeView = new MetascopeView();
-            metascopeView.setViewUrl(partition.getName());
-            metascopeView.setViewId(partition.getName());
-            cachedViews.put(partition.getName(), metascopeView);
-          }
-          if (table.getParameters() != null && table.getParameters().size() > 0) {
-            String parameterString = getParameterString(partition.getName(), table);
-            metascopeView.setParameterString(parameterString);
-          }
-          for (List<String> dependencyLists : partition.getDependencies().values()) {
-            for (String dependency : dependencyLists) {
-              MetascopeView dependencyView = cachedViews.get(dependency);
-              if (dependencyView == null) {
-                dependencyView = new MetascopeView();
-                dependencyView.setViewUrl(dependency);
-                dependencyView.setViewId(dependency);
-                cachedViews.put(dependency, dependencyView);
-              }
-              metascopeView.addToDependencies(dependencyView);
-              dependencyView.addToSuccessors(metascopeView);
-              viewDependencies.add(new ViewDependency(metascopeView.getViewId(), dependencyView.getViewId()));
-            }
-          }
-          for (String dependency : partition.getDependencies().keySet()) {
-            String dqpFqdn = dependency;
-            MetascopeTable dep = cachedTables.get(dqpFqdn);
-            table.addToDependencies(dep);
-            dep.addToSuccessor(table);
-          }
-          cachedViews.put(partition.getName(), metascopeView);
-          metascopeView.setTable(table);
-        }
-
-        LOG.info("Processed all views for table " + fqdn);
-
-        table.setViewsSize(views.size());
-        metascopeTableRepository.save(table);
-
-        LOG.info("Finished processing table " + fqdn);
-      }
-    }
 
     /* save view information via JDBC and raw sql to boost performance and avoid excessive database locking */
-    Connection connection = null;
-    try {
-      connection = dataSource.getConnection();
-      RawJDBCSqlRepository sqlRepository = new RawJDBCSqlRepository(isMySQLDatabase, isH2Database);
-      LOG.info("Saving views (" + cachedViews.values().size() + ")...");
-      sqlRepository.insertOrUpdateViews(connection, cachedViews.values());
-      LOG.info("Saving field dependency information (" + fieldDependencies.size() + ") ...");
-      sqlRepository.insertFieldDependencies(connection, fieldDependencies);
-      LOG.info("Saving view dependency information (" + viewDependencies.size() + ") ...");
-      sqlRepository.insertViewDependencies(connection, viewDependencies);
-    } catch (Exception e) {
-      LOG.error("Error writing to database", e);
+        Connection connection = null;
+        try {
+            connection = dataSource.getConnection();
+            RawJDBCSqlRepository sqlRepository = new RawJDBCSqlRepository(isMySQLDatabase, isH2Database);
+            LOG.info("Saving views (" + cachedViews.values().size() + ")...");
+            sqlRepository.insertOrUpdateViews(connection, cachedViews.values());
+            LOG.info("Saving field dependency information (" + fieldDependencies.size() + ") ...");
+            sqlRepository.insertFieldDependencies(connection, fieldDependencies);
+            LOG.info("Saving view dependency information (" + viewDependencies.size() + ") ...");
+            sqlRepository.insertViewDependencies(connection, viewDependencies);
+        } catch (Exception e) {
+            LOG.error("Error writing to database", e);
+        }
+
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            LOG.error("Could not close connection", e);
+        }
+
+        LOG.info("Saving to index");
+        for (MetascopeTable table : cachedTables.values()) {
+            solrFacade.updateTablePartial(table, false);
+        }
+        solrFacade.commit();
+        LOG.info("Finished index update");
+
+        metascopeMetadataService.save("schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
+
+        LOG.info("Finished sync with schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
+        return true;
     }
 
-    try {
-      connection.close();
-    } catch (SQLException e) {
-      LOG.error("Could not close connection", e);
+    private List<View> getViewsForTable(String viewPath, List<View> views) {
+        List<View> results = new ArrayList<>();
+        for (View view : views) {
+            if (view.getName().startsWith(viewPath) && !view.isTable()) {
+                results.add(view);
+            }
+        }
+        return results;
     }
 
-    LOG.info("Saving to index");
-    for (MetascopeTable table : cachedTables.values()) {
-      solrFacade.updateTablePartial(table, false);
+    public SchedoscopeTask forInstance(SchedoscopeInstance schedoscopeInstance) {
+        this.schedoscopeInstance = schedoscopeInstance;
+        return this;
     }
-    solrFacade.commit();
-    LOG.info("Finished index update");
 
-    metascopeMetadataService.save("schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
-
-    LOG.info("Finished sync with schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
-    return true;
-  }
-
-  private List<View> getViewsForTable(String viewPath, List<View> views) {
-    List<View> results = new ArrayList<>();
-    for (View view : views) {
-      if (view.getName().startsWith(viewPath) && !view.isTable()) {
-        results.add(view);
-      }
+    private String getParameterString(String viewName, MetascopeTable table) {
+        String parameterString = null;
+        String parametersAsString = viewName.replace(table.getViewPath(), "");
+        if (!parametersAsString.isEmpty()) {
+            parameterString = new String();
+            Set<MetascopeField> parameters = table.getParameters();
+            String[] parameterValue = parametersAsString.split("/");
+            Iterator<MetascopeField> iterator = parameters.iterator();
+            int i = 0;
+            while (iterator.hasNext()) {
+                parameterString += "/" + iterator.next().getFieldName() + "=" + parameterValue[i];
+                i++;
+            }
+        }
+        return parameterString;
     }
-    return results;
-  }
-
-  public SchedoscopeTask forInstance(SchedoscopeInstance schedoscopeInstance) {
-    this.schedoscopeInstance = schedoscopeInstance;
-    return this;
-  }
-
-  private String getParameterString(String viewName, MetascopeTable table) {
-    String parameterString = null;
-    String parametersAsString = viewName.replace(table.getViewPath(), "");
-    if (!parametersAsString.isEmpty()) {
-      parameterString = new String();
-      Set<MetascopeField> parameters = table.getParameters();
-      String[] parameterValue = parametersAsString.split("/");
-      Iterator<MetascopeField> iterator = parameters.iterator();
-      int i = 0;
-      while (iterator.hasNext()) {
-        parameterString += "/" + iterator.next().getFieldName() + "=" + parameterValue[i];
-        i++;
-      }
-    }
-    return parameterString;
-  }
 
 }

@@ -20,6 +20,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface MetascopeTaxonomyRepository extends CrudRepository<MetascopeTaxonomy, Long> {
 
-  public MetascopeTaxonomy findByName(String name);
+    public MetascopeTaxonomy findByName(String name);
 
 }

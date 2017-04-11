@@ -22,14 +22,14 @@ import akka.event.{Logging, LoggingReceive}
 import org.joda.time.LocalDateTime
 import org.schedoscope.AskPattern.queryActor
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.dsl.transformations.{Checksum, Touch}
 import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.{Checksum, Touch}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
 import scala.collection.mutable
-import scala.language.implicitConversions
 import scala.concurrent.duration.Duration
+import scala.language.implicitConversions
 
 /**
   * Table actors manage the scheduling states of the views belonging to a given table.

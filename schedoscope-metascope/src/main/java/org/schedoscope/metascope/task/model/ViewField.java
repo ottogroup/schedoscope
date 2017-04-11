@@ -17,49 +17,49 @@ package org.schedoscope.metascope.task.model;
 
 public class ViewField {
 
-  private String name;
-  private String fieldtype;
-  private String comment;
+    private String name;
+    private String fieldtype;
+    private String comment;
 
-  public ViewField() {
-  }
-
-  public ViewField(String name, String fieldtype, String comment) {
-    this.name = name;
-    this.fieldtype = fieldtype;
-    this.comment = comment;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public String getFieldtype() {
-    return fieldtype;
-  }
-
-  public void setFieldtype(String fieldtype) {
-    this.fieldtype = fieldtype;
-  }
-
-  public String getComment() {
-    if (comment == null) {
-      return "";
+    public ViewField() {
     }
-    return comment;
-  }
 
-  public void setComment(String comment) {
-    this.comment = comment;
-  }
+    public ViewField(String name, String fieldtype, String comment) {
+        this.name = name;
+        this.fieldtype = fieldtype;
+        this.comment = comment;
+    }
 
-  @Override
-  public String toString() {
-    return name + fieldtype + comment;
-  }
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getFieldtype() {
+        return fieldtype;
+    }
+
+    public void setFieldtype(String fieldtype) {
+        this.fieldtype = fieldtype;
+    }
+
+    public String getComment() {
+        if (comment == null) {
+            return "";
+        }
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    @Override
+    public String toString() {
+        return name + fieldtype + comment;
+    }
 
 }

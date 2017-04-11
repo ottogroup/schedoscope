@@ -15,18 +15,18 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, ActorRef, ActorSystem}
-import akka.testkit.{EventFilter, TestActorRef, TestKit, TestProbe}
+import akka.actor.{ActorRef, ActorSystem}
+import akka.testkit.{TestActorRef, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
-import test.views.ProductBrand
+import org.schedoscope.Settings
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.HiveTransformation
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.schema.ddl.HiveQl
-import org.schedoscope.Settings
+import test.views.ProductBrand
 
-import scala.util.Random
 import scala.concurrent.duration._
+import scala.util.Random
 
 class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
   with FlatSpecLike

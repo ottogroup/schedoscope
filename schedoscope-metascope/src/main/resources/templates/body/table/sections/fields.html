@@ -27,7 +27,8 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:id="'field-' + ${field.fieldName}" data-th-each="field : ${table.fields}" style="border-bottom: 1px solid lightgrey;">
+        <tr th:id="'field-' + ${field.fieldName}" data-th-each="field : ${table.fields}"
+            style="border-bottom: 1px solid lightgrey;">
             <td data-th-text="${field.fieldName}"/>
             <td data-th-text="${field.fieldType}"/>
             <td data-th-text="${field.description}"/>
@@ -40,7 +41,8 @@
                         </a>
                         <ul class="partitionList">
                             <li data-th-each="dep : ${e.value}">
-                                <a th:href="'table?fqdn=' + ${e.key} + '#schemaContent-' + ${dep.fieldName}" data-th-text="${dep.fieldName} + ' - ' + ${dep.fieldType}"></a>
+                                <a th:href="'table?fqdn=' + ${e.key} + '#schemaContent-' + ${dep.fieldName}"
+                                   data-th-text="${dep.fieldName} + ' - ' + ${dep.fieldType}"></a>
                             </li>
                         </ul>
                     </li>
@@ -55,7 +57,8 @@
                         </a>
                         <ul class="partitionList">
                             <li data-th-each="dep : ${e.value}">
-                                <a th:href="'table?fqdn=' + ${e.key} + '#schemaContent-' + ${dep.fieldName}" data-th-text="${dep.fieldName} + ' - ' + ${dep.fieldType}"></a>
+                                <a th:href="'table?fqdn=' + ${e.key} + '#schemaContent-' + ${dep.fieldName}"
+                                   data-th-text="${dep.fieldName} + ' - ' + ${dep.fieldType}"></a>
                             </li>
                         </ul>
                     </li>

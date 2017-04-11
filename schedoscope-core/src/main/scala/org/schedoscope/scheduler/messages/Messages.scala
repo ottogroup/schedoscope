@@ -23,6 +23,8 @@ import org.schedoscope.scheduler.driver._
 import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
 import org.schedoscope.scheduler.states.{PartyInterestedInViewSchedulingStateChange, ViewSchedulingAction, ViewSchedulingState}
 
+import scala.util.Try
+
 
 case class CommandForView(sender: Option[View], receiver: View, anyRef: AnyRef)
 
@@ -235,10 +237,10 @@ case class TransformationStatusListResponse(transformationStatusList: List[Trans
 /**
   * Response message of view manager actor with state of view actors
   *
-  * @param viewStatusList list of view metadata
+  * @param viewStatusList list of view metadata or a failure, if the views for the actors could not be initialized
   * @see ViewStatusResponse
   */
-case class ViewStatusListResponse(viewStatusList: List[ViewStatusResponse]) extends CommandResponse
+case class ViewStatusListResponse(viewStatusList: Try[List[ViewStatusResponse]]) extends CommandResponse
 
 /**
   * Driver actor responding to the transformation manager actor with the state of the running transformation

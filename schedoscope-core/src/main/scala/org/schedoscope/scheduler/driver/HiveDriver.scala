@@ -20,6 +20,7 @@ import java.io.{OutputStream, PrintStream}
 
 import org.apache.commons.lang.StringUtils
 import org.apache.hadoop.hive.conf.HiveConf
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars._
 import org.apache.hadoop.hive.metastore.api.{Function, ResourceType, ResourceUri}
 import org.apache.hadoop.hive.ql.metadata.Hive
 import org.apache.hadoop.hive.ql.processors.{CommandProcessor, CommandProcessorFactory}
@@ -236,15 +237,15 @@ object HiveDriver extends DriverCompanionObject[HiveTransformation] {
     val conf = new HiveConf(classOf[SessionState])
 
     conf.set("hive.metastore.local", "false")
-    conf.set("hive.auto.convert.join", "false")
-    conf.setBoolVar(HiveConf.ConfVars.HIVESESSIONSILENT, true)
-    conf.setVar(HiveConf.ConfVars.METASTOREURIS, Schedoscope.settings.metastoreUri.trim())
+    conf.set(HIVECONVERTJOIN.toString, "false")
+    conf.set(LOCALMODEAUTO.toString, "false")
+    conf.set(SUBMITLOCALTASKVIACHILD.toString, "false")
+    conf.setBoolVar(HIVESESSIONSILENT, true)
+    conf.setVar(METASTOREURIS, Schedoscope.settings.metastoreUri.trim())
 
     if (Schedoscope.settings.kerberosPrincipal.trim() != "") {
-      conf.setBoolVar(HiveConf.ConfVars.METASTORE_USE_THRIFT_SASL,
-        true)
-      conf.setVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL,
-        Schedoscope.settings.kerberosPrincipal)
+      conf.setBoolVar(METASTORE_USE_THRIFT_SASL, true)
+      conf.setVar(METASTORE_KERBEROS_PRINCIPAL, Schedoscope.settings.kerberosPrincipal)
     }
 
     new HiveDriver(ds.driverRunCompletionHandlers, conf)
@@ -254,4 +255,3 @@ object HiveDriver extends DriverCompanionObject[HiveTransformation] {
     new HiveDriver(List("org.schedoscope.test.resources.TestDriverRunCompletionHandler"), testResources.hiveConf)
 
 }
-

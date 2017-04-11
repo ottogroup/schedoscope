@@ -15,9 +15,9 @@
   */
 package org.schedoscope.scheduler.listeners
 
+import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages.MaterializeViewMode.MaterializeViewMode
 import org.schedoscope.scheduler.states._
-import org.schedoscope.dsl.View
 
 
 /**
