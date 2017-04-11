@@ -1,7 +1,23 @@
+/**
+ * Copyright 2017 Otto (GmbH & Co KG)
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.schedoscope.metascope.service;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.LoadingCache;
+import org.hibernate.Hibernate;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.*;
 import org.schedoscope.metascope.repository.MetascopeCategoryObjectRepository;
@@ -31,293 +47,337 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class MetascopeTableService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(MetascopeTableService.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MetascopeTableService.class);
 
-    @Autowired
-    private MetascopeTableRepository metascopeTableRepository;
+  @Autowired
+  private MetascopeTableRepository metascopeTableRepository;
 
-    @Autowired
-    private MetascopeUserService metascopeUserService;
+  @Autowired
+  private MetascopeUserService metascopeUserService;
 
-    @Autowired
-    private MetascopeCategoryObjectRepository metascopeCategoryObjectRepository;
+  @Autowired
+  private MetascopeCategoryObjectRepository metascopeCategoryObjectRepository;
 
-    @Autowired
-    private MetascopeActivityService metascopeActivityService;
+  @Autowired
+  private MetascopeActivityService metascopeActivityService;
 
-    @Autowired
-    private MetascopeViewRepository metascopeViewRepository;
+  @Autowired
+  private MetascopeViewRepository metascopeViewRepository;
 
-    @Autowired
-    @Lazy
-    private SolrFacade solr;
+  @Autowired
+  @Lazy
+  private SolrFacade solr;
 
-    @Autowired
-    private HiveQueryExecutor hiveQueryExecutor;
+  @Autowired
+  private HiveQueryExecutor hiveQueryExecutor;
 
-    /**
-     * sample cache
-     */
-    private LoadingCache<String, HiveQueryResult> sampleCache;
+  /**
+   * sample cache
+   */
+  private LoadingCache<String, HiveQueryResult> sampleCache;
 
-    @PostConstruct
-    public void init() {
-        this.sampleCache = CacheBuilder.newBuilder().maximumSize(1000).expireAfterWrite(1, TimeUnit.DAYS)
-                .build(new SampleCacheLoader(this, hiveQueryExecutor));
+  @PostConstruct
+  public void init() {
+    this.sampleCache = CacheBuilder.newBuilder().maximumSize(1000).expireAfterWrite(1, TimeUnit.DAYS)
+      .build(new SampleCacheLoader(this, hiveQueryExecutor));
+  }
+
+  public MetascopeTable findByFqdn(String fqdn) {
+    if (fqdn == null) {
+      return null;
+    }
+    return metascopeTableRepository.findOne(fqdn);
+  }
+
+  public List<MetascopeTable> getTopFiveTables() {
+    return metascopeTableRepository.findTop5ByOrderByViewCountDesc();
+  }
+
+  public MetascopeTable findByComment(MetascopeComment comment) {
+    return metascopeTableRepository.findByComment(comment);
+  }
+
+  @Transactional
+  public void save(MetascopeTable table) {
+    this.metascopeTableRepository.save(table);
+  }
+
+  public Map<String, CategoryMap> getTableTaxonomies(MetascopeTable table) {
+    Map<String, CategoryMap> taxonomies = new LinkedHashMap<String, CategoryMap>();
+
+    for (MetascopeCategoryObject categoryObjectEntity : table.getCategoryObjects()) {
+      String taxonomyName = categoryObjectEntity.getCategory().getTaxonomy().getName();
+      CategoryMap categoryMap = taxonomies.get(taxonomyName);
+      if (categoryMap == null) {
+        categoryMap = new CategoryMap();
+      }
+      categoryMap.addToCategories(categoryObjectEntity.getCategory());
+      categoryMap.addToCategoryObjects(categoryObjectEntity);
+      taxonomies.put(taxonomyName, categoryMap);
+    }
+    return taxonomies;
+  }
+
+  public Set<String> getAllOwner() {
+    return metascopeTableRepository.getAllOwner();
+  }
+
+  public void addOrRemoveFavourite(String fqdn) {
+    MetascopeUser user = metascopeUserService.getUser();
+    if (user.getFavourites() == null) {
+      user.setFavourites(new ArrayList<String>());
+    }
+    boolean removed = user.getFavourites().remove(fqdn);
+    if (!removed) {
+      user.getFavourites().add(fqdn);
+    }
+    metascopeUserService.save(user);
+  }
+
+  @Transactional
+  public void setCategoryObjects(String fqdn, Map<String, String[]> parameterMap) {
+    MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+
+    if (table == null) {
+      return;
     }
 
-    public MetascopeTable findByFqdn(String fqdn) {
-        if (fqdn == null) {
-            return null;
+    table.getCategoryObjects().clear();
+
+    String categoryObjectList = "";
+    if (parameterMap != null) {
+      for (Map.Entry<String, String[]> e : parameterMap.entrySet()) {
+        if (!e.getKey().endsWith("CategoryObjects")) {
+          continue;
         }
-        return metascopeTableRepository.findOne(fqdn);
-    }
 
-    public List<MetascopeTable> getTopFiveTables() {
-        return metascopeTableRepository.findTop5ByOrderByViewCountDesc();
-    }
+        String categoryObjectIds = e.getValue()[0];
+        String[] categoryObjects = categoryObjectIds.split(",");
+        for (String categoryObjectId : categoryObjects) {
+          if (categoryObjectId.isEmpty()) {
+            continue;
+          }
 
-    public MetascopeTable findByComment(MetascopeComment comment) {
-        return metascopeTableRepository.findByComment(comment);
-    }
-
-    @Transactional
-    public void save(MetascopeTable table) {
-        this.metascopeTableRepository.save(table);
-    }
-
-    public Map<String, CategoryMap> getTableTaxonomies(MetascopeTable table) {
-        Map<String, CategoryMap> taxonomies = new LinkedHashMap<String, CategoryMap>();
-
-        for (MetascopeCategoryObject categoryObjectEntity : table.getCategoryObjects()) {
-            String taxonomyName = categoryObjectEntity.getCategory().getTaxonomy().getName();
-            CategoryMap categoryMap = taxonomies.get(taxonomyName);
-            if (categoryMap == null) {
-                categoryMap = new CategoryMap();
+          MetascopeCategoryObject categoryObjectEntity = metascopeCategoryObjectRepository.findOne(Long
+            .parseLong(categoryObjectId));
+          if (categoryObjectEntity != null) {
+            table.getCategoryObjects().add(categoryObjectEntity);
+            if (!categoryObjectList.isEmpty()) {
+              categoryObjectList += ", ";
             }
-            categoryMap.addToCategories(categoryObjectEntity.getCategory());
-            categoryMap.addToCategoryObjects(categoryObjectEntity);
-            taxonomies.put(taxonomyName, categoryMap);
+            categoryObjectList += categoryObjectEntity.getName();
+          }
         }
-        return taxonomies;
+      }
     }
 
-    public Set<String> getAllOwner() {
-        return metascopeTableRepository.getAllOwner();
+    metascopeTableRepository.save(table);
+    solr.updateTableEntityAsync(table, true);
+    LOG.info("User '{}' changed category objects for table '{}' to '{}'", metascopeUserService.getUser().getUsername(),
+      fqdn, categoryObjectList);
+    metascopeActivityService.createUpdateTaxonomyActivity(table, metascopeUserService.getUser().getUsername());
+  }
+
+  @Transactional
+  public void setTags(String fqdn, String tagsCommaDelimited) {
+    MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+
+    if (table == null) {
+      return;
     }
 
-    public void addOrRemoveFavourite(String fqdn) {
-        MetascopeUser user = metascopeUserService.getUser();
-        if (user.getFavourites() == null) {
-            user.setFavourites(new ArrayList<String>());
+    if (tagsCommaDelimited == null) {
+      tagsCommaDelimited = "";
+    }
+
+    String[] tags = tagsCommaDelimited.split(",");
+    table.getTags().clear();
+    for (String tag : tags) {
+      if (!tag.isEmpty()) {
+        table.getTags().add(tag);
+      }
+    }
+    metascopeTableRepository.save(table);
+    solr.updateTableEntityAsync(table, true);
+    LOG.info("User '{}' changed tags for table '{}' to '{}'", metascopeUserService.getUser().getUsername(), fqdn,
+      tagsCommaDelimited);
+    metascopeActivityService.createUpdateTaxonomyActivity(table, metascopeUserService.getUser().getUsername());
+  }
+
+  @Transactional
+  public void setPersonResponsible(String fqdn, String fullname) {
+    MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+    MetascopeUser user = metascopeUserService.findByFullname(fullname);
+    if (table != null) {
+      if (table.getPersonResponsible() == null || !table.getPersonResponsible().equals(fullname)) {
+        if (user != null) {
+          table.setPersonResponsible(user.getFullname());
+          metascopeTableRepository.save(table);
+          LOG.info("User '{}' changed responsible person for table '{}' to '{}'", metascopeUserService.getUser()
+            .getUsername(), fqdn, fullname);
+          metascopeActivityService.createUpdateTableMetadataActivity(table, metascopeUserService.getUser()
+            .getUsername());
+        } else if (!fullname.isEmpty()) {
+          table.setPersonResponsible(fullname);
+          metascopeTableRepository.save(table);
+          LOG.info("User '{}' changed responsible person for table '{}' to '{}'", metascopeUserService.getUser()
+            .getUsername(), fqdn, fullname);
+          metascopeActivityService.createUpdateTableMetadataActivity(table, metascopeUserService.getUser()
+            .getUsername());
         }
-        boolean removed = user.getFavourites().remove(fqdn);
-        if (!removed) {
-            user.getFavourites().add(fqdn);
+      }
+    }
+  }
+
+  @Transactional
+  public void setTimestampField(String fqdn, String dataTimestampField, String dataTimestampFieldFormat) {
+    MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+    if (table != null && !dataTimestampField.isEmpty()) {
+      String oldTimestampField = table.getTimestampField();
+      table.setTimestampField(dataTimestampField);
+      if (!dataTimestampFieldFormat.isEmpty()) {
+        table.setTimestampFieldFormat(dataTimestampFieldFormat);
+      }
+      metascopeTableRepository.save(table);
+      LOG.info("User '{}' changed timestamp field for table '{}' to '{}' with format '{}'", metascopeUserService.getUser()
+        .getUsername(), fqdn, dataTimestampField, dataTimestampFieldFormat);
+      metascopeActivityService.createUpdateTableMetadataActivity(table, metascopeUserService.getUser().getUsername());
+      if (oldTimestampField != dataTimestampField) {
+        //TjobSchedulerService.updateLastDataForTable(tableEntity);
+      }
+    }
+  }
+
+  @Transactional
+  public void increaseViewCount(String fqdn) {
+    MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+    table.setViewCount(table.getViewCount() + 1);
+    metascopeTableRepository.save(table);
+  }
+
+  @Transactional
+  public String getLineage(MetascopeTable table) {
+    return LineageUtil.getDependencyGraph(table);
+  }
+
+  @Async
+  @Transactional
+  public Future<HiveQueryResult> getSample(String fqdn, Map<String, String> params) {
+    if (params == null || params.isEmpty()) {
+      return new AsyncResult<HiveQueryResult>(sampleCache.getUnchecked(fqdn));
+    } else {
+      MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+      return new AsyncResult<HiveQueryResult>(hiveQueryExecutor.executeQuery(table.getDatabaseName(), table.getTableName(),
+        table.getFieldsCommaDelimited(), table.getParameters(), params));
+    }
+  }
+
+  public Page<MetascopeView> getRequestedViewPage(String fqdn, Pageable pageable) {
+    return metascopeViewRepository.findByTableFqdnOrderByViewId(fqdn, pageable);
+  }
+
+  @Transactional
+  public String getRandomParameterValue(MetascopeTable table, MetascopeField parameter) {
+    MetascopeView viewEntity = metascopeViewRepository.findFirstByTableFqdn(table.getFqdn());
+    return viewEntity.getParameters().get(parameter.getFieldName());
+  }
+
+  public List<MetascopeTable> getTransitiveDependencies(MetascopeTable table) {
+    List<MetascopeTable> dependencies = new ArrayList<>();
+    for (MetascopeTable dependency : table.getDependencies()) {
+      getRecursiveDependencies(dependencies, dependency);
+    }
+    return dependencies;
+  }
+
+  private void getRecursiveDependencies(List<MetascopeTable> dependencies, MetascopeTable table) {
+    if (!dependencies.contains(table)) {
+      dependencies.add(table);
+      for (MetascopeTable dependency : table.getDependencies()) {
+        getRecursiveDependencies(dependencies, dependency);
+      }
+    }
+  }
+
+  public List<MetascopeTable> getTransitiveSuccessors(MetascopeTable table) {
+    List<MetascopeTable> successors = new ArrayList<>();
+    for (MetascopeTable successor : table.getSuccessors()) {
+      getRecursiveSuccessors(successors, successor);
+    }
+    return successors;
+  }
+
+  private void getRecursiveSuccessors(List<MetascopeTable> successors, MetascopeTable table) {
+    if (!successors.contains(table)) {
+      successors.add(table);
+      for (MetascopeTable successor : table.getSuccessors()) {
+        getRecursiveSuccessors(successors, successor);
+      }
+    }
+  }
+
+  public Map<String, Set<String>> getParameterValues(MetascopeTable table) {
+    Map<String, Set<String>> parameterValues = new HashMap<>();
+    List<String> parameterStrings = metascopeViewRepository.findParameterStringsForTable(table.getFqdn());
+    for (String parameterString : parameterStrings) {
+      if (parameterString != null && !parameterString.isEmpty()) {
+        String[] params = parameterString.split("/");
+        for (int i = 1; i < params.length; i++) {
+          String[] kv = params[i].split("=");
+          Set<String> list = parameterValues.get(kv[0]);
+          if (list == null) {
+            list = new LinkedHashSet<>();
+          }
+          list.add(kv[1]);
+          parameterValues.put(kv[0], list);
         }
-        metascopeUserService.save(user);
+      }
     }
+    return parameterValues;
+  }
 
-    @Transactional
-    public void setCategoryObjects(String fqdn, Map<String, String[]> parameterMap) {
-        MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+  @Transactional
+  public Map<String, Map<String, List<MetascopeField>>> getFieldDependencies(MetascopeTable tableEntity) {
+    Map<String, Map<String, List<MetascopeField>>> fieldDeps = new HashMap<>();
 
-        if (table == null) {
-            return;
+    for (MetascopeField metascopeField : tableEntity.getFields()) {
+      Map<String, List<MetascopeField>> depMap = new HashMap<>();
+      for (MetascopeField fieldDep : metascopeField.getDependencies()) {
+        List<MetascopeField> depFields = depMap.get(fieldDep.getTable().getFqdn());
+        if (depFields == null) {
+          depFields = new ArrayList<>();
         }
+        depFields.add(fieldDep);
+        depMap.put(fieldDep.getTable().getFqdn(), depFields);
+      }
+      if (depMap.size() > 0) {
+        fieldDeps.put(metascopeField.getFieldId(), depMap);
+      }
+    }
 
-        table.getCategoryObjects().clear();
+    return fieldDeps;
+  }
 
-        String categoryObjectList = "";
-        if (parameterMap != null) {
-            for (Map.Entry<String, String[]> e : parameterMap.entrySet()) {
-                if (!e.getKey().endsWith("CategoryObjects")) {
-                    continue;
-                }
+  @Transactional
+  public Map<String, Map<String, List<MetascopeField>>> getFieldSuccessors(MetascopeTable tableEntity) {
+    Map<String, Map<String, List<MetascopeField>>> fieldDeps = new HashMap<>();
 
-                String categoryObjectIds = e.getValue()[0];
-                String[] categoryObjects = categoryObjectIds.split(",");
-                for (String categoryObjectId : categoryObjects) {
-                    if (categoryObjectId.isEmpty()) {
-                        continue;
-                    }
-
-                    MetascopeCategoryObject categoryObjectEntity = metascopeCategoryObjectRepository.findOne(Long
-                            .parseLong(categoryObjectId));
-                    if (categoryObjectEntity != null) {
-                        table.getCategoryObjects().add(categoryObjectEntity);
-                        if (!categoryObjectList.isEmpty()) {
-                            categoryObjectList += ", ";
-                        }
-                        categoryObjectList += categoryObjectEntity.getName();
-                    }
-                }
-            }
+    for (MetascopeField metascopeField : tableEntity.getFields()) {
+      Map<String, List<MetascopeField>> depMap = new HashMap<>();
+      for (MetascopeField fieldDep : metascopeField.getSuccessors()) {
+        List<MetascopeField> depFields = depMap.get(fieldDep.getTable().getFqdn());
+        if (depFields == null) {
+          depFields = new ArrayList<>();
         }
-
-        metascopeTableRepository.save(table);
-        solr.updateTableEntityAsync(table, true);
-        LOG.info("User '{}' changed category objects for table '{}' to '{}'", metascopeUserService.getUser().getUsername(),
-                fqdn, categoryObjectList);
-        metascopeActivityService.createUpdateTaxonomyActivity(table, metascopeUserService.getUser().getUsername());
+        depFields.add(fieldDep);
+        depMap.put(fieldDep.getTable().getFqdn(), depFields);
+      }
+      if (depMap.size() > 0) {
+        fieldDeps.put(metascopeField.getFieldId(), depMap);
+      }
     }
 
-    @Transactional
-    public void setTags(String fqdn, String tagsCommaDelimited) {
-        MetascopeTable table = metascopeTableRepository.findOne(fqdn);
-
-        if (table == null) {
-            return;
-        }
-
-        if (tagsCommaDelimited == null) {
-            tagsCommaDelimited = "";
-        }
-
-        String[] tags = tagsCommaDelimited.split(",");
-        table.getTags().clear();
-        for (String tag : tags) {
-            if (!tag.isEmpty()) {
-                table.getTags().add(tag);
-            }
-        }
-        metascopeTableRepository.save(table);
-        solr.updateTableEntityAsync(table, true);
-        LOG.info("User '{}' changed tags for table '{}' to '{}'", metascopeUserService.getUser().getUsername(), fqdn,
-                tagsCommaDelimited);
-        metascopeActivityService.createUpdateTaxonomyActivity(table, metascopeUserService.getUser().getUsername());
-    }
-
-    @Transactional
-    public void setPersonResponsible(String fqdn, String fullname) {
-        MetascopeTable table = metascopeTableRepository.findOne(fqdn);
-        MetascopeUser user = metascopeUserService.findByFullname(fullname);
-        if (table != null) {
-            if (table.getPersonResponsible() == null || !table.getPersonResponsible().equals(fullname)) {
-                if (user != null) {
-                    table.setPersonResponsible(user.getFullname());
-                    metascopeTableRepository.save(table);
-                    LOG.info("User '{}' changed responsible person for table '{}' to '{}'", metascopeUserService.getUser()
-                            .getUsername(), fqdn, fullname);
-                    metascopeActivityService.createUpdateTableMetadataActivity(table, metascopeUserService.getUser()
-                            .getUsername());
-                } else if (!fullname.isEmpty()) {
-                    table.setPersonResponsible(fullname);
-                    metascopeTableRepository.save(table);
-                    LOG.info("User '{}' changed responsible person for table '{}' to '{}'", metascopeUserService.getUser()
-                            .getUsername(), fqdn, fullname);
-                    metascopeActivityService.createUpdateTableMetadataActivity(table, metascopeUserService.getUser()
-                            .getUsername());
-                }
-            }
-        }
-    }
-
-    @Transactional
-    public void setTimestampField(String fqdn, String dataTimestampField, String dataTimestampFieldFormat) {
-        MetascopeTable table = metascopeTableRepository.findOne(fqdn);
-        if (table != null && !dataTimestampField.isEmpty()) {
-            String oldTimestampField = table.getTimestampField();
-            table.setTimestampField(dataTimestampField);
-            if (!dataTimestampFieldFormat.isEmpty()) {
-                table.setTimestampFieldFormat(dataTimestampFieldFormat);
-            }
-            metascopeTableRepository.save(table);
-            LOG.info("User '{}' changed timestamp field for table '{}' to '{}' with format '{}'", metascopeUserService.getUser()
-                    .getUsername(), fqdn, dataTimestampField, dataTimestampFieldFormat);
-            metascopeActivityService.createUpdateTableMetadataActivity(table, metascopeUserService.getUser().getUsername());
-            if (oldTimestampField != dataTimestampField) {
-                //TjobSchedulerService.updateLastDataForTable(tableEntity);
-            }
-        }
-    }
-
-    @Transactional
-    public void increaseViewCount(String fqdn) {
-        MetascopeTable table = metascopeTableRepository.findOne(fqdn);
-        table.setViewCount(table.getViewCount() + 1);
-        metascopeTableRepository.save(table);
-    }
-
-    @Transactional
-    public String getLineage(MetascopeTable table) {
-        return LineageUtil.getDependencyGraph(table);
-    }
-
-    @Async
-    @Transactional
-    public Future<HiveQueryResult> getSample(String fqdn, Map<String, String> params) {
-        if (params == null || params.isEmpty()) {
-            return new AsyncResult<HiveQueryResult>(sampleCache.getUnchecked(fqdn));
-        } else {
-            MetascopeTable table = metascopeTableRepository.findOne(fqdn);
-            return new AsyncResult<HiveQueryResult>(hiveQueryExecutor.executeQuery(table.getDatabaseName(), table.getTableName(),
-                    table.getFieldsCommaDelimited(), table.getParameters(), params));
-        }
-    }
-
-    public Page<MetascopeView> getRequestedViewPage(String fqdn, Pageable pageable) {
-        return metascopeViewRepository.findByTableFqdnOrderByViewId(fqdn, pageable);
-    }
-
-    @Transactional
-    public String getRandomParameterValue(MetascopeTable table, MetascopeField parameter) {
-        MetascopeView viewEntity = metascopeViewRepository.findFirstByTableFqdn(table.getFqdn());
-        return viewEntity.getParameters().get(parameter.getFieldName());
-    }
-
-    public List<MetascopeTable> getTransitiveDependencies(MetascopeTable table) {
-        List<MetascopeTable> dependencies = new ArrayList<>();
-        for (MetascopeTable dependency : table.getDependencies()) {
-            getRecursiveDependencies(dependencies, dependency);
-        }
-        return dependencies;
-    }
-
-    private void getRecursiveDependencies(List<MetascopeTable> dependencies, MetascopeTable table) {
-        if (!dependencies.contains(table)) {
-            dependencies.add(table);
-            for (MetascopeTable dependency : table.getDependencies()) {
-                getRecursiveDependencies(dependencies, dependency);
-            }
-        }
-    }
-
-    public List<MetascopeTable> getTransitiveSuccessors(MetascopeTable table) {
-        List<MetascopeTable> successors = new ArrayList<>();
-        for (MetascopeTable successor : table.getSuccessors()) {
-            getRecursiveSuccessors(successors, successor);
-        }
-        return successors;
-    }
-
-    private void getRecursiveSuccessors(List<MetascopeTable> successors, MetascopeTable table) {
-        if (!successors.contains(table)) {
-            successors.add(table);
-            for (MetascopeTable successor : table.getSuccessors()) {
-                getRecursiveSuccessors(successors, successor);
-            }
-        }
-    }
-
-    public Map<String, Set<String>> getParameterValues(MetascopeTable table) {
-        Map<String, Set<String>> parameterValues = new HashMap<>();
-        List<String> parameterStrings = metascopeViewRepository.findParameterStringsForTable(table.getFqdn());
-        for (String parameterString : parameterStrings) {
-            if (parameterString != null && !parameterString.isEmpty()) {
-                String[] params = parameterString.split("/");
-                for (int i = 1; i < params.length; i++) {
-                    String[] kv = params[i].split("=");
-                    Set<String> list = parameterValues.get(kv[0]);
-                    if (list == null) {
-                        list = new LinkedHashSet<>();
-                    }
-                    list.add(kv[1]);
-                    parameterValues.put(kv[0], list);
-                }
-            }
-        }
-        return parameterValues;
-    }
+    return fieldDeps;
+  }
 
 }

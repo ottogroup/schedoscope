@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,41 +19,41 @@ import java.util.List;
 
 public class HiveQueryResult {
 
-    private List<String> header;
-    private List<List<String>> rows;
-    private String errorMessage;
+  private List<String> header;
+  private List<List<String>> rows;
+  private String errorMessage;
 
-    public HiveQueryResult(List<String> header, List<List<String>> rows) {
-        this.header = header;
-        this.rows = rows;
-    }
+  public HiveQueryResult(List<String> header, List<List<String>> rows) {
+    this.header = header;
+    this.rows = rows;
+  }
 
-    public HiveQueryResult(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
+  public HiveQueryResult(String errorMessage) {
+    this.errorMessage = errorMessage;
+  }
 
-    public List<String> getHeader() {
-        return header;
-    }
+  public List<String> getHeader() {
+    return header;
+  }
 
-    public void setHeader(List<String> header) {
-        this.header = header;
-    }
+  public void setHeader(List<String> header) {
+    this.header = header;
+  }
 
-    public List<List<String>> getRows() {
-        return rows;
-    }
+  public List<List<String>> getRows() {
+    return rows;
+  }
 
-    public void setRows(List<List<String>> rows) {
-        this.rows = rows;
-    }
+  public void setRows(List<List<String>> rows) {
+    this.rows = rows;
+  }
 
-    public String getErrorMessage() {
-        return errorMessage;
-    }
+  public String getErrorMessage() {
+    return errorMessage;
+  }
 
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
+  public void setErrorMessage(String errorMessage) {
+    this.errorMessage = errorMessage;
+  }
 
 }

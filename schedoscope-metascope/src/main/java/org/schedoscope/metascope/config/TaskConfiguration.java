@@ -1,7 +1,5 @@
-package org.schedoscope.metascope.config;
-
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +13,7 @@ package org.schedoscope.metascope.config;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.schedoscope.metascope.config;
 
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
 import org.springframework.aop.interceptor.SimpleAsyncUncaughtExceptionHandler;
@@ -34,42 +33,42 @@ import java.util.concurrent.Executors;
 @EnableAsync
 public class TaskConfiguration implements AsyncConfigurer, SchedulingConfigurer {
 
-    @Bean(name = "background")
-    public TaskExecutor backgroundTaskExecutor() {
-        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-        threadPoolTaskExecutor.setCorePoolSize(5);
-        threadPoolTaskExecutor.setMaxPoolSize(5);
-        threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-        return threadPoolTaskExecutor;
-    }
+  @Bean(name = "background")
+  public TaskExecutor backgroundTaskExecutor() {
+    ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+    threadPoolTaskExecutor.setCorePoolSize(5);
+    threadPoolTaskExecutor.setMaxPoolSize(5);
+    threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+    return threadPoolTaskExecutor;
+  }
 
-    @Bean
-    public TaskExecutor asyncTaskExecutor() {
-        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-        threadPoolTaskExecutor.setCorePoolSize(10);
-        threadPoolTaskExecutor.setMaxPoolSize(10);
-        threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
-        return threadPoolTaskExecutor;
-    }
+  @Bean
+  public TaskExecutor asyncTaskExecutor() {
+    ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+    threadPoolTaskExecutor.setCorePoolSize(10);
+    threadPoolTaskExecutor.setMaxPoolSize(10);
+    threadPoolTaskExecutor.setWaitForTasksToCompleteOnShutdown(true);
+    return threadPoolTaskExecutor;
+  }
 
-    @Override
-    public Executor getAsyncExecutor() {
-        return asyncTaskExecutor();
-    }
+  @Override
+  public Executor getAsyncExecutor() {
+    return asyncTaskExecutor();
+  }
 
-    @Override
-    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
-        return new SimpleAsyncUncaughtExceptionHandler();
-    }
+  @Override
+  public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+    return new SimpleAsyncUncaughtExceptionHandler();
+  }
 
-    @Override
-    public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-        taskRegistrar.setScheduler(taskExecutor());
-    }
+  @Override
+  public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+    taskRegistrar.setScheduler(taskExecutor());
+  }
 
-    @Bean(destroyMethod = "shutdown")
-    public Executor taskExecutor() {
-        return Executors.newScheduledThreadPool(100);
-    }
+  @Bean(destroyMethod = "shutdown")
+  public Executor taskExecutor() {
+    return Executors.newScheduledThreadPool(100);
+  }
 
 }

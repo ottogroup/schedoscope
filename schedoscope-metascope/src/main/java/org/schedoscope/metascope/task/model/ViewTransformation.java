@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,26 +20,26 @@ import java.util.Map;
 
 public class ViewTransformation {
 
-    protected String name;
-    protected Map<String, String> properties;
+  protected String name;
+  protected Map<String, String> properties;
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public Map<String, String> getProperties() {
-        if (properties == null) {
-            properties = new HashMap<String, String>();
-        }
-        return properties;
+  public Map<String, String> getProperties() {
+    if (properties == null) {
+      properties = new HashMap<String, String>();
     }
+    return properties;
+  }
 
-    public void setProperties(Map<String, String> properties) {
-        this.properties = properties;
-    }
+  public void setProperties(Map<String, String> properties) {
+    this.properties = properties;
+  }
 
 }

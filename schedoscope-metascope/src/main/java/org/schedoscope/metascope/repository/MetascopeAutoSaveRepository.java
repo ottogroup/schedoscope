@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface MetascopeAutoSaveRepository extends CrudRepository<MetascopeAutoSave, String> {
 
-    public void deleteByTableFqdn(String fqdn);
+  public void deleteByTableFqdn(String fqdn);
 
 }

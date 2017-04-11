@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,44 +26,44 @@ import java.sql.Statement;
 
 public class HiveServerConnection {
 
-    private static final Logger LOG = LoggerFactory.getLogger(HiveServerConnection.class);
+  private static final Logger LOG = LoggerFactory.getLogger(HiveServerConnection.class);
 
-    private MetascopeConfig config;
-    private Connection connection;
+  private MetascopeConfig config;
+  private Connection connection;
 
-    public HiveServerConnection(MetascopeConfig config) {
-        this.config = config;
+  public HiveServerConnection(MetascopeConfig config) {
+    this.config = config;
+  }
+
+  public HiveServerConnection connect() {
+    try {
+      Class.forName(config.getHiveJdbcDriver());
+    } catch (ClassNotFoundException e) {
+      e.printStackTrace();
     }
 
-    public HiveServerConnection connect() {
-        try {
-            Class.forName(config.getHiveJdbcDriver());
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            this.connection = DriverManager.getConnection(config.getHiveServerUrl());
-        } catch (SQLException e) {
-            LOG.warn("Could not connect to hive server", e);
-        }
-        return this;
+    try {
+      this.connection = DriverManager.getConnection(config.getHiveServerUrl());
+    } catch (SQLException e) {
+      LOG.warn("Could not connect to hive server", e);
     }
+    return this;
+  }
 
-    public void close() {
-        try {
-            this.connection.close();
-        } catch (SQLException e) {
-            LOG.error("Failed closing connection to hive server", e);
-        }
+  public void close() {
+    try {
+      this.connection.close();
+    } catch (SQLException e) {
+      LOG.error("Failed closing connection to hive server", e);
     }
+  }
 
-    public Statement createStatement() throws SQLException {
-        return this.connection.createStatement();
-    }
+  public Statement createStatement() throws SQLException {
+    return this.connection.createStatement();
+  }
 
-    public Connection getConnection() {
-        return connection;
-    }
+  public Connection getConnection() {
+    return connection;
+  }
 
 }

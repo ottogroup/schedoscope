@@ -21,7 +21,7 @@ import akka.dispatch.UnboundedPriorityMailbox
 import com.typesafe.config.Config
 
 /**
-  * Schedoscope Managed actors which rely on a BackOffStrategy for activation
+  * Schedoscope-managed actors which rely on a BackOffStrategy for activation
   * require prioritization of their activation messages, namely tick messages.
   * The implementation of this UnboundedPriorityMailbox is done in config file
   *

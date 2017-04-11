@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -350,6 +350,16 @@ var setViews = function(data) {
       }, 100);
     }
   }
+
+   if (url.match('#')) {
+      var urlPart = url.split('#')[1];
+      if (urlPart.split('-')[0] === 'schemaContent') {
+        var row = $('#field-' + urlPart.split('-')[1]);
+        row.children().each(function() {
+          $(this).css('background-color', 'rgba(153, 222, 255, 0.2)');
+        })
+      }
+    }
 }
 
 var initDataDisFilter = function(data, next) {

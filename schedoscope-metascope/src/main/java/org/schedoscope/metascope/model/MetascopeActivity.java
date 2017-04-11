@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,57 +23,57 @@ import javax.persistence.ManyToOne;
 @Entity
 public class MetascopeActivity {
 
-    public enum ActivityType {
-        NEW_COMMENT, UPDATE_DOCUMENTATION, UPDATE_TAGS, UPDATE_TABLE_METADATA
-    }
+  public enum ActivityType {
+    NEW_COMMENT, UPDATE_DOCUMENTATION, UPDATE_TAGS, UPDATE_TABLE_METADATA
+  }
 
-    @Id
-    private String activityId;
-    @Column
-    private ActivityType type;
-    private String username;
-    private long timestamp;
-    @ManyToOne
-    private MetascopeTable table;
+  @Id
+  private String activityId;
+  @Column
+  private ActivityType type;
+  private String username;
+  private long timestamp;
+  @ManyToOne
+  private MetascopeTable table;
 
-    public String getActivityId() {
-        return activityId;
-    }
+  public String getActivityId() {
+    return activityId;
+  }
 
-    public void setActivityId(String activityId) {
-        this.activityId = activityId;
-    }
+  public void setActivityId(String activityId) {
+    this.activityId = activityId;
+  }
 
-    public ActivityType getType() {
-        return type;
-    }
+  public ActivityType getType() {
+    return type;
+  }
 
-    public void setType(ActivityType type) {
-        this.type = type;
-    }
+  public void setType(ActivityType type) {
+    this.type = type;
+  }
 
-    public String getUsername() {
-        return username;
-    }
+  public String getUsername() {
+    return username;
+  }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+  public void setUsername(String username) {
+    this.username = username;
+  }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+  public long getTimestamp() {
+    return timestamp;
+  }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
+  public void setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
+  }
 
-    public MetascopeTable getTable() {
-        return table;
-    }
+  public MetascopeTable getTable() {
+    return table;
+  }
 
-    public void setTable(MetascopeTable table) {
-        this.table = table;
-    }
+  public void setTable(MetascopeTable table) {
+    this.table = table;
+  }
 
 }

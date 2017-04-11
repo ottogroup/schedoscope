@@ -1,5 +1,5 @@
 <!-- /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,6 @@
             </ul>
         </div>
     </td>
-    <td data-th-text="${'unknown'}"/>
+    <td data-th-text="${statusService.getStatus(partition.viewUrl)}"/>
     <td data-th-text="${util.getTime(partition.lastTransformation)}"/>
 </tr>

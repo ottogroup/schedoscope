@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,28 @@ package org.schedoscope.metascope.index.model;
 
 public class SolrHourRange {
 
-    private String name;
-    private long from;
+  private String name;
+  private long from;
 
-    public SolrHourRange(String name, long from) {
-        this.name = name;
-        this.from = from;
-    }
+  public SolrHourRange(String name, long from) {
+    this.name = name;
+    this.from = from;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public long getFrom() {
-        return from;
-    }
+  public long getFrom() {
+    return from;
+  }
 
-    public void setFrom(long from) {
-        this.from = from;
-    }
+  public void setFrom(long from) {
+    this.from = from;
+  }
 
 }

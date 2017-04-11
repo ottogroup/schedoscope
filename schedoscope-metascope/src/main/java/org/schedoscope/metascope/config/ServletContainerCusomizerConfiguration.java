@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,15 +25,15 @@ import org.springframework.http.HttpStatus;
 @Configuration
 public class ServletContainerCusomizerConfiguration {
 
-    @Bean
-    public EmbeddedServletContainerCustomizer containerCustomizer() {
-        return new EmbeddedServletContainerCustomizer() {
-            @Override
-            public void customize(ConfigurableEmbeddedServletContainer container) {
-                ErrorPage error404Page = new ErrorPage(HttpStatus.NOT_FOUND, "/notfound");
-                container.addErrorPages(error404Page);
-            }
-        };
-    }
+  @Bean
+  public EmbeddedServletContainerCustomizer containerCustomizer() {
+    return new EmbeddedServletContainerCustomizer() {
+      @Override
+      public void customize(ConfigurableEmbeddedServletContainer container) {
+        ErrorPage error404Page = new ErrorPage(HttpStatus.NOT_FOUND, "/notfound");
+        container.addErrorPages(error404Page);
+      }
+    };
+  }
 
 }

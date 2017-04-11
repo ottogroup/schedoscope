@@ -1,5 +1,5 @@
 /**
- * Copyright 2015 Otto (GmbH & Co KG)
+ * Copyright 2017 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,6 @@ import java.util.List;
 
 public interface MetascopeActivityRepository extends CrudRepository<MetascopeActivity, String> {
 
-    public List<MetascopeActivity> findFirst10ByOrderByTimestampDesc();
+  public List<MetascopeActivity> findFirst10ByOrderByTimestampDesc();
 
 }

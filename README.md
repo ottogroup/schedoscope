@@ -24,7 +24,7 @@ Get a glance at
 
 - [Schedoscope's features](https://github.com/ottogroup/schedoscope/wiki/Schedoscope-at-a-Glance)
 
-Build it:
+Build it (you currently need to use JDK7 because of the state of Cloudera dependencies):
 
      [~]$ git clone https://github.com/ottogroup/schedoscope.git
      [~]$ cd schedoscope
@@ -76,6 +76,12 @@ We would love to get contributions from you as well. We haven't got a formalized
 Please help making Schedoscope better!
 
 ## News
+
+###### 03/24/2017 - Release 0.8.2
+
+We have released Version 0.8.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This version provides significant performance improvements when initializing the scheduling state for a large number of views.
 
 ###### 03/18/2017 - Release 0.8.1
 
@@ -172,4 +178,3 @@ The test framework now automatically checks whether there is an `ON` condition f
 
 ## License
 Licensed under the [Apache License 2.0](https://github.com/ottogroup/schedoscope/blob/master/LICENSE)
-
