@@ -42,8 +42,7 @@ class PartitionCreatorActor(jdbcUrl: String, metaStoreUri: String, serverKerbero
   }
 
   /**
-    * Before the actor gets restarted, reenqueue the running write command with the schema root actor
-    * so it does not get lost.
+    * Before the actor gets restarted, reenqueue the running command so it does not get lost.
     */
   override def preRestart(reason: Throwable, message: Option[Any]) {
     if (runningCommand.isDefined)
