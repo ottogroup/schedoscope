@@ -119,8 +119,8 @@ object DependencyAnalyzer {
     val validated = try {
       planner.validate(parsed)
     } catch {
-      case _: ValidationException =>
-        log.debug("Trying again with a recursively-built schema...")
+      case ex: ValidationException =>
+        log.debug("Trying again with a recursively-built schema...", ex)
         planner = new NonFlatteningPlannerImpl(SchedoscopeConfig(view, scanRecursive = true))
         planner.validate(planner.parse(firstStmt))
     }
