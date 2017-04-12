@@ -64,7 +64,11 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       try {
         metastoreClient.add_partitions(List(partition), false, false)
       } catch {
-        case _: Throwable => // Accept exceptions
+        case _: AlreadyExistsException => // Accept
+        case t: Throwable =>
+          log.error(s"Schema Manager failed to partitions for table ${view.dbName}.${view.n}.")
+
+          throw RetryableSchemaManagerException(s"Schema Manager failed to partitions for table ${view.dbName}.${view.n}", t)
       }
     }
     partition
