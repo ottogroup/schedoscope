@@ -40,10 +40,10 @@ trait SchedoscopeSuite
 
   Class.forName("parquet.Log")
   Logger.getLogger("").getHandlers.foreach(Logger.getLogger("").removeHandler)
-  LogManager.getLogManager.reset()
   SLF4JBridgeHandler.removeHandlersForRootLogger()
   SLF4JBridgeHandler.install()
   Logger.getLogger("global").setLevel(Level.WARNING)
+
 
   val views = ListBuffer.empty[test]
 
