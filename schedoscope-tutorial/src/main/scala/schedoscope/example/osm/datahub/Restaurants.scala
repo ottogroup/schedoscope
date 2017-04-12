@@ -51,7 +51,10 @@ case class Restaurants() extends View
             this,
             queryFromResource("hiveql/datahub/insert_restaurants.sql")))
           .configureWith(defaultHiveQlParameters(this))
-      )
+      ).configureWith(
+        Map(
+          "spark.sql.hive.convertMetastoreParquet" -> "false"
+        ))
   }
 
   comment("View of restaurants")
