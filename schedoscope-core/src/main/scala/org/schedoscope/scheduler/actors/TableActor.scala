@@ -20,7 +20,7 @@ import java.lang.Math.pow
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.joda.time.LocalDateTime
-import org.schedoscope.AskPattern.queryActor
+import org.schedoscope.AskPattern.{queryActor, retryOnTimeout}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
 import org.schedoscope.dsl.transformations.{Checksum, Touch}
@@ -315,7 +315,9 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
         log.info(s"Creating table if necessary for ${viewsToCreate.head.dbName}.${viewsToCreate.head.n}")
 
-        queryActor[Any](schemaManagerRouter, CheckOrCreateTables(viewsToCreate), settings.schemaTimeout)
+        retryOnTimeout(() =>
+          queryActor[Any](schemaManagerRouter, CheckOrCreateTables(viewsToCreate), settings.schemaTimeout)
+        )
 
       }
 
@@ -323,9 +325,9 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
 
       //Add the partitions
-      val viewsWithMetadataToCreate = queryActor[TransformationMetadata](schemaManagerRouter,
-        AddPartitions(viewsToCreate),
-        settings.schemaTimeout)
+      val viewsWithMetadataToCreate = retryOnTimeout(() =>
+        queryActor[TransformationMetadata](schemaManagerRouter, AddPartitions(viewsToCreate), settings.schemaTimeout)
+      )
 
       log.info(s"Partitions created, initializing views")
 
