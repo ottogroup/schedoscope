@@ -38,11 +38,11 @@ trait SchedoscopeSuite
     with BeforeAndAfterEach {
   this: Suite =>
 
-  Class.forName("parquet.Log")
-  Logger.getLogger("").getHandlers.foreach(Logger.getLogger("").removeHandler)
-  SLF4JBridgeHandler.removeHandlersForRootLogger()
-  SLF4JBridgeHandler.install()
-  Logger.getLogger("global").setLevel(Level.WARNING)
+  //Class.forName("parquet.Log")
+  //Logger.getLogger("").getHandlers.foreach(Logger.getLogger("").removeHandler)
+  //SLF4JBridgeHandler.removeHandlersForRootLogger()
+  //SLF4JBridgeHandler.install()
+  //Logger.getLogger("global").setLevel(Level.WARNING)
 
 
   val views = ListBuffer.empty[test]

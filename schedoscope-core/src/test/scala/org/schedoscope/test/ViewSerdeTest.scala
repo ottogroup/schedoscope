@@ -36,13 +36,11 @@ class ViewSerdeTest extends FlatSpec with Matchers {
     val c = new Contingency()
     val json = """{"value":1, "nested":{"o11":1,"o12":0,"o21":0,"o22":11}}"""
     val res = ViewSerDe.deserializeField(manifest[Nested], json)
-    assert(res == Map("value" -> 1, "nested" -> Map("o11" -> 1, "o12" -> 0, "o21" -> 0, "o22" -> 11)))
-
+    res shouldBe Map("value" -> 1, "nested" -> Map("o11" -> 1, "o12" -> 0, "o21" -> 0, "o22" -> 11))
   }
 
   it should "deserialize Lists" in {
     assert(ViewSerDe.deserializeField(manifest[List[Long]], "[]") == List())
     assert(ViewSerDe.deserializeField(manifest[List[Long]], "[1,2,3]") == List(1, 2, 3))
-
   }
 }

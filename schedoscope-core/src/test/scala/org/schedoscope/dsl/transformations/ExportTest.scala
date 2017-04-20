@@ -22,7 +22,8 @@ import _root_.test.views._
 import com.google.common.collect.ImmutableList
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.curator.test.TestingServer
-import org.json4s.native.JsonMethods.parse
+import org.codehaus.jackson.map.ObjectMapper
+import org.codehaus.jackson.map.`type`.TypeFactory
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.Schedoscope
@@ -153,7 +154,10 @@ class ExportTest extends FlatSpec with Matchers {
     }
 
     val consumer = new SimpleTestKafkaConsumer(v.dbName + "_" + v.n, zkServer.getConnectString, 3)
-    for (x <- consumer) (parse(new String(x)) \ "date_id").values shouldBe "20140101"
+    for (r <- consumer) {
+      val record: java.util.HashMap[String, _] = new ObjectMapper().readValue(r, TypeFactory.mapType(classOf[java.util.HashMap[_,_]], classOf[String], classOf[Any]))
+      record.get("date_id") shouldBe "20140101"
+    }
 
     kafkaServer.shutdown()
     zkServer.stop()
