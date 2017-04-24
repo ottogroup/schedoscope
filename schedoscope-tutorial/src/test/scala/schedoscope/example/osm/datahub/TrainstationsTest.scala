@@ -44,8 +44,7 @@ class TrainstationsTest extends SchedoscopeSpec {
     new Trainstations() with test {
       basedOn(nodesInput)
       withConfiguration(
-        ("exec.type" -> "LOCAL"),
-        ("storage_format" -> "PigStorage()"))
+        ("exec.type" -> "LOCAL"))
       then()
       numRows shouldBe 3
       row(v(id) shouldBe "122317",

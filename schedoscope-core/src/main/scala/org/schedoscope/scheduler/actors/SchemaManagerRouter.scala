@@ -21,7 +21,7 @@ import akka.event.Logging
 import akka.routing.RoundRobinPool
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.scheduler.messages._
-import org.schedoscope.scheduler.utils.{BackOffSupervision, ExponentialBackOff}
+import org.schedoscope.scheduler.utils.BackOffSupervision
 import org.schedoscope.schema.RetryableSchemaManagerException
 
 import scala.concurrent.duration._

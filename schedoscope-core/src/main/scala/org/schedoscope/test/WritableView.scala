@@ -56,9 +56,6 @@ trait WritableView extends View {
       (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
 
 
-  // unify storage format
-  storedAs(resources.textStorage)
-
   /**
     * Inserts a row to this field. If columns are left out, they are either set to null or filled with random data.
     *
@@ -129,20 +126,26 @@ trait WritableView extends View {
     import WritableView._
     if (allowNullFields) "\\N" else FieldSequentialValue.get(f, rowData.size, rowIdPattern)
   }
+
 }
 
 object WritableView {
   def rowIdPattern = "%04d"
 }
 
+trait TextWritableView extends WritableView {
+  // unify storage format
+  storedAs(resources.textStorage)
+}
+
 /**
   * Syntactic sugar for default tests
   */
-trait rows extends WritableView {
+trait rows extends TextWritableView {
   override val isStatic = true
 }
 
 /**
   * Syntactic sugar for [[ReusableHiveSchema]] tests
   */
-trait InputSchema extends WritableView
+trait InputSchema extends TextWritableView

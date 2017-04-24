@@ -19,6 +19,7 @@ import test.views.{Brand, ProductBrand}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import scala.util.Success
 
 class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
@@ -45,7 +46,6 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
   val day = "01"
   val shop01 = "EC01"
   val shop02 = "EC02"
-
 
 
   val prodBrandUrl01 = s"test.views/ProductBrand/${shop01}/${year}/${month}/${day}"
@@ -90,7 +90,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
       schemaManagerRouter.reply(SchemaActionSuccess())
       schemaManagerRouter.expectMsg(AddPartitions(List(view)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
+      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true
@@ -113,13 +113,13 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
       def acceptMessage: PartialFunction[Any, _] = {
         case AddPartitions(List(`brandDependency`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency ->("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(brandDependency -> ("test", 1L))))
           messageSum += 1
         case AddPartitions(List(`productDependency`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency ->("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(productDependency -> ("test", 1L))))
           messageSum += 2
         case AddPartitions(List(`view`)) =>
-          schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
+          schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
           messageSum += 3
         case CheckOrCreateTables(List(`brandDependency`)) =>
           schemaManagerRouter.reply(SchemaActionSuccess())
@@ -230,6 +230,13 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       val response = service.views(Some(wrongUrlPath), Some(""), Some(""), Some(""), Some(true), Some(true), Some(true))
       Await.result(response, TIMEOUT)
     } should have message initError + errorMsg
+  }
+
+  it should "fail to initialize errorneous views" in new SchedoscopeServiceWithViewManagerTest {
+    the[IllegalArgumentException] thrownBy {
+      val response = service.materialize(Some("test.views/ViewWithExceptionThrowingDependency"), None, None, None, None)
+      Await.result(response, TIMEOUT)
+    } should have message "Some dependencies of the views passed could not be instantiated by the view manager"
   }
 
   it should "fail to load views due to wrong package reference for View Brand " +
@@ -485,7 +492,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     val response = service.views(Some(testView.urlPath), None, None, None, None, None, None)
 
     viewManagerActor.expectMsg(GetViews(Some(List(testView)), None, None, None))
-    viewManagerActor.reply(ViewStatusListResponse(List(ViewStatusResponse("loading", testView, viewManagerActor.ref))))
+    viewManagerActor.reply(ViewStatusListResponse(Success(List(ViewStatusResponse("loading", testView, viewManagerActor.ref)))))
 
     val expected = ViewStatusList(Map("loading" -> 1),
       List(ViewStatus("test.views/Brand/test",
@@ -725,8 +732,8 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     // it will be always the original state; however, for testing purposes
     // changed the artificially created different ViewStatusResponse values
     viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse("materialized", productBrandView01, prodBrandViewActor.ref,
-        errors = Some(false), incomplete = Some(false)))))
+      ViewStatusListResponse(Success(List(ViewStatusResponse("materialized", productBrandView01, prodBrandViewActor.ref,
+        errors = Some(false), incomplete = Some(false))))))
 
     prodBrandViewActor.expectMsg(CommandForView(None, productBrandView01, MaterializeView(MaterializeViewMode.DEFAULT)))
 
@@ -784,7 +791,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       viewManagerActor.expectMsg(GetViews(Some(List(productBrandView01)), statusParam, filterParam, issueFilterParam))
 
       viewManagerActor.reply(
-        ViewStatusListResponse(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref))))
+        ViewStatusListResponse(Success(List(ViewStatusResponse(initStatus, productBrandView01, prodBrandViewActor.ref)))))
 
       prodBrandViewActor.expectMsg("newdata")
 
@@ -825,8 +832,8 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
     // it will be always the original state; however, for testing purposes
     // changed the artificially created different ViewStatusResponse values
     viewManagerActor.reply(
-      ViewStatusListResponse(List(ViewStatusResponse("invalidated", productBrandView01, prodBrandViewActor.ref,
-        errors = Some(true), incomplete = Some(true)))))
+      ViewStatusListResponse(Success(List(ViewStatusResponse("invalidated", productBrandView01, prodBrandViewActor.ref,
+        errors = Some(true), incomplete = Some(true))))))
 
     prodBrandViewActor.expectMsg(CommandForView(None, productBrandView01, InvalidateView()))
 

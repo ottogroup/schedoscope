@@ -18,11 +18,11 @@ package org.schedoscope
 import java.util.concurrent.TimeUnit
 
 import akka.actor.{ActorRef, ActorSelection}
-import akka.pattern.Patterns
+import akka.pattern.{Patterns, AskTimeoutException}
 import akka.util.Timeout
 
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
 
 /**
   * Contains commonly codified ask patterns for actors.
@@ -41,40 +41,17 @@ object AskPattern {
   }
 
   /**
-    * Query an actor for responses by sending it multiple messages and observing a timeout.
+    * Executes an ask pattern with retries in case it yield Timeout or AskTimeout exceptions. These exceptions will only
+    * be thrown after the last retry. All other exceptions will be thrown immediately.
+    * @param pattern a function with the ask pattern to potentially retry
+    * @param retries the number of retries, defaulting to max int for infinite retries
+    * @return the result of the ask operation after the given number of retries.
     */
-  def queryActors[T](actor: ActorRef, queryMessages: List[Any], timeoutDuration: FiniteDuration): List[T] = {
-    val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
-    val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
-
-    val responseFutures = queryMessages.map { m => Patterns.ask(actor, m, askTimeOut) }
-
-    val responsesFuture = Future.sequence(responseFutures)
-
-    Await.result(responsesFuture, waitTimeOut.duration * queryMessages.size).asInstanceOf[List[T]]
-  }
-
-  /**
-    * Query multiple actors for responses by sending them a common message observing a timeout.
-    */
-  def queryActors[T](actors: List[ActorRef], queryMessage: Any, timeoutDuration: FiniteDuration): List[T] = {
-    val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
-    val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
-    val responseFutures = actors.map { a => Patterns.ask(a, queryMessage, askTimeOut) }
-
-    val responsesFuture = Future.sequence(responseFutures)
-
-    Await.result(responsesFuture, waitTimeOut.duration * actors.size).asInstanceOf[List[T]]
-  }
-
-  /**
-    * Transform an actor selection to an actor ref via an ask pattern.
-    */
-  def actorSelectionToRef(actorSelection: ActorSelection, timeoutDuration: FiniteDuration = Schedoscope.settings.schedulingCommandTimeout): Option[ActorRef] = try {
-    val askTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.1).toLong, TimeUnit.MILLISECONDS))
-    val waitTimeOut = Timeout(FiniteDuration((timeoutDuration.toMillis * 1.2).toLong, TimeUnit.MILLISECONDS))
-    Some(Await.result(actorSelection.resolveOne(askTimeOut.duration), waitTimeOut.duration))
+  def retryOnTimeout[R](pattern: () => R, retries: Int = Int.MaxValue): R = try {
+    pattern()
   } catch {
-    case _: Throwable => None
+    case t: TimeoutException => if (retries > 0) retryOnTimeout(pattern, retries - 1) else throw t
+    case at: AskTimeoutException => if (retries > 0) retryOnTimeout(pattern, retries - 1) else throw at
+    case o: Throwable => throw o
   }
 }

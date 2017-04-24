@@ -25,6 +25,7 @@ import org.schedoscope.scheduler.states.ViewSchedulingState
 
 import scala.collection.mutable
 import scala.collection.mutable.HashMap
+import scala.util.{Failure, Success, Try}
 
 /**
   * The view manager actor is the factory and supervisor of table actors managing all views of a table. It also serves
@@ -61,32 +62,42 @@ class ViewManagerActor(settings: SchedoscopeSettings,
       viewStatusMap.put(vsr.view.urlPath, vsr)
 
     case GetViews(views, status, filter, issueFilter, withDependencies) =>
-      val tableActors = tableActorsForViews(views.getOrElse(List()).toSet, withDependencies)
+      tableActorsForViews(views.getOrElse(List()).toSet, withDependencies) match {
+        case Success(tableActors) =>
+          val viewStates = viewStatusMap.values
+            .filter(vs => views.isEmpty || tableActors.contains(vs.view))
+            .filter(vs => status.isEmpty || status.get.equals(vs.status))
+            .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
+            .filter(vs => issueFilter.isEmpty || (
+              List("materialized", "failed").contains(vs.status) && (
+                ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
+                  || ("errors".equals(issueFilter.get) && vs.errors.getOrElse(false))
+                  || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
+                )
+              )
+            ).toList.distinct
 
-      val viewStates = viewStatusMap.values
-        .filter(vs => views.isEmpty || tableActors.contains(vs.view))
-        .filter(vs => status.isEmpty || status.get.equals(vs.status))
-        .filter(vs => filter.isEmpty || vs.view.urlPath.matches(filter.get))
-        .filter(vs => issueFilter.isEmpty || (
-          List("materialized", "failed").contains(vs.status) && (
-            ("incomplete".equals(issueFilter.get) && vs.incomplete.getOrElse(false))
-              || ("errors".equals(issueFilter.get) && vs.errors.getOrElse(false))
-              || (issueFilter.get.contains("AND") && vs.incomplete.getOrElse(false) && vs.errors.getOrElse(false))
-            )
-          )
-        ).toList.distinct
+          sender ! ViewStatusListResponse(Success(viewStates))
 
-      sender ! ViewStatusListResponse(viewStates)
-
+        case Failure(t) => sender ! ViewStatusListResponse(Failure(t))
+      }
 
     case v: View =>
-      sender ! tableActorForView(v)
+      tableActorForView(v) match {
+        case Success(a) =>
+          sender ! a
 
+        case Failure(t) => throw t
+      }
 
     case DelegateMessageToView(v, msg) =>
-      val ref = tableActorForView(v)
-      ref forward msg
-      sender ! NewTableActorRef(v, ref)
+      tableActorForView(v) match {
+        case Success(a) =>
+          a forward msg
+          sender ! NewTableActorRef(v, a)
+
+        case Failure(t) => throw t
+      }
 
   })
 
@@ -121,22 +132,28 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     * This method returns the table actor for the given view, creating it if necessary.
     *
     * @param v the view to obtain table actor for
-    * @return the actor
+    * @return the actor or a failure if the view or a dependency could not be initialized
     */
-  def tableActorForView(v: View): ActorRef = tableActorsForViews(Set(v), false).head._2
+  def tableActorForView(v: View): Try[ActorRef] = tableActorsForViews(Set(v), false).map(_ (v))
 
   /**
     * This method returns the table actors for the given views, creating them if necessary.
     *
     * @param vs               the views to obtain table actors for
     * @param withDependencies includes the dependencies of the given views (defaults to false)
-    * @return a map assigning each view its responsible table actor.
+    * @return a map assigning each view its responsible table actor or a failure if some dependencies of the views could
+    *         not be instantiated for some reason. Note that other problems will still raise an exception and
+    *         terminate the actor system and thereby Schedoscope.
     */
-  def tableActorsForViews(vs: Set[View], withDependencies: Boolean = false): Map[View, ActorRef] = {
+  def tableActorsForViews(vs: Set[View], withDependencies: Boolean = false): Try[Map[View, ActorRef]] = {
 
     log.info(s"Looking for unknown views or dependencies for a set of ${vs.size} views.")
 
-    val viewsRequiringInitialization = unknownViewsOrDependencies(vs.toList)
+    val viewsRequiringInitialization = try {
+      unknownViewsOrDependencies(vs.toList)
+    } catch {
+      case t: Throwable => return Failure(new IllegalArgumentException("Some dependencies of the views passed could not be instantiated by the view manager", t))
+    }
 
     log.info(s"${viewsRequiringInitialization.size} views require initialization.")
 
@@ -201,8 +218,9 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
     log.info(s"Returning actors for ${addressedViews.size} addressed views.")
 
-    addressedViews.map(v => v -> viewStatusMap(v.urlPath).actor).toMap
+    Success(addressedViews.map(v => v -> viewStatusMap(v.urlPath).actor).toMap)
   }
+
 
   /**
     * This method returns for a given set of views along with their dependencies, which of those are yet known

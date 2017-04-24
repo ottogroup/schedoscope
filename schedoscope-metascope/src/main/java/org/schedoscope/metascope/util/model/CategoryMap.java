@@ -23,54 +23,54 @@ import java.util.List;
 
 public class CategoryMap {
 
-  private List<MetascopeCategory> categories;
-  private List<MetascopeCategoryObject> categoryObjects;
+    private List<MetascopeCategory> categories;
+    private List<MetascopeCategoryObject> categoryObjects;
 
-  public CategoryMap() {
-    this.categories = new ArrayList<>();
-    this.categoryObjects = new ArrayList<>();
-  }
-
-  public List<MetascopeCategory> getCategories() {
-    return categories;
-  }
-
-  public List<MetascopeCategoryObject> getCategoryObjects() {
-    return categoryObjects;
-  }
-
-  public void addToCategories(MetascopeCategory categorie) {
-    if (!categories.contains(categorie)) {
-      categories.add(categorie);
+    public CategoryMap() {
+        this.categories = new ArrayList<>();
+        this.categoryObjects = new ArrayList<>();
     }
-  }
 
-  public void addToCategoryObjects(MetascopeCategoryObject categoryObject) {
-    if (!categoryObjects.contains(categoryObject)) {
-      categoryObjects.add(categoryObject);
+    public List<MetascopeCategory> getCategories() {
+        return categories;
     }
-  }
 
-  public String getCategoriesAsString() {
-    String res = "";
-    for (MetascopeCategory category : categories) {
-      if (!res.isEmpty()) {
-        res += ",";
-      }
-      res += category.getName();
+    public List<MetascopeCategoryObject> getCategoryObjects() {
+        return categoryObjects;
     }
-    return res;
-  }
 
-  public String getCategoryObjectsAsString() {
-    String res = "";
-    for (MetascopeCategoryObject categoryObject : categoryObjects) {
-      if (!res.isEmpty()) {
-        res += ",";
-      }
-      res += categoryObject.getName();
+    public void addToCategories(MetascopeCategory categorie) {
+        if (!categories.contains(categorie)) {
+            categories.add(categorie);
+        }
     }
-    return res;
-  }
+
+    public void addToCategoryObjects(MetascopeCategoryObject categoryObject) {
+        if (!categoryObjects.contains(categoryObject)) {
+            categoryObjects.add(categoryObject);
+        }
+    }
+
+    public String getCategoriesAsString() {
+        String res = "";
+        for (MetascopeCategory category : categories) {
+            if (!res.isEmpty()) {
+                res += ",";
+            }
+            res += category.getName();
+        }
+        return res;
+    }
+
+    public String getCategoryObjectsAsString() {
+        String res = "";
+        for (MetascopeCategoryObject categoryObject : categoryObjects) {
+            if (!res.isEmpty()) {
+                res += ",";
+            }
+            res += categoryObject.getName();
+        }
+        return res;
+    }
 
 }

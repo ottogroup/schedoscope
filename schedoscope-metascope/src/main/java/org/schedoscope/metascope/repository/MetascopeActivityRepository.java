@@ -22,6 +22,6 @@ import java.util.List;
 
 public interface MetascopeActivityRepository extends CrudRepository<MetascopeActivity, String> {
 
-  public List<MetascopeActivity> findFirst10ByOrderByTimestampDesc();
+    public List<MetascopeActivity> findFirst10ByOrderByTimestampDesc();
 
 }

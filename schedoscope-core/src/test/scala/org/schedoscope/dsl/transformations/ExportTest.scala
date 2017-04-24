@@ -18,10 +18,12 @@ package org.schedoscope.dsl.transformations
 import java.sql.DriverManager
 import java.util.Properties
 
+import _root_.test.views._
 import com.google.common.collect.ImmutableList
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.curator.test.TestingServer
-import org.json4s.native.JsonMethods.parse
+import org.codehaus.jackson.map.ObjectMapper
+import org.codehaus.jackson.map.`type`.TypeFactory
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.Schedoscope
@@ -30,7 +32,6 @@ import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.export.testsupport.{EmbeddedFtpSftpServer, EmbeddedKafkaCluster, SimpleTestKafkaConsumer}
 import org.schedoscope.export.utils.RedisMRJedisFactory
 import org.schedoscope.test.{rows, test}
-import _root_.test.views._
 
 import scala.collection.JavaConversions.iterableAsScalaIterable
 
@@ -133,7 +134,7 @@ class ExportTest extends FlatSpec with Matchers {
     val kafkaServer = new EmbeddedKafkaCluster(zkServer.getConnectString, new Properties(), ImmutableList.of(9092))
     kafkaServer.startup();
 
-    val v = new ClickOfEC0101WithKafkaExport(p("2014"), p("01"), p("01")) with test {
+    val v = new ClickOfEC01WithKafkaExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
 
       `then`()
@@ -153,7 +154,10 @@ class ExportTest extends FlatSpec with Matchers {
     }
 
     val consumer = new SimpleTestKafkaConsumer(v.dbName + "_" + v.n, zkServer.getConnectString, 3)
-    for (x <- consumer) (parse(new String(x)) \ "date_id").values shouldBe "20140101"
+    for (r <- consumer) {
+      val record: java.util.HashMap[String, _] = new ObjectMapper().readValue(r, TypeFactory.mapType(classOf[java.util.HashMap[_,_]], classOf[String], classOf[Any]))
+      record.get("date_id") shouldBe "20140101"
+    }
 
     kafkaServer.shutdown()
     zkServer.stop()

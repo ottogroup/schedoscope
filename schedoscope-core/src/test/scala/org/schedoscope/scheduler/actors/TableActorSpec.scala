@@ -20,14 +20,13 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
-import org.schedoscope.dsl.{ExternalView, View}
+import org.schedoscope.dsl.ExternalView
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.{HiveTransformation, Touch}
 import org.schedoscope.scheduler.driver.{DriverRunHandle, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
 import test.views.{ProductBrand, ViewWithExternalDeps}
-import scala.concurrent.duration._
 
 class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
@@ -222,7 +221,7 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     val newView = ProductBrand(p("ec0106"), p("2017"), p("12"), p("13"))
     viewActor ! InitializeViews(List(newView))
     schemaManagerRouter.expectMsg(AddPartitions(List(newView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(newView ->("test", 1L))))
+    schemaManagerRouter.reply(TransformationMetadata(Map(newView -> ("test", 1L))))
   }
 
   it should "materialize multiple views" in new TableActorTest {
@@ -230,7 +229,7 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     val newView = ProductBrand(p("ec0106"), p("2017"), p("12"), p("13"))
     viewActor ! InitializeViews(List(newView))
     schemaManagerRouter.expectMsg(AddPartitions(List(newView)))
-    schemaManagerRouter.reply(TransformationMetadata(Map(newView ->("test", 1L))))
+    schemaManagerRouter.reply(TransformationMetadata(Map(newView -> ("test", 1L))))
 
     materializeProductBrandView(view)
     materializeProductBrandView(newView)

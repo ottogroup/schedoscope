@@ -18,7 +18,7 @@ package org.schedoscope.lineage
 
 import org.apache.calcite.rel.`type`.RelDataType
 import org.apache.calcite.schema.Schema
-import org.apache.calcite.sql.`type`.{SqlTypeFactoryImpl, SqlTypeName}
+import org.apache.calcite.sql.`type`.SqlTypeFactoryImpl
 import org.apache.calcite.sql.`type`.SqlTypeName.{BOOLEAN, INTEGER, VARCHAR}
 import org.apache.hadoop.hive.ql.optimizer.calcite.HiveTypeSystemImpl
 import org.scalatest.prop.TableDrivenPropertyChecks

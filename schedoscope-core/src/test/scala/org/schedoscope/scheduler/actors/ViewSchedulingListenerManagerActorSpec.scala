@@ -19,20 +19,19 @@ import akka.actor.{Actor, ActorRef, ActorSystem, ExtendedActorSystem, ExtensionI
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.LocalDateTime
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.{Schedoscope, Settings}
-import org.schedoscope.dsl.View
 import org.schedoscope.dsl.Parameter._
+import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
+import org.schedoscope.{Schedoscope, Settings}
+import test.views.Brand
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import com.typesafe.config.ConfigFactory
-import test.views.Brand
 
 class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
   with ImplicitSender
@@ -79,7 +78,7 @@ class ViewSchedulingListenerManagerActorSpec extends TestKit(ActorSystem("schedo
       schemaManagerRouter.expectMsg(CheckOrCreateTables(List(view)))
       schemaManagerRouter.reply(SchemaActionSuccess())
       schemaManagerRouter.expectMsg(AddPartitions(List(view)))
-      schemaManagerRouter.reply(TransformationMetadata(Map(view ->("test", 1L))))
+      schemaManagerRouter.reply(TransformationMetadata(Map(view -> ("test", 1L))))
 
       Await.result(future, TIMEOUT)
       future.isCompleted shouldBe true

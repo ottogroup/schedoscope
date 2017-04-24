@@ -212,7 +212,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
   }
 
   def ddl(view: View): String =
-    s"""
+      s"""
 \tCREATE EXTERNAL TABLE IF NOT EXISTS ${view.tableName} ${if (view.storageFormat.getClass() != classOf[Avro]) "(\n\t\t" + fieldsDdl(view) + "\n\t)" else ""}
 \t${commentDdl(view)}
 \t${partitionDdl(view)}
@@ -221,6 +221,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 \t${locationDdl(view)}
 \t
 """.replaceAll("(?m)^[ \t]*\r?\n", "")
+
 
   def partitionWhereClause(view: View): String = {
     val whereClause = view
@@ -242,6 +243,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
   def ddlChecksum(view: View) = Checksum.digest(
     view.storageFormat match {
       case Avro(schemaPath, _) => ddl(view).replaceAll(Regex.quoteReplacement(s"${view.avroSchemaPathPrefix}/${schemaPath}"), "")
+
       case _ => ddl(view)
     }
   )

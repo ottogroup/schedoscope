@@ -15,8 +15,8 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{Actor, ActorInitializationException, ActorRef, OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy._
+import akka.actor.{Actor, ActorInitializationException, ActorRef, OneForOneStrategy, Props}
 import akka.event.{Logging, LoggingReceive}
 import akka.routing._
 import org.schedoscope.conf.SchedoscopeSettings

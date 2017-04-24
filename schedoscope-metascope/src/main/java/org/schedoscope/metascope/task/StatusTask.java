@@ -36,49 +36,49 @@ import java.util.Map;
 @Component
 public class StatusTask extends Task {
 
-  private static final Logger LOG = LoggerFactory.getLogger(StatusTask.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StatusTask.class);
 
-  @Autowired
-  private MetascopeConfig metascopeConfig;
+    @Autowired
+    private MetascopeConfig metascopeConfig;
 
-  @Autowired
-  private MetascopeStatusService metascopeStatusService;
+    @Autowired
+    private MetascopeStatusService metascopeStatusService;
 
-  @Override
-  public boolean run(long start) {
-    for (SchedoscopeInstance schedoscopeInstance : metascopeConfig.getSchedoscopeInstances()) {
-      String host = schedoscopeInstance.getHost();
-      int port = schedoscopeInstance.getPort();
-      LOG.info("Getting status information for (" + host + ":" + port + ")");
+    @Override
+    public boolean run(long start) {
+        for (SchedoscopeInstance schedoscopeInstance : metascopeConfig.getSchedoscopeInstances()) {
+            String host = schedoscopeInstance.getHost();
+            int port = schedoscopeInstance.getPort();
+            LOG.info("Getting status information for (" + host + ":" + port + ")");
 
-      ViewStatus viewStatus;
-      try {
-        viewStatus = SchedoscopeUtil.getViewStatus(false, false, null, host, port);
-      } catch (SchedoscopeConnectException e) {
-        LOG.warn("Could not retrieve Schedoscope status information (" + host + ":" + port + ")", e);
-        continue;
-      }
+            ViewStatus viewStatus;
+            try {
+                viewStatus = SchedoscopeUtil.getViewStatus(false, false, null, host, port);
+            } catch (SchedoscopeConnectException e) {
+                LOG.warn("Could not retrieve Schedoscope status information (" + host + ":" + port + ")", e);
+                continue;
+            }
 
-      Map<String, List<String>> tableAggregation = new HashMap<>();
-      for (View view : viewStatus.getViews()) {
-        List<String> statusesForTable = tableAggregation.get(view.viewPath());
-        if (statusesForTable == null) {
-          statusesForTable = new ArrayList<>();
+            Map<String, List<String>> tableAggregation = new HashMap<>();
+            for (View view : viewStatus.getViews()) {
+                List<String> statusesForTable = tableAggregation.get(view.viewPath());
+                if (statusesForTable == null) {
+                    statusesForTable = new ArrayList<>();
+                }
+                statusesForTable.add(view.getStatus());
+                tableAggregation.put(view.viewPath(), statusesForTable);
+                metascopeStatusService.setStatus(view.getName(), view.getStatus());
+            }
+            for (Map.Entry<String, List<String>> e : tableAggregation.entrySet()) {
+                String status = StatusUtil.getStatus(e.getValue());
+                metascopeStatusService.setStatus(e.getKey(), status);
+            }
+
+            LOG.info("Finished status update");
+
         }
-        statusesForTable.add(view.getStatus());
-        tableAggregation.put(view.viewPath(), statusesForTable);
-        metascopeStatusService.setStatus(view.getName(), view.getStatus());
-      }
-      for (Map.Entry<String, List<String>> e : tableAggregation.entrySet()) {
-        String status = StatusUtil.getStatus(e.getValue());
-        metascopeStatusService.setStatus(e.getKey(), status);
-      }
 
-      LOG.info("Finished status update");
-
+        return true;
     }
-
-    return true;
-  }
 
 }

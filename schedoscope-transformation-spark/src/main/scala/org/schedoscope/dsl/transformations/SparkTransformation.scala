@@ -17,9 +17,9 @@ package org.schedoscope.dsl.transformations
 
 import java.io.File
 
-import org.schedoscope.scheduler.service.ViewTransformationStatus
 import org.schedoscope.dsl.transformations.Transformation.replaceParameters
 import org.schedoscope.scheduler.driver.FilesystemDriver
+import org.schedoscope.scheduler.service.ViewTransformationStatus
 
 /**
   * This captures view transformation logic implemented as Spark jobs. It is expected to be available in a submittable
@@ -124,7 +124,6 @@ object SparkTransformation {
                  additionalPys: List[String] = List(),
                  additionalFiles: List[String] = List(),
                  propertiesFile: String = null): SparkTransformation =
-
     SparkTransformation(
       classNameOf(SparkSQLRunner), jarOf(SparkSQLRunner), classNameOf(SparkSQLRunner),
       List({

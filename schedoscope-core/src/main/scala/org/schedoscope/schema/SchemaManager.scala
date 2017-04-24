@@ -64,7 +64,11 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       try {
         metastoreClient.add_partitions(List(partition), false, false)
       } catch {
-        case _: Throwable => // Accept exceptions
+        case _: AlreadyExistsException => // Accept
+        case t: Throwable =>
+          log.error(s"Schema Manager failed to partitions for table ${view.dbName}.${view.n}.")
+
+          throw RetryableSchemaManagerException(s"Schema Manager failed to partitions for table ${view.dbName}.${view.n}", t)
       }
     }
     partition
@@ -110,13 +114,10 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
         log.warn(s"Failed to drop existing table ${view.dbName}.${view.n}.")
         throw t
     }
-
     log.info(s"Creating table:\n${ddl}")
-
     stmt.execute(ddl)
 
     stmt.close()
-
     log.info(s"Successfully created table ${view.dbName}.${view.n}; now adding Checksum '${HiveQl.ddlChecksum(view)}' to table properties.")
     setTableProperty(view.dbName, view.n, Checksum.SchemaChecksum.checksumProperty, HiveQl.ddlChecksum(view))
   } catch {
@@ -134,7 +135,6 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
     */
   def schemaExists(view: View): Boolean = try {
     val d = HiveQl.ddlChecksum(view)
-
     log.info(s"Checking whether table exists: view ${view.dbName}.${view.n} -- Checksum: ${d}")
 
     if (existingSchemas.contains(d)) {
@@ -293,7 +293,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
       Map()
     } else {
       metastoreClient.add_partitions(partitions, false, false)
-      partitions.map(p => (partitionToView(tablePrototype, p) ->(Checksum.defaultDigest, 0.toLong))).toMap
+      partitions.map(p => (partitionToView(tablePrototype, p) -> (Checksum.defaultDigest, 0.toLong))).toMap
     }
   } catch {
     case are: AlreadyExistsException => throw are

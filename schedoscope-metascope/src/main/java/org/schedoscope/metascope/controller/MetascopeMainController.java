@@ -35,138 +35,138 @@ import java.util.Map;
 @Controller
 public class MetascopeMainController {
 
-  @Autowired
-  private SolrFacade solrIndex;
-  @Autowired
-  private MetascopeUserService metascopeUserService;
-  @Autowired
-  private MetascopeTableService metascopeTableService;
-  @Autowired
-  private MetascopeTaxonomyService metascopeTaxonomyService;
-  @Autowired
-  private MetascopeMetadataService metascopeMetadataService;
-  @Autowired
-  private MetascopeActivityService metascopeActivityService;
-  @Autowired
-  private MetascopeURLService metascopeURLService;
-  @Autowired
-  private MetascopeConfig config;
-  @Autowired
-  private HTMLUtil htmlUtil;
+    @Autowired
+    private SolrFacade solrIndex;
+    @Autowired
+    private MetascopeUserService metascopeUserService;
+    @Autowired
+    private MetascopeTableService metascopeTableService;
+    @Autowired
+    private MetascopeTaxonomyService metascopeTaxonomyService;
+    @Autowired
+    private MetascopeMetadataService metascopeMetadataService;
+    @Autowired
+    private MetascopeActivityService metascopeActivityService;
+    @Autowired
+    private MetascopeURLService metascopeURLService;
+    @Autowired
+    private MetascopeConfig config;
+    @Autowired
+    private HTMLUtil htmlUtil;
 
-  /**
-   * Login page of Metascope
-   *
-   * @param request the HTTPServlet request
-   * @param params  params passed from the client
-   * @return the login view
-   */
-  @RequestMapping("/")
-  public ModelAndView index(HttpServletRequest request, @RequestParam Map<String, String> params) {
-    ModelAndView mav = new ModelAndView("body/home/index");
+    /**
+     * Login page of Metascope
+     *
+     * @param request the HTTPServlet request
+     * @param params  params passed from the client
+     * @return the login view
+     */
+    @RequestMapping("/")
+    public ModelAndView index(HttpServletRequest request, @RequestParam Map<String, String> params) {
+        ModelAndView mav = new ModelAndView("body/home/index");
 
-    boolean authenticationFailure = params.containsKey("error");
-    setupView(mav, authenticationFailure);
+        boolean authenticationFailure = params.containsKey("error");
+        setupView(mav, authenticationFailure);
 
-    if (metascopeUserService.isAuthenticated()) {
-      return new ModelAndView(new RedirectView("/home"));
+        if (metascopeUserService.isAuthenticated()) {
+            return new ModelAndView(new RedirectView("/home"));
+        }
+
+        return mav;
     }
 
-    return mav;
-  }
+    /**
+     * Landing page of Metascope
+     *
+     * @param request the HTTPServlet request
+     * @param params  params passed from the client
+     * @return the main view
+     */
+    @RequestMapping("/home")
+    @Transactional
+    public ModelAndView home(HttpServletRequest request, @RequestParam Map<String, String> params) {
+        ModelAndView mav = new ModelAndView("body/home/index");
+        setupView(mav, false);
 
-  /**
-   * Landing page of Metascope
-   *
-   * @param request the HTTPServlet request
-   * @param params  params passed from the client
-   * @return the main view
-   */
-  @RequestMapping("/home")
-  @Transactional
-  public ModelAndView home(HttpServletRequest request, @RequestParam Map<String, String> params) {
-    ModelAndView mav = new ModelAndView("body/home/index");
-    setupView(mav, false);
-
-    if (metascopeUserService.isAuthenticated()) {
+        if (metascopeUserService.isAuthenticated()) {
       /* get solr information for search and facets and query results */
-      SolrQueryResult solrQueryResult = solrIndex.query(params);
+            SolrQueryResult solrQueryResult = solrIndex.query(params);
 
       /*
        * solr query results (facets, filter and the actual entities to display
        */
 
-      mav.addObject("solrQuery", solrQueryResult);
+            mav.addObject("solrQuery", solrQueryResult);
 
       /* reference to URLService to build the filter (facets) url's */
-      mav.addObject("urlService", metascopeURLService);
+            mav.addObject("urlService", metascopeURLService);
 
       /* most viewed tables */
-      mav.addObject("topFive", metascopeTableService.getTopFiveTables());
+            mav.addObject("topFive", metascopeTableService.getTopFiveTables());
 
       /* last activities to display on landing page */
-      mav.addObject("activities", metascopeActivityService.getActivities());
+            mav.addObject("activities", metascopeActivityService.getActivities());
 
       /* check wether the user is an admin or not */
-      mav.addObject("admin", metascopeUserService.isAdmin());
+            mav.addObject("admin", metascopeUserService.isAdmin());
 
       /* favourited tables of this user */
-      mav.addObject("favs", metascopeUserService.getFavourites());
+            mav.addObject("favs", metascopeUserService.getFavourites());
 
       /* utility for styling */
-      mav.addObject("util", htmlUtil);
+            mav.addObject("util", htmlUtil);
 
       /* user management enabled/disabled */
-      mav.addObject("userMgmnt", config.withUserManagement());
+            mav.addObject("userMgmnt", config.withUserManagement());
 
       /* check if the sync task has been scheduled */
-      mav.addObject("schedoscopesync", getParameter(request, "schedoscopesync"));
+            mav.addObject("schedoscopesync", getParameter(request, "schedoscopesync"));
 
       /* objects needed for admin views */
-      if (metascopeUserService.getUser().isAdmin()) {
+            if (metascopeUserService.getUser().isAdmin()) {
         /* user management */
-        mav.addObject("users", metascopeUserService.getAllUser());
+                mav.addObject("users", metascopeUserService.getAllUser());
 
         /* taxonomy management */
-        mav.addObject("taxonomies", metascopeTaxonomyService.getTaxonomies());
-      }
+                mav.addObject("taxonomies", metascopeTaxonomyService.getTaxonomies());
+            }
 
+        }
+
+        return mav;
     }
 
-    return mav;
-  }
-
-  /**
-   * Sets the mandatory objects for the main view
-   *
-   * @param mav                   the ModelAndView object to add objects to
-   * @param authenticationFailure if user tried to login unsuccessfully
-   */
-  private void setupView(ModelAndView mav, boolean authenticationFailure) {
+    /**
+     * Sets the mandatory objects for the main view
+     *
+     * @param mav                   the ModelAndView object to add objects to
+     * @param authenticationFailure if user tried to login unsuccessfully
+     */
+    private void setupView(ModelAndView mav, boolean authenticationFailure) {
     /* last schedoscope sync */
-    mav.addObject("schedoscopeTimestamp", metascopeMetadataService.getMetadataValue("schedoscopeTimestamp"));
+        mav.addObject("schedoscopeTimestamp", metascopeMetadataService.getMetadataValue("schedoscopeTimestamp"));
 
     /* reference to user entity service to check users groups on the fly */
-    mav.addObject("userEntityService", metascopeUserService);
+        mav.addObject("userEntityService", metascopeUserService);
 
-    if (authenticationFailure) {
-      mav.addObject("error", true);
+        if (authenticationFailure) {
+            mav.addObject("error", true);
+        }
     }
-  }
 
-  private String getParameter(HttpServletRequest request, String parameterKey) {
-    Map<String, ?> inputFlashMap = RequestContextUtils.getInputFlashMap(request);
-    String[] parameterValues = request.getParameterMap().get(parameterKey);
-    if (parameterValues != null && parameterValues.length > 0) {
-      return parameterValues[0];
+    private String getParameter(HttpServletRequest request, String parameterKey) {
+        Map<String, ?> inputFlashMap = RequestContextUtils.getInputFlashMap(request);
+        String[] parameterValues = request.getParameterMap().get(parameterKey);
+        if (parameterValues != null && parameterValues.length > 0) {
+            return parameterValues[0];
+        }
+        if (inputFlashMap != null) {
+            Object val = inputFlashMap.get(parameterKey);
+            if (val != null) {
+                return String.valueOf(val);
+            }
+        }
+        return null;
     }
-    if (inputFlashMap != null) {
-      Object val = inputFlashMap.get(parameterKey);
-      if (val != null) {
-        return String.valueOf(val);
-      }
-    }
-    return null;
-  }
 
 }

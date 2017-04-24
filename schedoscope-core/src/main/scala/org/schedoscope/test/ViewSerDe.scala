@@ -17,9 +17,13 @@ package org.schedoscope.test
 
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.ArrayList
+import java.util.HashMap
 
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
+import scala.collection.JavaConversions._
+
+import org.codehaus.jackson.map.ObjectMapper
+import org.codehaus.jackson.map.`type`.TypeFactory
 import org.schedoscope.dsl.storageformats._
 import org.schedoscope.dsl.{Structure, View}
 import org.slf4j.LoggerFactory
@@ -30,6 +34,18 @@ import org.slf4j.LoggerFactory
   */
 object ViewSerDe {
   val logger = LoggerFactory.getLogger("gna")
+
+  /**
+    * Recursively convert nested Java collections to Scala collections
+    *
+    * @param j the java collection to convert
+    * @return
+    */
+  private def toScala(j: Any): Any = j match {
+    case jum: java.util.Map[_, _] => jum.map { case (k, v) => (toScala(k), toScala(v)) }.toList.toMap
+    case jal: java.util.List[_] => jal.map(toScala).toList
+    case _ => j
+  }
 
   /**
     * Escape data before writing it to hive.
@@ -78,21 +94,14 @@ object ViewSerDe {
     else if (t == manifest[Date])
       v.asInstanceOf[String] // TODO: parse date?
     else if (classOf[Structure].isAssignableFrom(t.runtimeClass)) {
-      // Structures are given like [FieldValue1,FieldValue2,...]
-      // Maps are given las json
-      implicit val format = DefaultFormats
-      val parsed = parse(v.toString())
-      parsed.extract[Map[String, _]]
+      val res: HashMap[String, _] = new ObjectMapper().readValue(v.toString, TypeFactory.mapType(classOf[HashMap[_, _]], classOf[String], classOf[Any]))
+      toScala(res)
     } else if (t.runtimeClass == classOf[List[_]]) {
-      // Lists are given like [el1, el2, ...]
-      implicit val format = DefaultFormats
-      val parsed = parse(v.toString())
-      parsed.extract[List[_]]
+      val res: ArrayList[_] = new ObjectMapper().readValue(v.toString, TypeFactory.collectionType(classOf[ArrayList[_]], classOf[Any]))
+      toScala(res)
     } else if (t.runtimeClass == classOf[Map[_, _]]) {
-      // Maps are given las json
-      implicit val format = DefaultFormats
-      val parsed = parse(v.toString())
-      parsed.extract[Map[String, _]]
+      val res: HashMap[String, _] = new ObjectMapper().readValue(v.toString, TypeFactory.mapType(classOf[java.util.HashMap[_, _]], classOf[String], classOf[Any]))
+      toScala(res)
     } else throw new RuntimeException("Could not deserialize field of type " + t + " with value " + v)
   }
 

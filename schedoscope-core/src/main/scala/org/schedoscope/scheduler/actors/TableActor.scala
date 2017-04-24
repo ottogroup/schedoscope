@@ -20,16 +20,16 @@ import java.lang.Math.pow
 import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.joda.time.LocalDateTime
-import org.schedoscope.AskPattern.queryActor
+import org.schedoscope.AskPattern.{queryActor, retryOnTimeout}
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.dsl.transformations.{Checksum, Touch}
 import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.{Checksum, Touch}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
 import scala.collection.mutable
-import scala.language.implicitConversions
 import scala.concurrent.duration.Duration
+import scala.language.implicitConversions
 
 /**
   * Table actors manage the scheduling states of the views belonging to a given table.
@@ -315,7 +315,9 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
         log.info(s"Creating table if necessary for ${viewsToCreate.head.dbName}.${viewsToCreate.head.n}")
 
-        queryActor[Any](schemaManagerRouter, CheckOrCreateTables(viewsToCreate), settings.schemaTimeout)
+        retryOnTimeout(() =>
+          queryActor[Any](schemaManagerRouter, CheckOrCreateTables(viewsToCreate), settings.schemaTimeout)
+        )
 
       }
 
@@ -323,9 +325,9 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
 
       //Add the partitions
-      val viewsWithMetadataToCreate = queryActor[TransformationMetadata](schemaManagerRouter,
-        AddPartitions(viewsToCreate),
-        settings.schemaTimeout)
+      val viewsWithMetadataToCreate = retryOnTimeout(() =>
+        queryActor[TransformationMetadata](schemaManagerRouter, AddPartitions(viewsToCreate), settings.schemaTimeout)
+      )
 
       log.info(s"Partitions created, initializing views")
 

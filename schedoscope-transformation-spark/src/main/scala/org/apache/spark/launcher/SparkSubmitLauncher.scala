@@ -19,12 +19,11 @@ import java.io.{File, IOException}
 import java.net.URLClassLoader
 import java.util.concurrent.atomic.AtomicInteger
 
-import SparkLauncher.{DRIVER_EXTRA_CLASSPATH, EXECUTOR_EXTRA_CLASSPATH}
-
 import org.apache.commons.io.FileUtils
 import org.apache.spark.deploy.SparkSubmit
 import org.apache.spark.launcher.CommandBuilderUtils._
 import org.apache.spark.launcher.SparkAppHandle.{Listener, State}
+import org.apache.spark.launcher.SparkLauncher.{DRIVER_EXTRA_CLASSPATH, EXECUTOR_EXTRA_CLASSPATH}
 import org.schedoscope.dsl.transformations.SparkTransformation._
 
 import scala.collection.JavaConversions._

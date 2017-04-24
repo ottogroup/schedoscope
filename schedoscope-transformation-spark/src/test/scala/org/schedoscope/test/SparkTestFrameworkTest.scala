@@ -20,7 +20,7 @@ import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
 import test.views.{Click, ClickOfEC0101ViaHiveQlOnSpark, ClickOfEC0101ViaSpark}
 
-class SparkTestFrameworkTest extends FlatSpec with Matchers {
+class SparkTestFrameworkTest extends SchedoscopeSpec {
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
       v(id, "event01"),

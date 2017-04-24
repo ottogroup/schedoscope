@@ -16,8 +16,7 @@
 package org.schedoscope.scheduler.actors
 
 import akka.actor.ActorSystem
-import akka.dispatch.PriorityGenerator
-import akka.dispatch.UnboundedPriorityMailbox
+import akka.dispatch.{PriorityGenerator, UnboundedPriorityMailbox}
 import com.typesafe.config.Config
 
 /**

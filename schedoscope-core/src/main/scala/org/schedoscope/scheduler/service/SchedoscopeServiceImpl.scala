@@ -32,6 +32,7 @@ import org.schedoscope.schema.ddl.HiveQl
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 
 class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSettings, viewManagerActor: ActorRef, transformationManagerActor: ActorRef) extends SchedoscopeService {
@@ -255,7 +256,10 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         queryActor[ViewStatusListResponse](
           viewManagerActor,
           GetViews(resolvedViews, status, filter, issueFilter, dependencies),
-          settings.schedulingCommandTimeout).viewStatusList
+          settings.schedulingCommandTimeout).viewStatusList match {
+          case Success(vsl) => vsl
+          case Failure(t) => throw t
+        }
       }
     }
   }

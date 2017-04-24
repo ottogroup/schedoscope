@@ -15,11 +15,12 @@
   */
 package org.schedoscope.test
 
-import java.io.{OutputStream, PrintStream}
+import java.util.logging.{Level, LogManager, Logger}
 
 import org.scalatest._
 import org.schedoscope.dsl.{Field, FieldLike}
 import org.schedoscope.test.resources.{LocalTestResources, TestResources}
+import org.slf4j.bridge.SLF4JBridgeHandler
 
 import scala.collection.mutable.ListBuffer
 
@@ -36,27 +37,20 @@ trait SchedoscopeSuite
     with BeforeAndAfterEach {
   this: Suite =>
 
+  Class.forName("parquet.Log")
+
+  private def silenceLogging {
+    val parquetLogger = LogManager.getLogManager.getLogger("parquet")
+    if (parquetLogger != null) {
+      parquetLogger.setLevel(Level.OFF)
+      parquetLogger.getHandlers.foreach(parquetLogger.removeHandler(_))
+    }
+  }
+
   val views = ListBuffer.empty[test]
 
-  //mute system err during tests (experimental)
-
-  val originalStream = System.err
-
-  def turnOffSystemErr() {
-    System.setErr(new PrintStream(new OutputStream() {
-      def write(b: Int) {}
-    }))
-  }
-
-  /**
-    * Deactivate the muting of system err
-    * during tests
-    */
-  def turnOnSystemErr() {
-    System.setErr(originalStream)
-  }
-
   override protected def beforeAll(configMap: org.scalatest.ConfigMap) = {
+    silenceLogging
     views.foreach {
       v => v.`then`()
     }
@@ -75,11 +69,6 @@ trait SchedoscopeSuite
   def putViewUnderTest[T <: test](view: T): T = {
     views += view
     view
-  }
-
-  override protected def afterAll(): Unit = {
-    System.setErr(originalStream)
-    super.afterAll()
   }
 }
 
