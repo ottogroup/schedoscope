@@ -45,6 +45,12 @@ trait SchedoscopeSuite
       parquetLogger.setLevel(Level.OFF)
       parquetLogger.getHandlers.foreach(parquetLogger.removeHandler(_))
     }
+   
+    val shadedParquetLogger = LogManager.getLogManager.getLogger("shaded.parquet")
+    if (shadedParquetLogger != null) {
+      shadedParquetLogger.setLevel(Level.OFF)
+      shadedParquetLogger.getHandlers.foreach(shadedParquetLogger.removeHandler(_))
+    }
   }
 
   val views = ListBuffer.empty[test]
