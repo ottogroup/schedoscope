@@ -77,6 +77,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 03/24/2017 - Release 0.8.3
+
+We have released Version 0.8.3 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This version has been built against Cloudera's CDH 5.10.1 client libraries. The test framework no longer artificially sets the storage formats of views under test to text, making testing of Spark jobs writing Parquet files simpler. The robustness of the Schedoscope HTTP service has been improved in face of invalid view parameters.
+
 ###### 03/24/2017 - Release 0.8.2
 
 We have released Version 0.8.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
