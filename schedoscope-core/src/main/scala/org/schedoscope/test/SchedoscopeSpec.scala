@@ -15,7 +15,6 @@
   */
 package org.schedoscope.test
 
-import java.io.{OutputStream, PrintStream}
 import java.util.logging.{Level, LogManager, Logger}
 
 import org.scalatest._
@@ -38,12 +37,13 @@ trait SchedoscopeSuite
     with BeforeAndAfterEach {
   this: Suite =>
 
-  //Class.forName("parquet.Log")
-  //Logger.getLogger("").getHandlers.foreach(Logger.getLogger("").removeHandler)
-  //SLF4JBridgeHandler.removeHandlersForRootLogger()
-  //SLF4JBridgeHandler.install()
-  //Logger.getLogger("global").setLevel(Level.WARNING)
+  private def silenceLogging {
+    Class.forName("parquet.Log")
+    val parquetLogger = LogManager.getLogManager.getLogger("parquet")
+    parquetLogger.getHandlers.foreach(parquetLogger.removeHandler(_))
+  }
 
+  silenceLogging
 
   val views = ListBuffer.empty[test]
 
