@@ -37,17 +37,20 @@ trait SchedoscopeSuite
     with BeforeAndAfterEach {
   this: Suite =>
 
-  private def silenceLogging {
-    Class.forName("parquet.Log")
-    val parquetLogger = LogManager.getLogManager.getLogger("parquet")
-    parquetLogger.getHandlers.foreach(parquetLogger.removeHandler(_))
-  }
+  Class.forName("parquet.Log")
 
-  silenceLogging
+  private def silenceLogging {
+    val parquetLogger = LogManager.getLogManager.getLogger("parquet")
+    if (parquetLogger != null) {
+      parquetLogger.setLevel(Level.OFF)
+      parquetLogger.getHandlers.foreach(parquetLogger.removeHandler(_))
+    }
+  }
 
   val views = ListBuffer.empty[test]
 
   override protected def beforeAll(configMap: org.scalatest.ConfigMap) = {
+    silenceLogging
     views.foreach {
       v => v.`then`()
     }

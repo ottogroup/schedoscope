@@ -91,17 +91,9 @@ class SchedoscopeRestServiceActor(schedoscope: SchedoscopeService) extends Actor
   */
 object SchedoscopeRestService {
 
-  private def silenceLogging {
-    Class.forName("parquet.Log")
-    val parquetLogger = LogManager.getLogManager.getLogger("parquet")
-    parquetLogger.getHandlers.foreach(parquetLogger.removeHandler(_))
-
-    SLF4JBridgeHandler.removeHandlersForRootLogger()
-    SLF4JBridgeHandler.install()
-    Logger.getLogger("global").setLevel(Level.WARNING)
-  }
-
-  silenceLogging
+  SLF4JBridgeHandler.removeHandlersForRootLogger()
+  SLF4JBridgeHandler.install()
+  Logger.getLogger("global").setLevel(Level.WARNING)
 
   import Schedoscope._
 
