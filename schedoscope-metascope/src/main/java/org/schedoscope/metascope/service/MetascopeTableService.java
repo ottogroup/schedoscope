@@ -341,7 +341,14 @@ public class MetascopeTableService {
 
         for (MetascopeField metascopeField : tableEntity.getFields()) {
             Map<String, List<MetascopeField>> depMap = new HashMap<>();
+            if (metascopeField.getDependencies() == null) {
+                continue;
+            }
             for (MetascopeField fieldDep : metascopeField.getDependencies()) {
+                if (fieldDep.getTable() == null) {
+                    //this should not happen if database model is correct ...
+                    continue;
+                }
                 List<MetascopeField> depFields = depMap.get(fieldDep.getTable().getFqdn());
                 if (depFields == null) {
                     depFields = new ArrayList<>();
@@ -363,7 +370,14 @@ public class MetascopeTableService {
 
         for (MetascopeField metascopeField : tableEntity.getFields()) {
             Map<String, List<MetascopeField>> depMap = new HashMap<>();
+            if (metascopeField.getSuccessors() == null) {
+                continue;
+            }
             for (MetascopeField fieldDep : metascopeField.getSuccessors()) {
+                if (fieldDep.getTable() == null) {
+                    //this should not happen if database model is correct ...
+                    continue;
+                }
                 List<MetascopeField> depFields = depMap.get(fieldDep.getTable().getFqdn());
                 if (depFields == null) {
                     depFields = new ArrayList<>();
