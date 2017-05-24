@@ -240,11 +240,11 @@ object FilesystemDriver extends DriverCompanionObject[FilesystemTransformation] 
       case _: Throwable => new File(pathOrUri).toURI()
     }
 
-  def localFilesystem(hadoopConfiguration: Configuration): FileSystem = FileSystem.getLocal(hadoopConfiguration)
+  def localFilesystem(hadoopConfiguration: Configuration): FileSystem = synchronized(FileSystem.getLocal(hadoopConfiguration))
 
-  def fileSystem(path: String, hadoopConfiguration: Configuration) = FileSystem.get(uri(path), hadoopConfiguration)
+  def fileSystem(path: String, hadoopConfiguration: Configuration) = synchronized(FileSystem.get(uri(path), hadoopConfiguration))
 
-  def defaultFileSystem(hadoopConfiguration: Configuration) = FileSystem.get(hadoopConfiguration)
+  def defaultFileSystem(hadoopConfiguration: Configuration) = synchronized(FileSystem.get(hadoopConfiguration))
 
   def classpathResourceToFile(classpathResourceUrl: String) = {
     val remainingPath = classpathResourceUrl.replace("classpath://", "")
