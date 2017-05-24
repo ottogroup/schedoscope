@@ -77,6 +77,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 05/24/2017 - Release 0.8.4
+
+We have released Version 0.8.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This version removes a race condition the file system driver initialization that seems to have been introduced with CDH-5.10. Also, we have changed the way how we delete and recreate output folders for Map/Reduce transformations to avoid Hive partitions pointing to temporarily non-existing folders.
+
 ###### 04/24/2017 - Release 0.8.3
 
 We have released Version 0.8.3 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
