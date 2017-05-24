@@ -44,13 +44,14 @@ case class MapreduceTransformation(
                                     v: View,
                                     createJob: (Map[String, Any]) => Job,
                                     cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceTransformation]) => DriverRunState[MapreduceTransformation] = (_, __, completionRunState) => completionRunState,
-                                    dirsToDelete: List[String] = List()) extends Transformation {
+                                    dirsToDelete: List[String] = List(),
+                                    deleteViewPath: Boolean = true) extends Transformation {
 
   def name = "mapreduce"
 
   lazy val job = createJob(configuration.toMap)
 
-  var directoriesToDelete = dirsToDelete ++ List(v.fullPath)
+  var directoriesToDelete = dirsToDelete ++ (if (deleteViewPath) List(v.fullPath) else List())
 
   description = StringUtils.abbreviate(v.urlPath, 100)
 
