@@ -77,6 +77,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 05/26/2017 - Release 0.8.5
+
+We have released Version 0.8.5 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This version adds support for float view fields to JDBC exports
+
 ###### 05/24/2017 - Release 0.8.4
 
 We have released Version 0.8.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
