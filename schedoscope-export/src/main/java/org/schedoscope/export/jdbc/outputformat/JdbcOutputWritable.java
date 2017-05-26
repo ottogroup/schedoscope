@@ -45,6 +45,7 @@ public class JdbcOutputWritable implements Writable, DBWritable {
 
     private static final String STRING = "string";
     private static final String DOUBLE = "double";
+    private static final String FLOAT = "float";
     private static final String BOOLEAN = "boolean";
     private static final String INTEGER = "int";
     private static final String LONG = "long";
@@ -103,6 +104,14 @@ public class JdbcOutputWritable implements Writable, DBWritable {
                     } else {
                         ps.setNull(i + 1, Types.DOUBLE);
                     }
+                } else if (type.equals(JdbcOutputWritable.FLOAT)) {
+                    if (!record.get(i).getRight().equals("NULL")) {
+                        ps.setDouble(i + 1,
+                                Double.parseDouble(record.get(i).getRight()));
+                    } else {
+                        ps.setNull(i + 1, Types.FLOAT);
+                    }
+
                 } else if (type.equals(JdbcOutputWritable.BOOLEAN)) {
                     if (!record.get(i).getRight().equals("NULL")) {
                         ps.setBoolean(i + 1,
@@ -132,9 +141,13 @@ public class JdbcOutputWritable implements Writable, DBWritable {
                     ps.setString(i + 1, record.get(i).getRight());
                 }
             }
-        } catch (NumberFormatException n) {
+        } catch (
+                NumberFormatException n)
+
+        {
             n.printStackTrace();
         }
+
     }
 
     @Override
