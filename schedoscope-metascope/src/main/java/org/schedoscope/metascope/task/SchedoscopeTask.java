@@ -20,11 +20,7 @@ import org.schedoscope.metascope.config.MetascopeConfig;
 import org.schedoscope.metascope.exception.SchedoscopeConnectException;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.*;
-import org.schedoscope.metascope.repository.MetascopeExportRepository;
-import org.schedoscope.metascope.repository.MetascopeFieldRepository;
-import org.schedoscope.metascope.repository.MetascopeTableRepository;
 import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
-import org.schedoscope.metascope.service.MetascopeMetadataService;
 import org.schedoscope.metascope.task.model.*;
 import org.schedoscope.metascope.util.SchedoscopeUtil;
 import org.schedoscope.metascope.util.model.SchedoscopeInstance;
@@ -47,19 +43,13 @@ public class SchedoscopeTask extends Task {
     private static final String OCCURRED_AT = "occurred_at";
     private static final String OCCURRED_UNTIL = "occurred_until";
     private static final String SCHEDOSCOPE_TIMESTAMP_FORMAT = "yyyy-MM-dd''T''HH:mm:ss.SSS''Z''";
+    private static final String FIELD_MAPPING_TABLE = "metascope_fields_mapping";
+    private static final String PARAMETER_MAPPING_TABLE = "metascope_parameter_mapping";
 
     @Autowired
     private MetascopeConfig config;
     @Autowired
     private SolrFacade solrFacade;
-    @Autowired
-    private MetascopeTableRepository metascopeTableRepository;
-    @Autowired
-    private MetascopeFieldRepository metascopeFieldRepository;
-    @Autowired
-    private MetascopeExportRepository metascopeExportRepository;
-    @Autowired
-    private MetascopeMetadataService metascopeMetadataService;
     @Autowired
     private DataSource dataSource;
 
@@ -79,6 +69,15 @@ public class SchedoscopeTask extends Task {
         boolean isH2Database = config.getRepositoryUrl().startsWith("jdbc:h2");
         boolean isMySQLDatabase = config.getRepositoryUrl().startsWith("jdbc:mysql");
 
+        Connection connection;
+        try {
+            connection = dataSource.getConnection();
+        } catch (SQLException e) {
+            LOG.error("Could not retrieve database connection.", e);
+            return false;
+        }
+
+        RawJDBCSqlRepository sqlRepository = new RawJDBCSqlRepository(isMySQLDatabase, isH2Database);
 
         /** get data from schedoscope */
         ViewStatus viewStatus;
@@ -96,7 +95,7 @@ public class SchedoscopeTask extends Task {
 
         if (viewStatus.getViews().size() == 0) {
             LOG.info("[SchedoscopeSyncTask] No schedoscope metadata available. Maybe materialize some views?");
-            metascopeMetadataService.save("schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
+            sqlRepository.saveMetadata(connection, "schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
             return false;
         }
 
@@ -108,19 +107,16 @@ public class SchedoscopeTask extends Task {
         for (View view : viewStatus.getViews()) {
             if (view.isTable()) {
                 String fqdn = view.getDatabase() + "." + view.getTableName();
-                MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+                MetascopeTable table = sqlRepository.findTable(connection, fqdn);
                 if (table == null) {
                     table = new MetascopeTable();
                     table.setFqdn(fqdn);
                 }
                 cachedTables.put(fqdn, table);
-                LOG.info("Saved table " + fqdn);
                 tableCount++;
             }
         }
         LOG.info("Received " + tableCount + " tables");
-
-        metascopeTableRepository.save(cachedTables.values());
 
         for (View view : viewStatus.getViews()) {
             if (view.isTable()) {
@@ -154,10 +150,11 @@ public class SchedoscopeTask extends Task {
                 int i = 0;
                 for (ViewField viewField : view.getFields()) {
                     String fieldFqdn = fqdn + "." + viewField.getName();
-                    MetascopeField field = metascopeFieldRepository.findOne(fieldFqdn);
+                    MetascopeField field = sqlRepository.findField(connection, fieldFqdn);
                     if (field == null) {
                         field = new MetascopeField();
                         field.setFieldId(fieldFqdn);
+                        field.setTableFqdn(fqdn);
                     }
                     field.setFieldName(viewField.getName());
                     field.setFieldType(viewField.getFieldtype());
@@ -184,16 +181,18 @@ public class SchedoscopeTask extends Task {
                     cachedFields.put(field.getFieldId(), field);
                 }
                 table.setFields(tableFields);
+                sqlRepository.saveFields(connection, table.getFields(), table.getFqdn(), FIELD_MAPPING_TABLE);
 
                 /** parameter */
                 Set<MetascopeField> tableParameter = new HashSet<>();
                 i = 0;
                 for (ViewField viewField : view.getParameters()) {
                     String parameterFqdn = fqdn + "." + viewField.getName();
-                    MetascopeField parameter = metascopeFieldRepository.findOne(parameterFqdn);
+                    MetascopeField parameter = sqlRepository.findField(connection, parameterFqdn);
                     if (parameter == null) {
                         parameter = new MetascopeField();
                         parameter.setFieldId(parameterFqdn);
+                        parameter.setTableFqdn(fqdn);
                     }
                     parameter.setFieldName(viewField.getName());
                     parameter.setFieldType(viewField.getFieldtype());
@@ -205,17 +204,19 @@ public class SchedoscopeTask extends Task {
                     tableParameter.add(parameter);
                 }
                 table.setParameters(tableParameter);
+                sqlRepository.saveFields(connection, table.getParameters(), table.getFqdn(), PARAMETER_MAPPING_TABLE);
 
                 /** exports */
                 List<MetascopeExport> tableExports = new ArrayList<>();
                 i = 0;
                 if (view.getExport() != null) {
                     for (ViewTransformation viewExport : view.getExport()) {
-                        String parameterFqdn = fqdn + "." + viewExport.getName();
-                        MetascopeExport export = metascopeExportRepository.findOne(parameterFqdn);
+                        String exportFqdn = fqdn + "." + viewExport.getName() + "_" + i;
+                        MetascopeExport export = sqlRepository.findExport(connection, exportFqdn);
                         if (export == null) {
                             export = new MetascopeExport();
-                            export.setExportId(table.getFqdn() + "_" + (i));
+                            export.setExportId(exportFqdn);
+                            export.setTableFqdn(fqdn);
                         }
                         export.setExportType(viewExport.getName());
                         export.setProperties(viewExport.getProperties());
@@ -226,6 +227,7 @@ public class SchedoscopeTask extends Task {
                     }
                 }
                 table.setExports(tableExports);
+                sqlRepository.saveExports(connection, table.getExports(), table.getFqdn());
 
                 /** transformation */
                 MetascopeTransformation metascopeTransformation = new MetascopeTransformation();
@@ -233,6 +235,7 @@ public class SchedoscopeTask extends Task {
                 metascopeTransformation.setTransformationType(view.getTransformation().getName());
                 metascopeTransformation.setProperties(view.getTransformation().getProperties());
                 table.setTransformation(metascopeTransformation);
+                sqlRepository.saveTransformation(connection, table.getTransformation(), table.getFqdn());
 
                 /** views and dependencies */
                 LOG.info("Getting views for table " + fqdn);
@@ -278,17 +281,13 @@ public class SchedoscopeTask extends Task {
                 LOG.info("Processed all views for table " + fqdn);
 
                 table.setViewsSize(views.size());
-                metascopeTableRepository.save(table);
+                sqlRepository.saveTable(connection, table);
 
                 LOG.info("Finished processing table " + fqdn);
             }
         }
 
-    /* save view information via JDBC and raw sql to boost performance and avoid excessive database locking */
-        Connection connection = null;
         try {
-            connection = dataSource.getConnection();
-            RawJDBCSqlRepository sqlRepository = new RawJDBCSqlRepository(isMySQLDatabase, isH2Database);
             LOG.info("Saving views (" + cachedViews.values().size() + ")...");
             sqlRepository.insertOrUpdateViews(connection, cachedViews.values());
             LOG.info("Saving field dependency information (" + fieldDependencies.size() + ") ...");
@@ -312,7 +311,7 @@ public class SchedoscopeTask extends Task {
         solrFacade.commit();
         LOG.info("Finished index update");
 
-        metascopeMetadataService.save("schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
+        sqlRepository.saveMetadata(connection, "schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
 
         LOG.info("Finished sync with schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
         return true;

@@ -67,6 +67,8 @@ public class MetascopeTable extends Documentable {
     @Column(columnDefinition = "int default 1")
     private int viewsSize;
     private String personResponsible;
+    @Transient
+    private Long commentId;
 
     @OneToOne(mappedBy = "table", cascade = CascadeType.ALL)
     @LazyCollection(LazyCollectionOption.FALSE)
@@ -417,7 +419,15 @@ public class MetascopeTable extends Documentable {
         this.viewsSize = viewsSize;
     }
 
-  /* ### GETTER/SETTER END ### */
+    public Long getCommentId() {
+        return commentId;
+    }
+
+    public void setCommentId(Long commentId) {
+        this.commentId = commentId;
+    }
+
+    /* ### GETTER/SETTER END ### */
 
     /* ### ADD/REMOVE START ### */
     public void addToFields(MetascopeField field) {
