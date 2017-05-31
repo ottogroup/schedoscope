@@ -35,7 +35,7 @@ public class MetascopeTable extends Documentable {
     private String tableName;
     private String viewPath;
     private boolean externalTable;
-    @Column(columnDefinition = "varchar(20000)")
+    @Column(columnDefinition = "text")
     private String tableDescription;
     private String storageFormat;
     private String inputFormat;
@@ -44,7 +44,7 @@ public class MetascopeTable extends Documentable {
     @Column(columnDefinition = "bigint default 0")
     private long createdAt;
     private String tableOwner;
-    @Column(columnDefinition = "varchar(5000)")
+    @Column(columnDefinition = "text")
     private String dataPath;
     @Column(columnDefinition = "bigint default 0")
     private long dataSize;

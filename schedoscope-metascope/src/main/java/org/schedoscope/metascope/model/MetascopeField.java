@@ -26,10 +26,10 @@ public class MetascopeField extends Documentable {
     @Id
     private String fieldId;
     private String fieldName;
-    @Column(columnDefinition = "varchar(31000)")
+    @Column(columnDefinition = "text")
     private String fieldType;
     private int fieldOrder;
-    @Column(columnDefinition = "varchar(31000)")
+    @Column(columnDefinition = "text")
     private String description;
     private boolean isParameter;
     @ManyToOne(fetch = FetchType.LAZY)

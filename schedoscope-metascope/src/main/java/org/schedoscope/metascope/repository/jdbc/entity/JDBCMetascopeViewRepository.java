@@ -3,8 +3,7 @@ package org.schedoscope.metascope.repository.jdbc.entity;
 import org.apache.commons.dbutils.DbUtils;
 import org.schedoscope.metascope.model.MetascopeView;
 import org.schedoscope.metascope.repository.jdbc.JDBCContext;
-import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
-import org.schedoscope.metascope.task.model.ViewDependency;
+import org.schedoscope.metascope.task.model.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +57,7 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
         }
     }
 
-    public void insertViewDependencies(Connection connection, List<ViewDependency> viewDependencies) {
+    public void linsertViewDependencies(Connection connection, List<Dependency> viewDependencies) {
         String deleteQuery = "delete from metascope_view_relationship";
         String sql = "insert into metascope_view_relationship (successor, dependency) values (?, ?) "
           + "on duplicate key update successor=values(successor), dependency=values(dependency)";
@@ -72,7 +71,7 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
             deleteStmt.close();
 
             stmt = connection.prepareStatement(sql);
-            for (ViewDependency viewDependency : viewDependencies) {
+            for (Dependency viewDependency : viewDependencies) {
                 stmt.setString(1, viewDependency.getDependency());
                 stmt.setString(2, viewDependency.getSuccessor());
                 stmt.addBatch();

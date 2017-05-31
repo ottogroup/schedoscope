@@ -17,8 +17,7 @@ package org.schedoscope.metascope.repository.jdbc;
 
 import org.schedoscope.metascope.model.*;
 import org.schedoscope.metascope.repository.jdbc.entity.*;
-import org.schedoscope.metascope.task.model.FieldDependency;
-import org.schedoscope.metascope.task.model.ViewDependency;
+import org.schedoscope.metascope.task.model.Dependency;
 
 import java.sql.Connection;
 import java.util.List;
@@ -53,12 +52,16 @@ public class RawJDBCSqlRepository {
         this.jdbcMetascopeTableRepository.saveTransformation(connection, transformation, fqdn);
     }
 
+    public void insertTableDependencies(Connection connection, String fqdn, String depdencyFqdn) {
+        this.jdbcMetascopeTableRepository.saveDependency(connection, fqdn, depdencyFqdn);
+    }
+
     /*### MetascopeView ###*/
     public void insertOrUpdateViews(Connection connection, Iterable<MetascopeView> views) {
         this.jdbcMetascopeViewRepository.insertOrUpdateViews(connection, views);
     }
 
-    public void insertViewDependencies(Connection connection, List<ViewDependency> viewDependencies) {
+    public void insertViewDependencies(Connection connection, List<Dependency> viewDependencies) {
         this.jdbcMetascopeViewRepository.insertViewDependencies(connection, viewDependencies);
     }
 
@@ -71,11 +74,11 @@ public class RawJDBCSqlRepository {
         return this.jdbcMetascopeFieldRepository.findField(connection, fieldFqdn);
     }
 
-    public void saveFields(Connection connection, Set<MetascopeField> fields, String fqdn, String mappingTable) {
-        this.jdbcMetascopeFieldRepository.saveFields(connection, fields, fqdn, mappingTable);
+    public void saveFields(Connection connection, Set<MetascopeField> fields, String fqdn, boolean isParameter) {
+        this.jdbcMetascopeFieldRepository.saveFields(connection, fields, fqdn, isParameter);
     }
 
-    public void insertFieldDependencies(Connection connection, List<FieldDependency> fieldDependencies) {
+    public void insertFieldDependencies(Connection connection, List<Dependency> fieldDependencies) {
         this.jdbcMetascopeFieldRepository.insertFieldDependencies(connection, fieldDependencies);
     }
 

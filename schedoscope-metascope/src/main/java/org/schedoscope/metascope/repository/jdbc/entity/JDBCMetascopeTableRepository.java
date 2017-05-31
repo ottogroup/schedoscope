@@ -7,10 +7,8 @@ import org.schedoscope.metascope.repository.jdbc.JDBCContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.Map;
 
 public class JDBCMetascopeTableRepository extends JDBCContext {
 
@@ -26,7 +24,7 @@ public class JDBCMetascopeTableRepository extends JDBCContext {
           + "external_table, table_description, storage_format, input_format, output_format, materialize_once, created_at, "
           + "table_owner, data_path, data_size, permissions, rowcount, last_data, timestamp_field, timestamp_field_format, "
           + "last_change, last_partition_created, last_schema_change, last_transformation_timestamp, view_count, views_size, "
-          + "person_responsible, comment_id"
+          + "person_responsible, comment_id "
           + "from metascope_table where fqdn = ?";
         PreparedStatement stmt = null;
         try {
@@ -100,13 +98,13 @@ public class JDBCMetascopeTableRepository extends JDBCContext {
           + "last_data=values(last_data), "
           + "timestamp_field=values(timestamp_field), "
           + "timestamp_field_format=values(timestamp_field_format), "
-          + "last_change=values(last_change)"
-          + "last_partition_created=values(last_partition_created)"
-          + "last_schema_change=values(last_schema_change)"
-          + "last_transformation_timestamp=values(last_transformation_timestamp)"
-          + "view_count=values(view_count)"
-          + "views_size=values(views_size)"
-          + "person_responsible=values(person_responsible)"
+          + "last_change=values(last_change), "
+          + "last_partition_created=values(last_partition_created), "
+          + "last_schema_change=values(last_schema_change), "
+          + "last_transformation_timestamp=values(last_transformation_timestamp), "
+          + "view_count=values(view_count), "
+          + "views_size=values(views_size), "
+          + "person_responsible=values(person_responsible), "
           + "comment_id=values(comment_id)";
         PreparedStatement stmt = null;
         try {
@@ -139,7 +137,11 @@ public class JDBCMetascopeTableRepository extends JDBCContext {
             stmt.setInt(25, table.getViewCount());
             stmt.setInt(26, table.getViewsSize());
             stmt.setString(27, table.getPersonResponsible());
-            stmt.setLong(28, table.getCommentId());
+            if (table.getCommentId() == null) {
+                stmt.setNull(28, Types.BIGINT);
+            } else {
+                stmt.setLong(28, table.getCommentId());
+            }
             stmt.execute();
         } catch (SQLException e) {
             LOG.error("Could not save/update table", e);
@@ -150,12 +152,18 @@ public class JDBCMetascopeTableRepository extends JDBCContext {
 
     public void saveTransformation(Connection connection, MetascopeTransformation transformation, String fqdn) {
         String deleteQuery = "delete from metascope_transformation where table_fqdn = ?";
+        String deletePropsQuery = "delete from metascope_transformation_properties where metascope_transformation_transformation_id = ?";
         String insertInto = "insert into metascope_transformation (transformation_id, transformation_type, table_fqdn) values " +
           "(?, ?, ?) on duplicate key update transformation_id=values(transformation_id), transformation_type=values(transformation_type)," +
           "table_fqdn=values(table_fqdn)";
+        String insertIntoProps = "insert into metascope_transformation_properties (metascope_transformation_transformation_id, properties_key, properties) values " +
+                "(?, ?, ?) on duplicate key update metascope_transformation_transformation_id=values(metascope_transformation_transformation_id), " +
+                "properties_key=values(properties_key), properties=values(properties)";
 
         PreparedStatement stmt = null;
+        PreparedStatement propsStmt = null;
         PreparedStatement delStmt = null;
+        PreparedStatement delPropsStmt = null;
         try {
             disableChecks(connection);
 
@@ -163,18 +171,37 @@ public class JDBCMetascopeTableRepository extends JDBCContext {
             delStmt.setString(1, fqdn);
             delStmt.execute();
 
+            delPropsStmt = connection.prepareStatement(deletePropsQuery);
+            delPropsStmt.setString(1, transformation.getTransformationId());
+            delPropsStmt.execute();
+
             stmt = connection.prepareStatement(insertInto);
             stmt.setString(1, transformation.getTransformationId());
             stmt.setString(2, transformation.getTransformationType());
             stmt.setString(3, fqdn);
             stmt.execute();
+
+            for (Map.Entry<String, String> entry : transformation.getProperties().entrySet()) {
+                propsStmt = connection.prepareStatement(insertIntoProps);
+                propsStmt.setString(1, transformation.getTransformationId());
+                propsStmt.setString(2, entry.getKey());
+                propsStmt.setString(3, entry.getValue());
+                propsStmt.execute();
+            }
+
             enableChecks(connection);
         } catch (SQLException e) {
             LOG.error("Could not save/update fields", e);
         } finally {
             DbUtils.closeQuietly(stmt);
+            DbUtils.closeQuietly(propsStmt);
             DbUtils.closeQuietly(delStmt);
+            DbUtils.closeQuietly(delPropsStmt);
         }
+
+    }
+
+    public void saveDependency(Connection connection, String fqdn, String depdencyFqdn) {
 
     }
 

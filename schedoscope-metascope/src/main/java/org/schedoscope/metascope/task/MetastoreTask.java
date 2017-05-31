@@ -109,8 +109,13 @@ public class MetastoreTask extends Task {
                 table.setInputFormat(mTable.getSd().getInputFormat());
                 table.setOutputFormat(mTable.getSd().getOutputFormat());
                 table.setDataPath(mTable.getSd().getLocation());
-                table.setDataSize(getDirectorySize(fs, table.getDataPath()));
-                table.setPermissions(getPermission(fs, table.getDataPath()));
+                try {
+                    table.setDataSize(getDirectorySize(fs, table.getDataPath()));
+                    table.setPermissions(getPermission(fs, table.getDataPath()));
+                } catch (IllegalArgumentException e) {
+                    LOG.warn("Could not retrieve dir size: " + e.getMessage());
+                    LOG.debug("ERROR: Could not read HDFS metadata", e);
+                }
 
                 long maxLastTransformation = -1;
 

@@ -43,8 +43,6 @@ public class SchedoscopeTask extends Task {
     private static final String OCCURRED_AT = "occurred_at";
     private static final String OCCURRED_UNTIL = "occurred_until";
     private static final String SCHEDOSCOPE_TIMESTAMP_FORMAT = "yyyy-MM-dd''T''HH:mm:ss.SSS''Z''";
-    private static final String FIELD_MAPPING_TABLE = "metascope_fields_mapping";
-    private static final String PARAMETER_MAPPING_TABLE = "metascope_parameter_mapping";
 
     @Autowired
     private MetascopeConfig config;
@@ -61,8 +59,9 @@ public class SchedoscopeTask extends Task {
         Map<String, MetascopeTable> cachedTables = new HashMap<>();
         Map<String, MetascopeField> cachedFields = new HashMap<>();
         Map<String, MetascopeView> cachedViews = new HashMap<>();
-        List<ViewDependency> viewDependencies = new ArrayList<>();
-        List<FieldDependency> fieldDependencies = new ArrayList<>();
+        List<Dependency> tableDependencies = new ArrayList<>();
+        List<Dependency> viewDependencies = new ArrayList<>();
+        List<Dependency> fieldDependencies = new ArrayList<>();
 
         LOG.info("Retrieve and parse data from schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
 
@@ -172,7 +171,7 @@ public class SchedoscopeTask extends Task {
                                     dField.setFieldId(dependencyField);
                                     cachedFields.put(dependencyField, dField);
                                 }
-                                fieldDependencies.add(new FieldDependency(field.getFieldId(), dField.getFieldId()));
+                                fieldDependencies.add(new Dependency(field.getFieldId(), dField.getFieldId()));
                             }
                         }
                     }
@@ -181,7 +180,7 @@ public class SchedoscopeTask extends Task {
                     cachedFields.put(field.getFieldId(), field);
                 }
                 table.setFields(tableFields);
-                sqlRepository.saveFields(connection, table.getFields(), table.getFqdn(), FIELD_MAPPING_TABLE);
+                sqlRepository.saveFields(connection, table.getFields(), table.getFqdn(), false);
 
                 /** parameter */
                 Set<MetascopeField> tableParameter = new HashSet<>();
@@ -204,7 +203,7 @@ public class SchedoscopeTask extends Task {
                     tableParameter.add(parameter);
                 }
                 table.setParameters(tableParameter);
-                sqlRepository.saveFields(connection, table.getParameters(), table.getFqdn(), PARAMETER_MAPPING_TABLE);
+                sqlRepository.saveFields(connection, table.getParameters(), table.getFqdn(), true);
 
                 /** exports */
                 List<MetascopeExport> tableExports = new ArrayList<>();
@@ -265,7 +264,7 @@ public class SchedoscopeTask extends Task {
                             }
                             metascopeView.addToDependencies(dependencyView);
                             dependencyView.addToSuccessors(metascopeView);
-                            viewDependencies.add(new ViewDependency(metascopeView.getViewId(), dependencyView.getViewId()));
+                            viewDependencies.add(new Dependency(metascopeView.getViewId(), dependencyView.getViewId()));
                         }
                     }
                     for (String dependency : partition.getDependencies().keySet()) {
@@ -273,6 +272,8 @@ public class SchedoscopeTask extends Task {
                         MetascopeTable dep = cachedTables.get(dqpFqdn);
                         table.addToDependencies(dep);
                         dep.addToSuccessor(table);
+                        tableDependencies.add(new Dependency(fqdn, dep.getFqdn()));
+                        sqlRepository.saveDependency(connection, fqdn, dep.getFqdn());
                     }
                     cachedViews.put(partition.getName(), metascopeView);
                     metascopeView.setTable(table);
@@ -298,12 +299,6 @@ public class SchedoscopeTask extends Task {
             LOG.error("Error writing to database", e);
         }
 
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            LOG.error("Could not close connection", e);
-        }
-
         LOG.info("Saving to index");
         for (MetascopeTable table : cachedTables.values()) {
             solrFacade.updateTablePartial(table, false);
@@ -312,6 +307,12 @@ public class SchedoscopeTask extends Task {
         LOG.info("Finished index update");
 
         sqlRepository.saveMetadata(connection, "schedoscopeTimestamp", String.valueOf(System.currentTimeMillis()));
+
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            LOG.error("Could not close connection", e);
+        }
 
         LOG.info("Finished sync with schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
         return true;

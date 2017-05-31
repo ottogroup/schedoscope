@@ -25,7 +25,7 @@ public class MetascopeAutoSave {
     @Id
     private String id;
     private String tableFqdn;
-    @Column(columnDefinition = "varchar(32629)")
+    @Column(columnDefinition = "text")
     private String text;
     private long timestamp;
 

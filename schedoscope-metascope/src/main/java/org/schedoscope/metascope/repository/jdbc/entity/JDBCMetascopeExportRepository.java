@@ -60,16 +60,22 @@ public class JDBCMetascopeExportRepository extends JDBCContext {
     public void save(Connection connection, List<MetascopeExport> exports, String fqdn) {
         String deleteQuery = "delete from metascope_export where table_fqdn = ?";
         String deletePropertyQuery = "delete from metascope_export_export_properties where metascope_export_export_id = ?";
+        String deleteMappingQuery = "delete from metascope_table_exports where metascope_table_fqdn = ?";
         String insertTableSql = "insert into metascope_export (export_id, export_type, table_fqdn) values "
           + "(?, ?, ?) on duplicate key update export_id=values(export_id), export_type=values(export_type), "
           + "table_fqdn=values(table_fqdn)";
         String insertPropsSql = "insert into metascope_export_export_properties (metascope_export_export_id, export_properties_key, " +
           "export_properties) values (?, ?, ?) on duplicate key update metascope_export_export_id=values(metascope_export_export_id), " +
           "export_properties_key=values(export_properties_key), export_properties=values(export_properties)";
+        String insertMappingSql = "insert into metascope_table_exports (metascope_table_fqdn, exports_export_id) " +
+                "values (?, ?) on duplicate key update metascope_table_fqdn=values(metascope_table_fqdn), " +
+                "exports_export_id=values(exports_export_id)";
         PreparedStatement stmt = null;
         PreparedStatement propsStmt = null;
+        PreparedStatement mappingStmt = null;
         PreparedStatement deleteStmt = null;
         PreparedStatement deletePropsStmt = null;
+        PreparedStatement deleteMappingStmt = null;
         try {
             int batch = 0;
             disableChecks(connection);
@@ -84,6 +90,10 @@ public class JDBCMetascopeExportRepository extends JDBCContext {
                 deletePropsStmt.execute();
                 deletePropsStmt.close();
             }
+
+            deleteMappingStmt = connection.prepareStatement(deleteMappingQuery);
+            deleteMappingStmt.setString(1, fqdn);
+            deleteMappingStmt.execute();
 
             stmt = connection.prepareStatement(insertTableSql);
             for (MetascopeExport export : exports) {
@@ -107,14 +117,29 @@ public class JDBCMetascopeExportRepository extends JDBCContext {
                     propsStmt.setString(2, entry.getKey());
                     propsStmt.setString(3, entry.getValue());
                     propsStmt.addBatch();
+
+                    batch++;
+                    if (batch % 1024 == 0) {
+                        propsStmt.executeBatch();
+                    }
                 }
+
+            }
+            propsStmt.executeBatch();
+
+            batch = 0;
+            mappingStmt = connection.prepareStatement(insertMappingSql);
+            for (MetascopeExport export : exports) {
+                mappingStmt.setString(1, fqdn);
+                mappingStmt.setString(2, export.getExportId());
+                mappingStmt.addBatch();
 
                 batch++;
                 if (batch % 1024 == 0) {
-                    propsStmt.executeBatch();
+                    mappingStmt.executeBatch();
                 }
             }
-            propsStmt.executeBatch();
+            mappingStmt.executeBatch();
 
             connection.commit();
             enableChecks(connection);
@@ -122,8 +147,11 @@ public class JDBCMetascopeExportRepository extends JDBCContext {
             LOG.error("Could not save/update exports", e);
         } finally {
             DbUtils.closeQuietly(stmt);
+            DbUtils.closeQuietly(propsStmt);
+            DbUtils.closeQuietly(mappingStmt);
             DbUtils.closeQuietly(deleteStmt);
             DbUtils.closeQuietly(deletePropsStmt);
+            DbUtils.closeQuietly(deleteMappingStmt);
         }
     }
 
