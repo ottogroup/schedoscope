@@ -70,20 +70,22 @@ public class JDBCMetascopeFieldRepository extends JDBCContext {
           + "(?,?) on duplicate key update metascope_table_fqdn=values(metascope_table_fqdn), " + mappingField + "=values(" + mappingField + ")";
         PreparedStatement insertMain = null;
         PreparedStatement insertMapping = null;
+        PreparedStatement deleteStmt = null;
+        PreparedStatement deleteMappingStmt = null;
         try {
             int batch = 0;
             disableChecks(connection);
 
-            PreparedStatement deleteStmt = connection.prepareStatement(deleteQuery);
+            deleteStmt = connection.prepareStatement(deleteQuery);
             deleteStmt.setString(1, fqdn);
             deleteStmt.setBoolean(2, isParameter);
             deleteStmt.executeUpdate();
             deleteStmt.close();
 
-            deleteStmt = connection.prepareStatement(deleteFromMappingTable);
-            deleteStmt.setString(1, fqdn);
-            deleteStmt.execute();
-            deleteStmt.close();
+            deleteMappingStmt = connection.prepareStatement(deleteFromMappingTable);
+            deleteMappingStmt.setString(1, fqdn);
+            deleteMappingStmt.execute();
+            deleteMappingStmt.close();
 
             insertMain = connection.prepareStatement(insertIntoMetascopeField);
             insertMapping = connection.prepareStatement(insertIntoMappingTable);
@@ -120,6 +122,8 @@ public class JDBCMetascopeFieldRepository extends JDBCContext {
         } finally {
             DbUtils.closeQuietly(insertMain);
             DbUtils.closeQuietly(insertMapping);
+            DbUtils.closeQuietly(deleteStmt);
+            DbUtils.closeQuietly(deleteMappingStmt);
         }
     }
 
@@ -128,13 +132,13 @@ public class JDBCMetascopeFieldRepository extends JDBCContext {
         String sql = "insert into metascope_field_relationship (successor, dependency) values (?, ?) "
           + "on duplicate key update successor=values(successor), dependency=values(dependency)";
         PreparedStatement stmt = null;
+        Statement delStmt = null;
         try {
             int batch = 0;
             disableChecks(connection);
 
-            Statement deleteStmt = connection.createStatement();
-            deleteStmt.execute(deleteQuery);
-            deleteStmt.close();
+            delStmt = connection.createStatement();
+            delStmt.execute(deleteQuery);
 
             stmt = connection.prepareStatement(sql);
             for (Dependency fieldDependency : fieldDependencies) {
@@ -153,6 +157,7 @@ public class JDBCMetascopeFieldRepository extends JDBCContext {
             LOG.error("Could not save view", e);
         } finally {
             DbUtils.closeQuietly(stmt);
+            DbUtils.closeQuietly(delStmt);
         }
     }
 

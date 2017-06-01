@@ -118,7 +118,7 @@ public class SchedoscopeTask extends Task {
         LOG.info("Received " + tableCount + " tables");
 
         for (View view : viewStatus.getViews()) {
-            if (view.isTable()) {
+            if (view.isTable() && !view.isExternal()) {
                 String fqdn = view.getDatabase() + "." + view.getTableName();
 
                 LOG.info("Consuming table " + fqdn);
@@ -273,7 +273,6 @@ public class SchedoscopeTask extends Task {
                         table.addToDependencies(dep);
                         dep.addToSuccessor(table);
                         tableDependencies.add(new Dependency(fqdn, dep.getFqdn()));
-                        sqlRepository.saveDependency(connection, fqdn, dep.getFqdn());
                     }
                     cachedViews.put(partition.getName(), metascopeView);
                     metascopeView.setTable(table);

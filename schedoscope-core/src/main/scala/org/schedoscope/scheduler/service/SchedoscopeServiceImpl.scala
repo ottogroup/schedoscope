@@ -148,7 +148,8 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
       storageFormat = if (overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
       materializeOnce = if (overview) None else Option(vsr.view.isMaterializeOnce),
       comment = if (overview) None else Option(vsr.view.comment),
-      isTable = isTable
+      isTable = isTable,
+      isExternal = vsr.view.isExternal
     )
 
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse],

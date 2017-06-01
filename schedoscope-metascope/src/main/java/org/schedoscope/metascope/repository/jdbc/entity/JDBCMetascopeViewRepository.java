@@ -57,18 +57,18 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
         }
     }
 
-    public void linsertViewDependencies(Connection connection, List<Dependency> viewDependencies) {
+    public void insertViewDependencies(Connection connection, List<Dependency> viewDependencies) {
         String deleteQuery = "delete from metascope_view_relationship";
         String sql = "insert into metascope_view_relationship (successor, dependency) values (?, ?) "
           + "on duplicate key update successor=values(successor), dependency=values(dependency)";
         PreparedStatement stmt = null;
+        Statement deleteStmt = null;
         try {
             int batch = 0;
             disableChecks(connection);
 
-            Statement deleteStmt = connection.createStatement();
+            deleteStmt = connection.createStatement();
             deleteStmt.execute(deleteQuery);
-            deleteStmt.close();
 
             stmt = connection.prepareStatement(sql);
             for (Dependency viewDependency : viewDependencies) {
@@ -87,6 +87,7 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
             LOG.error("Could not save view", e);
         } finally {
             DbUtils.closeQuietly(stmt);
+            DbUtils.closeQuietly(deleteStmt);
         }
     }
 
