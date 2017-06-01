@@ -22,7 +22,6 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
     }
 
     public void insertOrUpdateViews(Connection connection, Iterable<MetascopeView> views) {
-        String deleteQuery = "delete from metascope_view";
         String insertViewSql = "insert into metascope_view (view_id, view_url, parameter_string, table_fqdn) values "
           + "(?, ?, ?, ?) on duplicate key update view_id=values(view_id), view_url=values(view_url), "
           + "parameter_string=values(parameter_string), table_fqdn=values(table_fqdn)";
@@ -30,10 +29,6 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
         try {
             int batch = 0;
             disableChecks(connection);
-
-            Statement deleteStmt = connection.createStatement();
-            deleteStmt.execute(deleteQuery);
-            deleteStmt.close();
 
             stmt = connection.prepareStatement(insertViewSql);
             for (MetascopeView viewEntity : views) {
@@ -43,7 +38,7 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
                 stmt.setString(4, viewEntity.getTable().getFqdn());
                 stmt.addBatch();
                 batch++;
-                if (batch % 1024 == 0) {
+                if (batch % 10000 == 0) {
                     stmt.executeBatch();
                 }
             }
@@ -58,17 +53,12 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
     }
 
     public void insertViewDependencies(Connection connection, List<Dependency> viewDependencies) {
-        String deleteQuery = "delete from metascope_view_relationship";
         String sql = "insert into metascope_view_relationship (successor, dependency) values (?, ?) "
           + "on duplicate key update successor=values(successor), dependency=values(dependency)";
         PreparedStatement stmt = null;
-        Statement deleteStmt = null;
         try {
             int batch = 0;
             disableChecks(connection);
-
-            deleteStmt = connection.createStatement();
-            deleteStmt.execute(deleteQuery);
 
             stmt = connection.prepareStatement(sql);
             for (Dependency viewDependency : viewDependencies) {
@@ -76,7 +66,7 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
                 stmt.setString(2, viewDependency.getSuccessor());
                 stmt.addBatch();
                 batch++;
-                if (batch % 1024 == 0) {
+                if (batch % 10000 == 0) {
                     stmt.executeBatch();
                 }
             }
@@ -87,7 +77,6 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
             LOG.error("Could not save view", e);
         } finally {
             DbUtils.closeQuietly(stmt);
-            DbUtils.closeQuietly(deleteStmt);
         }
     }
 

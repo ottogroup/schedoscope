@@ -105,9 +105,19 @@ public class MetascopeTable extends Documentable {
     private List<MetascopeView> views;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "metascope_table_relationship",
+      joinColumns = @JoinColumn(name = "successor"),
+      inverseJoinColumns = @JoinColumn(name = "dependency"),
+      uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
+    )
     private List<MetascopeTable> successors;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "metascope_table_relationship",
+      joinColumns = @JoinColumn(name = "dependency"),
+      inverseJoinColumns = @JoinColumn(name = "successor"),
+      uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
+    )
     private List<MetascopeTable> dependencies;
 
     /* ### GETTER/SETTER START ### */

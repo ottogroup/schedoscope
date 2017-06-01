@@ -20,6 +20,7 @@ import org.schedoscope.metascope.repository.jdbc.entity.*;
 import org.schedoscope.metascope.task.model.Dependency;
 
 import java.sql.Connection;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -52,8 +53,8 @@ public class RawJDBCSqlRepository {
         this.jdbcMetascopeTableRepository.saveTransformation(connection, transformation, fqdn);
     }
 
-    public void insertTableDependencies(Connection connection, String fqdn, String depdencyFqdn) {
-        this.jdbcMetascopeTableRepository.saveDependency(connection, fqdn, depdencyFqdn);
+    public void insertTableDependencies(Connection connection, Collection<MetascopeTable> currentTables, List<Dependency> tables) {
+        this.jdbcMetascopeTableRepository.saveTableDependency(connection, currentTables, tables);
     }
 
     /*### MetascopeView ###*/
@@ -78,8 +79,8 @@ public class RawJDBCSqlRepository {
         this.jdbcMetascopeFieldRepository.saveFields(connection, fields, fqdn, isParameter);
     }
 
-    public void insertFieldDependencies(Connection connection, List<Dependency> fieldDependencies) {
-        this.jdbcMetascopeFieldRepository.insertFieldDependencies(connection, fieldDependencies);
+    public void insertFieldDependencies(Connection connection, Collection<MetascopeTable> currentTables, List<Dependency> fieldDependencies) {
+        this.jdbcMetascopeFieldRepository.insertFieldDependencies(connection, currentTables, fieldDependencies);
     }
 
     /*### MetascopeExport ###*/

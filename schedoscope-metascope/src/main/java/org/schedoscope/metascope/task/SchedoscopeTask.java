@@ -59,6 +59,7 @@ public class SchedoscopeTask extends Task {
         Map<String, MetascopeTable> cachedTables = new HashMap<>();
         Map<String, MetascopeField> cachedFields = new HashMap<>();
         Map<String, MetascopeView> cachedViews = new HashMap<>();
+        List<MetascopeView> viewsToPersist = new ArrayList<>();
         List<Dependency> tableDependencies = new ArrayList<>();
         List<Dependency> viewDependencies = new ArrayList<>();
         List<Dependency> fieldDependencies = new ArrayList<>();
@@ -104,7 +105,7 @@ public class SchedoscopeTask extends Task {
         /** save tables to avoid foreign key constraint violation */
         int tableCount = 0;
         for (View view : viewStatus.getViews()) {
-            if (view.isTable()) {
+            if (view.isTable() && !view.isExternal()) {
                 String fqdn = view.getDatabase() + "." + view.getTableName();
                 MetascopeTable table = sqlRepository.findTable(connection, fqdn);
                 if (table == null) {
@@ -249,6 +250,7 @@ public class SchedoscopeTask extends Task {
                         metascopeView.setViewId(partition.getName());
                         cachedViews.put(partition.getName(), metascopeView);
                     }
+                    viewsToPersist.add(metascopeView);
                     if (table.getParameters() != null && table.getParameters().size() > 0) {
                         String parameterString = getParameterString(partition.getName(), table);
                         metascopeView.setParameterString(parameterString);
@@ -268,11 +270,7 @@ public class SchedoscopeTask extends Task {
                         }
                     }
                     for (String dependency : partition.getDependencies().keySet()) {
-                        String dqpFqdn = dependency;
-                        MetascopeTable dep = cachedTables.get(dqpFqdn);
-                        table.addToDependencies(dep);
-                        dep.addToSuccessor(table);
-                        tableDependencies.add(new Dependency(fqdn, dep.getFqdn()));
+                        tableDependencies.add(new Dependency(fqdn, dependency));
                     }
                     cachedViews.put(partition.getName(), metascopeView);
                     metascopeView.setTable(table);
@@ -288,10 +286,12 @@ public class SchedoscopeTask extends Task {
         }
 
         try {
-            LOG.info("Saving views (" + cachedViews.values().size() + ")...");
-            sqlRepository.insertOrUpdateViews(connection, cachedViews.values());
             LOG.info("Saving field dependency information (" + fieldDependencies.size() + ") ...");
-            sqlRepository.insertFieldDependencies(connection, fieldDependencies);
+            sqlRepository.insertFieldDependencies(connection, cachedTables.values(), fieldDependencies);
+            LOG.info("Saving table dependency information (" + tableDependencies.size() + ") ...");
+            sqlRepository.insertTableDependencies(connection, cachedTables.values(), tableDependencies);
+            LOG.info("Saving views (" + viewsToPersist.size() + ")...");
+            sqlRepository.insertOrUpdateViews(connection, viewsToPersist);
             LOG.info("Saving view dependency information (" + viewDependencies.size() + ") ...");
             sqlRepository.insertViewDependencies(connection, viewDependencies);
         } catch (Exception e) {

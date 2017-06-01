@@ -2,12 +2,14 @@ package org.schedoscope.metascope.repository.jdbc.entity;
 
 import org.apache.commons.dbutils.DbUtils;
 import org.schedoscope.metascope.model.MetascopeField;
+import org.schedoscope.metascope.model.MetascopeTable;
 import org.schedoscope.metascope.repository.jdbc.JDBCContext;
 import org.schedoscope.metascope.task.model.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -127,19 +129,29 @@ public class JDBCMetascopeFieldRepository extends JDBCContext {
         }
     }
 
-    public void insertFieldDependencies(Connection connection, List<Dependency> fieldDependencies) {
-        String deleteQuery = "delete from metascope_field_relationship";
+    public void insertFieldDependencies(Connection connection, Collection<MetascopeTable> currentTables, List<Dependency> fieldDependencies) {
+        String delSql = "delete from metascope_field_relationship where successor like ? or dependency like ?";
         String sql = "insert into metascope_field_relationship (successor, dependency) values (?, ?) "
           + "on duplicate key update successor=values(successor), dependency=values(dependency)";
         PreparedStatement stmt = null;
-        Statement delStmt = null;
+        PreparedStatement delStmt = null;
         try {
             int batch = 0;
             disableChecks(connection);
 
-            delStmt = connection.createStatement();
-            delStmt.execute(deleteQuery);
+            delStmt = connection.prepareStatement(delSql);
+            for (MetascopeTable t : currentTables) {
+                delStmt.setString(1, t.getFqdn() + "%");
+                delStmt.setString(2, t.getFqdn() + "%");
+                delStmt.addBatch();
+                batch++;
+                if (batch % 1024 == 0) {
+                    delStmt.executeBatch();
+                }
+            }
+            delStmt.executeBatch();
 
+            batch = 0;
             stmt = connection.prepareStatement(sql);
             for (Dependency fieldDependency : fieldDependencies) {
                 stmt.setString(1, fieldDependency.getDependency());
@@ -154,7 +166,7 @@ public class JDBCMetascopeFieldRepository extends JDBCContext {
             connection.commit();
             enableChecks(connection);
         } catch (SQLException e) {
-            LOG.error("Could not save view", e);
+            LOG.error("Could not save field deoendencies", e);
         } finally {
             DbUtils.closeQuietly(stmt);
             DbUtils.closeQuietly(delStmt);

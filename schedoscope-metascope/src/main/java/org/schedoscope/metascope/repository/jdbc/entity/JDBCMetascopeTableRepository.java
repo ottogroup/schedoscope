@@ -4,10 +4,13 @@ import org.apache.commons.dbutils.DbUtils;
 import org.schedoscope.metascope.model.MetascopeTable;
 import org.schedoscope.metascope.model.MetascopeTransformation;
 import org.schedoscope.metascope.repository.jdbc.JDBCContext;
+import org.schedoscope.metascope.task.model.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class JDBCMetascopeTableRepository extends JDBCContext {
@@ -201,8 +204,48 @@ public class JDBCMetascopeTableRepository extends JDBCContext {
 
     }
 
-    public void saveDependency(Connection connection, String fqdn, String depdencyFqdn) {
+    public void saveTableDependency(Connection connection, Collection<MetascopeTable> currentTables, List<Dependency> tableDependencies) {
+        String delSql = "delete from metascope_table_relationship where successor = ? or dependency = ?";
+        String sql = "insert into metascope_table_relationship (successor, dependency) values (?, ?) "
+          + "on duplicate key update successor=values(successor), dependency=values(dependency)";
+        PreparedStatement stmt = null;
+        PreparedStatement delStmt = null;
+        try {
+            int batch = 0;
+            disableChecks(connection);
 
+            delStmt = connection.prepareStatement(delSql);
+            for (MetascopeTable t : currentTables) {
+                delStmt.setString(1, t.getFqdn());
+                delStmt.setString(2, t.getFqdn());
+                delStmt.addBatch();
+                batch++;
+                if (batch % 1024 == 0) {
+                    delStmt.executeBatch();
+                }
+            }
+            delStmt.executeBatch();
+
+            batch = 0;
+            stmt = connection.prepareStatement(sql);
+            for (Dependency tableDependency : tableDependencies) {
+                stmt.setString(1, tableDependency.getDependency());
+                stmt.setString(2, tableDependency.getSuccessor());
+                stmt.addBatch();
+                batch++;
+                if (batch % 1024 == 0) {
+                    stmt.executeBatch();
+                }
+            }
+            stmt.executeBatch();
+            connection.commit();
+            enableChecks(connection);
+        } catch (SQLException e) {
+            LOG.error("Could not save table deoendencies", e);
+        } finally {
+            DbUtils.closeQuietly(stmt);
+            DbUtils.closeQuietly(delStmt);
+        }
     }
 
 }
