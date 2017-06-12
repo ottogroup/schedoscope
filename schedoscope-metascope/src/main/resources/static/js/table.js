@@ -32,16 +32,6 @@ $(function() {
 
   $('#partitionSelectBox').sort_select_box();
 
-  /* GET lineage information on lineage modal open event */
-  $('#lineage').on('shown.bs.modal', function(e) {
-      $.ajax({
-        url : '/table/view/lineage',
-        type : 'GET',
-        data : $('#lineageForm').serialize(),
-        success : drawLineage
-      });
-  });
-
   /* initialize tablesorter plugin */
   initTablesorter();
 
