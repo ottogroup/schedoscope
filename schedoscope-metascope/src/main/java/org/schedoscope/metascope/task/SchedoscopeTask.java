@@ -164,6 +164,7 @@ public class SchedoscopeTask extends Task {
                     field.setFieldOrder(i++);
                     field.setParameter(false);
                     field.setDescription(viewField.getComment());
+                    field.setTable(table);
 
                     //lineage
                     if (view.getLineage() != null && view.getLineage().get(fieldFqdn) != null) {
