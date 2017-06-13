@@ -25,7 +25,7 @@ public class MetascopeTransformation {
     private String transformationId;
     private String transformationType;
     @ElementCollection
-    @Column(length = 32000)
+    @Column(columnDefinition = "text")
     private Map<String, String> properties;
     @OneToOne(fetch = FetchType.LAZY)
     private MetascopeTable table;

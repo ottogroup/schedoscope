@@ -142,6 +142,9 @@ public class SolrUpdateHandler {
         if (table.getFields().size() > 0) {
             doc.setField(FIELDS, table.getFieldNames());
         }
+        if (table.getParameters().size() > 0) {
+            doc.setField(PARAMETERS, table.getParameterNames());
+        }
         doc.setField(TRANSFORMATION, table.getTransformation().getTransformationType().split(" -> ")[0]);
         if (table.getExports() != null) {
             doc.setField(EXPORTS, table.getExportNames());

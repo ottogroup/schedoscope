@@ -25,9 +25,9 @@ public class MetascopeView {
     @Id
     @Column(columnDefinition = "varchar(766)")
     private String viewId;
-    @Column(columnDefinition = "varchar(5000)")
+    @Column(columnDefinition = "text")
     private String viewUrl;
-    @Column(columnDefinition = "varchar(5000)")
+    @Column(columnDefinition = "text")
     private String parameterString;
     @Column(columnDefinition = "bigint default 0")
     private long numRows;

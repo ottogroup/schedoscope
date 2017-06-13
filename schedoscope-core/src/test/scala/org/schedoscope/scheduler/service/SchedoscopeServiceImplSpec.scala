@@ -496,7 +496,7 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
 
     val expected = ViewStatusList(Map("loading" -> 1),
       List(ViewStatus("test.views/Brand/test",
-        None, "loading", None, None, None, None, None, None, None, None, None, None, None)))
+        None, "loading", None, None, None, None, None, None, None, None, None, None, None, false)))
 
     whenReady(response) { result =>
       result shouldBe expected
@@ -517,14 +517,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       properties = Some(Map("errors" -> "false", "incomplete" -> "false")),
       fields = None, parameters = None, dependencies = None, lineage = None,
       transformation = None, export = None, storageFormat = None, materializeOnce = None,
-      comment = None, isTable = None)
+      comment = None, isTable = None, isExternal = false)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "false", "incomplete" -> "false")),
       fields = None, parameters = None, dependencies = None, lineage = None,
       transformation = None, export = None, storageFormat = None, materializeOnce = None,
-      comment = None, isTable = None)
+      comment = None, isTable = None, isExternal = false)
 
     viewManagerActor ? brandVSRmsg
     viewManagerActor ? prodVSRmsg
@@ -553,14 +553,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
       fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      isTable = None, isExternal = false)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
       fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      isTable = None, isExternal = false)
 
     viewManagerActor ? brandVSRmsg
     viewManagerActor ? prodVSRmsg
@@ -589,14 +589,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
       fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      isTable = None, isExternal = false)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
       fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      isTable = None, isExternal = false)
 
     viewManagerActor ? brandVSRmsg
     viewManagerActor ? prodVSRmsg
@@ -626,14 +626,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
       fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      isTable = None, isExternal = false)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "true", "incomplete" -> "true")),
       fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      isTable = None, isExternal = false)
 
     viewManagerActor ? brandVSRmsg
     viewManagerActor ? prodVSRmsg
@@ -661,14 +661,14 @@ class SchedoscopeServiceImplSpec extends TestKit(ActorSystem("schedoscope"))
       properties = Some(Map("errors" -> "false", "incomplete" -> "true")),
       fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      isTable = None, isExternal = false)
 
     val prodExpected = ViewStatus(viewPath = productDependency01.urlPath,
       viewTableName = None, status = "materialized",
       properties = Some(Map("errors" -> "false", "incomplete" -> "true")),
       fields = None, parameters = None, dependencies = None, lineage = None, transformation = None,
       export = None, storageFormat = None, materializeOnce = None, comment = None,
-      isTable = None)
+      isTable = None, isExternal = false)
 
     viewManagerActor ? brandVSRmsg
     viewManagerActor ? prodVSRmsg

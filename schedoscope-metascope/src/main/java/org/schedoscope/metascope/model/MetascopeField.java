@@ -26,14 +26,18 @@ public class MetascopeField extends Documentable {
     @Id
     private String fieldId;
     private String fieldName;
-    @Column(columnDefinition = "varchar(31000)")
+    @Column(columnDefinition = "text")
     private String fieldType;
     private int fieldOrder;
-    @Column(columnDefinition = "varchar(31000)")
+    @Column(columnDefinition = "text")
     private String description;
     private boolean isParameter;
     @ManyToOne(fetch = FetchType.LAZY)
     private MetascopeTable table;
+    @Transient
+    private Long commentId;
+    @Transient
+    private String tableFqdn;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinTable(name = "metascope_field_relationship",
@@ -114,6 +118,22 @@ public class MetascopeField extends Documentable {
 
     public List<MetascopeField> getSuccessors() {
         return successors;
+    }
+
+    public Long getCommentId() {
+        return commentId;
+    }
+
+    public String getTableFqdn() {
+        return tableFqdn;
+    }
+
+    public void setCommentId(Long commentId) {
+        this.commentId = commentId;
+    }
+
+    public void setTableFqdn(String tableFqdn) {
+        this.tableFqdn = tableFqdn;
     }
 
     public void addToDependencies(MetascopeField field) {

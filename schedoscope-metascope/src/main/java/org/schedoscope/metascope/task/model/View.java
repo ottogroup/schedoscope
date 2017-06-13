@@ -41,7 +41,7 @@ public class View {
     private ViewTransformation transformation;
     private List<ViewTransformation> export;
     private String storageFormat;
-    private boolean external;
+    private boolean isExternal;
     private boolean materializeOnce;
     private String comment;
     private long createdAt;
@@ -173,11 +173,11 @@ public class View {
     }
 
     public boolean isExternal() {
-        return external;
+        return isExternal;
     }
 
-    public void setExternal(boolean external) {
-        this.external = external;
+    public void setIsExternal(boolean isExternal) {
+        this.isExternal = isExternal;
     }
 
     public boolean isMaterializeOnce() {

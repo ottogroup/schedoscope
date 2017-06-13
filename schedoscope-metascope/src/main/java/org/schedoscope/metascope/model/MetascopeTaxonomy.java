@@ -26,7 +26,7 @@ public class MetascopeTaxonomy {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private long taxonomyId;
 
-    @Column(columnDefinition = "varchar(32672)")
+    @Column(columnDefinition = "text")
     private String name;
 
     @OneToMany(mappedBy = "taxonomy", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
