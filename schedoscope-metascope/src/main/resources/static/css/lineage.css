@@ -1,4 +1,4 @@
-#forward-lineage-container + #backward-lineage-container {
+#backward-lineage-container + #forward-lineage-container {
     box-sizing: border-box;
     border-left: 1px solid black;
 }

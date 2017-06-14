@@ -23,11 +23,11 @@
 <nav data-th-replace="header/header :: navigation"></nav>
 
 <div class="container-fluid">
-    <div id="forward-lineage-container" class="col-md-6">
-        <h1 class="text-center">Influences</h1>
-    </div>
     <div id="backward-lineage-container" class="col-md-6">
-        <h1 class="text-center">Dependencies</h1>
+        <h1 class="text-center">← depends on ←</h1>
+    </div>
+    <div id="forward-lineage-container" class="col-md-6">
+        <h1 class="text-center">→ influences →</h1>
     </div>
 </div>
 
@@ -39,8 +39,8 @@
     (function () {
         document.addEventListener("DOMContentLoaded", function () {
             var lineage = /*[[${lineage}]]*/ null;
-            new LineageGraph("#forward-lineage-container", "RL").setData(lineage["forwardEdges"]);
-            new LineageGraph("#backward-lineage-container", "LR").setData(lineage["backwardEdges"]);
+            new LineageGraph("#forward-lineage-container", "LR").setData(lineage["forwardEdges"]);
+            new LineageGraph("#backward-lineage-container", "RL").setData(lineage["backwardEdges"]);
         });
     })();
     /*]]>*/
