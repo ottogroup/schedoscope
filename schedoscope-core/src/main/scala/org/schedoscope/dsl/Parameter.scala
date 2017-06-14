@@ -76,5 +76,9 @@ object Parameter {
     * Create a parameter out of an existing parameter, thereby assigning it a new order weight. When passing parameters
     * between views, they should be wrapped using this method to ensure correct parameter ordering.
     */
-  def p[T: Manifest](v: Parameter[T]): Parameter[T] = p(v.v.get)
+  def p[T: Manifest](v: Parameter[T]): Parameter[T] = {
+    val tmp = p(v.v.get)
+    if (v.assignedStructure.isDefined) tmp.assignTo(v.assignedStructure.get)
+    tmp
+  }
 }
