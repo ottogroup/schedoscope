@@ -394,7 +394,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       case (influencer, influencee) =>
         val ownerView: View = influencee.assignedStructure.get.asInstanceOf[View]
         if (ownerView.explicitLineage.isEmpty)
-          ownerView.explicitLineage = ownerView.fields.map(f => f -> mutable.Set[FieldLike[_]]()).toMap
+          ownerView.explicitLineage = ownerView.fieldsAndParameters.map(f => f -> mutable.Set[FieldLike[_]]()).toMap
 
         ownerView.explicitLineage(influencee).add(influencer)
     }
