@@ -89,7 +89,7 @@ class ExportTest extends FlatSpec with Matchers {
     }
 
     val statement = dbConnection.createStatement()
-    val resultSet = statement.executeQuery("SELECT COUNT(*) FROM TEST_TEST_VIEWS_CLICK_OF_E_C0101_WITH_JDBC_EXPORT")
+    val resultSet = statement.executeQuery("SELECT COUNT(*) FROM DEV_TEST_VIEWS_CLICK_OF_E_C0101_WITH_JDBC_EXPORT")
     resultSet.next()
 
     resultSet.getInt(1) shouldBe 3

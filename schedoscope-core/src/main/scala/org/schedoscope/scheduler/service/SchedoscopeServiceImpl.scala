@@ -74,7 +74,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   private def viewsFromUrl(viewUrlPath: String) =
-    View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
+    View.viewsFromUrl(viewUrlPath, settings.viewAugmentor)
 
 
   private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = q.map {

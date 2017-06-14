@@ -28,7 +28,7 @@ class NoAugmentation extends ViewUrlParser.ParsedViewAugmentor
 
 object ViewUrlParser {
 
-  case class ParsedView(env: String, viewClass: Class[View], parameters: List[TypedAny])
+  case class ParsedView(viewClass: Class[View], parameters: List[TypedAny])
 
   trait ParsedViewAugmentor {
     def augment(pv: ParsedView): ParsedView = pv
@@ -132,7 +132,7 @@ object ViewUrlParser {
     case cnf: ClassNotFoundException => throw new IllegalArgumentException("No class for package and view: " + cnf.getMessage())
   }
 
-  def parse(env: String, viewUrlPath: String): List[ParsedView] = try {
+  def parse(viewUrlPath: String): List[ParsedView] = try {
     val normalizedPathFront = if (viewUrlPath.startsWith("/"))
       viewUrlPath.tail
     else
@@ -154,7 +154,7 @@ object ViewUrlParser {
     for {
       viewClass <- parseViewClassnames(packageName, viewClassNames)
       pl <- parseParameters(parameters)
-    } yield ParsedView(env, viewClass, pl)
+    } yield ParsedView(viewClass, pl)
 
   } catch {
 
@@ -196,5 +196,5 @@ Quoting:
 """)
   }
 
-  def viewNames(viewUrlPath: String) = parse("dev", viewUrlPath).map(pv => pv.viewClass.getName)
+  def viewNames(viewUrlPath: String) = parse(viewUrlPath).map(pv => pv.viewClass.getName)
 }
