@@ -392,7 +392,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   def affects(influenceFunc: this.type => Traversable[(FieldLike[_], FieldLike[_])]): this.type = {
     influenceFunc(this).foreach {
       case (influencer, influencee) =>
-        val ownerView: View = influencee.assignedStructure.get.asInstanceOf[View]
+        val ownerView: View = View.register(env, influencee.assignedStructure.get.asInstanceOf[View])
         if (ownerView.explicitLineage.isEmpty)
           ownerView.explicitLineage = ownerView.fieldsAndParameters.map(f => f -> mutable.Set[FieldLike[_]]()).toMap
 
