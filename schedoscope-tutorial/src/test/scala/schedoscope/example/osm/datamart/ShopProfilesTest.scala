@@ -98,7 +98,7 @@ class ShopProfilesTest extends SchedoscopeSpec {
     }
 
     val statement = dbConnection.createStatement()
-    val resultSet = statement.executeQuery("SELECT COUNT(*) FROM TEST_SCHEDOSCOPE_EXAMPLE_OSM_DATAMART_SHOP_PROFILES")
+    val resultSet = statement.executeQuery("SELECT COUNT(*) FROM DEV_SCHEDOSCOPE_EXAMPLE_OSM_DATAMART_SHOP_PROFILES")
     resultSet.next()
 
     resultSet.getInt(1) shouldBe 3
