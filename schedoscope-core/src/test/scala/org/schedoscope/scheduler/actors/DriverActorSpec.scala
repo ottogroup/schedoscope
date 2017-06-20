@@ -15,12 +15,16 @@
   */
 package org.schedoscope.scheduler.actors
 
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props, Terminated}
+import akka.routing.SmallestMailboxPool
 import akka.testkit.{TestActorRef, TestKit, TestProbe}
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
+import org.schedoscope.conf.DriverSettings
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.HiveTransformation
+import org.schedoscope.scheduler.driver.FilesystemDriver.{apply => _, _}
+import org.schedoscope.scheduler.driver.{Driver, FilesystemDriver, InvalidDriverClassException, RetryableDriverException}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.schema.ddl.HiveQl
 import test.views.ProductBrand
@@ -41,6 +45,32 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
   val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
   val settings = Settings()
   val transformationManagerActor = TestProbe()
+
+  class BombActor(to: ActorRef, blastOnStart: Boolean = false, ex: Option[Exception] = None) extends Actor {
+
+    override def receive: Receive = {
+
+      case retryable: RetryableDriverException => to.forward("blasting on msg"); throw retryable
+
+      case ie: IllegalArgumentException => to.forward("committing suicide..."); context stop self
+
+      case "ref" => to.forward(self)
+
+      case x => to.forward(x)
+    }
+
+    override def preStart() {
+      if (blastOnStart) {
+        to.forward("blasting on start")
+        ex match {
+          case Some(ex) => throw ex
+          case _ => throw InvalidDriverClassException("boom goes the dynamite",
+            new IllegalArgumentException)
+        }
+      }
+
+    }
+  }
 
   trait HiveActorTest {
     val hivedriverActor = TestActorRef(DriverActor.props(settings,
@@ -99,6 +129,58 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
       }
       driverActor
     }
+  }
+
+/*  it should "NOT restart Driver actors upon exception thrown on ActorInitialization" in {
+    val hackActor = TestProbe()
+
+    val transformationManagerActor = system.actorOf(Props(new TransformationManagerActor(settings,
+      bootstrapDriverActors = false) {
+      override def preStart {
+        val bombActor = context.actorOf(Props(new BombActor(hackActor.ref, true)))
+        hackActor.watch(bombActor)
+      }
+    }))
+    hackActor.expectMsg("blasting on start")
+    hackActor.expectMsgPF() { case Terminated(t) => () }
+  }*/
+
+  it should "restart Driver routees upon RetryableDriverException" in {
+    val hackActor = TestProbe()
+
+    val driverRouterActor = system.actorOf(Props(new DriverActor[HiveTransformation](
+      transformationManagerActor.ref,
+      settings.getDriverSettings("hive"),
+      (ds: DriverSettings) => Driver.driverFor(ds),
+      5.seconds,
+      settings,
+      FilesystemDriver.defaultFileSystem(settings.hadoopConf)
+    ) {
+      override val supervisorStrategy = DriverActor.driverRouterSupervisorStrategy
+
+      override def preStart {
+        val bombActor1 = context.actorOf(Props(new BombActor(hackActor.ref, false)))
+        hackActor.watch(bombActor1)
+        hackActor.send(bombActor1, "ref")
+      }
+    })
+    )
+
+    val bombActor = hackActor.expectMsgType[ActorRef]
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectMsg("blasting on msg")
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectMsg("blasting on msg")
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectMsg("blasting on msg")
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectMsg("blasting on msg")
+    hackActor.send(bombActor, new IllegalArgumentException("bam"))
+    hackActor.expectMsg("committing suicide...")
+    hackActor.expectMsgPF() { case Terminated(t) => () }
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectNoMsg()
+
   }
 
   it should "not execute commands before changing to activeReceive state" in {

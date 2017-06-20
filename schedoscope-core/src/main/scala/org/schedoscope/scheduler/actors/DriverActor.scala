@@ -17,7 +17,8 @@ package org.schedoscope.scheduler.actors
 
 import java.security.PrivilegedAction
 
-import akka.actor.{Actor, ActorRef, Props, actorRef2Scala}
+import akka.actor.SupervisorStrategy.{Escalate, Restart, Stop}
+import akka.actor.{Actor, ActorInitializationException, ActorRef, OneForOneStrategy, Props, actorRef2Scala}
 import akka.event.{Logging, LoggingReceive}
 import org.apache.commons.lang.exception.ExceptionUtils
 import org.apache.hadoop.fs._
@@ -63,7 +64,8 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
     try {
       driver = driverConstructor(ds)
     } catch {
-      case t: Throwable => throw RetryableDriverException("Driver actor could not initialize driver because driver constructor throws exception (HINT: if Driver Actor start failure behaviour persists, validate the respective transformation driver config in conf file). Restarting driver actor...", t)
+      // note: whatever is thrown here is packed as an ActorInitializationException to Supervisor
+      case i: Throwable => throw InvalidDriverClassException(s"Unable to instantiate new Driver for provided transformation: ${i.getMessage}", i)
     }
     logStateInfo("booted", "DRIVER ACTOR: booted")
   }
@@ -301,6 +303,14 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
   * Factory methods for driver actors.
   */
 object DriverActor {
+
+  // used for determining BalancingDispatcher children' Supervision
+  lazy val driverRouterSupervisorStrategy = OneForOneStrategy(maxNrOfRetries = -1) {
+    case _: RetryableDriverException => Restart
+    case _: ActorInitializationException => Stop
+    case _ => Escalate
+  }
+
   def props(settings: SchedoscopeSettings, transformationName: String, transformationManager: ActorRef, hdfs: FileSystem): Props =
     Props(
       classOf[DriverActor[_]],

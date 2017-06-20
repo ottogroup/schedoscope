@@ -44,3 +44,5 @@ case class DriverRunFailed[T <: Transformation](override val driver: Driver[T], 
   * to cause a driver actor restart.
   */
 case class RetryableDriverException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)
+
+case class InvalidDriverClassException(message: String = null, cause: Throwable = null) extends RuntimeException(message, cause)

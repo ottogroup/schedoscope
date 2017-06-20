@@ -51,16 +51,10 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = -1) {
       case _: RetryableDriverException => Restart
-      case _: ActorInitializationException => Restart
+      case _: ActorInitializationException => Stop
       case _ => Escalate
     }
 
-  // used for determining BalancingDispatcher children' Supervision
-  lazy val driverRouterSupervisorStrategy = OneForOneStrategy(maxNrOfRetries = -1) {
-    case _: RetryableDriverException => Restart
-    case _: ActorInitializationException => Restart
-    case _ => Escalate
-  }
 
   val driverStates = HashMap[String, TransformationStatusResponse[_]]()
   val driverActorsBackOffSupervision = new BackOffSupervision(
@@ -107,7 +101,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
         actorOf(
           SmallestMailboxPool(
             nrOfInstances = settings.getDriverSettings(transformation).concurrency,
-            supervisorStrategy = driverRouterSupervisorStrategy,
+            supervisorStrategy = DriverActor.driverRouterSupervisorStrategy,
             routerDispatcher = "akka.actor.driver-router-dispatcher"
           ).props(routeeProps = DriverActor.props(settings, transformation, self)),
           s"${transformation}-driver"
@@ -153,6 +147,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
   * Factory for the actions manager actor.
   */
 object TransformationManagerActor {
+
   def props(settings: SchedoscopeSettings,
             bootstrapDriverActors: Boolean = true) =
     Props(classOf[TransformationManagerActor],

@@ -16,13 +16,17 @@
 package org.schedoscope.scheduler.actors
 
 
-import akka.actor.{Actor, ActorRef, ActorSystem, Props}
-import akka.testkit.{EventFilter, TestActorRef, TestKit, TestProbe}
+import akka.actor.Actor.Receive
+import akka.actor.SupervisorStrategy.{Restart, Stop}
+import akka.actor.TypedActor.Supervisor
+import akka.actor.{Actor, ActorInitializationException, ActorRef, ActorSystem, Props, Terminated}
+import akka.routing.SmallestMailboxPool
+import akka.testkit.{EventFilter, ImplicitSender, TestActorRef, TestKit, TestProbe}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.dsl.Parameter._
 import org.schedoscope.dsl.transformations.FilesystemTransformation
-import org.schedoscope.scheduler.driver.{Driver, HiveDriver}
+import org.schedoscope.scheduler.driver.{Driver, HiveDriver, InvalidDriverClassException, RetryableDriverException}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.{Settings, TestUtils}
 import test.views.ProductBrand
@@ -33,6 +37,7 @@ import scala.concurrent.duration._
 
 class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope",
   ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""")))
+  with ImplicitSender
   with FlatSpecLike
   with Matchers
   with BeforeAndAfterAll {
@@ -48,6 +53,31 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope",
   class ForwardChildActor(to: ActorRef) extends Actor {
     def receive = {
       case x => to.forward(x)
+    }
+  }
+
+  class BombActor(to: ActorRef, blastOnStart: Boolean = false, ex: Option[Exception] = None) extends Actor {
+
+    override def receive: Receive = {
+
+      case retryable: RetryableDriverException => to.forward("blasting on msg"); throw retryable
+
+      case ie: IllegalArgumentException => to.forward("committing suicide..."); context stop self
+
+      case "ref" => to.forward(self)
+
+      case x => to.forward(x)
+    }
+
+    override def preStart() {
+      if (blastOnStart) {
+        to.forward("blasting on start")
+        ex match {
+          case Some(ex) => throw ex
+          case _ => throw InvalidDriverClassException("boom goes the dynamite", new IllegalArgumentException)
+        }
+      }
+
     }
   }
 
@@ -80,8 +110,48 @@ class TransformationManagerActorSpec extends TestKit(ActorSystem("schedoscope",
     seqDriverRouter.send(transformationManagerActor, idleSeqStatus)
     val idleFSStatus = TransformationStatusResponse("idle", fsDriverRouter.ref, null, null, null)
     fsDriverRouter.send(transformationManagerActor, idleFSStatus)
-
   }
+
+  it should "NOT restart Driver actors upon exception thrown on ActorInitialization" in {
+    val hackActor = TestProbe()
+
+    val transformationManagerActor = system.actorOf(Props(new TransformationManagerActor(settings,
+      bootstrapDriverActors = false) {
+      override def preStart {
+        val bombActor = context.actorOf(Props(new BombActor(hackActor.ref, true)))
+        hackActor.watch(bombActor)
+      }
+    }))
+    hackActor.expectMsg("blasting on start")
+    hackActor.expectMsgPF() { case Terminated(t) => () }
+  }
+
+  it should "restart Driver actors upon RetryableDriverException" in {
+    val hackActor = TestProbe()
+
+    val transformationManagerActor = system.actorOf(Props(new TransformationManagerActor(settings,
+      bootstrapDriverActors = false) {
+      override def preStart {
+        val bombActor = context.actorOf(Props(new BombActor(hackActor.ref, false)))
+        hackActor.watch(bombActor)
+        hackActor.send(bombActor, "ref")
+      }
+    }))
+
+    val bombActor = hackActor.expectMsgType[ActorRef]
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectMsg("blasting on msg")
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectMsg("blasting on msg")
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectMsg("blasting on msg")
+    hackActor.send(bombActor, new IllegalArgumentException("bam"))
+    hackActor.expectMsg("committing suicide...")
+    hackActor.expectMsgPF() { case Terminated(t) => () }
+    hackActor.send(bombActor, RetryableDriverException("retry me"))
+    hackActor.expectNoMsg()
+  }
+
 
   it should "forward transformations to the correct DriverManager based on incoming View" in
     new TransformationManagerActorTest {
