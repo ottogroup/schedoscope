@@ -27,6 +27,8 @@ import org.schedoscope.metascope.util.LineageUtil;
 import org.schedoscope.metascope.util.SampleCacheLoader;
 import org.schedoscope.metascope.util.model.CategoryMap;
 import org.schedoscope.metascope.util.model.HiveQueryResult;
+import org.schedoscope.metascope.util.model.MetascopeLineageEdge;
+import org.schedoscope.metascope.util.model.MetascopeSchemaLineage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -255,8 +257,13 @@ public class MetascopeTableService {
     }
 
     @Transactional
-    public String getLineage(MetascopeTable table) {
-        return LineageUtil.getDependencyGraph(table);
+    public Set<MetascopeLineageEdge> getViewLineage(MetascopeTable table) {
+        return LineageUtil.getViewLineage(table);
+    }
+
+    @Transactional
+    public MetascopeSchemaLineage getSchemaLineage(MetascopeTable table) {
+        return LineageUtil.getSchemaLineage(table);
     }
 
     @Async

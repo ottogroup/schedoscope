@@ -293,42 +293,42 @@ public class MetascopeTableController {
     }
 
     /**
-     * Returns a JSON for VisJS to render the lineage graph
+     * Returns a {@link ModelAndView} for the view lineage detail page.
      *
      * @param fqdn the table for which the lineage graph is requesed
-     * @return JSON for VisJS
+     * @return the corresponding {@link ModelAndView} object
      */
     @RequestMapping(value = "/table/view/lineage", method = RequestMethod.GET)
-    @ResponseBody
-    public String getLineage(String fqdn) {
+    public ModelAndView getLineage(String fqdn) {
+        ModelAndView mav = new ModelAndView("body/viewLineage");
         MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
+        if (table == null) return new ModelAndView(new RedirectView("/notfound"));
 
-        if (table == null) {
-            return "table not found";
-        }
+        mav.addObject("admin", metascopeUserService.isAdmin());
+        mav.addObject("userMgmnt", config.withUserManagement());
+        mav.addObject("userEntityService", metascopeUserService);
+        mav.addObject("lineage", metascopeTableService.getViewLineage(table));
 
-        return metascopeTableService.getLineage(table);
+        return mav;
     }
 
     /**
-     * Returns the lineage detail when a node is selected in the lineage graph
+     * Returns a {@link ModelAndView} for the schema lineage detail page.
      *
-     * @param fqdn the table for which the lineage graph is requesed
-     * @param type the type of the node (either transformation or table)
-     * @return
+     * @param fqdn the table for which the schema lineage graph is requested
+     * @return the corresponding {@link ModelAndView} object
      */
-    @RequestMapping(value = "/table/view/lineage/detail", method = RequestMethod.GET)
-    @ResponseBody
-    public ModelAndView getTableDetail(String fqdn, String type) {
-        ModelAndView mav = null;
+    @RequestMapping(value = "/table/schema/lineage", method = RequestMethod.GET)
+    public ModelAndView showSchemaLineage(String fqdn) {
+        ModelAndView mav = new ModelAndView("body/schemaLineage");
         MetascopeTable table = metascopeTableService.findByFqdn(fqdn);
-        if (table != null) {
-            mav = new ModelAndView("body/table/sections/lineagedetail");
-            mav.addObject("table", table);
-            mav.addObject("type", type);
-            mav.addObject("util", htmlUtil);
-            mav.addObject("metascopeUserService", metascopeUserService);
-        }
+        if (table == null) return new ModelAndView(new RedirectView("/notfound"));
+
+        mav.addObject("admin", metascopeUserService.isAdmin());
+        mav.addObject("userMgmnt", config.withUserManagement());
+        mav.addObject("userEntityService", metascopeUserService);
+        mav.addObject("lineage", metascopeTableService.getSchemaLineage(table));
+
         return mav;
     }
 

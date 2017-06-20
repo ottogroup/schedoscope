@@ -19,6 +19,7 @@ import java.io.OutputStreamWriter
 import java.net.URI
 
 import org.apache.hadoop.fs.Path
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.{FieldLike, Named, View}
 import org.schedoscope.test.resources.{LocalTestResources, TestResources}
 
@@ -29,8 +30,6 @@ import scala.collection.mutable.ListBuffer
   * hive partition.
   */
 trait WritableView extends View {
-
-  env = "test"
 
   val isStatic = false
 

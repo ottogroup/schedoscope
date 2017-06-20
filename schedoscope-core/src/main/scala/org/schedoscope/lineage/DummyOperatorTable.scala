@@ -35,6 +35,8 @@ object DummyOperatorTable extends SqlOperatorTable {
 
   case class FramingSqlRankFunction(name: String) extends SqlRankFunction(name) {
     override def allowsFraming(): Boolean = true
+
+    override def getOperandCountRange: SqlOperandCountRange = SqlOperandCountRanges.any()
   }
 
   case class FramingSqlAggFunction(name: String) extends SqlAggFunction(name,
@@ -56,6 +58,10 @@ object DummyOperatorTable extends SqlOperatorTable {
     "LAG", "LEAD"
   ).map(n =>
     n -> FramingSqlAggFunction(n)
+  ) ++ Seq(
+    "CONVERT", "TRANSLATE"
+  ).map(n =>
+    n -> HiveQlFunction(n)
   )
 
   override def lookupOperatorOverloads(opName: SqlIdentifier, category: SqlFunctionCategory, syntax: SqlSyntax,

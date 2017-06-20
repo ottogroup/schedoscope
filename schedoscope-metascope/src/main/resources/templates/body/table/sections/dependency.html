@@ -52,43 +52,10 @@
                 dependencies</a>
         </div>
         <div class="col-md-3">
-            <form id="lineageForm">
+            <form id="lineageForm" action="table/view/lineage">
                 <input type="hidden" name="fqdn" th:value="${table.fqdn}"/>
-                <button class="pull-right btn btn-info" data-toggle="modal" data-target="#lineage"
-                        th:value="${table.fqdn}" type="button">
-                    Show Lineage Graph
-                </button>
+                <button class="pull-right btn btn-info" th:value="${table.fqdn}" type="submit"> Show Lineage Graph</button>
             </form>
         </div>
     </div>
-
-    <div class="modal fade" id="lineage" aria-hidden="true" data-th-fragment="table_lineage_modal" tabindex="-1">
-        <div class="modal-dialog" style="width: 90%;">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                    <h4 data-th-text="'Lineage Graph: ' + ${table.tableName}" class="modal-title"></h4>
-                </div>
-                <form id="lineageForm" style="margin-bottom: 0px;">
-                    <input type="hidden" id="lineageFqdn" name="fqdn" th:value="${table.fqdn}"/>
-                </form>
-                <div class="modal-body" style="margin-right: 0 !important; padding: 0px;">
-                    <div class="row" style="margin-right: 5px;">
-                        <div class="col-md-9" style="border-right: #cdcdcd medium solid;">
-                            <div id="mynetworkFA"></div>
-                        </div>
-                        <div class="col-md-3" style="padding: 5px;">
-                            <div id="lineageDetail" style="padding-top: 10px; overflow: auto; max-height: 600px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer" style="margin-top: 0px;">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>

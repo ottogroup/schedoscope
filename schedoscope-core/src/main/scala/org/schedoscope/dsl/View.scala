@@ -103,13 +103,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   /**
     * The view's environment.
     */
-  private var _env: String = "dev"
-
-  def env: String = _env
-
-  def env_=(env: String): Unit = {
-    _env = env
-  }
+  def env = Schedoscope.settings.env
 
   var storageFormat: StorageFormat = TextFile()
   var additionalStoragePathPrefix: Option[String] = None
@@ -238,7 +232,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * current view depends on. This function is returned so that it can be assigned to variables for further reference.
     */
   override def dependsOn[V <: View : Manifest](df: () => V) = {
-    val dsf = () => List(View.register(this.env, df()))
+    val dsf = () => List(View.register(df()))
 
     dependsOn(dsf)
 
@@ -250,9 +244,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * current view depends on.
     */
   override def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
-    val df = () => dsf().map {
-      View.register(this.env, _)
-    }
+    val df = () => dsf().map (View.register[V])
 
     deferredDependencies += df
   }
@@ -394,7 +386,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
       case (influencer, influencee) =>
         val ownerView: View = influencee.assignedStructure.get.asInstanceOf[View]
         if (ownerView.explicitLineage.isEmpty)
-          ownerView.explicitLineage = ownerView.fields.map(f => f -> mutable.Set[FieldLike[_]]()).toMap
+          ownerView.explicitLineage = ownerView.fieldsAndParameters.map(f => f -> mutable.Set[FieldLike[_]]()).toMap
 
         ownerView.explicitLineage(influencee).add(influencer)
     }
@@ -468,19 +460,19 @@ object View {
   }
 
   /**
-    * Instantiate views given an environment and view URL path. A parsed view augmentor can further modify the created views.
+    * Instantiate views given a view URL path. A parsed view augmentor can further modify the created views.
     */
-  def viewsFromUrl(env: String, viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] =
+  def viewsFromUrl(viewUrlPath: String, parsedViewAugmentor: ParsedViewAugmentor = new ParsedViewAugmentor() {}): List[View] =
     try {
       ViewUrlParser
-        .parse(env, viewUrlPath)
+        .parse(viewUrlPath)
         .map {
           parsedViewAugmentor.augment(_)
         }
         .filter {
           _ != null
         }
-        .map { case ParsedView(env, viewClass, parameters) => newView(viewClass, env, parameters: _*) }
+        .map { case ParsedView(viewClass, parameters) => newView(viewClass, parameters: _*) }
     } catch {
       case t: Throwable =>
         if (t.isInstanceOf[java.lang.reflect.InvocationTargetException]) {
@@ -491,9 +483,9 @@ object View {
     }
 
   /**
-    * Instantiate a new view given its class name, an environment, and a list of parameter values.
+    * Instantiate a new view given its class name and a list of parameter values.
     */
-  def newView[V <: View : Manifest](viewClass: Class[V], env: String, parameterValues: TypedAny*): V = {
+  def newView[V <: View : Manifest](viewClass: Class[V], parameterValues: TypedAny*): V = {
     val viewCompanionObjectClass = Class.forName(viewClass.getName() + "$")
     val viewCompanionConstructor = viewCompanionObjectClass.getDeclaredConstructor()
     viewCompanionConstructor.setAccessible(true)
@@ -535,21 +527,14 @@ object View {
       parametersToPass += passedValueForParameter.v
     }
 
-    register(env, viewConstructor.invoke(viewCompanionObject, parametersToPass.asInstanceOf[Seq[Object]]: _*).asInstanceOf[V])
+    register(viewConstructor.invoke(viewCompanionObject, parametersToPass.asInstanceOf[Seq[Object]]: _*).asInstanceOf[V])
   }
 
-  private def register[V <: View : Manifest](env: String, v: V): V = this.synchronized {
-    val registeredView = knownViews.get(v.urlPath) match {
-      case Some(registeredView) => {
-        registeredView.asInstanceOf[V]
-      }
-      case None => {
-        knownViews.put(v.urlPath, v)
-        v
-      }
-    }
-    registeredView.env = env
-    registeredView
+  private def register[V <: View : Manifest](v: V): V = this.synchronized {
+    if (!knownViews.contains(v.urlPath))
+      knownViews.put(v.urlPath, v)
+
+    knownViews(v.urlPath).asInstanceOf[V]
   }
 
   private def recursiveDependenciesOf(view: View, soFar: mutable.Set[View] = mutable.Set[View]()): mutable.Set[View] = {

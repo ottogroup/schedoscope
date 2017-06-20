@@ -15,12 +15,12 @@
  */
 package org.schedoscope.metascope.task.model;
 
-public class ViewDependency {
+public class Dependency {
 
     private String successor;
     private String dependency;
 
-    public ViewDependency(String successor, String dependency) {
+    public Dependency(String successor, String dependency) {
         this.successor = successor;
         this.dependency = dependency;
     }

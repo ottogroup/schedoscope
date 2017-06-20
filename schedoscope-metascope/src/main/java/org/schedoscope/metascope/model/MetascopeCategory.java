@@ -29,7 +29,7 @@ public class MetascopeCategory {
     @ManyToOne
     private MetascopeTaxonomy taxonomy;
 
-    @Column(columnDefinition = "varchar(32672)")
+    @Column(columnDefinition = "text")
     private String name;
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)

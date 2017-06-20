@@ -61,6 +61,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
             "views": [
             {
               "viewPath": "${pakkage}/ProductBrand/${shop01}/${year}/${month}/${day}/${year}${month}${day}",
+              "isExternal": false,
               "status": "receive"
             }
             ]
@@ -81,6 +82,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
       response.isCompleted shouldBe true
       response.value.get.get.overview shouldBe Map(("receive", 1))
       response.value.get.get.views.size shouldBe 1
+      response.value.get.get.views.head.isExternal shouldBe false
       response.value.get.get.views(0).status shouldBe "receive"
       response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
       response.value.get.get.views(0).dependencies shouldBe None
@@ -98,14 +100,17 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
             "views": [
             {
              "viewPath": "${pakkage}/Brand/${shop01}",
+             "isExternal": true,
              "status": "materializing"
             },
             {
               "viewPath": "${pakkage}/Product/${shop01}/${year}/${month}/${day}/${year}${month}${day}",
+              "isExternal": false,
               "status": "materializing"
             },
             {
              "viewPath": "${pakkage}/ProductBrand/${shop01}/${year}/${month}/${day}/${year}${month}${day}",
+             "isExternal": false,
              "status": "waiting",
              "dependencies": {
                 "dev_test_views.brand_${shop01.toLowerCase}" : ["${brandUrl01}"],
@@ -130,6 +135,10 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
       response.isCompleted shouldBe true
       response.value.get.get.overview shouldBe Map(("waiting", 1), ("materializing", 2))
       response.value.get.get.views.size shouldBe 3
+
+      response.value.get.get.views(0).isExternal shouldBe true
+      response.value.get.get.views(1).isExternal shouldBe false
+      response.value.get.get.views(2).isExternal shouldBe false
 
       response.value.get.get.views(0).status shouldBe "materializing"
       response.value.get.get.views(1).status shouldBe "materializing"
@@ -158,6 +167,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
             "views": [
             {
               "viewPath": "${pakkage}/ProductBrand/${shop01}/${year}/${month}/${day}/${year}${month}${day}",
+              "isExternal": false,
               "status": "receive"
             }
             ]
@@ -174,6 +184,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
     response.isCompleted shouldBe true
     response.value.get.get.overview shouldBe Map(("receive", 1))
     response.value.get.get.views.size shouldBe 1
+    response.value.get.get.views.head.isExternal shouldBe false
     response.value.get.get.views(0).status shouldBe "receive"
     response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
     response.value.get.get.views(0).dependencies shouldBe None
@@ -190,6 +201,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
             "views": [
                {
                 "viewPath": "${pakkage}/ProductBrand/${shop01}/${year}/${month}/${day}/${year}${month}${day}",
+                "isExternal": false,
                 "status": "receive"
                }
             ]
@@ -208,6 +220,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
       response.isCompleted shouldBe true
       response.value.get.get.overview shouldBe Map(("receive", 1))
       response.value.get.get.views.size shouldBe 1
+      response.value.get.get.views.head.isExternal shouldBe false
       response.value.get.get.views(0).status shouldBe "receive"
       response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
       response.value.get.get.views(0).dependencies shouldBe None
@@ -224,6 +237,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
             "views": [
                {
                 "viewPath": "${pakkage}/ProductBrand/${shop01}/${year}/${month}/${day}/${year}${month}${day}",
+                "isExternal": false,
                 "status": "invalid"
                }
             ]
@@ -241,6 +255,7 @@ class SchedoscopeServiceRestClientImplSpec extends FlatSpecLike
       response.isCompleted shouldBe true
       response.value.get.get.overview shouldBe Map(("invalid", 1))
       response.value.get.get.views.size shouldBe 1
+      response.value.get.get.views.head.isExternal shouldBe false
       response.value.get.get.views(0).status shouldBe "invalid"
       response.value.get.get.views(0).viewPath shouldBe prodBrandUrl01 + s"/${year}${month}${day}"
       response.value.get.get.views(0).dependencies shouldBe None
