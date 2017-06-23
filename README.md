@@ -77,6 +77,14 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 06/23/2017 - Release 0.8.6
+
+We have released Version 0.8.6 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This version includes support for field level data lineage - automatically inferred from Hive transformations, declaratively specifyable for other transformations - in Metascope. Also, Metascope lineage graph rendering has been reworked. Extensive documentation to come.
+
+Schedoscope now fails immediately if a driver specified in schedoscope.conf cannot be found on the classpath.
+
 ###### 05/26/2017 - Release 0.8.5
 
 We have released Version 0.8.5 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
