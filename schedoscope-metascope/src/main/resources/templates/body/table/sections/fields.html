@@ -79,6 +79,13 @@
         </tbody>
     </table>
 
+    <div class="col-md-3">
+        <form id="lineageForm" action="table/schema/lineage">
+            <input type="hidden" name="fqdn" th:value="${table.fqdn}"/>
+            <button class="btn btn-info" th:value="${table.fqdn}" type="submit">Show Lineage Graph</button>
+        </form>
+    </div>
+
     <div data-th-each="field : ${table.fields}">
         <div th:id="'schemaContent-' + ${field.fieldName}" class="fieldDocumentation">
             <div data-th-replace="body/table/sections/documentation_field :: documentation(${field}, ${util})"></div>

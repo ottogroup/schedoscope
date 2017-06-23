@@ -37,7 +37,8 @@ case class ViewStatus(
                        storageFormat: Option[String],
                        materializeOnce: Option[Boolean],
                        comment: Option[Option[String]],
-                       isTable: Option[Boolean])
+                       isTable: Option[Boolean],
+                       isExternal: Boolean)
 
 case class FieldStatus(name: String, fieldtype: String, comment: Option[String])
 

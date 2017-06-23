@@ -22,7 +22,7 @@ import akka.event.Logging
 import org.joda.time.format.DateTimeFormat
 import org.schedoscope.AskPattern._
 import org.schedoscope.conf.SchedoscopeSettings
-import org.schedoscope.dsl.View
+import org.schedoscope.dsl.{Field, View}
 import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.actors.ViewManagerActor
 import org.schedoscope.scheduler.driver.{DriverRunFailed, DriverRunOngoing, DriverRunState, DriverRunSucceeded}
@@ -74,7 +74,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
   }
 
   private def viewsFromUrl(viewUrlPath: String) =
-    View.viewsFromUrl(settings.env, viewUrlPath, settings.viewAugmentor)
+    View.viewsFromUrl(viewUrlPath, settings.viewAugmentor)
 
 
   private def parseQueueElements(q: List[AnyRef]): List[RunStatus] = q.map {
@@ -142,13 +142,14 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
         Some(vsr.view.dependencies.map(d => (d.tableName, d.urlPath)).groupBy(_._1).mapValues(_.toList.map(_._2)))
       else
         None,
-      lineage = if (overview) None else Some(vsr.view.lineage.map { case (f, deps) => f.toString -> deps.map(_.toString).toList }),
+      lineage = if (overview) None else Some(vsr.view.lineage.filter(_._1.isInstanceOf[Field[_]]).map { case (f, deps) => f.toString -> deps.map(_.toString).toList }),
       transformation = if (overview) None else Option(vsr.view.registeredTransformation().viewTransformationStatus),
       export = if (overview) None else Option(viewExportStatus(vsr.view.registeredExports.map(e => e.apply()))),
       storageFormat = if (overview) None else Option(vsr.view.storageFormat.getClass.getSimpleName),
       materializeOnce = if (overview) None else Option(vsr.view.isMaterializeOnce),
       comment = if (overview) None else Option(vsr.view.comment),
-      isTable = isTable
+      isTable = isTable,
+      isExternal = vsr.view.isExternal
     )
 
   private def viewStatusListFromStatusResponses(viewStatusResponses: List[ViewStatusResponse],

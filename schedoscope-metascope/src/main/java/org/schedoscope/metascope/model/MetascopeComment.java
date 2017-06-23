@@ -26,9 +26,9 @@ public class MetascopeComment {
     @Id
     @GeneratedValue
     private Long id;
-    @Column(columnDefinition = "varchar(32629)")
+    @Column(columnDefinition = "text")
     private String text;
-    @Column(columnDefinition = "varchar(32629)")
+    @Column(columnDefinition = "text")
     private String plainText;
     private String username;
     private long lastEdit;

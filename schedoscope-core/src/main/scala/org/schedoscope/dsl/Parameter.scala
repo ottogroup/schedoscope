@@ -38,8 +38,6 @@ case class Parameter[T: Manifest](orderWeight: Long) extends FieldLike[T] {
   override def hashCode(): Int = {
     t.hashCode + 7 * v.hashCode()
   }
-
-  override def toString() = if (v.isDefined) s"Parameter(${v.get})" else super.toString
 }
 
 /**

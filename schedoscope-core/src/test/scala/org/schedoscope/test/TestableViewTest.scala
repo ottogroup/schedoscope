@@ -222,16 +222,6 @@ class TestableViewTest extends FlatSpec with Matchers {
     }
   }
 
-  it should "forward the test environment to external views" in {
-    val productBrand = ProductBrand(p("ec0101"), p("2016"), p("11"), p("07"))
-    val externalProductBrand = ExternalView(productBrand)
-
-    externalProductBrand.env = "test"
-
-    productBrand.env shouldBe "test"
-    externalProductBrand.env shouldBe "test"
-  }
-
   it should "not change output/goal view storage format Avro" in {
     new ClickEC01Avro(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)

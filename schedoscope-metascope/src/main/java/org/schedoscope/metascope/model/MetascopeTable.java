@@ -35,7 +35,7 @@ public class MetascopeTable extends Documentable {
     private String tableName;
     private String viewPath;
     private boolean externalTable;
-    @Column(columnDefinition = "varchar(20000)")
+    @Column(columnDefinition = "text")
     private String tableDescription;
     private String storageFormat;
     private String inputFormat;
@@ -44,7 +44,7 @@ public class MetascopeTable extends Documentable {
     @Column(columnDefinition = "bigint default 0")
     private long createdAt;
     private String tableOwner;
-    @Column(columnDefinition = "varchar(5000)")
+    @Column(columnDefinition = "text")
     private String dataPath;
     @Column(columnDefinition = "bigint default 0")
     private long dataSize;
@@ -67,6 +67,8 @@ public class MetascopeTable extends Documentable {
     @Column(columnDefinition = "int default 1")
     private int viewsSize;
     private String personResponsible;
+    @Transient
+    private Long commentId;
 
     @OneToOne(mappedBy = "table", cascade = CascadeType.ALL)
     @LazyCollection(LazyCollectionOption.FALSE)
@@ -103,9 +105,19 @@ public class MetascopeTable extends Documentable {
     private List<MetascopeView> views;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "metascope_table_relationship",
+      joinColumns = @JoinColumn(name = "successor"),
+      inverseJoinColumns = @JoinColumn(name = "dependency"),
+      uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
+    )
     private List<MetascopeTable> successors;
 
     @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinTable(name = "metascope_table_relationship",
+      joinColumns = @JoinColumn(name = "dependency"),
+      inverseJoinColumns = @JoinColumn(name = "successor"),
+      uniqueConstraints = @UniqueConstraint(columnNames = {"dependency", "successor"})
+    )
     private List<MetascopeTable> dependencies;
 
     /* ### GETTER/SETTER START ### */
@@ -417,7 +429,15 @@ public class MetascopeTable extends Documentable {
         this.viewsSize = viewsSize;
     }
 
-  /* ### GETTER/SETTER END ### */
+    public Long getCommentId() {
+        return commentId;
+    }
+
+    public void setCommentId(Long commentId) {
+        this.commentId = commentId;
+    }
+
+    /* ### GETTER/SETTER END ### */
 
     /* ### ADD/REMOVE START ### */
     public void addToFields(MetascopeField field) {

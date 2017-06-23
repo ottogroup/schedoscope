@@ -66,7 +66,7 @@ abstract class FieldLike[T: Manifest] extends Named {
   }
 
   override def toString: String = assignedStructure match {
-    case Some(view: View) => s"${view.tableName}.${view.nameOf(this).getOrElse("")}"
-    case _ => namingBase
+    case Some(view: View) => s"${view.tableName}.$n"
+    case _ => n
   }
 }

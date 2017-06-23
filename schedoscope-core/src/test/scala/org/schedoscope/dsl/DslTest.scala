@@ -246,11 +246,9 @@ class DslTest extends FlatSpec with Matchers {
 
   it should "be transformable into DDL for an env" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
-    productBrand.env = "prod"
-
     val ddlStatement = ddl(productBrand)
 
-    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS prod_test_views.product_brand (") shouldBe true
+    ddlStatement.contains("CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.product_brand (") shouldBe true
     ddlStatement.contains("occurred_at STRING,") shouldBe true
     ddlStatement.contains("product_id STRING,") shouldBe true
     ddlStatement.contains("brand_name STRING,") shouldBe true
@@ -260,13 +258,12 @@ class DslTest extends FlatSpec with Matchers {
     ddlStatement.contains("COMMENT 'ProductBrand joins brands with products'") shouldBe true
     ddlStatement.contains("PARTITIONED BY (shop_code STRING, year STRING, month STRING, day STRING, date_id STRING)") shouldBe true
     ddlStatement.contains("STORED AS PARQUET") shouldBe true
-    ddlStatement.contains("LOCATION '/hdp/prod/test/views/product_brand'") shouldBe true
+    ddlStatement.contains("LOCATION '/hdp/dev/test/views/product_brand'") shouldBe true
 
   }
 
   it should "inherit its env to its dependencies" in {
     val productBrand = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
-    productBrand.env = "prod"
 
     for (d <- productBrand.dependencies) {
       d.env shouldEqual productBrand.env
@@ -344,7 +341,7 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "be dynamically instantiatable via URL path" in {
-    val views = View.viewsFromUrl("dev", "/test.views/Product/e(EC0106,EC0101)/rymd(20140224-20131202)/")
+    val views = View.viewsFromUrl("/test.views/Product/e(EC0106,EC0101)/rymd(20140224-20131202)/")
 
     views.length shouldBe 2 * 85
 
@@ -360,12 +357,12 @@ class DslTest extends FlatSpec with Matchers {
   }
 
   it should "throw an exception during dynamic instantiation" in {
-    val thrown = the[java.lang.RuntimeException] thrownBy View.viewsFromUrl("dev", "/test.views/RequireView/ec0106/")
+    val thrown = the[java.lang.RuntimeException] thrownBy View.viewsFromUrl("/test.views/RequireView/ec0106/")
     thrown.getMessage() shouldBe "Error while parsing view(s) /test.views/RequireView/ec0106/ : requirement failed: Put in upper case: ec0106"
   }
 
   it should "have the same urlPath as the one they were dynamically constructed with" in {
-    val views = View.viewsFromUrl("dev", "test.views/Product/EC0106/2014/02/24/20140224")
+    val views = View.viewsFromUrl("test.views/Product/EC0106/2014/02/24/20140224")
 
     views.length shouldBe 1
 

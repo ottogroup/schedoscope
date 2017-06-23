@@ -1,0 +1,46 @@
+#backward-lineage-container + #forward-lineage-container {
+    box-sizing: border-box;
+    border-left: 1px solid black;
+}
+
+svg g.output {
+    font-family: monospace;
+    font-size: large;
+}
+
+svg g.output .node.btn-default rect {
+    fill: white;
+    stroke: #ccc;
+}
+
+svg g.output .node.btn-default:hover rect {
+    fill: #e6e6e6;
+    stroke: #adadad;
+}
+
+svg g.output .node.btn-default.disabled rect {
+    fill: #e0e0e0;
+}
+
+#lineage-container svg g.output .node.btn-default.start rect {
+    stroke: #E23322;
+    stroke-width: 2px;
+}
+
+#lineage-container svg g.output .node.btn-default.start:hover rect {
+    stroke: #E23322;
+}
+
+svg g.output .node.leaf {
+    cursor: not-allowed;
+}
+
+svg g.output .edgePath {
+    fill: black;
+    stroke: black;
+    stroke-width: 2px;
+}
+
+svg g.output .clusters rect {
+    fill: lightblue;
+}

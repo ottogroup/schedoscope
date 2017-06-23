@@ -27,10 +27,10 @@ public class MetascopeCategoryObject {
     @ManyToOne
     private MetascopeCategory category;
 
-    @Column(columnDefinition = "varchar(32672)")
+    @Column(columnDefinition = "text")
     private String name;
 
-    @Column(columnDefinition = "varchar(32672)")
+    @Column(columnDefinition = "text")
     private String description;
 
     public long getCategoryObjectId() {

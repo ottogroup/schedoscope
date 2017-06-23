@@ -4546,6 +4546,8 @@ SqlBinaryOperator BinaryRowOperator() :
     { return SqlStdOperatorTable.DIVIDE; }
     | <MODULO>
     { return SqlStdOperatorTable.DIVIDE; }
+    | <DIV>
+    { return SqlStdOperatorTable.DIVIDE; }
     | <CONCAT>
     { return SqlStdOperatorTable.CONCAT; }
     | <AND>
@@ -4761,6 +4763,7 @@ SqlPostfixOperator PostfixRowOperator() :
     | < DISPATCH: "DISPATCH" >
     | < DISTINCT: "DISTINCT" >
     | < DISTRIBUTE: "DISTRIBUTE" >
+    | < DIV: "DIV" >
     | < DOMAIN: "DOMAIN" >
     | < DOUBLE: "DOUBLE" >
     | < DROP: "DROP" >

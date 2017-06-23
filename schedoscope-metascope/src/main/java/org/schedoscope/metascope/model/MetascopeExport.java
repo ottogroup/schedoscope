@@ -16,6 +16,7 @@
 package org.schedoscope.metascope.model;
 
 import javax.persistence.*;
+import java.util.HashMap;
 import java.util.Map;
 
 @Entity
@@ -29,6 +30,8 @@ public class MetascopeExport {
     private Map<String, String> exportProperties;
     @ManyToOne(fetch = FetchType.LAZY)
     private MetascopeTable table;
+    @Transient
+    private String tableFqdn;
 
     /* getter and setter */
     public String getExportId() {
@@ -77,6 +80,21 @@ public class MetascopeExport {
     @Override
     public int hashCode() {
         return exportId.hashCode();
+    }
+
+    public String getTableFqdn() {
+        return tableFqdn;
+    }
+
+    public void setTableFqdn(String tableFqdn) {
+        this.tableFqdn = tableFqdn;
+    }
+
+    public void addProperty(String key, String value) {
+        if (exportProperties == null) {
+            this.exportProperties = new HashMap<>();
+        }
+        this.exportProperties.put(key, value);
     }
 
 }

@@ -79,6 +79,17 @@ public class SchedoscopeUtil {
             url += "&filter=" + filter;
         }
 
+        //TODO
+        if (all && port == 20698) {
+            url = "http://localhost:9090/eci";
+        } else if (!all && port == 20698) {
+            url = "http://localhost:9090/eci-status";
+        } else if (all && port == 30698) {
+            url = "http://localhost:9090/ogm";
+        } else if (!all && port == 30698) {
+            url = "http://localhost:9090/ogm-status";
+        }
+
         return makeRequest(url);
     }
 

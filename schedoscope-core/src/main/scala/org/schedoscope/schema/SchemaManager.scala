@@ -322,8 +322,7 @@ class SchemaManager(val metastoreClient: IMetaStoreClient, val connection: Conne
 
   private def partitionToView(tablePrototype: View, p: Partition) = {
     val viewUrl = s"${tablePrototype.urlPathPrefix}/${p.getValues.mkString("/")}"
-    View.viewsFromUrl(settings.env,
-      viewUrl,
+    View.viewsFromUrl(viewUrl,
       settings.viewAugmentor).head
   }
 

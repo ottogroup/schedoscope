@@ -35,14 +35,6 @@ case class ExternalView(view: View) extends View {
   override val isExternal = true
 
   //
-  // Pass env through to wrapped view
-  //
-  override def env_=(env: String): Unit = {
-    super.env_=(env)
-    view.env = env
-  }
-
-  //
   // Give us a string representation clearly showing this is an external view
   //
   override def toString(): String = s"external(${super.toString()})"
