@@ -23,7 +23,7 @@ import org.joda.time.LocalDateTime
 import org.schedoscope.AskPattern.{queryActor, retryOnTimeout}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{Checksum, Touch}
+import org.schedoscope.dsl.transformations.{Checksum, NoOp, Touch}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
@@ -78,8 +78,14 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
           schemaManagerRouter ! GetMetaDataForMaterialize(currentState.view, mode, senderRef)
         }
 
-        case MetaDataForMaterialize(metadata, mode, source) => stateTransition {
+        case MaterializeViewAsStub(mode) => {
+          //TODO: set transformation to DistCp
+          currentState.view.registeredTransformation = () => NoOp()
+          //use transform only mode to mute dependencies
+          stateMachine.materialize(currentState,senderRef, MaterializeViewMode.TRANSFORM_ONLY)
+        }
 
+        case MetaDataForMaterialize(metadata, mode, source) => stateTransition {
           val externalState = metadata match {
             case (view, (version, timestamp)) =>
               TableActor.stateFromMetadata(view, view.transformation().checksum, timestamp)
