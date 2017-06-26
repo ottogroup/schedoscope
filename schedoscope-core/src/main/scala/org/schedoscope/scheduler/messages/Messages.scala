@@ -170,10 +170,8 @@ case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode
   * Special [[MaterializeView]] command with will stub a view. This is done by copying the data
   * from a different environment.
   * Used for development.
-  *
-  * @param mode materialization mode
   */
-case class MaterializeViewAsStub(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT)
+case class MaterializeViewAsStub()
   extends CommandRequest
 
 /**

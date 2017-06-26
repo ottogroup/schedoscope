@@ -68,6 +68,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
       val senderRef = AkkaActor(sourceView, sender)
 
+      val currentView = currentState.view
       command match {
 
         case MaterializeView(mode) => stateTransition {
@@ -75,14 +76,18 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
         }
 
         case MaterializeExternalView(mode) => {
-          schemaManagerRouter ! GetMetaDataForMaterialize(currentState.view, mode, senderRef)
+          schemaManagerRouter ! GetMetaDataForMaterialize(currentView, mode, senderRef)
         }
 
-        case MaterializeViewAsStub(mode) => {
+        case MaterializeViewAsStub() => {
+
+          //TODO: Determine distcp source path
+          val sourcePath = s"hdfs://${settings.prodNameNode}/${currentView.fullPathBuilder(settings.prodEnv)}"
+          val targetPath = s"hdfs://${settings.nameNode}/${currentView.fullPath}"
           //TODO: set transformation to DistCp
-          currentState.view.registeredTransformation = () => NoOp()
+          currentView.registeredTransformation = () => NoOp()
           //use transform only mode to mute dependencies
-          stateMachine.materialize(currentState,senderRef, MaterializeViewMode.TRANSFORM_ONLY)
+          stateMachine.materialize(currentState, senderRef, MaterializeViewMode.TRANSFORM_ONLY)
         }
 
         case MetaDataForMaterialize(metadata, mode, source) => stateTransition {
@@ -213,6 +218,10 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
       case Materialize(view, mode) =>
         if (!view.isExternal) {
           sendMessageToView(view, MaterializeView(mode))
+        } else if (settings.developmentModeEnabled &&
+          currentState.view.urlPathPrefix == settings.viewUnderDevelopment) {
+          //stub the dependent view
+          sendMessageToView(view, MaterializeViewAsStub())
         } else {
           sendMessageToView(view, MaterializeExternalView(mode))
         }

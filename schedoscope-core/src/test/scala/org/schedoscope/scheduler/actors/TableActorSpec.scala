@@ -22,7 +22,7 @@ import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.Settings
 import org.schedoscope.dsl.ExternalView
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.{HiveTransformation, Touch}
+import org.schedoscope.dsl.transformations.{HiveTransformation, NoOp, Touch}
 import org.schedoscope.scheduler.driver.{DriverRunHandle, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
@@ -167,6 +167,29 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
       mock[DriverRunSucceeded[HiveTransformation]],
       true))
     transformationManagerActor.reply(success)
+
+    expectMsgType[ViewMaterialized]
+  }
+
+  it should "materialize a stubbed view successfully" in new TableActorTest {
+
+    viewActor ! CommandForView(None, view, MaterializeViewAsStub())
+
+    println(view.urlPathPrefix)
+//    brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
+//    brandViewActor.reply(CommandForView(Some(brandDependency),
+//      view,
+//      ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
+//    productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
+//    productViewActor.reply(CommandForView(Some(productDependency),
+//      view,
+//      ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
+
+//    transformationManagerActor.expectMsg(view)
+//    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[NoOp]],
+//      mock[DriverRunSucceeded[NoOp]],
+//      true))
+//    transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
   }
