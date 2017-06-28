@@ -19,10 +19,10 @@ import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
-import org.schedoscope.Settings
+import org.schedoscope.{Settings, TestUtils}
 import org.schedoscope.dsl.ExternalView
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.{HiveTransformation, NoOp, Touch}
+import org.schedoscope.dsl.transformations.{HiveTransformation, MapreduceBaseTransformation, NoOp, Touch}
 import org.schedoscope.scheduler.driver.{DriverRunHandle, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
@@ -40,6 +40,8 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
   }
 
   trait TableActorTest {
+    lazy val settings = Settings()
+
     val viewManagerActor = TestProbe()
 
     val transformationManagerActor = TestProbe()
@@ -55,7 +57,7 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val viewActor = TestActorRef(TableActor.props(
       Map(view -> CreatedByViewManager(view)),
-      Settings(),
+      settings,
       Map(brandDependency.tableName -> brandViewActor.ref,
         productDependency.tableName -> productViewActor.ref),
       viewManagerActor.ref,
@@ -90,6 +92,12 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
       transformationManagerActor.expectMsg(Touch(pbView.fullPath + "/_SUCCESS"))
     }
   }
+
+  trait TableActorStubbingTest extends TableActorTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
+      "schedoscope.development.viewUrl = test.views/ProductBrand")
+  }
+
 
   "The TableActor" should "send materialize to deps" in new TableActorTest {
     viewActor ! CommandForView(None, view, MaterializeView())
@@ -171,29 +179,6 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     expectMsgType[ViewMaterialized]
   }
 
-  it should "materialize a stubbed view successfully" in new TableActorTest {
-
-    viewActor ! CommandForView(None, view, MaterializeViewAsStub())
-
-    println(view.urlPathPrefix)
-//    brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeView()))
-//    brandViewActor.reply(CommandForView(Some(brandDependency),
-//      view,
-//      ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
-//    productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
-//    productViewActor.reply(CommandForView(Some(productDependency),
-//      view,
-//      ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
-
-//    transformationManagerActor.expectMsg(view)
-//    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[NoOp]],
-//      mock[DriverRunSucceeded[NoOp]],
-//      true))
-//    transformationManagerActor.reply(success)
-
-    expectMsgType[ViewMaterialized]
-  }
-
   it should "materialize a view successfully (message from view)" in new TableActorTest {
 
     viewActor ! CommandForView(Some(brandDependency), view, MaterializeView())
@@ -236,6 +221,44 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
     transformationManagerActor.expectMsg(viewWithExt)
     val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]], mock[DriverRunSucceeded[HiveTransformation]], true)
     transformationManagerActor.reply(CommandForView(None, viewWithExt, success))
+
+    expectMsgType[ViewMaterialized]
+  }
+
+  it should "materialize a stubbed view successfully" in new TableActorTest {
+
+    viewActor ! CommandForView(None, view, MaterializeViewAsStub())
+
+    println(view.urlPathPrefix)
+    //dependencies should not be notified
+    brandViewActor.expectNoMsg()
+    productViewActor.expectNoMsg()
+
+    transformationManagerActor.expectMsg(view)
+    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[MapreduceBaseTransformation]],
+      mock[DriverRunSucceeded[MapreduceBaseTransformation]],
+      true))
+    transformationManagerActor.reply(success)
+
+    expectMsgType[ViewMaterialized]
+  }
+
+  it should "stub its dependencies if configured" in new TableActorStubbingTest {
+    viewActor ! CommandForView(None, view, MaterializeView())
+    brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeViewAsStub()))
+    brandViewActor.reply(CommandForView(Some(brandDependency),
+      view,
+      ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
+    productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeViewAsStub()))
+    productViewActor.reply(CommandForView(Some(productDependency),
+      view,
+      ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
+
+    transformationManagerActor.expectMsg(view)
+    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],
+      mock[DriverRunSucceeded[HiveTransformation]],
+      true))
+    transformationManagerActor.reply(success)
 
     expectMsgType[ViewMaterialized]
   }

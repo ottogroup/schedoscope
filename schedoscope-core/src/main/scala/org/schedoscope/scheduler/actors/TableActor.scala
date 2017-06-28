@@ -23,7 +23,7 @@ import org.joda.time.LocalDateTime
 import org.schedoscope.AskPattern.{queryActor, retryOnTimeout}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{Checksum, NoOp, Touch}
+import org.schedoscope.dsl.transformations.{Checksum, DistCpTransformation, NoOp, Touch}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
@@ -79,13 +79,11 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
           schemaManagerRouter ! GetMetaDataForMaterialize(currentView, mode, senderRef)
         }
 
-        case MaterializeViewAsStub() => {
-
+        case MaterializeViewAsStub() => stateTransition {
           //TODO: Determine distcp source path
           val sourcePath = s"hdfs://${settings.prodNameNode}/${currentView.fullPathBuilder(settings.prodEnv)}"
-          val targetPath = s"hdfs://${settings.nameNode}/${currentView.fullPath}"
-          //TODO: set transformation to DistCp
-          currentView.registeredTransformation = () => NoOp()
+
+          currentView.registeredTransformation = () => DistCpTransformation.copyToDirToView(sourcePath, currentView)
           //use transform only mode to mute dependencies
           stateMachine.materialize(currentState, senderRef, MaterializeViewMode.TRANSFORM_ONLY)
         }
@@ -216,14 +214,14 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
         touchSuccessFlag(view)
 
       case Materialize(view, mode) =>
-        if (!view.isExternal) {
-          sendMessageToView(view, MaterializeView(mode))
+        if (view.isExternal) {
+          sendMessageToView(view, MaterializeExternalView(mode))
         } else if (settings.developmentModeEnabled &&
           currentState.view.urlPathPrefix == settings.viewUnderDevelopment) {
           //stub the dependent view
           sendMessageToView(view, MaterializeViewAsStub())
         } else {
-          sendMessageToView(view, MaterializeExternalView(mode))
+          sendMessageToView(view, MaterializeView(mode))
         }
 
       case Transform(view) =>

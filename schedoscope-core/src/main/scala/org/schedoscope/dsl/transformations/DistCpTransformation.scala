@@ -30,8 +30,8 @@ object DistCpTransformation {
     DistCpTransformation(targetView, List(sourcePath), target)
   }
 
-  def copyToPathToView(sourcePath: String, targetView: View): DistCpTransformation = {
-    DistCpTransformation(targetView, List(sourcePath), targetView.fullPath)
+  def copyToFileToView(sourceFile: String, targetView: View): DistCpTransformation = {
+    DistCpTransformation(targetView, List(sourceFile), targetView.fullPath)
   }
 
 }
