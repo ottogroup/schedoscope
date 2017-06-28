@@ -214,7 +214,6 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
         touchSuccessFlag(view)
 
       case Materialize(view, mode) =>
-        log.info(s"Sending materialize! $view")
         if (view.isExternal) {
           sendMessageToView(view, MaterializeExternalView(mode))
         } else if (settings.developmentModeEnabled &&

@@ -235,7 +235,11 @@ class ViewManagerActor(settings: SchedoscopeSettings,
         List()
       } else {
         visited.add(v)
-        v :: unknownViewsOrDependencies(v.dependencies, visited)
+        if (settings.developmentModeEnabled && settings.viewUnderDevelopment == v.urlPathPrefix) {
+          v :: unknownViewsOrDependencies(List(), visited)
+        } else {
+          v :: unknownViewsOrDependencies(v.dependencies, visited)
+        }
       }
     }
 
