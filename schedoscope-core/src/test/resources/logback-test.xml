@@ -11,9 +11,9 @@
 
     <logger name="org.apache.hadoop.hive.ql.Driver" level="ERROR"/>
 
-    <logger name="org.apache.hadoop.mapred" level="ERROR"/>
+    <logger name="org.apache.hadoop.mapred" level="INFO"/>
 
-    <root level="OFF">
+    <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>
