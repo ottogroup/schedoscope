@@ -113,6 +113,18 @@ trait LoadableView extends WritableView {
   }
 
   /**
+    * TODO:
+    * Configures the associated transformation with the given property (as
+    * key value pair)
+    */
+  def withConfiguration(conf: Map[String, Any]) {
+    conf.foreach {
+      case (k, v) =>
+        configureTransformation(k, v)
+    }
+  }
+
+  /**
     * Configures the associated transformation with the given property (as
     * multiple key value pairs)
     */
@@ -193,7 +205,7 @@ trait test extends LoadableView with AccessRowData {
   }
 
   override def tablePath = storageFormat match {
-    case Avro(testPath, _) => new File(getClass.getResource("/"+testPath).getPath).getParentFile.getAbsolutePath
+    case Avro(testPath, _) => new File(getClass.getResource("/" + testPath).getPath).getParentFile.getAbsolutePath
 
     case _ => tablePathBuilder(env)
   }
