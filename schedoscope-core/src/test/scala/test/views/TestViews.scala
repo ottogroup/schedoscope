@@ -94,6 +94,15 @@ case class ProductBrand(shopCode: Parameter[String],
       withFunctions(this, Map("soundex" -> classOf[GenericUDFSoundex]))))
 }
 
+case class ProductBrandClick(shopCode: Parameter[String],
+                             year: Parameter[String],
+                             month: Parameter[String],
+                             day: Parameter[String]) extends View {
+
+  val productBrand = dependsOn(() => ProductBrand(shopCode,year,month,day))
+  val click = dependsOn(() => Click(shopCode,year,month,day))
+}
+
 case class ViewWithIllegalExternalDeps(shopCode: Parameter[String]) extends View {
 
   val shop = dependsOn(() => external(Brand(shopCode)))
