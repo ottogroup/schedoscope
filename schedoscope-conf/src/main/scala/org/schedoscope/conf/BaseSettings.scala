@@ -165,7 +165,11 @@ class BaseSettings(val config: Config) {
   /**
     * Root path of data on the production hdfs
     */
-  lazy val prodViewDataHdfsRoot = config.getString("schedoscope.development.prodViewDataHdfsRoot")
+  lazy val prodViewDataHdfsRoot = if(config.getString("schedoscope.development.prodViewDataHdfsRoot").isEmpty) {
+    viewDataHdfsRoot
+  } else {
+    config.getString("schedoscope.development.prodViewDataHdfsRoot")
+  }
 
   /**
     * View which is tested in development

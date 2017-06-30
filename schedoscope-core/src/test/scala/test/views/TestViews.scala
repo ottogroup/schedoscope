@@ -99,8 +99,8 @@ case class ProductBrandClick(shopCode: Parameter[String],
                              month: Parameter[String],
                              day: Parameter[String]) extends View {
 
-  val productBrand = dependsOn(() => ProductBrand(shopCode,year,month,day))
-  val click = dependsOn(() => Click(shopCode,year,month,day))
+  val productBrand = dependsOn(() => ProductBrand(shopCode, year, month, day))
+  val click = dependsOn(() => Click(shopCode, year, month, day))
 }
 
 case class ViewWithIllegalExternalDeps(shopCode: Parameter[String]) extends View {
@@ -276,43 +276,38 @@ trait ClickEC01 extends View
 }
 
 case class ClickOfEC01(year: Parameter[String],
-                     month: Parameter[String],
-                     day: Parameter[String]) extends ClickEC01
-   {
+                       month: Parameter[String],
+                       day: Parameter[String]) extends ClickEC01 {
   storedAs(TextFile())
 }
 
 case class ClickEC01Json(year: Parameter[String],
                          month: Parameter[String],
-                         day: Parameter[String]) extends ClickEC01
-{
+                         day: Parameter[String]) extends ClickEC01 {
   storedAs(Json())
 }
 
 case class ClickEC01ORC(year: Parameter[String],
                         month: Parameter[String],
-                        day: Parameter[String]) extends ClickEC01
-{
+                        day: Parameter[String]) extends ClickEC01 {
   storedAs(OptimizedRowColumnar())
 }
 
 case class ClickEC01Parquet(year: Parameter[String],
                             month: Parameter[String],
-                            day: Parameter[String]) extends ClickEC01
-{
+                            day: Parameter[String]) extends ClickEC01 {
   storedAs(Parquet())
 }
 
 case class ClickEC01Avro(year: Parameter[String],
                          month: Parameter[String],
-                         day: Parameter[String]) extends ClickEC01
-{
+                         day: Parameter[String]) extends ClickEC01 {
   storedAs(Avro("avro_schemas/click_of_e_c0101_avro.avsc"))
 }
 
 case class ClickOfEC0101WithJdbcExport(year: Parameter[String],
-                                     month: Parameter[String],
-                                     day: Parameter[String]) extends View
+                                       month: Parameter[String],
+                                       day: Parameter[String]) extends View
   with Id
   with DailyParameterization {
 
@@ -333,8 +328,8 @@ case class ClickOfEC0101WithJdbcExport(year: Parameter[String],
 }
 
 case class ClickOfEC0101WithRedisExport(year: Parameter[String],
-                                      month: Parameter[String],
-                                      day: Parameter[String]) extends View
+                                        month: Parameter[String],
+                                        day: Parameter[String]) extends View
   with Id
   with DailyParameterization {
 
@@ -377,8 +372,8 @@ case class ClickOfEC01WithKafkaExport(year: Parameter[String],
 }
 
 case class ClickOfEC0101WithFtpExport(year: Parameter[String],
-                                    month: Parameter[String],
-                                    day: Parameter[String]) extends View
+                                      month: Parameter[String],
+                                      day: Parameter[String]) extends View
   with Id
   with DailyParameterization {
 
@@ -431,10 +426,9 @@ case class ClicksGroupUrlShop(shopCodes: Parameter[List[String]],
 }
 
 
-
 case class SimpleDependendView() extends View with Id {
   val field1 = fieldOf[String]
-  tablePathBuilder = s => "src/test/resources/input"
+  tablePathBuilder = (s1, s2) => "src/test/resources/input"
 
   storedAs(TextFile())
 
@@ -442,7 +436,7 @@ case class SimpleDependendView() extends View with Id {
 
 case class HDFSInputView() extends View with Id {
   val field1 = fieldOf[String]
-  tablePathBuilder = s => "/tmp/test"
+  tablePathBuilder = (s1, s2) => "/tmp/test"
   storedAs(Parquet())
 }
 
