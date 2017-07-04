@@ -59,7 +59,6 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
     case CommandForView(sourceView, targetView, command) => {
 
       //mark the currentState as implicit for calling  stateTransition
-
       implicit val currentState = viewStates.get(targetView.urlPath) match {
         case Some(state) => state
         case None =>
@@ -80,7 +79,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
         }
 
         case MaterializeViewAsStub() => stateTransition {
-       
+
           val sourcePath = s"hdfs://${settings.prodNameNode}/" +
             s"${currentView.fullPathBuilder(settings.prodEnv, settings.prodViewDataHdfsRoot)}"
 
@@ -216,7 +215,11 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
       case Materialize(view, mode) =>
         if (view.isExternal) {
-          sendMessageToView(view, MaterializeExternalView(mode))
+          if(settings.developmentModeEnabled) {
+            sendMessageToView(view, MaterializeViewAsStub())
+          } else {
+            sendMessageToView(view, MaterializeExternalView(mode))
+          }
         } else if (settings.developmentModeEnabled &&
           currentState.view.urlPathPrefix == settings.viewUnderDevelopment) {
           log.info(s"View is in development $view")
