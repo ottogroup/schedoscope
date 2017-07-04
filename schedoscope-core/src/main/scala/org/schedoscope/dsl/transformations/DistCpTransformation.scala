@@ -21,7 +21,6 @@ object DistCpTransformation {
 
   def copyToView(sourceView: View, targetView: View): DistCpTransformation = {
     val target = targetView.fullPath.split("/").dropRight(1).mkString("/")
-    println(target)
     DistCpTransformation(targetView, List(sourceView.fullPath), target)
   }
 
@@ -45,12 +44,19 @@ case class DistCpTransformation(v: View,
 
   var directoriesToDelete = if (deleteViewPath) List(v.fullPath) else List()
 
-  val internalJobSubmit = true
-
-  val cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceBaseTransformation]) =>
+  override val cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceBaseTransformation]) =>
     DriverRunState[MapreduceBaseTransformation] = (_, __, completionRunState) => completionRunState
 
-  lazy val job: Job = new DistCp(config, distCpOptions).execute()
+  lazy val job: Job = {
+    val distCp = new DistCp(config, distCpOptions)
+    val createJob = distCp.getClass.getDeclaredMethod("createJob")
+    createJob.setAccessible(true)
+    val job = createJob.invoke(distCp).asInstanceOf[Job]
+    val prepareFileListing = distCp.getClass.getDeclaredMethod("prepareFileListing", job.getClass)
+    prepareFileListing.setAccessible(true)
+    prepareFileListing.invoke(distCp, job)
+    job
+  }
 
   def distCpOptions: DistCpOptions = if (configuration.nonEmpty) {
     DistCpConfiguration
@@ -64,7 +70,7 @@ case class DistCpTransformation(v: View,
 
 object DistCpConfiguration {
 
-  def create(): DistCpConfiguration = {
+  def apply(): DistCpConfiguration = {
     new DistCpConfiguration()
   }
 
@@ -73,7 +79,7 @@ object DistCpConfiguration {
   }
 
   implicit def fromConfig(config: Map[String, Any]): DistCpConfiguration = {
-    DistCpConfiguration.create().fromConfiguration(config)
+    DistCpConfiguration().fromConfiguration(config)
   }
 }
 

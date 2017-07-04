@@ -44,10 +44,9 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
           t.configure
           t.directoriesToDelete.foreach(d => fileSystemDriver.delete(d, true))
 
-          if(!t.internalJobSubmit) {
-            t.job.setJobName(t.getViewUrl())
-            t.job.submit()
-          }
+          t.job.setJobName(t.getViewUrl())
+          t.job.submit()
+
           if (fileSystemDriver.listFiles(t.v.fullPath).isEmpty)
             fileSystemDriver.mkdirs(t.v.fullPath)
 

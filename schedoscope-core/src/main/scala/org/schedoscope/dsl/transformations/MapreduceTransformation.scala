@@ -48,8 +48,6 @@ case class MapreduceTransformation(v: View,
 
   lazy val job = createJob(configuration.toMap)
 
-  val internalJobSubmit = false
-
   var directoriesToDelete = dirsToDelete ++ (if (deleteViewPath) List(v.fullPath) else List())
 
   description = StringUtils.abbreviate(v.urlPath, 100)
@@ -58,8 +56,6 @@ case class MapreduceTransformation(v: View,
 trait MapreduceBaseTransformation extends Transformation {
 
   def name = "mapreduce"
-
-  val internalJobSubmit: Boolean
 
   val cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceBaseTransformation]) => DriverRunState[MapreduceBaseTransformation]
 

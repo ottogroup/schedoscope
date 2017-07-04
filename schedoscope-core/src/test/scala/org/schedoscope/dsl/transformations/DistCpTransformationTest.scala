@@ -24,6 +24,8 @@ case class CopyProductBrand(shopCode: Parameter[String],
 
   val product = dependsOn(() => ProductBrand(shopCode, year, month, day))
 
+
+
   transformVia(() => DistCpTransformation.copyToView(product(), this))
   storedAs(TextFile(fieldTerminator = "\t"))
 }
@@ -46,7 +48,7 @@ class DistCpTransformationTest extends SchedoscopeSpec {
     println(Schedoscope.settings.viewDataHdfsRoot)
     new CopyProductBrand(p("ec0106"), p("2014"), p("01"), p("01")) with test {
       basedOn(productBrandView)
-      val conf = DistCpConfiguration.create()
+      val conf = DistCpConfiguration()
       conf.sourcePaths = List(new Path(productBrandView.fullPath))
       withConfiguration(conf)
       then()
