@@ -1,3 +1,18 @@
+/**
+  * Copyright 2015 Otto (GmbH & Co KG)
+  *
+  * Licensed under the Apache License, Version 2.0 (the "License");
+  * you may not use this file except in compliance with the License.
+  * You may obtain a copy of the License at
+  *
+  * http://www.apache.org/licenses/LICENSE-2.0
+  *
+  * Unless required by applicable law or agreed to in writing, software
+  * distributed under the License is distributed on an "AS IS" BASIS,
+  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  * See the License for the specific language governing permissions and
+  * limitations under the License.
+  */
 package org.schedoscope.dsl.transformations
 
 import _root_.test.views.ProductBrand
@@ -45,7 +60,6 @@ class DistCpTransformationTest extends SchedoscopeSpec {
   }
 
   "DistCp" should "copy a file" in {
-    println(Schedoscope.settings.viewDataHdfsRoot)
     new CopyProductBrand(p("ec0106"), p("2014"), p("01"), p("01")) with test {
       basedOn(productBrandView)
       val conf = DistCpConfiguration()
@@ -53,7 +67,6 @@ class DistCpTransformationTest extends SchedoscopeSpec {
       withConfiguration(conf)
       then()
       numRows() shouldBe 1
-      println(rowData)
       row(
         v(productId) shouldBe "id",
         v(brandName) shouldBe "brand")
