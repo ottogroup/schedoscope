@@ -307,6 +307,30 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   }
 
+  it should "stub its dependencies if dev mode on and dependency is external" in new TableActorStubbingTest {
+
+    val viewWithExt = ViewWithExternalDeps(p("ec0101"), p("2016"), p("11"), p("07"))
+    val extView = viewWithExt.dependencies.head
+    val extActor = TestProbe()
+    val actorWithExt = system.actorOf(TableActor.props(
+      Map(viewWithExt -> CreatedByViewManager(viewWithExt)),
+      settings,
+      Map(extView.tableName -> extActor.ref),
+      viewManagerActor.ref,
+      transformationManagerActor.ref,
+      schemaManagerRouter.ref,
+      viewSchedulingListenerManagerActor.ref))
+
+    actorWithExt ! CommandForView(None, viewWithExt, MaterializeView())
+    extActor.expectMsg(CommandForView(Some(viewWithExt), extView, MaterializeViewAsStub()))
+    extActor.reply(CommandForView(Some(extView), viewWithExt, ViewMaterialized(extView, incomplete = false, 1L, errors = false)))
+    transformationManagerActor.expectMsg(viewWithExt)
+    val success = TransformationSuccess(mock[DriverRunHandle[HiveTransformation]], mock[DriverRunSucceeded[HiveTransformation]], true)
+    transformationManagerActor.reply(CommandForView(None, viewWithExt, success))
+
+    expectMsgType[ViewMaterialized]
+  }
+
   "A view" should "reload it's state and ignore it's deps when called view external materialize" in new TableActorTest {
     val viewNE = ProductBrand(p("ec0101"), p("2016"), p("11"), p("07"))
     val viewE = ExternalView(ProductBrand(p("ec0101"), p("2016"), p("11"), p("07")))
