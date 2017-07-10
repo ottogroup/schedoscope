@@ -216,6 +216,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
       case Materialize(view, mode) =>
         if (view.isExternal) {
           if(settings.developmentModeEnabled) {
+            log.info(s"Materialize view as stub $view")
             sendMessageToView(view, MaterializeViewAsStub())
           } else {
             sendMessageToView(view, MaterializeExternalView(mode))

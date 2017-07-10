@@ -66,10 +66,10 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * moduleNameBuilder, replacing _ with / and prepending /hdp/dev/ for the default dev environment.
     */
   override var dbPathBuilder = (env: String, viewDataHdfsRoot: String) =>
-    if (s3Bucket.isDefined && s3UriScheme.isDefined)
+    (if (s3Bucket.isDefined && s3UriScheme.isDefined)
       s3BucketPathBuilder(s3Bucket.get, s3UriScheme.get)
     else
-      viewDataHdfsRoot + "/" + env.toLowerCase() +
+      viewDataHdfsRoot) + "/" + env.toLowerCase() +
         "/" + moduleNameBuilder()
         .replaceFirst("app", "applications").replaceAll("_", "/")
 
@@ -79,10 +79,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * be surrounded by additionalStoragePathPrefix and additionalStoragePathSuffix, if set.
     */
   override var tablePathBuilder = (env: String, viewDataHdfsRoot: String) => dbPathBuilder(env, viewDataHdfsRoot) +
-    (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") +
-    "/" +
-    n +
-    (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
+      (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") +
+      "/" +
+      n +
+      (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
+
   /**
     * Pluggable builder function that returns the relative partition path for the view. By default,
     * this is the standard Hive /partitionColumn=value/... pattern.
