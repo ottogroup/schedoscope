@@ -53,6 +53,12 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
+  if (settings.developmentModeEnabled) {
+    log.info("development mode is enabled.")
+  } else {
+    log.info("development mode is disabled.")
+  }
+
   /**
     * Message handler.
     */
