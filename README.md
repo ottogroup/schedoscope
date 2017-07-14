@@ -50,7 +50,7 @@ Check out Metascope! It's an add-on to Schedoscope for collaborative metadata ma
 
 - [Metascope Primer](https://github.com/ottogroup/schedoscope/wiki/Metascope%20Primer)
 
-![Metascope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/lineage.png)
+![Metascope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/view-lineage.png)
 
 ## When is Schedoscope not for you?
 
@@ -76,6 +76,12 @@ We would love to get contributions from you as well. We haven't got a formalized
 Please help making Schedoscope better!
 
 ## News
+
+###### 07/04/2017 - Release 0.8.7
+
+We have released Version 0.8.7 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This version contains a critical Metascope bugfix introduced with the last version preventing startup. Also, finally Metascope field lineage documentation has been provided in the [View DSL Primer](https://github.com/ottogroup/schedoscope/wiki/Schedoscope-View-DSL-Primer) and the [Metascope Primer](https://github.com/ottogroup/schedoscope/wiki/Metascope-Primer).
 
 ###### 06/23/2017 - Release 0.8.6
 
