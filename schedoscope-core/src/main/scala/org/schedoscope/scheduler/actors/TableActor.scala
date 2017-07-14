@@ -83,6 +83,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
           val sourcePath = s"hdfs://${settings.prodNameNode}/" +
             s"${currentView.fullPathBuilder(settings.prodEnv, settings.prodViewDataHdfsRoot)}"
 
+
           currentView.registeredTransformation = () => DistCpTransformation.copyToDirToView(sourcePath, currentView)
           //use transform only mode to mute dependencies
           stateMachine.materialize(currentState, senderRef, MaterializeViewMode.TRANSFORM_ONLY)
