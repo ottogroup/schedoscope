@@ -86,7 +86,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
           sender ! ViewStatusListResponse(Success(viewStates))
 
         case Failure(t) => sender ! ViewStatusListResponse(Failure(t))
-      }n
+      }
 
     case v: View =>
       tableActorForView(v) match {
