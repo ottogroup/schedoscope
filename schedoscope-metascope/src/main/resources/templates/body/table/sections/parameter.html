@@ -21,7 +21,7 @@
             <th>Type</th>
             <th>Documentation</th>
         </tr>
-        <div data-th-each="parameter : ${table.parameters}">
+        <div data-th-each="parameter : ${table.getOrderedParameters()}">
             <tr style="border-bottom: 1px solid lightgrey;">
                 <td data-th-text="${parameter.fieldName}"></td>
                 <td data-th-text="${parameter.fieldType}"/>
@@ -41,7 +41,7 @@
         </div>
     </table>
 
-    <div data-th-each="parameter : ${table.parameters}">
+    <div data-th-each="parameter : ${table.getOrderedParameters()}">
         <div th:id="'parameterContent-' + ${parameter.fieldName}" class="fieldDocumentation">
             <div data-th-replace="body/table/sections/documentation_field :: documentation(${parameter}, ${util})"></div>
         </div>
