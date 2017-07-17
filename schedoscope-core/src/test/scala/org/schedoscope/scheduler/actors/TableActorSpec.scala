@@ -261,7 +261,7 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     val transformCommand = transformationManagerActor.expectMsg(view)
     transformCommand.transformation() shouldBe a[ShellTransformation]
-    
+
     val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[ShellTransformation]],
       mock[DriverRunSucceeded[ShellTransformation]],
       true))
