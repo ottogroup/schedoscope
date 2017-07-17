@@ -174,7 +174,7 @@ class BaseSettings(val config: Config) {
   /**
     * Use ssh for distcp
     */
-  lazy val devSshEnabled = config.getString("schedoscope.development.sshEnabled")
+  lazy val devSshEnabled = config.getBoolean("schedoscope.development.sshEnabled")
 
   /**
     * Target for distcp

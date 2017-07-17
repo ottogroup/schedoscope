@@ -20,9 +20,9 @@ import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
 import org.schedoscope.{Settings, TestUtils}
-import org.schedoscope.dsl.ExternalView
+import org.schedoscope.dsl.{ExternalView, transformations}
 import org.schedoscope.dsl.Parameter._
-import org.schedoscope.dsl.transformations.{HiveTransformation, MapreduceBaseTransformation, NoOp, Touch}
+import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.driver.{DriverRunHandle, DriverRunSucceeded}
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states.CreatedByViewManager
@@ -96,6 +96,13 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
   trait TableActorStubbingTest extends TableActorTest {
     override lazy val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
       "schedoscope.development.viewUrl = test.views/ProductBrand")
+  }
+
+  trait TableActorStubbingSshTest extends TableActorTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
+      "schedoscope.development.viewUrl = test.views/ProductBrand",
+      "schedoscope.development.sshEnabled = true",
+      "schedoscope.development.sshTarget = bambam")
   }
 
 
@@ -229,14 +236,34 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
     viewActor ! CommandForView(None, view, MaterializeViewAsStub())
 
-    println(view.urlPathPrefix)
     //dependencies should not be notified
     brandViewActor.expectNoMsg()
     productViewActor.expectNoMsg()
 
-    transformationManagerActor.expectMsg(view)
+    val transformCommand = transformationManagerActor.expectMsg(view)
+    transformCommand.transformation() shouldBe a[DistCpTransformation]
+
     val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[MapreduceBaseTransformation]],
       mock[DriverRunSucceeded[MapreduceBaseTransformation]],
+      true))
+    transformationManagerActor.reply(success)
+
+    expectMsgType[ViewMaterialized]
+  }
+
+  it should "materialize a stubbed view over ssh successfully" in new TableActorStubbingSshTest {
+
+    viewActor ! CommandForView(None, view, MaterializeViewAsStub())
+
+    //dependencies should not be notified
+    brandViewActor.expectNoMsg()
+    productViewActor.expectNoMsg()
+
+    val transformCommand = transformationManagerActor.expectMsg(view)
+    transformCommand.transformation() shouldBe a[ShellTransformation]
+    
+    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[ShellTransformation]],
+      mock[DriverRunSucceeded[ShellTransformation]],
       true))
     transformationManagerActor.reply(success)
 

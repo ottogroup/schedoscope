@@ -23,7 +23,7 @@ import org.joda.time.LocalDateTime
 import org.schedoscope.AskPattern.{queryActor, retryOnTimeout}
 import org.schedoscope.conf.SchedoscopeSettings
 import org.schedoscope.dsl.View
-import org.schedoscope.dsl.transformations.{Checksum, DistCpTransformation, NoOp, Touch}
+import org.schedoscope.dsl.transformations._
 import org.schedoscope.scheduler.messages._
 import org.schedoscope.scheduler.states._
 
@@ -83,8 +83,16 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
           val sourcePath = s"hdfs://${settings.prodNameNode}/" +
             s"${currentView.fullPathBuilder(settings.prodEnv, settings.prodViewDataHdfsRoot)}"
 
+          log.info(s"source path: $sourcePath")
 
-          currentView.registeredTransformation = () => DistCpTransformation.copyToDirToView(sourcePath, currentView)
+          if (settings.devSshEnabled) {
+            log.info(s"using ssh to execute distcp from ${settings.devSshTarget}")
+            currentView.registeredTransformation = () => SshDistcpTransformation
+              .copyFromProd(sourcePath, currentView, settings.devSshTarget)
+          } else {
+            currentView.registeredTransformation = () => DistCpTransformation.copyToDirToView(sourcePath, currentView)
+          }
+
           //use transform only mode to mute dependencies
           stateMachine.materialize(currentState, senderRef, MaterializeViewMode.TRANSFORM_ONLY)
         }
@@ -216,7 +224,7 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
       case Materialize(view, mode) =>
         if (view.isExternal) {
-          if(settings.developmentModeEnabled) {
+          if (settings.developmentModeEnabled) {
             log.info(s"Materialize view as stub $view")
             sendMessageToView(view, MaterializeViewAsStub())
           } else {
