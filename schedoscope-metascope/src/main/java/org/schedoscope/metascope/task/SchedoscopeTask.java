@@ -337,7 +337,7 @@ public class SchedoscopeTask extends Task {
         String parametersAsString = viewName.replace(table.getViewPath(), "");
         if (!parametersAsString.isEmpty()) {
             parameterString = new String();
-            Set<MetascopeField> parameters = table.getParameters();
+            List<MetascopeField> parameters = table.getOrderedParameters();
             String[] parameterValue = parametersAsString.split("/");
             Iterator<MetascopeField> iterator = parameters.iterator();
             int i = 0;
