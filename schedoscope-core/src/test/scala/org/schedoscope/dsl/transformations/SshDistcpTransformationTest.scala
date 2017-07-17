@@ -12,14 +12,13 @@ class SshDistcpTransformationTest extends FlatSpec with Matchers {
 
     val settings = TestUtils.createSettings("schedoscope.development.sshTarget=bambam",
       "schedoscope.development.nameNode=feuerstein", "schedoscope.hadoop.nameNode=test")
-    Schedoscope.settingsBuilder = () => settings
 
     val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
 
-    val sourcePath = s"hdfs://${Schedoscope.settings.prodNameNode}" +
-      s"${view.fullPathBuilder(settings.prodEnv, Schedoscope.settings.prodViewDataHdfsRoot)}"
+    val sourcePath = s"hdfs://${settings.prodNameNode}" +
+      s"${view.fullPathBuilder(settings.prodEnv, settings.prodViewDataHdfsRoot)}"
 
-    val transformation = SshDistcpTransformation.copyFromProd(sourcePath, view, Schedoscope.settings.devSshTarget)
+    val transformation = SshDistcpTransformation.copyFromProd(sourcePath, view, settings.devSshTarget)
 
     //replace the dump file:/// namenode
     val res = transformation.script.replace("file:///","bambam")
