@@ -22,7 +22,7 @@
             <b>Filter by partitions</b>
         </h5>
         <hr/>
-        <div data-th-each="parameter : ${table.parameters}">
+        <div data-th-each="parameter : ${table.getOrderedParameters()}">
             <div class="row">
                 <div class="col-md-12">
                     <div class="control-group">

@@ -537,6 +537,14 @@ public class MetascopeTable extends Documentable {
         return result;
     }
 
+    public List<MetascopeField> getOrderedParameters() {
+        List<MetascopeField> ordered = new ArrayList<>();
+        for (MetascopeField parameter : parameters) {
+            ordered.add(parameter.getFieldOrder(), parameter);
+        }
+        return ordered;
+    }
+
     public List<String> getExportNames() {
         List<String> result = new ArrayList<String>();
         if (exports == null) {

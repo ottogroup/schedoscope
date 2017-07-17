@@ -16,7 +16,7 @@
 
 <tr data-th-each="partition : ${views}" style="border-bottom: 1px solid lightgrey;"
     th:id="${partition.internalViewId()}">
-    <td data-th-each="parameter:${table.parameters}"
+    <td data-th-each="parameter:${table.getOrderedParameters()}"
         data-th-text="${partition.getValueForParameterName(parameter.fieldName)}"/>
     <td data-th-if="${table.parameters.size() == 0}">/</td>
     <td data-th-if="${partition.dependencies.size() > 0}" th:with="dependencyMap=${partition.getDependencyMap()}">

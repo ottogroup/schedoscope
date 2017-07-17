@@ -27,7 +27,7 @@
             <table class="table table-bordered table-striped tablesorter-default" id="partitionsTable">
                 <thead>
                 <tr class="info">
-                    <th data-th-each="parameter:${table.parameters}" data-th-text="${parameter.fieldName}"></th>
+                    <th data-th-each="parameter:${table.getOrderedParameters()}" data-th-text="${parameter.fieldName}"></th>
                     <td data-th-if="${table.parameters.size() == 0}"></td>
                     <th data-th-if="${table.dependencies.size() > 0}">Based On</th>
                     <th data-th-if="${table.successors.size() > 0}">Used By</th>
