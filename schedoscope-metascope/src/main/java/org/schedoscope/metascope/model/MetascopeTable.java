@@ -19,10 +19,7 @@ import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Entity
 public class MetascopeTable extends Documentable {
@@ -538,11 +535,11 @@ public class MetascopeTable extends Documentable {
     }
 
     public List<MetascopeField> getOrderedParameters() {
-        List<MetascopeField> ordered = new ArrayList<>();
+        MetascopeField[] orderedArray = new MetascopeField[parameters.size()];
         for (MetascopeField parameter : parameters) {
-            ordered.add(parameter.getFieldOrder(), parameter);
+            orderedArray[parameter.getFieldOrder()] = parameter;
         }
-        return ordered;
+        return Arrays.asList(orderedArray);
     }
 
     public List<String> getExportNames() {
