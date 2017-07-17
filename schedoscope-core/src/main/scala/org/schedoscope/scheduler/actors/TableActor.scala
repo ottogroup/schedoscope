@@ -80,15 +80,16 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
 
         case MaterializeViewAsStub() => stateTransition {
 
-          val sourcePath = s"hdfs://${settings.prodNameNode}/" +
+          val sourcePath = s"hdfs://${settings.prodNameNode}" +
             s"${currentView.fullPathBuilder(settings.prodEnv, settings.prodViewDataHdfsRoot)}"
 
           log.info(s"source path: $sourcePath")
 
           if (settings.devSshEnabled) {
             log.info(s"using ssh to execute distcp from ${settings.devSshTarget}")
-            currentView.registeredTransformation = () => SshDistcpTransformation
-              .copyFromProd(sourcePath, currentView, settings.devSshTarget)
+            val transformation = SshDistcpTransformation.copyFromProd(sourcePath, currentView, settings.devSshTarget)
+            log.info(s"shell command ${transformation.script}")
+            currentView.registeredTransformation = () => transformation
           } else {
             currentView.registeredTransformation = () => DistCpTransformation.copyToDirToView(sourcePath, currentView)
           }
