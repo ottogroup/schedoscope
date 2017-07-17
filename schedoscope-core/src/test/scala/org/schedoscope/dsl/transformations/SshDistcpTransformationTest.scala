@@ -25,8 +25,8 @@ class SshDistcpTransformationTest extends FlatSpec with Matchers {
     val res = transformation.script.replace("file:///","bambam")
 
     res shouldBe "ssh -K bambam 'hadoop distcp -m 50 " +
-      "hdfs://locahost:8020/hdp/prod/test/views/product_brand/shop_code=ec0106/year=2014/month=01/day=01/date_id=20140101 " +
-      "hdfs://bambam/hdp/dev/test/views/product_brand/shop_code=ec0106/year=2014/month=01/day=01'"
+      "\"hdfs://locahost:8020/hdp/prod/test/views/product_brand/shop_code=ec0106/year=2014/month=01/day=01/date_id=20140101\" " +
+      "\"hdfs://bambam/hdp/dev/test/views/product_brand/shop_code=ec0106/year=2014/month=01/day=01\"'"
   }
 
 }

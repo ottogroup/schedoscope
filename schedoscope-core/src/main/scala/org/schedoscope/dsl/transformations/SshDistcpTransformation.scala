@@ -9,7 +9,7 @@ object SshDistcpTransformation {
     val target = targetView.fullPath.split("/").dropRight(1).mkString("/")
     val namenode = Schedoscope.settings.nameNode
 
-    ShellTransformation(s"ssh -K $machine 'hadoop distcp -m $mapper \"$source\" \"hdfs://$namenode$target\"'")
+    ShellTransformation(s"""ssh -K $machine 'hadoop distcp -m $mapper "$source" "hdfs://$namenode$target"'""")
   }
 
 }
