@@ -138,11 +138,9 @@ function LineageGraph(containerSelector, direction) {
         // check if graph is acyclic
         if (!dagreD3.graphlib.alg.isAcyclic(fullGraph)) {
             var cycles = dagreD3.graphlib.alg.findCycles(fullGraph);
-            var message = "Lineage graph is not acyclic. Brace yourself, display bugs are coming!";
             cycles.forEach(function (cycle) {
-                message += "\nFound cycle: " + cycle.join(" → ") + " → " + cycle[0];
+                fullGraph.removeEdge(cycle[cycle.length - 2], cycle[cycle.length - 1])
             });
-            alert(message);
         }
 
         if (!startNodes) {
