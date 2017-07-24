@@ -8,12 +8,12 @@ import scala.collection.JavaConverters._
 class DistCpConfiguration {
 
   /**
-    * List of source paths.
+    * List of source paths. Setting this will overwrite the sources parameter of [[DistCpTransformation]].
     */
   var sourcePaths: List[Path] = _
 
   /**
-    * Target path.
+    * Target path. Setting this will overwrite the target parameter of [[DistCpTransformation]].
     */
   var targetPath: Path = _
 
@@ -25,7 +25,7 @@ class DistCpConfiguration {
   /**
     * Set if source and target folder contents be sync'ed up.
     */
-  var syncFolder = false
+  var update = false
 
   /**
     * Delete the files existing in the dst but not in src.
@@ -56,7 +56,7 @@ class DistCpConfiguration {
     * Use snapshot diff report between given two snapshots to identify the difference between source and target,
     * and apply the diff to the target to make it in sync with source.
     *
-    * This option is valid only with [[syncFolder]] option and the following conditions should be satisfied.
+    * This option is valid only with [[update]] option and the following conditions should be satisfied.
     * <p><ul>
     * <li> Both the source and the target FileSystem must be DistributedFileSystem.
     * <li> Two snapshots [[fromSnapshot]] and [[toSnapshot]] have been created on the source FS,
@@ -74,7 +74,7 @@ class DistCpConfiguration {
     * since the snapshot [[fromSnapshot]] was created on the target, and apply the diff reversely to the target,
     * and copy modified files from the source’s [[fromSnapshot]], to make the target the same as [[fromSnapshot]].
     *
-    * This option is valid only with [[syncFolder]] option and the following conditions should be satisfied.
+    * This option is valid only with [[update]] option and the following conditions should be satisfied.
     * <p><ul>
     * <li> Both the source and the target FileSystem must be DistributedFileSystem. The source and the target can be
     *      two different clusters/paths, or they can be exactly the same cluster/path. In the latter case,
@@ -149,7 +149,7 @@ class DistCpConfiguration {
 
   /**
     * Set if we want to append new data to target files. This is valid only with
-    * [[syncFolder]] option and CRC is not skipped.
+    * [[update]] option and CRC is not skipped.
     */
   var append = false
 
@@ -167,7 +167,7 @@ class DistCpConfiguration {
     sourcePaths = configuration("sourcePaths").asInstanceOf[List[Path]]
     targetPath = configuration("targetPath").asInstanceOf[Path]
     atomicCommit = configuration("atomicCommit").asInstanceOf[Boolean]
-    syncFolder = configuration("syncFolder").asInstanceOf[Boolean]
+    update = configuration("syncFolder").asInstanceOf[Boolean]
     deleteMissing = configuration("deleteMissing").asInstanceOf[Boolean]
     ignoreFailures = configuration("ignoreFailures").asInstanceOf[Boolean]
     overwrite = configuration("overwrite").asInstanceOf[Boolean]
@@ -198,7 +198,7 @@ class DistCpConfiguration {
     "sourcePaths" -> sourcePaths,
     "targetPath" -> targetPath,
     "atomicCommit" -> atomicCommit,
-    "syncFolder" -> syncFolder,
+    "syncFolder" -> update,
     "deleteMissing" -> deleteMissing,
     "ignoreFailures" -> ignoreFailures,
     "overwrite" -> overwrite,
@@ -236,7 +236,7 @@ class DistCpConfiguration {
 
     //fill options
     options.setAtomicCommit(atomicCommit)
-    options.setSyncFolder(syncFolder)
+    options.setSyncFolder(update)
     options.setDeleteMissing(deleteMissing)
     options.setIgnoreFailures(ignoreFailures)
     options.setOverwrite(overwrite)

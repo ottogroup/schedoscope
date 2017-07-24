@@ -53,6 +53,8 @@ case class DistCpTransformation(v: View,
 
   override def stringsToChecksum: List[String] = target :: sources
 
+  override def fileResourcesToChecksum = List()
+
 
   override val cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceBaseTransformation]) =>
     DriverRunState[MapreduceBaseTransformation] = (_, __, completionRunState) => completionRunState
