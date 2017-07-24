@@ -3,6 +3,7 @@ package org.schedoscope.dsl.transformations
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.tools.DistCpOptions.FileAttribute
 import org.apache.hadoop.tools.{DistCpConstants, DistCpOptions}
+import scala.collection.JavaConverters._
 
 class DistCpConfiguration {
 

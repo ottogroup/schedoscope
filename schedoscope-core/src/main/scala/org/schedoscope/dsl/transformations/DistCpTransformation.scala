@@ -18,8 +18,7 @@ package org.schedoscope.dsl.transformations
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import org.apache.hadoop.mapreduce.Job
-import org.apache.hadoop.tools.DistCpOptions.FileAttribute
-import org.apache.hadoop.tools.{DistCp, DistCpConstants, DistCpOptions}
+import org.apache.hadoop.tools.{DistCp, DistCpOptions}
 import org.schedoscope.dsl.View
 import org.schedoscope.scheduler.driver.{DriverRunState, MapreduceDriver}
 
