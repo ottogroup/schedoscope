@@ -52,6 +52,9 @@ case class DistCpTransformation(v: View,
 
   var directoriesToDelete = if (deleteViewPath) List(v.fullPath) else List()
 
+  override def stringsToChecksum: List[String] = target :: sources
+
+
   override val cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceBaseTransformation]) =>
     DriverRunState[MapreduceBaseTransformation] = (_, __, completionRunState) => completionRunState
 
