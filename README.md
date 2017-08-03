@@ -24,11 +24,11 @@ Get a glance at
 
 - [Schedoscope's features](https://github.com/ottogroup/schedoscope/wiki/Schedoscope-at-a-Glance)
 
-Build it (you currently need to use JDK7 because of the state of Cloudera dependencies):
+Build it:
 
      [~]$ git clone https://github.com/ottogroup/schedoscope.git
      [~]$ cd schedoscope
-     [~/schedoscope]$  MAVEN_OPTS='-XX:MaxPermSize=512m' mvn clean install
+     [~/schedoscope]$  MAVEN_OPTS='-XX:MaxPermSize=512m -Xmx1G' mvn clean install
      
 Follow the Open Street Map tutorial to install and run Schedoscope in a standard Hadoop distribution image:
 
