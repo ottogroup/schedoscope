@@ -65,11 +65,11 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * The default implementation does this by building a path from the lower-case-underscore format of
     * moduleNameBuilder, replacing _ with / and prepending /hdp/dev/ for the default dev environment.
     */
-  override var dbPathBuilder = (env: String) =>
+  override var dbPathBuilder = (env: String, viewDataHdfsRoot: String) =>
     (if (s3Bucket.isDefined && s3UriScheme.isDefined)
       s3BucketPathBuilder(s3Bucket.get, s3UriScheme.get)
     else
-      Schedoscope.settings.viewDataHdfsRoot) + "/" + env.toLowerCase() +
+      viewDataHdfsRoot) + "/" + env.toLowerCase() +
       "/" + moduleNameBuilder()
       .replaceFirst("app", "applications").replaceAll("_", "/")
 
@@ -78,11 +78,12 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * The default implementation does this by joining dbPathBuilder and n. The latter will
     * be surrounded by additionalStoragePathPrefix and additionalStoragePathSuffix, if set.
     */
-  override var tablePathBuilder = (env: String) => dbPathBuilder(env) +
+  override var tablePathBuilder = (env: String, viewDataHdfsRoot: String) => dbPathBuilder(env, viewDataHdfsRoot) +
     (if (additionalStoragePathPrefix.isDefined) "/" + additionalStoragePathPrefix.get else "") +
     "/" +
     n +
     (if (additionalStoragePathSuffix.isDefined) "/" + additionalStoragePathSuffix.get else "")
+
   /**
     * Pluggable builder function that returns the relative partition path for the view. By default,
     * this is the standard Hive /partitionColumn=value/... pattern.
@@ -93,7 +94,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * The default implementation concatenates the output of tablePathBuilder and partitionPathBuilder for
     * this purpose.
     */
-  override var fullPathBuilder = (env: String) => tablePathBuilder(env) + partitionPathBuilder()
+  override var fullPathBuilder = (env: String, viewDataHdfsRoot: String) =>
+    tablePathBuilder(env, viewDataHdfsRoot) + partitionPathBuilder()
   /**
     * Pluggable builder function returning a path prefix of where Avro schemas can be found in HDFS.
     * By default, this is hdfs:///hdp/$\{env\}/global/datadictionary/schema/avro
@@ -104,6 +106,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * The view's environment.
     */
   def env = Schedoscope.settings.env
+
+  def viewDataHdfsRoot = Schedoscope.settings.viewDataHdfsRoot
 
   var storageFormat: StorageFormat = TextFile()
   var additionalStoragePathPrefix: Option[String] = None
@@ -197,13 +201,13 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
 
   def tableName = tableNameBuilder(env)
 
-  def dbPath = dbPathBuilder(env)
+  def dbPath = dbPathBuilder(env, viewDataHdfsRoot)
 
-  def tablePath = tablePathBuilder(env)
+  def tablePath = tablePathBuilder(env, viewDataHdfsRoot)
 
   def partitionPath = partitionPathBuilder()
 
-  def fullPath = fullPathBuilder(env)
+  def fullPath = fullPathBuilder(env, viewDataHdfsRoot)
 
   def avroSchemaPathPrefix = avroSchemaPathPrefixBuilder(env)
 
@@ -244,7 +248,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     * current view depends on.
     */
   override def dependsOn[V <: View : Manifest](dsf: () => Seq[V]) {
-    val df = () => dsf().map (View.register[V])
+    val df = () => dsf().map(View.register[V])
 
     deferredDependencies += df
   }

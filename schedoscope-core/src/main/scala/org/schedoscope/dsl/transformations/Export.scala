@@ -132,14 +132,14 @@ object Export {
     */
   def jdbcPostCommit(
                       job: Job,
-                      driver: Driver[MapreduceTransformation],
-                      runState: DriverRunState[MapreduceTransformation]): DriverRunState[MapreduceTransformation] = {
+                      driver: Driver[MapreduceBaseTransformation],
+                      runState: DriverRunState[MapreduceBaseTransformation]): DriverRunState[MapreduceBaseTransformation] = {
 
     val jobConfigurer = new JdbcExportJob()
 
     try {
 
-      jobConfigurer.postCommit(runState.isInstanceOf[DriverRunSucceeded[MapreduceTransformation]], job.getConfiguration)
+      jobConfigurer.postCommit(runState.isInstanceOf[DriverRunSucceeded[MapreduceBaseTransformation]], job.getConfiguration)
       runState
 
     } catch {

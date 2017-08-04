@@ -33,7 +33,6 @@ class ShellDriver(val driverRunCompletionHandlerClassNames: List[String]) extend
     * Actually run the shell transformation.
     */
   def doRun(t: ShellTransformation): DriverRunState[ShellTransformation] = {
-    val stdout = new StringBuilder
     val environment = t.configuration.toSeq.map { case (k, v) => (k, v.toString) }
 
     try {

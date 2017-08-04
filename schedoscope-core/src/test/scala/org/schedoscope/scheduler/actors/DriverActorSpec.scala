@@ -131,19 +131,19 @@ class DriverActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
   }
 
-/*  it should "NOT restart Driver actors upon exception thrown on ActorInitialization" in {
-    val hackActor = TestProbe()
+  /*  it should "NOT restart Driver actors upon exception thrown on ActorInitialization" in {
+      val hackActor = TestProbe()
 
-    val transformationManagerActor = system.actorOf(Props(new TransformationManagerActor(settings,
-      bootstrapDriverActors = false) {
-      override def preStart {
-        val bombActor = context.actorOf(Props(new BombActor(hackActor.ref, true)))
-        hackActor.watch(bombActor)
-      }
-    }))
-    hackActor.expectMsg("blasting on start")
-    hackActor.expectMsgPF() { case Terminated(t) => () }
-  }*/
+      val transformationManagerActor = system.actorOf(Props(new TransformationManagerActor(settings,
+        bootstrapDriverActors = false) {
+        override def preStart {
+          val bombActor = context.actorOf(Props(new BombActor(hackActor.ref, true)))
+          hackActor.watch(bombActor)
+        }
+      }))
+      hackActor.expectMsg("blasting on start")
+      hackActor.expectMsgPF() { case Terminated(t) => () }
+    }*/
 
   it should "restart Driver routees upon RetryableDriverException" in {
     val hackActor = TestProbe()

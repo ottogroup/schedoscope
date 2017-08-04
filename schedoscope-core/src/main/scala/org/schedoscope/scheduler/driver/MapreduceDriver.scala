@@ -24,23 +24,23 @@ import org.apache.hadoop.security.UserGroupInformation
 import org.joda.time.LocalDateTime
 import org.schedoscope.Schedoscope
 import org.schedoscope.conf.DriverSettings
-import org.schedoscope.dsl.transformations.MapreduceTransformation
+import org.schedoscope.dsl.transformations.{MapreduceBaseTransformation}
 import org.schedoscope.test.resources.TestResources
 
 /**
   * Driver that executes Mapreduce transformations.
   */
-class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val fileSystemDriver: FilesystemDriver) extends DriverOnNonBlockingApi[MapreduceTransformation] {
+class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], val ugi: UserGroupInformation, val fileSystemDriver: FilesystemDriver) extends DriverOnNonBlockingApi[MapreduceBaseTransformation] {
 
   def transformationName = "mapreduce"
 
-  def run(t: MapreduceTransformation): DriverRunHandle[MapreduceTransformation] = try {
+  def run(t: MapreduceBaseTransformation): DriverRunHandle[MapreduceBaseTransformation] = try {
 
     ugi.doAs {
 
-      new PrivilegedAction[DriverRunHandle[MapreduceTransformation]]() {
+      new PrivilegedAction[DriverRunHandle[MapreduceBaseTransformation]]() {
 
-        def run(): DriverRunHandle[MapreduceTransformation] = {
+        def run(): DriverRunHandle[MapreduceBaseTransformation] = {
           t.configure
           t.directoriesToDelete.foreach(d => fileSystemDriver.delete(d, true))
 
@@ -50,7 +50,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
           if (fileSystemDriver.listFiles(t.v.fullPath).isEmpty)
             fileSystemDriver.mkdirs(t.v.fullPath)
 
-          new DriverRunHandle[MapreduceTransformation](driver, new LocalDateTime(), t, t.job)
+          new DriverRunHandle[MapreduceBaseTransformation](driver, new LocalDateTime(), t, t.job)
         }
       }
     }
@@ -58,7 +58,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
     case e: Throwable => throw RetryableDriverException("Unexpected error occurred while submitting Mapreduce job", e)
   }
 
-  def getDriverRunState(runHandle: DriverRunHandle[MapreduceTransformation]): DriverRunState[MapreduceTransformation] = try {
+  def getDriverRunState(runHandle: DriverRunHandle[MapreduceBaseTransformation]): DriverRunState[MapreduceBaseTransformation] = try {
 
     val job = runHandle.stateHandle.asInstanceOf[Job]
     val jobId = job.getJobName
@@ -66,15 +66,12 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
 
     ugi.doAs {
 
-      new PrivilegedAction[DriverRunState[MapreduceTransformation]]() {
+      new PrivilegedAction[DriverRunState[MapreduceBaseTransformation]]() {
 
-        def run(): DriverRunState[MapreduceTransformation] = job.getJobState match {
-          case PREP | RUNNING =>
-            DriverRunOngoing[MapreduceTransformation](driver, runHandle)
-          case FAILED | KILLED =>
-            cleanupAfterJob(job, driver, DriverRunFailed[MapreduceTransformation](driver, s"Mapreduce job ${jobId} failed with state ${job.getJobState}", null))
-          case SUCCEEDED =>
-            cleanupAfterJob(job, driver, DriverRunSucceeded[MapreduceTransformation](driver, s"Mapreduce job ${jobId} succeeded"))
+        def run(): DriverRunState[MapreduceBaseTransformation] = job.getJobState match {
+          case PREP | RUNNING => DriverRunOngoing[MapreduceBaseTransformation](driver, runHandle)
+          case FAILED | KILLED => cleanupAfterJob(job, driver, DriverRunFailed[MapreduceBaseTransformation](driver, s"Mapreduce job ${jobId} failed with state ${job.getJobState}", null))
+          case SUCCEEDED => cleanupAfterJob(job, driver, DriverRunSucceeded[MapreduceBaseTransformation](driver, s"Mapreduce job ${jobId} succeeded"))
         }
 
       }
@@ -83,7 +80,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
     case e: Throwable => throw RetryableDriverException(s"Unexpected error occurred while checking run state of Mapreduce job", e)
   }
 
-  override def killRun(runHandle: DriverRunHandle[MapreduceTransformation]) = try {
+  override def killRun(runHandle: DriverRunHandle[MapreduceBaseTransformation]) = try {
     val job = runHandle.stateHandle.asInstanceOf[Job]
 
     ugi.doAs {
@@ -107,7 +104,7 @@ class MapreduceDriver(val driverRunCompletionHandlerClassNames: List[String], va
 /**
   * Factory for the mapreduce driver.
   */
-object MapreduceDriver extends DriverCompanionObject[MapreduceTransformation] {
+object MapreduceDriver extends DriverCompanionObject[MapreduceBaseTransformation] {
 
   def apply(ds: DriverSettings) =
     new MapreduceDriver(ds.driverRunCompletionHandlers, Schedoscope.settings.userGroupInformation, FilesystemDriver(Schedoscope.settings.getDriverSettings("filesystem")))

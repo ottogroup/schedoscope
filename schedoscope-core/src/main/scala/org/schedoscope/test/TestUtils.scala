@@ -62,7 +62,7 @@ object TestUtils {
     // edge case to solve issue with recursive dependencies
     var recursiveView = false
     inputFixtures.foreach { v =>
-      if(v.n == view.n && !recursiveView) {
+      if (v.n == view.n && !recursiveView) {
         println(s"[Schedoscope INFO]: The View you are testing - ${view.n} - depends on itself " +
           s"(specified with dependsOn {} method). In these edge cases Schedoscope also changes Storage " +
           s"format of output files into TextFile() of the view being tested (besides for its input views). " +

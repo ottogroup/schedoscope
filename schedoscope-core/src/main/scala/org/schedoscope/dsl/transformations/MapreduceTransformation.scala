@@ -40,20 +40,30 @@ import org.schedoscope.scheduler.service.ViewTransformationStatus
   * @param dirsToDelete    List of directories to empty before execution. Includes the view's fullPath
   *
   */
-case class MapreduceTransformation(
-                                    v: View,
-                                    createJob: (Map[String, Any]) => Job,
-                                    cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceTransformation]) => DriverRunState[MapreduceTransformation] = (_, __, completionRunState) => completionRunState,
-                                    dirsToDelete: List[String] = List(),
-                                    deleteViewPath: Boolean = true) extends Transformation {
-
-  def name = "mapreduce"
+case class MapreduceTransformation(v: View,
+                                   createJob: (Map[String, Any]) => Job,
+                                   cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceBaseTransformation]) => DriverRunState[MapreduceBaseTransformation] = (_, __, completionRunState) => completionRunState,
+                                   dirsToDelete: List[String] = List(),
+                                   deleteViewPath: Boolean = true) extends MapreduceBaseTransformation {
 
   lazy val job = createJob(configuration.toMap)
 
   var directoriesToDelete = dirsToDelete ++ (if (deleteViewPath) List(v.fullPath) else List())
 
   description = StringUtils.abbreviate(v.urlPath, 100)
+}
+
+trait MapreduceBaseTransformation extends Transformation {
+
+  def name = "mapreduce"
+
+  val cleanupAfterJob: (Job, MapreduceDriver, DriverRunState[MapreduceBaseTransformation]) => DriverRunState[MapreduceBaseTransformation]
+
+  val v: View
+
+  val job: Job
+
+  var directoriesToDelete: List[String]
 
   override def fileResourcesToChecksum = {
     val jarName = try {

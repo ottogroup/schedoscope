@@ -212,7 +212,7 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
   }
 
   def ddl(view: View): String =
-      s"""
+    s"""
 \tCREATE EXTERNAL TABLE IF NOT EXISTS ${view.tableName} ${if (view.storageFormat.getClass() != classOf[Avro]) "(\n\t\t" + fieldsDdl(view) + "\n\t)" else ""}
 \t${commentDdl(view)}
 \t${partitionDdl(view)}

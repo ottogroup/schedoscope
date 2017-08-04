@@ -138,7 +138,6 @@ class BaseSettings(val config: Config) {
     List.empty[String]
   }
 
-
   /**
     * Flag for disabling checks for external dependencies
     */
@@ -147,6 +146,45 @@ class BaseSettings(val config: Config) {
   } else {
     false
   }
+
+  /**
+    * Flag for enabling the development mode
+    */
+  lazy val developmentModeEnabled = config.getBoolean("schedoscope.development.enabled")
+
+  /**
+    * Flag for enabling the development mode
+    */
+  lazy val prodNameNode = config.getString("schedoscope.development.prodNameNode")
+
+  /**
+    * Production environment
+    */
+  lazy val prodEnv = config.getString("schedoscope.development.prodEnv")
+
+  /**
+    * Root path of data on the production hdfs
+    */
+  lazy val prodViewDataHdfsRoot = if (config.getString("schedoscope.development.prodViewDataHdfsRoot").isEmpty) {
+    viewDataHdfsRoot
+  } else {
+    config.getString("schedoscope.development.prodViewDataHdfsRoot")
+  }
+
+  /**
+    * Use ssh for distcp
+    */
+  lazy val devSshEnabled = config.getBoolean("schedoscope.development.sshEnabled")
+
+  /**
+    * Target for distcp
+    */
+  lazy val devSshTarget = config.getString("schedoscope.development.sshTarget")
+
+  /**
+    * View which is tested in development
+    */
+  lazy val viewUnderDevelopment = config.getString("schedoscope.development.viewUrl")
 
   /**
     * Number of parallel threads to access the metastore
