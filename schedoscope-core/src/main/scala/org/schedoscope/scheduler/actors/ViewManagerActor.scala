@@ -53,6 +53,12 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
   val viewStatusMap = HashMap[String, ViewStatusResponse]()
 
+  if (settings.developmentModeEnabled) {
+    log.info("development mode is enabled.")
+  } else {
+    log.info("development mode is disabled.")
+  }
+
   /**
     * Message handler.
     */
@@ -150,7 +156,7 @@ class ViewManagerActor(settings: SchedoscopeSettings,
     log.info(s"Looking for unknown views or dependencies for a set of ${vs.size} views.")
 
     val viewsRequiringInitialization = try {
-      unknownViewsOrDependencies(vs.toList)
+      unknownViewsOrDependencies(vs.toList, viewStatusMap.toMap)(settings)
     } catch {
       case t: Throwable => return Failure(new IllegalArgumentException("Some dependencies of the views passed could not be instantiated by the view manager", t))
     }
@@ -223,23 +229,6 @@ class ViewManagerActor(settings: SchedoscopeSettings,
 
 
   /**
-    * This method returns for a given set of views along with their dependencies, which of those are yet known
-    * to the view manager actor
-    *
-    * @param vs views to inspect along with their dependecies
-    * @return the view needing initialization
-    */
-  def unknownViewsOrDependencies(vs: List[View], visited: mutable.HashSet[View] = mutable.HashSet()): List[View] =
-    vs.flatMap { v =>
-      if (visited.contains(v) || viewStatusMap.contains(v.urlPath)) {
-        List()
-      } else {
-        visited.add(v)
-        v :: unknownViewsOrDependencies(v.dependencies, visited)
-      }
-    }
-
-  /**
     * Returns the responsible table actor for a view if it exists.
     */
   def existingTableActorForView(view: View): Option[ActorRef] =
@@ -260,4 +249,28 @@ object ViewManagerActor {
       .withDispatcher("akka.actor.view-manager-dispatcher")
 
   def tableActorNameForView(view: View): String = view.urlPathPrefix.replaceAll("/", ":")
+
+  /**
+    * This method returns for a given set of views along with their dependencies, which of those are yet known
+    * to the view manager actor
+    *
+    * @param vs views to inspect along with their dependecies
+    * @return the view needing initialization
+    */
+  def unknownViewsOrDependencies(vs: List[View],
+                                 vsm: Map[String, ViewStatusResponse],
+                                 visited: mutable.HashSet[View] = mutable.HashSet())
+                                (implicit settings: SchedoscopeSettings): List[View] =
+    vs.flatMap { v =>
+      if (visited.contains(v) || vsm.contains(v.urlPath)) {
+        List()
+      } else {
+        visited.add(v)
+        if (settings.developmentModeEnabled && settings.viewUnderDevelopment == v.urlPathPrefix) {
+          v :: v.dependencies
+        } else {
+          v :: unknownViewsOrDependencies(v.dependencies, vsm, visited)
+        }
+      }
+    }
 }

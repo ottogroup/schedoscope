@@ -155,7 +155,7 @@ class ExportTest extends FlatSpec with Matchers {
 
     val consumer = new SimpleTestKafkaConsumer(v.dbName + "_" + v.n, zkServer.getConnectString, 3)
     for (r <- consumer) {
-      val record: java.util.HashMap[String, _] = new ObjectMapper().readValue(r, TypeFactory.mapType(classOf[java.util.HashMap[_,_]], classOf[String], classOf[Any]))
+      val record: java.util.HashMap[String, _] = new ObjectMapper().readValue(r, TypeFactory.mapType(classOf[java.util.HashMap[_, _]], classOf[String], classOf[Any]))
       record.get("date_id") shouldBe "20140101"
     }
 

@@ -120,6 +120,11 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
       "schedoscope.external-dependencies.home=[\"dev.test.views\"]")
   }
 
+  trait ViewManagerStubbingTest extends ViewManagerActorTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
+      "schedoscope.development.viewUrl = test.views/ProductBrand")
+  }
+
 
   "The ViewManagerActor" should "create a new view" in new ViewManagerActorTest {
     initializeView(view)
@@ -194,4 +199,34 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
     }
 
   }
+
+  "The view manager" should "determined the dependecies of a view" in {
+    implicit val settings = TestUtils.createSettings()
+    val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
+    val result = ViewManagerActor.unknownViewsOrDependencies(List(view), Map.empty[String, ViewStatusResponse])
+    result shouldBe List(view, Brand(p("ec0106")), Product(p("ec0106"), p("2014"), p("01"), p("01")))
+  }
+
+  "The view manager" should "determined the transitive dependecies of a view" in {
+    implicit val settings = TestUtils.createSettings()
+    val view = ProductBrandClick(p("ec0106"), p("2014"), p("01"), p("01"))
+    val result = ViewManagerActor.unknownViewsOrDependencies(List(view), Map.empty[String, ViewStatusResponse])
+    result shouldBe List(view,
+      ProductBrand(p("ec0106"), p("2014"), p("01"), p("01")),
+      Brand(p("ec0106")), Product(p("ec0106"), p("2014"), p("01"), p("01")),
+      Click(p("ec0106"), p("2014"), p("01"), p("01")))
+  }
+
+
+  "The view manager" should "determined ignore the dependencies of a stubbed view" in {
+    implicit val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
+      "schedoscope.development.viewUrl = test.views/ProductBrandClick")
+    val view = ProductBrandClick(p("ec0106"), p("2014"), p("01"), p("01"))
+    val result = ViewManagerActor.unknownViewsOrDependencies(List(view), Map.empty[String, ViewStatusResponse])
+    result shouldBe List(view,
+      ProductBrand(p("ec0106"), p("2014"), p("01"), p("01")),
+      Click(p("ec0106"), p("2014"), p("01"), p("01")))
+  }
+
+
 }

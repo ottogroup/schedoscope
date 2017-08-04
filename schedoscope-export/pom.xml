@@ -9,7 +9,7 @@
     <parent>
         <artifactId>schedoscope-suite</artifactId>
         <groupId>schedoscope</groupId>
-        <version>0.8.8-SNAPSHOT</version>
+        <version>0.9.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -35,10 +35,6 @@
                 <exclusion>
                     <artifactId>slf4j-api</artifactId>
                     <groupId>org.slf4j</groupId>
-                </exclusion>
-                <exclusion>
-                    <artifactId>hive-shims-0.20S</artifactId>
-                    <groupId>org.apache.hive.shims</groupId>
                 </exclusion>
                 <exclusion>
                     <groupId>org.mockito</groupId>
@@ -177,7 +173,7 @@
             <artifactId>joda-time</artifactId>
             <version>2.5</version>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>2.4.4</version>
@@ -186,7 +182,7 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
             <version>2.4.4</version>
-        </dependency>
+        </dependency> -->
         <dependency>
             <groupId>commons-dbutils</groupId>
             <artifactId>commons-dbutils</artifactId>
@@ -259,12 +255,6 @@
                     <groupId>org.slf4j</groupId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.derby</groupId>
-            <artifactId>derby</artifactId>
-            <version>10.11.1.1</version>
-            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.rarefiedredis.redis</groupId>

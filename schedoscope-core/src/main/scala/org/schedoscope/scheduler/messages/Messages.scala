@@ -163,7 +163,16 @@ case class MaterializeView(mode: MaterializeViewMode.MaterializeViewMode = Mater
   *
   * @param mode materialization mode
   */
-case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT) extends CommandRequest
+case class MaterializeExternalView(mode: MaterializeViewMode.MaterializeViewMode = MaterializeViewMode.DEFAULT)
+  extends CommandRequest
+
+/**
+  * Special [[MaterializeView]] command with will stub a view. This is done by copying the data
+  * from a different environment.
+  * Used for development.
+  */
+case class MaterializeViewAsStub()
+  extends CommandRequest
 
 /**
   * Request for the SchemaManager to retrieve partition / table metadta for view.
@@ -216,7 +225,9 @@ case class SchemaActionSuccess() extends CommandResponse
   * @param mode              transformation mode
   * @param materializeSource sender of the [[MaterializeView]] command
   */
-case class MetaDataForMaterialize(metadata: (View, (String, Long)), mode: MaterializeViewMode, materializeSource: PartyInterestedInViewSchedulingStateChange) extends CommandResponse
+case class MetaDataForMaterialize(metadata: (View, (String, Long)),
+                                  mode: MaterializeViewMode,
+                                  materializeSource: PartyInterestedInViewSchedulingStateChange) extends CommandResponse
 
 /**
   * Driver actor notifying view actor of successful transformation.

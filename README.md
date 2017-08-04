@@ -77,6 +77,17 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 08/04/2017 - Release 0.8.9
+
+We have released Version 0.8.9 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This release contains the following enhancements and changes:
+* Cloudera client libraries updated to CDH-5.12.0;
+* a [DistCp transformation](https://github.com/ottogroup/schedoscope/wiki/DistCp-Transformations) for view materialization by parallel, cross-cluser file copying;
+* a new [development mode](https://github.com/ottogroup/schedoscope/wiki/Development-Mode) setup that helps developers to easily copy data from a production environment to the direct dependencies of the view they are developing;
+* shell transformations had to be moved back into `schedoscope-core` to facilitate development mode;
+* a versioning issue with the Scala Maven compiler plugin with regard to Scala 2.10 was fixed so that finally Schedoscope compiles and runs under JDK8 as well.
+
 ###### 07/04/2017 - Release 0.8.7
 
 We have released Version 0.8.7 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
@@ -149,55 +160,6 @@ This release includes a fix removing bad default values for the driver setting `
 We have also upgraded Schedoscope's dependencies to CDH-5.8.3. There is catch, though: we had to backport Schedoscope 0.7.0 to Scala 2.10 for compatibility with Cloudera's Spark 1.6.0 dependencies.
 
 We have released Version 0.7.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-###### 10/20/2016 - Release 0.6.7
-
-Minor improvements to test framework.
-
-###### 10/07/2016 - Release 0.6.6
-We have released Version 0.6.6 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-The test framework has received some love. There are [two new testing styles](https://github.com/ottogroup/schedoscope/wiki/Test%20Framework#alternative-testing-styles) that can make your tests look prettier and run faster:
-* compute a view once and execute multiple tests on its data;
-* create the Hive structures for input views and views under test once and load these with different data within each test case saving Hive environment setup overhead and keeping input data and assertions next to each other within each test.
-
-###### 08/19/2016 - Release 0.6.5
-We have released Version 0.6.5 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-We have factored out Oozie, Pig, and shell transformations and their drivers into separate modules and removed knowledge about which transformation types exist from `schedoscope-core`. Thus, one can now extend Schedoscope with new tranformation types without touching the core.
-
-We have fixed a bug in the test framework where sorting results with null values yielded a null pointer exception.
-
-###### 08/12/2016 - Release 0.6.4
-We have released Version 0.6.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-We have added: 
-* simple parallel [(S)FTP exporting of views](https://github.com/ottogroup/schedoscope/wiki/(S)FTP%20Export)
-* the ability to manually assign versions to transformations with `defineVersion` in order to avoid unnecessary recomputations in complex cases where the automatic transformation logic change detection generates too many false positives.
-
-###### 07/01/2016 - Release 0.6.3
-We have released Version 0.6.3 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-We have fixed a security issue with Metascope that allowed non-admin users to edit taxonomies.
-
-###### 06/30/2016 - Release 0.6.2
-We have released Version 0.6.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-Hadoop dependencies have been updated to CDH-5.7.1. A critical bug that could result in no more views transforming while depending views still waiting has been fixed. Reliability of Metascope has been improved.
-
-###### 06/23/2016 - Release 0.6.1
-We have released Version 0.6.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom). 
-
-Hive transformations are no longer submitted via Hive Server 2 to the cluster but directly via the `hive-exec` library. The reason for this change are stability and resource leakage issues commonly encountered when operating Hive Server 2. Please note that Hive transformations are now issued with `hive.auto.convert.join` set to false by default to limit heap consumption in Schedoscope due to involuntary local map join operations. Refer to [Hive Transformation](https://github.com/ottogroup/schedoscope/wiki/Hive%20Transformations) for more information on how to reenable map joins for queries that need them.
-
-Also: quite a few bug fixes, better error messages when using the CLI client, improved parallelization of JDBC exports.  
-
-###### 05/27/2016 - Release 0.6.0
-We have released Version 0.6.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom). 
-
-We have updated the checksumming algorithm for Hive transformations such that changes to comments, settings, and formatting no longer affect the checksum. This should significantly reduce operations worries. However, the checksums of all your Hive queries compared to Release 0.5.0 will change. **Take care that you issue a materialization request with [mode `RESET_TRANSFORMATION_CHECKSUMS`](https://github.com/ottogroup/schedoscope/wiki/Scheduling-Command-Reference) when switching to this version to avoid unwanted view recomputations!** Hence the switch of the minor release number.
-
-The test framework now automatically checks whether there is an `ON` condition for each `JOIN` clause in your Hive queries. Also, it checks whether each input view you provide in `basedOn` is also declared as a dependency.
 
 ## Community / Forums
 

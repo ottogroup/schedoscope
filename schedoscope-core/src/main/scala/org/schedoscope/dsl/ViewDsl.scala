@@ -109,14 +109,14 @@ trait ViewDsl extends StructureDsl {
     * The default implementation does this by building a path from the lower-case-underscore format of
     * moduleNameBuilder, replacing _ with / and prepending hdp/dev/ for the default dev environment.
     */
-  var dbPathBuilder: String => String
+  var dbPathBuilder: (String, String) => String
 
   /**
     * Pluggable builder function that returns the HDFS path to the table the view belongs to.
     * The default implementation does this by joining dbPathBuilder and n. The latter will
     * be surrounded by additionalStoragePathPrefix and additionalStoragePathSuffix, if set.
     */
-  var tablePathBuilder: String => String
+  var tablePathBuilder: (String, String) => String
 
   /**
     * Pluggable builder function that returns the relative partition path for the view. By default,
@@ -129,7 +129,7 @@ trait ViewDsl extends StructureDsl {
     * The default implementation concatenates the output of tablePathBuilder and partitionPathBuilder for
     * this purpose.
     */
-  var fullPathBuilder: String => String
+  var fullPathBuilder: (String, String) => String
 
   /**
     * Pluggable builder function returning a path prefix of where Avro schemas can be found in HDFS.

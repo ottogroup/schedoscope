@@ -45,14 +45,13 @@ trait WritableView extends View {
 
   moduleNameBuilder = () => Named.camelToLowerUnderscore(getClass().getSuperclass.getPackage().getName()).replaceAll("[.]", "_")
 
-  // overrides (to enable correct table/database names, otherwise $$anonFunc...)
-  tablePathBuilder = (env: String) =>
+  tablePathBuilder = (env: String, viewDataHfdsRoot: String) =>
     resources.hiveWarehouseDir +
       ("/hdp/" + env.toLowerCase() + "/" + module.replaceFirst("app", "applications")).replaceAll("_", "/") +
-      (if (additionalStoragePathPrefix != null) "/" + additionalStoragePathPrefix else "") +
+      (if (additionalStoragePathPrefix.nonEmpty) "/" + additionalStoragePathPrefix.get else "") +
       "/" +
       n +
-      (if (additionalStoragePathSuffix != null) "/" + additionalStoragePathSuffix else "")
+      (if (additionalStoragePathSuffix.nonEmpty) "/" + additionalStoragePathSuffix.get else "")
 
 
   /**

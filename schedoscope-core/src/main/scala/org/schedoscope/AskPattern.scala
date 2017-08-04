@@ -43,6 +43,7 @@ object AskPattern {
   /**
     * Executes an ask pattern with retries in case it yield Timeout or AskTimeout exceptions. These exceptions will only
     * be thrown after the last retry. All other exceptions will be thrown immediately.
+    *
     * @param pattern a function with the ask pattern to potentially retry
     * @param retries the number of retries, defaulting to max int for infinite retries
     * @return the result of the ask operation after the given number of retries.

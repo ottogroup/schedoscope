@@ -179,7 +179,7 @@ object LocalTestResources {
       val freePort = anySocket.getLocalPort
       anySocket.close()
 
-      networkServerControl = new NetworkServerControl(InetAddress.getByName("127.0.0.1"), freePort)
+      networkServerControl = new NetworkServerControl(InetAddress.getByName("0.0.0.0"), freePort)
       networkServerControl.start(null)
 
       var connectionAccepted = false
