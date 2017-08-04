@@ -60,11 +60,11 @@ public class LineageUtil {
         List<MetascopeLineageEdge> backwardEdges = new ArrayList<>();
 
         for (MetascopeField metascopeField : table.getFields()) {
-            forwardEdges.addAll(computeRecursiveSchemaLineage(metascopeField, false));
+            forwardEdges.addAll(computeRecursiveSchemaLineage(metascopeField, false, new HashSet<MetascopeField>()));
         }
 
         for (MetascopeField metascopeField : table.getFields()) {
-            backwardEdges.addAll(computeRecursiveSchemaLineage(metascopeField, true));
+            backwardEdges.addAll(computeRecursiveSchemaLineage(metascopeField, true, new HashSet<MetascopeField>()));
         }
 
         schemaLineage.setForwardEdges(forwardEdges);
@@ -80,7 +80,8 @@ public class LineageUtil {
      * @param isBackward {@code true}: backward, {@code false}: forward
      * @return the edges to display in the graph
      */
-    private static Set<MetascopeLineageEdge> computeRecursiveSchemaLineage(MetascopeField field, boolean isBackward) {
+    private static Set<MetascopeLineageEdge> computeRecursiveSchemaLineage(MetascopeField field, boolean isBackward, Set<MetascopeField> seen) {
+        seen.add(field);
         Collection<MetascopeField> lineage = isBackward ? field.getDependencies() : field.getSuccessors();
         HashSet<MetascopeLineageEdge> result = new HashSet<>();
         if (lineage.isEmpty()) return result;
@@ -89,7 +90,9 @@ public class LineageUtil {
             MetascopeLineageNode from = new MetascopeLineageNode(field.getFieldId(), field.getFieldName(), field.getTable().getFqdn());
             MetascopeLineageNode to = new MetascopeLineageNode(otherField.getFieldId(), otherField.getFieldName(), otherField.getTable().getFqdn());
             result.add(new MetascopeLineageEdge(from, to));
-            result.addAll(computeRecursiveSchemaLineage(otherField, isBackward));
+            if (!seen.contains(otherField)) {
+                result.addAll(computeRecursiveSchemaLineage(otherField, isBackward, seen));
+            }
         }
 
         return result;
