@@ -124,7 +124,7 @@ case class NoOp() extends Transformation {
 object Transformation {
 
   /**
-    * Replace ${v}-style parameters and §{v}-style parameters in transformation syntax with values from the given parameter map.
+    * Replace \${v}-style parameters and \§{v}-style parameters in transformation syntax with values from the given parameter map.
     * Perform some quoting against injection attacks. $-style parameters quote ;$'" whereas §-style parameters only quote ;.
     */
   def replaceParameters(transformationSyntax: String, parameters: Map[String, Any]): String =

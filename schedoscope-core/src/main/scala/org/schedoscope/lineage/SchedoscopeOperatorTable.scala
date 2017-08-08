@@ -25,7 +25,7 @@ import org.schedoscope.dsl.View
 import scala.collection.JavaConverters._
 
 /**
-  * SqlOperatorTable for registered [[org.apache.hadoop.hive.metastore.api.Function]]s in Schedoscope [[org.schedoscope.dsl.transformations.HiveTransformation]]s.
+  * SqlOperatorTable for registered org.apache.hadoop.hive.metastore.api.Function s in Schedoscope [[org.schedoscope.dsl.transformations.HiveTransformation]]s.
   *
   * @author Jan Hicken (jhicken)
   */

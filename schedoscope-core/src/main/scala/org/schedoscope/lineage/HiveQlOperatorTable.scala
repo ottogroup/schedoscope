@@ -26,7 +26,7 @@ import org.schedoscope.lineage.parser.{NamedStructValueConstructor, StructFieldA
 import scala.collection.JavaConverters._
 
 /**
-  * SqlOperatorTable for Hive's [[org.apache.hadoop.hive.ql.exec.FunctionRegistry]].
+  * SqlOperatorTable for Hive's org.apache.hadoop.hive.ql.exec.FunctionRegistry.
   *
   * @author Jan Hicken (jhicken)
   */
