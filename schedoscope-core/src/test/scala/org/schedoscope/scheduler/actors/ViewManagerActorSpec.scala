@@ -220,7 +220,7 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   "The view manager" should "determined ignore the dependencies of a stubbed view" in {
     implicit val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
-      "schedoscope.development.viewUrl = test.views/ProductBrandClick")
+      "schedoscope.development.viewUrls = [test.views/ProductBrandClick]")
     val view = ProductBrandClick(p("ec0106"), p("2014"), p("01"), p("01"))
     val result = ViewManagerActor.unknownViewsOrDependencies(List(view), Map.empty[String, ViewStatusResponse])
     result shouldBe List(view,
