@@ -15,19 +15,12 @@
  */
 package org.schedoscope.metascope.task;
 
+import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 public abstract class Task {
 
-    public void preExecute() {
-    }
-
-    public boolean execute(long start) {
-        preExecute();
-        return run(start);
-    }
-
     @Transactional
-    public abstract boolean run(long start);
+    public abstract boolean run(RawJDBCSqlRepository sqlRepository, long start);
 
 }

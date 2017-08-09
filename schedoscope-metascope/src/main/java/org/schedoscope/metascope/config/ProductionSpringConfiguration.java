@@ -196,7 +196,7 @@ public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter 
     @Scheduled(initialDelay = 1000, fixedRate = 60000)
     @Transactional
     public void runStatusTask() {
-        statusTask().run(System.currentTimeMillis());
+        statusTask().run(null, System.currentTimeMillis());
     }
 
     private String[] appendRolePrefix(String groups) {

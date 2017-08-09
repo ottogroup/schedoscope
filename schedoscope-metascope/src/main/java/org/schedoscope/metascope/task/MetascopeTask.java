@@ -16,6 +16,7 @@
 package org.schedoscope.metascope.task;
 
 import org.schedoscope.metascope.config.MetascopeConfig;
+import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
 import org.schedoscope.metascope.util.TaskMutex;
 import org.schedoscope.metascope.util.model.SchedoscopeInstance;
 import org.slf4j.Logger;
@@ -45,12 +46,16 @@ public class MetascopeTask implements Runnable {
     @Transactional
     public void run() {
         long ts = System.currentTimeMillis();
+        boolean isH2Database = config.getRepositoryUrl().startsWith("jdbc:h2");
+        boolean isMySQLDatabase = config.getRepositoryUrl().startsWith("jdbc:mysql");
+        RawJDBCSqlRepository sqlRepository = new RawJDBCSqlRepository(isMySQLDatabase, isH2Database);
+
         if (!taskMutex.isSchedoscopeTaskRunning()) {
             taskMutex.setSchedoscopeTaskRunning(true);
             for (SchedoscopeInstance schedoscopeInstance : config.getSchedoscopeInstances()) {
-                syncTask.forInstance(schedoscopeInstance).run(ts);
+                syncTask.forInstance(schedoscopeInstance).run(sqlRepository, ts);
             }
-            metastoreSyncTask.run(ts);
+            metastoreSyncTask.run(sqlRepository, ts);
             taskMutex.setSchedoscopeTaskRunning(false);
         }
     }

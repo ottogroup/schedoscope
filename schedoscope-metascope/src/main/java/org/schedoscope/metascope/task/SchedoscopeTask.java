@@ -55,7 +55,7 @@ public class SchedoscopeTask extends Task {
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean run(long start) {
+    public boolean run(RawJDBCSqlRepository sqlRepository, long start) {
         Map<String, MetascopeTable> cachedTables = new HashMap<>();
         Map<String, MetascopeField> cachedFields = new HashMap<>();
         Map<String, MetascopeView> cachedViews = new HashMap<>();
@@ -66,9 +66,6 @@ public class SchedoscopeTask extends Task {
 
         LOG.info("Retrieve and parse data from schedoscope instance \"" + schedoscopeInstance.getId() + "\"");
 
-        boolean isH2Database = config.getRepositoryUrl().startsWith("jdbc:h2");
-        boolean isMySQLDatabase = config.getRepositoryUrl().startsWith("jdbc:mysql");
-
         Connection connection;
         try {
             connection = dataSource.getConnection();
@@ -76,8 +73,6 @@ public class SchedoscopeTask extends Task {
             LOG.error("Could not retrieve database connection.", e);
             return false;
         }
-
-        RawJDBCSqlRepository sqlRepository = new RawJDBCSqlRepository(isMySQLDatabase, isH2Database);
 
         /** get data from schedoscope */
         ViewStatus viewStatus;

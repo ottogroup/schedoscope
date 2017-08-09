@@ -15,6 +15,7 @@
  */
 package org.schedoscope.metascope.task;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -23,12 +24,13 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.tomcat.jdbc.pool.DataSource;
 import org.hibernate.Hibernate;
 import org.schedoscope.metascope.config.MetascopeConfig;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.MetascopeTable;
 import org.schedoscope.metascope.model.MetascopeView;
-import org.schedoscope.metascope.repository.MetascopeTableRepository;
+import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,6 +40,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -51,14 +56,14 @@ public class MetastoreTask extends Task {
     private MetascopeConfig config;
 
     @Autowired
-    private MetascopeTableRepository metascopeTableRepository;
+    private DataSource dataSource;
 
     @Autowired
     private SolrFacade solrFacade;
 
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public boolean run(long start) {
+    public boolean run(RawJDBCSqlRepository sqlRepository, long start) {
         LOG.info("Sync repository with metastore");
         HiveConf conf = new HiveConf();
         conf.set("hive.metastore.local", "false");
@@ -90,19 +95,23 @@ public class MetastoreTask extends Task {
             return false;
         }
 
+        Connection connection;
+        try {
+            connection = dataSource.getConnection();
+        } catch (SQLException e) {
+            LOG.error("Could not retrieve database connection.", e);
+            return false;
+        }
+
         LOG.info("Connected to metastore (" + config.getMetastoreThriftUri() + ")");
 
-        List<String> allTables = metascopeTableRepository.getAllTablesNames();
+        List<MetascopeTable> allTables = sqlRepository.findAllTables(connection);
 
-        for (String fqdn : allTables) {
-            //load table
-            MetascopeTable table = metascopeTableRepository.findOne(fqdn);
+        for (MetascopeTable table : allTables) {
             LOG.info("Get metastore information for table " + table.getFqdn());
 
             try {
                 Table mTable = client.getTable(table.getDatabaseName(), table.getTableName());
-                List<Partition> partitions = client.listPartitions(table.getDatabaseName(),
-                        table.getTableName(), Short.MAX_VALUE);
 
                 table.setTableOwner(mTable.getOwner());
                 table.setCreatedAt(mTable.getCreateTime() * 1000L);
@@ -122,29 +131,40 @@ public class MetastoreTask extends Task {
                 Hibernate.initialize(table.getViews());
                 table.setViewsSize(table.getViews().size());
 
-                for (Partition partition : partitions) {
-                    MetascopeView view = getView(table.getViews(), partition);
-                    if (view == null) {
-                        //a view which is not registered as a partition in hive metastore should not exists ...
-                        continue;
-                    }
-                    String numRows = partition.getParameters().get("numRows");
-                    if (numRows != null) {
-                        view.setNumRows(Long.parseLong(numRows));
-                    }
-                    String totalSize = partition.getParameters().get("totalSize");
-                    if (totalSize != null) {
-                        view.setTotalSize(Long.parseLong(totalSize));
-                    }
-                    String lastTransformation = partition.getParameters().get(SCHEDOSCOPE_TRANSFORMATION_TIMESTAMP);
-                    if (lastTransformation != null) {
-                        long ts = Long.parseLong(lastTransformation);
-                        view.setLastTransformation(ts);
-                        if (ts > maxLastTransformation) {
-                            maxLastTransformation = ts;
+                List<String> partitionNames = new ArrayList<>();
+                List<String> partitionNamesTmp = client.listPartitionNames(table.getDatabaseName(), table.getTableName(), (short) -1);
+                for (String pn : partitionNamesTmp) {
+                    partitionNames.add("/" + pn);
+                }
+
+                List<List<String>> groupedPartitions = Lists.partition(partitionNames, 10000);
+                for (List<String> groupedPartitionNames : groupedPartitions) {
+                    List<Partition> partitions = client.getPartitionsByNames(table.getDatabaseName(), table.getTableName(), groupedPartitionNames);
+                    for (Partition partition : partitions) {
+                        MetascopeView view = getView(table.getViews(), partition);
+                        if (view == null) {
+                            //a view which is not registered as a partition in hive metastore should not exists ...
+                            continue;
                         }
+                        String numRows = partition.getParameters().get("numRows");
+                        if (numRows != null) {
+                            view.setNumRows(Long.parseLong(numRows));
+                        }
+                        String totalSize = partition.getParameters().get("totalSize");
+                        if (totalSize != null) {
+                            view.setTotalSize(Long.parseLong(totalSize));
+                        }
+                        String lastTransformation = partition.getParameters().get(SCHEDOSCOPE_TRANSFORMATION_TIMESTAMP);
+                        if (lastTransformation != null) {
+                            long ts = Long.parseLong(lastTransformation);
+                            view.setLastTransformation(ts);
+                            if (ts > maxLastTransformation) {
+                                maxLastTransformation = ts;
+                            }
+                        }
+                        solrFacade.updateViewEntity(view, false);
                     }
-                    solrFacade.updateViewEntity(view, false);
+                    solrFacade.commit();
                 }
 
                 if (maxLastTransformation != -1) {
@@ -160,7 +180,7 @@ public class MetastoreTask extends Task {
                     }
                 }
 
-                metascopeTableRepository.save(table);
+                sqlRepository.saveTable(connection, table);
                 solrFacade.updateTablePartial(table, true);
             } catch (Exception e) {
                 LOG.warn("Could not retrieve table from metastore", e);
@@ -169,7 +189,7 @@ public class MetastoreTask extends Task {
 
         }
 
-    /* commit to index */
+        /* commit to index */
         solrFacade.commit();
 
         client.close();
@@ -177,6 +197,12 @@ public class MetastoreTask extends Task {
             fs.close();
         } catch (IOException e) {
             LOG.warn("Could not close connection to HDFS", e);
+        }
+
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            LOG.error("Could not close connection", e);
         }
 
         LOG.info("Sync with metastore finished");
