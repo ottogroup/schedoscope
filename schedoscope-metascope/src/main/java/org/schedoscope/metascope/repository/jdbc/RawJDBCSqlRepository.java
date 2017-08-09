@@ -62,8 +62,16 @@ public class RawJDBCSqlRepository {
     }
 
     /*### MetascopeView ###*/
+    public List<MetascopeView> findViews(Connection connection, String fqdn) {
+        return this.jdbcMetascopeViewRepository.findAll(connection, fqdn);
+    }
+
     public void insertOrUpdateViews(Connection connection, Iterable<MetascopeView> views) {
         this.jdbcMetascopeViewRepository.insertOrUpdateViews(connection, views);
+    }
+
+    public void insertOrUpdateViewMetadata(Connection connection, Iterable<MetascopeView> views) {
+        this.jdbcMetascopeViewRepository.insertOrUpdateViewMetadata(connection, views);
     }
 
     public void insertViewDependencies(Connection connection, List<Dependency> viewDependencies) {

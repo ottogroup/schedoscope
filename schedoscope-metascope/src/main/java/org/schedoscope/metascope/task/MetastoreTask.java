@@ -25,7 +25,6 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.tomcat.jdbc.pool.DataSource;
-import org.hibernate.Hibernate;
 import org.schedoscope.metascope.config.MetascopeConfig;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.model.MetascopeTable;
@@ -128,24 +127,25 @@ public class MetastoreTask extends Task {
 
                 long maxLastTransformation = -1;
 
-                Hibernate.initialize(table.getViews());
-                table.setViewsSize(table.getViews().size());
-
                 List<String> partitionNames = new ArrayList<>();
                 List<String> partitionNamesTmp = client.listPartitionNames(table.getDatabaseName(), table.getTableName(), (short) -1);
                 for (String pn : partitionNamesTmp) {
-                    partitionNames.add("/" + pn);
+                    partitionNames.add( pn);
                 }
 
+                List<MetascopeView> views = sqlRepository.findViews(connection, table.getFqdn());
                 List<List<String>> groupedPartitions = Lists.partition(partitionNames, 10000);
                 for (List<String> groupedPartitionNames : groupedPartitions) {
                     List<Partition> partitions = client.getPartitionsByNames(table.getDatabaseName(), table.getTableName(), groupedPartitionNames);
+                    List<MetascopeView> changedViews = new ArrayList<>();
                     for (Partition partition : partitions) {
-                        MetascopeView view = getView(table.getViews(), partition);
+                        MetascopeView view = getView(views, partition);
                         if (view == null) {
                             //a view which is not registered as a partition in hive metastore should not exists ...
                             continue;
                         }
+                        view.setTable(table);
+
                         String numRows = partition.getParameters().get("numRows");
                         if (numRows != null) {
                             view.setNumRows(Long.parseLong(numRows));
@@ -163,7 +163,9 @@ public class MetastoreTask extends Task {
                             }
                         }
                         solrFacade.updateViewEntity(view, false);
+                        changedViews.add(view);
                     }
+                    sqlRepository.insertOrUpdateViewMetadata(connection, changedViews);
                     solrFacade.commit();
                 }
 
@@ -174,14 +176,15 @@ public class MetastoreTask extends Task {
                     if (ts != null) {
                         long lastTransformationTs = Long.parseLong(ts);
                         table.setLastTransformation(lastTransformationTs);
-                        MetascopeView rootView = table.getViews().get(0);
+                        MetascopeView rootView = views.get(0);
+                        rootView.setTable(table);
                         rootView.setLastTransformation(lastTransformationTs);
                         solrFacade.updateViewEntity(rootView, false);
                     }
                 }
 
                 sqlRepository.saveTable(connection, table);
-                solrFacade.updateTablePartial(table, true);
+                solrFacade.updateTableMetastoreData(table, true);
             } catch (Exception e) {
                 LOG.warn("Could not retrieve table from metastore", e);
                 continue;

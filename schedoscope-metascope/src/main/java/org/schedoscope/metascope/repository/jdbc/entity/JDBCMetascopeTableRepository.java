@@ -87,7 +87,7 @@ public class JDBCMetascopeTableRepository extends JDBCContext {
         try {
             stmt = connection.prepareStatement(findQuery);
             ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
+            while (rs.next()) {
                 MetascopeTable table = new MetascopeTable();
                 table.setFqdn(rs.getString("fqdn"));
                 table.setSchedoscopeId(rs.getString("schedoscope_id"));

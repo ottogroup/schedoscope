@@ -177,6 +177,24 @@ public class SolrUpdateHandler {
         }
     }
 
+    public void updateTableMetastoreData(MetascopeTable table, boolean commit) {
+        SolrInputDocument doc = getDocument(table.getFqdn());
+        if (doc == null) {
+            doc = new SolrInputDocument();
+        }
+        doc.setField(ID, table.getFqdn());
+        if (table.getCreatedAt() != 0) {
+            doc.setField(CREATED_AT, table.getCreatedAt() / 1000);
+        }
+        if (table.getLastTransformation() != 0) {
+            doc.setField(TRANSFORMATIONTIMESTAMP, table.getLastTransformation() / 1000);
+        }
+        addDocument(doc);
+        if (commit) {
+            commit();
+        }
+    }
+
     /**
      * Updates the Solr document for the given view entity
      *

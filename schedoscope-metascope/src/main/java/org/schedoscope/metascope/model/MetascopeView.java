@@ -55,6 +55,9 @@ public class MetascopeView {
     @ManyToOne(fetch = FetchType.EAGER)
     private MetascopeTable table;
 
+    @Transient
+    private String fqdn;
+
     public String getViewId() {
         return viewId;
     }
@@ -125,6 +128,14 @@ public class MetascopeView {
 
     public void setLastTransformation(long lastTransformation) {
         this.lastTransformation = lastTransformation;
+    }
+
+    public String getFqdn() {
+        return fqdn;
+    }
+
+    public void setFqdn(String fqdn) {
+        this.fqdn = fqdn;
     }
 
     public void addToDependencies(MetascopeView view) {
