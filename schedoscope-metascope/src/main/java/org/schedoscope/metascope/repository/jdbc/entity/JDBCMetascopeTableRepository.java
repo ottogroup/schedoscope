@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -72,6 +73,59 @@ public class JDBCMetascopeTableRepository extends JDBCContext {
             DbUtils.closeQuietly(stmt);
         }
         return table;
+    }
+
+    public List<MetascopeTable> findAll(Connection connection) {
+        List<MetascopeTable> metascopeTables = new ArrayList<>();
+        String findQuery = "select fqdn, schedoscope_id, database_name, table_name, view_path, "
+          + "external_table, table_description, storage_format, input_format, output_format, materialize_once, created_at, "
+          + "table_owner, data_path, data_size, permissions, rowcount, last_data, timestamp_field, timestamp_field_format, "
+          + "last_change, last_partition_created, last_schema_change, last_transformation_timestamp, view_count, views_size, "
+          + "person_responsible, comment_id "
+          + "from metascope_table";
+        PreparedStatement stmt = null;
+        try {
+            stmt = connection.prepareStatement(findQuery);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                MetascopeTable table = new MetascopeTable();
+                table.setFqdn(rs.getString("fqdn"));
+                table.setSchedoscopeId(rs.getString("schedoscope_id"));
+                table.setDatabaseName(rs.getString("database_name"));
+                table.setTableName(rs.getString("table_name"));
+                table.setViewPath(rs.getString("view_path"));
+                table.setExternalTable(rs.getBoolean("external_table"));
+                table.setTableDescription(rs.getString("table_description"));
+                table.setStorageFormat(rs.getString("storage_format"));
+                table.setInputFormat(rs.getString("input_format"));
+                table.setOutputFormat(rs.getString("output_format"));
+                table.setMaterializeOnce(rs.getBoolean("materialize_once"));
+                table.setCreatedAt(rs.getLong("created_at"));
+                table.setTableOwner(rs.getString("table_owner"));
+                table.setDataPath(rs.getString("data_path"));
+                table.setDataSize(rs.getLong("data_size"));
+                table.setPermissions(rs.getString("permissions"));
+                table.setRowcount(rs.getLong("rowcount"));
+                table.setLastData(rs.getString("last_data"));
+                table.setTimestampField(rs.getString("timestamp_field"));
+                table.setTimestampFieldFormat(rs.getString("timestamp_field_format"));
+                table.setLastChange(rs.getLong("last_change"));
+                table.setLastPartitionCreated(rs.getLong("last_partition_created"));
+                table.setLastSchemaChange(rs.getLong("last_schema_change"));
+                table.setLastTransformation(rs.getLong("last_transformation_timestamp"));
+                table.setViewCount(rs.getInt("view_count"));
+                table.setViewsSize(rs.getInt("views_size"));
+                table.setPersonResponsible(rs.getString("person_responsible"));
+                long comment_id = rs.getLong("comment_id");
+                table.setCommentId(rs.wasNull() ? null : comment_id);
+                metascopeTables.add(table);
+            }
+        } catch (SQLException e) {
+            LOG.error("Could not retrieve table", e);
+        } finally {
+            DbUtils.closeQuietly(stmt);
+        }
+        return metascopeTables;
     }
 
     public void save(Connection connection, MetascopeTable table) {

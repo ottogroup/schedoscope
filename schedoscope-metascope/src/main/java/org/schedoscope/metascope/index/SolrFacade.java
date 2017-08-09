@@ -119,6 +119,14 @@ public class SolrFacade {
     }
 
     /**
+     * Refer to {@link SolrUpdateHandler#updateTableMetastoreData(MetascopeTable, boolean)}
+     * .
+     */
+    public void updateTableMetastoreData(MetascopeTable table, boolean commit) {
+        solrUpdateHandler.updateTableMetastoreData(table, commit);
+    }
+
+    /**
      * Refer to {@link SolrUpdateHandler#updateViewEntity(MetascopeView, boolean)}
      */
     public void updateViewEntity(MetascopeView view, boolean commit) {

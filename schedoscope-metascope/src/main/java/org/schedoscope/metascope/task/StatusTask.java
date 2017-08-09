@@ -17,6 +17,7 @@ package org.schedoscope.metascope.task;
 
 import org.schedoscope.metascope.config.MetascopeConfig;
 import org.schedoscope.metascope.exception.SchedoscopeConnectException;
+import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
 import org.schedoscope.metascope.service.MetascopeStatusService;
 import org.schedoscope.metascope.task.model.View;
 import org.schedoscope.metascope.task.model.ViewStatus;
@@ -45,7 +46,7 @@ public class StatusTask extends Task {
     private MetascopeStatusService metascopeStatusService;
 
     @Override
-    public boolean run(long start) {
+    public boolean run(RawJDBCSqlRepository sqlRepository, long start) {
         for (SchedoscopeInstance schedoscopeInstance : metascopeConfig.getSchedoscopeInstances()) {
             String host = schedoscopeInstance.getHost();
             int port = schedoscopeInstance.getPort();
