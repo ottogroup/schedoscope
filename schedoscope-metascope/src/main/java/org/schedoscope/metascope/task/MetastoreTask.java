@@ -144,6 +144,7 @@ public class MetastoreTask extends Task {
                             //a view which is not registered as a partition in hive metastore should not exists ...
                             continue;
                         }
+                        
                         view.setTable(table);
 
                         String numRows = partition.getParameters().get("numRows");
