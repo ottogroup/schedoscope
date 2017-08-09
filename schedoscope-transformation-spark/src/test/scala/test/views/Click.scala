@@ -51,7 +51,7 @@ case class ClickOfEC0101ViaSpark(year: Parameter[String],
         s"""
            INSERT INTO TABLE ${this.tableName}
            PARTITION (year = '${year.v.get}', month = '${month.v.get}', day = '${day.v.get}', date_id = '${dateId.v.get}')
-           SELECT *
+           SELECT id, url
            FROM ${click().tableName}
            WHERE shop_code = 'EC0101'
            AND   year = '${year.v.get}' AND month = '${month.v.get}' AND day = '${day.v.get}' AND date_id = '${dateId.v.get}'
@@ -75,7 +75,7 @@ case class ClickOfEC0101ViaHiveQlOnSpark(year: Parameter[String],
     HiveTransformation(
       insertInto(this,
         s"""
-           SELECT *
+           SELECT id, url
            FROM ${click().tableName}
            WHERE shop_code = 'EC0101'
            AND   year = '${year.v.get}' AND month = '${month.v.get}' AND day = '${day.v.get}' AND date_id = '${dateId.v.get}'

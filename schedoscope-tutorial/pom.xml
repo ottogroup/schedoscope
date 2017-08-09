@@ -20,12 +20,12 @@
         </dependency>
         <dependency>
             <groupId>schedoscope</groupId>
-            <artifactId>schedoscope-transformation-spark</artifactId>
+            <artifactId>schedoscope-transformation-pig</artifactId>
             <version>${schedoscope.version}</version>
         </dependency>
         <dependency>
             <groupId>schedoscope</groupId>
-            <artifactId>schedoscope-transformation-pig</artifactId>
+            <artifactId>schedoscope-transformation-spark</artifactId>
             <version>${schedoscope.version}</version>
         </dependency>
         <dependency>

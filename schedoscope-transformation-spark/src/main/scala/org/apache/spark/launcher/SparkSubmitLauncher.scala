@@ -66,7 +66,7 @@ class SparkSubmitLauncher extends SparkLauncher {
   def addLocalClasspath(): SparkSubmitLauncher = {
     val cp = ClassLoader.getSystemClassLoader().asInstanceOf[URLClassLoader].getURLs.map(_.getFile).toList.mkString(File.pathSeparator)
 
-    builder.childEnv.put("SPARK_CLASSPATH",
+    builder.childEnv.put("SPARK_DIST_CLASSPATH",
       cp + (
         if (builder.conf.containsKey(DRIVER_EXTRA_CLASSPATH))
           File.pathSeparator + builder.conf.get(DRIVER_EXTRA_CLASSPATH)
@@ -122,8 +122,8 @@ class SparkSubmitLauncher extends SparkLauncher {
     //
 
     val childLoggerName: String =
-      if (builder.getEffectiveConfig.get("spark.launcher.childProcLoggerName") != null)
-        builder.getEffectiveConfig.get("spark.launcher.childProcLoggerName")
+      if (builder.getEffectiveConfig.get(SparkLauncher.CHILD_PROCESS_LOGGER_NAME) != null)
+        builder.getEffectiveConfig.get(SparkLauncher.CHILD_PROCESS_LOGGER_NAME)
       else if (builder.appName != null)
         builder.appName
       else if (builder.mainClass != null) {
@@ -151,6 +151,8 @@ class SparkSubmitLauncher extends SparkLauncher {
         // Local mode => test framework
         //
 
+        setChildEnv("SPARK_TESTING", "1")
+        setChildEnv("SPARK_SQL_TESTING", "1")
         builder.buildCommand(Map[String, String]()).toList
 
       } else {
@@ -175,13 +177,12 @@ class SparkSubmitLauncher extends SparkLauncher {
 
     val process = new ProcessBuilder(sparkSubmitCall)
 
-    process.redirectErrorStream(true)
-
     for ((k, v) <- builder.childEnv)
       process.environment().put(k, v)
 
-    process.environment().put("_SPARK_LAUNCHER_PORT", String.valueOf(LauncherServer.getServerInstance.getPort))
-    process.environment().put("_SPARK_LAUNCHER_SECRET", handle.getSecret)
+    process.environment().put(LauncherProtocol.ENV_LAUNCHER_PORT, String.valueOf(LauncherServer.getServerInstance.getPort))
+    process.environment().put(LauncherProtocol.ENV_LAUNCHER_SECRET, handle.getSecret)
+    //process.redirectErrorStream(true)
 
 
     //
