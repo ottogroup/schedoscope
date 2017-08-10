@@ -17,6 +17,7 @@ package org.schedoscope.metascope.task;
 
 import org.schedoscope.metascope.config.MetascopeConfig;
 import org.schedoscope.metascope.repository.jdbc.RawJDBCSqlRepository;
+import org.schedoscope.metascope.task.metastore.MetastoreTask;
 import org.schedoscope.metascope.util.TaskMutex;
 import org.schedoscope.metascope.util.model.SchedoscopeInstance;
 import org.slf4j.Logger;

@@ -21,9 +21,12 @@ import org.schedoscope.conf.BaseSettings;
 import org.schedoscope.metascope.index.SolrFacade;
 import org.schedoscope.metascope.service.MetascopeUserService;
 import org.schedoscope.metascope.task.MetascopeTask;
-import org.schedoscope.metascope.task.MetastoreTask;
+import org.schedoscope.metascope.task.metastore.MetastoreClient;
+import org.schedoscope.metascope.task.metastore.MetastoreJdbcClient;
+import org.schedoscope.metascope.task.metastore.MetastoreTask;
 import org.schedoscope.metascope.task.SchedoscopeTask;
 import org.schedoscope.metascope.task.StatusTask;
+import org.schedoscope.metascope.task.metastore.MetastoreThriftClient;
 import org.schedoscope.metascope.util.TaskMutex;
 import org.schedoscope.metascope.util.ValidationQueryUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -179,7 +182,14 @@ public class ProductionSpringConfiguration extends WebSecurityConfigurerAdapter 
 
     @Bean
     public MetastoreTask metastoreTask() {
-        return new MetastoreTask();
+        MetastoreClient metastoreClient = null;
+        MetascopeConfig config = metascopeConfig();
+        if (config.getMetastoreAccessMethod().equals("thrift")) {
+            metastoreClient = new MetastoreThriftClient(config);
+        } else if (config.getMetastoreAccessMethod().equals("jdbc")) {
+            metastoreClient = new MetastoreJdbcClient(config);
+        }
+        return new MetastoreTask(metastoreClient);
     }
 
     @Bean
