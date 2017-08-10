@@ -68,6 +68,8 @@ public class MetastoreTask extends Task {
     public boolean run(RawJDBCSqlRepository sqlRepository, long start) {
         LOG.info("Sync repository with metastore");
 
+        metastoreClient.init();
+
         FileSystem fs;
         try {
             Configuration hadoopConfig = new Configuration();
@@ -133,15 +135,15 @@ public class MetastoreTask extends Task {
                         
                         view.setTable(table);
 
-                        String numRows = partition.getNumRows();//partition.getParameters().get("numRows");
+                        String numRows = partition.getNumRows();
                         if (numRows != null) {
                             view.setNumRows(Long.parseLong(numRows));
                         }
-                        String totalSize = partition.getTotalSize();//partition.getParameters().get("totalSize");
+                        String totalSize = partition.getTotalSize();
                         if (totalSize != null) {
                             view.setTotalSize(Long.parseLong(totalSize));
                         }
-                        String lastTransformation = partition.getSchedoscopeTimestamp();//partition.getParameters().get(SCHEDOSCOPE_TRANSFORMATION_TIMESTAMP);
+                        String lastTransformation = partition.getSchedoscopeTimestamp();
                         if (lastTransformation != null) {
                             long ts = Long.parseLong(lastTransformation);
                             view.setLastTransformation(ts);
@@ -202,7 +204,7 @@ public class MetastoreTask extends Task {
 
     private MetascopeView getView(List<MetascopeView> views, MetastorePartition partition) {
         for (MetascopeView view : views) {
-            if (view.getViewUrl().equals(partition.getName())) {
+            if (view.getParameterValues().equals(partition.getValues())) {
                 return view;
             }
         }

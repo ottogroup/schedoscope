@@ -3,6 +3,7 @@ package org.schedoscope.metascope.task.metastore;
 import com.google.common.collect.Lists;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.thrift.TException;
@@ -12,6 +13,7 @@ import org.schedoscope.metascope.task.metastore.model.MetastoreTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MetastoreThriftClient extends MetastoreClient {
@@ -74,7 +76,23 @@ public class MetastoreThriftClient extends MetastoreClient {
 
     @Override
     public List<MetastorePartition> listPartitions(String databaseName, String tableName, List<String> groupedPartitionNames) {
-        return null;
+        try {
+            List<MetastorePartition> partitions = new ArrayList<>();
+            List<Partition> partitionList = client.getPartitionsByNames(databaseName, tableName, groupedPartitionNames);
+            for (Partition partition : partitionList) {
+                MetastorePartition metastorePartition = new MetastorePartition();
+                metastorePartition.setValues(partition.getValues());
+                metastorePartition.setNumRows(partition.getParameters().get("numRows"));
+                metastorePartition.setTotalSize(partition.getParameters().get("totalSize"));
+                metastorePartition.setSchedoscopeTimestamp(partition.getParameters().get(SCHEDOSCOPE_TRANSFORMATION_TIMESTAMP));
+                partitions.add(metastorePartition);
+            }
+            return partitions;
+        } catch (TException e) {
+            LOG.error("Could not retrieve partitions from metastore", e);
+            return Lists.newArrayList();
+        }
+
     }
 
     @Override

@@ -1,18 +1,21 @@
 package org.schedoscope.metascope.task.metastore.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MetastorePartition {
 
-    private String name;
+    private List<String> values;
     private String numRows;
     private String totalSize;
     private String schedoscopeTimestamp;
 
-    public String getName() {
-        return name;
+    public List<String> getValues() {
+        return values;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setValues(List<String> values) {
+        this.values = values;
     }
 
     public String getNumRows() {
@@ -37,6 +40,18 @@ public class MetastorePartition {
 
     public void setSchedoscopeTimestamp(String schedoscopeTimestamp) {
         this.schedoscopeTimestamp = schedoscopeTimestamp;
+    }
+
+    public void setValuesFromName(String parameterString) {
+        List<String> parameters = new ArrayList<>();
+        if (parameterString != null && !parameterString.isEmpty()) {
+            String[] params = parameterString.split("/");
+            for (int i = 1; i < params.length; i++) {
+                String[] kv = params[i].split("=");
+                parameters.add(kv[1]);
+            }
+        }
+        this.values = parameters;
     }
 
 }
