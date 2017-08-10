@@ -9,8 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 
 public class JDBCMetascopeViewRepository extends JDBCContext {
@@ -19,6 +20,34 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
 
     public JDBCMetascopeViewRepository(boolean isMySQLDatabase, boolean isH2Database) {
         super(isMySQLDatabase, isH2Database);
+    }
+
+    public List<MetascopeView> findAll(Connection connection, String fqdn) {
+        List<MetascopeView> metascopeViews = new ArrayList<>();
+        String findQuery = "select view_id, view_url, parameter_string, num_rows, total_size, last_transformation, table_fqdn "
+               + "from metascope_view where table_fqdn = ?";
+        PreparedStatement stmt = null;
+        try {
+            stmt = connection.prepareStatement(findQuery);
+            stmt.setString(1, fqdn);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                MetascopeView view = new MetascopeView();
+                view.setViewId(rs.getString("view_id"));
+                view.setViewUrl(rs.getString("view_url"));
+                view.setParameterString(rs.getString("parameter_string"));
+                view.setNumRows(rs.getLong("num_rows"));
+                view.setTotalSize(rs.getLong("total_size"));
+                view.setLastTransformation(rs.getLong("last_transformation"));
+                view.setFqdn(rs.getString("table_fqdn"));
+                metascopeViews.add(view);
+            }
+        } catch (SQLException e) {
+            LOG.error("Could not retrieve views", e);
+        } finally {
+            DbUtils.closeQuietly(stmt);
+        }
+        return metascopeViews;
     }
 
     public void insertOrUpdateViews(Connection connection, Iterable<MetascopeView> views) {
@@ -36,6 +65,41 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
                 stmt.setString(2, viewEntity.getViewUrl());
                 stmt.setString(3, viewEntity.getParameterString());
                 stmt.setString(4, viewEntity.getTable().getFqdn());
+                stmt.addBatch();
+                batch++;
+                if (batch % 10000 == 0) {
+                    stmt.executeBatch();
+                }
+            }
+            stmt.executeBatch();
+            connection.commit();
+            enableChecks(connection);
+        } catch (SQLException e) {
+            LOG.error("Could not save view", e);
+        } finally {
+            DbUtils.closeQuietly(stmt);
+        }
+    }
+
+    public void insertOrUpdateViewMetadata(Connection connection, Iterable<MetascopeView> views) {
+        String insertViewSql = "insert into metascope_view (view_id, view_url, parameter_string, num_rows, total_size, last_transformation, table_fqdn) values "
+                + "(?, ?, ?, ?, ?, ?, ?) on duplicate key update view_id=values(view_id), view_url=values(view_url), "
+                + "parameter_string=values(parameter_string), num_rows=values(num_rows), total_size=values(total_size), "
+                + "last_transformation=values(last_transformation), table_fqdn=values(table_fqdn)";
+        PreparedStatement stmt = null;
+        try {
+            int batch = 0;
+            disableChecks(connection);
+
+            stmt = connection.prepareStatement(insertViewSql);
+            for (MetascopeView viewEntity : views) {
+                stmt.setString(1, viewEntity.getViewId());
+                stmt.setString(2, viewEntity.getViewUrl());
+                stmt.setString(3, viewEntity.getParameterString());
+                stmt.setLong(4, viewEntity.getNumRows());
+                stmt.setLong(5, viewEntity.getTotalSize());
+                stmt.setLong(6, viewEntity.getLastTransformation());
+                stmt.setString(7, viewEntity.getTable().getFqdn());
                 stmt.addBatch();
                 batch++;
                 if (batch % 10000 == 0) {
@@ -107,5 +171,5 @@ public class JDBCMetascopeViewRepository extends JDBCContext {
             DbUtils.closeQuietly(updateStatusStmt);
         }
     }
-    
+
 }
