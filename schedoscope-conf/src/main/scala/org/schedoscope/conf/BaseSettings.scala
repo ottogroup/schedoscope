@@ -184,7 +184,7 @@ class BaseSettings(val config: Config) {
   /**
     * View which is tested in development
     */
-  lazy val viewUnderDevelopment = config.getString("schedoscope.development.viewUrl")
+  lazy val viewsUnderDevelopment = config.getStringList("schedoscope.development.viewUrls").toList
 
   /**
     * Number of parallel threads to access the metastore
