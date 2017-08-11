@@ -9,7 +9,7 @@
     <parent>
         <artifactId>schedoscope-suite</artifactId>
         <groupId>schedoscope</groupId>
-        <version>0.9.0-SNAPSHOT</version>
+        <version>0.9.1-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -20,12 +20,12 @@
         </dependency>
         <dependency>
             <groupId>schedoscope</groupId>
-            <artifactId>schedoscope-transformation-spark</artifactId>
+            <artifactId>schedoscope-transformation-pig</artifactId>
             <version>${schedoscope.version}</version>
         </dependency>
         <dependency>
             <groupId>schedoscope</groupId>
-            <artifactId>schedoscope-transformation-pig</artifactId>
+            <artifactId>schedoscope-transformation-spark</artifactId>
             <version>${schedoscope.version}</version>
         </dependency>
         <dependency>
@@ -113,15 +113,6 @@
         <testSourceDirectory>src/test/scala</testSourceDirectory>
 
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
-                <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>

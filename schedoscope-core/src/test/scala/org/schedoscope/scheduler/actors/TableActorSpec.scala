@@ -95,12 +95,12 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   trait TableActorStubbingTest extends TableActorTest {
     override lazy val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
-      "schedoscope.development.viewUrl = test.views/ProductBrand")
+      "schedoscope.development.viewUrls = [test.views/ProductBrand]")
   }
 
   trait TableActorStubbingSshTest extends TableActorTest {
     override lazy val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
-      "schedoscope.development.viewUrl = test.views/ProductBrand",
+      "schedoscope.development.viewUrls = [test.views/ProductBrand]",
       "schedoscope.development.sshEnabled = true",
       "schedoscope.development.sshTarget = bambam")
   }

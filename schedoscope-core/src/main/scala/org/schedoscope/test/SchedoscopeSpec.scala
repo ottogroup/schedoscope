@@ -81,7 +81,7 @@ trait SchedoscopeSuite
 /**
   * This test suite lets you predefine fixtures that can be reused in
   * several test cases. Leading to faster runtime and improved readability.
-  * The suite can be mixed into the [[SchedoscopeSpec]] trait.
+  * The suite can be mixed into the SchedoscopeSpec trait.
   */
 trait ReusableHiveSchema
   extends BeforeAndAfterEach
@@ -98,7 +98,7 @@ trait ReusableHiveSchema
   }
 
   /**
-    * Replace the default [[TestResources]].
+    * Replace the default TestResources.
     *
     * @param resources new resources
     */

@@ -187,6 +187,20 @@ class SchedoscopeSettings(config: Config) extends BaseSettings(config) with Exte
     config.getString(confName)
   }
 
+  /**
+    * Retrieve a setting  for a transformation type; if the setting cannot be found return a default value.
+    *
+    * @param transformationName the name of the transformation type (e.g. mapreduce)
+    * @param n                  the name of the setting for transformationName
+    * @param default						the default value to return if the setting cannot be found.
+    * @return the setting's value as a string
+    */
+  def getTransformationSetting(transformationName: String, n: String, default: String) = try {
+    val confName = s"schedoscope.transformations.${transformationName}.transformation.${n}"
+    config.getString(confName)
+  } catch {
+    case _: Throwable => default
+  }
 }
 
 /**

@@ -266,7 +266,7 @@ object ViewManagerActor {
         List()
       } else {
         visited.add(v)
-        if (settings.developmentModeEnabled && settings.viewUnderDevelopment == v.urlPathPrefix) {
+        if (settings.developmentModeEnabled && settings.viewsUnderDevelopment.contains(v.urlPathPrefix)) {
           v :: v.dependencies
         } else {
           v :: unknownViewsOrDependencies(v.dependencies, vsm, visited)
