@@ -77,6 +77,14 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 08/11/2017 - Release 0.9.0
+
+We have released Version 0.9.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This release upgrades Spark transformations from Spark version 1.6.0 to Spark version 2.2.0 based on Cloudera's CDH 5.12 Spark 2.2 beta parcel. As a consequence, Schedoscope has been lifted to Scala 2.11 and JDK8 as well. 
+
+This is an incompatible change likely requiring adaptation of Spark jobs, dependencies, and build pipelines of existing Schedoscope projects - hence the incrememtation of the minor release number.
+
 ###### 08/04/2017 - Release 0.8.9
 
 We have released Version 0.8.9 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
@@ -146,20 +154,6 @@ Schedoscope 0.8.0 includes, among other things:
 * the names of views being transformed appear as the job name in the Hadoop resource manager.
 
 Please note that Metascope's database schema has changed with this release, so back up your database before deploying.
-
-###### 11/30/2016 - Release 0.7.1
-
-We have released Version 0.7.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
-
-This release includes a fix removing bad default values for the driver setting `location` for some transformation types. Moreover, it now includes the config setting `schedoscope.hadoop.viewDataHdfsRoot` which allows one to set a root folder different from `/hdp` for view table data without having to register a new `dbPathBuilder` builder function for each view.
-
-###### 11/01/2016 - Release 0.7.0
-
-[Spark transformations, finally](https://github.com/ottogroup/schedoscope/wiki/Spark-Transformations)! Build views based on Scala and Python Spark 1.6.0 jobs or run your Hive transformations on Spark. Test them using the Schedoscope test framework like any other transformation type. `HiveContext` is supported.
-
-We have also upgraded Schedoscope's dependencies to CDH-5.8.3. There is catch, though: we had to backport Schedoscope 0.7.0 to Scala 2.10 for compatibility with Cloudera's Spark 1.6.0 dependencies.
-
-We have released Version 0.7.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
 
 ## Community / Forums
 
