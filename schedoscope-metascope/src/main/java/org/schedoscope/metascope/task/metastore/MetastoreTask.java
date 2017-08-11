@@ -136,15 +136,15 @@ public class MetastoreTask extends Task {
                         view.setTable(table);
 
                         String numRows = partition.getNumRows();
-                        if (numRows != null) {
+                        if (numRows != null && !numRows.toUpperCase().equals("NULL") && !numRows.isEmpty()) {
                             view.setNumRows(Long.parseLong(numRows));
                         }
                         String totalSize = partition.getTotalSize();
-                        if (totalSize != null) {
+                        if (totalSize != null && !totalSize.toUpperCase().equals("NULL") && !totalSize.isEmpty()) {
                             view.setTotalSize(Long.parseLong(totalSize));
                         }
                         String lastTransformation = partition.getSchedoscopeTimestamp();
-                        if (lastTransformation != null) {
+                        if (lastTransformation != null && !lastTransformation.toUpperCase().equals("NULL") && !lastTransformation.isEmpty()) {
                             long ts = Long.parseLong(lastTransformation);
                             view.setLastTransformation(ts);
                             if (ts > maxLastTransformation) {

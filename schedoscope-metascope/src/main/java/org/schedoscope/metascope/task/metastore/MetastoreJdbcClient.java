@@ -126,15 +126,17 @@ public class MetastoreJdbcClient extends MetastoreClient {
         try {
             Statement stmt = connection.createStatement();
             String query = new StringBuilder()
-                    .append("select PART_NAME, NUM_ROWS, TOTAL_SIZE, TIMESTAMP from ( ")
-                    .append("  select TBL_ID, PART_ID, PART_NAME from PARTITIONS where TBL_ID=" + tableNameToTableId.get(databaseName + "." + tableName))
-                    .append(") p join ( ")
-                    .append("  select PART_ID, PARAM_VALUE as NUM_ROWS from PARTITION_PARAMS where PARAM_KEY=\"numRows\" ")
-                    .append(") nr on p.PART_ID = nr.PART_ID join (")
-                    .append("  select PART_ID, PARAM_VALUE as TOTAL_SIZE from PARTITION_PARAMS where PARAM_KEY=\"totalSize\" ")
-                    .append(") ts on p.PART_ID = ts.PART_ID join (")
-                    .append("  select PART_ID, PARAM_VALUE as TIMESTAMP from PARTITION_PARAMS where PARAM_KEY=\"transformation.timestamp\" ")
-                    .append(") tt on p.PART_ID = tt.PART_ID")
+                    .append("select ")
+                    .append("  PART_ID, PART_NAME, max(NUM_ROWS) as NUM_ROWS, max(TOTAL_SIZE) AS TOTAL_SIZE, max(TRANSFORMATION_TIMESTAMP) AS TIMESTAMP ")
+                    .append("from (")
+                    .append("  select ")
+                    .append("    p.PART_ID, p.PART_NAME, ")
+                    .append("    case when pp.PARAM_KEY = \"numRows\" then pp.PARAM_VALUE END as NUM_ROWS, ")
+                    .append("    case when pp.PARAM_KEY = \"totalSize\" then pp.PARAM_VALUE END as TOTAL_SIZE, ")
+                    .append("    case when pp.PARAM_KEY = \"transformation.timestamp\" then pp.PARAM_VALUE END as TRANSFORMATION_TIMESTAMP ")
+                    .append("  from PARTITIONS p left join PARTITION_PARAMS pp on p.PART_ID = pp.PART_ID ")
+                    .append("  where TBL_ID=" + tableNameToTableId.get(databaseName + "." + tableName) + " and (pp.PARAM_KEY=\"numRows\" or pp.PARAM_KEY=\"totalSize\" or pp.PARAM_KEY=\"transformation.timestamp\")) asd ")
+                    .append("group by PART_ID, PART_NAME")
                     .toString();
             ResultSet rs = stmt.executeQuery(query);
             while (rs.next()) {
