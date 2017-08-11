@@ -18,6 +18,10 @@ package org.schedoscope.metascope.config;
 import com.typesafe.config.ConfigFactory;
 import org.schedoscope.conf.BaseSettings;
 import org.schedoscope.metascope.index.SolrFacade;
+import org.schedoscope.metascope.task.metastore.MetastoreClient;
+import org.schedoscope.metascope.task.metastore.MetastoreJdbcClient;
+import org.schedoscope.metascope.task.metastore.MetastoreTask;
+import org.schedoscope.metascope.task.metastore.MetastoreThriftClient;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.*;
 import org.springframework.context.annotation.ComponentScan.Filter;
@@ -73,6 +77,11 @@ public class TestSpringConfiguration extends WebSecurityConfigurerAdapter {
     @Bean
     public SolrFacade solrFacade() {
         return new SolrFacade();
+    }
+
+    @Bean
+    public MetastoreTask metastoreTask() {
+        return new MetastoreTask(new MetastoreJdbcClient(metascopeConfig()));
     }
 
 }
