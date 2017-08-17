@@ -182,7 +182,7 @@ class SparkSubmitLauncher extends SparkLauncher {
 
     process.environment().put(LauncherProtocol.ENV_LAUNCHER_PORT, String.valueOf(LauncherServer.getServerInstance.getPort))
     process.environment().put(LauncherProtocol.ENV_LAUNCHER_SECRET, handle.getSecret)
-    //process.redirectErrorStream(true)
+    process.redirectErrorStream(true)
 
 
     //
