@@ -77,6 +77,13 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 08/17/2017 - Release 0.9.1
+
+We have released Version 0.9.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+We fixed a bug in the Spark driver that could lead to incomplete consumption of the error stream of the Spark submit subprocess resulting in transformation freezes.
+
+
 ###### 08/11/2017 - Release 0.9.0
 
 We have released Version 0.9.0 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
