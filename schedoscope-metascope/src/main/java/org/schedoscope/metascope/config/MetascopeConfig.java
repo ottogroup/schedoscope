@@ -70,6 +70,12 @@ public class MetascopeConfig {
     private String repositoryPassword;
     private String repositoryDialect;
 
+    /* Metastore settings */
+    private String metastoreAccessMethod;
+    private String metastoreJdbcUrl;
+    private String metastoreJdbcUser;
+    private String metastoreJdbcPassword;
+
     /* Solr settings */
     private String solrUrl;
 
@@ -115,6 +121,11 @@ public class MetascopeConfig {
         this.repositoryUser = getString(config.metascopeRepositoryUser());
         this.repositoryPassword = getString(config.metascopeRepositoryPw());
         this.repositoryDialect = getString(config.metascopeRepositoryDialect());
+
+        this.metastoreAccessMethod = getString(config.metascopeMetastoreAccessMethod());
+        this.metastoreJdbcUrl = getString(config.metascopeMetastoreJdbcUrl());
+        this.metastoreJdbcUser = getString(config.metascopeMetastoreJdbcUser());
+        this.metastoreJdbcPassword = getString(config.metascopeMetastoreJdbcPw());
 
         this.solrUrl = getString(config.metascopeSolrUrl());
 
@@ -175,6 +186,22 @@ public class MetascopeConfig {
 
     public String getKerberosPrincipal() {
         return kerberosPrincipal;
+    }
+
+    public String getMetastoreAccessMethod() {
+        return metastoreAccessMethod;
+    }
+
+    public String getMetastoreJdbcUrl() {
+        return metastoreJdbcUrl;
+    }
+
+    public String getMetastoreJdbcUser() {
+        return metastoreJdbcUser;
+    }
+
+    public String getMetastoreJdbcPassword() {
+        return metastoreJdbcPassword;
     }
 
     public String getRepositoryUrl() {

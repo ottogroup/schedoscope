@@ -322,6 +322,26 @@ class BaseSettings(val config: Config) {
   lazy val metascopeRepositoryPw = config.getString("schedoscope.metascope.repository.password")
 
   /**
+    * Method to access the hive metastore to hive metastore
+    */
+  lazy val metascopeMetastoreAccessMethod = config.getString("schedoscope.metascope.metastore.method")
+
+  /**
+    * JDBC URL to hive metastore
+    */
+  lazy val metascopeMetastoreJdbcUrl = config.getString("schedoscope.metascope.metastore.jdbc.url")
+
+  /**
+    * User to access the hive metastore
+    */
+  lazy val metascopeMetastoreJdbcUser = config.getString("schedoscope.metascope.metastore.jdbc.user")
+
+  /**
+    * Password for the user used to access the hive metastore
+    */
+  lazy val metascopeMetastoreJdbcPw = config.getString("schedoscope.metascope.metastore.jdbc.password")
+
+  /**
     * SQL Dialect for the specified database
     */
   lazy val metascopeRepositoryDialect = config.getString("schedoscope.metascope.repository.dialect")
