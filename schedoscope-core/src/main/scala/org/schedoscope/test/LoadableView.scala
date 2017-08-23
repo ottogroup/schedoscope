@@ -17,7 +17,9 @@ package org.schedoscope.test
 
 
 import java.io.File
+
 import org.apache.hadoop.fs.Path
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.storageformats.Avro
 import org.schedoscope.dsl.{FieldLike, View}
 
@@ -171,16 +173,6 @@ trait LoadableView extends WritableView {
 trait test extends LoadableView with AccessRowData {
 
   /**
-    * Execute the hive query in test on previously specified test fixtures
-    */
-  def `then`() {
-    `then`(null,
-      disableDependencyCheck = false,
-      disableTransformationValidation = false,
-      disableLineageValidation = true)
-  }
-
-  /**
     * Execute the hive query in test on previously specified test fixtures.
     *
     * @param sortedBy                        sort the table by field
@@ -191,7 +183,7 @@ trait test extends LoadableView with AccessRowData {
   def `then`(sortedBy: FieldLike[_] = null,
              disableDependencyCheck: Boolean = false,
              disableTransformationValidation: Boolean = false,
-             disableLineageValidation: Boolean = true) {
+             disableLineageValidation: Boolean = Schedoscope.settings.disableLineageValidation) {
     TestUtils.loadView(this, sortedBy, disableDependencyCheck, disableTransformationValidation,
       disableLineageValidation)
   }

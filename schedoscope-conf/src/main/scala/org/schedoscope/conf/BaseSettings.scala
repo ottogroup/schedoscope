@@ -360,4 +360,9 @@ class BaseSettings(val config: Config) {
     * Logging level of Metascope
     */
   lazy val metascopeLoggingLevel = config.getString("schedoscope.metascope.logging.loglevel")
+
+  /**
+    * Logging level of Metascope
+    */
+  lazy val disableLineageValidation = config.getBoolean("schedoscope.test.disableLineageValidation")
 }
