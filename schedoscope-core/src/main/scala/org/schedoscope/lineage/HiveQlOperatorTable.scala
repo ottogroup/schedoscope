@@ -21,7 +21,7 @@ import java.util
 import org.apache.calcite.sql.`type`.SqlTypeName
 import org.apache.calcite.sql.{SqlFunctionCategory, SqlIdentifier, SqlOperator, SqlOperatorTable, SqlSyntax}
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry
-import org.schedoscope.lineage.parser.{NamedStructValueConstructor, StructFieldAccessOperator, StructValueConstructor}
+import org.schedoscope.lineage.parser.{AllowEmptySqlArrayValueConstructor, NamedStructValueConstructor, StructFieldAccessOperator, StructValueConstructor}
 
 import scala.collection.JavaConverters._
 
@@ -34,6 +34,7 @@ object HiveQlOperatorTable extends SqlOperatorTable {
   val STRUCT_FIELD_ACCESS = StructFieldAccessOperator
   val STRUCT_VALUE_CONSTRUCTOR = StructValueConstructor
   val NAMED_STRUCT_VALUE_CONSTRUCTOR = NamedStructValueConstructor
+  val ALLOW_EMPTY_SQL_ARRAY_VALUE_CONSTRUCTOR = AllowEmptySqlArrayValueConstructor
 
   private val knownReturnTypes = Map(
     "array_contains" -> SqlTypeName.BOOLEAN
