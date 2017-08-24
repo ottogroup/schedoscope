@@ -3298,7 +3298,7 @@ SqlNode ArrayConstructor() :
     )
     <RPAREN>
     {
-        return SqlStdOperatorTable.ARRAY_VALUE_CONSTRUCTOR.createCall(
+        return HiveQlOperatorTable.ALLOW_EMPTY_SQL_ARRAY_VALUE_CONSTRUCTOR().createCall(
             pos.plus(getPos()), SqlParserUtil.toNodeArray(args));
     }
 }
