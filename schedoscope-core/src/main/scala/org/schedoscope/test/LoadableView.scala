@@ -173,6 +173,16 @@ trait LoadableView extends WritableView {
 trait test extends LoadableView with AccessRowData {
 
   /**
+    * Execute the hive query in test on previously specified test fixtures
+    */
+  def `then`() {
+    `then`(null,
+      disableDependencyCheck = false,
+      disableTransformationValidation = false,
+      disableLineageValidation = true)
+  }
+
+  /**
     * Execute the hive query in test on previously specified test fixtures.
     *
     * @param sortedBy                        sort the table by field
