@@ -18,6 +18,7 @@ package org.schedoscope.test
 import java.util.logging.{Level, LogManager, Logger}
 
 import org.scalatest._
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.{Field, FieldLike}
 import org.schedoscope.test.resources.{LocalTestResources, TestResources}
 import org.slf4j.bridge.SLF4JBridgeHandler
@@ -120,7 +121,7 @@ trait ReusableHiveSchema
   def then(view: LoadableView, sortedBy: FieldLike[_] = null,
            disableDependencyCheck: Boolean = false,
            disableTransformationValidation: Boolean = false,
-           disableLineageValidation: Boolean = true) {
+           disableLineageValidation: Boolean = Schedoscope.settings.disableLineageValidation) {
 
     view.resources = resources
     view.inputFixtures.foreach { v =>

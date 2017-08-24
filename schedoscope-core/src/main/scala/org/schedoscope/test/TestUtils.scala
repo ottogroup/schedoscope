@@ -30,10 +30,10 @@ object TestUtils {
     * @param disableDependencyCheck disable dependency checks
     */
   def loadView(view: LoadableView,
-               sortedBy: FieldLike[_] = null,
-               disableDependencyCheck: Boolean = false,
-               disableTransformationValidation: Boolean = false,
-               disableLineageValidation: Boolean = true) = {
+               sortedBy: FieldLike[_],
+               disableDependencyCheck: Boolean,
+               disableTransformationValidation: Boolean,
+               disableLineageValidation: Boolean) = {
 
 
     //dependencyCheck

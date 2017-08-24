@@ -17,7 +17,9 @@ package org.schedoscope.test
 
 
 import java.io.File
+
 import org.apache.hadoop.fs.Path
+import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.storageformats.Avro
 import org.schedoscope.dsl.{FieldLike, View}
 
@@ -191,7 +193,7 @@ trait test extends LoadableView with AccessRowData {
   def `then`(sortedBy: FieldLike[_] = null,
              disableDependencyCheck: Boolean = false,
              disableTransformationValidation: Boolean = false,
-             disableLineageValidation: Boolean = true) {
+             disableLineageValidation: Boolean = Schedoscope.settings.disableLineageValidation) {
     TestUtils.loadView(this, sortedBy, disableDependencyCheck, disableTransformationValidation,
       disableLineageValidation)
   }
