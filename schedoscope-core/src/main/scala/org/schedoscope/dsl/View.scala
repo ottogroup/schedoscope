@@ -295,6 +295,7 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
     */
   override def transformVia(ft: () => Transformation) {
     ensureRegisteredParameters
+    ft().forView(this)
 
     registeredTransformation = ft
   }
