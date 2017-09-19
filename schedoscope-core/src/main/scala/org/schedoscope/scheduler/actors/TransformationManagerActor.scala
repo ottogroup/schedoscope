@@ -130,7 +130,7 @@ class TransformationManagerActor(settings: SchedoscopeSettings,
       }
 
     case viewToTransform: View =>
-      val transformation = viewToTransform.transformation().forView(viewToTransform)
+      val transformation = viewToTransform.transformation()
       val commandRequest = DriverCommand(TransformView(transformation, viewToTransform), sender)
       context.actorSelection(s"${self.path}/${transformation.name}-driver") forward commandRequest
 
