@@ -77,6 +77,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 09/21/2017 - Release 0.9.2
+
+We have released Version 0.9.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+Minor bug fixes. Improved Metascope performance by optionally circumventing the Hive Metastore API and accessing the Metastore DB directly.
+
 ###### 08/17/2017 - Release 0.9.1
 
 We have released Version 0.9.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
