@@ -239,7 +239,7 @@ class DriverActor[T <: Transformation](transformationManagerActor: ActorRef,
           logStateInfo("idle", "DRIVER ACTOR: becoming idle")
           runningCommand = None
         case TransformView(t, view) =>
-          val transformation: T = t.asInstanceOf[T]
+          val transformation: T = t.forView(view).asInstanceOf[T]
 
           val runHandle = driver.run(transformation)
           driver.driverRunStarted(runHandle)
