@@ -15,9 +15,16 @@
   */
 package org.schedoscope.dsl.transformations
 
+import org.schedoscope.dsl.View
+
 case class SeqTransformation[T1 <: Transformation, T2 <: Transformation](firstThisTransformation: T1, thenThatTransformation: T2, firstTransformationIsDriving: Boolean = true) extends Transformation {
 
   def name = "seq"
+
+  override def forView(v: View) = {
+    firstThisTransformation.forView(v)
+    thenThatTransformation.forView(v)
+  }
 
   override def fileResourcesToChecksum =
     if (firstTransformationIsDriving)
