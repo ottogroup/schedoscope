@@ -77,6 +77,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 10/11/2017 - Release 0.9.3
+
+We have released Version 0.9.3 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+Minor bug fix. Show view name in resource manager also for transformations of views that have exportAs statements.
+
 ###### 09/21/2017 - Release 0.9.2
 
 We have released Version 0.9.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
