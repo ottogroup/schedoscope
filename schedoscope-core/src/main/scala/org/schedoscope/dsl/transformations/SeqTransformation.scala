@@ -24,6 +24,7 @@ case class SeqTransformation[T1 <: Transformation, T2 <: Transformation](firstTh
   override def forView(v: View) = {
     firstThisTransformation.forView(v)
     thenThatTransformation.forView(v)
+    super.forView(v)
   }
 
   override def fileResourcesToChecksum =
