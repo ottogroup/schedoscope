@@ -77,6 +77,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 10/12/2017 - Release 0.9.4
+
+We have released Version 0.9.4 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+Emergency bug fix for Schedoscope crashing upon exports. Do not use 0.9.3!
+
 ###### 10/11/2017 - Release 0.9.3
 
 We have released Version 0.9.3 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
