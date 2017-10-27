@@ -5482,7 +5482,7 @@ String CommonNonReservedKeyWord() :
 
 <DEFAULT, DQID, BTID> TOKEN :
 {
-    < EQ: "=" | "==">
+    < EQ: "=" | "==" | "<=>">
     | < GT: ">" >
     | < LT: "<" >
     | < HOOK: "?" >
