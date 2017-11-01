@@ -82,12 +82,7 @@ public class SchemaUtils {
 
             if (!inputSchema.get(i).isComplex()) {
 
-                if (inputSchema.get(i).getTypeString()
-                        .toLowerCase(Locale.getDefault()) == null
-                        || inputSchema.get(i).getTypeString()
-                        .toLowerCase(Locale.getDefault())
-                        .equals("null")) {
-
+                if (inputSchema.get(i).getTypeString().toLowerCase(Locale.getDefault()).equals("null")) {
                     type = columnTypeMapping.get("tinyint");
 
                 } else if (anonFields.contains(inputSchema.get(i).getName())) {
