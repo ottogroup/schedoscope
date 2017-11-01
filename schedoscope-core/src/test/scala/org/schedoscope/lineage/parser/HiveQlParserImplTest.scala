@@ -3,6 +3,7 @@ package org.schedoscope.lineage.parser
 import java.io.ByteArrayInputStream
 
 import org.apache.calcite.avatica.util.Casing
+import org.apache.calcite.sql.{SqlCall, SqlKind, SqlSelect}
 import org.scalatest.{FlatSpec, Matchers}
 
 class HiveQlParserImplTest extends FlatSpec with Matchers {
@@ -13,6 +14,9 @@ class HiveQlParserImplTest extends FlatSpec with Matchers {
     parser.setIdentifierMaxLength(255)
     parser.setUnquotedCasing(Casing.UNCHANGED)
 
-    parser.parseSqlStmtEof() should not be null
+    val sqlNode = parser.parseSqlStmtEof
+    val select = sqlNode.asInstanceOf[SqlSelect]
+    val where = select.getWhere.asInstanceOf[SqlCall]
+    where.getOperator.getKind should be(SqlKind.EQUALS)
   }
 }
