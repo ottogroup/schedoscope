@@ -342,7 +342,7 @@
                 <executions>
                     <execution>
                         <id>generate-fmpp-sources</id>
-                        <phase>compile</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>generate</goal>
                         </goals>
@@ -356,7 +356,7 @@
                 <executions>
                     <execution>
                         <id>javacc</id>
-                        <phase>compile</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>javacc</goal>
                         </goals>
