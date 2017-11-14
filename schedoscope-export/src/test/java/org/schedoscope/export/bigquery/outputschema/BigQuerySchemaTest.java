@@ -1,7 +1,6 @@
 package org.schedoscope.export.bigquery.outputschema;
 
 import com.google.cloud.bigquery.*;
-import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
@@ -22,9 +21,9 @@ public class BigQuerySchemaTest {
 
     private BigQuery bigQuery;
 
-    private HCatSchema flatHcatSchema;
+    private HCatSchema flatHcatSchema, hcatSchemaWithPrimitiveList;
 
-    private Schema flatBigQuerySchema;
+    private Schema flatBigQuerySchema, bigQuerySchemaWithPrimitiveList;
 
     @Before
     public void setUp() throws HCatException {
@@ -48,36 +47,43 @@ public class BigQuerySchemaTest {
         PrimitiveTypeInfo hcatFloatType = new PrimitiveTypeInfo();
         hcatFloatType.setTypeName("float");
 
-        HCatFieldSchema hcatStringField = new HCatFieldSchema("aString", hcatStringType, "a string field");
-        HCatFieldSchema hcatIntField = new HCatFieldSchema("anInt", hcatIntType, "an int field");
-        HCatFieldSchema hcatLongField = new HCatFieldSchema("aLong", hcatLongType, "a long field");
-        HCatFieldSchema hcatByteField = new HCatFieldSchema("aByte", hcatByteType, "a byte field");
-        HCatFieldSchema hcatBooleanField = new HCatFieldSchema("aBoolean", hcatBooleanType, "a boolean field");
-        HCatFieldSchema hcatDoubleField = new HCatFieldSchema("aDouble", hcatDoubleType, "a double field");
-        HCatFieldSchema hcatFloatField = new HCatFieldSchema("aFloat", hcatFloatType, "a float field");
-
         flatHcatSchema = new HCatSchema(
                 Arrays.asList(
-                        hcatStringField,
-                        hcatIntField,
-                        hcatLongField,
-                        hcatByteField,
-                        hcatBooleanField,
-                        hcatDoubleField,
-                        hcatFloatField
+                        new HCatFieldSchema("aString", hcatStringType, "a string field"),
+                        new HCatFieldSchema("anInt", hcatIntType, "an int field"),
+                        new HCatFieldSchema("aLong", hcatLongType, "a long field"),
+                        new HCatFieldSchema("aByte", hcatByteType, "a byte field"),
+                        new HCatFieldSchema("aBoolean", hcatBooleanType, "a boolean field"),
+                        new HCatFieldSchema("aDouble", hcatDoubleType, "a double field"),
+                        new HCatFieldSchema("aFloat", hcatFloatType, "a float field")
                 )
         );
 
         flatBigQuerySchema = Schema.of(
-                Field.newBuilder("aString", Field.Type.string()).setDescription("a string field").build(),
-                Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").build(),
-                Field.newBuilder("aLong", Field.Type.integer()).setDescription("a long field").build(),
-                Field.newBuilder("aByte", Field.Type.integer()).setDescription("a byte field").build(),
-                Field.newBuilder("aBoolean", Field.Type.bool()).setDescription("a boolean field").build(),
-                Field.newBuilder("aDouble", Field.Type.floatingPoint()).setDescription("a double field").build(),
-                Field.newBuilder("aFloat", Field.Type.floatingPoint()).setDescription("a float field").build()
+                Field.newBuilder("aString", Field.Type.string()).setDescription("a string field").setMode(Field.Mode.NULLABLE).build(),
+                Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
+                Field.newBuilder("aLong", Field.Type.integer()).setDescription("a long field").setMode(Field.Mode.NULLABLE).build(),
+                Field.newBuilder("aByte", Field.Type.integer()).setDescription("a byte field").setMode(Field.Mode.NULLABLE).build(),
+                Field.newBuilder("aBoolean", Field.Type.bool()).setDescription("a boolean field").setMode(Field.Mode.NULLABLE).build(),
+                Field.newBuilder("aDouble", Field.Type.floatingPoint()).setDescription("a double field").setMode(Field.Mode.NULLABLE).build(),
+                Field.newBuilder("aFloat", Field.Type.floatingPoint()).setDescription("a float field").setMode(Field.Mode.NULLABLE).build()
         );
 
+        hcatSchemaWithPrimitiveList = new HCatSchema(
+                Arrays.asList(
+                        new HCatFieldSchema("anInt", hcatIntType, "an int field"),
+                        new HCatFieldSchema("listOfInts",
+                                HCatFieldSchema.Type.ARRAY,
+                                new HCatSchema(Arrays.asList(new HCatFieldSchema(null, hcatIntType, null))),
+                                "a list of ints field")
+
+                )
+        );
+
+        bigQuerySchemaWithPrimitiveList = Schema.of(
+                Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
+                Field.newBuilder("listOfInts", Field.Type.integer()).setDescription("a list of ints field").setMode(Field.Mode.REPEATED).build()
+        );
 
     }
 
@@ -87,61 +93,29 @@ public class BigQuerySchemaTest {
         bigQuery.create(datasetInfo);
     }
 
-    @After
+    //@After
     public void dropBigQueryDataSets() {
         DatasetId datasetId = DatasetId.of("schedoscope_export_big_query_schema_test");
         bigQuery.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
     }
 
-    private void assertHcatSchemaEqualsBigQueryTable(TableInfo bigQueryTable, String databaseName, String tableName, HCatSchema hCatSchema) {
-
-        assertEquals("schedoscope_export_big_query_schema_test", bigQueryTable.getTableId().getDataset());
-        assertEquals("flat_table", bigQueryTable.getTableId().getTable());
-
-        for (int h = 0; h < hCatSchema.getFields().size(); h++) {
-            HCatFieldSchema hcatFieldSchema = hCatSchema.getFields().get(h);
-            Field bigQueryField = bigQueryTable.getDefinition().getSchema().getFields().get(h);
-
-            assertEquals(hcatFieldSchema.getName(), bigQueryField.getName());
-            assertEquals(hcatFieldSchema.getComment(), bigQueryField.getDescription());
-
-            if (hcatFieldSchema.getTypeInfo().getCategory().equals(ObjectInspector.Category.PRIMITIVE)) {
-                assertEquals(Field.Mode.NULLABLE, bigQueryField.getMode());
-            }
-
-            switch (hcatFieldSchema.getTypeInfo().getTypeName()) {
-                case "string":
-                    assertEquals(Field.Type.string(), bigQueryField.getType());
-                    break;
-                case "int":
-                    assertEquals(Field.Type.integer(), bigQueryField.getType());
-                    break;
-                case "bigint":
-                    assertEquals(Field.Type.integer(), bigQueryField.getType());
-                    break;
-                case "tinyint":
-                    assertEquals(Field.Type.integer(), bigQueryField.getType());
-                    break;
-                case "boolean":
-                    assertEquals(Field.Type.bool(), bigQueryField.getType());
-                    break;
-                case "float":
-                    assertEquals(Field.Type.floatingPoint(), bigQueryField.getType());
-                    break;
-                case "double":
-                    assertEquals(Field.Type.floatingPoint(), bigQueryField.getType());
-                    break;
-                default:
-                    assertEquals(Field.Type.string(), bigQueryField.getType());
-            }
-        }
-
-
-    }
-
     @Test
     public void testFlatTableConversion() throws IOException {
         TableInfo converted = bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema);
-        assertHcatSchemaEqualsBigQueryTable(converted, "schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema);
+
+        assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
+        assertEquals("flat_table", converted.getTableId().getTable());
+        assertEquals(flatBigQuerySchema, converted.getDefinition().getSchema());
+    }
+
+    @Test
+    public void testTableWithPrimitiveListConversion() throws IOException {
+        TableInfo converted = bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_primitive_list", hcatSchemaWithPrimitiveList);
+
+        assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
+        assertEquals("table_with_primitive_list", converted.getTableId().getTable());
+        assertEquals(bigQuerySchemaWithPrimitiveList, converted.getDefinition().getSchema());
+
+        bigQuery.create(converted);
     }
 }
