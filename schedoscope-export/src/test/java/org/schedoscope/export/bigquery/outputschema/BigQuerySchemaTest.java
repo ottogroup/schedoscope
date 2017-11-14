@@ -1,12 +1,11 @@
 package org.schedoscope.export.bigquery.outputschema;
 
-import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.BigQueryOptions;
-import com.google.cloud.bigquery.DatasetId;
+import com.google.cloud.bigquery.*;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,10 +18,16 @@ public class BigQuerySchemaTest {
 
     private BigQuery bigQuery;
 
-    private HCatSchema flatTable;
+    private HCatSchema flatHcatSchema;
+
+    private Schema flatBigQuerySchema;
 
     @Before
     public void setUp() throws HCatException {
+
+        bigQuery = BigQueryOptions.getDefaultInstance().getService();
+
+        createBigQueryDataSet();
 
         PrimitiveTypeInfo hcatStringType = new PrimitiveTypeInfo();
         hcatStringType.setTypeName("string");
@@ -47,7 +52,7 @@ public class BigQuerySchemaTest {
         HCatFieldSchema hcatDoubleField = new HCatFieldSchema("aDouble", hcatDoubleType, "a double field");
         HCatFieldSchema hcatFloatField = new HCatFieldSchema("aFloat", hcatFloatType, "a float field");
 
-        flatTable = new HCatSchema(
+        flatHcatSchema = new HCatSchema(
                 Arrays.asList(
                         hcatStringField,
                         hcatIntField,
@@ -59,17 +64,35 @@ public class BigQuerySchemaTest {
                 )
         );
 
-
-        bigQuery = BigQueryOptions.getDefaultInstance().getService();
-
-        DatasetId datasetId = DatasetId.of("schedoscope_export_big_query_schema_test");
-        bigQuery.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
+        flatBigQuerySchema = Schema.of(
+                Field.newBuilder("aString", Field.Type.string()).setDescription("a string field").build(),
+                Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").build(),
+                Field.newBuilder("aLong", Field.Type.integer()).setDescription("a long field").build(),
+                Field.newBuilder("aByte", Field.Type.integer()).setDescription("a byte field").build(),
+                Field.newBuilder("aBoolean", Field.Type.bool()).setDescription("a boolean field").build(),
+                Field.newBuilder("aDouble", Field.Type.floatingPoint()).setDescription("a double field").build(),
+                Field.newBuilder("aFloat", Field.Type.floatingPoint()).setDescription("a float field").build()
+        );
 
 
     }
 
+    public void createBigQueryDataSet() {
+        dropBigQueryDataSets();
+        DatasetInfo datasetInfo = DatasetInfo.newBuilder("schedoscope_export_big_query_schema_test").build();
+        bigQuery.create(datasetInfo);
+    }
+
+    //@After
+    public void dropBigQueryDataSets() {
+        DatasetId datasetId = DatasetId.of("schedoscope_export_big_query_schema_test");
+        bigQuery.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
+    }
+
     @Test
-    public void figuringOutApi() throws IOException {
-        bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatTable);
+    public void testFlatTableConversion() throws IOException {
+        bigQuery.create(
+            bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema)
+        );
     }
 }
