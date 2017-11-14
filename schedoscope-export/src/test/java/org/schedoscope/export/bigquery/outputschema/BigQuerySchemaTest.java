@@ -1,6 +1,7 @@
 package org.schedoscope.export.bigquery.outputschema;
 
 import com.google.cloud.bigquery.*;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
@@ -11,6 +12,9 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
+
+import static org.junit.Assert.assertEquals;
+
 
 public class BigQuerySchemaTest {
 
@@ -83,16 +87,61 @@ public class BigQuerySchemaTest {
         bigQuery.create(datasetInfo);
     }
 
-    //@After
+    @After
     public void dropBigQueryDataSets() {
         DatasetId datasetId = DatasetId.of("schedoscope_export_big_query_schema_test");
         bigQuery.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
     }
 
+    private void assertHcatSchemaEqualsBigQueryTable(TableInfo bigQueryTable, String databaseName, String tableName, HCatSchema hCatSchema) {
+
+        assertEquals("schedoscope_export_big_query_schema_test", bigQueryTable.getTableId().getDataset());
+        assertEquals("flat_table", bigQueryTable.getTableId().getTable());
+
+        for (int h = 0; h < hCatSchema.getFields().size(); h++) {
+            HCatFieldSchema hcatFieldSchema = hCatSchema.getFields().get(h);
+            Field bigQueryField = bigQueryTable.getDefinition().getSchema().getFields().get(h);
+
+            assertEquals(hcatFieldSchema.getName(), bigQueryField.getName());
+            assertEquals(hcatFieldSchema.getComment(), bigQueryField.getDescription());
+
+            if (hcatFieldSchema.getTypeInfo().getCategory().equals(ObjectInspector.Category.PRIMITIVE)) {
+                assertEquals(Field.Mode.NULLABLE, bigQueryField.getMode());
+            }
+
+            switch (hcatFieldSchema.getTypeInfo().getTypeName()) {
+                case "string":
+                    assertEquals(Field.Type.string(), bigQueryField.getType());
+                    break;
+                case "int":
+                    assertEquals(Field.Type.integer(), bigQueryField.getType());
+                    break;
+                case "bigint":
+                    assertEquals(Field.Type.integer(), bigQueryField.getType());
+                    break;
+                case "tinyint":
+                    assertEquals(Field.Type.integer(), bigQueryField.getType());
+                    break;
+                case "boolean":
+                    assertEquals(Field.Type.bool(), bigQueryField.getType());
+                    break;
+                case "float":
+                    assertEquals(Field.Type.floatingPoint(), bigQueryField.getType());
+                    break;
+                case "double":
+                    assertEquals(Field.Type.floatingPoint(), bigQueryField.getType());
+                    break;
+                default:
+                    assertEquals(Field.Type.string(), bigQueryField.getType());
+            }
+        }
+
+
+    }
+
     @Test
     public void testFlatTableConversion() throws IOException {
-        bigQuery.create(
-            bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema)
-        );
+        TableInfo converted = bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema);
+        assertHcatSchemaEqualsBigQueryTable(converted, "schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema);
     }
 }
