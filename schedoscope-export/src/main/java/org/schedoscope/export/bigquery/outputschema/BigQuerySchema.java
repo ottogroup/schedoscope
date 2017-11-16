@@ -15,7 +15,18 @@ public class BigQuerySchema {
 
     private static final Log LOG = LogFactory.getLog(BigQuerySchema.class);
 
-    public Field.Type convertTypeInfoToFieldType(PrimitiveTypeInfo typeInfo) {
+    static private PrimitiveTypeInfo stringTypeInfo;
+
+    private PrimitiveTypeInfo stringTypeInfo() {
+        if (stringTypeInfo == null) {
+            stringTypeInfo = new PrimitiveTypeInfo();
+            stringTypeInfo.setTypeName("string");
+        }
+
+        return stringTypeInfo;
+    }
+
+    private Field.Type convertPrimitiveTypeInfoToFieldType(PrimitiveTypeInfo typeInfo) {
         Field.Type bigQueryType;
 
         switch (typeInfo.getTypeName()) {
@@ -47,70 +58,121 @@ public class BigQuerySchema {
         return bigQueryType;
     }
 
-    public Field convertFieldSchemaToField(HCatFieldSchema fieldSchema) {
-
-        String fieldName = fieldSchema.getName();
-        String fieldDescription = fieldSchema.getComment();
-
-        PrimitiveTypeInfo fieldType;
-        Field.Mode mode = Field.Mode.NULLABLE;
-
-        if (fieldSchema.getCategory().equals(HCatFieldSchema.Category.ARRAY)) {
-
-            HCatFieldSchema elementSchema = null;
-
-            try {
-                elementSchema = fieldSchema.getArrayElementSchema().get(0);
-            } catch (HCatException e) {
-                // not going to happen
-            }
-
-            if (elementSchema.getCategory().equals(HCatFieldSchema.Category.PRIMITIVE)) {
-
-                mode = Field.Mode.REPEATED;
-                fieldType = elementSchema.getTypeInfo();
-
-            } else {
-
-                fieldType = elementSchema.getTypeInfo();
-
-            }
-
-        } else {
-            fieldType = fieldSchema.getTypeInfo();
-        }
-
-        Field.Type bigQueryType = convertTypeInfoToFieldType(fieldType);
+    private Field convertPrimitiveSchemaToField(HCatFieldSchema fieldSchema) {
 
         return Field
-                .newBuilder(fieldName, bigQueryType)
-                .setDescription(fieldDescription)
-                .setMode(mode)
+                .newBuilder(fieldSchema.getName(), convertPrimitiveTypeInfoToFieldType(fieldSchema.getTypeInfo()))
+                .setDescription(fieldSchema.getComment())
+                .setMode(Field.Mode.NULLABLE)
                 .build();
 
     }
 
-    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema) throws IOException {
+    private Field convertStructSchemaField(HCatFieldSchema fieldSchema) {
 
-        LOG.info("Incoming HCat table schema: " + hcatSchema.getSchemaAsTypeString());
+        HCatSchema structSchema = null;
 
-        TableId tableId = TableId.of(database, table);
+        try {
+            structSchema = fieldSchema.getStructSubSchema();
+        } catch (HCatException e) {
+            // not going to happen
+        }
 
+        Schema recordSchema = convertSchemaToTableFields(structSchema);
+
+        return Field
+                .newBuilder(fieldSchema.getName(), Field.Type.record(recordSchema.getFields()))
+                .setDescription(fieldSchema.getComment())
+                .setMode(Field.Mode.NULLABLE)
+                .build();
+
+    }
+
+    private Field convertArraySchemaField(HCatFieldSchema fieldSchema) {
+
+        HCatFieldSchema elementSchema = null;
+
+        try {
+            elementSchema = fieldSchema.getArrayElementSchema().get(0);
+        } catch (HCatException e) {
+            // not going to happen
+        }
+
+        Field.Type arrayFieldType = null;
+
+        if (HCatFieldSchema.Category.PRIMITIVE == elementSchema.getCategory())
+            arrayFieldType = convertPrimitiveTypeInfoToFieldType(elementSchema.getTypeInfo());
+        else if (HCatFieldSchema.Category.ARRAY == elementSchema.getCategory())
+            arrayFieldType = Field.Type.string();
+        else if (HCatFieldSchema.Category.MAP == elementSchema.getCategory())
+            arrayFieldType = Field.Type.string();
+        else
+            try {
+                arrayFieldType = Field.Type.record(convertSchemaToTableFields(elementSchema.getStructSubSchema()).getFields());
+            } catch (HCatException e) {
+                // not going to happen
+            }
+
+
+        return Field
+                .newBuilder(fieldSchema.getName(), arrayFieldType)
+                .setDescription(fieldSchema.getComment())
+                .setMode(Field.Mode.REPEATED)
+                .build();
+
+    }
+
+    private Field convertFieldSchemaToField(HCatFieldSchema fieldSchema) {
+
+        if (HCatFieldSchema.Category.ARRAY == fieldSchema.getCategory())
+            return convertArraySchemaField(fieldSchema);
+        else if (HCatFieldSchema.Category.STRUCT == fieldSchema.getCategory())
+            return convertStructSchemaField(fieldSchema);
+        else if (HCatFieldSchema.Category.MAP == fieldSchema.getCategory())
+            try {
+                return convertPrimitiveSchemaToField(new HCatFieldSchema(fieldSchema.getName(), stringTypeInfo(), fieldSchema.getComment()));
+            } catch (HCatException e) {
+                // not going to happen
+                return null;
+            }
+        else
+            return convertPrimitiveSchemaToField(fieldSchema);
+
+    }
+
+    private Schema convertSchemaToTableFields(HCatSchema hcatSchema) {
         LinkedList<Field> biqQueryFields = new LinkedList<>();
 
         for (HCatFieldSchema field : hcatSchema.getFields()) {
             biqQueryFields.add(convertFieldSchemaToField(field));
         }
 
-        Schema tableFields = Schema.of(biqQueryFields);
+        return Schema.of(biqQueryFields);
+    }
 
-        StandardTableDefinition tableDefinition = StandardTableDefinition.of(tableFields);
+    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, TemporalPartitioningScheme partitioning) throws IOException {
 
-        TableInfo tableInfo = TableInfo.of(tableId, tableDefinition);
+        LOG.info("Incoming HCat table schema: " + hcatSchema.getSchemaAsTypeString());
+
+        TableId tableId = TableId.of(database, table);
+
+        StandardTableDefinition.Builder tableDefinitionBuilder = StandardTableDefinition
+                .newBuilder()
+                .setSchema(convertSchemaToTableFields(hcatSchema));
+
+        if (partitioning.isDefined()) {
+            tableDefinitionBuilder.setTimePartitioning(TimePartitioning.of(TimePartitioning.Type.DAY));
+        }
+
+        TableInfo tableInfo = TableInfo.of(tableId, tableDefinitionBuilder.build());
 
         LOG.info("Converted BigQuery schema: " + tableInfo);
 
         return tableInfo;
+    }
+
+    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema) throws IOException {
+        return convertSchemaToTableInfo(database, table, hcatSchema, new TemporalPartitioningScheme());
     }
 
 }
