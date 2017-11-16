@@ -56,6 +56,7 @@ public class BigQuerySchemaTest extends BigQueryBaseTest {
         );
 
         flatBigQuerySchema = Schema.of(
+                Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setDescription("HCatInputFormat filter used to export the present record.").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("aString", Field.Type.string()).setDescription("a string field").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("aLong", Field.Type.integer()).setDescription("a long field").setMode(Field.Mode.NULLABLE).build(),
@@ -77,6 +78,7 @@ public class BigQuerySchemaTest extends BigQueryBaseTest {
         );
 
         bigQuerySchemaWithPrimitiveList = Schema.of(
+                Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setDescription("HCatInputFormat filter used to export the present record.").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("listOfInts", Field.Type.integer()).setDescription("a list of ints field").setMode(Field.Mode.REPEATED).build()
         );
@@ -113,6 +115,7 @@ public class BigQuerySchemaTest extends BigQueryBaseTest {
         );
 
         bigQuerySchemaWithRecord = Schema.of(
+                Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setDescription("HCatInputFormat filter used to export the present record.").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("aStruct",
                         Field.Type.record(
@@ -157,6 +160,7 @@ public class BigQuerySchemaTest extends BigQueryBaseTest {
         );
 
         bigQuerySchemaWithListOfRecord = Schema.of(
+                Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setDescription("HCatInputFormat filter used to export the present record.").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("listOfStructs",
                         Field.Type.record(
@@ -184,6 +188,7 @@ public class BigQuerySchemaTest extends BigQueryBaseTest {
         );
 
         bigQuerySchemaWithListOfList = Schema.of(
+                Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setDescription("HCatInputFormat filter used to export the present record.").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("listOfList", Field.Type.string()).setDescription("a list of lists field").setMode(Field.Mode.REPEATED).build()
         );
@@ -205,6 +210,7 @@ public class BigQuerySchemaTest extends BigQueryBaseTest {
         );
 
         bigQuerySchemaWithMap = Schema.of(
+                Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setDescription("HCatInputFormat filter used to export the present record.").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("aMap", Field.Type.string()).setDescription("a map field").setMode(Field.Mode.NULLABLE).build()
         );
@@ -233,6 +239,7 @@ public class BigQuerySchemaTest extends BigQueryBaseTest {
         );
 
         bigQuerySchemaWithListOfMaps = Schema.of(
+                Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setDescription("HCatInputFormat filter used to export the present record.").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("anInt", Field.Type.integer()).setDescription("an int field").setMode(Field.Mode.NULLABLE).build(),
                 Field.newBuilder("listOfMap", Field.Type.string()).setDescription("a list of maps field").setMode(Field.Mode.REPEATED).build()
         );

@@ -10,6 +10,7 @@ import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 
 public class BigQuerySchema {
 
@@ -25,6 +26,8 @@ public class BigQuerySchema {
 
         return stringTypeInfo;
     }
+
+    private Field usedFilterField = Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setMode(Field.Mode.NULLABLE).setDescription("HCatInputFormat filter used to export the present record.").build();
 
     private Field.Type convertPrimitiveTypeInfoToFieldType(PrimitiveTypeInfo typeInfo) {
         Field.Type bigQueryType;
@@ -156,9 +159,13 @@ public class BigQuerySchema {
 
         TableId tableId = TableId.of(database, table);
 
+        List<Field> fields = new LinkedList<>();
+        fields.add(usedFilterField);
+        fields.addAll(convertSchemaToTableFields(hcatSchema).getFields());
+
         StandardTableDefinition.Builder tableDefinitionBuilder = StandardTableDefinition
                 .newBuilder()
-                .setSchema(convertSchemaToTableFields(hcatSchema));
+                .setSchema(Schema.of(fields));
 
         if (partitioning.isDefined()) {
             tableDefinitionBuilder.setTimePartitioning(TimePartitioning.of(TimePartitioning.Type.DAY));
