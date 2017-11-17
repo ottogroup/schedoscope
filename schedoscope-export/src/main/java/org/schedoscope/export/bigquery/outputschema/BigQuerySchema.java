@@ -153,7 +153,7 @@ public class BigQuerySchema {
         return Schema.of(biqQueryFields);
     }
 
-    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, TemporalPartitioningScheme partitioning) throws IOException {
+    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning) throws IOException {
 
         LOG.info("Incoming HCat table schema: " + hcatSchema.getSchemaAsTypeString());
 
@@ -167,7 +167,7 @@ public class BigQuerySchema {
                 .newBuilder()
                 .setSchema(Schema.of(fields));
 
-        if (partitioning.isDefined()) {
+        if (partitioning.isTemporallyPartitioned()) {
             tableDefinitionBuilder.setTimePartitioning(TimePartitioning.of(TimePartitioning.Type.DAY));
         }
 
@@ -179,7 +179,7 @@ public class BigQuerySchema {
     }
 
     public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema) throws IOException {
-        return convertSchemaToTableInfo(database, table, hcatSchema, new TemporalPartitioningScheme());
+        return convertSchemaToTableInfo(database, table, hcatSchema, new PartitioningScheme());
     }
 
 }
