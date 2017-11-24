@@ -1,8 +1,6 @@
 package org.schedoscope.export.bigquery.outputschema;
 
-import com.google.cloud.bigquery.Field;
-import com.google.cloud.bigquery.Schema;
-import com.google.cloud.bigquery.TableInfo;
+import com.google.cloud.bigquery.*;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
@@ -15,6 +13,7 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 public class BigQuerySchemaTest extends BigQueryBaseTest {
@@ -255,6 +254,52 @@ public class BigQuerySchemaTest extends BigQueryBaseTest {
 
         createTable(converted);
     }
+
+    @Test
+    public void testTableConversionWithPostfix() throws IOException {
+        TableInfo converted = bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, "test");
+
+        assertTrue(converted.getTableId().getTable().endsWith("_test"));
+    }
+
+    @Test
+    public void testTableConversionWithPartitioning() throws IOException, NoSuchFieldException, IllegalAccessException {
+        PartitioningScheme partitioning = new PartitioningScheme("aString", PartitioningScheme.Granularity.MONTHLY);
+
+        TableInfo converted = bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning);
+
+        assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
+        assertEquals("flat_table", converted.getTableId().getTable());
+
+        StandardTableDefinition bigQueryTableDefinition = converted.getDefinition();
+
+        java.lang.reflect.Field field = StandardTableDefinition.class.getDeclaredField("timePartitioning");
+        field.setAccessible(true);
+        TimePartitioning timePartitioning = (TimePartitioning) field.get(bigQueryTableDefinition);
+
+        assertEquals(TimePartitioning.Type.DAY, timePartitioning.getType());
+
+    }
+
+    @Test
+    public void testTableConversionWithPartitioningAndPostfix() throws IOException, NoSuchFieldException, IllegalAccessException {
+        PartitioningScheme partitioning = new PartitioningScheme("aString", PartitioningScheme.Granularity.MONTHLY);
+
+        TableInfo converted = bigQuerySchema.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning, "test");
+
+        assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
+        assertEquals("flat_table_test", converted.getTableId().getTable());
+
+        StandardTableDefinition bigQueryTableDefinition = converted.getDefinition();
+
+        java.lang.reflect.Field field = StandardTableDefinition.class.getDeclaredField("timePartitioning");
+        field.setAccessible(true);
+        TimePartitioning timePartitioning = (TimePartitioning) field.get(bigQueryTableDefinition);
+
+        assertEquals(TimePartitioning.Type.DAY, timePartitioning.getType());
+
+    }
+
 
     @Test
     public void testTableWithPrimitiveListConversion() throws IOException {

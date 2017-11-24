@@ -153,11 +153,11 @@ public class BigQuerySchema {
         return Schema.of(biqQueryFields);
     }
 
-    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning) throws IOException {
+    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning, String postfix) throws IOException {
 
         LOG.info("Incoming HCat table schema: " + hcatSchema.getSchemaAsTypeString());
 
-        TableId tableId = TableId.of(database, table);
+        TableId tableId = TableId.of(database, table + (postfix == null || postfix.isEmpty() ? "" : "_" + postfix));
 
         List<Field> fields = new LinkedList<>();
         fields.add(usedFilterField);
@@ -176,6 +176,14 @@ public class BigQuerySchema {
         LOG.info("Converted BigQuery schema: " + tableInfo);
 
         return tableInfo;
+    }
+
+    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning) throws IOException {
+        return convertSchemaToTableInfo(database, table, hcatSchema, partitioning, "");
+    }
+
+    public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, String postfix) throws IOException {
+        return convertSchemaToTableInfo(database, table, hcatSchema, new PartitioningScheme(), postfix);
     }
 
     public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema) throws IOException {
