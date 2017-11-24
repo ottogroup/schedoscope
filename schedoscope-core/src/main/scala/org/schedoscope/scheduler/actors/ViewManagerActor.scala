@@ -267,7 +267,13 @@ object ViewManagerActor {
       } else {
         visited.add(v)
         if (settings.developmentModeEnabled && settings.viewsUnderDevelopment.contains(v.urlPathPrefix)) {
-          v :: v.dependencies
+          val viewsUnderDev = settings.viewsUnderDevelopment
+          val (normalViews, stubbedViews) = v.dependencies.partition(v => viewsUnderDev.contains(v.urlPathPrefix))
+          if(normalViews.isEmpty) {
+            v :: v.dependencies
+          } else {
+            v :: stubbedViews ::: unknownViewsOrDependencies(normalViews, vsm, visited)
+          }
         } else {
           v :: unknownViewsOrDependencies(v.dependencies, vsm, visited)
         }

@@ -232,8 +232,11 @@ class TableActor(currentStates: Map[View, ViewSchedulingState],
             sendMessageToView(view, MaterializeExternalView(mode))
           }
         } else if (settings.developmentModeEnabled &&
-           settings.viewsUnderDevelopment.contains(currentState.view.urlPathPrefix)) {
+          settings.viewsUnderDevelopment.contains(currentState.view.urlPathPrefix) &&
+          !settings.viewsUnderDevelopment.contains(view.urlPathPrefix)) {
+
           log.info(s"View is in development $view")
+
           //stub the dependent view
           sendMessageToView(view, MaterializeViewAsStub())
         } else {

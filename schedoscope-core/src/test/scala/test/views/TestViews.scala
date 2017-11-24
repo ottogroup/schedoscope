@@ -100,7 +100,19 @@ case class ProductBrandClick(shopCode: Parameter[String],
                              day: Parameter[String]) extends View {
 
   val productBrand = dependsOn(() => ProductBrand(shopCode, year, month, day))
-  val click = dependsOn(() => Click(shopCode, year, month, day))
+  val click = dependsOn(() => NestedClick(shopCode, year, month, day))
+}
+
+case class NestedClick(shopCode: Parameter[String],
+                      year: Parameter[String],
+                      month: Parameter[String],
+                      day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  dependsOn(() => Click(shopCode, year, month, day))
+
+  val url = fieldOf[String]
 }
 
 case class ViewWithIllegalExternalDeps(shopCode: Parameter[String]) extends View {
@@ -115,6 +127,8 @@ case class ViewWithIllegalExternalDeps(shopCode: Parameter[String]) extends View
       this,
       s"""SELECT * FROM ${shop().n}""")))
 }
+
+
 
 case class ViewWithIllegalInternalDeps(shopCode: Parameter[String]) extends View {
 

@@ -98,6 +98,11 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
       "schedoscope.development.viewUrls = [test.views/ProductBrand]")
   }
 
+  trait TableActorNestedStubbingTest extends TableActorTest {
+    override lazy val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
+      "schedoscope.development.viewUrls = [test.views/ProductBrand, test.views/Product]")
+  }
+
   trait TableActorStubbingSshTest extends TableActorTest {
     override lazy val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
       "schedoscope.development.viewUrls = [test.views/ProductBrand]",
@@ -277,6 +282,26 @@ class TableActorSpec extends TestKit(ActorSystem("schedoscope"))
       view,
       ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
     productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeViewAsStub()))
+    productViewActor.reply(CommandForView(Some(productDependency),
+      view,
+      ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
+
+    transformationManagerActor.expectMsg(view)
+    val success = CommandForView(None, view, TransformationSuccess(mock[DriverRunHandle[HiveTransformation]],
+      mock[DriverRunSucceeded[HiveTransformation]],
+      true))
+    transformationManagerActor.reply(success)
+
+    expectMsgType[ViewMaterialized]
+  }
+
+  it should "not stub a dependency if in stub mode" in new TableActorNestedStubbingTest {
+    viewActor ! CommandForView(None, view, MaterializeView())
+    brandViewActor.expectMsg(CommandForView(Some(view), brandDependency, MaterializeViewAsStub()))
+    brandViewActor.reply(CommandForView(Some(brandDependency),
+      view,
+      ViewMaterialized(brandDependency, incomplete = false, 1L, errors = false)))
+    productViewActor.expectMsg(CommandForView(Some(view), productDependency, MaterializeView()))
     productViewActor.reply(CommandForView(Some(productDependency),
       view,
       ViewMaterialized(productDependency, incomplete = false, 1L, errors = false)))
