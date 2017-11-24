@@ -128,8 +128,6 @@ case class ViewWithIllegalExternalDeps(shopCode: Parameter[String]) extends View
       s"""SELECT * FROM ${shop().n}""")))
 }
 
-
-
 case class ViewWithIllegalInternalDeps(shopCode: Parameter[String]) extends View {
 
   val shop = dependsOn(() => ExternalShop())
