@@ -200,32 +200,45 @@ class ViewManagerActorSpec extends TestKit(ActorSystem("schedoscope"))
 
   }
 
-  "The view manager" should "determined the dependecies of a view" in {
+  "The view manager" should "determine the dependencies of a view" in {
     implicit val settings = TestUtils.createSettings()
     val view = ProductBrand(p("ec0106"), p("2014"), p("01"), p("01"))
     val result = ViewManagerActor.unknownViewsOrDependencies(List(view), Map.empty[String, ViewStatusResponse])
     result shouldBe List(view, Brand(p("ec0106")), Product(p("ec0106"), p("2014"), p("01"), p("01")))
   }
 
-  "The view manager" should "determined the transitive dependecies of a view" in {
+  "The view manager" should "determine the transitive dependencies of a view" in {
     implicit val settings = TestUtils.createSettings()
     val view = ProductBrandClick(p("ec0106"), p("2014"), p("01"), p("01"))
     val result = ViewManagerActor.unknownViewsOrDependencies(List(view), Map.empty[String, ViewStatusResponse])
     result shouldBe List(view,
       ProductBrand(p("ec0106"), p("2014"), p("01"), p("01")),
       Brand(p("ec0106")), Product(p("ec0106"), p("2014"), p("01"), p("01")),
-      Click(p("ec0106"), p("2014"), p("01"), p("01")))
+      NestedClick(p("ec0106"), p("2014"), p("01"), p("01")),
+      Click(p("ec0106"), p("2014"), p("01"), p("01"))
+    )
   }
 
 
-  "The view manager" should "determined ignore the dependencies of a stubbed view" in {
+  "The view manager" should "ignore the dependencies of a stubbed view" in {
     implicit val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
       "schedoscope.development.viewUrls = [test.views/ProductBrandClick]")
     val view = ProductBrandClick(p("ec0106"), p("2014"), p("01"), p("01"))
     val result = ViewManagerActor.unknownViewsOrDependencies(List(view), Map.empty[String, ViewStatusResponse])
     result shouldBe List(view,
       ProductBrand(p("ec0106"), p("2014"), p("01"), p("01")),
-      Click(p("ec0106"), p("2014"), p("01"), p("01")))
+      NestedClick(p("ec0106"), p("2014"), p("01"), p("01")))
+  }
+
+  "The view manager" should "ignore the dependencies of a stubbed view with nested stubs" in {
+    implicit val settings = TestUtils.createSettings("schedoscope.development.enabled=true",
+      "schedoscope.development.viewUrls = [test.views/ProductBrandClick, test.views/ProductBrand]")
+    val view = ProductBrandClick(p("ec0106"), p("2014"), p("01"), p("01"))
+    val result = ViewManagerActor.unknownViewsOrDependencies(List(view), Map.empty[String, ViewStatusResponse])
+    result shouldBe List(view,
+      NestedClick(p("ec0106"), p("2014"), p("01"), p("01")),
+      ProductBrand(p("ec0106"), p("2014"), p("01"), p("01")),
+      Brand(p("ec0106")), Product(p("ec0106"), p("2014"), p("01"), p("01")))
   }
 
 
