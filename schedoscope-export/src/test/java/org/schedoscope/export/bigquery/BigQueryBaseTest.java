@@ -6,20 +6,21 @@ import org.junit.BeforeClass;
 
 public abstract class BigQueryBaseTest {
 
-    private static boolean CALL_BIG_QUERY = false;
+    final private static boolean CALL_BIG_QUERY = false;
 
-    private static boolean CLEAN_UP_BIG_QUERY = true;
+    final private static boolean CLEAN_UP_BIG_QUERY = true;
+
+    private static BigQueryUtils execute = new BigQueryUtils();
 
     private static BigQuery bigQuery;
+
 
     public void createTable(TableInfo tableInfo) {
 
         if (CALL_BIG_QUERY) {
 
-            if (bigQuery.getTable(tableInfo.getTableId()) != null)
-                bigQuery.delete(tableInfo.getTableId());
-
-            bigQuery.create(tableInfo);
+            execute.dropTable(bigQuery, tableInfo);
+            execute.createTable(bigQuery, tableInfo);
 
             try {
                 Thread.currentThread().sleep(500);
@@ -34,13 +35,12 @@ public abstract class BigQueryBaseTest {
         if (!CALL_BIG_QUERY)
             return;
 
-        bigQuery = BigQueryOptions.getDefaultInstance().getService();
+        bigQuery = execute.bigQueryService();
 
-        DatasetId datasetId = DatasetId.of("schedoscope_export_big_query_schema_test");
-        bigQuery.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
+        if (execute.existsDataset(bigQuery, "schedoscope_export_big_query_schema_test"))
+            execute.dropDataset(bigQuery, "schedoscope_export_big_query_schema_test");
 
-        DatasetInfo datasetInfo = DatasetInfo.newBuilder("schedoscope_export_big_query_schema_test").build();
-        bigQuery.create(datasetInfo);
+        execute.createDataset(bigQuery, "schedoscope_export_big_query_schema_test");
     }
 
     @AfterClass
@@ -48,8 +48,8 @@ public abstract class BigQueryBaseTest {
         if (!CALL_BIG_QUERY || !CLEAN_UP_BIG_QUERY)
             return;
 
-        DatasetId datasetId = DatasetId.of("schedoscope_export_big_query_schema_test");
-        bigQuery.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
+        if (execute.existsDataset(bigQuery, "schedoscope_export_big_query_schema_test"))
+            execute.dropDataset(bigQuery, "schedoscope_export_big_query_schema_test");
     }
 
 
