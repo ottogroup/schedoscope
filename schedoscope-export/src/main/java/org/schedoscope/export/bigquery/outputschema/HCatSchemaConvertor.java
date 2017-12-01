@@ -22,17 +22,18 @@ public abstract class HCatSchemaConvertor<T, F, S> {
         return stringTypeInfo;
     }
 
-    protected abstract T createPrimitiveSchemaField(PrimitiveTypeInfo typeInfo);
+    protected abstract T constructPrimitiveType(PrimitiveTypeInfo typeInfo);
 
-    protected abstract F createPrimitiveArrayField(HCatFieldSchema fieldSchema, PrimitiveTypeInfo elementSchema);
+    protected abstract F constructPrimitiveArrayField(HCatFieldSchema fieldSchema, T elementType);
 
-    protected abstract F createStructArrayField(HCatFieldSchema fieldSchema, HCatSchema subSchema);
+    protected abstract F constructPrimitiveField(HCatFieldSchema fieldSchema, T fieldType);
 
-    protected abstract F createStructSchemaField(HCatFieldSchema fieldSchema, S recordSchema);
+    protected abstract F constructStructArrayField(HCatFieldSchema fieldSchema, HCatSchema subSchema);
 
-    protected abstract S createSchema(List<F> fields);
+    protected abstract F constructStructField(HCatFieldSchema fieldSchema, S recordSchema);
 
-    protected abstract F convertPrimitiveSchemaField(HCatFieldSchema fieldSchema);
+    protected abstract S constructSchema(List<F> fields);
+
 
     public F convertStructSchemaField(HCatFieldSchema fieldSchema) {
 
@@ -44,7 +45,7 @@ public abstract class HCatSchemaConvertor<T, F, S> {
             // not going to happen
         }
 
-        return createStructSchemaField(fieldSchema, convertSchemaFields(structSchema));
+        return constructStructField(fieldSchema, convertSchemaFields(structSchema));
 
     }
 
@@ -59,14 +60,14 @@ public abstract class HCatSchemaConvertor<T, F, S> {
         }
 
         if (HCatFieldSchema.Category.PRIMITIVE == elementSchema.getCategory())
-            return createPrimitiveArrayField(fieldSchema, elementSchema.getTypeInfo());
+            return constructPrimitiveArrayField(fieldSchema, constructPrimitiveType(elementSchema.getTypeInfo()));
         else if (HCatFieldSchema.Category.ARRAY == elementSchema.getCategory())
-            return createPrimitiveArrayField(fieldSchema, stringTypeInfo());
+            return constructPrimitiveArrayField(fieldSchema, constructPrimitiveType(stringTypeInfo()));
         else if (HCatFieldSchema.Category.MAP == elementSchema.getCategory())
-            return createPrimitiveArrayField(fieldSchema, stringTypeInfo());
+            return constructPrimitiveArrayField(fieldSchema, constructPrimitiveType(stringTypeInfo()));
         else
             try {
-                return createStructArrayField(fieldSchema, elementSchema.getStructSubSchema());
+                return constructStructArrayField(fieldSchema, elementSchema.getStructSubSchema());
             } catch (HCatException e) {
                 return null; // not going to happen
             }
@@ -81,13 +82,13 @@ public abstract class HCatSchemaConvertor<T, F, S> {
             return convertStructSchemaField(fieldSchema);
         else if (HCatFieldSchema.Category.MAP == fieldSchema.getCategory())
             try {
-                return convertPrimitiveSchemaField(new HCatFieldSchema(fieldSchema.getName(), stringTypeInfo(), fieldSchema.getComment()));
+                return constructPrimitiveField(new HCatFieldSchema(fieldSchema.getName(), stringTypeInfo(), fieldSchema.getComment()), constructPrimitiveType(stringTypeInfo()));
             } catch (HCatException e) {
                 // not going to happen
                 return null;
             }
         else
-            return convertPrimitiveSchemaField(fieldSchema);
+            return constructPrimitiveField(fieldSchema, constructPrimitiveType(fieldSchema.getTypeInfo()));
 
     }
 
@@ -98,6 +99,6 @@ public abstract class HCatSchemaConvertor<T, F, S> {
             convertedFields.add(convertSchemaField(field));
         }
 
-        return createSchema(convertedFields);
+        return constructSchema(convertedFields);
     }
 }

@@ -18,8 +18,34 @@ public class HCatSchemaToBigQuerySchemaConverter extends HCatSchemaConvertor<Fie
     private Field usedFilterField = Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setMode(Field.Mode.NULLABLE).setDescription("HCatInputFormat filter used to export the present record.").build();
 
 
+
     @Override
-    public Field.Type createPrimitiveSchemaField(PrimitiveTypeInfo typeInfo) {
+    protected Field constructStructField(HCatFieldSchema fieldSchema, Schema recordSchema) {
+        return Field
+                .newBuilder(fieldSchema.getName(), Field.Type.record(recordSchema.getFields()))
+                .setDescription(fieldSchema.getComment())
+                .setMode(Field.Mode.NULLABLE)
+                .build();
+    }
+
+
+    @Override
+    protected Field constructStructArrayField(HCatFieldSchema fieldSchema, HCatSchema subSchema) {
+        return Field
+                .newBuilder(fieldSchema.getName(), Field.Type.record(convertSchemaFields(subSchema).getFields()))
+                .setDescription(fieldSchema.getComment())
+                .setMode(Field.Mode.REPEATED)
+                .build();
+    }
+
+
+    @Override
+    protected Schema constructSchema(List<Field> fields) {
+        return Schema.of(fields);
+    }
+
+    @Override
+    public Field.Type constructPrimitiveType(PrimitiveTypeInfo typeInfo) {
         Field.Type bigQueryType;
 
         switch (typeInfo.getTypeName()) {
@@ -52,48 +78,21 @@ public class HCatSchemaToBigQuerySchemaConverter extends HCatSchemaConvertor<Fie
     }
 
     @Override
-    protected Field convertPrimitiveSchemaField(HCatFieldSchema fieldSchema) {
-
+    protected Field constructPrimitiveArrayField(HCatFieldSchema fieldSchema, Field.Type elementType) {
         return Field
-                .newBuilder(fieldSchema.getName(), createPrimitiveSchemaField(fieldSchema.getTypeInfo()))
-                .setDescription(fieldSchema.getComment())
-                .setMode(Field.Mode.NULLABLE)
-                .build();
-
-    }
-
-    @Override
-    protected Field createStructSchemaField(HCatFieldSchema fieldSchema, Schema recordSchema) {
-        return Field
-                .newBuilder(fieldSchema.getName(), Field.Type.record(recordSchema.getFields()))
-                .setDescription(fieldSchema.getComment())
-                .setMode(Field.Mode.NULLABLE)
-                .build();
-    }
-
-
-    @Override
-    protected Field createPrimitiveArrayField(HCatFieldSchema fieldSchema, PrimitiveTypeInfo elementSchema) {
-        return Field
-                .newBuilder(fieldSchema.getName(), createPrimitiveSchemaField(elementSchema))
+                .newBuilder(fieldSchema.getName(), elementType)
                 .setDescription(fieldSchema.getComment())
                 .setMode(Field.Mode.REPEATED)
                 .build();
     }
 
     @Override
-    protected Field createStructArrayField(HCatFieldSchema fieldSchema, HCatSchema subSchema) {
+    protected Field constructPrimitiveField(HCatFieldSchema fieldSchema, Field.Type fieldType) {
         return Field
-                .newBuilder(fieldSchema.getName(), Field.Type.record(convertSchemaFields(subSchema).getFields()))
+                .newBuilder(fieldSchema.getName(), fieldType)
                 .setDescription(fieldSchema.getComment())
-                .setMode(Field.Mode.REPEATED)
+                .setMode(Field.Mode.NULLABLE)
                 .build();
-    }
-
-
-    @Override
-    protected Schema createSchema(List<Field> fields) {
-        return Schema.of(fields);
     }
 
     public TableDefinition convertSchemaToTableDefinition(HCatSchema hcatSchema, PartitioningScheme partitioning) {
