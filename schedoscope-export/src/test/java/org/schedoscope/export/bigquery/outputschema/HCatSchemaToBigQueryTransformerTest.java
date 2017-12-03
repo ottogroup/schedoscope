@@ -14,11 +14,10 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo;
 
 
-public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
-
-    private HCatSchemaToBigQuerySchemaConverter HCatSchemaToBigQuerySchemaConverter = new HCatSchemaToBigQuerySchemaConverter();
+public class HCatSchemaToBigQueryTransformerTest extends BigQueryBaseTest {
 
     private HCatSchema flatHcatSchema, hcatSchemaWithPrimitiveList, hcatSchemaWithStruct, hcatSchemaWithListOfStruct, hcatSchemaWithListOfList, hcatSchemaWithMap, hcatSchemaWithListOfMaps;
 
@@ -246,7 +245,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
 
     @Test
     public void testFlatTableConversion() throws IOException {
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema);
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema);
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("flat_table", converted.getTableId().getTable());
@@ -257,7 +256,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
 
     @Test
     public void testTableConversionWithPostfix() throws IOException {
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, "test");
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, "test");
 
         assertTrue(converted.getTableId().getTable().endsWith("_test"));
     }
@@ -266,7 +265,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
     public void testTableConversionWithPartitioning() throws IOException, NoSuchFieldException, IllegalAccessException {
         PartitioningScheme partitioning = new PartitioningScheme("aString", PartitioningScheme.Granularity.MONTHLY);
 
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning);
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning);
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("flat_table", converted.getTableId().getTable());
@@ -282,10 +281,10 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
     }
 
     @Test
-    public void testTableConversionWithPartitioningAndPostfix() throws IOException, NoSuchFieldException, IllegalAccessException {
+    public void testTableConversionWithPartitioningAndPHCatSchemaToBigQuerySchemaConverterostfix() throws IOException, NoSuchFieldException, IllegalAccessException {
         PartitioningScheme partitioning = new PartitioningScheme("aString", PartitioningScheme.Granularity.MONTHLY);
 
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning, "test");
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning, "test");
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("flat_table_test", converted.getTableId().getTable());
@@ -303,7 +302,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
 
     @Test
     public void testTableWithPrimitiveListConversion() throws IOException {
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_primitive_list", hcatSchemaWithPrimitiveList);
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_primitive_list", hcatSchemaWithPrimitiveList);
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("table_with_primitive_list", converted.getTableId().getTable());
@@ -314,7 +313,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
 
     @Test
     public void testTableWithStructConversion() throws IOException {
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_struct", hcatSchemaWithStruct);
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_struct", hcatSchemaWithStruct);
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("table_with_struct", converted.getTableId().getTable());
@@ -325,7 +324,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
 
     @Test
     public void testTableWithListStructConversion() throws IOException {
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_list_struct", hcatSchemaWithListOfStruct);
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_list_struct", hcatSchemaWithListOfStruct);
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("table_with_list_struct", converted.getTableId().getTable());
@@ -336,7 +335,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
 
     @Test
     public void testTableWithListOfListsConversion() throws IOException {
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_list_of_lists", hcatSchemaWithListOfList);
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_list_of_lists", hcatSchemaWithListOfList);
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("table_with_list_of_lists", converted.getTableId().getTable());
@@ -348,7 +347,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
 
     @Test
     public void testTableWithMapConversion() throws IOException {
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_map", hcatSchemaWithMap);
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_map", hcatSchemaWithMap);
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("table_with_map", converted.getTableId().getTable());
@@ -359,7 +358,7 @@ public class HCatSchemaToBigQuerySchemaConverterTest extends BigQueryBaseTest {
 
     @Test
     public void testTableWithListOfMapConversion() throws IOException {
-        TableInfo converted = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_list_of_map", hcatSchemaWithListOfMaps);
+        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "table_with_list_of_map", hcatSchemaWithListOfMaps);
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("table_with_list_of_map", converted.getTableId().getTable());
