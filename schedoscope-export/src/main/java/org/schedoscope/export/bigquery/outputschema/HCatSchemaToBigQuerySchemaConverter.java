@@ -14,7 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
-import static org.schedoscope.export.bigquery.outputschema.HCatSchemaTransformer.*;
+import static org.schedoscope.export.bigquery.outputschema.HCatSchemaTransformer.transformSchema;
 
 public class HCatSchemaToBigQuerySchemaConverter {
 
@@ -32,17 +32,17 @@ public class HCatSchemaToBigQuerySchemaConverter {
 
 
         @Override
-        public Function<HCatSchema, HCatFieldSchema> accessPrimitiveField(HCatFieldSchema field) {
+        public Function<HCatSchema, HCatFieldSchema> accessPrimitiveField(HCatSchema schema, HCatFieldSchema field) {
             return s -> field;
         }
 
         @Override
-        public Function<HCatSchema, HCatFieldSchema> accessMapField(HCatFieldSchema field) {
+        public Function<HCatSchema, HCatFieldSchema> accessMapField(HCatSchema schema, HCatFieldSchema field) {
             return s -> field;
         }
 
         @Override
-        public Function<HCatSchema, HCatSchema> accessStructField(HCatFieldSchema field) {
+        public Function<HCatSchema, HCatSchema> accessStructField(HCatSchema schema, HCatFieldSchema field) {
             return s -> {
                 try {
                     return field.getStructSubSchema();
@@ -54,22 +54,22 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
 
         @Override
-        public Function<HCatSchema, List<HCatFieldSchema>> accessPrimitiveArrayField(HCatFieldSchema field) {
+        public Function<HCatSchema, List<HCatFieldSchema>> accessPrimitiveArrayField(HCatSchema schema, HCatFieldSchema field) {
             return x -> Arrays.asList(field);
         }
 
         @Override
-        public Function<HCatSchema, List<HCatFieldSchema>> accessArrayArrayField(HCatFieldSchema field) {
+        public Function<HCatSchema, List<HCatFieldSchema>> accessArrayArrayField(HCatSchema schema, HCatFieldSchema field) {
             return x -> Arrays.asList(field);
         }
 
         @Override
-        public Function<HCatSchema, List<HCatFieldSchema>> accessMapArrayField(HCatFieldSchema field) {
+        public Function<HCatSchema, List<HCatFieldSchema>> accessMapArrayField(HCatSchema schema, HCatFieldSchema field) {
             return x -> Arrays.asList(field);
         }
 
         @Override
-        public Function<HCatSchema, List<HCatSchema>> accessStructArrayField(HCatFieldSchema field) {
+        public Function<HCatSchema, List<HCatSchema>> accessStructArrayField(HCatSchema schema, HCatFieldSchema field) {
             return x -> {
                 try {
                     return Arrays.asList(field.getArrayElementSchema().get(0).getStructSubSchema());
@@ -122,19 +122,19 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
 
         @Override
-        public Function<List<HCatFieldSchema>, Field> constructPrimitiveArrayField(HCatFieldSchema schema, PrimitiveTypeInfo field) {
+        public Function<List<HCatFieldSchema>, Field> constructPrimitiveArrayField(HCatFieldSchema field, PrimitiveTypeInfo elementType) {
             return x -> Field
-                    .newBuilder(schema.getName(), translatePrimitiveType(field))
-                    .setDescription(schema.getComment())
+                    .newBuilder(field.getName(), translatePrimitiveType(elementType))
+                    .setDescription(field.getComment())
                     .setMode(Field.Mode.REPEATED)
                     .build();
         }
 
         @Override
-        public Function<List<HCatFieldSchema>, Field> constructMapArrayField(HCatFieldSchema schema) {
+        public Function<List<HCatFieldSchema>, Field> constructMapArrayField(HCatFieldSchema field) {
             return x -> Field
-                    .newBuilder(schema.getName(), translatePrimitiveType(stringTypeInfo))
-                    .setDescription(schema.getComment())
+                    .newBuilder(field.getName(), translatePrimitiveType(stringTypeInfo))
+                    .setDescription(field.getComment())
                     .setMode(Field.Mode.REPEATED)
                     .build();
         }
