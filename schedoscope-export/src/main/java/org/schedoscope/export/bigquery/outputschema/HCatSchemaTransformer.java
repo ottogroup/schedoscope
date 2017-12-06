@@ -15,42 +15,42 @@ public class HCatSchemaTransformer {
 
     public interface Constructor<S, F, FT, ST> {
 
-        Function<S, F> accessPrimitiveField(HCatSchema schema, HCatFieldSchema field);
+        F accessPrimitiveField(HCatSchema schema, HCatFieldSchema field, S s);
 
-        Function<S, F> accessMapField(HCatSchema schema, HCatFieldSchema field);
+        F accessMapField(HCatSchema schema, HCatFieldSchema field, S s);
 
-        Function<S, S> accessStructField(HCatSchema schema, HCatFieldSchema field);
+        S accessStructField(HCatSchema schema, HCatFieldSchema field, S s);
 
-        Function<S, List<F>> accessPrimitiveArrayField(HCatSchema schema, HCatFieldSchema field);
+        List<F> accessPrimitiveArrayField(HCatSchema schema, HCatFieldSchema field, S s);
 
-        Function<S, List<F>> accessArrayArrayField(HCatSchema schema, HCatFieldSchema field);
+        List<F> accessArrayArrayField(HCatSchema schema, HCatFieldSchema field, S s);
 
-        Function<S, List<F>> accessMapArrayField(HCatSchema schema, HCatFieldSchema field);
+        List<F> accessMapArrayField(HCatSchema schema, HCatFieldSchema field, S s);
 
-        Function<S, List<S>> accessStructArrayField(HCatSchema schema, HCatFieldSchema field);
+        List<S> accessStructArrayField(HCatSchema schema, HCatFieldSchema field, S s);
 
-        Function<List<FT>, ST> constructSchema();
+        ST constructSchema(List<FT> fts);
 
-        Function<F, FT> constructPrimitiveField(HCatFieldSchema field);
+        FT constructPrimitiveField(HCatFieldSchema field, F f);
 
-        Function<F, FT> constructMapField(HCatFieldSchema field);
+        FT constructMapField(HCatFieldSchema field, F f);
 
-        Function<ST, FT> constructStructField(HCatSchema schema, HCatFieldSchema field);
+        FT constructStructField(HCatSchema schema, HCatFieldSchema field, ST st);
 
-        Function<List<F>, FT> constructPrimitiveArrayField(HCatFieldSchema field, PrimitiveTypeInfo elementType);
+        FT constructPrimitiveArrayField(HCatFieldSchema field, PrimitiveTypeInfo elementType, List<F> fs);
 
-        Function<List<F>, FT> constructMapArrayField(HCatFieldSchema field);
+        FT constructMapArrayField(HCatFieldSchema field, List<F> fs);
 
-        Function<List<F>, FT> constructArrayArrayField(HCatFieldSchema field);
+        FT constructArrayArrayField(HCatFieldSchema field, List<F> fs);
 
-        Function<List<ST>, FT> constructStructArrayField(HCatSchema schema, HCatFieldSchema field);
+        FT constructStructArrayField(HCatSchema schema, HCatFieldSchema field, List<ST> sts);
     }
 
 
     static public <S, F, FT, ST> Function<S, ST> transformSchema(Constructor<S, F, FT, ST> c, HCatSchema schema) {
 
         return s ->
-                c.constructSchema().apply(
+                c.constructSchema(
                         schema
                                 .getFields()
                                 .stream()
@@ -82,8 +82,8 @@ public class HCatSchemaTransformer {
 
     static public <S, F, FT, ST> Function<S, FT> transformPrimitiveField(Constructor<S, F, FT, ST> c, HCatSchema schema, HCatFieldSchema field) {
 
-        return s -> c.constructPrimitiveField(field).apply(
-                c.accessPrimitiveField(schema, field).apply(s)
+        return s -> c.constructPrimitiveField(field,
+                c.accessPrimitiveField(schema, field, s)
         );
 
     }
@@ -97,28 +97,29 @@ public class HCatSchemaTransformer {
 
             if (HCatFieldSchema.Category.PRIMITIVE == elementSchema.getCategory())
 
-                return s -> c.constructPrimitiveArrayField(field, elementType).apply(
-                        c.accessPrimitiveArrayField(schema, field).apply(s)
+                return s -> c.constructPrimitiveArrayField(
+                        field, elementType,
+                        c.accessPrimitiveArrayField(schema, field, s)
                 );
 
             else if (HCatFieldSchema.Category.MAP == elementSchema.getCategory())
 
-                return s -> c.constructMapArrayField(field).apply(
-                        c.accessMapArrayField(schema, field).apply(s)
+                return s -> c.constructMapArrayField(field,
+                        c.accessMapArrayField(schema, field, s)
                 );
 
             else if (HCatFieldSchema.Category.ARRAY == elementSchema.getCategory())
 
-                return s -> c.constructArrayArrayField(field).apply(
-                        c.accessArrayArrayField(schema, field).apply(s)
+                return s -> c.constructArrayArrayField(field,
+                        c.accessArrayArrayField(schema, field, s)
                 );
 
             else {
 
                 HCatSchema structSchema = elementSchema.getStructSubSchema();
 
-                return s -> c.constructStructArrayField(structSchema, field).apply(
-                        c.accessStructArrayField(schema, field).apply(s)
+                return s -> c.constructStructArrayField(structSchema, field,
+                        c.accessStructArrayField(schema, field, s)
                                 .stream()
                                 .map(saf -> transformSchema(c, structSchema).apply(saf))
                                 .collect(Collectors.toList())
@@ -136,8 +137,8 @@ public class HCatSchemaTransformer {
 
     static public <S, F, FT, ST> Function<S, FT> transformMapField(Constructor<S, F, FT, ST> c, HCatSchema schema, HCatFieldSchema field) {
 
-        return s -> c.constructMapField(field).apply(
-                c.accessMapField(schema, field).apply(s)
+        return s -> c.constructMapField(field,
+                c.accessMapField(schema, field, s)
         );
 
     }
@@ -148,9 +149,10 @@ public class HCatSchemaTransformer {
 
             HCatSchema structSchema = field.getStructSubSchema();
 
-            return s -> c.constructStructField(structSchema, field).apply(
+            return s -> c.constructStructField(
+                    structSchema, field,
                     transformSchema(c, structSchema).apply(
-                            c.accessStructField(schema, field).apply(s)
+                            c.accessStructField(schema, field, s)
                     )
             );
 

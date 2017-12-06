@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Function;
 
 import static org.schedoscope.export.bigquery.outputschema.HCatSchemaTransformer.transformSchema;
 
@@ -29,62 +28,6 @@ public class HCatSchemaToBigQuerySchemaConverter {
     static private final Field usedFilterField = Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setMode(Field.Mode.NULLABLE).setDescription("HCatInputFormat filter used to export the present record.").build();
 
     static private class Constructor implements HCatSchemaTransformer.Constructor<HCatSchema, HCatFieldSchema, Field, Schema> {
-
-
-        @Override
-        public Function<HCatSchema, HCatFieldSchema> accessPrimitiveField(HCatSchema schema, HCatFieldSchema field) {
-            return s -> field;
-        }
-
-        @Override
-        public Function<HCatSchema, HCatFieldSchema> accessMapField(HCatSchema schema, HCatFieldSchema field) {
-            return s -> field;
-        }
-
-        @Override
-        public Function<HCatSchema, HCatSchema> accessStructField(HCatSchema schema, HCatFieldSchema field) {
-            return s -> {
-                try {
-                    return field.getStructSubSchema();
-                } catch (HCatException e) {
-                    // not going to happen
-                    return null;
-                }
-            };
-        }
-
-        @Override
-        public Function<HCatSchema, List<HCatFieldSchema>> accessPrimitiveArrayField(HCatSchema schema, HCatFieldSchema field) {
-            return x -> Arrays.asList(field);
-        }
-
-        @Override
-        public Function<HCatSchema, List<HCatFieldSchema>> accessArrayArrayField(HCatSchema schema, HCatFieldSchema field) {
-            return x -> Arrays.asList(field);
-        }
-
-        @Override
-        public Function<HCatSchema, List<HCatFieldSchema>> accessMapArrayField(HCatSchema schema, HCatFieldSchema field) {
-            return x -> Arrays.asList(field);
-        }
-
-        @Override
-        public Function<HCatSchema, List<HCatSchema>> accessStructArrayField(HCatSchema schema, HCatFieldSchema field) {
-            return x -> {
-                try {
-                    return Arrays.asList(field.getArrayElementSchema().get(0).getStructSubSchema());
-                } catch (HCatException e) {
-                    // not going to happen
-                    return null;
-                }
-            };
-        }
-
-        @Override
-        public Function<List<Field>, Schema> constructSchema() {
-            return Schema::of;
-        }
-
 
         private Field.Type translatePrimitiveType(PrimitiveTypeInfo primitiveTypeInfo) {
             switch (primitiveTypeInfo.getTypeName()) {
@@ -104,8 +47,58 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
 
         @Override
-        public Function<HCatFieldSchema, Field> constructPrimitiveField(HCatFieldSchema field) {
-            return x -> Field
+        public HCatFieldSchema accessPrimitiveField(HCatSchema schema, HCatFieldSchema field, HCatSchema hCatSchema) {
+            return field;
+        }
+
+        @Override
+        public HCatFieldSchema accessMapField(HCatSchema schema, HCatFieldSchema field, HCatSchema hCatSchema) {
+            return field;
+        }
+
+        @Override
+        public HCatSchema accessStructField(HCatSchema schema, HCatFieldSchema field, HCatSchema hCatSchema) {
+            try {
+                return field.getStructSubSchema();
+            } catch (HCatException e) {
+                // not going to happen
+                return null;
+            }
+        }
+
+        @Override
+        public List<HCatFieldSchema> accessPrimitiveArrayField(HCatSchema schema, HCatFieldSchema field, HCatSchema hCatSchema) {
+            return Arrays.asList(field);
+        }
+
+        @Override
+        public List<HCatFieldSchema> accessArrayArrayField(HCatSchema schema, HCatFieldSchema field, HCatSchema hCatSchema) {
+            return Arrays.asList(field);
+        }
+
+        @Override
+        public List<HCatFieldSchema> accessMapArrayField(HCatSchema schema, HCatFieldSchema field, HCatSchema hCatSchema) {
+            return Arrays.asList(field);
+        }
+
+        @Override
+        public List<HCatSchema> accessStructArrayField(HCatSchema schema, HCatFieldSchema field, HCatSchema hCatSchema) {
+            try {
+                return Arrays.asList(field.getArrayElementSchema().get(0).getStructSubSchema());
+            } catch (HCatException e) {
+                // not going to happen
+                return null;
+            }
+        }
+
+        @Override
+        public Schema constructSchema(List<Field> fields) {
+            return Schema.of(fields);
+        }
+
+        @Override
+        public Field constructPrimitiveField(HCatFieldSchema field, HCatFieldSchema fieldSchema) {
+            return Field
                     .newBuilder(field.getName(), translatePrimitiveType(field.getTypeInfo()))
                     .setDescription(field.getComment())
                     .setMode(Field.Mode.NULLABLE)
@@ -113,8 +106,8 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
 
         @Override
-        public Function<HCatFieldSchema, Field> constructMapField(HCatFieldSchema field) {
-            return x -> Field
+        public Field constructMapField(HCatFieldSchema field, HCatFieldSchema fieldSchema) {
+            return Field
                     .newBuilder(field.getName(), Field.Type.string())
                     .setDescription(field.getComment())
                     .setMode(Field.Mode.NULLABLE)
@@ -122,8 +115,17 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
 
         @Override
-        public Function<List<HCatFieldSchema>, Field> constructPrimitiveArrayField(HCatFieldSchema field, PrimitiveTypeInfo elementType) {
-            return x -> Field
+        public Field constructStructField(HCatSchema schema, HCatFieldSchema field, Schema structSchema) {
+            return Field
+                    .newBuilder(field.getName(), Field.Type.record(structSchema.getFields()))
+                    .setDescription(field.getComment())
+                    .setMode(Field.Mode.NULLABLE)
+                    .build();
+        }
+
+        @Override
+        public Field constructPrimitiveArrayField(HCatFieldSchema field, PrimitiveTypeInfo elementType, List<HCatFieldSchema> hCatFieldSchemas) {
+            return Field
                     .newBuilder(field.getName(), translatePrimitiveType(elementType))
                     .setDescription(field.getComment())
                     .setMode(Field.Mode.REPEATED)
@@ -131,8 +133,8 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
 
         @Override
-        public Function<List<HCatFieldSchema>, Field> constructMapArrayField(HCatFieldSchema field) {
-            return x -> Field
+        public Field constructMapArrayField(HCatFieldSchema field, List<HCatFieldSchema> hCatFieldSchemas) {
+            return Field
                     .newBuilder(field.getName(), translatePrimitiveType(stringTypeInfo))
                     .setDescription(field.getComment())
                     .setMode(Field.Mode.REPEATED)
@@ -140,8 +142,8 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
 
         @Override
-        public Function<List<HCatFieldSchema>, Field> constructArrayArrayField(HCatFieldSchema field) {
-            return x -> Field
+        public Field constructArrayArrayField(HCatFieldSchema field, List<HCatFieldSchema> hCatFieldSchemas) {
+            return Field
                     .newBuilder(field.getName(), translatePrimitiveType(stringTypeInfo))
                     .setDescription(field.getComment())
                     .setMode(Field.Mode.REPEATED)
@@ -149,23 +151,13 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
 
         @Override
-        public Function<List<Schema>, Field> constructStructArrayField(HCatSchema schema, HCatFieldSchema field) {
-            return s -> Field
-                    .newBuilder(field.getName(), Field.Type.record(s.get(0).getFields()))
+        public Field constructStructArrayField(HCatSchema schema, HCatFieldSchema field, List<Schema> schemas) {
+            return Field
+                    .newBuilder(field.getName(), Field.Type.record(schemas.get(0).getFields()))
                     .setDescription(field.getComment())
                     .setMode(Field.Mode.REPEATED)
                     .build();
         }
-
-        @Override
-        public Function<Schema, Field> constructStructField(HCatSchema schema, HCatFieldSchema field) {
-            return s -> Field
-                    .newBuilder(field.getName(), Field.Type.record(s.getFields()))
-                    .setDescription(field.getComment())
-                    .setMode(Field.Mode.NULLABLE)
-                    .build();
-        }
-
     }
 
     private final static Constructor c = new Constructor();
