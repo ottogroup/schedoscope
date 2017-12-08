@@ -26,7 +26,7 @@ public class HCatRecordToBigQueryMapConvertor {
 
     static private final ObjectMapper jsonConvertor = new ObjectMapper();
 
-    private static class Constructor implements HCatSchemaTransformer.Constructor<HCatRecord, Object, Pair<String, Object>, Map<String, Object>> {
+    private static final HCatSchemaTransformer.Constructor<HCatRecord, Object, Pair<String, Object>, Map<String, Object>> c = new HCatSchemaTransformer.Constructor<HCatRecord, Object, Pair<String, Object>, Map<String, Object>>() {
 
         @Override
         public Object accessPrimitiveField(HCatSchema schema, HCatFieldSchema field, HCatRecord hCatRecord) {
@@ -157,10 +157,8 @@ public class HCatRecordToBigQueryMapConvertor {
         public Pair<String, Object> constructStructArrayField(HCatSchema schema, HCatFieldSchema field, List<Map<String, Object>> maps) {
             return new ImmutablePair<>(field.getName(), maps);
         }
-    }
+    };
 
-
-    private static final Constructor c = new Constructor();
 
     static public Map<String, Object> convertHCatRecordToBigQueryMap(HCatSchema schema, HCatRecord record) throws JsonProcessingException {
 

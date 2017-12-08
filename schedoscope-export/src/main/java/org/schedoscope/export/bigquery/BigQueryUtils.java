@@ -6,6 +6,9 @@ import com.google.cloud.bigquery.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BigQueryUtils {
 
@@ -112,5 +115,22 @@ public class BigQueryUtils {
 
     public void dropTable(BigQuery bigQueryService, TableInfo tableInfo) {
         dropTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable());
+    }
+
+    public void insertIntoTable(BigQuery bigQueryService, TableId table, Map<String, Object>... rowsToInsert) {
+
+        InsertAllRequest insertAllRequest = InsertAllRequest.newBuilder(table)
+                .setRows(
+                        Arrays.stream(rowsToInsert)
+                                .map(InsertAllRequest.RowToInsert::of)
+                                .collect(Collectors.toList())
+                )
+                .build();
+
+        InsertAllResponse result = bigQueryService.insertAll(insertAllRequest);
+
+        if (result.hasErrors()) {
+            throw new BigQueryException(999, "Could not insert some records into BigQuery table: " + result.getInsertErrors().toString());
+        }
     }
 }
