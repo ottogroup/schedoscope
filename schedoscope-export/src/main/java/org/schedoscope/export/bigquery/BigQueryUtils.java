@@ -8,16 +8,20 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Random;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class BigQueryUtils {
 
-    public BigQuery bigQueryService() {
+    final static private Random rnd = new Random();
+
+    public static BigQuery bigQueryService() {
         return BigQueryOptions.getDefaultInstance().getService();
     }
 
 
-    public BigQuery bigQueryService(String gcpKey) throws IOException {
+    public static BigQuery bigQueryService(String gcpKey) throws IOException {
         if (gcpKey == null)
             return bigQueryService();
 
@@ -29,33 +33,67 @@ public class BigQueryUtils {
         return BigQueryOptions.newBuilder().setCredentials(credentials).build().getService();
     }
 
-    public boolean existsDataset(BigQuery bigQueryService, String project, String dataset) {
+    public static <T> T retry(int numberOfRetries, Supplier<T> action) {
+        try {
+            return action.get();
+        } catch (Throwable t) {
+            if (numberOfRetries > 0) {
+
+                try {
+                    Thread.currentThread().sleep(rnd.nextInt(2000));
+                } catch (InterruptedException e) {
+                }
+
+                return retry(numberOfRetries - 1, action);
+            } else
+                throw t;
+        }
+    }
+
+    public static void retry(int numberOfRetries, Runnable action) {
+        try {
+            action.run();
+        } catch (Throwable t) {
+            if (numberOfRetries > 0) {
+
+                try {
+                    Thread.currentThread().sleep(rnd.nextInt(2000));
+                } catch (InterruptedException e) {
+                }
+
+                retry(numberOfRetries - 1, action);
+            } else
+                throw t;
+        }
+    }
+
+    public static boolean existsDataset(BigQuery bigQueryService, String project, String dataset) {
         return bigQueryService.getDataset(project == null ? DatasetId.of(dataset) : DatasetId.of(project, dataset)) != null;
     }
 
-    public boolean existsDataset(BigQuery bigQueryService, String dataset) {
+    public static boolean existsDataset(BigQuery bigQueryService, String dataset) {
         return existsDataset(bigQueryService, null, dataset);
     }
 
-    public boolean existsDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
+    public static boolean existsDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
         return existsDataset(bigQueryService, datasetInfo.getDatasetId().getProject(), datasetInfo.getDatasetId().getDataset());
     }
 
-    public void createDataset(BigQuery bigQueryService, String project, String dataset) {
+    public static void createDataset(BigQuery bigQueryService, String project, String dataset) {
         if (!existsDataset(bigQueryService, project, dataset)) {
             bigQueryService.create((project == null ? DatasetInfo.newBuilder(dataset) : DatasetInfo.newBuilder(project, dataset)).build());
         }
     }
 
-    public void createDataset(BigQuery bigQueryService, String dataset) {
+    public static void createDataset(BigQuery bigQueryService, String dataset) {
         createDataset(bigQueryService, null, dataset);
     }
 
-    public void createDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
+    public static void createDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
         createDataset(bigQueryService, datasetInfo.getDatasetId().getProject(), datasetInfo.getDatasetId().getDataset());
     }
 
-    public void dropDataset(BigQuery bigQueryService, String project, String dataset) {
+    public static void dropDataset(BigQuery bigQueryService, String project, String dataset) {
         if (existsDataset(bigQueryService, project, dataset)) {
             bigQueryService.delete(
                     (project == null ? DatasetInfo.newBuilder(dataset) : DatasetInfo.newBuilder(project, dataset)).build().getDatasetId(),
@@ -64,27 +102,27 @@ public class BigQueryUtils {
         }
     }
 
-    public void dropDataset(BigQuery bigQueryService, String dataset) {
+    public static void dropDataset(BigQuery bigQueryService, String dataset) {
         dropDataset(bigQueryService, null, dataset);
     }
 
-    public void dropDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
+    public static void dropDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
         dropDataset(bigQueryService, datasetInfo.getDatasetId().getProject(), datasetInfo.getDatasetId().getDataset());
     }
 
-    public boolean existsTable(BigQuery bigQueryService, String project, String dataset, String table) {
+    public static boolean existsTable(BigQuery bigQueryService, String project, String dataset, String table) {
         return bigQueryService.getTable(project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table)) != null;
     }
 
-    public boolean existsTable(BigQuery bigQueryService, String dataset, String table) {
+    public static boolean existsTable(BigQuery bigQueryService, String dataset, String table) {
         return existsTable(bigQueryService, null, table);
     }
 
-    public boolean existsTable(BigQuery bigQueryService, TableInfo tableInfo) {
+    public static boolean existsTable(BigQuery bigQueryService, TableInfo tableInfo) {
         return existsTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable());
     }
 
-    public void createTable(BigQuery bigQueryService, String project, String dataset, String table, TableDefinition tableDefinition) {
+    public static void createTable(BigQuery bigQueryService, String project, String dataset, String table, TableDefinition tableDefinition) {
         createDataset(bigQueryService, project, dataset);
 
         if (!existsTable(bigQueryService, project, dataset, table)) {
@@ -97,27 +135,27 @@ public class BigQueryUtils {
         }
     }
 
-    public void createTable(BigQuery bigQueryService, String dataset, String table, TableDefinition tableDefinition) {
+    public static void createTable(BigQuery bigQueryService, String dataset, String table, TableDefinition tableDefinition) {
         createTable(bigQueryService, null, dataset, table, tableDefinition);
     }
 
-    public void createTable(BigQuery bigQueryService, TableInfo tableInfo) {
+    public static void createTable(BigQuery bigQueryService, TableInfo tableInfo) {
         createTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable(), tableInfo.getDefinition());
     }
 
-    public void dropTable(BigQuery bigQueryService, String project, String dataset, String table) {
+    public static void dropTable(BigQuery bigQueryService, String project, String dataset, String table) {
         bigQueryService.delete(project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table));
     }
 
-    public void dropTable(BigQuery bigQueryService, String dataset, String table) {
+    public static void dropTable(BigQuery bigQueryService, String dataset, String table) {
         dropTable(bigQueryService, null, table);
     }
 
-    public void dropTable(BigQuery bigQueryService, TableInfo tableInfo) {
+    public static void dropTable(BigQuery bigQueryService, TableInfo tableInfo) {
         dropTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable());
     }
 
-    public void insertIntoTable(BigQuery bigQueryService, TableId table, Map<String, Object>... rowsToInsert) {
+    public static void insertIntoTable(BigQuery bigQueryService, TableId table, Map<String, Object>... rowsToInsert) {
 
         InsertAllRequest insertAllRequest = InsertAllRequest.newBuilder(table)
                 .setRows(
@@ -133,4 +171,5 @@ public class BigQueryUtils {
             throw new BigQueryException(999, "Could not insert some records into BigQuery table: " + result.getInsertErrors().toString());
         }
     }
+
 }
