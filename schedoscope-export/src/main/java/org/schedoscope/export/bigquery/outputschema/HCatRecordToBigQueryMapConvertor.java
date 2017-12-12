@@ -12,13 +12,15 @@ import org.apache.hive.hcatalog.data.DefaultHCatRecord;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
+import org.schedoscope.export.utils.HCatSchemaTransformer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.schedoscope.export.bigquery.outputschema.HCatSchemaTransformer.transformSchema;
+import static org.schedoscope.export.utils.HCatSchemaTransformer.transformSchema;
+
 
 public class HCatRecordToBigQueryMapConvertor {
 

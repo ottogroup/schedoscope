@@ -51,20 +51,10 @@ public class BigQueryUtils {
     }
 
     static public void retry(int numberOfRetries, Runnable action) {
-        try {
+        retry(numberOfRetries, () -> {
             action.run();
-        } catch (Throwable t) {
-            if (numberOfRetries > 0) {
-
-                try {
-                    Thread.currentThread().sleep(rnd.nextInt(2000));
-                } catch (InterruptedException e) {
-                }
-
-                retry(numberOfRetries - 1, action);
-            } else
-                throw t;
-        }
+            return null;
+        });
     }
 
     static public boolean existsDataset(BigQuery bigQueryService, String project, String dataset) {
