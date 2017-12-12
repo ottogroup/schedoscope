@@ -1,4 +1,4 @@
-package org.schedoscope.export.bigquery;
+package org.schedoscope.export.utils;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.*;
@@ -16,12 +16,12 @@ public class BigQueryUtils {
 
     final static private Random rnd = new Random();
 
-    public static BigQuery bigQueryService() {
+    static public BigQuery bigQueryService() {
         return BigQueryOptions.getDefaultInstance().getService();
     }
 
 
-    public static BigQuery bigQueryService(String gcpKey) throws IOException {
+    static public BigQuery bigQueryService(String gcpKey) throws IOException {
         if (gcpKey == null)
             return bigQueryService();
 
@@ -33,7 +33,7 @@ public class BigQueryUtils {
         return BigQueryOptions.newBuilder().setCredentials(credentials).build().getService();
     }
 
-    public static <T> T retry(int numberOfRetries, Supplier<T> action) {
+    static public <T> T retry(int numberOfRetries, Supplier<T> action) {
         try {
             return action.get();
         } catch (Throwable t) {
@@ -50,7 +50,7 @@ public class BigQueryUtils {
         }
     }
 
-    public static void retry(int numberOfRetries, Runnable action) {
+    static public void retry(int numberOfRetries, Runnable action) {
         try {
             action.run();
         } catch (Throwable t) {
@@ -67,33 +67,33 @@ public class BigQueryUtils {
         }
     }
 
-    public static boolean existsDataset(BigQuery bigQueryService, String project, String dataset) {
+    static public boolean existsDataset(BigQuery bigQueryService, String project, String dataset) {
         return bigQueryService.getDataset(project == null ? DatasetId.of(dataset) : DatasetId.of(project, dataset)) != null;
     }
 
-    public static boolean existsDataset(BigQuery bigQueryService, String dataset) {
+    static public boolean existsDataset(BigQuery bigQueryService, String dataset) {
         return existsDataset(bigQueryService, null, dataset);
     }
 
-    public static boolean existsDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
+    static public boolean existsDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
         return existsDataset(bigQueryService, datasetInfo.getDatasetId().getProject(), datasetInfo.getDatasetId().getDataset());
     }
 
-    public static void createDataset(BigQuery bigQueryService, String project, String dataset) {
+    static public void createDataset(BigQuery bigQueryService, String project, String dataset) {
         if (!existsDataset(bigQueryService, project, dataset)) {
             bigQueryService.create((project == null ? DatasetInfo.newBuilder(dataset) : DatasetInfo.newBuilder(project, dataset)).build());
         }
     }
 
-    public static void createDataset(BigQuery bigQueryService, String dataset) {
+    static public void createDataset(BigQuery bigQueryService, String dataset) {
         createDataset(bigQueryService, null, dataset);
     }
 
-    public static void createDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
+    static public void createDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
         createDataset(bigQueryService, datasetInfo.getDatasetId().getProject(), datasetInfo.getDatasetId().getDataset());
     }
 
-    public static void dropDataset(BigQuery bigQueryService, String project, String dataset) {
+    static public void dropDataset(BigQuery bigQueryService, String project, String dataset) {
         if (existsDataset(bigQueryService, project, dataset)) {
             bigQueryService.delete(
                     (project == null ? DatasetInfo.newBuilder(dataset) : DatasetInfo.newBuilder(project, dataset)).build().getDatasetId(),
@@ -102,60 +102,59 @@ public class BigQueryUtils {
         }
     }
 
-    public static void dropDataset(BigQuery bigQueryService, String dataset) {
+    static public void dropDataset(BigQuery bigQueryService, String dataset) {
         dropDataset(bigQueryService, null, dataset);
     }
 
-    public static void dropDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
+    static public void dropDataset(BigQuery bigQueryService, DatasetInfo datasetInfo) {
         dropDataset(bigQueryService, datasetInfo.getDatasetId().getProject(), datasetInfo.getDatasetId().getDataset());
     }
 
-    public static boolean existsTable(BigQuery bigQueryService, String project, String dataset, String table) {
-        return bigQueryService.getTable(project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table)) != null;
+    static public boolean existsTable(BigQuery bigQueryService, TableId tableId) {
+        return bigQueryService.getTable(tableId) != null;
     }
 
-    public static boolean existsTable(BigQuery bigQueryService, String dataset, String table) {
-        return existsTable(bigQueryService, null, table);
+    static public boolean existsTable(BigQuery bigQueryService, String project, String dataset, String table) {
+        return existsTable(bigQueryService, project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table));
     }
 
-    public static boolean existsTable(BigQuery bigQueryService, TableInfo tableInfo) {
-        return existsTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable());
+    static public boolean existsTable(BigQuery bigQueryService, String dataset, String table) {
+        return existsTable(bigQueryService, null, dataset, table);
     }
 
-    public static void createTable(BigQuery bigQueryService, String project, String dataset, String table, TableDefinition tableDefinition) {
-        createDataset(bigQueryService, project, dataset);
+    static public void createTable(BigQuery bigQueryService, TableId tableId, TableDefinition tableDefinition) {
+        createDataset(bigQueryService, tableId.getProject(), tableId.getDataset());
 
-        if (!existsTable(bigQueryService, project, dataset, table)) {
-            bigQueryService.create(
-                    TableInfo.of(
-                            project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table),
-                            tableDefinition
-                    )
-            );
-        }
+        if (!existsTable(bigQueryService, tableId))
+            bigQueryService.create(TableInfo.of(tableId, tableDefinition));
+
     }
 
-    public static void createTable(BigQuery bigQueryService, String dataset, String table, TableDefinition tableDefinition) {
+    static public void createTable(BigQuery bigQueryService, String project, String dataset, String table, TableDefinition tableDefinition) {
+        createTable(bigQueryService, project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table), tableDefinition);
+    }
+
+    static public void createTable(BigQuery bigQueryService, String dataset, String table, TableDefinition tableDefinition) {
         createTable(bigQueryService, null, dataset, table, tableDefinition);
     }
 
-    public static void createTable(BigQuery bigQueryService, TableInfo tableInfo) {
+    static public void createTable(BigQuery bigQueryService, TableInfo tableInfo) {
         createTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable(), tableInfo.getDefinition());
     }
 
-    public static void dropTable(BigQuery bigQueryService, String project, String dataset, String table) {
+    static public void dropTable(BigQuery bigQueryService, String project, String dataset, String table) {
         bigQueryService.delete(project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table));
     }
 
-    public static void dropTable(BigQuery bigQueryService, String dataset, String table) {
+    static public void dropTable(BigQuery bigQueryService, String dataset, String table) {
         dropTable(bigQueryService, null, table);
     }
 
-    public static void dropTable(BigQuery bigQueryService, TableInfo tableInfo) {
-        dropTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable());
+    static public void dropTable(BigQuery bigQueryService, TableId tableId) {
+        dropTable(bigQueryService, tableId.getProject(), tableId.getDataset(), tableId.getTable());
     }
 
-    public static void insertIntoTable(BigQuery bigQueryService, TableId table, Map<String, Object>... rowsToInsert) {
+    static public void insertIntoTable(BigQuery bigQueryService, TableId table, Map<String, Object>... rowsToInsert) {
 
         InsertAllRequest insertAllRequest = InsertAllRequest.newBuilder(table)
                 .setRows(

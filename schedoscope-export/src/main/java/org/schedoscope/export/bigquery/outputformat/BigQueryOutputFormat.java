@@ -2,18 +2,22 @@ package org.schedoscope.export.bigquery.outputformat;
 
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.TableDefinition;
+import com.google.cloud.bigquery.TableId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
-import org.schedoscope.export.bigquery.BigQueryUtils;
-import org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter;
 import org.schedoscope.export.bigquery.outputschema.PartitioningScheme;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Map;
 
-public class BigQueryOutputFormat<K, V> extends OutputFormat<K, V> {
+import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableDefinition;
+import static org.schedoscope.export.utils.BigQueryUtils.*;
+
+public class BigQueryOutputFormat<K, V extends Map<String, Object>> extends OutputFormat<K, V> {
 
     private static Configuration configuration;
     private static String project;
@@ -23,12 +27,11 @@ public class BigQueryOutputFormat<K, V> extends OutputFormat<K, V> {
     private static HCatSchema hcatSchema;
     private static String gcpKey;
     private static String tableNamePostfix;
-    private static HCatSchemaToBigQuerySchemaConverter HCatSchemaToBigQuerySchemaConverter = new HCatSchemaToBigQuerySchemaConverter();
-    private static BigQueryUtils execute;
+    private static int commitSize;
     private static BigQuery bigQueryService;
 
 
-    public static void setOutput(Configuration conf, String project, String gcpKey, String database, String table, HCatSchema hcatSchema, String usedHCatFilter, String tableNamePostfix, BigQueryUtils bigQueryUtils) throws IOException {
+    public static void setOutput(Configuration conf, String project, String gcpKey, String database, String table, HCatSchema hcatSchema, String usedHCatFilter, String tableNamePostfix, int commitSize) throws IOException {
         configuration = conf;
         BigQueryOutputFormat.project = project;
         BigQueryOutputFormat.database = database;
@@ -36,52 +39,66 @@ public class BigQueryOutputFormat<K, V> extends OutputFormat<K, V> {
         BigQueryOutputFormat.usedHCatFilter = usedHCatFilter;
         BigQueryOutputFormat.hcatSchema = hcatSchema;
         BigQueryOutputFormat.gcpKey = gcpKey;
-        execute = bigQueryUtils;
-        bigQueryService = execute.bigQueryService(gcpKey);
+        BigQueryOutputFormat.commitSize = commitSize;
+        bigQueryService = bigQueryService(gcpKey);
     }
 
-    public static void setOutput(Configuration conf, String gcpKey, String database, String table, HCatSchema hcatSchema, String usedHCatFilter, String tableNamePostfix, BigQueryUtils bigQueryUtils) {
-        setOutput(conf, gcpKey, database, table, hcatSchema, usedHCatFilter, tableNamePostfix, bigQueryUtils);
-    }
+    public class BiqQueryRecordWriter extends RecordWriter<K, V> {
 
-    public static void setOutput(Configuration conf, String project, String gcpKey, String database, String table, HCatSchema hcatSchema, String usedHCatFilter, String tableNamePostfix) throws IOException {
-        setOutput(conf, project, gcpKey, database, table, hcatSchema, usedHCatFilter, tableNamePostfix, new BigQueryUtils());
-    }
-
-    public static void setOutput(Configuration conf, String gcpKey, String database, String table, HCatSchema hcatSchema, String usedHCatFilter, String tableNamePostfix) throws IOException {
-        setOutput(conf, null, gcpKey, database, table, hcatSchema, usedHCatFilter, tableNamePostfix);
-    }
-
-
-    public class BiqQueryRecordWriter extends RecordWriter<K,V> {
+        private TableId tableId;
+        private int commitSize;
+        private Map<String, Object>[] batch;
+        private int elementsInBatch = 0;
+        private BigQuery bigQueryService;
 
         @Override
-        public void write(K key, V value) throws IOException, InterruptedException {
+        public void write(K key, V value) {
+            batch[elementsInBatch] = value;
+            elementsInBatch++;
+
+            if (elementsInBatch == commitSize) {
+                retry(3, () -> insertIntoTable(bigQueryService, tableId, batch));
+
+                elementsInBatch = 0;
+            }
 
         }
 
         @Override
-        public void close(TaskAttemptContext context) throws IOException, InterruptedException {
+        public void close(TaskAttemptContext context) {
+
+            if (elementsInBatch > 0) {
+                retry(3, () -> insertIntoTable(bigQueryService, tableId, Arrays.copyOf(batch, elementsInBatch)));
+            }
 
         }
-    }
 
+        public BiqQueryRecordWriter(BigQuery bigQueryService, TableId tableId, int commitSize) {
+            this.bigQueryService = bigQueryService;
+            this.tableId = tableId;
+            this.commitSize = commitSize;
+            this.batch = new Map[commitSize];
+        }
+    }
 
 
     @Override
     public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
 
-        TableDefinition outputSchema = HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableDefinition(hcatSchema, new PartitioningScheme());
+        TableDefinition outputSchema = convertSchemaToTableDefinition(hcatSchema, new PartitioningScheme());
 
         String tmpOutputTable = table
                 + (tableNamePostfix != null ? "_" + tableNamePostfix : "")
                 + "_" + context.getTaskAttemptID().getTaskID().getId();
 
+        TableId tmpTableId = project == null ? TableId.of(database, tmpOutputTable) : TableId.of(project, database, tmpOutputTable);
 
-        execute.dropTable(bigQueryService, project, database, tmpOutputTable);
-        execute.createTable(bigQueryService, project, database, tmpOutputTable, outputSchema);
+        retry(3, () -> {
+            dropTable(bigQueryService, tmpTableId);
+            createTable(bigQueryService, tmpTableId, outputSchema);
+        });
 
-        return null;
+        return new BiqQueryRecordWriter(bigQueryService, tmpTableId, commitSize);
 
     }
 

@@ -1,4 +1,4 @@
-package org.schedoscope.export.bigquery.outputschema;
+package org.schedoscope.export.utils;
 
 
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;

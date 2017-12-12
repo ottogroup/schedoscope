@@ -3,10 +3,11 @@ package org.schedoscope.export.bigquery;
 import com.google.cloud.bigquery.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.schedoscope.export.utils.BigQueryUtils;
 
 import java.util.Map;
 
-import static org.schedoscope.export.bigquery.BigQueryUtils.*;
+import static org.schedoscope.export.utils.BigQueryUtils.*;
 
 public abstract class BigQueryBaseTest {
 
@@ -21,7 +22,7 @@ public abstract class BigQueryBaseTest {
 
         if (CALL_BIG_QUERY)
             retry(3, () -> {
-                dropTable(bigQuery, tableInfo);
+                dropTable(bigQuery, tableInfo.getTableId());
                 BigQueryUtils.createTable(bigQuery, tableInfo);
             });
 

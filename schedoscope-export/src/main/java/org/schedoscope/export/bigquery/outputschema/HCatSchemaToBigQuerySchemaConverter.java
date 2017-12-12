@@ -7,13 +7,15 @@ import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
+import org.schedoscope.export.utils.HCatSchemaTransformer;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.schedoscope.export.bigquery.outputschema.HCatSchemaTransformer.transformSchema;
+import static org.schedoscope.export.utils.HCatSchemaTransformer.transformSchema;
+
 
 public class HCatSchemaToBigQuerySchemaConverter {
 
