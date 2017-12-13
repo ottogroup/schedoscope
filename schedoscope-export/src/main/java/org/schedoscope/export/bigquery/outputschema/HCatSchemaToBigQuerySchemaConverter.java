@@ -27,7 +27,9 @@ public class HCatSchemaToBigQuerySchemaConverter {
         stringTypeInfo.setTypeName("string");
     }
 
-    static private final Field usedFilterField = Field.newBuilder("_USED_HCAT_FILTER", Field.Type.string()).setMode(Field.Mode.NULLABLE).setDescription("HCatInputFormat filter used to export the present record.").build();
+    static public final String USED_FILTER_FIELD_NAME = "_USED_HCAT_FILTER";
+
+    static private final Field usedFilterField = Field.newBuilder(USED_FILTER_FIELD_NAME, Field.Type.string()).setMode(Field.Mode.NULLABLE).setDescription("HCatInputFormat filter used to export the present record.").build();
 
     static private final HCatSchemaTransformer.Constructor<HCatSchema, HCatFieldSchema, Field, Schema> c = new HCatSchemaTransformer.Constructor<HCatSchema, HCatFieldSchema, Field, Schema>() {
 

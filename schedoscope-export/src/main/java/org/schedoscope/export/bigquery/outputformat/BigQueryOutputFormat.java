@@ -7,59 +7,149 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.schedoscope.export.bigquery.outputschema.PartitioningScheme;
 
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Map;
 
+import static org.schedoscope.export.bigquery.outputschema.HCatRecordToBigQueryMapConvertor.convertHCatRecordToBigQueryMap;
+import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.USED_FILTER_FIELD_NAME;
 import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableDefinition;
 import static org.schedoscope.export.utils.BigQueryUtils.*;
 
-public class BigQueryOutputFormat<K, V extends Map<String, Object>> extends OutputFormat<K, V> {
-
-    private static Configuration configuration;
-    private static String project;
-    private static String database;
-    private static String table;
-    private static String usedHCatFilter;
-    private static HCatSchema hcatSchema;
-    private static String gcpKey;
-    private static String tableNamePostfix;
-    private static int commitSize;
-    private static BigQuery bigQueryService;
+public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<K, V> {
 
 
-    public static void setOutput(Configuration conf, String project, String gcpKey, String database, String table, HCatSchema hcatSchema, String usedHCatFilter, String tableNamePostfix, int commitSize) throws IOException {
-        configuration = conf;
-        BigQueryOutputFormat.project = project;
-        BigQueryOutputFormat.database = database;
-        BigQueryOutputFormat.table = table;
-        BigQueryOutputFormat.usedHCatFilter = usedHCatFilter;
-        BigQueryOutputFormat.hcatSchema = hcatSchema;
-        BigQueryOutputFormat.gcpKey = gcpKey;
-        BigQueryOutputFormat.commitSize = commitSize;
-        bigQueryService = bigQueryService(gcpKey);
+    public static final String BIGQUERY_PROJECT = "bigquery.project";
+    public static final String BIGQUERY_DATASET = "bigquery.dataset";
+    public static final String BIGQUERY_TABLE = "bigquery.table";
+    public static final String BIGQUERY_TABLE_NAME_POSTFIX = "bigquery.tableNamePostfix";
+    public static final String BIGQUERY_TABLE_PARTITION_DATE = "bigquery.tablePartitionDate";
+    public static final String BIGQUERY_USED_HCAT_FILTER = "bigquery.usedHCatFilter";
+    public static final String BIGQUERY_HCAT_SCHEMA = "bigquery.hcatSchema";
+    public static final String BIGQUERY_COMMIT_SIZE = "bigquery.commitSize";
+    public static final String BIGQUERY_NO_OF_PARTITIONS = "bigquery.noOfPartitions";
+    public static final String BIGQUERY_GCP_KEY = "bigquery.gcpKey";
+
+
+    private static String serializeHCatSchema(HCatSchema schema) throws IOException {
+
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        ObjectOutputStream serializer = new ObjectOutputStream(bytes);
+        serializer.writeObject(schema);
+        serializer.close();
+
+        return Base64.getEncoder().encodeToString(bytes.toByteArray());
+
     }
 
-    public class BiqQueryRecordWriter extends RecordWriter<K, V> {
+    private static HCatSchema deserializeHCatSchema(String serializedSchema) throws IOException, ClassNotFoundException {
+        byte[] bytes = Base64.getDecoder().decode(serializedSchema);
+        ObjectInputStream deserializer = new ObjectInputStream(new ByteArrayInputStream(bytes));
+
+        HCatSchema schema = (HCatSchema) deserializer.readObject();
+
+        deserializer.close();
+
+        return schema;
+
+    }
+
+    public static String getBigQueryProject(Configuration conf) {
+        return conf.get(BIGQUERY_PROJECT);
+    }
+
+    public static String getBigQueryGcpKey(Configuration conf) {
+        return conf.get(BIGQUERY_GCP_KEY);
+    }
+
+    public static String getBigQueryDataset(Configuration conf) {
+        return conf.get(BIGQUERY_DATASET);
+    }
+
+    public static String getBigQueryTable(Configuration conf) {
+        return conf.get(BIGQUERY_TABLE);
+    }
+
+    public static String getBigQueryTableNamePostfix(Configuration conf) {
+        return conf.get(BIGQUERY_TABLE_NAME_POSTFIX);
+    }
+
+    public static String getBigQueryUsedHcatFilter(Configuration conf) {
+        return conf.get(BIGQUERY_USED_HCAT_FILTER);
+    }
+
+    public static String getBigqueryTablePartitionDate(Configuration conf) {
+        return conf.get(BIGQUERY_TABLE_PARTITION_DATE);
+    }
+
+    public static int getBigQueryCommitSize(Configuration conf) {
+        return Integer.parseInt(conf.get(BIGQUERY_COMMIT_SIZE));
+    }
+
+    public static int getBigQueryNoOfPartitions(Configuration conf) {
+        return Integer.parseInt(conf.get(BIGQUERY_NO_OF_PARTITIONS));
+    }
+
+    public static HCatSchema getBigQueryHCatSchema(Configuration conf) throws IOException {
+        try {
+            return deserializeHCatSchema(conf.get(BIGQUERY_HCAT_SCHEMA));
+        } catch (ClassNotFoundException e) {
+            throw new IOException("Error while deserializing HCatSchema", e);
+        }
+    }
+
+    public static Configuration configureBigQueryOutput(Configuration currentConf, String project, String gcpKey, String database, String table, String tableNamePostfix, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, int commitSize, int noOfPartitions) throws IOException {
+
+        currentConf.set(BIGQUERY_PROJECT, project);
+        currentConf.set(BIGQUERY_GCP_KEY, gcpKey);
+        currentConf.set(BIGQUERY_DATASET, database);
+        currentConf.set(BIGQUERY_TABLE, table);
+        currentConf.set(BIGQUERY_TABLE_NAME_POSTFIX, tableNamePostfix);
+        currentConf.set(BIGQUERY_TABLE_PARTITION_DATE, tablePartitionDate);
+        currentConf.set(BIGQUERY_USED_HCAT_FILTER, usedHCatFilter);
+        currentConf.set(BIGQUERY_COMMIT_SIZE, String.valueOf(commitSize));
+        currentConf.set(BIGQUERY_NO_OF_PARTITIONS, String.valueOf(noOfPartitions));
+        currentConf.set(BIGQUERY_HCAT_SCHEMA, serializeHCatSchema(hcatSchema));
+
+        return currentConf;
+
+    }
+
+
+    public class BiqQueryHCatRecordWriter extends RecordWriter<K, V> {
 
         private TableId tableId;
         private int commitSize;
         private Map<String, Object>[] batch;
         private int elementsInBatch = 0;
+        private HCatSchema hcatSchema;
         private BigQuery bigQueryService;
+        private String usedHCatFilter;
 
         @Override
-        public void write(K key, V value) {
-            batch[elementsInBatch] = value;
-            elementsInBatch++;
+        public void write(K key, V value) throws IOException {
 
-            if (elementsInBatch == commitSize) {
-                retry(3, () -> insertIntoTable(bigQueryService, tableId, batch));
+            try {
 
-                elementsInBatch = 0;
+                Map<String, Object> bigQueryMap = convertHCatRecordToBigQueryMap(hcatSchema, value);
+                if (usedHCatFilter != null)
+                    bigQueryMap.put(USED_FILTER_FIELD_NAME, usedHCatFilter);
+
+                batch[elementsInBatch] = bigQueryMap;
+                elementsInBatch++;
+
+                if (elementsInBatch == commitSize) {
+                    retry(3, () -> insertIntoTable(bigQueryService, tableId, batch));
+                    elementsInBatch = 0;
+                }
+
+            } catch (Throwable t) {
+                throw new IOException("Exception encountered while writing HCatRecord to BigQuery", t);
             }
 
         }
@@ -73,32 +163,39 @@ public class BigQueryOutputFormat<K, V extends Map<String, Object>> extends Outp
 
         }
 
-        public BiqQueryRecordWriter(BigQuery bigQueryService, TableId tableId, int commitSize) {
+        public BiqQueryHCatRecordWriter(BigQuery bigQueryService, TableId tableId, HCatSchema hcatSchema, String usedHCatFilter, int commitSize) {
             this.bigQueryService = bigQueryService;
             this.tableId = tableId;
             this.commitSize = commitSize;
             this.batch = new Map[commitSize];
+            this.hcatSchema = hcatSchema;
+            this.usedHCatFilter = usedHCatFilter;
         }
+
     }
 
 
     @Override
-    public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException, InterruptedException {
+    public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException {
 
-        TableDefinition outputSchema = convertSchemaToTableDefinition(hcatSchema, new PartitioningScheme());
+        Configuration conf = context.getConfiguration();
 
-        String tmpOutputTable = table
-                + (tableNamePostfix != null ? "_" + tableNamePostfix : "")
+        TableDefinition outputSchema = convertSchemaToTableDefinition(getBigQueryHCatSchema(conf), new PartitioningScheme());
+
+        String tmpOutputTable = getBigQueryTable(conf)
+                + (getBigQueryTableNamePostfix(conf) != null ? "_" + getBigQueryTableNamePostfix(conf) : "")
                 + "_" + context.getTaskAttemptID().getTaskID().getId();
 
-        TableId tmpTableId = project == null ? TableId.of(database, tmpOutputTable) : TableId.of(project, database, tmpOutputTable);
+        TableId tmpTableId = getBigQueryProject(conf) == null ? TableId.of(getBigQueryDataset(conf), tmpOutputTable) : TableId.of(getBigQueryProject(conf), getBigQueryDataset(conf), tmpOutputTable);
+
+        BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
 
         retry(3, () -> {
             dropTable(bigQueryService, tmpTableId);
             createTable(bigQueryService, tmpTableId, outputSchema);
         });
 
-        return new BiqQueryRecordWriter(bigQueryService, tmpTableId, commitSize);
+        return new BiqQueryHCatRecordWriter(bigQueryService, tmpTableId, getBigQueryHCatSchema(conf), getBigQueryUsedHcatFilter(conf), getBigQueryCommitSize(conf));
 
     }
 
