@@ -53,8 +53,12 @@ public abstract class BigQueryBaseTest {
         if (existsDataset(bigQuery, "schedoscope_export_big_query_record_test"))
             dropDataset(bigQuery, "schedoscope_export_big_query_record_test");
 
+        if (existsDataset(bigQuery, "schedoscope_export_big_query_output_test"))
+            dropDataset(bigQuery, "schedoscope_export_big_query_output_test");
+
         createDataset(bigQuery, "schedoscope_export_big_query_schema_test");
         createDataset(bigQuery, "schedoscope_export_big_query_record_test");
+        createDataset(bigQuery, "schedoscope_export_big_query_output_test");
     }
 
     @AfterClass
@@ -67,6 +71,9 @@ public abstract class BigQueryBaseTest {
 
         if (existsDataset(bigQuery, "schedoscope_export_big_query_record_test"))
             dropDataset(bigQuery, "schedoscope_export_big_query_record_test");
+
+        if (existsDataset(bigQuery, "schedoscope_export_big_query_output_test"))
+            dropDataset(bigQuery, "schedoscope_export_big_query_output_test");
     }
 
 
