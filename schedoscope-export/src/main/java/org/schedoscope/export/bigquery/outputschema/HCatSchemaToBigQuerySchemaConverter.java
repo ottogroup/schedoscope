@@ -175,7 +175,7 @@ public class HCatSchemaToBigQuerySchemaConverter {
                 .newBuilder()
                 .setSchema(Schema.of(fields));
 
-        if (partitioning.isTemporallyPartitioned()) {
+        if (partitioning != PartitioningScheme.NONE) {
             tableDefinitionBuilder.setTimePartitioning(TimePartitioning.of(TimePartitioning.Type.DAY));
         }
 
@@ -209,7 +209,7 @@ public class HCatSchemaToBigQuerySchemaConverter {
     }
 
     static public TableInfo convertSchemaToTableInfo(String project, String database, String table, HCatSchema hcatSchema, String postfix) throws IOException {
-        return convertSchemaToTableInfo(project, database, table, hcatSchema, new PartitioningScheme(), postfix);
+        return convertSchemaToTableInfo(project, database, table, hcatSchema, PartitioningScheme.NONE, postfix);
     }
 
     static public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, String postfix) throws IOException {
@@ -217,7 +217,7 @@ public class HCatSchemaToBigQuerySchemaConverter {
     }
 
     static public TableInfo convertSchemaToTableInfo(String project, String database, String table, HCatSchema hcatSchema) throws IOException {
-        return convertSchemaToTableInfo(project, database, table, hcatSchema, new PartitioningScheme());
+        return convertSchemaToTableInfo(project, database, table, hcatSchema, PartitioningScheme.NONE);
     }
 
     static public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema) throws IOException {

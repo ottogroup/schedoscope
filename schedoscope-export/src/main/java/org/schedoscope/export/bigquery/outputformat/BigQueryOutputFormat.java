@@ -19,6 +19,8 @@ import java.util.Map;
 import static org.schedoscope.export.bigquery.outputschema.HCatRecordToBigQueryMapConvertor.convertHCatRecordToBigQueryMap;
 import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.USED_FILTER_FIELD_NAME;
 import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableDefinition;
+import static org.schedoscope.export.bigquery.outputschema.PartitioningScheme.DAILY;
+import static org.schedoscope.export.bigquery.outputschema.PartitioningScheme.NONE;
 import static org.schedoscope.export.utils.BigQueryUtils.*;
 
 public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<K, V> {
@@ -27,12 +29,11 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
     public static final String BIGQUERY_PROJECT = "bigquery.project";
     public static final String BIGQUERY_DATASET = "bigquery.dataset";
     public static final String BIGQUERY_TABLE = "bigquery.table";
-    public static final String BIGQUERY_TABLE_NAME_POSTFIX = "bigquery.tableNamePostfix";
     public static final String BIGQUERY_TABLE_PARTITION_DATE = "bigquery.tablePartitionDate";
     public static final String BIGQUERY_USED_HCAT_FILTER = "bigquery.usedHCatFilter";
     public static final String BIGQUERY_HCAT_SCHEMA = "bigquery.hcatSchema";
     public static final String BIGQUERY_COMMIT_SIZE = "bigquery.commitSize";
-    public static final String BIGQUERY_NO_OF_PARTITIONS = "bigquery.noOfPartitions";
+    public static final String BIGQUERY_NO_OF_WORKERS = "bigquery.noOfPartitions";
     public static final String BIGQUERY_GCP_KEY = "bigquery.gcpKey";
 
 
@@ -75,15 +76,11 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
         return conf.get(BIGQUERY_TABLE);
     }
 
-    public static String getBigQueryTableNamePostfix(Configuration conf) {
-        return conf.get(BIGQUERY_TABLE_NAME_POSTFIX);
-    }
-
     public static String getBigQueryUsedHcatFilter(Configuration conf) {
         return conf.get(BIGQUERY_USED_HCAT_FILTER);
     }
 
-    public static String getBigqueryTablePartitionDate(Configuration conf) {
+    public static String getBigQueryTablePartitionDate(Configuration conf) {
         return conf.get(BIGQUERY_TABLE_PARTITION_DATE);
     }
 
@@ -91,8 +88,8 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
         return Integer.parseInt(conf.get(BIGQUERY_COMMIT_SIZE));
     }
 
-    public static int getBigQueryNoOfPartitions(Configuration conf) {
-        return Integer.parseInt(conf.get(BIGQUERY_NO_OF_PARTITIONS));
+    public static int getBigQueryNoOfWorkers(Configuration conf) {
+        return Integer.parseInt(conf.get(BIGQUERY_NO_OF_WORKERS));
     }
 
     public static HCatSchema getBigQueryHCatSchema(Configuration conf) throws IOException {
@@ -103,23 +100,49 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
         }
     }
 
-    public static Configuration configureBigQueryOutput(Configuration currentConf, String project, String gcpKey, String database, String table, String tableNamePostfix, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, int commitSize, int noOfPartitions) throws IOException {
+    public static Configuration configureBigQueryOutput(Configuration currentConf, String project, String gcpKey, String database, String table, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, int commitSize, int noOfPartitions) throws IOException {
 
         currentConf.set(BIGQUERY_PROJECT, project);
         currentConf.set(BIGQUERY_GCP_KEY, gcpKey);
         currentConf.set(BIGQUERY_DATASET, database);
         currentConf.set(BIGQUERY_TABLE, table);
-        currentConf.set(BIGQUERY_TABLE_NAME_POSTFIX, tableNamePostfix);
         currentConf.set(BIGQUERY_TABLE_PARTITION_DATE, tablePartitionDate);
         currentConf.set(BIGQUERY_USED_HCAT_FILTER, usedHCatFilter);
         currentConf.set(BIGQUERY_COMMIT_SIZE, String.valueOf(commitSize));
-        currentConf.set(BIGQUERY_NO_OF_PARTITIONS, String.valueOf(noOfPartitions));
+        currentConf.set(BIGQUERY_NO_OF_WORKERS, String.valueOf(noOfPartitions));
         currentConf.set(BIGQUERY_HCAT_SCHEMA, serializeHCatSchema(hcatSchema));
 
         return currentConf;
 
     }
 
+    public static TableId getBigQueryTableId(Configuration conf, boolean includingPartition) {
+        String bigQueryTableName = getBigQueryTable(conf) + (includingPartition && getBigQueryTablePartitionDate(conf) != null ? "$" + getBigQueryTablePartitionDate(conf) : "");
+
+        return getBigQueryProject(conf) == null ? TableId.of(getBigQueryDataset(conf), bigQueryTableName) : TableId.of(getBigQueryProject(conf), getBigQueryDataset(conf), bigQueryTableName);
+    }
+
+    public static TableId getBigQueryTableId(Configuration conf) {
+        return getBigQueryTableId(conf, false);
+    }
+
+    public static void prepareBigQueryTable(Configuration conf) throws IOException {
+
+        PartitioningScheme partitioning = getBigQueryTablePartitionDate(conf) != null ? DAILY : NONE;
+
+        TableDefinition outputSchema = convertSchemaToTableDefinition(getBigQueryHCatSchema(conf), partitioning);
+
+        BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
+
+        retry(3, () -> {
+            createTable(bigQueryService, getBigQueryTableId(conf), outputSchema);
+        });
+
+    }
+
+    public static void rollback(Configuration conf) throws IOException {
+
+    }
 
     public class BiqQueryHCatRecordWriter extends RecordWriter<K, V> {
 
@@ -180,22 +203,9 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
 
         Configuration conf = context.getConfiguration();
 
-        TableDefinition outputSchema = convertSchemaToTableDefinition(getBigQueryHCatSchema(conf), new PartitioningScheme());
-
-        String tmpOutputTable = getBigQueryTable(conf)
-                + (getBigQueryTableNamePostfix(conf) != null ? "_" + getBigQueryTableNamePostfix(conf) : "")
-                + "_" + context.getTaskAttemptID().getTaskID().getId();
-
-        TableId tmpTableId = getBigQueryProject(conf) == null ? TableId.of(getBigQueryDataset(conf), tmpOutputTable) : TableId.of(getBigQueryProject(conf), getBigQueryDataset(conf), tmpOutputTable);
-
         BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
 
-        retry(3, () -> {
-            dropTable(bigQueryService, tmpTableId);
-            createTable(bigQueryService, tmpTableId, outputSchema);
-        });
-
-        return new BiqQueryHCatRecordWriter(bigQueryService, tmpTableId, getBigQueryHCatSchema(conf), getBigQueryUsedHcatFilter(conf), getBigQueryCommitSize(conf));
+        return new BiqQueryHCatRecordWriter(bigQueryService, getBigQueryTableId(conf, true), getBigQueryHCatSchema(conf), getBigQueryUsedHcatFilter(conf), getBigQueryCommitSize(conf));
 
     }
 
