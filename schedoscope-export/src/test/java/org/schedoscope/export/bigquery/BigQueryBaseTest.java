@@ -11,11 +11,11 @@ import static org.schedoscope.export.utils.BigQueryUtils.*;
 
 public abstract class BigQueryBaseTest {
 
-    final private static boolean CALL_BIG_QUERY = false;
+    final private static boolean CALL_BIG_QUERY = true;
 
-    final private static boolean CLEAN_UP_BIG_QUERY = true;
+    final private static boolean CLEAN_UP_BIG_QUERY = false;
 
-    private static BigQuery bigQuery;
+    protected static BigQuery bigQuery;
 
 
     public void createTable(TableInfo tableInfo) {

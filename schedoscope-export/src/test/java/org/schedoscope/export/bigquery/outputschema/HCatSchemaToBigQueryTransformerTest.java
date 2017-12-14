@@ -447,7 +447,7 @@ public class HCatSchemaToBigQueryTransformerTest extends BigQueryBaseTest {
 
     @Test
     public void testTableConversionWithPartitioning() throws IOException, NoSuchFieldException, IllegalAccessException {
-        PartitioningScheme partitioning = new PartitioningScheme("aString", PartitioningScheme.Granularity.MONTHLY);
+        PartitioningScheme partitioning = PartitioningScheme.MONTHLY;
 
         TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning);
 
@@ -466,7 +466,7 @@ public class HCatSchemaToBigQueryTransformerTest extends BigQueryBaseTest {
 
     @Test
     public void testTableConversionWithPartitioningAndPHCatSchemaToBigQuerySchemaConverterostfix() throws IOException, NoSuchFieldException, IllegalAccessException {
-        PartitioningScheme partitioning = new PartitioningScheme("aString", PartitioningScheme.Granularity.MONTHLY);
+        PartitioningScheme partitioning = PartitioningScheme.MONTHLY;
 
         TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning, "test");
 
@@ -613,5 +613,6 @@ public class HCatSchemaToBigQueryTransformerTest extends BigQueryBaseTest {
 
         insertIntoTable("schedoscope_export_big_query_record_test", "table_with_list_of_map", bigQuerySchemaWithListOfMaps, converted);
 
+        System.out.println("cdsddsds");
     }
 }

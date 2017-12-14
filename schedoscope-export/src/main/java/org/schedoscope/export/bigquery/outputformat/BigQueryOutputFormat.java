@@ -142,6 +142,13 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
 
     public static void rollback(Configuration conf) throws IOException {
 
+        BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
+        TableId tableId = getBigQueryTableId(conf, true);
+
+        retry(3, () -> {
+            dropTable(bigQueryService, tableId);
+        });
+
     }
 
     public class BiqQueryHCatRecordWriter extends RecordWriter<K, V> {
