@@ -235,6 +235,11 @@
             <version>0.20.0-beta</version>
         </dependency>
         <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+            <version>1.14.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.101tec</groupId>
             <artifactId>zkclient</artifactId>
             <version>0.3</version>
