@@ -15,7 +15,6 @@ public class BigQueryOutputConfiguration {
     public static final String BIGQUERY_TABLE_PARTITION_DATE = "bigquery.tablePartitionDate";
     public static final String BIGQUERY_USED_HCAT_FILTER = "bigquery.usedHCatFilter";
     public static final String BIGQUERY_HCAT_SCHEMA = "bigquery.hcatSchema";
-    public static final String BIGQUERY_COMMIT_SIZE = "bigquery.commitSize";
     public static final String BIGQUERY_NO_OF_WORKERS = "bigquery.noOfPartitions";
     public static final String BIGQUERY_GCP_KEY = "bigquery.gcpKey";
     public static final String BIGQUERY_EXPORT_STORAGE_BUCKET = "bigquery.exportStorageBucket";
@@ -68,10 +67,6 @@ public class BigQueryOutputConfiguration {
         return conf.get(BIGQUERY_TABLE_PARTITION_DATE);
     }
 
-    public static int getBigQueryCommitSize(Configuration conf) {
-        return Integer.parseInt(conf.get(BIGQUERY_COMMIT_SIZE));
-    }
-
     public static int getBigQueryNoOfWorkers(Configuration conf) {
         return Integer.parseInt(conf.get(BIGQUERY_NO_OF_WORKERS));
     }
@@ -98,8 +93,18 @@ public class BigQueryOutputConfiguration {
         return getBigQueryTableId(conf, false);
     }
 
+    public static String getBigQueryFullTableName(Configuration conf, boolean includingPartition) {
+        TableId tableId = getBigQueryTableId(conf, includingPartition);
 
-    public static Configuration configureBigQueryOutput(Configuration currentConf, String project, String gcpKey, String database, String table, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, int commitSize, int noOfPartitions) throws IOException {
+        return (tableId.getProject() != null ? tableId.getProject() + "." : "")
+                + tableId.getDataset() + "." + tableId.getTable();
+    }
+
+    public static String getBigQueryFullTableName(Configuration conf) {
+        return getBigQueryFullTableName(conf, false);
+    }
+
+    public static Configuration configureBigQueryOutput(Configuration currentConf, String project, String gcpKey, String database, String table, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, String exportStorageBucket, int commitSize, int noOfPartitions) throws IOException {
 
         if (project != null)
             currentConf.set(BIGQUERY_PROJECT, project);
@@ -116,7 +121,8 @@ public class BigQueryOutputConfiguration {
         if (usedHCatFilter != null)
             currentConf.set(BIGQUERY_USED_HCAT_FILTER, usedHCatFilter);
 
-        currentConf.set(BIGQUERY_COMMIT_SIZE, String.valueOf(commitSize));
+        currentConf.set(BIGQUERY_EXPORT_STORAGE_BUCKET, exportStorageBucket);
+
         currentConf.set(BIGQUERY_NO_OF_WORKERS, String.valueOf(noOfPartitions));
         currentConf.set(BIGQUERY_HCAT_SCHEMA, serializeHCatSchema(hcatSchema));
 
