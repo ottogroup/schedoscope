@@ -13,12 +13,14 @@ public class BigQueryOutputConfiguration {
     public static final String BIGQUERY_DATASET = "bigquery.dataset";
     public static final String BIGQUERY_TABLE = "bigquery.table";
     public static final String BIGQUERY_TABLE_PARTITION_DATE = "bigquery.tablePartitionDate";
+    public static final String BIGQUERY_DATASET_LOCATION = "bigquery.datasetLocation";
     public static final String BIGQUERY_USED_HCAT_FILTER = "bigquery.usedHCatFilter";
     public static final String BIGQUERY_HCAT_SCHEMA = "bigquery.hcatSchema";
     public static final String BIGQUERY_NO_OF_WORKERS = "bigquery.noOfPartitions";
     public static final String BIGQUERY_GCP_KEY = "bigquery.gcpKey";
     public static final String BIGQUERY_EXPORT_STORAGE_BUCKET = "bigquery.exportStorageBucket";
-
+    public static final String BIGQUERY_EXPORT_STORAGE_FOLDER_PREFIX = "bigquery.exportStorageFolderPrefix";
+    public static final String BIGQUERY_EXPORT_STORAGE_REGION = "bigquery.exportStorageRegion";
 
     private static String serializeHCatSchema(HCatSchema schema) throws IOException {
 
@@ -55,6 +57,10 @@ public class BigQueryOutputConfiguration {
         return conf.get(BIGQUERY_DATASET);
     }
 
+    public static String getBigQueryDatasetLocation(Configuration conf) {
+        return conf.get(BIGQUERY_DATASET_LOCATION);
+    }
+
     public static String getBigQueryTable(Configuration conf) {
         return conf.get(BIGQUERY_TABLE);
     }
@@ -73,6 +79,18 @@ public class BigQueryOutputConfiguration {
 
     public static String getBigQueryExportStorageBucket(Configuration conf) {
         return conf.get(BIGQUERY_EXPORT_STORAGE_BUCKET);
+    }
+
+    public static String getBigqueryExportStorageFolderPrefix(Configuration conf) {
+        return conf.get(BIGQUERY_EXPORT_STORAGE_FOLDER_PREFIX);
+    }
+
+    public static String getBigqueryExportStorageRegion(Configuration conf) {
+        return conf.get(BIGQUERY_EXPORT_STORAGE_REGION);
+    }
+
+    public static String getBigQueryExportStorageFolder(Configuration conf) {
+        return !getBigqueryExportStorageFolderPrefix(conf).isEmpty() ? getBigqueryExportStorageFolderPrefix(conf) + "/" + getBigQueryFullTableName(conf, true) : getBigQueryFullTableName(conf, true);
     }
 
     public static HCatSchema getBigQueryHCatSchema(Configuration conf) throws IOException {
@@ -104,7 +122,7 @@ public class BigQueryOutputConfiguration {
         return getBigQueryFullTableName(conf, false);
     }
 
-    public static Configuration configureBigQueryOutput(Configuration currentConf, String project, String gcpKey, String database, String table, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, String exportStorageBucket, int commitSize, int noOfPartitions) throws IOException {
+    public static Configuration configureBigQueryOutput(Configuration currentConf, String project, String gcpKey, String database, String table, String dataLocation, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, String exportStorageBucket, String exportStorageFolderPrefix, String exportStorageRegion, int noOfPartitions) throws IOException {
 
         if (project != null)
             currentConf.set(BIGQUERY_PROJECT, project);
@@ -115,6 +133,9 @@ public class BigQueryOutputConfiguration {
         currentConf.set(BIGQUERY_DATASET, database);
         currentConf.set(BIGQUERY_TABLE, table);
 
+        if (dataLocation != null)
+            currentConf.set(BIGQUERY_DATASET_LOCATION, dataLocation);
+
         if (tablePartitionDate != null)
             currentConf.set(BIGQUERY_TABLE_PARTITION_DATE, tablePartitionDate);
 
@@ -122,6 +143,17 @@ public class BigQueryOutputConfiguration {
             currentConf.set(BIGQUERY_USED_HCAT_FILTER, usedHCatFilter);
 
         currentConf.set(BIGQUERY_EXPORT_STORAGE_BUCKET, exportStorageBucket);
+
+        if (exportStorageFolderPrefix != null)
+            currentConf.set(BIGQUERY_EXPORT_STORAGE_FOLDER_PREFIX, exportStorageFolderPrefix);
+        else
+            currentConf.set(BIGQUERY_EXPORT_STORAGE_FOLDER_PREFIX, "");
+
+        if (exportStorageRegion != null)
+            currentConf.set(BIGQUERY_EXPORT_STORAGE_REGION, exportStorageRegion);
+        else
+            currentConf.set(BIGQUERY_EXPORT_STORAGE_REGION, "europe-west3");
+
 
         currentConf.set(BIGQUERY_NO_OF_WORKERS, String.valueOf(noOfPartitions));
         currentConf.set(BIGQUERY_HCAT_SCHEMA, serializeHCatSchema(hcatSchema));

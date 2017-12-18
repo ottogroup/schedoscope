@@ -16,8 +16,10 @@ import org.schedoscope.export.bigquery.outputformat.BigQueryOutputFormat;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeoutException;
 
-import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputFormat.configureBigQueryOutput;
+import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputConfiguration.configureBigQueryOutput;
+import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputFormat.commit;
 import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputFormat.prepareBigQueryTable;
 
 public class BigQueryOutputFormatTest extends BigQueryBaseTest {
@@ -70,10 +72,13 @@ public class BigQueryOutputFormatTest extends BigQueryBaseTest {
                 null,
                 "schedoscope_export_big_query_output_test",
                 "flat_table",
+                "EU",
                 null,
                 "aString=y",
                 flatHcatSchema,
-                2,
+                "schedoscope_export_big_query_output_test",
+                null,
+                null,
                 1
         );
 
@@ -87,13 +92,17 @@ public class BigQueryOutputFormatTest extends BigQueryBaseTest {
                 null,
                 null,
                 "schedoscope_export_big_query_output_test",
-                "flat_table_partitioned",
+                "flat_table_part",
+                "EU",
                 "20171001",
                 "aString=y",
                 flatHcatSchema,
-                2,
+                "schedoscope_export_big_query_output_test",
+                null,
+                null,
                 1
         );
+
 
         partitionedContext = new TaskAttemptContextImpl(partitionedExport, new TaskAttemptID());
 
@@ -154,7 +163,10 @@ public class BigQueryOutputFormatTest extends BigQueryBaseTest {
     }
 
     @Test
-    public void testUnpartitionedExport() throws IOException, InterruptedException {
+    public void testUnpartitionedExport() throws IOException, InterruptedException, TimeoutException {
+        if (!CALL_BIG_QUERY)
+            return;
+
         prepareBigQueryTable(unpartitionedExport);
 
         for (DefaultHCatRecord r : inputData)
@@ -162,17 +174,22 @@ public class BigQueryOutputFormatTest extends BigQueryBaseTest {
 
         recordWriterUnpartitioned.close(unpartitionedContext);
 
+        commit(unpartitionedExport);
     }
 
     @Test
-    public void testPartitionedExport() throws IOException, InterruptedException {
+    public void testPartitionedExport() throws IOException, InterruptedException, TimeoutException {
+        if (!CALL_BIG_QUERY)
+            return;
+
         prepareBigQueryTable(partitionedExport);
 
         for (DefaultHCatRecord r : inputData)
             recordWriterPartitioned.write(null, r);
 
-        recordWriterPartitioned.close(unpartitionedContext);
+        recordWriterPartitioned.close(partitionedContext);
 
+        commit(partitionedExport);
     }
 
 }

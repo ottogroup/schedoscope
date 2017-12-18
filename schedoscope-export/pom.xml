@@ -24,6 +24,16 @@
             <version>19.0</version>
         </dependency>
         <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-storage</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-bigquery</artifactId>
+            <version>0.20.0-beta</version>
+        </dependency>
+        <dependency>
             <groupId>com.twitter</groupId>
             <artifactId>parquet-hadoop-bundle</artifactId>
             <version>${pig.parquet.version}</version>
@@ -223,21 +233,6 @@
                     <groupId>org.slf4j</groupId>
                 </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.google.api-client</groupId>
-            <artifactId>google-api-client</artifactId>
-            <version>1.23.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-bigquery</artifactId>
-            <version>0.20.0-beta</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.cloud</groupId>
-            <artifactId>google-cloud-storage</artifactId>
-            <version>1.14.0</version>
         </dependency>
         <dependency>
             <groupId>com.101tec</groupId>

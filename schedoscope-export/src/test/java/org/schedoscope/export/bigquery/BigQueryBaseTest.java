@@ -1,6 +1,7 @@
 package org.schedoscope.export.bigquery;
 
 import com.google.cloud.bigquery.*;
+import com.google.cloud.storage.Storage;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.schedoscope.export.utils.BigQueryUtils;
@@ -8,14 +9,16 @@ import org.schedoscope.export.utils.BigQueryUtils;
 import java.util.Map;
 
 import static org.schedoscope.export.utils.BigQueryUtils.*;
+import static org.schedoscope.export.utils.CloudStorageUtils.*;
 
 public abstract class BigQueryBaseTest {
 
-    final private static boolean CALL_BIG_QUERY = true;
+    final protected static boolean CALL_BIG_QUERY = false;
 
-    final private static boolean CLEAN_UP_BIG_QUERY = false;
+    final protected static boolean CLEAN_UP_BIG_QUERY = true;
 
     protected static BigQuery bigQuery;
+    protected static Storage storage;
 
 
     public void createTable(TableInfo tableInfo) {
@@ -46,19 +49,26 @@ public abstract class BigQueryBaseTest {
             return;
 
         bigQuery = bigQueryService();
+        storage = storageService();
 
-        if (existsDataset(bigQuery, "schedoscope_export_big_query_schema_test"))
-            dropDataset(bigQuery, "schedoscope_export_big_query_schema_test");
+        if (existsDataset(bigQuery, null, "schedoscope_export_big_query_schema_test"))
+            dropDataset(bigQuery, null, "schedoscope_export_big_query_schema_test");
 
-        if (existsDataset(bigQuery, "schedoscope_export_big_query_record_test"))
-            dropDataset(bigQuery, "schedoscope_export_big_query_record_test");
+        if (existsDataset(bigQuery, null, "schedoscope_export_big_query_record_test"))
+            dropDataset(bigQuery, null, "schedoscope_export_big_query_record_test");
 
-        if (existsDataset(bigQuery, "schedoscope_export_big_query_output_test"))
-            dropDataset(bigQuery, "schedoscope_export_big_query_output_test");
+        if (existsDataset(bigQuery, null, "schedoscope_export_big_query_output_test"))
+            dropDataset(bigQuery, null, "schedoscope_export_big_query_output_test");
 
-        createDataset(bigQuery, "schedoscope_export_big_query_schema_test");
-        createDataset(bigQuery, "schedoscope_export_big_query_record_test");
-        createDataset(bigQuery, "schedoscope_export_big_query_output_test");
+        if (existsBucket(storage, "schedoscope_export_big_query_output_test"))
+            deleteBucket(storage, "schedoscope_export_big_query_output_test");
+
+        createDataset(bigQuery, null, "schedoscope_export_big_query_schema_test", "EU");
+        createDataset(bigQuery, null, "schedoscope_export_big_query_record_test", "EU");
+        createDataset(bigQuery, null, "schedoscope_export_big_query_output_test", "EU");
+
+        createBucket(storage, "schedoscope_export_big_query_output_test", "europe-west3");
+
     }
 
     @AfterClass
@@ -66,14 +76,17 @@ public abstract class BigQueryBaseTest {
         if (!CALL_BIG_QUERY || !CLEAN_UP_BIG_QUERY)
             return;
 
-        if (existsDataset(bigQuery, "schedoscope_export_big_query_schema_test"))
-            dropDataset(bigQuery, "schedoscope_export_big_query_schema_test");
+        if (existsDataset(bigQuery, null, "schedoscope_export_big_query_schema_test"))
+            dropDataset(bigQuery, null, "schedoscope_export_big_query_schema_test");
 
-        if (existsDataset(bigQuery, "schedoscope_export_big_query_record_test"))
-            dropDataset(bigQuery, "schedoscope_export_big_query_record_test");
+        if (existsDataset(bigQuery, null, "schedoscope_export_big_query_record_test"))
+            dropDataset(bigQuery, null, "schedoscope_export_big_query_record_test");
 
-        if (existsDataset(bigQuery, "schedoscope_export_big_query_output_test"))
-            dropDataset(bigQuery, "schedoscope_export_big_query_output_test");
+        if (existsDataset(bigQuery, null, "schedoscope_export_big_query_output_test"))
+            dropDataset(bigQuery, null, "schedoscope_export_big_query_output_test");
+
+        if (existsBucket(storage, "schedoscope_export_big_query_output_test"))
+            deleteBucket(storage, "schedoscope_export_big_query_output_test");
     }
 
 

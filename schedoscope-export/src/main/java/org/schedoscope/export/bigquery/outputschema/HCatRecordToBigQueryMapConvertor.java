@@ -162,23 +162,7 @@ public class HCatRecordToBigQueryMapConvertor {
     };
 
 
-    static public Map<String, Object> convertHCatRecordToBigQueryMap(HCatSchema schema, HCatRecord record) throws JsonProcessingException {
-
-        try {
-            LOG.info("Incoming HCat record: " + record.toString() + " of Schema: " + schema.toString());
-
-            Map<String, Object> bigQueryMap = transformSchema(c, schema).apply(record);
-
-            LOG.info("Outgoing BigQuery map: " + jsonConvertor.writeValueAsString(bigQueryMap));
-
-            return bigQueryMap;
-
-        } catch (JsonProcessingException e) {
-            // should not happen
-            LOG.error("Error converting HCatRecord", e);
-
-            throw e;
-        }
-
+    static public Map<String, Object> convertHCatRecordToBigQueryMap(HCatSchema schema, HCatRecord record) {
+        return transformSchema(c, schema).apply(record);
     }
 }
