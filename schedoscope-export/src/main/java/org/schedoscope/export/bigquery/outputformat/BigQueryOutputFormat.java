@@ -1,6 +1,5 @@
 package org.schedoscope.export.bigquery.outputformat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.TableDefinition;
 import com.google.cloud.bigquery.TableId;
@@ -10,29 +9,46 @@ import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hive.hcatalog.data.HCatRecord;
-import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.schedoscope.export.bigquery.outputschema.PartitioningScheme;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.WritableByteChannel;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputConfiguration.*;
-import static org.schedoscope.export.bigquery.outputschema.HCatRecordToBigQueryMapConvertor.convertHCatRecordToBigQueryMap;
-import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.USED_FILTER_FIELD_NAME;
 import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableDefinition;
 import static org.schedoscope.export.bigquery.outputschema.PartitioningScheme.DAILY;
 import static org.schedoscope.export.bigquery.outputschema.PartitioningScheme.NONE;
 import static org.schedoscope.export.utils.BigQueryUtils.*;
 import static org.schedoscope.export.utils.CloudStorageUtils.*;
 
+/**
+ * Hadoop output format to write HCat records to GCP Cloud Storage and then forward them to BigQuery.
+ *
+ * @param <K> we do not care about this type parameter.
+ * @param <V> a subtype of HCatRecord.
+ */
 public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<K, V> {
 
 
+    private static void setProxies(Configuration conf) {
+        if (getBigQueryProxyHost(conf) != null && getBigQueryProxyPort(conf) != null) {
+            System.setProperty("https.proxyHost", getBigQueryProxyHost(conf));
+            System.setProperty("https.proxyPort", getBigQueryProxyPort(conf));
+        }
+    }
+
+    /**
+     * Given a Hadoop configuration with the BigQuery output format configuration values, create an equivalent BigQuery
+     * table. It HCatSchema passed in the configuration is considered, as well as a potentially given partition date
+     * to decide about daily partitioning of the table (or not).
+     *
+     * @param conf the BigQuery augmented Hadoop configuration (see {@link BigQueryOutputConfiguration})
+     * @throws IOException in case the table could not be created.
+     */
     public static void prepareBigQueryTable(Configuration conf) throws IOException {
+
+        setProxies(conf);
 
         PartitioningScheme partitioning = getBigQueryTablePartitionDate(conf) != null ? DAILY : NONE;
 
@@ -46,7 +62,17 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
 
     }
 
+    /**
+     * After the output format has written a Hive table's data to GCP cloud storage, commit the export by loading
+     * the data into the prepared BigQuery table and then delete the data in the storage bucket afterwards.
+     *
+     * @param conf the BigQuery augmented Hadoop configuration (see {@link BigQueryOutputConfiguration})
+     * @throws IOException
+     * @throws TimeoutException
+     * @throws InterruptedException
+     */
     public static void commit(Configuration conf) throws IOException, TimeoutException, InterruptedException {
+        setProxies(conf);
 
         BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
         Storage storageService = storageService(getBigQueryGcpKey(conf));
@@ -64,7 +90,14 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
 
     }
 
+    /**
+     * Call the method in case of a problem. It drops the BigQuery table or table partition and deletes all data
+     * on cloud storage.
+     *
+     * @param conf the BigQuery augmented Hadoop configuration (see {@link BigQueryOutputConfiguration})
+     */
     public static void rollback(Configuration conf) {
+        setProxies(conf);
 
         try {
             rollbackBigQuery(conf);
@@ -99,59 +132,16 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
         });
     }
 
-    public class BiqQueryHCatRecordWriter extends RecordWriter<K, V> {
-
-        private HCatSchema hcatSchema;
-        private Storage storageService;
-
-        private String usedHCatFilter;
-        private String bucket;
-        private String blobName;
-        private String region;
-
-        private WritableByteChannel channel;
-
-        private ObjectMapper jsonFactory = new ObjectMapper();
-
-        @Override
-        public void write(K key, V value) throws IOException {
-            if (channel == null) {
-                channel = createBlobIfNotExists(storageService, bucket, blobName, region).writer();
-            }
-
-            Map<String, Object> recordMap = convertHCatRecordToBigQueryMap(hcatSchema, value);
-            recordMap.put(USED_FILTER_FIELD_NAME, this.usedHCatFilter);
-
-            String output = jsonFactory.writeValueAsString(recordMap) + "\n";
-
-            channel.write(ByteBuffer.wrap(output.getBytes("UTF-8")));
-        }
-
-        @Override
-        public void close(TaskAttemptContext context) throws IOException {
-            if (channel != null)
-                channel.close();
-        }
-
-        public BiqQueryHCatRecordWriter(Storage storageService, String bucket, String blobName, String region, HCatSchema hcatSchema, String usedHCatFilter) {
-            this.storageService = storageService;
-            this.bucket = bucket;
-            this.blobName = blobName;
-            this.region = region;
-            this.hcatSchema = hcatSchema;
-            this.usedHCatFilter = usedHCatFilter;
-        }
-
-    }
-
 
     @Override
     public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException {
         Configuration conf = context.getConfiguration();
 
+        setProxies(conf);
+
         Storage storageService = storageService(getBigQueryGcpKey(conf));
 
-        return new BiqQueryHCatRecordWriter(
+        return new BiqQueryHCatRecordWriter<>(
                 storageService,
                 getBigQueryExportStorageBucket(conf),
                 getBigQueryExportStorageFolder(conf) + "/" + context.getTaskAttemptID().toString(),

@@ -16,7 +16,9 @@ import java.util.List;
 
 import static org.schedoscope.export.utils.HCatSchemaTransformer.transformSchema;
 
-
+/**
+ * Convertor for transforming HCat schemas to BigQuery schemas.
+ */
 public class HCatSchemaToBigQuerySchemaConverter {
 
     static private final Log LOG = LogFactory.getLog(HCatSchemaToBigQuerySchemaConverter.class);
@@ -164,6 +166,13 @@ public class HCatSchemaToBigQuerySchemaConverter {
         }
     };
 
+    /**
+     * Convert a given HCat schema to a BigQuery table definition.
+     *
+     * @param hcatSchema   the HCat schema to convert
+     * @param partitioning should the table be partitioned? If so, with what granularity.
+     * @return the BigQuery table definition for a table equivalent to the HCat schema.
+     */
     static public TableDefinition convertSchemaToTableDefinition(HCatSchema hcatSchema, PartitioningScheme partitioning) {
         LOG.info("Incoming HCat table schema: " + hcatSchema.getSchemaAsTypeString());
 
@@ -186,34 +195,28 @@ public class HCatSchemaToBigQuerySchemaConverter {
         return tableDefinition;
     }
 
-    static public TableInfo convertSchemaToTableInfo(String project, String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning, String postfix) throws IOException {
+    /**
+     * Convert a given HCat schema to a BigQuery table information.
+     *
+     * @param project      the ID of the GCP project where to create the dataset for the BigQuery table. If null, this is the configured default project.
+     * @param dataset      the dataset to create the table in. The dataset will be created if it does not exist yet.
+     * @param table        the name of the resulting BigQuery table.
+     * @param hcatSchema   the HCat schema to convert
+     * @param partitioning should the table be partitioned? If so, with what granularity.
+     * @return the BigQuery table info for a table equivalent to the HCat schema.
+     * @throws IOException
+     */
+    static public TableInfo convertSchemaToTableInfo(String project, String dataset, String table, HCatSchema hcatSchema, PartitioningScheme partitioning) throws IOException {
 
-        TableId tableId = project == null ? TableId.of(database, table + (postfix == null || postfix.isEmpty() ? "" : "_" + postfix)) : TableId.of(project, database, table + (postfix == null || postfix.isEmpty() ? "" : "_" + postfix));
+        TableId tableId = project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table);
 
         TableInfo tableInfo = TableInfo.of(tableId, convertSchemaToTableDefinition(hcatSchema, partitioning));
 
         return tableInfo;
     }
 
-    static public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning, String postfix) throws IOException {
-        return convertSchemaToTableInfo(null, database, table, hcatSchema, partitioning, postfix);
-    }
-
-
-    static public TableInfo convertSchemaToTableInfo(String project, String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning) throws IOException {
-        return convertSchemaToTableInfo(project, database, table, hcatSchema, partitioning, "");
-    }
-
     static public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning) throws IOException {
         return convertSchemaToTableInfo(null, database, table, hcatSchema, partitioning);
-    }
-
-    static public TableInfo convertSchemaToTableInfo(String project, String database, String table, HCatSchema hcatSchema, String postfix) throws IOException {
-        return convertSchemaToTableInfo(project, database, table, hcatSchema, PartitioningScheme.NONE, postfix);
-    }
-
-    static public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, String postfix) throws IOException {
-        return convertSchemaToTableInfo(null, database, table, hcatSchema, postfix);
     }
 
     static public TableInfo convertSchemaToTableInfo(String project, String database, String table, HCatSchema hcatSchema) throws IOException {

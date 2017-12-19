@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.schedoscope.export.bigquery.outputschema.HCatRecordToBigQueryMapConvertor.convertHCatRecordToBigQueryMap;
 import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.convertSchemaToTableInfo;
 
@@ -439,13 +438,6 @@ public class HCatSchemaToBigQueryTransformerTest extends BigQueryBaseTest {
     }
 
     @Test
-    public void testTableConversionWithPostfix() throws IOException {
-        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, "test");
-
-        assertTrue(converted.getTableId().getTable().endsWith("_test"));
-    }
-
-    @Test
     public void testTableConversionWithPartitioning() throws IOException, NoSuchFieldException, IllegalAccessException {
         PartitioningScheme partitioning = PartitioningScheme.MONTHLY;
 
@@ -453,25 +445,6 @@ public class HCatSchemaToBigQueryTransformerTest extends BigQueryBaseTest {
 
         assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
         assertEquals("flat_table", converted.getTableId().getTable());
-
-        StandardTableDefinition bigQueryTableDefinition = converted.getDefinition();
-
-        java.lang.reflect.Field field = StandardTableDefinition.class.getDeclaredField("timePartitioning");
-        field.setAccessible(true);
-        TimePartitioning timePartitioning = (TimePartitioning) field.get(bigQueryTableDefinition);
-
-        assertEquals(TimePartitioning.Type.DAY, timePartitioning.getType());
-
-    }
-
-    @Test
-    public void testTableConversionWithPartitioningAndPHCatSchemaToBigQuerySchemaConverterostfix() throws IOException, NoSuchFieldException, IllegalAccessException {
-        PartitioningScheme partitioning = PartitioningScheme.MONTHLY;
-
-        TableInfo converted = convertSchemaToTableInfo("schedoscope_export_big_query_schema_test", "flat_table", flatHcatSchema, partitioning, "test");
-
-        assertEquals("schedoscope_export_big_query_schema_test", converted.getTableId().getDataset());
-        assertEquals("flat_table_test", converted.getTableId().getTable());
 
         StandardTableDefinition bigQueryTableDefinition = converted.getDefinition();
 

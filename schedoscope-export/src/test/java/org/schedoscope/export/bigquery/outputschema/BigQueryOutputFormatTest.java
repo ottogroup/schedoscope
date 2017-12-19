@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.concurrent.TimeoutException;
 
-import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputConfiguration.configureBigQueryOutput;
+import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputConfiguration.configureBigQueryOutputFormat;
 import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputFormat.commit;
 import static org.schedoscope.export.bigquery.outputformat.BigQueryOutputFormat.prepareBigQueryTable;
 
@@ -66,12 +66,13 @@ public class BigQueryOutputFormatTest extends BigQueryBaseTest {
         );
 
 
-        unpartitionedExport = configureBigQueryOutput(
+        unpartitionedExport = configureBigQueryOutputFormat(
                 new Configuration(),
                 null,
                 null,
                 "schedoscope_export_big_query_output_test",
                 "flat_table",
+                null,
                 "EU",
                 null,
                 "aString=y",
@@ -79,7 +80,9 @@ public class BigQueryOutputFormatTest extends BigQueryBaseTest {
                 "schedoscope_export_big_query_output_test",
                 null,
                 null,
-                1
+                1,
+                null,
+                null
         );
 
         unpartitionedContext = new TaskAttemptContextImpl(unpartitionedExport, new TaskAttemptID());
@@ -87,12 +90,13 @@ public class BigQueryOutputFormatTest extends BigQueryBaseTest {
         recordWriterUnpartitioned = new BigQueryOutputFormat<Object, DefaultHCatRecord>().getRecordWriter(unpartitionedContext);
 
 
-        partitionedExport = configureBigQueryOutput(
+        partitionedExport = configureBigQueryOutputFormat(
                 new Configuration(),
                 null,
                 null,
                 "schedoscope_export_big_query_output_test",
                 "flat_table_part",
+                null,
                 "EU",
                 "20171001",
                 "aString=y",
@@ -100,7 +104,9 @@ public class BigQueryOutputFormatTest extends BigQueryBaseTest {
                 "schedoscope_export_big_query_output_test",
                 null,
                 null,
-                1
+                1,
+                null,
+                null
         );
 
 

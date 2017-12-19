@@ -22,6 +22,9 @@ import java.util.stream.Collectors;
 import static org.schedoscope.export.utils.HCatSchemaTransformer.transformSchema;
 
 
+/**
+ * Convert HCat records to maps for use with BigQuery APIs
+ */
 public class HCatRecordToBigQueryMapConvertor {
 
     static private final Log LOG = LogFactory.getLog(HCatRecordToBigQueryMapConvertor.class);
@@ -162,6 +165,14 @@ public class HCatRecordToBigQueryMapConvertor {
     };
 
 
+    /**
+     * Given an HCat schema, convert a record to a map representation for use with the BigQuery API.
+     *
+     * @param schema the HCatSchema to which records conform
+     * @param record the record to transform.
+     * @return a nested map representing the record sucht that it can be converted to the JSON format expected by
+     * the BigQuery API.
+     */
     static public Map<String, Object> convertHCatRecordToBigQueryMap(HCatSchema schema, HCatRecord record) {
         return transformSchema(c, schema).apply(record);
     }
