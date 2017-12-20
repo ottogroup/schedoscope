@@ -7,14 +7,14 @@ import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
-import org.schedoscope.export.utils.HCatSchemaTransformer;
+import org.schedoscope.export.utils.HCatSchemaToBigQueryTransformer;
 
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.schedoscope.export.utils.HCatSchemaTransformer.transformSchema;
+import static org.schedoscope.export.utils.HCatSchemaToBigQueryTransformer.transformSchema;
 
 /**
  * Convertor for transforming HCat schemas to BigQuery schemas.
@@ -33,7 +33,7 @@ public class HCatSchemaToBigQuerySchemaConverter {
 
     static private final Field usedFilterField = Field.newBuilder(USED_FILTER_FIELD_NAME, Field.Type.string()).setMode(Field.Mode.NULLABLE).setDescription("HCatInputFormat filter used to export the present record.").build();
 
-    static private final HCatSchemaTransformer.Constructor<HCatSchema, HCatFieldSchema, Field, Schema> c = new HCatSchemaTransformer.Constructor<HCatSchema, HCatFieldSchema, Field, Schema>() {
+    static private final HCatSchemaToBigQueryTransformer.Constructor<HCatSchema, HCatFieldSchema, Field, Schema> c = new HCatSchemaToBigQueryTransformer.Constructor<HCatSchema, HCatFieldSchema, Field, Schema>() {
 
         private Field.Type translatePrimitiveType(PrimitiveTypeInfo primitiveTypeInfo) {
             switch (primitiveTypeInfo.getTypeName()) {
@@ -178,7 +178,7 @@ public class HCatSchemaToBigQuerySchemaConverter {
 
         List<Field> fields = new LinkedList<>();
         fields.add(usedFilterField);
-        fields.addAll(transformSchema(c, hcatSchema).apply(hcatSchema).getFields());
+        fields.addAll(transformSchema(c, hcatSchema, hcatSchema).getFields());
 
         StandardTableDefinition.Builder tableDefinitionBuilder = StandardTableDefinition
                 .newBuilder()
@@ -214,17 +214,4 @@ public class HCatSchemaToBigQuerySchemaConverter {
 
         return tableInfo;
     }
-
-    static public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema, PartitioningScheme partitioning) throws IOException {
-        return convertSchemaToTableInfo(null, database, table, hcatSchema, partitioning);
-    }
-
-    static public TableInfo convertSchemaToTableInfo(String project, String database, String table, HCatSchema hcatSchema) throws IOException {
-        return convertSchemaToTableInfo(project, database, table, hcatSchema, PartitioningScheme.NONE);
-    }
-
-    static public TableInfo convertSchemaToTableInfo(String database, String table, HCatSchema hcatSchema) throws IOException {
-        return convertSchemaToTableInfo(null, database, table, hcatSchema);
-    }
-
 }

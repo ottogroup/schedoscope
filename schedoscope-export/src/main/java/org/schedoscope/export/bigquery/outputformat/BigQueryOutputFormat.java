@@ -72,6 +72,7 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
      * @throws InterruptedException
      */
     public static void commit(Configuration conf) throws IOException, TimeoutException, InterruptedException {
+
         setProxies(conf);
 
         BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
@@ -97,6 +98,7 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
      * @param conf the BigQuery augmented Hadoop configuration (see {@link BigQueryOutputConfiguration})
      */
     public static void rollback(Configuration conf) {
+
         setProxies(conf);
 
         try {

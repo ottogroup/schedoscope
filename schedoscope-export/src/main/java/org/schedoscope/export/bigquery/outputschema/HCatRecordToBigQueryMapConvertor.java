@@ -4,22 +4,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.DefaultHCatRecord;
 import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
-import org.schedoscope.export.utils.HCatSchemaTransformer;
+import org.schedoscope.export.utils.HCatSchemaToBigQueryTransformer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.schedoscope.export.utils.HCatSchemaTransformer.transformSchema;
+import static org.schedoscope.export.utils.HCatSchemaToBigQueryTransformer.transformSchema;
 
 
 /**
@@ -27,11 +25,9 @@ import static org.schedoscope.export.utils.HCatSchemaTransformer.transformSchema
  */
 public class HCatRecordToBigQueryMapConvertor {
 
-    static private final Log LOG = LogFactory.getLog(HCatRecordToBigQueryMapConvertor.class);
-
     static private final ObjectMapper jsonConvertor = new ObjectMapper();
 
-    private static final HCatSchemaTransformer.Constructor<HCatRecord, Object, Pair<String, Object>, Map<String, Object>> c = new HCatSchemaTransformer.Constructor<HCatRecord, Object, Pair<String, Object>, Map<String, Object>>() {
+    private static final HCatSchemaToBigQueryTransformer.Constructor<HCatRecord, Object, Pair<String, Object>, Map<String, Object>> c = new HCatSchemaToBigQueryTransformer.Constructor<HCatRecord, Object, Pair<String, Object>, Map<String, Object>>() {
 
         @Override
         public Object accessPrimitiveField(HCatSchema schema, HCatFieldSchema field, HCatRecord hCatRecord) {
@@ -174,6 +170,6 @@ public class HCatRecordToBigQueryMapConvertor {
      * the BigQuery API.
      */
     static public Map<String, Object> convertHCatRecordToBigQueryMap(HCatSchema schema, HCatRecord record) {
-        return transformSchema(c, schema).apply(record);
+        return transformSchema(c, schema, record);
     }
 }
