@@ -6,19 +6,22 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
+import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.hive.hcatalog.data.HCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
+import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.thrift.TException;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 import org.schedoscope.export.BaseExportJob;
-import org.schedoscope.export.jdbc.JdbcExportJob;
+import org.schedoscope.export.bigquery.outputformat.BigQueryOutputFormat;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.TimeoutException;
 
 import static org.apache.hive.hcatalog.common.HCatUtil.getTable;
 import static org.apache.hive.hcatalog.common.HCatUtil.getTableSchemaWithPtnCols;
@@ -64,8 +67,10 @@ public class BigQueryExportJob extends BaseExportJob {
     private String proxyPort;
 
 
+    private Configuration initialConfiguration;
+
     @Override
-    public int run(String[] args) throws CmdLineException, IOException, TException, ClassNotFoundException, InterruptedException, TimeoutException {
+    public int run(String[] args) throws CmdLineException, IOException, TException, ClassNotFoundException, InterruptedException {
 
         CmdLineParser cmd = new CmdLineParser(this);
 
@@ -77,7 +82,7 @@ public class BigQueryExportJob extends BaseExportJob {
             throw e;
         }
 
-        Configuration conf = prepareConfiguration();
+        Configuration conf = prepareConfiguration(initialConfiguration);
         Job job = prepareJob(conf);
 
         boolean success = job.waitForCompletion(true);
@@ -95,8 +100,7 @@ public class BigQueryExportJob extends BaseExportJob {
         return (success ? 0 : 1);
     }
 
-    private Configuration prepareConfiguration() throws IOException, TException {
-        Configuration conf = getConfiguration();
+    private Configuration prepareConfiguration(Configuration conf) throws IOException, TException {
         conf = configureHiveMetaStore(conf);
         conf = configureKerberos(conf);
         conf = configureAnonFields(conf);
@@ -140,12 +144,37 @@ public class BigQueryExportJob extends BaseExportJob {
         Job job = Job.getInstance(conf, "BigQueryExport: " + inputDatabase + "."
                 + inputTable);
 
+        job.setJarByClass(BigQueryExportJob.class);
+        job.setMapperClass(Mapper.class);
+        job.setNumReduceTasks(0);
+
+        if (inputFilter == null || inputFilter.trim().equals("")) {
+            HCatInputFormat.setInput(job, inputDatabase, inputTable);
+        } else {
+            HCatInputFormat.setInput(job, inputDatabase, inputTable,
+                    inputFilter);
+        }
+
+        job.setInputFormatClass(HCatInputFormat.class);
+        job.setOutputFormatClass(BigQueryOutputFormat.class);
+
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(HCatRecord.class);
+
         return job;
+    }
+
+    public BigQueryExportJob(Configuration initialConfiguration) {
+        this.initialConfiguration = initialConfiguration;
+    }
+
+    public BigQueryExportJob() {
+        this(new Configuration());
     }
 
     public static void main(String[] args) {
         try {
-            int exitCode = ToolRunner.run(new JdbcExportJob(), args);
+            int exitCode = ToolRunner.run(new BigQueryExportJob(), args);
             System.exit(exitCode);
         } catch (Exception e) {
             LOG.error(e.getMessage());

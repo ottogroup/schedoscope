@@ -57,6 +57,10 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
         BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
 
         retry(3, () -> {
+            dropTable(bigQueryService, getBigQueryTableId(conf, true));
+        });
+
+        retry(3, () -> {
             createTable(bigQueryService, getBigQueryTableId(conf), outputSchema);
         });
 

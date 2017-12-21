@@ -137,7 +137,9 @@ public class BigQueryUtils {
      * @return true iff the table already exists.
      */
     static public boolean existsTable(BigQuery bigQueryService, TableId tableId) {
-        return bigQueryService.getTable(tableId) != null;
+        Table table = bigQueryService.getTable(tableId);
+
+        return table != null;
     }
 
     /**

@@ -52,11 +52,11 @@ public abstract class HiveUnitBaseTest {
         Logger.getLogger("global").setLevel(Level.FINEST);
     }
 
-    private static final String DEFAUlT_HIVE_DB = "default";
+    private static final String DEFAULT_HIVE_DB = "default";
     private static final String DEFAULT_DERBY_DB = "jdbc:derby:memory:TestingDB;create=true";
     private static final String DATA_FILE_PATH = "DATA_FILE_PATH";
 
-    private HiveTestSuite testSuite;
+    protected HiveTestSuite testSuite;
 
     // use those two instances to set up
     // the unit test, the conf is needed
@@ -73,6 +73,7 @@ public abstract class HiveUnitBaseTest {
         testSuite = new HiveTestSuite();
         testSuite.createTestCluster();
         conf = testSuite.getFS().getConf();
+
     }
 
     @After
@@ -97,15 +98,16 @@ public abstract class HiveUnitBaseTest {
         Schema schema = SchemaFactory.getSchema(conf);
 
         // set up column type mapping
-        HCatInputFormat.setInput(conf, DEFAUlT_HIVE_DB, tableName);
+        HCatInputFormat.setInput(conf, DEFAULT_HIVE_DB, tableName);
         hcatInputSchema = HCatInputFormat.getTableSchema(conf);
         conf.setStrings(Schema.JDBC_OUTPUT_COLUMN_TYPES, SchemaUtils
                 .getColumnTypesFromHcatSchema(hcatInputSchema, schema,
                         new HashSet<String>(0)));
 
+
         // set up hcatalog record reader
         ReadEntity.Builder builder = new ReadEntity.Builder();
-        ReadEntity entity = builder.withDatabase(DEFAUlT_HIVE_DB)
+        ReadEntity entity = builder.withDatabase(DEFAULT_HIVE_DB)
                 .withTable(tableName).build();
 
         Map<String, String> config = new HashMap<String, String>();
@@ -122,7 +124,7 @@ public abstract class HiveUnitBaseTest {
         // load data into hive table
         testSuite.executeScript(hiveScript);
 
-        HCatInputFormat.setInput(conf, DEFAUlT_HIVE_DB, tableName);
+        HCatInputFormat.setInput(conf, DEFAULT_HIVE_DB, tableName);
         hcatInputSchema = HCatInputFormat.getTableSchema(conf);
     }
 }

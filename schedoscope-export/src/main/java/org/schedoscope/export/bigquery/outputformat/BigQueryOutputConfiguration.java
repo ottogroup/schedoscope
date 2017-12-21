@@ -189,7 +189,7 @@ public class BigQueryOutputConfiguration {
      * @return the folder
      */
     public static String getBigQueryExportStorageFolder(Configuration conf) {
-        return !getBigqueryExportStorageFolderPrefix(conf).isEmpty() ? getBigqueryExportStorageFolderPrefix(conf) + "/" + getBigQueryFullTableName(conf, true) : getBigQueryFullTableName(conf, true);
+        return (getBigqueryExportStorageFolderPrefix(conf) != null && !getBigqueryExportStorageFolderPrefix(conf).isEmpty()) ? getBigqueryExportStorageFolderPrefix(conf) + "/" + getBigQueryFullTableName(conf, true) : getBigQueryFullTableName(conf, true);
     }
 
     /**
