@@ -72,6 +72,14 @@ public class BigQueryExportJob extends BaseExportJob {
     @Override
     public int run(String[] args) throws CmdLineException, IOException, TException, ClassNotFoundException, InterruptedException {
 
+        Job job = createJob(args);
+
+        boolean success = executeJob(job);
+
+        return (success ? 0 : 1);
+    }
+
+    public Job createJob(String[] args) throws IOException, TException, CmdLineException {
         CmdLineParser cmd = new CmdLineParser(this);
 
         try {
@@ -81,13 +89,22 @@ public class BigQueryExportJob extends BaseExportJob {
             cmd.printUsage(System.err);
             throw e;
         }
+        return prepareJobObject(prepareJobConfiguration());
+    }
 
-        Configuration conf = prepareConfiguration(initialConfiguration);
-        Job job = prepareJob(conf);
+    public boolean executeJob(Job job) throws IOException, InterruptedException, ClassNotFoundException {
 
         boolean success = job.waitForCompletion(true);
 
-        if (success) {
+        finishJob(job, success);
+
+        return success;
+    }
+
+    public void finishJob(Job job, boolean wasSuccessful) {
+        Configuration conf = job.getConfiguration();
+
+        if (wasSuccessful) {
             try {
                 prepareBigQueryTable(conf);
                 commit(conf);
@@ -96,11 +113,11 @@ public class BigQueryExportJob extends BaseExportJob {
             }
         } else
             rollback(conf);
-
-        return (success ? 0 : 1);
     }
 
-    private Configuration prepareConfiguration(Configuration conf) throws IOException, TException {
+
+    private Configuration prepareJobConfiguration() throws IOException, TException {
+        Configuration conf = initialConfiguration;
         conf = configureHiveMetaStore(conf);
         conf = configureKerberos(conf);
         conf = configureAnonFields(conf);
@@ -118,7 +135,7 @@ public class BigQueryExportJob extends BaseExportJob {
             metastore.close();
         }
 
-        return configureBigQueryOutputFormat(
+        conf = configureBigQueryOutputFormat(
                 conf,
                 project,
                 gcpKey,
@@ -137,9 +154,10 @@ public class BigQueryExportJob extends BaseExportJob {
                 proxyPort
         );
 
+        return conf;
     }
 
-    private Job prepareJob(Configuration conf) throws IOException, TException {
+    private Job prepareJobObject(Configuration conf) throws IOException, TException {
 
         Job job = Job.getInstance(conf, "BigQueryExport: " + inputDatabase + "."
                 + inputTable);
@@ -163,6 +181,7 @@ public class BigQueryExportJob extends BaseExportJob {
 
         return job;
     }
+
 
     public BigQueryExportJob(Configuration initialConfiguration) {
         this.initialConfiguration = initialConfiguration;

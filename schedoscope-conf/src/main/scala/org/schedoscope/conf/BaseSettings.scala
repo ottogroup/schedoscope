@@ -247,9 +247,44 @@ class BaseSettings(val config: Config) {
   lazy val redisExportBatchSize = config.getInt("schedoscope.export.redis.insertBatchSize")
 
   /**
-    * Number of reducers to use for Redis export.
+    * Number of reducers to use for Kafka export.
     */
   lazy val kafkaExportNumReducers = config.getInt("schedoscope.export.kafka.numberOfReducers")
+
+  /**
+    * GCP project ID under which exported BigQuery dataset will be created. Defaults to the default project of the current user.
+    */
+  lazy val bigQueryExportProjectId = config.getString("schedoscope.export.bigQuery.projectId")
+
+  /**
+    * Number of reducers to use for BigQuery export.
+    */
+  lazy val bigQueryExportNumReducers = config.getInt("schedoscope.export.bigQuery.numberOfReducers")
+
+  /**
+    * GCP data storage location of exported data within BigQuery. Defaults to EU.
+    */
+  lazy val bigQueryExportDataLocation = config.getString("schedoscope.export.bigQuery.dataLocation")
+
+  /**
+    * GCP key in JSON format to use for authentication when exporting to BigQuery. If not set, the key of the current user is used.
+    */
+  lazy val bigQueryExportGcpKey = config.getString("schedoscope.export.bigQuery.gcpKey")
+
+  /**
+    * GCP Cloud Storage bucket to use for temporary storage while exporting to BigQuery. Defaults to "schedoscope_bigquery_export"
+    */
+  lazy val bigQueryExportStorageBucket = config.getString("schedoscope.export.bigQuery.exportStorageBucket")
+
+  /**
+    * Folder prefix to apply to blobs in the GCP Cloud Storage bucket while exporting to BigQuery. Defaults to ""
+    */
+  lazy val bigQueryExportStorageBucketFolderPrefix = config.getString("schedoscope.export.bigQuery.exportStorageBucketFolderPrefix")
+
+  /**
+    * GCP Cloud Storage bucket region to use for exporting to BigQuery. Defaults to europe-west3
+    */
+  lazy val bigQueryExportStorageBucketRegion = config.getString("schedoscope.export.bigQuery.exportStorageBucketRegion")
 
   /**
     * Number of reducers to use for (S)Ftp export.

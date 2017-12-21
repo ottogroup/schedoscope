@@ -149,6 +149,67 @@ object Export {
   }
 
   /**
+    * This function prepares a MapReduce job for exporting a given view to BigQuery.
+    *
+    * @param v                         the view to export.
+    * @param projectId                 GCP project ID under which exported BigQuery dataset will be created. If not set,
+    *                                  this is the default GCP project of the current user. Can be globally configured by
+    *                                  setting schedoscope.export.bigQuery.projectId
+    * @param gcpKey                    GCP key in JSON format to use for authentication when exporting to BigQuery.
+    *                                  If not set, the local gcloud key of the user running Schedoscope is used.
+    *                                  Can be globally configured by setting schedoscope.export.bigQuery.gcpKey
+    * @param gcpKeyFile                An absolute path pointing to the GCP key in JSON format to use for authentication
+    *                                  when exporting to BigQuery. If not set, the local gcloud key of the user running
+    *                                  Schedoscope is used (or gcpKey).
+    * @param storageBucket             GCP Cloud Storage bucket to use for temporary storage while exporting to BigQuery.
+    *                                  Defaults to "schedoscope_bigquery_export". Can be globally configured by
+    *                                  setting schedoscope.export.bigQuery.storageBucket
+    * @param storageBucketFolderPrefix Folder prefix to apply to blobs in the GCP Cloud Storage bucket while exporting
+    *                                  to BigQuery. Defaults to "". Can be globally configured by
+    *                                  setting schedoscope.export.bigQuery.storageBucketFolderPrefix
+    * @param storageBucketRegion       GCP Cloud Storage bucket region to use for exporting to BigQuery. Defaults to
+    *                                  europe-west3.
+    *                                  Can be globally configured by setting schedoscope.export.bigQuery.storageBucketRegion
+    * @param dataLocation              GCP data storage location of exported data within BigQuery. Defaults to EU.
+    *                                  Can be globally configured by setting schedoscope.export.bigQuery.dataLocation
+    * @param numReducers               Number of reducers to use for BigQuery export. Defines the parallelism. Defaults to 10.
+    *                                  an be globally configured by setting schedoscope.export.bigQuery.numReducers
+    * @param isKerberized              Is the cluster kerberized?
+    * @param kerberosPrincipal         Kerberos principal to use. Can be globally configured by setting schedoscope.kerberos.principal
+    * @param metastoreUri              URI of the metastore. Can be globally configured by setting schedoscope.metastore.metastoreUri
+    * @param exportSalt                Salt to use for anonymization. schedoscope.export.salt
+    * @return the MapReduce transformation performing the export
+    */
+  def BigQuery(
+                v: View,
+                projectId: String = if (Schedoscope.settings.bigQueryExportProjectId.isEmpty) null else Schedoscope.settings.bigQueryExportProjectId,
+                gcpKey: String = if (Schedoscope.settings.bigQueryExportGcpKey.isEmpty) null else Schedoscope.settings.bigQueryExportGcpKey,
+                gcpKeyFile: String = null,
+                storageBucket: String = Schedoscope.settings.bigQueryExportStorageBucket,
+                storageBucketFolderPrefix: String = Schedoscope.settings.bigQueryExportStorageBucketFolderPrefix,
+                storageBucketRegion: String = Schedoscope.settings.bigQueryExportStorageBucketRegion,
+                dataLocation: String = Schedoscope.settings.bigQueryExportDataLocation,
+                numReducers: Int = Schedoscope.settings.bigQueryExportNumReducers,
+                isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
+                kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
+                metastoreUri: String = Schedoscope.settings.metastoreUri,
+                exportSalt: String = Schedoscope.settings.exportSalt
+              ) = {
+
+    val t = MapreduceTransformation(
+      v,
+      (conf) => ???
+    )
+
+    t.directoriesToDelete = List()
+
+    t.configureWith(
+      Map(
+
+      ))
+  }
+
+  /**
     * This function configures the Redis export job and returns a MapreduceTransformation.
     *
     * @param v                 The view
