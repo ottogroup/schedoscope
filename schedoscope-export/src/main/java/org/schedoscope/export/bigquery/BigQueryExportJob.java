@@ -9,8 +9,9 @@ import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.hive.hcatalog.data.HCatRecord;
+import org.apache.hive.hcatalog.data.DefaultHCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.thrift.TException;
@@ -74,7 +75,9 @@ public class BigQueryExportJob extends BaseExportJob {
 
         Job job = createJob(args);
 
-        boolean success = executeJob(job);
+        boolean success = job.waitForCompletion(true);
+
+        finishJob(job, success);
 
         return (success ? 0 : 1);
     }
@@ -92,16 +95,7 @@ public class BigQueryExportJob extends BaseExportJob {
         return prepareJobObject(prepareJobConfiguration());
     }
 
-    public boolean executeJob(Job job) throws IOException, InterruptedException, ClassNotFoundException {
-
-        boolean success = job.waitForCompletion(true);
-
-        finishJob(job, success);
-
-        return success;
-    }
-
-    public void finishJob(Job job, boolean wasSuccessful) {
+    public static void finishJob(Job job, boolean wasSuccessful) {
         Configuration conf = job.getConfiguration();
 
         if (wasSuccessful) {
@@ -164,20 +158,23 @@ public class BigQueryExportJob extends BaseExportJob {
 
         job.setJarByClass(BigQueryExportJob.class);
         job.setMapperClass(Mapper.class);
-        job.setNumReduceTasks(0);
+        job.setReducerClass(Reducer.class);
+
+        job.setMapOutputKeyClass(LongWritable.class);
+        job.setMapOutputValueClass(DefaultHCatRecord.class);
+        job.setOutputKeyClass(LongWritable.class);
+        job.setOutputValueClass(DefaultHCatRecord.class);
 
         if (inputFilter == null || inputFilter.trim().equals("")) {
             HCatInputFormat.setInput(job, inputDatabase, inputTable);
         } else {
-            HCatInputFormat.setInput(job, inputDatabase, inputTable,
-                    inputFilter);
+            HCatInputFormat.setInput(job, inputDatabase, inputTable, inputFilter);
         }
 
         job.setInputFormatClass(HCatInputFormat.class);
         job.setOutputFormatClass(BigQueryOutputFormat.class);
 
-        job.setMapOutputKeyClass(LongWritable.class);
-        job.setMapOutputValueClass(HCatRecord.class);
+        job.setNumReduceTasks(numReducer);
 
         return job;
     }

@@ -287,6 +287,16 @@ class BaseSettings(val config: Config) {
   lazy val bigQueryExportStorageBucketRegion = config.getString("schedoscope.export.bigQuery.exportStorageBucketRegion")
 
   /**
+    * Host of proxy to use for GCP API access. Set to empty, i.e., no proxy to use.
+    */
+  lazy val bigQueryExportProxyHost = config.getString("schedoscope.export.bigQuery.proxyHost")
+
+  /**
+    * Port of proxy to use for GCP API access. Set to empty, i.e., no proxy to use.
+    */
+  lazy val bigQueryExportProxyPort = config.getString("schedoscope.export.bigQuery.proxyPort")
+
+  /**
     * Number of reducers to use for (S)Ftp export.
     */
   lazy val ftpExportNumReducers = config.getInt("schedoscope.export.ftp.numberOfReducers")

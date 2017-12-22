@@ -19,6 +19,7 @@ package org.schedoscope.dsl.transformations
 import org.apache.hadoop.mapreduce.Job
 import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.{Field, View}
+import org.schedoscope.export.bigquery.BigQueryExportJob
 import org.schedoscope.export.ftp.FtpExportJob
 import org.schedoscope.export.ftp.outputformat.FileOutputType
 import org.schedoscope.export.ftp.upload.FileCompressionCodec
@@ -69,23 +70,28 @@ object Export {
       (conf) => {
 
         val filter = v.partitionParameters
-          .map {
-            (p => s"${p.n} = '${p.v.get}'")
-          }
+          .map { p => s"${p.n} = '${p.v.get}'" }
           .mkString(" and ")
 
         val distributionField = if (distributionKey != null) distributionKey.n else null
 
-        val anonFields = v.fields.filter {
-          _.isPrivacySensitive
-        }.map {
-          _.n
-        }.toArray
-        val anonParameters = v.partitionParameters.filter {
-          _.isPrivacySensitive
-        }.map {
-          _.n
-        }.toArray
+        val anonFields = v.fields
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
+
+        val anonParameters = v.partitionParameters
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
 
         new JdbcExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -124,7 +130,7 @@ object Export {
   }
 
   /**
-    * This function runs the post commit action and finalizes the database tables.
+    * This function runs the post commit action for a JDBC export and finalizes the database tables.
     *
     * @param job      The MR job object
     * @param driver   The schedoscope driver
@@ -143,7 +149,7 @@ object Export {
       runState
 
     } catch {
-      case ex: RetryException => throw new RetryableDriverException(ex.getMessage, ex)
+      case ex: RetryException => throw RetryableDriverException(ex.getMessage, ex)
       case ex: UnrecoverableException => DriverRunFailed(driver, ex.getMessage, ex)
     }
   }
@@ -151,10 +157,10 @@ object Export {
   /**
     * This function prepares a MapReduce job for exporting a given view to BigQuery.
     *
-    * @param v                         the view to export.
-    * @param projectId                 GCP project ID under which exported BigQuery dataset will be created. If not set,
-    *                                  this is the default GCP project of the current user. Can be globally configured by
-    *                                  setting schedoscope.export.bigQuery.projectId
+    * @param v                                           the view to export.
+    * @param projectId                                   GCP project ID under which exported BigQuery dataset will be created. If not set,
+    *                                                    this is the default GCP project of the current user. Can be globally configured by
+    *                                                    setting schedoscope.export.bigQuery.projectId
     * @param gcpKey                    GCP key in JSON format to use for authentication when exporting to BigQuery.
     *                                  If not set, the local gcloud key of the user running Schedoscope is used.
     *                                  Can be globally configured by setting schedoscope.export.bigQuery.gcpKey
@@ -167,17 +173,19 @@ object Export {
     * @param storageBucketFolderPrefix Folder prefix to apply to blobs in the GCP Cloud Storage bucket while exporting
     *                                  to BigQuery. Defaults to "". Can be globally configured by
     *                                  setting schedoscope.export.bigQuery.storageBucketFolderPrefix
-    * @param storageBucketRegion       GCP Cloud Storage bucket region to use for exporting to BigQuery. Defaults to
-    *                                  europe-west3.
-    *                                  Can be globally configured by setting schedoscope.export.bigQuery.storageBucketRegion
-    * @param dataLocation              GCP data storage location of exported data within BigQuery. Defaults to EU.
-    *                                  Can be globally configured by setting schedoscope.export.bigQuery.dataLocation
-    * @param numReducers               Number of reducers to use for BigQuery export. Defines the parallelism. Defaults to 10.
-    *                                  an be globally configured by setting schedoscope.export.bigQuery.numReducers
-    * @param isKerberized              Is the cluster kerberized?
-    * @param kerberosPrincipal         Kerberos principal to use. Can be globally configured by setting schedoscope.kerberos.principal
-    * @param metastoreUri              URI of the metastore. Can be globally configured by setting schedoscope.metastore.metastoreUri
-    * @param exportSalt                Salt to use for anonymization. schedoscope.export.salt
+    * @param storageBucketRegion GCP Cloud Storage bucket region to use for exporting to BigQuery. Defaults to
+    *                                                    europe-west3.
+    *                                                    Can be globally configured by setting schedoscope.export.bigQuery.storageBucketRegion
+    * @param dataLocation                                GCP data storage location of exported data within BigQuery. Defaults to EU.
+    *                                                    Can be globally configured by setting schedoscope.export.bigQuery.dataLocation
+    * @param numReducers                                 Number of reducers to use for BigQuery export. Defines the parallelism. Defaults to 10.
+    *                                                    an be globally configured by setting schedoscope.export.bigQuery.numReducers
+    * @param proxyHost                                   Host of proxy to use for GCP API access. Set to empty, i.e., no proxy to use.
+    * @param proxyPort                                   Port of proxy to use for GCP API access. Set to empty, i.e., no proxy to use.
+    * @param isKerberized                                Is the cluster kerberized?
+    * @param kerberosPrincipal                           Kerberos principal to use. Can be globally configured by setting schedoscope.kerberos.principal
+    * @param metastoreUri                                URI of the metastore. Can be globally configured by setting schedoscope.metastore.metastoreUri
+    * @param exportSalt                                  Salt to use for anonymization. schedoscope.export.salt
     * @return the MapReduce transformation performing the export
     */
   def BigQuery(
@@ -190,6 +198,8 @@ object Export {
                 storageBucketRegion: String = Schedoscope.settings.bigQueryExportStorageBucketRegion,
                 dataLocation: String = Schedoscope.settings.bigQueryExportDataLocation,
                 numReducers: Int = Schedoscope.settings.bigQueryExportNumReducers,
+                proxyHost: String = if (Schedoscope.settings.bigQueryExportProxyHost.isEmpty) null else Schedoscope.settings.bigQueryExportProxyHost,
+                proxyPort: String = if (Schedoscope.settings.bigQueryExportProxyPort.isEmpty) null else Schedoscope.settings.bigQueryExportProxyPort,
                 isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
                 kerberosPrincipal: String = Schedoscope.settings.kerberosPrincipal,
                 metastoreUri: String = Schedoscope.settings.metastoreUri,
@@ -198,15 +208,171 @@ object Export {
 
     val t = MapreduceTransformation(
       v,
-      (conf) => ???
+      (conf) => {
+
+        val filter = v.partitionParameters
+          .map { p => s"${p.n} = '${p.v.get}'" }
+          .mkString(" and ")
+
+        val anonFields = v.fields
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
+
+        val anonParameters = v.partitionParameters
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
+
+        val bigQueryPartitionDate: Option[String] = v.partitionParameters
+          .filter { p => Set("month_id", "date_id").contains(p.n) }
+          .map {
+            p =>
+              if (p.n == "month_id")
+                p.v.get.asInstanceOf[String] + "01"
+              else
+                p.v.get.asInstanceOf[String]
+          }
+          .headOption
+
+        val bigQueryPartitionSuffixes = v.partitionParameters
+          .filter { p => !Set("year", "month", "day", "date_id", "month_id").contains(p.n) }
+          .sortBy {
+            _.n
+          }
+          .map {
+            _.v.get
+          }
+          .mkString("_")
+
+
+        val baseJobParameters: Seq[String] = Seq() ++
+          (
+            if (conf("schedoscope.export.isKerberized").asInstanceOf[Boolean])
+              Seq("-s", "true", "-p", conf("schedoscope.export.kerberosPrincipal").asInstanceOf[String])
+            else
+              Nil
+            ) ++
+          Seq("-m", conf("schedoscope.export.metastoreUri").asInstanceOf[String]) ++
+          Seq("-d", v.dbName) ++
+          Seq("-t", v.n) ++
+          (
+            if (!filter.isEmpty)
+              Seq("-i", filter)
+            else
+              Nil
+            ) ++
+          Seq("-c", conf("schedoscope.export.numReducers").asInstanceOf[Integer].toString) ++
+          (
+            if (!(anonFields ++ anonParameters).isEmpty)
+              Seq("-A", (anonFields ++ anonParameters).mkString(" "), "-S", conf("schedoscope.export.exportSalt").asInstanceOf[String])
+            else
+              Nil
+            )
+
+        val bigQueryJobParameters: Seq[String] = Seq() ++
+          (
+            if (conf.contains("schedoscope.export.projectId"))
+              Seq("-P", conf("schedoscope.export.projectId").asInstanceOf[String])
+            else
+              Nil
+            ) ++
+          (
+            if (conf.contains("schedoscope.export.gcpKey"))
+              Seq("-k", conf("schedoscope.export.gcpKey").asInstanceOf[String])
+            else
+              Nil
+            ) ++
+          (
+            if (conf.contains("schedoscope.export.gcpKeyFile"))
+              Seq("-K", conf("schedoscope.export.gcpKeyFile").asInstanceOf[String])
+            else
+              Nil
+            ) ++
+          (
+            if (conf.contains("schedoscope.export.proxyHost"))
+              Seq("-y", conf("schedoscope.export.proxyHost").asInstanceOf[String])
+            else
+              Nil
+            ) ++
+          (
+            if (conf.contains("schedoscope.export.proxyPort"))
+              Seq("-Y", conf("schedoscope.export.proxyPort").asInstanceOf[String])
+            else
+              Nil
+            ) ++
+          Seq("-l", conf("schedoscope.export.dataLocation").asInstanceOf[String]) ++
+          Seq("-b", conf("schedoscope.export.storageBucket").asInstanceOf[String]) ++
+          Seq("-f", conf("schedoscope.export.storageBucketFolderPrefix").asInstanceOf[String]) ++
+          Seq("-r", conf("schedoscope.export.storageBucketRegion").asInstanceOf[String]) ++
+          (
+            if (bigQueryPartitionDate.isDefined)
+              Seq("-D", bigQueryPartitionDate.get)
+            else
+              Nil
+            ) ++
+          (
+            if (!bigQueryPartitionSuffixes.isEmpty)
+              Seq("-x", bigQueryPartitionSuffixes)
+            else
+              Nil
+            )
+
+        new BigQueryExportJob().createJob((baseJobParameters ++ bigQueryJobParameters).toArray[String])
+      },
+      bigQueryPostCommit
     )
 
     t.directoriesToDelete = List()
 
     t.configureWith(
       Map(
+        "schedoscope.export.storageBucket" -> storageBucket,
+        "schedoscope.export.storageBucketFolderPrefix" -> storageBucketFolderPrefix,
+        "schedoscope.export.storageBucketRegion" -> storageBucketRegion,
+        "schedoscope.export.dataLocation" -> dataLocation,
+        "schedoscope.export.numReducers" -> numReducers,
+        "schedoscope.export.isKerberized" -> isKerberized,
+        "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
+        "schedoscope.export.metastoreUri" -> metastoreUri,
+        "schedoscope.export.exportSalt" -> exportSalt
+      ) ++ (if (projectId != null) Seq("schedoscope.export.projectId" -> projectId) else Nil)
+        ++ (if (gcpKey != null) Seq("schedoscope.export.gcpKey" -> gcpKey) else Nil)
+        ++ (if (gcpKeyFile != null) Seq("schedoscope.export.gcpKeyFile" -> gcpKeyFile) else Nil)
+        ++ (if (proxyHost != null) Seq("schedoscope.export.proxyHost" -> proxyHost) else Nil)
+        ++ (if (proxyPort != null) Seq("schedoscope.export.proxyPort" -> proxyPort) else Nil)
+    )
+  }
 
-      ))
+  /**
+    * This function runs the post commit action for a BigQuery export and finalizes the database tables.
+    *
+    * @param job      The MR job object
+    * @param driver   The schedoscope driver
+    * @param runState The job's runstate
+    */
+  def bigQueryPostCommit(
+                          job: Job,
+                          driver: Driver[MapreduceBaseTransformation],
+                          runState: DriverRunState[MapreduceBaseTransformation]): DriverRunState[MapreduceBaseTransformation] = {
+
+    try {
+
+      BigQueryExportJob.finishJob(job, runState.isInstanceOf[DriverRunSucceeded[MapreduceBaseTransformation]])
+      runState
+
+    } catch {
+      case ex: RetryException => throw RetryableDriverException(ex.getMessage, ex)
+      case ex: UnrecoverableException => DriverRunFailed(driver, ex.getMessage, ex)
+    }
   }
 
   /**
@@ -253,23 +419,28 @@ object Export {
       (conf) => {
 
         val filter = v.partitionParameters
-          .map {
-            (p => s"${p.n} = '${p.v.get}'")
-          }
+          .map { p => s"${p.n} = '${p.v.get}'" }
           .mkString(" and ")
 
         val valueFieldName = if (value != null) value.n else null
 
-        val anonFields = v.fields.filter {
-          _.isPrivacySensitive
-        }.map {
-          _.n
-        }.toArray
-        val anonParameters = v.partitionParameters.filter {
-          _.isPrivacySensitive
-        }.map {
-          _.n
-        }.toArray
+        val anonFields = v.fields
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
+
+        val anonParameters = v.partitionParameters
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
 
         new RedisExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -320,11 +491,10 @@ object Export {
     * @param kafkaHosts        String list of Kafka hosts to communicate with
     * @param zookeeperHosts    String list of zookeeper hosts
     * @param replicationFactor The replication factor, defaults to 1
-    * @param numPartitions     The number of partitions in the topic. Defaults to 3
     * @param exportSalt        an optional salt when anonymizing fields
     * @param producerType      The type of producer to use, defaults to synchronous
     * @param cleanupPolicy     Default cleanup policy is delete
-    * @param compressionCodes  Default compression codec is gzip
+    * @param compressionCodec  Default compression codec is gzip
     * @param encoding          Defines, whether data is to be serialized as strings (one line JSONs) or Avro
     * @param numReducers       number of reducers to use (i.e., the parallelism)
     * @param isKerberized      Is the cluster kerberized?
@@ -354,21 +524,26 @@ object Export {
       (conf) => {
 
         val filter = v.partitionParameters
-          .map {
-            (p => s"${p.n} = '${p.v.get}'")
-          }
+          .map { p => s"${p.n} = '${p.v.get}'" }
           .mkString(" and ")
 
-        val anonFields = v.fields.filter {
-          _.isPrivacySensitive
-        }.map {
-          _.n
-        }.toArray
-        val anonParameters = v.partitionParameters.filter {
-          _.isPrivacySensitive
-        }.map {
-          _.n
-        }.toArray
+        val anonFields = v.fields
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
+
+        val anonParameters = v.partitionParameters
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
 
         new KafkaExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],
@@ -451,21 +626,26 @@ object Export {
       v,
       (conf) => {
         val filter = v.partitionParameters
-          .map {
-            (p => s"${p.n} = '${p.v.get}'")
-          }
+          .map { p => s"${p.n} = '${p.v.get}'" }
           .mkString(" and ")
 
-        val anonFields = v.fields.filter {
-          _.isPrivacySensitive
-        }.map {
-          _.n
-        }.toArray
-        val anonParameters = v.partitionParameters.filter {
-          _.isPrivacySensitive
-        }.map {
-          _.n
-        }.toArray
+        val anonFields = v.fields
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
+
+        val anonParameters = v.partitionParameters
+          .filter {
+            _.isPrivacySensitive
+          }
+          .map {
+            _.n
+          }
+          .toArray
 
         new FtpExportJob().configure(
           conf.get("schedoscope.export.isKerberized").get.asInstanceOf[Boolean],

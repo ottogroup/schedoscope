@@ -3,6 +3,7 @@
 Schedoscope Export is a collection of Map/Reduce jobs to move data from Hive (via HCatalog) into various output sinks. Currently the following sinks are supported:
 
  * JDBC
+ * Google BigQuery
  * Redis
  * Kafka
  * (S)FTP
@@ -56,6 +57,60 @@ After the classpath has been defined the JDBC export job can now be started:
 <pre>
 yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.jdbc.JdbcExportJob -d default -t my_table -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083' -c 10 -j 'jdbc:mysql://host/db' -k 1000 -u username -w mypassword
 </pre>
+
+### BigQuery
+
+This Map/Reduce job moves data into Google BigQuery via CloudStorage. It transforms the Hive table schema to a BigQuery
+table schema as best as it can. Problematic constructs like maps, arrays of arrays, etc. are mapped to JSON formatted
+string columns.
+
+#### Configuration options
+
+ * -s set to true if kerberos is enabled
+
+ * -m specify the metastore URIs
+
+ * -p the kerberos principal
+ 
+ * -d input database
+ 
+ * -t input table
+ 
+ * -i input filter, e.g. month='08' and year='2015'
+ 
+ * -c number of reducers, concurrency level
+ 
+ * -A a list of fields to anonymize separated by space, e.g. 'id visitor_id'
+ 
+ * -S an optional salt to for anonymizing fields
+ 
+ * -P the GCP project ID under which to create the resulting BigQuery dataset, e.g., project-4711. If not passed, the user's default GCP project will be used
+ 
+ * -k GCP key to use for authentication in JSON format. If not passed, the GCP default authentication protocol will be followed. 
+ 
+ * -K absolute path to the file with GCP key to use for authentication in JSON format. If not passed, the GCP default authentication protocol will be followed. 
+
+ * -D the BigQuery table partition date into which to insert the exported data, e.g., 20171001. If not passed, it is assumed that the resulting BigQuery table is not partitioned
+ 
+ * -x the postfix to append to the resulting BigQuery table name, e.g., EC0101. If not passed, no postfix will be appended
+ 
+ * -l the location where to store the resulting BigQuery table, e.g., US. If not passed, EU will be used
+ 
+ * -b GCP storage bucket to use for temporal storage, e.g., my-storage-bucket-for-export. This one is required
+ 
+ * -f GCP storage bucket folder prefix to prepend to temporal storage blobs, e.g., scratch
+ 
+ * -r GCP storage bucket region to use, e.g., europe-west1. Defaults to europe-west3
+ 
+ * -y proxy host to use for GCP access
+ 
+ * -Y proxy port to use for GCP access
+ 
+ #### Run the BigQuery export
+ 
+ <pre>
+ yarn jar schedoscope-export-*-SNAPSHOT-jar-with-dependencies.jar org.schedoscope.export.redis.BigQueryExportJob -d default -t my_table -b my-storage-bucket-for-export -s -p 'hive/_HOST@PRINCIPAL.COM' -m 'thrift://metastore:9083' -c 10
+ </pre>
 
 ### Redis
 
