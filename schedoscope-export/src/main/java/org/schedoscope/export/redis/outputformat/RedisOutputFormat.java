@@ -61,11 +61,11 @@ public class RedisOutputFormat<K, V extends RedisWritable> extends
     @Override
     public void checkOutputSpecs(JobContext context) throws IOException {
 
-		/*
+        /*
          * Jedis jedis =
-		 * RedisMRJedisFactory.getJedisClient(context.getConfiguration());
-		 * LOG.info("set up redis: " + jedis.ping()); jedis.close();
-		 */
+         * RedisMRJedisFactory.getJedisClient(context.getConfiguration());
+         * LOG.info("set up redis: " + jedis.ping()); jedis.close();
+         */
     }
 
     @Override

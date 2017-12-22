@@ -1,5 +1,5 @@
 /**
- * Copyright 2016 Otto (GmbH & Co KG)
+ * Copyright 2015 Otto (GmbH & Co KG)
  * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.schedoscope.export.utils;
 
 import com.fasterxml.jackson.core.JsonParser;

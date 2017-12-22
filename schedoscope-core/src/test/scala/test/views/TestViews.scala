@@ -339,6 +339,28 @@ case class ClickOfEC0101WithJdbcExport(year: Parameter[String],
 
 }
 
+case class ClickOfEC0101WithBigQueryExport(year: Parameter[String],
+                                           month: Parameter[String],
+                                           day: Parameter[String]) extends View
+  with Id
+  with DailyParameterization {
+
+  val url = fieldOf[String]
+
+  val click = dependsOn(() => Click(p("EC0101"), year, month, day))
+
+  transformVia(
+    () => HiveTransformation(
+      insertInto(this,
+        s"""
+            SELECT ${click().id.n}, ${click().url.n}
+            FROM ${click().tableName}
+            WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
+
+  exportTo(() => BigQuery(this, storageBucket = "schedoscope_export_big_query_full_test"))
+
+}
+
 case class ClickOfEC0101WithRedisExport(year: Parameter[String],
                                         month: Parameter[String],
                                         day: Parameter[String]) extends View

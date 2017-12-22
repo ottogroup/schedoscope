@@ -19,29 +19,59 @@ import java.sql.DriverManager
 import java.util.Properties
 
 import _root_.test.views._
-import com.google.common.collect.ImmutableList
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.curator.test.TestingServer
 import org.codehaus.jackson.map.ObjectMapper
 import org.codehaus.jackson.map.`type`.TypeFactory
 import org.rarefiedredis.redis.adapter.jedis.JedisAdapter
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{BeforeAndAfter, FlatSpec, Matchers}
 import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.Field.v
 import org.schedoscope.dsl.Parameter.p
 import org.schedoscope.export.testsupport.{EmbeddedFtpSftpServer, EmbeddedKafkaCluster, SimpleTestKafkaConsumer}
+import org.schedoscope.export.utils.BigQueryUtils.{bigQueryService, dropDataset, existsDataset}
+import org.schedoscope.export.utils.CloudStorageUtils.{createBucket, deleteBucket, storageService}
 import org.schedoscope.export.utils.RedisMRJedisFactory
 import org.schedoscope.test.{rows, test}
 
 import scala.collection.JavaConversions.iterableAsScalaIterable
+import scala.collection.JavaConverters._
 
-class ExportTest extends FlatSpec with Matchers {
+class ExportTest extends FlatSpec with Matchers with BeforeAndAfter {
+
+  private val CALL_BIG_QUERY = false
+  private val CLEAN_UP_BIG_QUERY = true
+
+  before {
+    if (CALL_BIG_QUERY) {
+      val bigQuery = bigQueryService
+      val storage = storageService
+
+      if (existsDataset(bigQuery, null, "default"))
+        dropDataset(bigQuery, null, "default")
+
+      createBucket(storage, "schedoscope_export_big_query_full_test", "europe-west3")
+    }
+  }
+
+  after {
+    if (CALL_BIG_QUERY && CLEAN_UP_BIG_QUERY) {
+      val bigQuery = bigQueryService
+      val storage = storageService
+
+      if (existsDataset(bigQuery, null, "default"))
+        dropDataset(bigQuery, null, "default")
+
+      deleteBucket(storage, "schedoscope_export_big_query_full_test")
+    }
+  }
 
   Class.forName("org.apache.derby.jdbc.EmbeddedDriver")
   val dbConnection = DriverManager.getConnection("jdbc:derby:memory:TestingDB;create=true")
 
   val jedisAdapter = new JedisAdapter()
   RedisMRJedisFactory.setJedisMock(jedisAdapter)
+
 
   val ec0101Clicks = new Click(p("EC0101"), p("2014"), p("01"), p("01")) with rows {
     set(
@@ -98,6 +128,29 @@ class ExportTest extends FlatSpec with Matchers {
     statement.close()
   }
 
+  it should "execute hive transformations and perform BigQuery export" in {
+
+    if (CALL_BIG_QUERY)
+      new ClickOfEC0101WithBigQueryExport(p("2014"), p("01"), p("01")) with test {
+        basedOn(ec0101Clicks, ec0106Clicks)
+
+        `then`()
+
+        numRows shouldBe 3
+
+        row(
+          v(id) shouldBe "event01",
+          v(url) shouldBe "http://ec0101.com/url1")
+        row(
+          v(id) shouldBe "event02",
+          v(url) shouldBe "http://ec0101.com/url2")
+        row(
+          v(id) shouldBe "event03",
+          v(url) shouldBe "http://ec0101.com/url3")
+
+      }
+  }
+
   it should "execute hive transformations and perform Redis export" in {
 
     new ClickOfEC0101WithRedisExport(p("2014"), p("01"), p("01")) with test {
@@ -131,8 +184,8 @@ class ExportTest extends FlatSpec with Matchers {
     zkServer.start()
     Thread.sleep(500)
 
-    val kafkaServer = new EmbeddedKafkaCluster(zkServer.getConnectString, new Properties(), ImmutableList.of(9092))
-    kafkaServer.startup();
+    val kafkaServer = new EmbeddedKafkaCluster(zkServer.getConnectString, new Properties(), List(new Integer(9092)).asJava)
+    kafkaServer.startup()
 
     val v = new ClickOfEC01WithKafkaExport(p("2014"), p("01"), p("01")) with test {
       basedOn(ec0101Clicks, ec0106Clicks)
