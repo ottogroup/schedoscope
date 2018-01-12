@@ -48,18 +48,17 @@ public class BigQueryExportJob extends BaseExportJob {
 
     private static final Log LOG = LogFactory.getLog(BigQueryExportJob.class);
 
-    @Option(name = "-P", usage = "the GCP project ID under which to create the resulting BigQuery dataset, e.g., project 4711. If not passed, the default GCP project will be used")
+    @Option(name = "-P", usage = "the GCP project ID under which to create the resulting BigQuery dataset, e.g., project-4711. If not passed, the default GCP project will be used")
     private String project;
 
     @Option(name = "-D", usage = "the BigQuery table partition date into which to insert the exported data, e.g., 20171001. If not passed, it is assumed that the resulting BigQuery table is not partitioned")
     private String partitionDate;
 
-    @Option(name = "-x", usage = "the postfix to append to the resulting BigQuery table name, e.g., EC0101. If not passed, no postfix will be appended")
+    @Option(name = "-x", usage = "the postfix to append with an underscore to the resulting BigQuery table name, e.g., mypartitionpostfix. If not passed, no postfix will be appended")
     private String tablePostfix;
 
     @Option(name = "-l", usage = "the location where to store the resulting BigQuery table, e.g., US. If not passed, EU will be used")
     private String tableStorageLocation;
-
 
     @Option(name = "-k", usage = "GCP key to use for authentication in JSON format. If not passed, the gcloud default user will be used")
     private String gcpKey;
@@ -172,7 +171,7 @@ public class BigQueryExportJob extends BaseExportJob {
                 + inputTable);
 
         job.setJarByClass(BigQueryExportJob.class);
-        job.setMapperClass(Mapper.class);
+        job.setMapperClass(BigQueryExportMapper.class);
         job.setReducerClass(Reducer.class);
 
         job.setMapOutputKeyClass(LongWritable.class);
