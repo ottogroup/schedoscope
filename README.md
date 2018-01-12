@@ -57,7 +57,8 @@ Check out Metascope! It's an add-on to Schedoscope for collaborative metadata ma
 Schedoscope is based on the following assumptions:
 * data are largely relational and meaningfully representable as Hive tables;
 * there is enough cluster time and capacity to actually allow for retroactive recomputation of data;
-* it is acceptable to compile table structures, dependencies, and transformation logic into what is effectively a project-specific scheduler.
+* it is acceptable to compile table structures, dependencies, and transformation logic into what is effectively a project-specific scheduler;
+* it is acceptable that your scheduler creates and possibly drops Hive tables and databases it manages.
 
 Should any of those assumptions not hold in your context, you should probably look for a different scheduler.
 
