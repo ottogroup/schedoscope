@@ -32,13 +32,13 @@ public abstract class BaseExportJob extends Configured implements Tool {
 
     public static final String EXPORT_ANON_SALT = "export.anon.salt";
 
-    @Option(name = "-s", usage = "set to true if kerberos is enabled")
+    @Option(name = "-s", usage = "set if Kerberos is enabled")
     protected boolean isSecured = false;
 
-    @Option(name = "-m", usage = "specify the metastore URIs", required = true)
+    @Option(name = "-m", usage = "specify the Metastore URI", required = true)
     protected String metaStoreUris = "";
 
-    @Option(name = "-p", usage = "the kerberos principal", depends = {"-s"})
+    @Option(name = "-p", usage = "the Kerberos principal for accessing the metastore, e.g., hive/_HOST@DOMAIN.COM", depends = {"-s"})
     protected String principal;
 
     @Option(name = "-d", usage = "input database", required = true)
