@@ -168,7 +168,7 @@ object Export {
     *                                  when exporting to BigQuery. If not set, the local gcloud key of the user running
     *                                  Schedoscope is used (or gcpKey).
     * @param storageBucket             GCP Cloud Storage bucket to use for temporary storage while exporting to BigQuery.
-    *                                  Defaults to "schedoscope_bigquery_export". Can be globally configured by
+    *                                  Defaults to "schedoscope-bigquery-export". Can be globally configured by
     *                                  setting schedoscope.export.bigQuery.storageBucket
     * @param storageBucketFolderPrefix Folder prefix to apply to blobs in the GCP Cloud Storage bucket while exporting
     *                                  to BigQuery. Defaults to "". Can be globally configured by
