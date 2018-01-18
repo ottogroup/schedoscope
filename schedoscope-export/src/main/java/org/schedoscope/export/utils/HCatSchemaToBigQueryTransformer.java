@@ -202,14 +202,14 @@ public class HCatSchemaToBigQueryTransformer {
      */
     static public <S, F, FT, ST> ST transformSchema(Constructor<S, F, FT, ST> c, HCatSchema schema, S s) {
 
-        return
-                c.constructSchema(
-                        schema
-                                .getFields()
-                                .stream()
-                                .map(field -> transformField(c, schema, field, s))
-                                .collect(Collectors.toList())
-                );
+        return s == null ?
+                null : c.constructSchema(
+                schema
+                        .getFields()
+                        .stream()
+                        .map(field -> transformField(c, schema, field, s))
+                        .collect(Collectors.toList())
+        );
 
     }
 
@@ -301,11 +301,15 @@ public class HCatSchemaToBigQueryTransformer {
 
                 HCatSchema structSchema = elementSchema.getStructSubSchema();
 
-                return c.constructStructArrayField(structSchema, field,
-                        c.accessStructArrayField(schema, field, s)
+                List<S> structArrayFieldValue = c.accessStructArrayField(schema, field, s);
+
+                return structArrayFieldValue == null ?
+                        null : c.constructStructArrayField(structSchema, field,
+                        structArrayFieldValue
                                 .stream()
                                 .map(saf -> transformSchema(c, structSchema, saf))
-                                .collect(Collectors.toList()));
+                                .collect(Collectors.toList())
+                );
 
             }
 
