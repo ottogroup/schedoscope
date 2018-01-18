@@ -67,7 +67,8 @@ public class HCatRecordToBigQueryMapConvertor {
         @Override
         public HCatRecord accessStructField(HCatSchema schema, HCatFieldSchema field, HCatRecord hCatRecord) {
             try {
-                return new DefaultHCatRecord((List<Object>) hCatRecord.getStruct(field.getName(), schema));
+                List<Object> structFields = (List<Object>) hCatRecord.getStruct(field.getName(), schema);
+                return structFields == null ? null : new DefaultHCatRecord(structFields);
             } catch (HCatException e) {
                 // not going to happen
                 return null;
@@ -96,18 +97,25 @@ public class HCatRecordToBigQueryMapConvertor {
 
         @Override
         public List<HCatRecord> accessStructArrayField(HCatSchema schema, HCatFieldSchema field, HCatRecord hCatRecord) {
-            return accessPrimitiveArrayField(schema, field, hCatRecord)
+            List<Object> fieldValue = accessPrimitiveArrayField(schema, field, hCatRecord);
+            return fieldValue == null ?
+                    null : fieldValue
                     .stream()
-                    .map(s -> new DefaultHCatRecord((List<Object>) s))
+                    .map(s -> s == null ? null : new DefaultHCatRecord((List<Object>) s))
                     .collect(Collectors.toList());
         }
 
         @Override
         public Map<String, Object> constructSchema(List<Pair<String, Object>> pairs) {
+
+            if (pairs == null)
+                return null;
+
             Map<String, Object> m = new HashMap<>();
 
             for (Pair<String, Object> p : pairs)
-                m.put(p.getKey(), p.getValue());
+                if (p != null && p.getValue() != null)
+                    m.put(p.getKey(), p.getValue());
 
             return m;
         }
@@ -120,7 +128,7 @@ public class HCatRecordToBigQueryMapConvertor {
         @Override
         public Pair<String, Object> constructMapField(HCatFieldSchema field, Object o) {
             try {
-                return new ImmutablePair<>(field.getName(), jsonConvertor.writeValueAsString(o));
+                return new ImmutablePair<>(field.getName(), o == null ? null : jsonConvertor.writeValueAsString(o));
             } catch (JsonProcessingException e) {
                 // should not happen
                 return null;
@@ -140,7 +148,8 @@ public class HCatRecordToBigQueryMapConvertor {
         @Override
         public Pair<String, Object> constructMapArrayField(HCatFieldSchema field, List<Object> objects) {
             return new ImmutablePair<>(field.getName(),
-                    objects.stream()
+                    objects == null ?
+                            null : objects.stream()
                             .map(m -> {
                                 try {
                                     return jsonConvertor.writeValueAsString(m);
@@ -156,7 +165,8 @@ public class HCatRecordToBigQueryMapConvertor {
         @Override
         public Pair<String, Object> constructArrayArrayField(HCatFieldSchema field, List<Object> objects) {
             return new ImmutablePair<>(field.getName(),
-                    objects.stream()
+                    objects == null ?
+                            null : objects.stream()
                             .map(a -> {
                                 try {
                                     return jsonConvertor.writeValueAsString(a);
@@ -171,7 +181,7 @@ public class HCatRecordToBigQueryMapConvertor {
 
         @Override
         public Pair<String, Object> constructStructArrayField(HCatSchema schema, HCatFieldSchema field, List<Map<String, Object>> maps) {
-            return new ImmutablePair<>(field.getName(), maps);
+            return maps == null ? null : new ImmutablePair<>(field.getName(), maps);
         }
     };
 
