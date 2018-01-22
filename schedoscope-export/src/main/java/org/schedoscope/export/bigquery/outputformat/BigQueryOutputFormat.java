@@ -69,7 +69,7 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
 
         TableDefinition outputSchema = convertSchemaToTableDefinition(getBigQueryHCatSchema(conf), partitioning);
 
-        BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
+        BigQuery bigQueryService = bigQueryService(getBigQueryProject(conf), getBigQueryGcpKey(conf));
 
         retry(3, () -> {
             dropTable(bigQueryService, getBigQueryTableId(conf, true));
@@ -94,8 +94,8 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
 
         setProxies(conf);
 
-        BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
-        Storage storageService = storageService(getBigQueryGcpKey(conf));
+        BigQuery bigQueryService = bigQueryService(getBigQueryProject(conf), getBigQueryGcpKey(conf));
+        Storage storageService = storageService(getBigQueryProject(conf), getBigQueryGcpKey(conf));
 
         List<String> blobsToLoad = listBlobs(storageService, getBigQueryExportStorageBucket(conf), getBigQueryExportStorageFolder(conf));
         TableId tableId = getBigQueryTableId(conf, true);
@@ -135,7 +135,7 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
     }
 
     private static void rollbackBigQuery(Configuration conf) throws IOException {
-        BigQuery bigQueryService = bigQueryService(getBigQueryGcpKey(conf));
+        BigQuery bigQueryService = bigQueryService(getBigQueryProject(conf), getBigQueryGcpKey(conf));
         TableId tableId = getBigQueryTableId(conf, true);
 
         retry(3, () -> {
@@ -144,7 +144,7 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
     }
 
     private static void rollbackStorage(Configuration conf) throws IOException {
-        Storage storageService = storageService(getBigQueryGcpKey(conf));
+        Storage storageService = storageService(getBigQueryProject(conf), getBigQueryGcpKey(conf));
         String bucket = getBigQueryExportStorageBucket(conf);
         String blobPrefix = getBigQueryExportStorageFolder(conf);
 
@@ -160,7 +160,7 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
 
         setProxies(conf);
 
-        Storage storageService = storageService(getBigQueryGcpKey(conf));
+        Storage storageService = storageService(getBigQueryProject(conf), getBigQueryGcpKey(conf));
 
         return new BiqQueryHCatRecordWriter<>(
                 storageService,

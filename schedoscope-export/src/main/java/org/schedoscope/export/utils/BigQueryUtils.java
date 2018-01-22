@@ -43,26 +43,40 @@ public class BigQueryUtils {
      * @return the service instance.
      */
     static public BigQuery bigQueryService() {
-        return BigQueryOptions.getDefaultInstance().getService();
+        try {
+            return bigQueryService(null, null);
+        } catch (IOException e) {
+            // not going to happen
+            return null;
+        }
     }
 
     /**
-     * Retrieve an instance of the BigQuery web service, authenticated using the given GCP key.
+     * Retrieve an instance of the BigQuery web service, authenticated using the given GCP key and a given project ID.
      *
-     * @param gcpKey the JSON formatted GCP key.
+     * @param projectId the GCP project id to use.
+     * @param gcpKey    the JSON formatted GCP key.
      * @return the service instance.
      * @throws IOException
      */
-    static public BigQuery bigQueryService(String gcpKey) throws IOException {
-        if (gcpKey == null)
-            return bigQueryService();
+    static public BigQuery bigQueryService(String projectId, String gcpKey) throws IOException {
+        BigQueryOptions.Builder builder = BigQueryOptions.newBuilder();
 
-        GoogleCredentials credentials = GoogleCredentials
-                .fromStream(
-                        new ByteArrayInputStream(Charset.forName("UTF-8").encode(gcpKey).array())
-                );
+        if (projectId != null) {
+            builder.setProjectId(projectId);
+        }
 
-        return BigQueryOptions.newBuilder().setCredentials(credentials).build().getService();
+        if (gcpKey != null) {
+            GoogleCredentials credentials = GoogleCredentials
+                    .fromStream(
+                            new ByteArrayInputStream(Charset.forName("UTF-8").encode(gcpKey).array())
+                    );
+
+            builder.setCredentials(credentials);
+        }
+
+
+        return builder.build().getService();
     }
 
     /**

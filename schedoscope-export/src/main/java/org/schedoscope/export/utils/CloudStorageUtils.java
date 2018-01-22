@@ -34,7 +34,12 @@ public class CloudStorageUtils {
      * @return the instance
      */
     static public Storage storageService() {
-        return StorageOptions.getDefaultInstance().getService();
+        try {
+            return storageService(null, null);
+        } catch (IOException e) {
+            // not going to happen
+            return null;
+        }
     }
 
     /**
@@ -44,23 +49,34 @@ public class CloudStorageUtils {
      */
 
     /**
-     * Return an instance of the Google Cloud Storage web service authenticated using the given key.
+     * Return an instance of the Google Cloud Storage web service authenticated using the given key and project ID.
      *
-     * @param gcpKey the JSON formatted GCP key.
+     * @param projectId the GCP project id to use.
+     * @param gcpKey    the JSON formatted GCP key.
      * @return the instance
      * @throws IOException if a problem occurs parsing the key.
      */
-    static public Storage storageService(String gcpKey) throws IOException {
-        if (gcpKey == null)
-            return storageService();
+    static public Storage storageService(String projectId, String gcpKey) throws IOException {
 
-        GoogleCredentials credentials = GoogleCredentials
-                .fromStream(
-                        new ByteArrayInputStream(Charset.forName("UTF-8").encode(gcpKey).array())
-                );
+        StorageOptions.Builder builder = StorageOptions.newBuilder();
 
-        return StorageOptions.newBuilder().setCredentials(credentials).build().getService();
+        if (projectId != null) {
+            builder.setProjectId(projectId);
+        }
+
+        if (gcpKey != null) {
+            GoogleCredentials credentials = GoogleCredentials
+                    .fromStream(
+                            new ByteArrayInputStream(Charset.forName("UTF-8").encode(gcpKey).array())
+                    );
+
+            builder.setCredentials(credentials);
+        }
+
+
+        return builder.build().getService();
     }
+
 
     /**
      * Check whether a bucket exists.
