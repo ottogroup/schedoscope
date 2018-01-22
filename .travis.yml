@@ -6,4 +6,4 @@ jdk:
   - oraclejdk8
 install: 
   - echo "MAVEN_OPTS='-Xmx1G'" > ~/.mavenrc
-  - travis_wait 30 mvn -B install -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -DskipTests -Dmaven.javadoc.skip=true
+  - travis_wait 45 mvn -B install -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn -DskipTests -Dmaven.javadoc.skip=true
