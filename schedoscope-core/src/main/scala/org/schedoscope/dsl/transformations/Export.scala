@@ -251,13 +251,12 @@ object Export {
           .map {
             _.v.get
           }
-          .mkString("_")
-
+          .mkString("_").toLowerCase
 
         val baseJobParameters: Seq[String] = Seq() ++
           (
             if (conf("schedoscope.export.isKerberized").asInstanceOf[Boolean])
-              Seq("-s", "true", "-p", conf("schedoscope.export.kerberosPrincipal").asInstanceOf[String])
+              Seq("-s", "-p", conf("schedoscope.export.kerberosPrincipal").asInstanceOf[String])
             else
               Nil
             ) ++
