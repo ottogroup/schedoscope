@@ -20,10 +20,10 @@ import com.google.cloud.bigquery.TableDefinition;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.storage.Storage;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputCommitter;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hive.hcatalog.data.HCatRecord;
 import org.schedoscope.export.bigquery.outputschema.PartitioningScheme;
 
 import java.io.IOException;
@@ -38,12 +38,11 @@ import static org.schedoscope.export.utils.BigQueryUtils.*;
 import static org.schedoscope.export.utils.CloudStorageUtils.*;
 
 /**
- * Hadoop output format to write HCat records to GCP Cloud Storage and then forward them to BigQuery.
+ * Hadoop output format to write JSON formatted records to GCP Cloud Storage and then forward them to BigQuery.
  *
  * @param <K> we do not care about this type parameter.
- * @param <V> a subtype of HCatRecord.
  */
-public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<K, V> {
+public class BigQueryOutputFormat<K> extends OutputFormat<K, Text> {
 
 
     private static void setProxies(Configuration conf) {
@@ -155,20 +154,18 @@ public class BigQueryOutputFormat<K, V extends HCatRecord> extends OutputFormat<
 
 
     @Override
-    public RecordWriter<K, V> getRecordWriter(TaskAttemptContext context) throws IOException {
+    public RecordWriter<K, Text> getRecordWriter(TaskAttemptContext context) throws IOException {
         Configuration conf = context.getConfiguration();
 
         setProxies(conf);
 
         Storage storageService = storageService(getBigQueryProject(conf), getBigQueryGcpKey(conf));
 
-        return new BiqQueryHCatRecordWriter<>(
+        return new BiqQueryJsonRecordWriter<>(
                 storageService,
                 getBigQueryExportStorageBucket(conf),
                 getBigQueryExportStorageFolder(conf) + "/" + context.getTaskAttemptID().toString(),
-                getBigqueryExportStorageRegion(conf),
-                getBigQueryHCatSchema(conf),
-                getBigQueryUsedHcatFilter(conf));
+                getBigqueryExportStorageRegion(conf));
     }
 
     @Override

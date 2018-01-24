@@ -22,10 +22,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.util.ToolRunner;
-import org.apache.hive.hcatalog.data.DefaultHCatRecord;
 import org.apache.hive.hcatalog.data.schema.HCatSchema;
 import org.apache.hive.hcatalog.mapreduce.HCatInputFormat;
 import org.apache.thrift.TException;
@@ -174,9 +174,9 @@ public class BigQueryExportJob extends BaseExportJob {
         job.setReducerClass(Reducer.class);
 
         job.setMapOutputKeyClass(LongWritable.class);
-        job.setMapOutputValueClass(DefaultHCatRecord.class);
+        job.setMapOutputValueClass(Text.class);
         job.setOutputKeyClass(LongWritable.class);
-        job.setOutputValueClass(DefaultHCatRecord.class);
+        job.setOutputValueClass(Text.class);
 
         if (inputFilter == null || inputFilter.trim().equals("")) {
             HCatInputFormat.setInput(job, inputDatabase, inputTable);

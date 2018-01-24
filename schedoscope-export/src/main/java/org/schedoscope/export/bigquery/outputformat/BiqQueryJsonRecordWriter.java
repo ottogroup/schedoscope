@@ -15,54 +15,39 @@
  */
 package org.schedoscope.export.bigquery.outputformat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.storage.Storage;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hive.hcatalog.data.HCatRecord;
-import org.apache.hive.hcatalog.data.schema.HCatSchema;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
-import java.util.Map;
 
-import static org.schedoscope.export.bigquery.outputschema.HCatRecordToBigQueryMapConvertor.convertHCatRecordToBigQueryMap;
-import static org.schedoscope.export.bigquery.outputschema.HCatSchemaToBigQuerySchemaConverter.USED_FILTER_FIELD_NAME;
 import static org.schedoscope.export.utils.CloudStorageUtils.createBlobIfNotExists;
 
 /**
- * A writer for the BigQuery output format that transforms HCatRecords to JSON, and stores them to a cloud storage bucket.
+ * A writer for the BigQuery output format that stores JSON-formatted records for BigQuery to a cloud storage bucket.
  *
- * @param <K> ingored
- * @param <V> a subtype of HCatRecord
+ * @param <K> ignored
  */
-public class BiqQueryHCatRecordWriter<K, V extends HCatRecord> extends RecordWriter<K, V> {
+public class BiqQueryJsonRecordWriter<K> extends RecordWriter<K, Text> {
 
-    private HCatSchema hcatSchema;
     private Storage storageService;
-
-    private String usedHCatFilter;
     private String bucket;
     private String blobName;
     private String region;
 
     private WritableByteChannel channel;
 
-    private ObjectMapper jsonFactory = new ObjectMapper();
 
     @Override
-    public void write(K key, V value) throws IOException {
+    public void write(K key, Text value) throws IOException {
         if (channel == null) {
             channel = createBlobIfNotExists(storageService, bucket, blobName, region).writer();
         }
 
-        Map<String, Object> recordMap = convertHCatRecordToBigQueryMap(hcatSchema, value);
-        recordMap.put(USED_FILTER_FIELD_NAME, this.usedHCatFilter);
-
-        String output = jsonFactory.writeValueAsString(recordMap) + "\n";
-
-        channel.write(ByteBuffer.wrap(output.getBytes("UTF-8")));
+        channel.write(ByteBuffer.wrap(value.toString().getBytes("UTF-8")));
     }
 
     @Override
@@ -78,16 +63,12 @@ public class BiqQueryHCatRecordWriter<K, V extends HCatRecord> extends RecordWri
      * @param bucket         the bucket to write data to. The bucket gets created if it does not exist
      * @param blobName       the name of the blob to write data to
      * @param region         the storage region where the bucket is created if created.
-     * @param hcatSchema     the HCat schema to which the records conform.
-     * @param usedHCatFilter the HCat filter expression that was used to read the HCat records passing through the writer.
      */
-    public BiqQueryHCatRecordWriter(Storage storageService, String bucket, String blobName, String region, HCatSchema hcatSchema, String usedHCatFilter) {
+    public BiqQueryJsonRecordWriter(Storage storageService, String bucket, String blobName, String region) {
         this.storageService = storageService;
         this.bucket = bucket;
         this.blobName = blobName;
         this.region = region;
-        this.hcatSchema = hcatSchema;
-        this.usedHCatFilter = usedHCatFilter;
     }
 
 }

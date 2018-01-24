@@ -59,7 +59,7 @@ public class BigQueryExportTest extends HiveUnitBaseTest {
     }
 
     @Test
-    public void runBigQueryExportJob() throws CmdLineException, IOException, InterruptedException, TException, TimeoutException, ClassNotFoundException {
+    public void runBigQueryExportJob() throws CmdLineException, IOException, InterruptedException, TException, ClassNotFoundException {
 
         if (!CALL_BIG_QUERY)
             return;
