@@ -80,6 +80,8 @@ string columns.
  
  * -c number of reducers, concurrency level
  
+ * -F number of records to batch before flushing data to GCP Cloud Storage.
+ 
  * -A a list of fields to anonymize separated by space, e.g. 'id visitor_id'
  
  * -S an optional salt to for anonymizing fields

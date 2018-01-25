@@ -357,7 +357,7 @@ case class ClickOfEC0101WithBigQueryExport(year: Parameter[String],
             FROM ${click().tableName}
             WHERE ${click().shopCode.n} = '${click().shopCode.v.get}'""")))
 
-  exportTo(() => BigQuery(this, storageBucket = "schedoscope_export_big_query_full_test"))
+  exportTo(() => BigQuery(this, storageBucket = "schedoscope_export_big_query_full_test", flushInterval = 1))
 
 }
 

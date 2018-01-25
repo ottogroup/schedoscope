@@ -80,6 +80,8 @@ public class BigQueryExportJob extends BaseExportJob {
     @Option(name = "-Y", usage = "Proxy port to use for GCP access")
     private String proxyPort;
 
+    @Option(name = "-F", usage = "Number of records to read before the export job flushes them to Google cloud storage.")
+    private long flushInterval = 10000;
 
     private Configuration initialConfiguration;
 
@@ -158,7 +160,8 @@ public class BigQueryExportJob extends BaseExportJob {
                 exportStorageRegion,
                 numReducer,
                 proxyHost,
-                proxyPort
+                proxyPort,
+                flushInterval
         );
 
         return conf;

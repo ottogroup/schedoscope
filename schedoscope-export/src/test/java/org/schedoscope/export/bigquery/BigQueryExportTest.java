@@ -71,7 +71,8 @@ public class BigQueryExportTest extends HiveUnitBaseTest {
                 "-d", "default",
                 "-t", "test_map",
                 "-b", "schedoscope_export_big_query_full_test",
-                "-D", "20150801"
+                "-D", "20150801",
+                "-F", "5"
         });
 
 

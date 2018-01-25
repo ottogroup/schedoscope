@@ -43,6 +43,7 @@ public class BigQueryOutputConfiguration {
     public static final String BIGQUERY_EXPORT_STORAGE_REGION = "bigquery.exportStorageRegion";
     public static final String BIGQUERY_PROXY_HOST = "bigquery.proxyHost";
     public static final String BIGQUERY_PROXY_PORT = "bigquery.proxyPort";
+    public static final String BIGQUERY_FLUSH_INTERVAL = "bigquery.flushInterval";
 
     private static String serializeHCatSchema(HCatSchema schema) throws IOException {
 
@@ -127,7 +128,7 @@ public class BigQueryOutputConfiguration {
      * @param conf the Hadoop configuration object
      * @return the table name postfix
      */
-    public static String getBigqueryTablePostfix(Configuration conf) {
+    public static String getBigQueryTablePostfix(Configuration conf) {
         return conf.get(BIGQUERY_TABLE_POSTFIX);
     }
 
@@ -153,16 +154,17 @@ public class BigQueryOutputConfiguration {
         return conf.get(BIGQUERY_TABLE_PARTITION_DATE);
     }
 
+
     /**
-     * Return the number of parallel workers (mappers) exporting the Hive table data to BigQuery from the Hadoop
-     * configuration.
+     * Returns the number of records after which exported records should be flushed to cloud storage.
      *
      * @param conf the Hadoop configuration object
-     * @return the number of workers.
+     * @return the flush interval
      */
-    public static int getBigQueryNoOfWorkers(Configuration conf) {
-        return Integer.parseInt(conf.get(BIGQUERY_NO_OF_WORKERS));
+    public static long getBigQueryFlushInterval(Configuration conf) {
+        return Long.parseLong(conf.get(BIGQUERY_FLUSH_INTERVAL));
     }
+
 
     /**
      * Return the name of the Google Cloud Storage bucket used for temporal storage of exported Hive table data from the
@@ -182,7 +184,7 @@ public class BigQueryOutputConfiguration {
      * @param conf the Hadoop configuration object
      * @return the prefix.
      */
-    public static String getBigqueryExportStorageFolderPrefix(Configuration conf) {
+    public static String getBigQueryExportStorageFolderPrefix(Configuration conf) {
         return conf.get(BIGQUERY_EXPORT_STORAGE_FOLDER_PREFIX);
     }
 
@@ -193,7 +195,7 @@ public class BigQueryOutputConfiguration {
      * @param conf the Hadoop configuration object
      * @return the storage region
      */
-    public static String getBigqueryExportStorageRegion(Configuration conf) {
+    public static String getBigQueryExportStorageRegion(Configuration conf) {
         return conf.get(BIGQUERY_EXPORT_STORAGE_REGION);
     }
 
@@ -204,7 +206,7 @@ public class BigQueryOutputConfiguration {
      * @return the folder
      */
     public static String getBigQueryExportStorageFolder(Configuration conf) {
-        return (getBigqueryExportStorageFolderPrefix(conf) != null && !getBigqueryExportStorageFolderPrefix(conf).isEmpty()) ? getBigqueryExportStorageFolderPrefix(conf) + "/" + getBigQueryFullTableName(conf, true) : getBigQueryFullTableName(conf, true);
+        return (getBigQueryExportStorageFolderPrefix(conf) != null && !getBigQueryExportStorageFolderPrefix(conf).isEmpty()) ? getBigQueryExportStorageFolderPrefix(conf) + "/" + getBigQueryFullTableName(conf, true) : getBigQueryFullTableName(conf, true);
     }
 
     /**
@@ -231,7 +233,7 @@ public class BigQueryOutputConfiguration {
      */
     public static TableId getBigQueryTableId(Configuration conf, boolean includingPartition) {
         String bigQueryTableName = getBigQueryTable(conf) +
-                (getBigqueryTablePostfix(conf) != null ? "_" + getBigqueryTablePostfix(conf) : "") +
+                (getBigQueryTablePostfix(conf) != null ? "_" + getBigQueryTablePostfix(conf) : "") +
                 (includingPartition && getBigQueryTablePartitionDate(conf) != null ? "$" + getBigQueryTablePartitionDate(conf) : "");
 
         return getBigQueryProject(conf) == null ? TableId.of(getBigQueryDatabase(conf), bigQueryTableName) : TableId.of(getBigQueryProject(conf), getBigQueryDatabase(conf), bigQueryTableName);
@@ -259,16 +261,6 @@ public class BigQueryOutputConfiguration {
 
         return (tableId.getProject() != null ? tableId.getProject() + "." : "")
                 + tableId.getDataset() + "." + tableId.getTable();
-    }
-
-    /**
-     * Return the fully qualified BigQuery table name serving as the Hive table export target without partition designation.
-     *
-     * @param conf the Hadoop configuration
-     * @return the table name
-     */
-    public static String getBigQueryFullTableName(Configuration conf) {
-        return getBigQueryFullTableName(conf, false);
     }
 
     /**
@@ -320,10 +312,11 @@ public class BigQueryOutputConfiguration {
      * @param noOfPartitions            the parallelism with which to perform the export. Defaults to 1 in case you pass null.
      * @param proxyHost                 the host running the HTTPS proxy to route traffic through. Set to null if no proxy is to be used.
      * @param proxyPort                 the port of the HTTPS proxy to route traffic through. Set to null if no proxy is to be used.
-     * @return
+     * @param flushInterval             the flush interval. If null, use 10000
+     * @return the Hadoop configuration
      * @throws IOException
      */
-    public static Configuration configureBigQueryOutputFormat(Configuration currentConf, String project, String gcpKey, String database, String table, String tablePostfix, String dataLocation, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, String exportStorageBucket, String exportStorageFolderPrefix, String exportStorageRegion, Integer noOfPartitions, String proxyHost, String proxyPort) throws IOException {
+    public static Configuration configureBigQueryOutputFormat(Configuration currentConf, String project, String gcpKey, String database, String table, String tablePostfix, String dataLocation, String tablePartitionDate, String usedHCatFilter, HCatSchema hcatSchema, String exportStorageBucket, String exportStorageFolderPrefix, String exportStorageRegion, Integer noOfPartitions, String proxyHost, String proxyPort, Long flushInterval) throws IOException {
 
         if (project != null)
             currentConf.set(BIGQUERY_PROJECT, project);
@@ -368,6 +361,11 @@ public class BigQueryOutputConfiguration {
             currentConf.set(BIGQUERY_PROXY_HOST, proxyHost);
             currentConf.set(BIGQUERY_PROXY_PORT, proxyPort);
         }
+
+        if (flushInterval != null)
+            currentConf.set(BIGQUERY_FLUSH_INTERVAL, flushInterval.toString());
+        else
+            currentConf.set(BIGQUERY_FLUSH_INTERVAL, "10000");
 
         return currentConf;
 
