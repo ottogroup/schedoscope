@@ -78,6 +78,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 01/24/2018 - Release 0.9.7
+
+We have released Version 0.9.7 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+Optimized performance of BigQuery export by moving more work to the map phase of the export job. 
+
 ###### 01/23/2018 - Release 0.9.6
 
 We have released Version 0.9.6 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
