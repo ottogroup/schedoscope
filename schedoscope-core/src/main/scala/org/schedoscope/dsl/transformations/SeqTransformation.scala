@@ -39,5 +39,11 @@ case class SeqTransformation[T1 <: Transformation, T2 <: Transformation](firstTh
     else
       firstThisTransformation.stringsToChecksum ++ thenThatTransformation.stringsToChecksum
 
+  override def checksum: String =
+    if (firstTransformationIsDriving)
+      firstThisTransformation.checksum
+    else
+      super.checksum
+
   description = s"${firstThisTransformation.description} => ${thenThatTransformation.description}"
 }

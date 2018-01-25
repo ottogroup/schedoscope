@@ -2,6 +2,7 @@ package org.schedoscope.dsl.transformations
 
 import org.scalatest.{FlatSpec, Matchers}
 import org.schedoscope.dsl.View
+import org.schedoscope.dsl.transformations.Export.BigQuery
 import org.schedoscope.dsl.transformations.HiveTransformation._
 
 case class HiveView() extends View {
@@ -14,6 +15,8 @@ case class HiveView() extends View {
         insertInto(this, "select * from view"))
         .defineVersion("v2.2")
   }
+
+  exportTo(() => BigQuery(this))
 
 }
 
