@@ -177,9 +177,10 @@ public class BigQueryUtils {
      * @param bigQueryService the BigQuery web service instance to use
      * @param tableId         the ID of the table to create.
      * @param tableDefinition the schema of the table to create.
+     * @param dataLocation    the location where to create the table
      */
-    static public void createTable(BigQuery bigQueryService, TableId tableId, TableDefinition tableDefinition) {
-        createDataset(bigQueryService, tableId.getProject(), tableId.getDataset(), null);
+    static public void createTable(BigQuery bigQueryService, TableId tableId, TableDefinition tableDefinition, String dataLocation) {
+        createDataset(bigQueryService, tableId.getProject(), tableId.getDataset(), dataLocation);
 
         if (!existsTable(bigQueryService, tableId))
             bigQueryService.create(TableInfo.of(tableId, tableDefinition));
@@ -194,9 +195,10 @@ public class BigQueryUtils {
      * @param dataset         the name of the dataset to create the table in.
      * @param table           the name of the table to create.
      * @param tableDefinition the schema of the table to create.
+     * @param dataLocation    the location where to create the table
      */
-    static public void createTable(BigQuery bigQueryService, String project, String dataset, String table, TableDefinition tableDefinition) {
-        createTable(bigQueryService, project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table), tableDefinition);
+    static public void createTable(BigQuery bigQueryService, String project, String dataset, String table, TableDefinition tableDefinition, String dataLocation) {
+        createTable(bigQueryService, project == null ? TableId.of(dataset, table) : TableId.of(project, dataset, table), tableDefinition, dataLocation);
     }
 
 
@@ -205,9 +207,10 @@ public class BigQueryUtils {
      *
      * @param bigQueryService the BigQuery web service instance to use
      * @param tableInfo       the complete table info of the table to create.
+     * @param dataLocation    the location where to create the table
      */
-    static public void createTable(BigQuery bigQueryService, TableInfo tableInfo) {
-        createTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable(), tableInfo.getDefinition());
+    static public void createTable(BigQuery bigQueryService, TableInfo tableInfo, String dataLocation) {
+        createTable(bigQueryService, tableInfo.getTableId().getProject(), tableInfo.getTableId().getDataset(), tableInfo.getTableId().getTable(), tableInfo.getDefinition(), dataLocation);
     }
 
 

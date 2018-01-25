@@ -179,7 +179,9 @@ object Export {
     * @param dataLocation              GCP data storage location of exported data within BigQuery. Defaults to EU.
     *                                  Can be globally configured by setting schedoscope.export.bigQuery.dataLocation
     * @param numReducers               Number of reducers to use for BigQuery export. Defines the parallelism. Defaults to 10.
-    *                                  an be globally configured by setting schedoscope.export.bigQuery.numReducers
+    *                                  Can be globally configured by setting schedoscope.export.bigQuery.numReducers
+    * @param flushInterval             Number of records to batch before flushing data to GCP Cloud Storage. Defaults to 10000.
+    *                                  Can be globally configured by setting schedoscope.export.bigQuery.flushInterval
     * @param proxyHost                 Host of proxy to use for GCP API access. Set to empty, i.e., no proxy to use.
     * @param proxyPort                 Port of proxy to use for GCP API access. Set to empty, i.e., no proxy to use.
     * @param isKerberized              Is the cluster kerberized?
@@ -198,6 +200,7 @@ object Export {
                 storageBucketRegion: String = Schedoscope.settings.bigQueryExportStorageBucketRegion,
                 dataLocation: String = Schedoscope.settings.bigQueryExportDataLocation,
                 numReducers: Int = Schedoscope.settings.bigQueryExportNumReducers,
+                flushInterval: Long = Schedoscope.settings.bigQueryExportFlushInterval,
                 proxyHost: String = if (Schedoscope.settings.bigQueryExportProxyHost.isEmpty) null else Schedoscope.settings.bigQueryExportProxyHost,
                 proxyPort: String = if (Schedoscope.settings.bigQueryExportProxyPort.isEmpty) null else Schedoscope.settings.bigQueryExportProxyPort,
                 isKerberized: Boolean = !Schedoscope.settings.kerberosPrincipal.isEmpty(),
@@ -270,6 +273,7 @@ object Export {
               Nil
             ) ++
           Seq("-c", conf("schedoscope.export.numReducers").asInstanceOf[Integer].toString) ++
+          Seq("-F", conf("schedoscope.export.flushInterval").asInstanceOf[Long].toString) ++
           (
             if (!(anonFields ++ anonParameters).isEmpty)
               Seq("-A", (anonFields ++ anonParameters).mkString(" "), "-S", conf("schedoscope.export.exportSalt").asInstanceOf[String])
@@ -342,7 +346,8 @@ object Export {
         "schedoscope.export.isKerberized" -> isKerberized,
         "schedoscope.export.kerberosPrincipal" -> kerberosPrincipal,
         "schedoscope.export.metastoreUri" -> metastoreUri,
-        "schedoscope.export.exportSalt" -> exportSalt
+        "schedoscope.export.exportSalt" -> exportSalt,
+        "schedoscope.export.flushInterval" -> flushInterval
       ) ++ (if (projectId != null) Seq("schedoscope.export.projectId" -> projectId) else Nil)
         ++ (if (gcpKey != null) Seq("schedoscope.export.gcpKey" -> gcpKey) else Nil)
         ++ (if (gcpKeyFile != null) Seq("schedoscope.export.gcpKeyFile" -> gcpKeyFile) else Nil)

@@ -20,9 +20,11 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
+import java.util.zip.GZIPOutputStream;
 
 import static org.schedoscope.export.utils.CloudStorageUtils.createBlobIfNotExists;
 
@@ -40,18 +42,56 @@ public class BiqQueryJsonRecordWriter<K> extends RecordWriter<K, Text> {
 
     private WritableByteChannel channel;
 
+    private ByteArrayOutputStream buffer;
+    private GZIPOutputStream compressor;
+
+    private long recordCounter = 0;
+    private long flushInterval;
+
 
     @Override
     public void write(K key, Text value) throws IOException {
-        if (channel == null) {
+
+        if (channel == null)
             channel = createBlobIfNotExists(storageService, bucket, blobName, region).writer();
+
+        if (buffer == null)
+            buffer = new ByteArrayOutputStream();
+
+        if (compressor == null)
+            compressor = new GZIPOutputStream(buffer, true);
+
+
+        compressor.write(value.toString().getBytes("UTF-8"));
+        recordCounter++;
+
+        if (recordCounter % flushInterval == 0) {
+            compressor.flush();
+            byte[] recordsCompressed = buffer.toByteArray();
+            channel.write(ByteBuffer.wrap(recordsCompressed));
+            buffer.reset();
         }
 
-        channel.write(ByteBuffer.wrap(value.toString().getBytes("UTF-8")));
     }
 
     @Override
     public void close(TaskAttemptContext context) throws IOException {
+
+        if (compressor != null) {
+            compressor.flush();
+            compressor.finish();
+
+            if (buffer != null) {
+                byte[] lastBytes = buffer.toByteArray();
+                channel.write(ByteBuffer.wrap(lastBytes));
+            }
+
+            compressor.close();
+        }
+
+        if (buffer != null)
+            buffer.close();
+
         if (channel != null)
             channel.close();
     }
@@ -63,12 +103,14 @@ public class BiqQueryJsonRecordWriter<K> extends RecordWriter<K, Text> {
      * @param bucket         the bucket to write data to. The bucket gets created if it does not exist
      * @param blobName       the name of the blob to write data to
      * @param region         the storage region where the bucket is created if created.
+     * @param flushInterval  the number of records buffered after which the results should be pushed to the storage bucket.
      */
-    public BiqQueryJsonRecordWriter(Storage storageService, String bucket, String blobName, String region) {
+    public BiqQueryJsonRecordWriter(Storage storageService, String bucket, String blobName, String region, long flushInterval) {
         this.storageService = storageService;
         this.bucket = bucket;
         this.blobName = blobName;
         this.region = region;
+        this.flushInterval = flushInterval;
     }
 
 }

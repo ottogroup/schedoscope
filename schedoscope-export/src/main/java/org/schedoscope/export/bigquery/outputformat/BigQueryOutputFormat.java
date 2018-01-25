@@ -75,7 +75,7 @@ public class BigQueryOutputFormat<K> extends OutputFormat<K, Text> {
         });
 
         retry(3, () -> {
-            createTable(bigQueryService, getBigQueryTableId(conf), outputSchema);
+            createTable(bigQueryService, getBigQueryTableId(conf), outputSchema, getBigQueryDatasetLocation(conf));
         });
 
     }
@@ -164,8 +164,10 @@ public class BigQueryOutputFormat<K> extends OutputFormat<K, Text> {
         return new BiqQueryJsonRecordWriter<>(
                 storageService,
                 getBigQueryExportStorageBucket(conf),
-                getBigQueryExportStorageFolder(conf) + "/" + context.getTaskAttemptID().toString(),
-                getBigqueryExportStorageRegion(conf));
+                getBigQueryExportStorageFolder(conf) + "/" + context.getTaskAttemptID().toString() + ".gz",
+                getBigQueryExportStorageRegion(conf),
+                getBigQueryFlushInterval(conf)
+        );
     }
 
     @Override

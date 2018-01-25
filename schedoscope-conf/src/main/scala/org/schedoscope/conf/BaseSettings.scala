@@ -262,6 +262,11 @@ class BaseSettings(val config: Config) {
   lazy val bigQueryExportNumReducers = config.getInt("schedoscope.export.bigQuery.numberOfReducers")
 
   /**
+    * Number of records to batch before flushing data to GCP Cloud Storage during BigQuery export.
+    */
+  lazy val bigQueryExportFlushInterval = config.getLong("schedoscope.export.bigQuery.flushInterval")
+
+  /**
     * GCP data storage location of exported data within BigQuery. Defaults to EU.
     */
   lazy val bigQueryExportDataLocation = config.getString("schedoscope.export.bigQuery.dataLocation")

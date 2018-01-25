@@ -41,7 +41,7 @@ public abstract class BigQueryBaseTest {
         if (CALL_BIG_QUERY)
             retry(3, () -> {
                 dropTable(bigQuery, tableInfo.getTableId());
-                BigQueryUtils.createTable(bigQuery, tableInfo);
+                BigQueryUtils.createTable(bigQuery, tableInfo, null);
             });
 
 
