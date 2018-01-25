@@ -78,6 +78,14 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 01/25/2018 - Release 0.9.8
+
+We have released Version 0.9.8 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+Export your views to Google Cloud Platform's BigQuery via a simple [`exportAs()`](https://github.com/ottogroup/schedoscope/wiki/Google-BigQuery-Export) statement.
+
+BigQuery export now compresses view data before sending it off to Google Cloud Storage.
+
 ###### 01/24/2018 - Release 0.9.7
 
 We have released Version 0.9.7 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
