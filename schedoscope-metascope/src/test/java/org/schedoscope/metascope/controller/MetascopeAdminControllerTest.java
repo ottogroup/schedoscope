@@ -46,7 +46,7 @@ public class MetascopeAdminControllerTest {
     headers.set("Referer", "/test");
     HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
 
-    ResponseEntity<String> response = this.restTemplate.exchange("/admin/sync", HttpMethod.POST, entity, String.class);
+    ResponseEntity<String> response = this.restTemplate.exchange("/admin/sync/schedoscope", HttpMethod.POST, entity, String.class);
     assertEquals(302, response.getStatusCodeValue());
     assertTrue(response.getHeaders().get("Location").get(0).endsWith("/test"));
   }
