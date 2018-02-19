@@ -33,8 +33,8 @@ public class MetascopeAdminController {
     @Autowired
     private TaskMutex taskMutex;
 
-    @RequestMapping("/admin/sync")
-    public String sync(HttpServletRequest request, RedirectAttributes redirAttr) {
+    @RequestMapping("/admin/sync/schedoscope")
+    public String syncSchedoscope(HttpServletRequest request, RedirectAttributes redirAttr) {
         String sync = "failed";
         if (!taskMutex.isSchedoscopeTaskRunning()) {
             metascopeAdminService.schedule();
@@ -42,6 +42,12 @@ public class MetascopeAdminController {
         }
         redirAttr.addFlashAttribute("schedoscopesync", sync);
         return "redirect:" + request.getHeader("Referer");
+    }
+
+    @RequestMapping("/admin/sync/index")
+    public String syncIndex(HttpServletRequest request, RedirectAttributes redirAttr) {
+        metascopeAdminService.syncIndex();
+        return "Synchronize solr index with database. Check logs for progress";
     }
 
 }

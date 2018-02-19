@@ -44,7 +44,7 @@
                         <li data-th-if="${admin}" class="dropdown-header">Admin</li>
                         <li data-th-if="${admin}"><a th:href="@{'/admin/taxonomies'}">Taxonomies</a></li>
                         <li data-th-if="${admin and userMgmnt}"><a th:href="@{'/admin/users'}">User Management</a></li>
-                        <li data-th-if="${admin and userMgmnt}"><a th:href="@{'/admin/sync'}">Trigger Schedoscope
+                        <li data-th-if="${admin and userMgmnt}"><a th:href="@{'/admin/sync/schedoscope'}">Trigger Schedoscope
                             Sync</a></li>
                         <li data-th-if="${admin}" role="separator" class="divider"></li>
                         <li class="dropdown-header">Actions</li>

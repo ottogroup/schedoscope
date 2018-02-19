@@ -15,8 +15,12 @@
  */
 package org.schedoscope.metascope.service;
 
+import org.schedoscope.metascope.index.SolrFacade;
+import org.schedoscope.metascope.model.MetascopeTable;
+import org.schedoscope.metascope.repository.MetascopeTableRepository;
 import org.schedoscope.metascope.task.MetascopeTask;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,13 +28,30 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MetascopeAdminService {
 
-    @Autowired
-    private MetascopeTask metascopeTask;
+  @Autowired
+  private MetascopeTask metascopeTask;
 
-    @Async
-    @Transactional
-    public void schedule() {
-        metascopeTask.run();
+  @Autowired
+  private MetascopeTableRepository metascopeTableRepository;
+
+  @Autowired
+  @Lazy
+  private SolrFacade solr;
+
+  @Async
+  @Transactional
+  public void schedule() {
+    metascopeTask.run();
+  }
+
+  @Async
+  @Transactional
+  public void syncIndex() {
+    Iterable<MetascopeTable> tables = metascopeTableRepository.findAll();
+    for (MetascopeTable table : tables) {
+      solr.updateTableEntityAsync(table, false);
     }
+    solr.commit();
+  }
 
 }
