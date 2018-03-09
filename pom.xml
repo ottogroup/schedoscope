@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>schedoscope</groupId>
     <artifactId>schedoscope-suite</artifactId>
-    <version>0.9.10-SNAPSHOT</version>
+    <version>0.9.11-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>Schedoscope Suite</name>
     <description>A wrapper building all modules of the Schedoscope project</description>
@@ -15,17 +15,17 @@
         <scalarelease.version>2.11.11</scalarelease.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <hadoop.version>2.6.0-cdh5.12.0</hadoop.version>
-        <hive.version>1.1.0-cdh5.12.0</hive.version>
+        <hadoop.version>2.6.0-cdh5.14.0</hadoop.version>
+        <hive.version>1.1.0-cdh5.14.0</hive.version>
         <hive.hcatalog.version>${hive.version}</hive.hcatalog.version>
-        <oozie.version>4.1.0-cdh5.12.0</oozie.version>
-        <pig.version>0.12.0-cdh5.12.0</pig.version>
-        <pig.parquet.version>1.5.0-cdh5.12.0</pig.parquet.version>
-        <spark.version>2.2.0.cloudera1</spark.version>
+        <oozie.version>4.1.0-cdh5.14.0</oozie.version>
+        <pig.version>0.12.0-cdh5.14.0</pig.version>
+        <pig.parquet.version>1.5.0-cdh5.14.0</pig.parquet.version>
+        <spark.version>2.2.0.cloudera2</spark.version>
         <mrunit.version>1.1.0</mrunit.version>
-        <hiveunit.version>1.2.6</hiveunit.version>
-        <minioozie.version>1.2.4</minioozie.version>
-        <schedoscope.version>0.9.10-SNAPSHOT</schedoscope.version>
+        <hiveunit.version>1.2.7</hiveunit.version>
+        <minioozie.version>1.2.5</minioozie.version>
+        <schedoscope.version>0.9.11-SNAPSHOT</schedoscope.version>
     </properties>
 
     <modules>
