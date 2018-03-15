@@ -78,6 +78,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 03/15/2018 - Release 0.9.11
+
+We have released Version 0.9.11 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+Added [configuration parameter](https://github.com/ottogroup/schedoscope/wiki/Configuring-Schedoscope) `schedoscope.export.disableAll` to globally disable all view exports. Useful in test environments.
+
 ###### 03/09/2018 - Release 0.9.10
 
 We have released Version 0.9.10 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
