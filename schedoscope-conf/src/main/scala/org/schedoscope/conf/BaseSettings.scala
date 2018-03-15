@@ -212,6 +212,11 @@ class BaseSettings(val config: Config) {
   lazy val metastoreReadBatchSize = config.getInt("schedoscope.metastore.readBatchSize")
 
   /**
+    * Globally disable exports
+    */
+  lazy val exportDisableGlobally = config.getBoolean("schedoscope.export.disableAll")
+
+  /**
     * A salt to use when anonymizing fields during export
     */
   lazy val exportSalt = config.getString("schedoscope.export.salt")

@@ -306,7 +306,8 @@ abstract class View extends Structure with ViewDsl with DelayedInit {
   override def exportTo(export: () => Transformation) {
     ensureRegisteredParameters
 
-    registeredExports ::= export
+    if (!Schedoscope.settings.exportDisableGlobally)
+      registeredExports ::= export
   }
 
 
