@@ -60,11 +60,8 @@ object HiveTransformation {
     val functionBuff = ListBuffer[Function]()
 
     for ((funcName, cls) <- functions) {
-      val jarName = try {
+      val jarName =
         cls.getProtectionDomain().getCodeSource().getLocation().getFile.split("/").last
-      } catch {
-        case _: Throwable => null
-      }
 
       val jarResources = Settings().getDriverSettings("hive").libJarsHdfs
         .filter(lj => jarName == null || lj.contains(jarName))
