@@ -78,9 +78,9 @@ Please help making Schedoscope better!
 
 ## News
 
-###### 04/06/2018 - Release 0.9.12
+###### 04/06/2018 - Release 0.9.13
 
-We have released Version 0.9.12 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+We have released Version 0.9.13 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
 
 Removed derelict indirect CDH5.12.0 dependencies incurred by Cloudera's Spark 2.2.0-Cloudera2 dependency.
 
