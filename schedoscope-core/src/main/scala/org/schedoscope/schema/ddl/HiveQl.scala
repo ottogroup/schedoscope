@@ -217,8 +217,8 @@ ${if (mapKeyTerminator != null) s"\tMAP KEYS TERMINATED BY '${mapKeyTerminator}'
 \t${commentDdl(view)}
 \t${partitionDdl(view)}
 \t${storedAsDdl(view)}
-\t${tblPropertiesDdl(view)}
 \t${locationDdl(view)}
+\t${tblPropertiesDdl(view)}
 \t
 """.replaceAll("(?m)^[ \t]*\r?\n", "")
 
