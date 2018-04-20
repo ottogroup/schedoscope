@@ -68,11 +68,11 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		number INT
         |	)
         |	STORED AS PARQUET
+        |	LOCATION '/hdp/dev/test/views/article_view_parquet'
         |	TBLPROPERTIES (
         |		 'orc.compress' = 'ZLIB',
         |		 'transactional' = 'true'
         |	)
-        |	LOCATION '/hdp/dev/test/views/article_view_parquet'
         |""".stripMargin
   }
 
@@ -115,10 +115,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
          |	STORED AS
          |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
          |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+         |	LOCATION '/hdp/dev/test/views/article_view_avro'
          |	TBLPROPERTIES (
          |		 'immutable' = 'true'
          |	)
-         |	LOCATION '/hdp/dev/test/views/article_view_avro'
          |""".stripMargin
   }
 
@@ -128,10 +128,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
     HiveQl.ddl(view) shouldEqual
       s"""	CREATE EXTERNAL TABLE IF NOT EXISTS dev_test_views.article_view_avro2 ${hack}
          |	STORED AS AVRO
+         |	LOCATION '/hdp/dev/test/views/article_view_avro2'
          |	TBLPROPERTIES (
          |		 'immutable' = 'true'
          |	)
-         |	LOCATION '/hdp/dev/test/views/article_view_avro2'
          |""".stripMargin
   }
 
@@ -143,10 +143,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		number INT
         |	)
         |	STORED AS ORC
+        |	LOCATION '/hdp/dev/test/views/article_view_orc'
         |	TBLPROPERTIES (
         |		 'immutable' = 'false'
         |	)
-        |	LOCATION '/hdp/dev/test/views/article_view_orc'
         |""".stripMargin
   }
 
@@ -178,10 +178,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	COLLECTION ITEMS TERMINATED BY '\002'
         |	MAP KEYS TERMINATED BY '\003'
         |	STORED AS TEXTFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file1'
         |	TBLPROPERTIES (
         |		 'what' = 'ever'
         |	)
-        |	LOCATION '/hdp/dev/test/views/article_view_text_file1'
         |""".stripMargin
   }
 
@@ -198,10 +198,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		 'escapeChar' = '\\'
         |	)
         |	STORED AS TEXTFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file2'
         |	TBLPROPERTIES (
         |		 'what' = 'buh'
         |	)
-        |	LOCATION '/hdp/dev/test/views/article_view_text_file2'
         |""".stripMargin
   }
 
@@ -215,10 +215,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	STORED AS
         |		INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat'
         |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'
+        |	LOCATION '/hdp/dev/test/views/article_view_text_file3'
         |	TBLPROPERTIES (
         |		 'what' = 'buh'
         |	)
-        |	LOCATION '/hdp/dev/test/views/article_view_text_file3'
         |""".stripMargin
   }
 
@@ -230,10 +230,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		number INT
         |	)
         |	STORED AS RCFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_rc'
         |	TBLPROPERTIES (
         |		 'scalable' = 'true'
         |	)
-        |	LOCATION '/hdp/dev/test/views/article_view_rc'
         |""".stripMargin
   }
 
@@ -246,10 +246,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	)
         |	ROW FORMAT SERDE 'org.apache.hive.hcatalog.data.JsonSerDe'
         |	STORED AS TEXTFILE
+        |	LOCATION '/hdp/dev/test/views/article_view_json'
         |	TBLPROPERTIES (
         |		 'transactional' = 'true'
         |	)
-        |	LOCATION '/hdp/dev/test/views/article_view_json'
         |""".stripMargin
   }
 
@@ -298,10 +298,10 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |	STORED AS
         |		INPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcInputFormat'
         |		OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
+        |	LOCATION '/hdp/dev/test/views/article_view_in_output'
         |	TBLPROPERTIES (
         |		 'EXTERNAL' = 'TRUE'
         |	)
-        |	LOCATION '/hdp/dev/test/views/article_view_in_output'
         |""".stripMargin
   }
 
@@ -313,11 +313,11 @@ class HiveQlTest extends FlatSpec with BeforeAndAfter with Matchers {
         |		number INT
         |	)
         |	STORED AS ORC
+        |	LOCATION 's3a://schedoscope-bucket-test/dev/test/views/article_view_s3'
         |	TBLPROPERTIES (
         |		 'orc.compress' = 'ZLIB',
         |		 'transactional' = 'true'
         |	)
-        |	LOCATION 's3a://schedoscope-bucket-test/dev/test/views/article_view_s3'
         |""".stripMargin
   }
 
