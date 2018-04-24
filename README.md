@@ -70,13 +70,21 @@ Schedoscope was conceived at the Business Intelligence department of [Otto Group
 
 The following people have contributed to the various parts of Schedoscope so far: 
 
-[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Kassem Tohme](https://github.com/ktohme), [Alexander Kolb](https://github.com/lofifnc), [Christian Richter](https://github.com/christianrichter), [Jan Hicken](https://github.com/janhicken), [Diogo Aurelio](https://github.com/diogoaurelio), [Hans-Peter Zorn](https://github.com/hpzorn), [Dominik Benz](https://github.com/dominikbenz), [Annika Seidler](https://github.com/aleveringhaus), [Martin Sänger](https://github.com/martinsaenger).
+[Utz Westermann](https://github.com/utzwestermann) (maintainer), [Kassem Tohme](https://github.com/ktohme), [Alexander Kolb](https://github.com/lofifnc), [Christian Richter](https://github.com/christianrichter), [Jan Hicken](https://github.com/janhicken), [Diogo Aurelio](https://github.com/diogoaurelio), [Hans-Peter Zorn](https://github.com/hpzorn), [Dominik Benz](https://github.com/dominikbenz), [Annika Seidler](https://github.com/aleveringhaus), [Martin Sänger](https://github.com/martinsaenger), [Julian Keppel](https://github.com/juliankeppel).
 
 We would love to get contributions from you as well. We haven't got a formalized submission process yet. If you have an idea for a contribution or even coded one already, get in touch with Utz or just send us your pull request. We will work it out from there.
 
 Please help making Schedoscope better!
 
 ## News
+
+###### 04/24/2018 - Release 0.10.1
+
+We have released Version 0.10.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+This is a bugfix release correcting the order of the TBLPROPERTIES and LOCATION clauses in the Hive DDL generated for views. **Please do note that if you use the `tblProperties` clause in some views, this change affects the DDL checksum making Schedoscope drop and recreate the respective tables.** Hence the version bump to 0.10.1.
+
+Thanks to Julian Keppel for reporting the issue and providing the fix.
 
 ###### 04/06/2018 - Release 0.9.13
 
