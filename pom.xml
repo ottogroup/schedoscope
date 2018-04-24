@@ -69,11 +69,6 @@
             <id>bintray-ottogroup-maven</id>
             <url>https://api.bintray.com/maven/ottogroup/maven/schedoscope</url>
         </repository>
-        <snapshotRepository>
-            <id>gbi-snapshots</id>
-            <name>Ecbi-Snapshot-Releases</name>
-            <url>https://nexus.scm.otto.de/content/repositories/gbi-snapshots/</url>
-        </snapshotRepository>
     </distributionManagement>
 
 </project> 
