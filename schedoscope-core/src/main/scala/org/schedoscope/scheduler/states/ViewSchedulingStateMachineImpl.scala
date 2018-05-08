@@ -47,7 +47,7 @@ class ViewSchedulingStateMachineImpl extends ViewSchedulingStateMachine {
             false,
             false)))
 
-    else if (view.dependencies.isEmpty || materializationMode == TRANSFORM_ONLY)
+    else if (view.dependencies.isEmpty || (view.isMaterializeOnce && lastTransformationTimestamp > 0) || materializationMode == TRANSFORM_ONLY)
       leaveWaitingState(
         Waiting(view,
           lastTransformationChecksum,

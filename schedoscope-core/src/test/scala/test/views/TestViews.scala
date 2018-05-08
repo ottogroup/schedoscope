@@ -104,9 +104,9 @@ case class ProductBrandClick(shopCode: Parameter[String],
 }
 
 case class NestedClick(shopCode: Parameter[String],
-                      year: Parameter[String],
-                      month: Parameter[String],
-                      day: Parameter[String]) extends View
+                       year: Parameter[String],
+                       month: Parameter[String],
+                       day: Parameter[String]) extends View
   with Id
   with DailyParameterization {
 
@@ -217,14 +217,6 @@ case class ProductBrandsNoOpMirror(year: Parameter[String],
 
   dependsOn(() => ProductBrand(p("EC0101"), year, month, day))
   dependsOn(() => ProductBrand(p("EC0102"), year, month, day))
-}
-
-case class ProductBrandsNoOpMirrorDependent(
-                                             year: Parameter[String],
-                                             month: Parameter[String],
-                                             day: Parameter[String]) extends View {
-
-  dependsOn(() => ProductBrandsNoOpMirror(year, month, day))
 }
 
 case class NestedStructure() extends Structure {
