@@ -195,12 +195,39 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
     }
   }
 
+  it should "transition to Waiting upon materialize even if materializeOnce" in new IntermediateView {
+    val startState = Invalidated(materializeOnceView)
+
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
+      case ResultingViewSchedulingState(
+      Waiting(
+      `materializeOnceView`, org.schedoscope.dsl.transformations.Checksum.defaultDigest, 0,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
+        dependenciesMaterializing shouldEqual materializeOnceView.dependencies.toSet
+        interestedParties should contain(DependentView(dependentView))
+      case _ => fail()
+    }
+  }
+
   it should "ask its dependencies to materialize" in new IntermediateView {
     val startState = Invalidated(viewUnderTest)
 
     stateMachine.materialize(startState, dependentView, currentTime = 10) match {
       case ResultingViewSchedulingState(__, s) =>
         viewUnderTest.dependencies.foreach { d =>
+          s should contain(Materialize(d, DEFAULT))
+        }
+      case _ => fail()
+    }
+  }
+
+  it should "ask its dependencies to materialize even if materializeOnce" in new IntermediateView {
+    val startState = Invalidated(materializeOnceView)
+
+    stateMachine.materialize(startState, dependentView, currentTime = 10) match {
+      case ResultingViewSchedulingState(__, s) =>
+        materializeOnceView.dependencies.foreach { d =>
           s should contain(Materialize(d, DEFAULT))
         }
       case _ => fail()
@@ -636,6 +663,56 @@ class IntermediateViewSchedulingStateMachineTest extends FlatSpec with Matchers 
       DEFAULT, false, false, false, 0), _) =>
         dependenciesMaterializing shouldEqual viewUnderTest.dependencies.toSet
         interestedParties should contain(DependentView(dependentView))
+      case _ => fail()
+    }
+  }
+
+  it should "transition to Waiting upon materialize if materializeOnce but not yet transformed" in new IntermediateView {
+    val startState = Materialized(materializeOnceView, viewTransformationChecksum, 0, withErrors = false, incomplete = false)
+
+    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
+      case ResultingViewSchedulingState(
+      Waiting(
+      `materializeOnceView`, `viewTransformationChecksum`, 0,
+      dependenciesMaterializing, interestedParties,
+      DEFAULT, false, false, false, 0), _) =>
+        dependenciesMaterializing shouldEqual materializeOnceView.dependencies.toSet
+        interestedParties should contain(DependentView(dependentView))
+      case _ => fail()
+    }
+  }
+
+  it should "transition to Materialized if materializedOnce and already materialized" in new IntermediateView {
+    val startState = Materialized(materializeOnceView, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
+
+    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
+      case ResultingViewSchedulingState(
+      Materialized(
+      view,
+      `viewTransformationChecksum`,
+      10,
+      false,
+      false), s) =>
+        view shouldBe materializeOnceView
+        s shouldEqual Set(
+          ReportMaterialized(
+            materializeOnceView,
+            Set(dependentView),
+            10,
+            withErrors = false,
+            incomplete = false))
+      case _ => fail()
+    }
+  }
+
+  it should "transition to Materialized but not ask dependencies to materialize if materializedOnce and already materialized" in new IntermediateView {
+    val startState = Materialized(materializeOnceView, viewTransformationChecksum, 10, withErrors = false, incomplete = false)
+
+    stateMachine.materialize(startState, dependentView, currentTime = 20) match {
+      case ResultingViewSchedulingState(_, s) =>
+        materializeOnceView.dependencies.foreach { d =>
+          s should not contain (Materialize(d, DEFAULT))
+        }
       case _ => fail()
     }
   }
