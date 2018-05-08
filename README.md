@@ -78,6 +78,12 @@ Please help making Schedoscope better!
 
 ## News
 
+###### 05/08/2018 - Release 0.10.2
+
+We have released Version 0.10.2 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
+
+We have changed the materialization logic of `materializeOnce` views such that they no longer ask their child views to materialize if the `materializeOnce` views have been materialized already. This improves performance.
+
 ###### 04/24/2018 - Release 0.10.1
 
 We have released Version 0.10.1 as a Maven artifact to our Bintray repository (see [Setting Up A Schedoscope Project](https://github.com/ottogroup/schedoscope/wiki/Setting-up-a-Schedoscope-Project) for an example pom).
