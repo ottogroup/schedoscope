@@ -17,14 +17,12 @@ package org.schedoscope.export.utils;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.bigquery.*;
+import com.google.cloud.bigquery.JobInfo.WriteDisposition;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -245,8 +243,18 @@ public class BigQueryUtils {
      * @param cloudStoragePathsToData the list of gs:// URLs to the blobs to load into the table.
      */
     static public void loadTable(BigQuery bigQueryService, TableId table, List<String> cloudStoragePathsToData) {
-        Table t = bigQueryService.getTable(table);
-        Job loadJob = t.load(FormatOptions.json(), cloudStoragePathsToData);
+
+        LoadJobConfiguration configuration = LoadJobConfiguration
+                .newBuilder(table, cloudStoragePathsToData)
+                .setFormatOptions(FormatOptions.json())
+                .setWriteDisposition(WriteDisposition.WRITE_EMPTY)
+                .build();
+
+        //jobId could be used to reference the job later
+        JobId jobId = JobId.of(UUID.randomUUID().toString());
+        JobInfo jobInfo = JobInfo.of(jobId, configuration);
+
+        Job loadJob = bigQueryService.create(jobInfo);
 
         try {
             loadJob = loadJob.waitFor();
