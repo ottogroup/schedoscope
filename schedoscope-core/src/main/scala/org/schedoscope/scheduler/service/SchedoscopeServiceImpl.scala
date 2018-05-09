@@ -159,7 +159,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
                                                 issueFilter: Option[String]
                                                ) = {
 
-    val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
+    lazy val viewStatusListWithoutViewDetails = viewStatusResponses.map { v =>
       viewStatusOutput(vsr = v,
         viewTableName = if (all.getOrElse(false)) Some(v.view.tableName) else None,
         isTable = if (all.getOrElse(false)) Some(false) else None,
@@ -184,7 +184,7 @@ class SchedoscopeServiceImpl(actorSystem: ActorSystem, settings: SchedoscopeSett
             issueFilter
           )
         )
-        .toList ::: viewStatusListWithoutViewDetails
+        .toList
     else
       viewStatusListWithoutViewDetails
 

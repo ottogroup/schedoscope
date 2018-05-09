@@ -39,8 +39,8 @@ import scala.collection.JavaConverters._
 
 class ExportTest extends FlatSpec with Matchers with BeforeAndAfter {
 
-  private val CALL_BIG_QUERY = false
-  private val CLEAN_UP_BIG_QUERY = true
+  private val CALL_BIG_QUERY = true
+  private val CLEAN_UP_BIG_QUERY = false
 
   before {
     if (CALL_BIG_QUERY) {
