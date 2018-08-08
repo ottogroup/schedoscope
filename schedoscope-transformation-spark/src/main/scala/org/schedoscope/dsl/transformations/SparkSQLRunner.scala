@@ -50,6 +50,5 @@ object SparkSQLRunner {
     } finally
       sc.stop()
 
-    System.exit(0)
   }
 }
