@@ -28,7 +28,7 @@ RUN wget -qO- http://archive.cloudera.com/spark2/csd/SPARK2_ON_YARN-2.2.0.cloude
 RUN yum -y install python-pip ; yum clean all \
     && pip install cm-api
 
-COPY parcel-installer.py /root/parcel-installer.py
-COPY prepare-env.sh /root/prepare-env.sh
+COPY scripts/parcel-installer.py /root/parcel-installer.py
+COPY scripts/prepare-env.sh /root/prepare-env.sh
 
 CMD /root/prepare-env.sh
