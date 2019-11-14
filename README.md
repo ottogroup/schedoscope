@@ -1,3 +1,5 @@
+*Schedoscope is no longer under development by OttoGroup. Feel free to fork!*
+
 # ![Schedoscope](https://raw.githubusercontent.com/wiki/ottogroup/schedoscope/images/schedoscope_logo.jpg)
 
 ## Introduction
