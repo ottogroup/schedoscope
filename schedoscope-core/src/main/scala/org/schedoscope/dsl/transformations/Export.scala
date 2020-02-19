@@ -16,6 +16,8 @@
 
 package org.schedoscope.dsl.transformations
 
+import java.util.UUID
+
 import org.apache.hadoop.mapreduce.Job
 import org.schedoscope.Schedoscope
 import org.schedoscope.dsl.{Field, View}
@@ -339,7 +341,7 @@ object Export {
     t.configureWith(
       Map(
         "schedoscope.export.storageBucket" -> storageBucket,
-        "schedoscope.export.storageBucketFolderPrefix" -> storageBucketFolderPrefix,
+        "schedoscope.export.storageBucketFolderPrefix" -> s"${storageBucketFolderPrefix}${if (storageBucketFolderPrefix != "") "/" else ""}${UUID.randomUUID().toString}",
         "schedoscope.export.storageBucketRegion" -> storageBucketRegion,
         "schedoscope.export.dataLocation" -> dataLocation,
         "schedoscope.export.numReducers" -> numReducers,

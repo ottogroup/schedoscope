@@ -247,7 +247,7 @@ public class BigQueryUtils {
         LoadJobConfiguration configuration = LoadJobConfiguration
                 .newBuilder(table, cloudStoragePathsToData)
                 .setFormatOptions(FormatOptions.json())
-                .setWriteDisposition(WriteDisposition.WRITE_EMPTY)
+                .setWriteDisposition(WriteDisposition.WRITE_TRUNCATE)
                 .build();
 
         //jobId could be used to reference the job later
@@ -259,9 +259,9 @@ public class BigQueryUtils {
         try {
             loadJob = loadJob.waitFor();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            throw new BigQueryException(999, "Caught exception while inserting records into BigTable ", e);
         } catch (TimeoutException e) {
-            e.printStackTrace();
+            throw new BigQueryException(999, "Caught exception while inserting records into BigTable ", e);
         }
 
         if (loadJob.getStatus().getError() != null) {
